@@ -1,8 +1,8 @@
-// L'état d'un port TCP d'une machine, vu de la machine elle-même ou de
-// l'extérieur : ouvert (un programme écoute et la connexion passe), refusé
-// (personne n'écoute, ou ufw rejette), filtré (ufw jette le paquet : délai
-// dépassé). Les connexions locales (lo) ne passent pas par ufw. Un port
-// publié par Docker sur 0.0.0.0 contourne ufw (voir docker.ts).
+// The state of a machine's TCP port, seen from the machine itself or from
+// outside: open (a program listens and the connection goes through),
+// refused (nobody listens, or ufw rejects), filtered (ufw drops the packet:
+// timeout). Local connections (lo) don't go through ufw. A port published
+// by Docker on 0.0.0.0 bypasses ufw (see docker.ts).
 
 import type { Game } from './shell';
 import { verdict, type Firewall } from './firewall';

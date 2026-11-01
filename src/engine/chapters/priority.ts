@@ -1,16 +1,16 @@
-// Histoire « La Veille » — chapitre « La priorité » : deux CVE restent à
-// traiter (nginx et rsync). Le score CVSS seul ne suffit pas pour décider
-// quoi corriger en premier : il faut croiser avec l'exposition, déjà
-// apprise dans « Le périmètre » et « L'exposition » (L'Audit). nginx (80,
-// 443) est joignable depuis internet ; rsync n'a aucun port en écoute (un
-// outil en ligne de commande, pas un service) : même avec un score plus
-// bas, nginx passe avant.
-// Objectif vérifié sur l'état : priorite.md classe nginx avant rsync, avec
-// une justification qui cite l'exposition (pas seulement le score), et
-// note que openssh-server n'a rien à faire ici (déjà protégé).
-// Pièges prévus : classer uniquement par score CVSS décroissant (rsync
-// avant nginx).
-// Sources : https://man7.org/linux/man-pages/man8/ss.8.html,
+// Story "La Veille" — chapter "The priority": two CVEs remain to
+// handle (nginx and rsync). The CVSS score alone isn't enough to decide
+// what to fix first: it must be crossed with exposure, already
+// learnt in "Le périmètre" and "L'exposition" (L'Audit). nginx (80,
+// 443) is reachable from the internet; rsync has no listening port (a
+// command-line tool, not a service): even with a lower score,
+// nginx comes first.
+// Objective checked on the state: priority.md ranks nginx before rsync, with
+// a justification that cites exposure (not only the score), and
+// notes that openssh-server has nothing to do here (already protected).
+// Expected traps: ranking only by decreasing CVSS score (rsync
+// before nginx).
+// Sources: https://man7.org/linux/man-pages/man8/ss.8.html,
 // https://nmap.org/book/man.html, https://www.first.org/cvss/
 
 import { path, f, type Chapter } from '../world';

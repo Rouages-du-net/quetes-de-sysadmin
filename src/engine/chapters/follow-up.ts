@@ -1,27 +1,27 @@
-// Histoire « L'Audit » — chapitre « La contre-visite » : les correctifs des
-// parties 1 à 4 sont en place. Avant de rendre son rapport, Salomé revient
-// vérifier, comme une auditrice : on refait le balayage, on passe Lynis, on
-// corrige ce qui compte, on prouve, puis on écrit le rapport de clôture.
-//   - nmap -sV fournil.internal : plus que 22, 80 et 443 vus d'internet ; mais
-//     la version de SSH est celle d'avant la mise à jour de sécurité ;
-//   - sudo lynis audit system : un avertissement (PKGS-7392, des paquets
-//     vulnérables) et des suggestions de gravité inégale. Certaines se
-//     corrigent ici (sshd_config, UMASK de login.defs, bannière /etc/issue),
-//     d'autres demandent un vrai chantier (intégrité des fichiers, antimalware,
-//     journalisation distante, auditd) : on les met au rapport avec leur
-//     identifiant plutôt que de les installer à la va-vite ;
-//   - sudo apt update ; sudo apt upgrade : corrige PKGS-7392 ET change la
-//     version de SSH que nmap affiche (la preuve) ; sshd_config modifié demande
-//     sshd -t puis reload : Lynis lit le fichier, pas le service qui tourne ;
-//   - rapport-cloture.md : un résumé, les constats corrigés, les preuves
-//     (l'indice Lynis et le balayage), ce qui reste à faire. Salomé relit à
-//     chaque enregistrement.
-// Objectif vérifié sur l'état : plus d'avertissement Lynis et un indice d'au
-// moins 70, la configuration de ssh appliquée, un dernier balayage qui ne voit
-// que 22, 80 et 443 avec la version de SSH à jour, un dernier audit Lynis qui
-// reflète la machine, et un rapport complet qui cite l'indice et un constat
-// encore ouvert.
-// Sources : https://cisofy.com/documentation/lynis/, https://nmap.org/book/man.html,
+// Story "L'Audit" — chapter "The follow-up visit": the fixes of
+// parts 1 to 4 are in place. Before handing in her report, Salomé comes back
+// to check, like an auditor: scan again, run Lynis,
+// fix what matters, prove it, then write the closing report.
+//   - nmap -sV fournil.internal: only 22, 80 and 443 seen from the internet; but
+//     the SSH version is the one from before the security update;
+//   - sudo lynis audit system: a warning (PKGS-7392, vulnerable
+//     packages) and suggestions of uneven severity. Some can be
+//     fixed here (sshd_config, UMASK in login.defs, /etc/issue banner),
+//     others need real work (file integrity, antimalware,
+//     remote logging, auditd): they go in the report with their
+//     identifier rather than being installed in a hurry;
+//   - sudo apt update; sudo apt upgrade: fixes PKGS-7392 AND changes the
+//     SSH version nmap shows (the proof); a modified sshd_config needs
+//     sshd -t then reload: Lynis reads the file, not the running service;
+//   - closing_report.md: a summary, the fixed findings, the proofs
+//     (the Lynis index and the scan), what remains to do. Salomé rereads it
+//     on every save.
+// Objective checked on the state: no more Lynis warning and an index of at
+// least 70, ssh's configuration applied, a last scan that sees only
+// 22, 80 and 443 with the updated SSH version, a last Lynis audit that
+// reflects the machine, and a complete report that cites the index and a
+// finding still open.
+// Sources: https://cisofy.com/documentation/lynis/, https://nmap.org/book/man.html,
 // https://man.openbsd.org/sshd_config
 
 import { path, d, f, type Chapter } from '../world';
@@ -51,7 +51,7 @@ PASS_MIN_DAYS   0
 PASS_WARN_AGE   7
 ENCRYPT_METHOD  YESCRYPT`;
 
-// Le pare-feu après « L'exposition » : SSH, 80 et 443.
+// The firewall after "L'exposition": SSH, 80 and 443.
 const RULES: Rule[] = [
   { action: 'allow', to: 'OpenSSH', ports: [22], forEachOf: null },
   { action: 'allow', to: 'Nginx Full', ports: [80, 443], forEachOf: null },
@@ -87,7 +87,7 @@ const nmapOk = (j: Game) => {
 
 const sections = (j: Game, text: string) => sectionsMd(j, text, 'follow-up-section', SECTIONS);
 const words = (j: Game, key: string) => j.t(key).split(',').map((m) => m.trim().toLowerCase());
-// Les nombres écrits juste après le mot « indice » (ou « index », « hardening »…) : « indice de durcissement 80 ».
+// The numbers written just after the word "index" (or "indice", "hardening"…): "hardening index 80".
 const digits = (j: Game, text: string) => {
   const word = words(j, 'follow-up-words-hint').map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   return [...text.matchAll(new RegExp(`(?:${word})\\D{0,40}(\\d+)`, 'gi'))].map((x) => Number(x[1]));
@@ -136,7 +136,7 @@ export const againstVisit: Chapter = {
   }),
   initialise: (j) => {
     loadSshd(j);
-    // Salomé ne relit que ce qui a changé : l'état de départ compte comme déjà lu.
+    // Salomé only rereads what has changed: the initial state counts as already read.
     j.state.readReport = readReport(j);
   },
   createWorld: (t) =>
@@ -150,7 +150,7 @@ export const againstVisit: Chapter = {
       ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
       more: { var: d({ log: d({}, undefined, { owner: 'root' }) }, undefined, { owner: 'root' }) },
     }),
-  // Salomé relit le rapport de clôture après chaque enregistrement.
+  // Salomé rereads the closing report after each save.
   afterCommand: (j) => {
     const text = readReport(j);
     if (text === j.state.readReport || j.state.finishedReport) return;

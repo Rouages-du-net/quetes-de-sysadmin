@@ -1,8 +1,8 @@
-// ufw (Uncomplicated Firewall), d'après https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html :
+// ufw (Uncomplicated Firewall), based on https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html:
 // status [verbose|numbered], enable, disable, default, allow, deny, reject,
-// limit, delete, app list. Les règles vivent dans etat.ufw (../parefeu.ts).
-// ufw est traduit : ses messages suivent la langue du système (textes .ftl),
-// sauf les noms d'actions (ALLOW, DENY…), qu'il n'affiche qu'en anglais.
+// limit, delete, app list. The rules live in state.ufw (../firewall.ts).
+// ufw is translated: its messages follow the system's language (.ftl texts),
+// except the action names (ALLOW, DENY…), which it only shows in English.
 
 import type { Shell } from '../shell';
 import { APPLICATIONS, SERVICES, type Action, type Firewall, type Policy, type Rule } from '../firewall';
@@ -10,7 +10,7 @@ import type { Command } from './index';
 
 const ACTIONS = ['allow', 'deny', 'reject', 'limit'];
 
-// « 22 », « 22/tcp », « ssh », « OpenSSH », ou « from X [to any port N] [proto P] ».
+// "22", "22/tcp", "ssh", "OpenSSH", or "from X [to any port N] [proto P]".
 function readRule(game: Shell, action: Action, words: string[]): Rule | null {
   if (words.length === 1) {
     const [spec] = words;
@@ -38,7 +38,7 @@ function readRule(game: Shell, action: Action, words: string[]): Rule | null {
 const sameRule = (a: Rule, b: Rule) => a.action === b.action && a.to === b.to && a.forEachOf === b.forEachOf;
 const ruleText = (r: Rule) => (r.forEachOf ? `${r.action} from ${r.forEachOf}${r.ports.length ? ` to any port ${r.to}` : ''}` : `${r.action} ${r.to}`);
 
-// Le tableau de ufw status : une ligne par règle, plus sa jumelle (v6).
+// The ufw status table: one line per rule, plus its twin (v6).
 function grid(game: Shell, pf: Firewall, sens: string, numbers: boolean): string[] {
   const everywhere = game.t('ufw-everywhere');
   const lines: [string, string, string][] = [];
@@ -99,7 +99,7 @@ export const UFW: Record<string, Command> = {
       if (action === 'app' && rest[0] === 'list') return [game.t('ufw-applications'), ...Object.keys(APPLICATIONS).sort().map((a) => `  ${a}`)].join('\n');
       if (action === 'delete') {
         if (rest.length === 1 && /^\d+$/.test(rest[0])) {
-          // La numérotation de ufw status numbered compte aussi les lignes (v6).
+          // The numbering of ufw status numbered also counts the (v6) lines.
           const lines = pf.rules.flatMap((r) => (r.forEachOf ? [r] : [r, r]));
           const r = lines[Number(rest[0]) - 1];
           if (!r) return game.error(game.t('ufw-number', { number: rest[0] }));

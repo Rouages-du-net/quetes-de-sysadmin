@@ -1,11 +1,11 @@
-// Histoire « Le Paquet perdu » : diagnostiquer une panne réseau couche par
-// couche, avec ping, dig, traceroute et curl. Prolonge le module « De
-// l'Entrée à la page » (DNS, voyage des paquets, réponse du serveur).
+// Story "The Lost Packet": diagnose a network failure layer by
+// layer, with ping, dig, traceroute and curl. Follows on from the module "De
+// l'Entrée à la page" (DNS, the packets' journey, the server's answer).
 //
-// Adresses : réseau local privé (192.168.x.x, RFC 1918), réseau de collecte
-// d'opérateur (100.64.x.x, RFC 6598), le reste réservé à la documentation
-// (RFC 5737) ; noms en .example (RFC 6761). Seule exception : 9.9.9.9, le
-// résolveur DNS public de la fondation Quad9.
+// Addresses: private local network (192.168.x.x, RFC 1918), operator's
+// shared address space (100.64.x.x, RFC 6598), the rest reserved for documentation
+// (RFC 5737); names in .example (RFC 6761). The only exception: 9.9.9.9, the
+// Quad9 foundation's public DNS resolver.
 
 import { d, f, type Chapter } from '../world';
 
@@ -31,14 +31,14 @@ export const pkg: Chapter = {
   names: true,
   final: 'curl',
   password: 'anthill',
-  // t : les textes dans la langue du jeu (français tant que le shell ne le
-  // transmet pas).
+  // t: the texts in the game's language (French as long as the shell doesn't
+  // pass it on).
   state: (t) => ({
     network: {
       machines: {
         '192.168.1.1': { ping: true, ms: 0.9 },
         '9.9.9.9': { ping: true, ms: 11.8 },
-        // Le serveur du site ne répond pas au ping : son pare-feu l'ignore.
+        // The site's server doesn't answer ping: its firewall ignores it.
         [IP_SITE]: { ping: false, ms: 12.6 },
       },
       names: { [SITE]: IP_SITE, 'box.maison': '192.168.1.1' },

@@ -1,14 +1,13 @@
-// Histoire « La Veille » — chapitre « Sans preuve, pas de certitude » : un
-// correctif qu'on n'a pas vérifié n'est qu'une intention (la leçon de « La
-// contre-visite », reprise). On reprouve que nginx et rsync sont à jour, et
-// on regarde dans les journaux si quelqu'un avait déjà essayé d'exploiter
-// la faille HTTP/2 de nginx avant le correctif : une requête HTTP/2 vide,
-// sans en-tête, que nginx a refusée (400), mais qui vaut la peine d'être
-// notée.
-// Objectif vérifié sur l'état : les deux paquets confirmés à jour (apt list
-// --upgradable vide), la tentative trouvée dans access.log (grep), et le
-// site toujours servi.
-// Sources : https://manpages.debian.org/trixie/apt/apt.8.en.html,
+// Story "The Watch" — chapter "No Proof, No Certainty": a fix that has not
+// been checked is only an intention (the lesson of "The Follow-up Visit",
+// again). We prove again that nginx and rsync are up to date, and look in
+// the logs for whether someone had already tried to exploit nginx's HTTP/2
+// flaw before the fix: an empty HTTP/2 request, with no header, that nginx
+// refused (400), but that is worth noting.
+// Objective checked on the state: both packages confirmed up to date (apt
+// list --upgradable empty), the attempt found in access.log (grep), and the
+// site still served.
+// Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html,
 // https://nginx.org/en/docs/http/ngx_http_log_module.html
 
 import { f, type Chapter } from '../world';
@@ -20,8 +19,8 @@ import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initial
 const STARTED = NOW - 13 * 86_400_000;
 const SUSPICIOUS = '203.0.113.77';
 
-// Un journal d'accès ordinaire, avec une tentative suspecte avant le correctif : une
-// requête HTTP/2 vide, sans navigateur déclaré, refusée par nginx (400).
+// An ordinary access log, with a suspicious attempt before the fix: an
+// empty HTTP/2 request, with no declared browser, refused by nginx (400).
 const ACCESS = `192.0.2.44 - - [05/Sep/2028:09:12:33 +0200] "GET / HTTP/1.1" 200 612 "-" "Mozilla/5.0 (X11; Linux x86_64)"
 192.0.2.51 - - [06/Sep/2028:11:40:02 +0200] "GET / HTTP/1.1" 200 612 "-" "Mozilla/5.0 (Android 14)"
 ${SUSPICIOUS} - - [09/Sep/2028:02:14:07 +0200] "GET / HTTP/2.0" 400 0 "-" "-"

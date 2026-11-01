@@ -1,14 +1,14 @@
-// La supervision : le courrier local (mail, de bsd-mailx) et trois plugins
-// de monitoring-plugins (ceux de Nagios, Icinga, Shinken…) : check_disk,
-// check_http, check_procs. Un plugin écrit une ligne (OK, WARNING,
-// CRITICAL, UNKNOWN, puis les mesures après « | ») et rend un code de
-// retour : 0, 1, 2 ou 3. D'après https://www.monitoring-plugins.org/doc/man/
-// (check_disk, check_http, check_procs) et
-// https://www.monitoring-plugins.org/doc/guidelines.html (codes de retour,
-// seuils) ; mail d'après mailx(1) de bsd-mailx.
-// Écarts : les plugins sont dans /usr/lib/nagios/plugins (hors du PATH,
-// comme sur Debian) ; peu d'options ; mail sans mode interactif (il liste
-// la boîte et rend la main) ; le courrier ne quitte pas la machine.
+// Monitoring: local mail (mail, from bsd-mailx) and three plugins of
+// monitoring-plugins (those of Nagios, Icinga, Shinken…): check_disk,
+// check_http, check_procs. A plugin writes one line (OK, WARNING,
+// CRITICAL, UNKNOWN, then the measurements after "|") and returns an exit
+// code: 0, 1, 2 or 3. Based on https://www.monitoring-plugins.org/doc/man/
+// (check_disk, check_http, check_procs) and
+// https://www.monitoring-plugins.org/doc/guidelines.html (exit codes,
+// thresholds); mail based on bsd-mailx's mailx(1).
+// Differences: the plugins are in /usr/lib/nagios/plugins (outside the PATH,
+// as on Debian); few options; mail without interactive mode (it lists the
+// mailbox and returns); mail does not leave the machine.
 
 import type { Shell } from '../shell';
 import type { Process } from './system';
@@ -29,10 +29,10 @@ export interface Mail {
   body: string;
 }
 
-/** Les courriers remis sur cette machine (pour les histoires : qui a été prévenu, et quand). */
+/** The mails delivered on this machine (for the stories: who was warned, and when). */
 export const mails = (game: Shell): Mail[] => (game.state.mails ??= []);
 
-// L'heure de la machine, et sa date au format des courriers.
+// The machine's time, and its date in the mails' format.
 const now = (game: Shell) => (timeOfDay(game) ? machineTime(game).wall : (systemd(game)?.clock ?? Date.UTC(2027, 0, 1)));
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -41,7 +41,7 @@ const dateMbox = (ms: number) => {
   return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2)} ${d.toISOString().slice(11, 19)} ${d.getUTCFullYear()}`;
 };
 
-/** À qui va un courrier : la partie locale de l'adresse, après /etc/aliases. */
+/** Who a mail goes to: the local part of the address, after /etc/aliases. */
 function recipient(game: Shell, address: string): string {
   const local = address.replace(/@.*$/, '');
   const aliases = game.read('/etc/aliases') ?? '';
@@ -81,7 +81,7 @@ export function send(game: Shell, addresses: string[], subject: string, body: st
   }
 }
 
-// La boîte d'un compte, comme l'en-tête de mail sans argument.
+// An account's mailbox, like mail's header without arguments.
 function box(game: Shell): string {
   const text = game.read(`/var/mail/${game.who}`);
   const messages = (text ?? '').split(/^(?=From \S+ )/m).filter((m) => m.startsWith('From '));
@@ -98,7 +98,7 @@ function box(game: Shell): string {
   ].join('\n');
 }
 
-// Un seuil en pourcentage de libre (« 20% ») : le statut quand il reste `libre` %.
+// A threshold as a percentage of free space ("20%"): the status when that many % are left.
 const pctThreshold = (text: string | undefined) => (text && /^\d+(\.\d+)?%$/.test(text) ? Number(text.slice(0, -1)) : null);
 
 function checkDisk(game: Shell, args: string[]): string {
@@ -168,7 +168,7 @@ function checkHttp(game: Shell, args: string[]): string {
   return `HTTP ${CODES[state]}: HTTP/1.1 ${r.code} ${reasons[r.code] ?? ''} - ${size} bytes in 0.004 second response time |time=0.004000s;;;0.000000 size=${size}B;;;0`;
 }
 
-// « 1: » (au moins 1), « :5 » (au plus 5), « 2:3 », « 4 » (de 0 à 4) : hors de la plage, alerte.
+// "1:" (at least 1), ":5" (at most 5), "2:3", "4" (from 0 to 4): outside the range, alert.
 function inRange(n: number, range: string): boolean {
   const m = /^(\d*):(\d*)$/.exec(range);
   if (m) return (m[1] === '' || n >= Number(m[1])) && (m[2] === '' || n <= Number(m[2]));
@@ -188,7 +188,7 @@ function checkProcs(game: Shell, args: string[]): string {
   return `PROCS ${CODES[state]}: ${what} | procs=${n};${w ?? ''};${c ?? ''};0;`;
 }
 
-/** Une connexion passée ou en cours (pour last), décrite par l'histoire. */
+/** A past or current login (for last), described by the story. */
 export interface Connection {
   account: string;
   tty: string;
@@ -197,7 +197,7 @@ export interface Connection {
   end: number | null;
 }
 
-// last : les connexions, de la plus récente à la plus ancienne (d'après /var/log/wtmp).
+// last: the logins, from the most recent to the oldest (from /var/log/wtmp).
 function last(game: Shell, args: string[]): string {
   const i = args.indexOf('-n');
   const max = i >= 0 ? Number(args[i + 1]) : Infinity;
@@ -235,12 +235,12 @@ export const SUPERVISION: Record<string, Command> = {
       }
       if (!addresses.length) return box(game);
       const body = (input ?? '').replace(/\n+$/, '');
-      // -E : pas de courrier vide (pratique : n'envoyer que s'il y a quelque chose à dire).
+      // -E: no empty mail (handy: only send when there is something to say).
       if (!body) {
         if (forbiddenEmpty) return '';
         game.error('Null message body; hope that\u0027s ok');
       }
-      // Une machine avec Postfix (courrier.ts) : le message part par la file d'attente, vers la machine ou au-dehors.
+      // A machine with Postfix (mail.ts): the message goes through the queue, to the machine or outside.
       if (game.state.mail) {
         submit(game, game.who, addresses, subject, body, game.accounts.users[game.who]?.uid ?? 1000);
         return '';
@@ -249,7 +249,7 @@ export const SUPERVISION: Record<string, Command> = {
       return '';
     },
   },
-  // La page de manuel des timers (section 5), pas une commande.
+  // The manual page of timers (section 5), not a command.
   'systemd.timer': { section: 5, launch: () => '' },
   check_disk: { directory: PLUGINS, ownOptions: true, launch: ({ args, game }) => checkDisk(game, args) },
   check_http: { directory: PLUGINS, ownOptions: true, launch: ({ args, game }) => checkHttp(game, args) },

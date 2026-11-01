@@ -1,13 +1,13 @@
-// Un mini-shell qui interprète de vraies commandes Linux sur le monde d'un
-// chapitre. Les comportements suivent ceux de Linux (messages simplifiés et
-// traduits) ; les écarts volontaires sont signalés en commentaire et listés
-// dans docs/SCENARIOS.md.
+// A mini-shell that interprets real Linux commands on a chapter's world.
+// The behaviours follow Linux's (messages simplified and translated); the
+// deliberate differences are pointed out in comments and listed in
+// docs/SCENARIOS.md.
 //
-// Comme un vrai shell : la ligne est découpée en mots (guillemets compris),
-// les jokers * et ? sont développés, les commandes reliées par des tubes |
-// (la sortie de l'une devient l'entrée de la suivante), et la sortie finale
-// peut être redirigée dans un fichier (> écrase, >> ajoute). Les messages
-// d'erreur ne passent pas dans les tubes (sortie d'erreur séparée).
+// Like a real shell: the line is split into words (quotes included), the
+// wildcards * and ? are expanded, commands are joined by | pipes (the
+// output of one becomes the input of the next), and the final output can
+// be redirected to a file (> overwrites, >> appends). Error messages do
+// not go through pipes (separate error output).
 
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -22,14 +22,14 @@ import { applyMode, compareNames, content, split, wildcard, modeWithMask, sizeFo
 import { launchScript } from './commands/scripts';
 import { read as readSudoers, SUDOERS } from './sudoers';
 
-// La place des arguments d'un programme (getconf ARG_MAX), et les commandes intégrées au shell, qui n'y sont pas soumises.
+// The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
 const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf'];
 
-// Ce que le jeu (les chapitres et les commandes) peut consulter ou modifier.
-// Les clins d'œil : xyzzy (le mot magique de Colossal Cave Adventure), le
-// sandwich de xkcd 149 (https://xkcd.com/149/), et sl, la locomotive qui punit
-// ceux qui tapent sl au lieu de ls (le paquet Debian sl).
+// What the game (the chapters and the commands) can read or change.
+// The easter eggs: xyzzy (the magic word of Colossal Cave Adventure), the
+// sandwich of xkcd 149 (https://xkcd.com/149/), and sl, the locomotive that
+// punishes those who type sl instead of ls (the Debian sl package).
 const EGGS: Record<string, { text: string; achievements: string }> = {
   xyzzy: { text: 'egg-xyzzy', achievements: 'xyzzy' },
   'make me a sandwich': { text: 'egg-sandwich-refusal', achievements: '' },
@@ -43,13 +43,13 @@ export interface Game {
   flags: Set<string>;
   home: string;
   state: Record<string, any>;
-  // Utilisateur qui agit pour la commande en cours : le joueur, ou « root » sous sudo.
+  // The user acting for the current command: the player, or "root" under sudo.
   who: string;
-  // Le compte du joueur ou de la joueuse, dans la langue (« vous », « you » :
-  // voir joueur() dans monde.ts). Le code compare et écrit ce nom-là, jamais 'vous'.
+  // The player's account, in the language ("vous", "you": see player() in
+  // world.ts). The code compares and writes that name, never 'you'.
   player: string;
-  // La dernière ligne exécutée (pour les événements) : commandes du tube,
-  // sortie produite (avant redirection), fichier de redirection.
+  // The last line run (for events): the pipe's commands, output produced
+  // (before redirection), redirection file.
   last: { line: string; commands: string[][]; output: string; errors: string[]; redirection: string | null };
   find(path: string, last?: boolean): Node | null;
   exists(path: string): boolean;
@@ -57,20 +57,20 @@ export interface Game {
   count(place: string, prefix: string): number;
   erase(path: string): void;
   can(n: Node, right: 'r' | 'w' | 'x', user?: string): boolean;
-  // Comptes et groupes de la machine ; groupes d'un compte (principal d'abord).
+  // The machine's accounts and groups; an account's groups (primary first).
   accounts: Accounts;
   groupsFor(user: string): string[];
-  // Les textes dans la langue du jeu (voir src/texts/).
+  // The texts in the game's language (see src/texts/).
   t: Translate;
-  // Nom de la machine (invite « joueur@nom »).
+  // The machine's name (prompt "player@name").
   host: string;
-  /** Le nom de la machine dans la langue (kingdom pour royaume). */
+  /** The machine's name in the language (royaume for kingdom in French). */
   readonly hostName: string;
-  // Pose une question (ex. « yes/no » de ssh) : la ligne suivante est la
-  // réponse, passée à `repondre`, dont le texte s'affiche.
+  // Asks a question (e.g. ssh's "yes/no"): the next line is the answer,
+  // passed to `answer`, whose text is displayed.
   ask(prompt: string, answer: (response: string) => string): void;
-  // Demande d'ouvrir une session sur une autre machine (ssh) ; la console
-  // (console.ts) s'en charge après la ligne en cours.
+  // Request to open a session on another machine (ssh); the console
+  // (console.ts) handles it after the current line.
   connectionRequest: string | null;
   reboot: boolean;
   edition: Edition | null;
@@ -82,89 +82,89 @@ export interface Edition {
   path: string;
   text: string;
   root: boolean;
-  // Message de la ligne d'état à l'ouverture (« Nouveau fichier »…).
+  // Status-line message on opening ("New File"…).
   message: string;
-  // À la fermeture (ex. crontab -e vérifie et installe) : message à afficher.
+  // On closing (e.g. crontab -e checks and installs): message to display.
   after?: () => string;
-  // La fermeture change l'état (ex. systemctl edit) : elle compte comme une commande, même sans message.
+  // Closing changes the state (e.g. systemctl edit): it counts as a command, even without a message.
   conclude?: boolean;
 }
 
 export class Shell implements Game {
   root: Directory;
   cwd: string;
-  /** Le dossier d'avant ($OLDPWD), pour cd -. */
+  /** The previous directory ($OLDPWD), for cd -. */
   old: string | null = null;
   home: string;
   flags = new Set<string>();
   state: Record<string, any>;
   finished = false;
-  // Mode examen : les étapes sont vérifiées, mais seul le message final (le débrief) s'affiche.
+  // Exam mode: the steps are checked, but only the final message (the debrief) is shown.
   exam = false;
-  // Le terminal montre les couleurs (l'interface, si le réglage est allumé) :
-  // ls, grep… colorent alors ce qui va à l'écran (voir couleurs.ts).
+  // The terminal shows colours (the interface, if the setting is on): ls,
+  // grep… then colour what goes to the screen (see colours.ts).
   colours = false;
-  // La largeur du terminal, en caractères ($COLUMNS) : ls range ses colonnes dedans.
+  // The terminal's width, in characters ($COLUMNS): ls fits its columns into it.
   columns = 80;
   who: string;
   last: Game['last'] = { line: '', commands: [], output: '', errors: [], redirection: null };
-  // Le compte sous lequel sudo lance la commande en cours (sudo -u).
+  // The account under which sudo runs the current command (sudo -u).
   private as = 'root';
-  // sudo : mot de passe déjà donné ? ligne en attente du mot de passe ?
+  // sudo: password already given? line waiting for the password?
   private authenticated = false;
   private doneLecture = false;
   waiting: { line: string; attempts: number } | null = null;
-  // Question en cours (ssh : « Are you sure you want to continue connecting? »).
-  // secret : la réponse ne s'affiche pas (un mot de passe demandé par ssh).
+  // Current question (ssh: "Are you sure you want to continue connecting?").
+  // secret: the answer is not displayed (a password asked by ssh).
   question: { prompt: string; answer: (response: string) => string; secret?: boolean } | null = null;
-  // Une session à ouvrir sur une autre machine (ssh -J, ssh depuis une
-  // machine vers son réseau interne), traitée par la console.
+  // A session to open on another machine (ssh -J, ssh from a machine to its
+  // internal network), handled by the console.
   sessionRequest: { shell: Shell; domain: string; via?: string; address: string } | null = null;
-  // La machine principale de l'histoire, pour une machine interne.
+  // The story's main machine, for an internal machine.
   parent: Shell | null = null;
   private internals = new Map<string, Shell>();
-  // exit tapé : la console ferme la session (voir console.ts).
+  // exit typed: the console closes the session (see console.ts).
   output = false;
-  // La machine vient de redémarrer (reboot) : la console coupe la session.
+  // The machine has just rebooted (reboot): the console cuts the session.
   reboot = false;
-  // Fichier ouvert dans l'éditeur (nano) : l'interface l'affiche à la place
-  // de la ligne de commande. `root` : ouvert avec sudo.
+  // File open in the editor (nano): the interface shows it in place of the
+  // command line. `root`: opened with sudo.
   edition: Edition | null = null;
-  // Un suivi en cours (tail -f, journalctl -f) : lire() donne les lignes
-  // arrivées depuis la dernière fois. Ctrl-C l'arrête (Console.interrompre).
+  // A follow in progress (tail -f, journalctl -f): read() gives the lines
+  // that arrived since last time. Ctrl-C stops it (Console.interrupt).
   follow: { read: () => string } | null = null;
-  // Les commandes tapées sur cette machine (history, !!).
+  // The commands typed on this machine (history, !!).
   history: string[] = [];
-  // Messages de l'histoire déclenchés pendant l'édition, affichés à la sortie.
+  // Story messages triggered while editing, shown on exit.
   private inWaiting: string[] = [];
   connectionRequest: string | null = null;
   accounts: Accounts;
-  // Sortie d'erreur et remarques de la ligne en cours.
+  // Error output and remarks of the current line.
   private errors: string[] = [];
-  // Le code de retour de la dernière commande, quand elle le donne elle-même
-  // (un plugin de supervision : 0 OK, 1 WARNING, 2 CRITICAL) ; sinon, il
-  // vaut 1 si elle a écrit une erreur, 0 sinon.
+  // The exit code of the last command, when it sets it itself (a
+  // monitoring plugin: 0 OK, 1 WARNING, 2 CRITICAL); otherwise, it is 1 if
+  // it wrote an error, 0 otherwise.
   status: number | null = null;
-  // Le masque des droits des fichiers créés (umask), propre à cette session.
+  // The permission mask of created files (umask), specific to this session.
   mask = '0022';
-  // Le fichier où part la sortie de la commande en cours (> fichier), s'il y en a un : wg genkey le regarde.
+  // The file the current command's output goes to (> file), if there is one: wg genkey looks at it.
   outputTo: string | null = null;
-  // La session tmux où l'on tape (null : hors de tmux) ; les sessions vivent dans etat.tmux.
+  // The tmux session being typed in (null: outside tmux); the sessions live in state.tmux.
   tmux: string | null = null;
-  // La connexion vient de tomber (le réseau a coupé) : la console ramène au poste.
+  // The connection has just dropped (the network went down): the console brings you back to the workstation.
   cut = false;
-  // Les lieux où l'on est entré (cd), pour la carte (voir carte.ts).
+  // The places entered (cd), for the map (see map.ts).
   visits = new Set<string>();
-  // Les messages de l'histoire déjà affichés dans ce chapitre (le panneau « Mission » les relit).
+  // The story messages already shown in this chapter (the "Mission" panel rereads them).
   log: string[] = [];
-  // Les clins d'œil trouvés dans cette session (voir OEUFS et succes.ts).
+  // The easter eggs found in this session (see EGGS and achievements.ts).
   eggs = new Set<string>();
-  // Les indices demandés dans ce chapitre (« étape:niveau », voir indices.ts) : le débrief les compte.
+  // The hints asked for in this chapter ("step:level", see hints.ts): the debrief counts them.
   requestsHints = new Set<string>();
-  // Pour le bilan de fin de chapitre (voir bilan.ts) : les commandes tapées,
-  // celles qui ont échoué, et la ligne qui a franchi chaque étape. Une
-  // réponse à une question (yes, mot de passe) n'est pas une commande : une
-  // étape franchie par une réponse est notée avec la commande qui l'a posée.
+  // For the end-of-chapter summary (see summary.ts): the commands typed, those
+  // that failed, and the line that passed each step. An answer to a question
+  // (yes, password) is not a command: a step passed by an answer is recorded
+  // with the command that asked it.
   typedCommands = 0;
   commandsInError = 0;
   passed: Record<string, string> = {};
@@ -172,7 +172,7 @@ export class Shell implements Game {
 
   t: Translate;
 
-  // hote : l'identifiant de la machine (royaume) ; nomHote, son nom dans la langue (kingdom).
+  // host: the machine's identifier (kingdom); hostName, its name in the language (royaume in French).
   constructor(
     public chapter: Chapter,
     language?: Language,
@@ -191,11 +191,11 @@ export class Shell implements Game {
     chapter.initialise?.(this);
   }
 
-  // Les chapitres écrivent le nom de leur machine en français (/etc/hostname,
-  // journal, noms que nginx ou docker reconnaissent) ; il prend celui de la
-  // langue (royaume → kingdom, voir machines.ftl).
+  // The chapters write their machine's name in English (/etc/hostname,
+  // journal, names nginx or docker recognise); it takes the language's name
+  // (kingdom → royaume in French, see machines.ftl).
   private nameMachine(): void {
-    // /etc/hosts : chaque nom (aussi sur les machines internes : wiki.maison.internal).
+    // /etc/hosts: each name (also on internal machines: wiki.community.internal).
     const hosts = this.find('/etc/hosts');
     if (hosts?.type === 'file' && typeof hosts.content === 'string')
       hosts.content = hosts.content
@@ -221,19 +221,19 @@ export class Shell implements Game {
     }
   }
 
-  /** Le compte du joueur ou de la joueuse, sous son nom dans la langue (vous, you…). */
+  /** The player's account, under its name in the language (vous, you…). */
   get player(): string {
     return this.chapter.names ? player(this.t) : 'you';
   }
 
-  /** Le fichier d'accueil du chapitre, sous son nom dans la langue. */
+  /** The chapter's home directory, under its name in the language. */
   get welcome(): string {
     return this.chapter.names ? name(this.t, this.chapter.welcome) : this.chapter.welcome;
   }
 
-  // ——— Chemins et fichiers ———
+  // ——— Paths and files ———
 
-  // Chemin (relatif, absolu, ~, ..) → chemin absolu normalisé.
+  // Path (relative, absolute, ~, ..) → normalised absolute path.
   resolve(path: string): string {
     if (path === '~' || path.startsWith('~/')) path = this.home + path.slice(1);
     const parts = (path.startsWith('/') ? path : `${this.cwd}/${path}`).split('/');
@@ -246,8 +246,8 @@ export class Shell implements Game {
     return '/' + stack.join('/');
   }
 
-  // Suit les liens symboliques (comme stat) ; `dernier: false` s'arrête sur
-  // un lien en fin de chemin (comme lstat : ls -l, rm, ln).
+  // Follows symbolic links (like stat); `last: false` stops on a link at the
+  // end of the path (like lstat: ls -l, rm, ln).
   find(path: string, last = true, depth = 0): Node | null {
     let n: Node = this.root;
     const parts = this.resolve(path).split('/').filter(Boolean);
@@ -257,7 +257,7 @@ export class Shell implements Game {
       n = n.children[p];
       const end = i === parts.length - 1;
       if (n.type === 'file' && n.link !== undefined && (!end || last)) {
-        // Trop de liens en chaîne : ELOOP, comme le noyau.
+        // Too many links in a chain: ELOOP, like the kernel.
         if (depth > 8) return null;
         const here = '/' + parts.slice(0, i).join('/');
         const target = n.link.startsWith('/') ? n.link : `${here}/${n.link}`;
@@ -267,7 +267,7 @@ export class Shell implements Game {
     return n;
   }
 
-  /** Le chemin absolu atteint en suivant un lien symbolique (ou le chemin lui-même). */
+  /** The absolute path reached by following a symbolic link (or the path itself). */
   realPath(path: string): string {
     const absolute = this.resolve(path);
     const n = this.find(absolute, false);
@@ -302,7 +302,7 @@ export class Shell implements Game {
 
   // ——— Permissions ———
 
-  // Groupe principal, puis groupes secondaires (par numéro), comme id(1).
+  // Primary group, then supplementary groups (by number), like id(1).
   groupsFor(user: string): string[] {
     const principal = this.accounts.users[user]?.group ?? user;
     const other = Object.entries(this.accounts.groups)
@@ -312,20 +312,20 @@ export class Shell implements Game {
     return [principal, ...other];
   }
 
-  // Permissions Unix : le propriétaire n'a que les droits du propriétaire,
-  // un membre du groupe que ceux du groupe, les autres ceux des autres
-  // (même si le groupe ou les autres ont plus). root a tous les droits.
+  // Unix permissions: the owner only has the owner's rights, a group member
+  // only the group's, others only the others' (even if the group or others
+  // have more). root has every right.
   can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
     if (user === 'root') return true;
     const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
     const owner = n.owner ?? this.player;
     const triplet =
       owner === user ? mode.slice(0, 3) : this.groupsFor(user).includes(n.group ?? owner) ? mode.slice(3, 6) : mode.slice(6, 9);
-    // s et t (setuid, setgid, sticky) en dernière position valent aussi x.
+    // s and t (setuid, setgid, sticky) in the last position also count as x.
     return triplet.includes(right) || (right === 'x' && /[st]$/.test(triplet));
   }
 
-  // Droit de traverser (x) chaque lieu qui mène à ce chemin (sans le dernier).
+  // Right to traverse (x) each place leading to this path (not the last one).
   traverses(path: string): boolean {
     let n: Node | undefined = this.root;
     for (const p of this.resolve(path).split('/').filter(Boolean)) {
@@ -336,19 +336,19 @@ export class Shell implements Game {
     return true;
   }
 
-  /** Ce chemin est-il sur un support monté en lecture seule (mount -o ro) ? */
+  /** Is this path on a medium mounted read-only (mount -o ro)? */
   onlyRead(path: string): boolean {
     return !!(this.mount(this.resolve(path)) as { onlyRead?: boolean } | null)?.onlyRead;
   }
 
-  // Droit d'écrire dans le lieu qui contient ce chemin (créer, effacer, déplacer).
+  // Right to write in the place containing this path (create, delete, move).
   writtenIn(path: string): boolean {
     if (this.onlyRead(path)) return false;
     const parent = this.find(path + '/..');
     return !!parent && this.traverses(path + '/..') && this.can(parent, 'x') && this.can(parent, 'w');
   }
 
-  // Raison du premier lieu bloqué traversé par ce chemin, sinon null.
+  // Reason for the first blocked place this path goes through, otherwise null.
   block(path: string): string | null {
     let n: Node = this.root;
     for (const p of this.resolve(path).split('/').filter(Boolean)) {
@@ -360,8 +360,8 @@ export class Shell implements Game {
     return null;
   }
 
-  // Lit un fichier pour une commande, avec les vérifications d'usage ; en
-  // cas de problème, écrit l'erreur et renvoie null.
+  // Reads a file for a command, with the usual checks; if there is a
+  // problem, writes the error and returns null.
   readFor(cmd: string, target: string): string | null {
     const n = this.find(target);
     const v = { command: cmd, target: target };
@@ -374,9 +374,9 @@ export class Shell implements Game {
     return content(n, this);
   }
 
-  // Place un nœud dans un lieu (création, copie, déplacement), en vérifiant
-  // les droits et la place disponible sur le support. Renvoie une erreur.
-  // Pour une redirection (cmd = « bash »), le refus a la forme courte de bash.
+  // Puts a node in a place (creation, copy, move), checking the rights and
+  // the space available on the medium. Returns an error.
+  // For a redirection (cmd = "bash"), the refusal has bash's short form.
   place(cmd: string, path: string, n: Node): string | null {
     const v = { command: cmd, target: path };
     const parent = this.find(path + '/..');
@@ -387,12 +387,12 @@ export class Shell implements Game {
     if (!this.writtenIn(path)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'error-creation-permission', v);
     const name = this.name(path);
     const old = parent.children[name];
-    // Écrire dans un lien, c'est écrire dans le fichier qu'il vise.
+    // Writing to a link is writing to the file it points to.
     if (old?.type === 'file' && old.link !== undefined && n.type === 'file' && n.link === undefined) return this.place(cmd, this.realPath(path), n);
     if (this.missingPlace(this.resolve(path), n, old)) return this.t('error-space', v);
     if (!old) {
-      // Un nouveau fichier prend les droits permis par le masque (umask) ;
-      // dans un dossier setgid, il prend le groupe du dossier (et un dossier, le setgid).
+      // A new file gets the permissions the mask (umask) allows; in a setgid
+      // directory, it gets the directory's group (and a directory, the setgid bit).
       if (n.mode === undefined && this.mask !== '0022') n.mode = modeWithMask(n.type === 'directory', this.mask);
       if (/[sS]/.test(parent.mode?.[5] ?? '') && n.group === undefined) {
         n.group = parent.group ?? parent.owner ?? this.player;
@@ -403,14 +403,14 @@ export class Shell implements Game {
     return null;
   }
 
-  // Taille d'un nœud en octets (un lieu : la somme de son contenu).
+  // A node's size in bytes (a place: the sum of its contents).
   size(n: Node): number {
     if (n.type === 'file') return sizeFor(n, this);
     return Object.values(n.children).reduce((t, e) => t + this.size(e), 0);
   }
 
-  // Les supports montés (clé USB…) ont une capacité : etat.montages.
-  // Le support le plus précis qui contient ce chemin (/srv/radio avant /).
+  // Mounted media (USB stick…) have a capacity: state.mounts.
+  // The most specific medium containing this path (/srv/radio before /).
   mount(absolute: string): { path: string; capacity: number; inodes?: number; inodesBase?: number } | null {
     const mounts: { path: string; capacity: number; inodes?: number }[] = this.state.mounts ?? [];
     return (
@@ -420,14 +420,14 @@ export class Shell implements Game {
     );
   }
 
-  /** Les inodes occupés sur un support : chaque fichier et chaque lieu, plus ceux du système (inodesBase). */
+  /** The inodes used on a medium: each file and each place, plus the system's (inodesBase). */
   usedInodes(m: { path: string; inodesBase?: number }): number {
     const other: string[] = (this.state.mounts ?? []).map((x: { path: string }) => x.path).filter((c: string) => c !== m.path);
     const count = (path: string, n: Node): number => {
       if (other.includes(path)) return 0;
       if (n.type === 'file') return 1;
       let total = 1;
-      // Seuls les lieux ont besoin de leur chemin (pour reconnaître un autre support monté dedans).
+      // Only places need their path (to recognise another medium mounted inside).
       for (const k in n.children) {
         const e = n.children[k];
         total += e.type === 'file' ? 1 : count(`${path === '/' ? '' : path}/${k}`, e);
@@ -441,10 +441,10 @@ export class Shell implements Game {
   private missingPlace(absolute: string, n: Node, old?: Node): boolean {
     const m = this.mount(absolute);
     if (!m) return false;
-    // Plus d'inode libre : plus moyen de créer un fichier, même vide (« No space left on device »).
+    // No free inode left: no way to create a file, even an empty one ("No space left on device").
     if (m.inodes && !old && this.usedInodes(m) >= m.inodes) return true;
     const place = this.find(m.path);
-    // Sans les autres supports montés dedans (/srv n'est pas sur /), comme df.
+    // Without the other media mounted inside it (/srv is not on /), like df.
     const inside = ((this.state.mounts ?? []) as { path: string }[]).filter(
       (x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')),
     );
@@ -453,16 +453,16 @@ export class Shell implements Game {
     return inUse - (old ? this.size(old) : 0) + this.size(n) > m.capacity;
   }
 
-  // ——— Sorties ———
+  // ——— Outputs ———
 
   error(message: string, code?: number): '' {
     this.errors.push(message);
-    // Le code de retour du vrai outil (ex. userdel : 6 pour un compte inconnu), sinon 1.
+    // The real tool's exit code (e.g. userdel: 6 for an unknown account), otherwise 1.
     if (code !== undefined) this.status = code;
     return '';
   }
 
-  /** Les erreurs écrites jusqu'ici (et on les efface) : pour une réponse à une question. */
+  /** The errors written so far (and clears them): for an answer to a question. */
   recoverErrors(): string[] {
     const e = this.errors;
     this.errors = [];
@@ -474,8 +474,8 @@ export class Shell implements Game {
     if (this.question) return this.question.prompt;
     const here =
       this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
-    // Dans tmux, la barre d'état montre le nom de la session : on le met devant l'invite.
-    // root (la console de secours d'un chapitre) a son invite à lui, avec #, comme bash.
+    // In tmux, the status bar shows the session's name: we put it in front of the prompt.
+    // root (a chapter's rescue console) has its own prompt, with #, like bash.
     const root = this.who === 'root';
     return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.player}@${this.hostName}:${here}${root ? '#' : '$'}`;
   }
@@ -484,17 +484,17 @@ export class Shell implements Game {
     this.question = { prompt, answer, secret };
   }
 
-  /** La saisie en cours ne doit pas s'afficher (mot de passe de sudo ou de ssh). */
+  /** The current input must not be displayed (sudo's or ssh's password). */
   maskedInput(): boolean {
     return this.waiting !== null || !!this.question?.secret;
   }
 
-  /** La machine principale de l'histoire (elle-même, ou celle dont dépend une machine interne). */
+  /** The story's main machine (itself, or the one an internal machine depends on). */
   get principal(): Shell {
     return this.parent ? this.parent.principal : this;
   }
 
-  /** Une machine du réseau interne de l'histoire, créée à la première connexion. */
+  /** A machine of the story's internal network, created on the first connection. */
   internal(name: string): Shell | null {
     const p = this.principal;
     const def = p.chapter.hosts?.[name];
@@ -506,7 +506,7 @@ export class Shell implements Game {
       number: p.chapter.number,
       commands: def.commands ?? p.chapter.commands,
       home: '/home/you',
-      // Renommée comme la machine principale (le compte vous, /home/vous…).
+      // Renamed like the main machine (the account you, /home/you…).
       names: p.chapter.names,
       welcome: '',
       final: '',
@@ -523,13 +523,13 @@ export class Shell implements Game {
     return s;
   }
 
-  /** Les machines internes de l'histoire : nom, adresse, domaine. */
+  /** The story's internal machines: name, address, domain. */
   internal_(): { name: string; address: string; domain: string }[] {
     return Object.entries(this.principal.chapter.hosts ?? {}).map(([name, h]) => ({ name, address: h.address, domain: hostInLanguage(this.t, h.domain) }));
   }
 
-  // Développe * et ? comme le fait le shell, avant la commande. Les fichiers
-  // cachés ne sont pris que si le motif commence par un point.
+  // Expands * and ? as the shell does, before the command. Hidden files are
+  // only matched if the pattern starts with a dot.
   expand(word: string): string[] {
     if (!/[*?]/.test(word)) return [word];
     const i = word.lastIndexOf('/');
@@ -545,16 +545,16 @@ export class Shell implements Game {
     return found.length ? found : [word];
   }
 
-  // Complétion par Tab du dernier mot.
-  // Ce que Tab peut compléter au bout de la ligne : les candidats (tels
-  // qu'affichés au double Tab : les lieux avec un /), et ce qu'on y ajoute.
+  // Tab completion of the last word.
+  // What Tab can complete at the end of the line: the candidates (as shown
+  // on double Tab: places with a /), and what gets added.
   private candidates(line: string): { words: string[]; base: string; names: string[]; directories: Set<string> } | null {
     const words = line.split(' ');
     const last = words.pop() ?? '';
     const before = words.filter(Boolean);
     if (before.length === 0 || before.at(-1) === 'sudo' || before.at(-1) === '|')
       return { words, base: '', names: [...new Set(this.known())].filter((c) => c.startsWith(last)).sort(), directories: new Set() };
-    // Comme bash-completion : après ssh, les machines de ~/.ssh/config.
+    // Like bash-completion: after ssh, the machines of ~/.ssh/config.
     if (before[0] === 'ssh' && !last.startsWith('-') && !last.includes('/') && before.at(-1) !== '-i') {
       const hosts = [...(this.read('~/.ssh/config') ?? '').matchAll(/^Host\s+(\S+)/gm)].map((m) => m[1]).filter((h) => h.startsWith(last) && !/[*?]/.test(h));
       return { words, base: '', names: hosts, directories: new Set() };
@@ -574,7 +574,7 @@ export class Shell implements Game {
     const c = this.candidates(line);
     if (!c || c.names.length === 0) return line;
     if (c.names.length > 1) {
-      // Comme bash : on complète jusqu'au plus long début commun.
+      // Like bash: complete up to the longest common prefix.
       let common = c.names[0];
       for (const n of c.names) while (!n.startsWith(common)) common = common.slice(0, -1);
       return [...c.words, c.base + common].join(' ');
@@ -583,28 +583,28 @@ export class Shell implements Game {
     return [...c.words, c.base + c.names[0] + suffix].join(' ');
   }
 
-  /** Les possibilités, quand Tab ne peut pas choisir (bash les montre au deuxième Tab) ; vide sinon. */
+  /** The possibilities, when Tab cannot choose (bash shows them on the second Tab); empty otherwise. */
   suggestions(line: string): string[] {
     const c = this.candidates(line);
     if (!c || c.names.length < 2) return [];
     return c.names.map((n) => (c.directories.has(n) ? `${n}/` : n));
   }
 
-  /** Le nom de la machine dans la langue : l'invite, hostname, les journaux. */
+  /** The machine's name in the language: the prompt, hostname, the logs. */
   get hostName(): string {
     return machineName(this.t, this.host);
   }
 
   known(): string[] {
-    // La commande qui liste les autres a le nom de la langue (aide en français) ;
-    // help, comme le builtin de bash, marche dans toutes les langues.
+    // The command that lists the others has the language's name (aide in
+    // French); help, like bash's builtin, works in every language.
     return [...this.chapter.commands, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', this.t('command-help')];
   }
 
 
-  // man, apropos, whatis : le manuel couvre toutes les commandes du jeu,
-  // même celles qu'on n'a pas encore dans ce chapitre (comme sur un vrai
-  // système, où le manuel décrit aussi ce qu'on n'a pas le droit de lancer).
+  // man, apropos, whatis: the manual covers every command of the game, even
+  // those not yet available in this chapter (as on a real system, where the
+  // manual also describes what you are not allowed to run).
   private consulter(cmd: string, rest: string[]): string {
     const all = Object.entries(COMMANDS).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
     const notStill = (n: string) => (this.known().includes(n) ? '' : '\n\n' + this.t('manual-not-still'));
@@ -628,10 +628,10 @@ export class Shell implements Game {
     return outputs.join(cmd === 'man' ? '\n\n' : '\n');
   }
 
-  // ——— Exécution ———
+  // ——— Execution ———
 
-  // Exécute une ligne ; renvoie le texte à afficher, ou null pour « clear ».
-  // Si sudo attend un mot de passe, la ligne est ce mot de passe.
+  // Runs a line; returns the text to display, or null for "clear".
+  // If sudo is waiting for a password, the line is that password.
   execute(line: string): string | null {
     if (this.waiting) return this.password(line);
     if (this.question) {
@@ -639,8 +639,8 @@ export class Shell implements Game {
       this.question = null;
       return this.conclude(answer(line.trim()), true);
     }
-    // L'historique, comme bash : !! (la dernière commande), !n, !-n, !début.
-    // La ligne développée s'affiche avant de s'exécuter, et c'est elle qui est gardée.
+    // History, like bash: !! (the last command), !n, !-n, !prefix.
+    // The expanded line is shown before it runs, and it is the one kept.
     const expanded = this.expandHistory(line);
     if (expanded.error) {
       this.typedCommands++;
@@ -650,14 +650,14 @@ export class Shell implements Game {
     }
     const echo = expanded.line !== line ? expanded.line : '';
     line = expanded.line;
-    // Comme HISTCONTROL=ignoreboth (le ~/.bashrc de Debian) : ni les lignes qui commencent par une espace, ni les doublons qui se suivent.
+    // Like HISTCONTROL=ignoreboth (Debian's ~/.bashrc): neither lines starting with a space, nor consecutive duplicates.
     if (line.trim() && !/^\s/.test(line) && this.history.at(-1) !== line) this.history.push(line);
     if (!echo) return this.runLine(line);
     const output = this.runLine(line);
     return output === null ? null : [echo, output].filter(Boolean).join('\n');
   }
 
-  // !! et ses cousins, hors des apostrophes.
+  // !! and its cousins, outside single quotes.
   private expandHistory(line: string): { line: string; error?: string } {
     if (!line.includes('!')) return { line };
     let output = '';
@@ -686,36 +686,36 @@ export class Shell implements Game {
     return { line: output };
   }
 
-  // La ligne, une fois l'historique développé.
+  // The line, once history is expanded.
   private runLine(line: string): string | null {
     const words = split(line);
     if (!words.length) return '';
     this.typedCommands++;
     this.commandLine = line.trim();
-    // Quelques clins d'œil de la culture du terminal : une réponse, et un succès caché.
+    // A few easter eggs from terminal culture: an answer, and a hidden achievement.
     const egg = EGGS[line.trim().replace(/\s+/g, ' ')];
     if (egg) {
       if (egg.achievements) this.eggs.add(egg.achievements);
       return this.t(egg.text);
     }
     if (words.length === 1 && words[0].text === 'clear' && !words[0].city) return null;
-    // exit est intégré au shell : la console ferme la session.
+    // exit is built into the shell: the console closes the session.
     if (words[0].text === 'exit' && !words[0].city && words.length <= 2) {
-      // Dans tmux, exit ferme le shell de la session (et la session avec), pas la connexion.
+      // In tmux, exit closes the session's shell (and the session with it), not the connection.
       if (this.tmux) {
         delete (this.state.tmux as Record<string, unknown>)[this.tmux];
         this.tmux = null;
         return '[exited]';
       }
-      // Le shell du mode secours : exit reprend le démarrage (voir fstab.ts).
+      // The emergency-mode shell: exit resumes booting (see fstab.ts).
       const rescue = this.state.continueBoot as ((j: Shell) => string) | undefined;
       if (this.state.rescue && rescue) return this.conclude(rescue(this), true);
       this.output = true;
       return '';
     }
-    // sudo demande le mot de passe avant de lancer quoi que ce soit.
+    // sudo asks for the password before running anything.
     const withSudo = words.some((m, i) => !m.city && m.text === 'sudo' && (i === 0 || words[i - 1].op === '|'));
-    // Une erreur dans la politique de sudo (un fichier de /etc/sudoers.d écrit sans visudo) : sudo refuse tout.
+    // An error in sudo's policy (a file in /etc/sudoers.d written without visudo): sudo refuses everything.
     if (withSudo && this.known().includes('sudo') && this.exists(SUDOERS)) {
       const { error } = readSudoers(this);
       if (error) {
@@ -739,13 +739,13 @@ export class Shell implements Game {
     return this.conclude(this.countLine(this.tube(line, words)), true);
   }
 
-  // Une ligne finie en erreur (un message d'erreur, ou un code de retour non nul) compte pour le bilan.
+  // A line that ended in error (an error message, or a non-zero exit code) counts for the summary.
   private countLine(output: string): string {
     if (this.errors.length || (this.status ?? 0) !== 0) this.commandsInError++;
     return output;
   }
 
-  /** Le mot de passe du joueur ou de la joueuse, dans la langue (tournesol → sunflower, voir passwords.ftl). */
+  /** The player's password, in the language (sunflower → tournesol in French, see passwords.ftl). */
   playerPassword(): string | undefined {
     const m = this.chapter.password;
     return m && password(this.t, m);
@@ -767,9 +767,9 @@ export class Shell implements Game {
   }
 
   /**
-   * Lance une ligne de commande comme le ferait cron : depuis la maison, sans
-   * événements de l'histoire ; renvoie tout ce qu'elle a écrit (sortie et
-   * erreurs), que cron enverrait par courrier.
+   * Runs a command line the way cron would: from the home directory, without
+   * story events; returns everything it wrote (output and errors), which
+   * cron would send by mail.
    */
   runTask(line: string): string {
     const cwd = this.cwd;
@@ -782,10 +782,10 @@ export class Shell implements Game {
   }
 
   /**
-   * Lance une ligne pour un script (script.ts : crochet de git, script de
-   * déploiement), depuis ce lieu, sans toucher à la ligne en cours : renvoie
-   * ce qu'elle a écrit, si elle a réussi (aucune erreur) et le lieu où le
-   * script se trouve ensuite (cd).
+   * Runs a line for a script (script.ts: git hook, deployment script), from
+   * this place, without touching the current line: returns what it wrote,
+   * whether it succeeded (no error) and the place the script is in
+   * afterwards (cd).
    */
   underCommand(line: string, cwd: string): { output: string; ok: boolean; code: number; cwd: string } {
     const before = { cwd: this.cwd, errors: this.errors, last: this.last };
@@ -801,7 +801,7 @@ export class Shell implements Game {
     }
   }
 
-  /** Vérifie les événements de l'histoire hors d'une commande (ex. à la reconnexion). */
+  /** Checks the story's events outside a command (e.g. on reconnection). */
   events(): string {
     return this.conclude('', false);
   }
@@ -811,12 +811,12 @@ export class Shell implements Game {
     return [output, next ? this.prose(next) : '', ...this.checkEvents()].filter(Boolean).join('\n\n');
   }
 
-  // Un texte de l'histoire (événement, remarque) : paragraphes et typographie.
+  // A story text (event, remark): paragraphs and typography.
   private prose(text: string): string {
     return typography(clean(text), this.t.language);
   }
 
-  // Une ligne complète : commandes reliées par des tubes, redirection finale.
+  // A complete line: commands joined by pipes, final redirection.
   private tube(line: string, words: Word[]): string {
     this.errors = [];
     this.status = null;
@@ -837,12 +837,12 @@ export class Shell implements Game {
     let input: string | null = null;
     const commands: string[][] = [];
     segments.forEach((segment, i) => {
-      // Comme le shell : les jokers ne sont pas développés entre guillemets.
+      // Like the shell: wildcards are not expanded inside quotes.
       let args = segment.flatMap((m) => (m.city ? [m.text] : this.expand(m.text)));
       let root = false;
-      // sudo -u compte : agir sous ce compte plutôt que root.
+      // sudo -u account: act as that account rather than root.
       let as = 'root';
-      // sudo -l : c'est sudo lui-même qui répond (la liste des commandes permises).
+      // sudo -l: sudo itself answers (the list of allowed commands).
       if (args[0] === 'sudo' && /^-l+$/.test(args[1] ?? '')) args = ['sudo', ...args.slice(1)];
       else if (args[0] === 'sudo') {
         args = args.slice(1);
@@ -865,12 +865,12 @@ export class Shell implements Game {
       this.outputTo = null;
     });
     let output: string = input ?? '';
-    // Les événements lisent la sortie telle qu'on la lit, sans les codes de couleur.
+    // Events read the output as the player reads it, without colour codes.
     this.last = { line, commands, output: withoutColours(output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
 
     if (redirection) {
-      // La redirection est faite par TON shell, avant sudo : même avec sudo
-      // devant la commande, c'est « vous » qui écrit dans le fichier.
+      // The redirection is done by YOUR shell, before sudo: even with sudo in
+      // front of the command, it is "you" who writes to the file.
       const error = this.redirect(redirection.file, output, redirection.addition);
       if (error) {
         this.error(error);
@@ -896,14 +896,14 @@ export class Shell implements Game {
     return this.place('bash', file, { type: 'file', content: text, owner: this.who, lines: true });
   }
 
-  // Lance une commande. `dernier` : sa sortie s'affiche à l'écran (sinon elle
-  // part dans un tube ou un fichier).
+  // Runs a command. `last`: its output is shown on screen (otherwise it goes
+  // into a pipe or a file).
   private launch(args: string[], input: string | null, root: boolean, last: boolean): string {
-    // Dans un tube, c'est le code de la dernière commande qui compte.
+    // In a pipe, it is the last command's exit code that counts.
     this.status = null;
     const [raw, ...rest] = args;
-    // /usr/bin/rsnapshot, /bin/ls… : le chemin complet d'une commande du jeu
-    // (et /usr/lib/nagios/plugins/check_disk pour celles qui sont hors du PATH).
+    // /usr/bin/rsnapshot, /bin/ls…: the full path of a game command
+    // (and /usr/lib/nagios/plugins/check_disk for those outside the PATH).
     const onlyName = raw?.split('/').at(-1) ?? '';
     const outsidePath = COMMANDS[onlyName]?.directory;
     const cmd =
@@ -913,11 +913,11 @@ export class Shell implements Game {
     if (cmd && COMMANDS[cmd]?.directory && cmd === raw) return this.error(this.t('command-missing', { command: cmd }));
     if (!cmd) return '';
     if (root && !this.known().includes('sudo')) return this.error(this.t('sudo-not-still'));
-    // Vrai comportement : cd est intégré au shell, ce n'est pas un programme.
+    // Real behaviour: cd is built into the shell, it is not a program.
     if (root && cmd === 'cd') return this.error(this.t('sudo-cd'));
     if (cmd === 'help' || cmd === this.t('command-help')) return this.t('help-commands', { commands: this.known().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, rest);
-    // Un chemin (./deployer.sh, /srv/site/deployer.sh) : un script, s'il est exécutable.
+    // A path (./deployer.sh, /srv/site/deployer.sh): a script, if it is executable.
     if (cmd.includes('/')) {
       const n = this.find(cmd);
       if (!n) return this.error(this.t('script-missing', { command: cmd }));
@@ -931,9 +931,9 @@ export class Shell implements Game {
         this.who = before;
       }
     }
-    // Une page de manuel de fichier (section 5, ex. sshd_config) n'est pas une commande.
+    // A man page for a file (section 5, e.g. sshd_config) is not a command.
     const command: Command | undefined = COMMANDS[cmd]?.section === 5 ? undefined : COMMANDS[cmd];
-    // Sur une machine interne d'une histoire, un programme absent l'est vraiment (bash, code 127).
+    // On a story's internal machine, a missing program really is missing (bash, code 127).
     if (this.parent && !this.known().includes(cmd)) {
       const output = this.error(`-bash: ${cmd}: command not found`);
       this.status = 127;
@@ -941,18 +941,18 @@ export class Shell implements Game {
     }
     if (!this.known().includes(cmd) || !command)
       return this.error(this.t(command || cmd === 'sudo' ? 'command-not-still' : 'command-missing', { command: cmd }));
-    // Un programme reçoit ses arguments dans une zone limitée (ARG_MAX, 2 Mio
-    // sous Linux) : un joker qui donne des dizaines de milliers de noms
-    // dépasse. echo, intégré au shell, n'a pas cette limite.
+    // A program receives its arguments in a limited area (ARG_MAX, 2 MiB on
+    // Linux): a wildcard that gives tens of thousands of names exceeds it.
+    // echo, built into the shell, does not have this limit.
     if (!BUILT_IN.includes(cmd) && args.reduce((t, a) => t + a.length + 1, 0) > ARG_MAX) {
       this.state.argumentsTooLong = (this.state.argumentsTooLong ?? 0) + 1;
       return this.error(this.t(root ? 'sudo-list-arguments-too-long' : 'list-arguments-too-long', { program: `/usr/bin/${cmd}` }));
     }
-    // Les réflexes d'auto-dépannage : --help et les options inconnues.
+    // Self-help reflexes: --help and unknown options.
     if (rest.includes('--help')) return help(cmd, command, this.t);
     const invalid = invalidOption(cmd, command, rest, this.t);
     if (invalid) return this.error(invalid);
-    // --all → -a : la commande ne lit que ses options courtes.
+    // --all → -a: the command only reads its short options.
     const options = command.ownOptions ? rest : shorten(command, rest);
     const before = this.who;
     if (root) this.who = this.as;
@@ -963,13 +963,13 @@ export class Shell implements Game {
     }
   }
 
-  // ——— Éditeur (nano) ———
+  // ——— Editor (nano) ———
 
   /**
-   * Écrit le texte de l'éditeur dans le fichier, avec les droits de celui ou
-   * celle qui l'a ouvert (root sous sudo) ; renvoie le message de nano.
-   * Les événements de l'histoire sont vérifiés, et leurs messages gardés pour
-   * la fermeture de l'éditeur.
+   * Writes the editor's text to the file, with the rights of whoever opened
+   * it (root under sudo); returns nano's message.
+   * The story's events are checked, and their messages kept for when the
+   * editor closes.
    */
   saveEdition(text: string): string {
     const e = this.edition!;
@@ -996,12 +996,12 @@ export class Shell implements Game {
     }
   }
 
-  /** Ferme l'éditeur ; renvoie les messages de l'histoire en attente. */
+  /** Closes the editor; returns the pending story messages. */
   quitEdition(): string {
     const after = this.edition?.after?.() ?? '';
     const conclude = this.edition?.conclude;
     this.edition = null;
-    // Ce que la fermeture a changé (ex. une crontab installée) compte comme une commande.
+    // What closing changed (e.g. a crontab installed) counts as a command.
     const next = after || conclude ? this.conclude('', true) : '';
     const messages = [after, ...this.inWaiting, next].filter(Boolean).join('\n\n');
     this.inWaiting = [];

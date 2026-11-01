@@ -1,15 +1,15 @@
-// Histoire « L'Astreinte » — chapitre « Les inodes » : l'enregistrement de
-// nuit échoue encore (« No space left on device »), mais df -h dit que le
-// volume des données est presque vide. Chaque fichier occupe un inode, et
-// il n'y en a plus : le relais écrit un petit fichier par écoute depuis six
-// mois (df -i, du --inodes). rm * échoue (« Liste d'arguments trop
-// longue ») ; find … -mtime +30 -delete efface les vieux en gardant le
-// dernier mois, et une tâche cron le refait chaque nuit.
-// Objectif vérifié sur l'état : après une nuit simulée (la tâche cron
-// tourne), aucun fichier de moins de 31 jours n'a disparu, le plus ancien a
-// au plus 60 jours, et le volume est sous 80 % d'inodes ; l'enregistrement
-// de nuit a pu être écrit.
-// Sources : https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html,
+// Story "On Call", chapter "Inodes": the night recording still fails
+// ("No space left on device"), but df -h says the data volume is almost
+// empty. Each file takes an inode, and there are none left: the relay has
+// been writing one small file per listen for six months (df -i,
+// du --inodes). rm * fails ("Argument list too long"); find … -mtime +30
+// -delete removes the old ones while keeping the last month, and a cron
+// job does it again every night.
+// Objective checked on the state: after a simulated night (the cron job
+// runs), no file less than 31 days old has disappeared, the oldest is at
+// most 60 days old, and the volume is under 80 % of its inodes; the night
+// recording could be written.
+// Sources: https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html,
 // https://www.gnu.org/software/findutils/manual/html_mono/find.html (-mtime, -delete),
 // https://man7.org/linux/man-pages/man2/execve.2.html (E2BIG, ARG_MAX)
 
@@ -23,12 +23,12 @@ const DATA = '/srv/radio';
 const STATS = '/srv/radio/stats';
 const DAY = 86_400_000;
 const INODES = 65_536;
-// Le soir de l'incident : dimanche 29 août 2027, 3 h 20 (heure locale lue comme UTC).
+// The evening of the incident: Sunday 29 August 2027, 3:20 (local time read as UTC).
 const NOW = Date.UTC(2027, 7, 29, 3, 20, 0);
-// Les statistiques commencent le 1er mars : un fichier par écoute, environ 360 par jour.
+// The statistics start on 1 March: one file per listen, about 360 a day.
 const START = Date.UTC(2027, 2, 1, 0, 0, 0);
 const RECORD = '/srv/radio/shows/nuit-2027-08-29.ogg';
-// L'enregistrement de cette nuit, dans la langue (/srv/radio/shows/… en anglais).
+// Tonight's recording, in the language (/srv/radio/shows/… in English).
 const record = (j: Game) => path(j.t, RECORD);
 
 const accounts = (): Accounts => ({
@@ -55,7 +55,7 @@ const inodesPercent = (j: Game) => Math.ceil((100 * shell(j).usedInodes(volume(j
 const dayFor = (ms: number) => Math.floor(ms / DAY);
 const twoDigits = (n: number) => String(n).padStart(2, '0');
 
-// Le nom d'un fichier de statistiques : la date de l'écoute, et un numéro.
+// A statistics file's name: the date of the listen, and a number.
 function statName(ms: number, n: number): string {
   const dt = new Date(ms);
   const date = `${dt.getUTCFullYear()}-${twoDigits(dt.getUTCMonth() + 1)}-${twoDigits(dt.getUTCDate())}`;
@@ -71,7 +71,7 @@ const stat = (ms: number): File => ({
   lines: true,
 });
 
-// Combien de fichiers de statistiques de chaque jour sont encore là.
+// How many statistics files of each day are still there.
 function byDay(j: Game): Map<number, number> {
   const place = j.find(STATS);
   const account = new Map<number, number>();
@@ -83,7 +83,7 @@ function byDay(j: Game): Map<number, number> {
   return account;
 }
 
-// Les statistiques de moins de 31 jours (find -mtime -31) sont-elles toutes là ?
+// Are all the statistics less than 31 days old (find -mtime -31) still there?
 function intactRecent(j: Game): boolean {
   const written: Record<number, number> = j.state.statsWritten;
   const presents = byDay(j);
@@ -91,7 +91,7 @@ function intactRecent(j: Game): boolean {
   return Object.entries(written).every(([day, n]) => Number(day) < limit || (presents.get(Number(day)) ?? 0) >= n);
 }
 
-// L'âge du plus ancien fichier de statistiques, en jours entiers (comme find -mtime).
+// The age of the oldest statistics file, in whole days (like find -mtime).
 const moreOld = (j: Game) => {
   const place = j.find(STATS);
   let min = Infinity;
@@ -103,7 +103,7 @@ const moreOld = (j: Game) => {
   return min === Infinity ? 0 : Math.floor((sd(j).clock - min) / DAY);
 };
 
-/** Écrire un fichier comme le compte radio : réussit seulement s'il reste un inode. */
+/** Writes a file as the radio account: succeeds only if an inode is left. */
 function writeAsRadio(j: Game, path: string, n: File): boolean {
   const game = shell(j);
   const before = game.who;
@@ -115,7 +115,7 @@ function writeAsRadio(j: Game, path: string, n: File): boolean {
   }
 }
 
-// Le relais note une écoute ; le compteur des fichiers écrits par jour suit.
+// The relay records a listen; the counter of files written per day follows.
 function noteListening(j: Game, ms: number): boolean {
   const n = (j.state.statNumber = (j.state.statNumber ?? 0) + 1);
   const ok = writeAsRadio(j, `${STATS}/${statName(ms, n)}`, stat(ms));
@@ -123,16 +123,16 @@ function noteListening(j: Game, ms: number): boolean {
   return ok;
 }
 
-// Les crontabs qui parlent des statistiques (pour savoir quand faire passer une nuit).
+// The crontabs that mention the statistics (to know when to let a night pass).
 const cronFingerprint = (j: Game) => JSON.stringify(j.state.crontabs ?? {});
 const cronStats = (j: Game) => Object.values((j.state.crontabs ?? {}) as Record<string, string>).some((t) => t.includes(STATS));
 
-/** La nuit suivante : une journée d'écoutes, puis cron. Renvoie le compte rendu du matin. */
+/** The next night: a day of listens, then cron. Returns the morning report. */
 function night(j: Game): string {
   const s = sd(j);
   const before = byDay(j);
   const total = (m: Map<number, number>) => [...m.values()].reduce((a, b) => a + b, 0);
-  // La journée : le relais note ses écoutes, tant qu'il reste des inodes.
+  // The day: the relay records its listens, as long as inodes are left.
   const nextDay = (dayFor(s.clock) + 1) * DAY;
   const free = INODES - shell(j).usedInodes(volume(j));
   const place = j.find(STATS);
@@ -143,16 +143,16 @@ function night(j: Game): string {
     (place as Directory).children[statName(ms, n)] = stat(ms);
     j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
   }
-  // La nuit : cron lance les tâches prévues jusqu'à 6 h.
+  // The night: cron runs the scheduled jobs until 6:00.
   const start = s.clock;
   const end = nextDay + 6 * 3600_000;
-  // Les tâches voient l'heure du matin (find -mtime compte l'âge depuis l'horloge).
+  // The jobs see the morning's time (find -mtime counts age from the clock).
   s.clock = end;
   const executions = pass(shell(j), start, end);
   const deleted = total(before) + written - total(byDay(j));
   const mails = executions
     .filter((e) => e.output)
-    // Un courrier de milliers de lignes (une erreur par fichier) : seulement le début.
+    // A mail of thousands of lines (one error per file): only the beginning.
     .map((e) => {
       const lines = e.output.split('\n');
       const output = lines.length > 5 ? [...lines.slice(0, 5), '[…]'].join('\n') : e.output;
@@ -234,13 +234,13 @@ export const inodes: Chapter = {
     ],
     mounts: [
       { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
-      // Un petit volume de données : 1 Gio, donc 65 536 inodes (un pour 16 Kio, le réglage par défaut de mkfs.ext4).
+      // A small data volume: 1 GiB, so 65,536 inodes (one per 16 KiB, mkfs.ext4's default setting).
       { path: DATA, capacity: 1_073_741_824, name: '/dev/vdb1', system: 'ext4', inodes: INODES, inodesBase: 11 },
     ],
     crontabs: {},
     statsWritten: {},
   }),
-  // Les statistiques remplissent tous les inodes qui restent sur le volume.
+  // The statistics fill all the inodes left on the volume.
   initialise: (j) => {
     const s = sd(j);
     const place = j.find(STATS) as Directory;
@@ -252,7 +252,7 @@ export const inodes: Chapter = {
       place.children[statName(ms, n)] = stat(ms);
       j.state.statsWritten[dayFor(ms)] = (j.state.statsWritten[dayFor(ms)] ?? 0) + 1;
     }
-    // Ce soir, plus rien ne s'écrit sur le volume.
+    // Tonight, nothing can be written on the volume any more.
     s.clock = NOW - 40 * 60_000;
     writeLog(s, 'radio-stream.service', 'stream', 1730, `stats: cannot create ${STATS}/${statName(s.clock, 99_001)}: No space left on device`, 3);
     s.clock = NOW - 20 * 60_000;
@@ -268,7 +268,7 @@ export const inodes: Chapter = {
     );
     s.clock = NOW;
   },
-  // À chaque instant, le relais note une écoute et réessaie d'enregistrer l'émission ; et si la crontab a changé, une nuit passe.
+  // At every moment, the relay records a listen and retries recording the show; and if the crontab changed, a night passes.
   afterCommand: (j) => {
     const s = sd(j);
     s.clock += 30_000;

@@ -1,13 +1,13 @@
-// Les commandes des tests s'écrivent avec les noms français des lieux et des
-// objets ; dans une autre langue, chaque nom du monde prend sa traduction
-// (voir nom() dans src/engine/world.ts). Une copie numérotée (sourdough_2)
-// suit son original. Le compte du joueur se traduit aussi dans vous@royaume
-// ou /home/vous:/bin/bash (@ et : séparent les noms). Machine names are
+// The tests' commands are written with the French names of places and
+// objects; in another language, each name of the world takes its translation
+// (see name() in src/engine/world.ts). A numbered copy (sourdough_2)
+// follows its original. The player's account is translated too in vous@royaume
+// or /home/vous:/bin/bash (@ and : separate the names). Machine names are
 // written in English, the engine's identifiers (kingdom → royaume in French,
 // see machines.ftl), and translated where they are host names: after ssh and
 // its cousins, after @, in kingdom.internal, id_kingdom, kingdom:path (scp),
-// ~/.ssh/config (Host, HostName, ProxyJump) and the banner "Linux kingdom". Les mots de passe des histoires aussi
-// (farine-2028 → flour-2028, voir passwords.ftl), partout où ils sont un mot entier.
+// ~/.ssh/config (Host, HostName, ProxyJump) and the banner "Linux kingdom". So are the stories' passwords
+// (farine-2028 → flour-2028, see passwords.ftl), wherever they are a whole word.
 import { readFileSync } from 'node:fs';
 import { password, name, systemDirectory } from '../src/engine/world';
 import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';

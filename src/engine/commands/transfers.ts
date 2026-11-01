@@ -1,11 +1,10 @@
-// Copier vers une autre machine : ssh-copy-id (installer sa clé publique
-// dans ~/.ssh/authorized_keys d'en face) et scp (copier des fichiers par
-// ssh). D'après https://man.openbsd.org/scp et ssh-copy-id(1) (paquet
-// openssh-client de Debian). Les sauts, les clés d'hôte et
-// l'authentification passent par ../acces.ts.
-// Écarts : scp copie entre la machine où l'on est et une seule autre ; pas
-// d'options de vitesse ni de compression ; la barre de progression est
-// immédiate.
+// Copying to another machine: ssh-copy-id (installing your public key in
+// the other side's ~/.ssh/authorized_keys) and scp (copying files over
+// ssh). Based on https://man.openbsd.org/scp and ssh-copy-id(1) (Debian's
+// openssh-client package). Jumps, host keys and authentication go through
+// ../access.ts.
+// Differences: scp copies between the current machine and a single other
+// one; no speed or compression options; the progress bar is immediate.
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -15,7 +14,7 @@ import type { Command } from './index';
 
 const ID_COPY_SSH_NAME = '/usr/bin/ssh-copy-id';
 
-// La clé publique à installer : -i (avec ou sans .pub), sinon la plus récente de ~/.ssh/id_*.pub.
+// The public key to install: -i (with or without .pub), otherwise the most recent of ~/.ssh/id_*.pub.
 function chosenPublicKey(game: Shell, data?: string): string | null {
   if (data) return data.endsWith('.pub') ? data : `${data}.pub`;
   const ssh = game.find('~/.ssh');
@@ -54,7 +53,7 @@ function sshCopyId(game: Shell, args: string[]): string {
     ].join('\n');
   start.push(`${ID_COPY_SSH_NAME}: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys`);
   const output = pass(game, jumps, () => {
-    // Comme le script : mkdir -p ~/.ssh (700), puis la clé ajoutée à authorized_keys (600), au nom du compte d'en face.
+    // Like the script: mkdir -p ~/.ssh (700), then the key appended to authorized_keys (600), owned by the remote account.
     const s = d.shell;
     const before = s.who;
     s.who = d.user;
@@ -86,11 +85,11 @@ function sshCopyId(game: Shell, args: string[]): string {
   return [...start, output].filter((l) => l !== undefined).join('\n');
 }
 
-// « [compte@]machine:chemin » (un chemin local peut contenir « : » s'il commence par / ou ./).
+// "[account@]machine:path" (a local path may contain ":" if it starts with / or ./).
 const remote = (text: string) =>
   /^[^/.][^/]*:/.test(text) ? { target: text.slice(0, text.indexOf(':')), path: text.slice(text.indexOf(':') + 1) } : null;
 
-/** Copier `chemin` de la machine `src` vers `dest` sur `dst` (récursif avec -r) ; renvoie les lignes de scp. */
+/** Copies `path` from machine `src` to `dest` on `dst` (recursive with -r); returns scp's lines. */
 export function copy(src: Shell, dst: Shell, path: string, dest: string, recursive: boolean, errors: string[]): string[] {
   const n = src.find(path);
   const absolute = src.resolve(path);
@@ -170,7 +169,7 @@ function scp(game: Shell, args: string[]): string {
   const toRemote = remote(dest);
   const since = paths.map(remote);
   const other = toRemote ?? since.find(Boolean);
-  // Sans machine d'en face : une simple copie locale, comme cp.
+  // With no remote machine: a plain local copy, like cp.
   if (!other) return game.error(game.t('scp-local'));
   if (toRemote && since.some(Boolean)) return game.error(game.t('scp-two-remote'));
   const jumps = prepare(game, other.target, { identities, port, hop, program: 'ssh' });
@@ -200,5 +199,5 @@ export const TRANSFERS: Record<string, Command> = {
   scp: { ownOptions: true, launch: ({ args, game }) => scp(game, args) },
 };
 
-// Pour rsync vers ou depuis une autre machine (sauvegarde.ts).
+// For rsync to or from another machine (backup.ts).
 export { remote as remotePath };

@@ -1,25 +1,24 @@
-// fail2ban sur une machine : lecture de la configuration comme fail2ban
-// (https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html) :
-//   - fichiers lus dans l'ordre jail.conf, jail.d/*.conf, jail.local,
-//     jail.d/*.local : une valeur lue plus tard REMPLACE la précédente ;
-//   - la section d'une prison l'emporte sur [DEFAULT], quel que soit le
-//     fichier : un port mis dans le [DEFAULT] de jail.local ne remplace pas
-//     le « port = ssh » du [sshd] de jail.conf ;
-//   - toute section [nom] est une prison ; active (enabled = true), il lui
-//     faut son journal, sinon fail2ban ne démarre pas ;
-//   - durées : 600, 10m, 1h, 1d, 1w ; -1 = pour toujours.
-// Les échecs viennent du journal du service ssh (sshd), de error.log de nginx
-// (nginx-limit-req) ou de fail2ban.log (recidive : les bannissements des
-// autres prisons) ; une adresse est bannie
-// quand elle atteint maxretry échecs, sauf si ignoreip la couvre. Les
-// bannissements survivent à un rechargement (comme avec la base de données
-// de fail2ban) : seul unbanip les lève.
-// L'action bloque les ports de la prison (port = ssh, 2222, http,https,
-// 1000:2000) : une adresse bannie peut encore joindre les autres ports.
-// Écarts : filtres connus pour sshd, nginx-limit-req et recidive seulement
-// (les autres prisons se chargent sans rien bannir), findtime non appliqué (tous les échecs
-// du journal comptent), filtre réduit à « Failed password », « Invalid user »
-// et « Failed publickey ».
+// fail2ban on a machine: the configuration read like fail2ban does
+// (https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html):
+//   - files read in the order jail.conf, jail.d/*.conf, jail.local,
+//     jail.d/*.local: a value read later REPLACES the earlier one;
+//   - a jail's section wins over [DEFAULT], whatever the file: a port set
+//     in jail.local's [DEFAULT] doesn't replace the "port = ssh" of
+//     jail.conf's [sshd];
+//   - every [name] section is a jail; when enabled (enabled = true), it
+//     needs its log, otherwise fail2ban doesn't start;
+//   - durations: 600, 10m, 1h, 1d, 1w; -1 = forever.
+// Failures come from the ssh service's journal (sshd), from nginx's error.log
+// (nginx-limit-req) or from fail2ban.log (recidive: the bans of the other
+// jails); an address is banned
+// when it reaches maxretry failures, unless ignoreip covers it. Bans
+// survive a reload (as with fail2ban's database): only unbanip lifts them.
+// The action blocks the jail's ports (port = ssh, 2222, http,https,
+// 1000:2000): a banned address can still reach the other ports.
+// Differences: filters known for sshd, nginx-limit-req and recidive only
+// (the other jails load without banning anything), findtime not applied (all
+// the failures in the log count), filter reduced to "Failed password",
+// "Invalid user" and "Failed publickey".
 
 import type { Game } from './shell';
 import { systemd } from './systemd';
@@ -34,15 +33,15 @@ export interface Jail {
   findtime: number;
   maxretry: number;
   ignoreip: string[];
-  // Les ports bloqués pour une adresse bannie (vide : tous).
+  // The ports blocked for a banned address (empty: all).
   ports: number[];
-  // Le fichier lu par la prison (null : le journal de systemd).
+  // The file read by the jail (null: systemd's journal).
   log: string | null;
 }
 
 const PORTS_NAMES: Record<string, number> = { ssh: 22, http: 80, https: 443, ftp: 21, smtp: 25, submission: 587, imap: 143, imaps: 993 };
 
-/** « ssh,2222 » → [22, 2222] ; « 0:65535 » → [] (tous) ; null si un nom est inconnu. */
+/** "ssh,2222" → [22, 2222]; "0:65535" → [] (all); null if a name is unknown. */
 export function readPorts(value: string): number[] | null {
   const ports: number[] = [];
   for (const word of value.split(/[\s,]+/).filter(Boolean)) {
@@ -57,27 +56,27 @@ export function readPorts(value: string): number[] | null {
   return ports;
 }
 
-/** La prison bloque-t-elle ce port pour les adresses bannies ? */
+/** Does the jail block this port for banned addresses? */
 export const portBlocked = (p: Jail | null | undefined, port: number) => !p || !p.ports.length || p.ports.includes(port);
 
 export interface Fail2banState {
-  // La prison sshd chargée, et ses adresses bannies.
+  // The loaded sshd jail, and its banned addresses.
   load: Jail | null;
   banned: string[];
-  // Toutes les prisons actives chargées (sshd comprise), et les bannis des autres.
+  // All the loaded active jails (sshd included), and the others' banned addresses.
   jails?: Jail[];
   other?: Record<string, { banned: string[]; total: number }>;
   bannedTotal: number;
-  // Lignes ajoutées à /var/log/fail2ban.log pendant la partie.
+  // Lines added to /var/log/fail2ban.log during the game.
   log: string[];
   loads: number;
-  // Vrai si l'on a consulté l'état de la prison depuis le dernier chargement.
+  // True if the jail's status was looked at since the last load.
   consulted: boolean;
-  // Quand une adresse a été débannie (fin du bantime) : seuls ses échecs suivants comptent.
+  // When an address was unbanned (end of bantime): only its later failures count.
   restored?: Record<string, number>;
 }
 
-/** « 10m » → 600, « 1h » → 3600, « -1 » → -1 ; null si le format est faux. */
+/** "10m" → 600, "1h" → 3600, "-1" → -1; null if the format is wrong. */
 export function seconds(value: string): number | null {
   const v = value.trim();
   if (/^-?\d+$/.test(v)) return Number(v);
@@ -86,7 +85,7 @@ export function seconds(value: string): number | null {
   return Number(m[1]) * { s: 1, m: 60, h: 3600, d: 86400, w: 604800 }[m[2] as 's' | 'm' | 'h' | 'd' | 'w'];
 }
 
-/** L'adresse est-elle couverte par cette entrée d'ignoreip (adresse ou CIDR) ? */
+/** Is the address covered by this ignoreip entry (address or CIDR)? */
 export function covers(input: string, address: string): boolean {
   const [network, bits] = input.split('/');
   const count = (ip: string) => ip.split('.').reduce((n, o) => n * 256 + Number(o), 0);
@@ -106,7 +105,7 @@ const files = (game: Game): string[] => {
   );
 };
 
-// Où les prisons lisent leurs journaux (paths-debian.conf), quand le backend n'est pas systemd.
+// Where the jails read their logs (paths-debian.conf), when the backend isn't systemd.
 const PATHS: Record<string, string> = {
   nginx_error_log: '/var/log/nginx/*error.log',
   nginx_access_log: '/var/log/nginx/access.log',
@@ -114,7 +113,7 @@ const PATHS: Record<string, string> = {
   postfix_log: '/var/log/mail.log',
 };
 
-// Un journal existe-t-il pour ce motif (chemin, avec un joker * possible) ?
+// Does a log exist for this pattern (a path, possibly with a * wildcard)?
 function existsLog(game: Game, pattern: string): boolean {
   const k = pattern.lastIndexOf('/');
   const directory = game.find(pattern.slice(0, k));
@@ -123,9 +122,9 @@ function existsLog(game: Game, pattern: string): boolean {
 }
 
 /**
- * Les prisons telles que fail2ban les chargerait, ou les erreurs (comme
- * fail2ban-client -t). prison : la prison sshd (même désactivée) ;
- * prisons : toutes celles qui sont actives.
+ * The jails as fail2ban would load them, or the errors (like
+ * fail2ban-client -t). jail: the sshd jail (even disabled);
+ * jails: all the active ones.
  */
 export function readConfig(game: Game): { jail: Jail | null; jails: Jail[]; errors: string[] } {
   const defaults: Record<string, string> = {};
@@ -144,7 +143,7 @@ export function readConfig(game: Game): { jail: Jail | null; jails: Jail[]; erro
         continue;
       }
       const m = /^([A-Za-z_.]+)\s*[=:]\s*(.*)$/.exec(line.trim());
-      // Une ligne qui n'est ni [section] ni « clé = valeur » : le message de configparser.
+      // A line that is neither [section] nor "key = value": configparser's message.
       if (!m || section === null)
         return {
           jail: null,
@@ -169,7 +168,7 @@ export function readConfig(game: Game): { jail: Jail | null; jails: Jail[]; erro
     };
     const maxretry = Number(values.maxretry ?? '5');
     if (!Number.isInteger(maxretry) || maxretry < 1) no('maxretry');
-    // banaction_allports (recidive) : l'adresse bannie perd tous les ports.
+    // banaction_allports (recidive): the banned address loses every port.
     const portsAll = /allports/.test(values.banaction ?? '');
     const ports = portsAll ? [] : readPorts(values.port ?? '0:65535');
     if (ports === null) no('port');
@@ -182,20 +181,20 @@ export function readConfig(game: Game): { jail: Jail | null; jails: Jail[]; erro
       maxretry,
       ignoreip: ['127.0.0.1/8', '::1', ...(values.ignoreip ?? '').split(/[\s,]+/).filter(Boolean)],
       ports: ports ?? [],
-      // sshd lit le journal de systemd ; les autres, un fichier.
+      // sshd reads systemd's journal; the others, a file.
       log: name === 'sshd' || !path || path.includes('%(') ? null : path,
     };
   };
   const jails = Object.keys(byJail)
     .map(read)
     .filter((p) => p.enabled);
-  // Une prison active sans journal à lire : fail2ban refuse de démarrer.
+  // An active jail with no log to read: fail2ban refuses to start.
   for (const p of jails) if (p.log && !existsLog(game, p.log)) errors.push(`ERROR  Failed during configuration: Have not found any log file for ${p.name} jail`);
   const jail = read('sshd');
   return errors.length ? { jail: null, jails: [], errors } : { jail, jails, errors };
 }
 
-/** Les échecs de connexion par adresse, d'après le journal de ssh. */
+/** Connection failures by address, from ssh's log. */
 export function failures(game: Game): Map<string, number> {
   const account = new Map<string, number>();
   const restored = (game.state.fail2ban as Fail2banState | undefined)?.restored ?? {};
@@ -215,23 +214,23 @@ const timestamp = (game: Game) => {
 export const note = (game: Game, f2b: Fail2banState, message: string, jail = 'sshd') =>
   f2b.log.push(`${timestamp(game)} fail2ban.actions        [701]: NOTICE  [${jail}] ${message}`);
 
-/** Les prisons actives chargées (les anciens états n'ont que charge). */
+/** The loaded active jails (old states only have load). */
 export const actives = (f2b: Fail2banState): Jail[] => f2b.jails ?? (f2b.load?.enabled ? [f2b.load] : []);
 
-/** Les adresses bannies par une prison. */
+/** The addresses banned by a jail. */
 export function bannedFor(f2b: Fail2banState, jail: string): string[] {
   if (jail === 'sshd') return f2b.banned;
   return ((f2b.other ??= {})[jail] ??= { banned: [], total: 0 }).banned;
 }
 
-// Les filtres que le jeu connaît (filter.d/*.conf), réduits à leur motif principal.
+// The filters the game knows (filter.d/*.conf), reduced to their main pattern.
 const FILTERS: Record<string, RegExp> = {
   'nginx-limit-req': /limiting requests, excess: [\d.]+ by zone "[^"]+", client: (\d+\.\d+\.\d+\.\d+)/,
-  // recidive : les bannissements des autres prisons, dans fail2ban.log.
+  // recidive: the bans of the other jails, in fail2ban.log.
   recidive: /fail2ban\.actions\s+\[\d+\]: NOTICE\s+\[(?!recidive\])[^\]]+\]\s+Ban (\d+\.\d+\.\d+\.\d+)/,
 };
 
-/** Les échecs par adresse vus par une prison. */
+/** The failures by address seen by a jail. */
 export function failuresFor(game: Game, p: Jail): Map<string, number> {
   if (p.name === 'sshd') return failures(game);
   const account = new Map<string, number>();
@@ -245,9 +244,9 @@ export function failuresFor(game: Game, p: Jail): Map<string, number> {
 }
 
 /**
- * Applique les prisons chargées : bannit les adresses qui ont assez d'échecs
- * (recidive en dernier). `seulement` : l'adresse qui vient d'échouer — comme
- * le vrai fail2ban, qui ne réagit qu'aux nouvelles lignes du journal.
+ * Applies the loaded jails: bans the addresses that have enough failures
+ * (recidive last). `only`: the address that just failed, like the real
+ * fail2ban, which only reacts to new lines in the log.
  */
 export function apply(game: Game, f2b: Fail2banState, only?: string) {
   const order = [...actives(f2b)].sort((a, b) => Number(a.name === 'recidive') - Number(b.name === 'recidive'));
@@ -265,6 +264,6 @@ export function apply(game: Game, f2b: Fail2banState, only?: string) {
   }
 }
 
-/** Les adresses qu'une prison au moins empêche de joindre ce port. */
+/** The addresses that at least one jail prevents from reaching this port. */
 export const bannedOnPort = (f2b: Fail2banState, port: number): string[] =>
   [...new Set(actives(f2b).filter((p) => portBlocked(p, port)).flatMap((p) => bannedFor(f2b, p.name)))];

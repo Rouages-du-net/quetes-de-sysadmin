@@ -1,12 +1,12 @@
-// Commandes de texte : elles lisent des fichiers, ou ce qui arrive par un
-// tube quand on ne leur donne pas de fichier. C'est la force d'Unix : de
-// petits outils qui font une seule chose, et qu'on enchaîne.
+// Text commands: they read files, or what comes through a pipe when they
+// are given no file. That is Unix's strength: small tools that do one
+// thing, and that are chained together.
 
 import { options } from '../tools';
 import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
 import type { Command, Context } from './index';
 
-// Les lignes à traiter : celles des fichiers donnés, sinon l'entrée du tube.
+// The lines to process: those of the given files, else the pipe's input.
 function texts(cmd: string, { input, game }: Context, files: string[]): { name: string; text: string }[] {
   if (!files.length) {
     if (input === null) game.error(game.t('text-without-input', { command: cmd }));
@@ -19,7 +19,7 @@ function texts(cmd: string, { input, game }: Context, files: string[]): { name: 
 
 const linesFor = (t: string) => (t === '' ? [] : t.split('\n'));
 
-// -n 5, -n5 ou -5 → 5.
+// -n 5, -n5 or -5 → 5.
 function count(args: string[], fallback: number): { n: number; rest: string[] } {
   const rest: string[] = [];
   let n = fallback;
@@ -54,7 +54,7 @@ export const TEXT: Record<string, Command> = {
 
   grep: {
     launch: (raw) => {
-      // --color : comme l'alias « grep --color=auto » du ~/.bashrc de Debian.
+      // --color: like the alias "grep --color=auto" of Debian's ~/.bashrc.
       const colour = readColour(raw.args, 'auto', 'auto');
       if (colour.invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'grep', colour.invalid));
       const c = { ...raw, args: colour.args };
@@ -63,7 +63,7 @@ export const TEXT: Record<string, Command> = {
       const [pattern, ...files] = rest;
       if (pattern === undefined) return c.game.error(c.game.t('grep-usage'));
       const broken = letters.has('i');
-      // Le motif : une expression régulière basique (BRE), étendue avec -E, du texte brut avec -F.
+      // The pattern: a basic regular expression (BRE), extended with -E, plain text with -F.
       let re: RegExp | null = null;
       if (!letters.has('F'))
         try {
@@ -75,7 +75,7 @@ export const TEXT: Record<string, Command> = {
       const searches = broken ? pattern.toLowerCase() : pattern;
       const correspond = (l: string) => (re ? re.test(l) : (broken ? l.toLowerCase() : l).includes(searches));
       const ts = texts('grep', c, files);
-      // En couleur (GREP_COLORS par défaut) : ce qui correspond en rouge gras, le nom du fichier en magenta, le « : » en cyan.
+      // In colour (default GREP_COLORS): matches in bold red, the file name in magenta, the ":" in cyan.
       const global = re ? new RegExp(re.source, re.flags + 'g') : null;
       const highlight = (l: string) => {
         if (!inColour || letters.has('v')) return l;
@@ -97,11 +97,11 @@ export const TEXT: Record<string, Command> = {
         if (letters.has('c')) outputs.push(ts.length > 1 ? `${prefix(name)}${kept.length}` : String(kept.length));
         else outputs.push(...kept.map((l) => (ts.length > 1 ? `${prefix(name)}${highlight(l)}` : highlight(l))));
       }
-      // Écart volontaire : le vrai grep ne dit rien quand il ne trouve rien ;
-      // ici, on le précise (seulement à l'écran, jamais dans un tube).
-      // -q : rien à l'écran ; seul compte le code de retour (échec si rien trouvé).
+      // Deliberate difference: the real grep says nothing when it finds nothing;
+      // here, the game says so (only on screen, never in a pipe).
+      // -q: nothing on screen; only the exit code counts (failure if nothing found).
       if (letters.has('q')) return outputs.length ? '' : c.game.error('');
-      // Comme grep : code 1 quand rien ne correspond (utile dans un script).
+      // Like grep: code 1 when nothing matches (useful in a script).
       c.game.status = outputs.length ? 0 : 1;
       if (!outputs.length && c.last && ts.length) c.game.error(c.game.t('grep-nothing', { pattern: pattern }));
       return outputs.join('\n');
@@ -113,14 +113,14 @@ export const TEXT: Record<string, Command> = {
   },
 
   tail: {
-    // -f (--follow, -F) : après la fin du fichier, tail attend ce qui s'y ajoute
-    // et l'affiche, jusqu'à Ctrl-C (Shell.suivi, voir activite.ts).
+    // -f (--follow, -F): after the end of the file, tail waits for what gets
+    // appended and shows it, until Ctrl-C (Shell.follow, see activity.ts).
     launch: (c) => {
       const follow = c.args.some((a) => a === '-f' || a === '-F' || a === '--follow');
       const args = c.args.filter((a) => a !== '-f' && a !== '-F' && a !== '--follow');
       const output = head('tail')({ ...c, args });
       const { rest } = count(args, 10);
-      // Écart : dans un tube (tail -f journal | grep …), le jeu affiche une fois, sans suivre.
+      // Difference: in a pipe (tail -f log | grep …), the game shows it once, without following.
       if (!follow || !c.last || rest.length !== 1 || c.game.readFor('tail', rest[0]) === null) return output;
       const file = c.game.resolve(rest[0]);
       let views = linesFor(c.game.read(file) ?? '').length;
@@ -146,7 +146,7 @@ export const TEXT: Record<string, Command> = {
       const all = !letters.has('l') && !letters.has('w') && !letters.has('c');
       return texts('wc', c, rest)
         .map(({ name, text }) => {
-          // Comme le vrai wc : on compte les fins de ligne.
+          // Like the real wc: line endings are counted.
           const fields: number[] = [];
           if (all || letters.has('l')) fields.push(text === '' ? 0 : text.split('\n').length);
           if (all || letters.has('w')) fields.push(text.split(/\s+/).filter(Boolean).length);
@@ -207,9 +207,9 @@ export const TEXT: Record<string, Command> = {
   },
 };
 
-// Une expression régulière basique (BRE, comme grep sans -E) en expression JavaScript :
-// + ? | ( ) { } sont des caractères ordinaires, et spéciaux précédés de \ ;
-// les crochets [...] sont recopiés tels quels.
+// A basic regular expression (BRE, like grep without -E) as a JavaScript expression:
+// + ? | ( ) { } are ordinary characters, and special when preceded by \;
+// brackets [...] are copied as they are.
 export function toBasicRegex(pattern: string): string {
   let res = '';
   for (let i = 0; i < pattern.length; i++) {

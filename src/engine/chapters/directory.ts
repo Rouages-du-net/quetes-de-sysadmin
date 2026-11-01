@@ -1,18 +1,17 @@
-// Histoire « La Ruche » — chapitre « L'annuaire » : les comptes de l'équipe
-// sont dans un annuaire OpenLDAP (slapd, sur le routeur), installé par
-// Sacha. Avant le Wi-Fi des bureaux (qui s'appuiera dessus), il faut le
-// remettre d'aplomb :
-//   - Camille est partie en décembre : supprimer son entrée (ldapdelete)
-//     ET la retirer du groupe bureaux (memberUid n'est pas mis à jour tout
-//     seul) ;
-//   - Sami (l'Annexe) arrive : une entrée inetOrgPerson + posixAccount
-//     (un LDIF, d'après modele-ines.ldif), avec un uidNumber libre, un mot
-//     de passe en empreinte (slappasswd, ou ldappasswd) et pas en clair, et
-//     memberUid: sami dans le groupe bureaux (ldapmodify).
-// Objectif vérifié sur l'état de l'annuaire : plus aucune trace de camille,
-// sami existe (classes, uidNumber unique, mot de passe chiffré) et est
-// dans bureaux, slapd tourne.
-// Sources : https://www.openldap.org/doc/admin26/dbtools.html,
+// Story "The Hive" — chapter "The Directory": the team's accounts are in
+// an OpenLDAP directory (slapd, on the router), installed by Sacha. Before
+// the office Wi-Fi (which will rely on it), it needs putting straight:
+//   - Camille left in December: delete her entry (ldapdelete)
+//     AND remove her from the bureaux group (memberUid is not updated on
+//     its own);
+//   - Sami (the Annex) is arriving: an inetOrgPerson + posixAccount entry
+//     (an LDIF, based on modele-ines.ldif), with a free uidNumber, a hashed
+//     password (slappasswd, or ldappasswd) rather than plain text, and
+//     memberUid: sami in the bureaux group (ldapmodify).
+// Objective checked on the directory's state: no trace of camille left,
+// sami exists (classes, unique uidNumber, hashed password) and is in
+// bureaux, slapd is running.
+// Sources: https://www.openldap.org/doc/admin26/dbtools.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html,
 // https://wiki.debian.org/LDAP/OpenLDAPSetup
 
@@ -62,7 +61,7 @@ const person = (uid: string, firstName: string, name: string, number: number, md
   },
 });
 
-/** L'annuaire de La Ruche, tel que Sacha l'a laissé. */
+/** The Hive's directory, as Sacha left it. */
 export function departureDirectory(): Directory {
   return {
     base: BASE,
@@ -110,7 +109,7 @@ homeDirectory: /home/ines
 loginShell: /bin/bash
 userPassword: ruche-ines-2027`;
 
-// ——— L'état de l'annuaire ———
+// ——— The directory's state ———
 
 const people = (a: Directory) => a.inputs.filter((e) => (e.attrs.objectclass ?? []).some((c) => c.toLowerCase() === 'posixaccount'));
 const sami = (a: Directory) =>
@@ -141,7 +140,7 @@ const finished = (j: Game) => {
   );
 };
 
-/** Le service slapd de La Ruche. */
+/** The Hive's slapd service. */
 export const serviceSlapd = () => ({
   description: 'LSB: OpenLDAP standalone server (Lightweight Directory Access Protocol)',
   active: true,

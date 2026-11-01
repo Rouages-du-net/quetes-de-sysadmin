@@ -1,10 +1,10 @@
-// sftp : transférer des fichiers par SSH, de façon interactive (sftp> ),
-// comme le client d'OpenSSH. Les sauts, les clés d'hôte et
-// l'authentification passent par ../acces.ts, comme ssh et scp.
-// Sources : https://man.openbsd.org/sftp
-// Écarts : les commandes courantes seulement (ls, cd, pwd, lcd, lls, lpwd,
-// get, put, mkdir, rm, rmdir, rename, help, bye) ; pas de -b (fichier de
-// commandes), de reget/reput ni de jokers.
+// sftp: transferring files over SSH, interactively (sftp> ), like
+// OpenSSH's client. Jumps, host keys and authentication go through
+// ../access.ts, like ssh and scp.
+// Sources: https://man.openbsd.org/sftp
+// Differences: only the common commands (ls, cd, pwd, lcd, lls, lpwd, get,
+// put, mkdir, rm, rmdir, rename, help, bye); no -b (batch file), no
+// reget/reput and no wildcards.
 
 import type { Shell } from '../shell';
 import { pass, prepare } from '../access';
@@ -18,7 +18,7 @@ interface SessionSftp {
   cwdLocal: string;
 }
 
-// Agir sur la machine d'en face, sous le compte de la connexion, dans le dossier distant.
+// Acting on the remote machine, as the connection's account, in the remote directory.
 function inFace<T>(s: SessionSftp, run: (d: Shell) => T): T {
   const d = s.remote;
   const [who, cwd] = [d.who, d.cwd];
@@ -42,7 +42,7 @@ function atSelf<T>(game: Shell, s: SessionSftp, run: () => T): T {
   }
 }
 
-/** Une commande sftp ; renvoie ce qu'elle affiche, ou null pour quitter. */
+/** An sftp command; returns what it displays, or null to quit. */
 function sftpCommand(game: Shell, s: SessionSftp, line: string): string | null {
   const [cmd, ...args] = line.trim().split(/\s+/);
   if (!cmd) return '';
@@ -96,7 +96,7 @@ function sftpCommand(game: Shell, s: SessionSftp, line: string): string | null {
       const lines = toRemote
         ? [`Uploading ${source}${n.type === 'directory' ? '/' : ''} to ${dest}`, ...(n.type === 'directory' ? [`Entering ${source}/`] : [])]
         : [`Fetching ${source}${n.type === 'directory' ? '/' : ''} to ${b ?? name}`, ...(n.type === 'directory' ? [`Retrieving ${source}`] : [])];
-      // Comme sftp : un dossier qui existe déjà de l'autre côté reçoit le contenu (scp, lui, emboîterait).
+      // Like sftp: a directory that already exists on the other side receives the contents (scp would nest it).
       const cote = toRemote ? inFace(s, (d) => d.find(dest)) : atSelf(game, s, () => game.find(dest));
       const children =
         n.type === 'directory' && cote?.type === 'directory' ? Object.keys(n.children).map((k) => [`${source}/${k}`, dest]) : [[source, dest]];

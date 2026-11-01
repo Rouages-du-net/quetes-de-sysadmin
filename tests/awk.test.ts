@@ -1,4 +1,4 @@
-// awk : les tournures courantes des administrateur·rices, sur un journal web.
+// awk: sysadmins' common idioms, on a web log.
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { d, f, type Chapter } from '../src/engine/world';
@@ -24,7 +24,7 @@ const chapter: Chapter = {
 describe('awk', () => {
   const s = new Shell(chapter, 'fr');
   const awk = (line: string) => s.execute(line);
-  it('champs et motifs', () => {
+  it('fields and patterns', () => {
     expect(awk("awk '{print $1}' access.log")).toBe('198.51.100.23\n203.0.113.7\n198.51.100.23\n203.0.113.9');
     expect(awk("awk '$9 == 502 {print $7}' access.log")).toBe('/agenda/ateliers?page=1\n/agenda/ateliers?page=2');
     expect(awk('awk \'$7 ~ /^\\/agenda/ && $9 < 500 {print NR": "$1}\' access.log')).toBe('2: 203.0.113.7');
@@ -37,7 +37,7 @@ describe('awk', () => {
     expect(awk("awk -F'\"' '{print $6}' access.log | sort | uniq -c")).toBe('      2 Aspirateur/2.1\n      2 Mozilla/5.0');
     expect(awk('awk \'BEGIN {x = 3; y = x * 2 + 1; print y, length("abc"), toupper("ok"), substr("bonjour", 4)}\'')).toBe('7 3 OK jour');
   });
-  it('erreurs de syntaxe à la façon de mawk', () => {
+  it('syntax errors in the style of mawk', () => {
     s.execute("awk '{print $1' access.log");
     expect(s.last.errors[0]).toMatch(/^awk: line 1: syntax error at or near/);
   });

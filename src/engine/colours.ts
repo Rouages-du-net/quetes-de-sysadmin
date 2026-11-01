@@ -1,24 +1,24 @@
-// Les couleurs des sorties, comme les vrais outils les écrivent : des
-// séquences ANSI (SGR, « ESC [ … m »). Un outil ne colore que si sa sortie
-// va à l'écran (--color=auto : pas dans un tube ni dans un fichier), ou
-// toujours avec --color=always (alors les codes partent aussi dans le tube,
-// comme sur un vrai système). L'interface transforme ces séquences en
-// couleurs ; les événements des chapitres lisent la sortie sans elles.
+// Output colours, as the real tools write them:
+// ANSI sequences (SGR, "ESC [ … m"). A tool only colours if its output
+// goes to the screen (--color=auto: not into a pipe or a file), or
+// always with --color=always (then the codes also go into the pipe,
+// as on a real system). The interface turns these sequences into
+// colours; the chapters' events read the output without them.
 //
-// Les codes sont ceux par défaut des outils : dircolors (ls), GREP_COLORS
+// The codes are the tools' defaults: dircolors (ls), GREP_COLORS
 // (grep), diff --palette, systemctl.
 
 import type { Context } from './commands';
 
 export const ESC = '\x1b';
 
-/** Le texte entouré d'une couleur (ex. « 01;34 », bleu gras), puis le retour à la normale. */
+/** The text wrapped in a colour (e.g. "01;34", bold blue), then back to normal. */
 export const sgr = (code: string, text: string) => (code && text ? `${ESC}[${code}m${text}${ESC}[0m` : text);
 
-/** La sortie sans ses couleurs (ni les « effacer jusqu'à la fin de la ligne » de grep). */
+/** The output without its colours (nor grep's "erase to end of line"). */
 export const withoutColours = (text: string) => text.replace(/\x1b\[[0-9;]*[mK]/g, '');
 
-/** La longueur visible (sans les séquences de couleur), pour aligner des colonnes. */
+/** The visible length (without the colour sequences), to align columns. */
 export const visibleWidth = (text: string) => withoutColours(text).length;
 
 export type When = 'always' | 'never' | 'auto';
@@ -36,9 +36,9 @@ const VALUES: Record<string, When> = {
 };
 
 /**
- * L'option --color[=QUAND] d'une commande (la dernière l'emporte), et les
- * arguments sans elle. Sans option, `defaut` : « auto » pour ls et grep,
- * comme les alias du ~/.bashrc de Debian ; « never » pour diff.
+ * A command's --color[=WHEN] option (the last one wins), and the
+ * arguments without it. With no option, `fallback`: "auto" for ls and grep,
+ * like the aliases in Debian's ~/.bashrc; "never" for diff.
  */
 export function readColour(args: string[], fallback: When, withoutValue: When = 'always'): { when: When; args: string[]; invalid?: string } {
   let when = fallback;
@@ -54,13 +54,13 @@ export function readColour(args: string[], fallback: When, withoutValue: When = 
   return { when, args: rest, invalid };
 }
 
-/** Faut-il colorer ? Selon --color et selon que la sortie va à un terminal qui montre les couleurs. */
+/** Should we colour? Depending on --color and on whether the output goes to a terminal that shows colours. */
 export const colourise = (c: Context, when: When) => when === 'always' || (when === 'auto' && c.last && c.game.colours);
 
-/** Le message de GNU coreutils pour une valeur de --color inconnue (dans la langue du système). */
+/** GNU coreutils' message for an unknown --color value (in the system's language). */
 export const invalidColourMessage = (c: Context, command: string, value: string) => c.game.t('colour-argument-invalid', { command: command, value: value });
 
-// ls : les couleurs par défaut de dircolors (coreutils), pour les types les plus courants.
+// ls: dircolors' default colours (coreutils), for the most common types.
 const ARCHIVES = /\.(tar|tgz|gz|bz2|xz|zst|zip|7z|deb|rpm)$/i;
 const IMAGES = /\.(png|jpe?g|gif|svg|webp|bmp)$/i;
 export function lsColour(name: string, type: 'directory' | 'file', link: boolean, mode: string): string {
@@ -73,7 +73,7 @@ export function lsColour(name: string, type: 'directory' | 'file', link: boolean
   return '';
 }
 
-/** Un morceau de texte et son style, pour l'interface : gras, couleur du texte (30-37, 90-97), du fond (40-47). */
+/** A piece of text and its style, for the interface: bold, text colour (30-37, 90-97), background (40-47). */
 export interface Chunk {
   text: string;
   bold: boolean;
@@ -81,7 +81,7 @@ export interface Chunk {
   background: number | null;
 }
 
-/** Une ligne de sortie lue comme un terminal lit les séquences SGR. */
+/** An output line read the way a terminal reads SGR sequences. */
 export function chunks(line: string): Chunk[] {
   const output: Chunk[] = [];
   let style = { bold: false, before: null as number | null, background: null as number | null };

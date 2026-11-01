@@ -1,18 +1,18 @@
-// Un petit interpréteur de scripts shell (/bin/sh), pour les crochets de git
-// et les scripts de déploiement. Chaque ligne est lancée par le shell du jeu
-// (shell.ts), depuis le lieu du script.
+// A small shell script interpreter (/bin/sh), for git hooks
+// and deployment scripts. Each line is run by the game's shell
+// (shell.ts), from the script's place.
 //
-// Ce qu'il comprend, comme dash (le /bin/sh de Debian, https://manpages.debian.org/dash) :
-// les commentaires et la ligne #!, les lignes coupées par « \ », set -e
-// (s'arrêter à la première commande qui échoue), exit N, les variables
-// (NOM=valeur, export, $NOM, ${NOM}, $1…, $?), $(commande), read (une ligne
-// de l'entrée), cd, true, false, :, [ … ] (la commande test), et les suites
-// « a && b », « a || b ».
-// Une affectation devant une commande (GIT_WORK_TREE=… git …) ne vaut que
-// pour git, qui la lit comme l'option correspondante.
-// Écarts : pas de if, for, while, case ni de fonctions (une erreur le dit),
-// et le code de retour d'une commande vaut 0 si elle n'a écrit aucune erreur
-// (sauf si elle donne le sien, comme les plugins de supervision ou grep).
+// What it understands, like dash (Debian's /bin/sh, https://manpages.debian.org/dash):
+// comments and the #! line, lines split with "\", set -e
+// (stop at the first command that fails), exit N, variables
+// (NAME=value, export, $NAME, ${NAME}, $1…, $?), $(command), read (one line
+// of input), cd, true, false, :, [ … ] (the test command), and the sequences
+// "a && b", "a || b".
+// An assignment in front of a command (GIT_WORK_TREE=… git …) only applies
+// to git, which reads it as the matching option.
+// Differences: no if, for, while, case nor functions (an error says so),
+// and a command's exit code is 0 if it wrote no error
+// (unless it sets its own, like monitoring plugins or grep).
 
 import type { Shell } from './shell';
 
@@ -22,17 +22,17 @@ export interface ScriptResult {
 }
 
 export interface OptionsScript {
-  // Le lieu de départ (pour un crochet de git : le dépôt).
+  // The starting place (for a git hook: the repository).
   cwd: string;
-  // L'entrée standard (pour un crochet pre-receive : « ancien nouveau ref »).
+  // Standard input (for a pre-receive hook: "old new ref").
   input?: string;
   // $0, $1, $2…
   arguments?: string[];
-  // Le nom du script, pour les messages d'erreur (comme sh : « nom: 3: … »).
+  // The script's name, for error messages (like sh: "name: 3: …").
   name: string;
 }
 
-// Coupe une ligne sur && et || (hors des guillemets).
+// Splits a line on && and || (outside quotes).
 function chain(line: string): { command: string; before: '&&' | '||' | null }[] {
   const chunks: { command: string; before: '&&' | '||' | null }[] = [];
   let active = '';
@@ -59,7 +59,7 @@ function chain(line: string): { command: string; before: '&&' | '||' | null }[] 
 
 const RESERVES_WORDS = ['if', 'then', 'else', 'elif', 'fi', 'for', 'while', 'until', 'do', 'done', 'case', 'esac', 'function'];
 
-/** Exécute un script ; renvoie ce qu'il a écrit (sortie et erreurs mêlées) et son code de retour. */
+/** Runs a script; returns what it wrote (output and errors mixed) and its exit code. */
 export function runScript(game: Shell, text: string, options: OptionsScript): ScriptResult {
   const variables: Record<string, string> = { '?': '0', '0': options.name };
   (options.arguments ?? []).forEach((a, i) => (variables[String(i + 1)] = a));
@@ -68,7 +68,7 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
   let stopOnError = false;
   const outputs: string[] = [];
 
-  // $NOM, ${NOM}, $1, $? et $(commande) ; rien entre guillemets simples.
+  // $NAME, ${NAME}, $1, $? and $(command); nothing inside single quotes.
   const expand = (s: string): string => {
     let result = '';
     let simple = false;
@@ -101,12 +101,12 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
     return result;
   };
 
-  // Une commande simple ; renvoie son code de retour.
+  // A simple command; returns its exit code.
   const launch = (rawValue: string, number: number): number => {
     let line = expand(rawValue).trim();
     if (!line || line === ':' || line === 'true') return 0;
     if (line === 'false') return 1;
-    // [ condition ] est la commande test (son dernier argument doit être « ] »).
+    // [ condition ] is the test command (its last argument must be "]").
     if (/^\[(\s|$)/.test(line)) {
       if (!/\s\]$/.test(line)) {
         outputs.push(game.t('test-hook-missing', { script: options.name, number: number }));
@@ -131,7 +131,7 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
       names.forEach((n, i) => (variables[n] = i === names.length - 1 ? values.slice(i).join(' ') : (values[i] ?? '')));
       return 0;
     }
-    // NOM=valeur (seul) : une variable ; devant une commande : son environnement.
+    // NAME=value (alone): a variable; in front of a command: its environment.
     const assignments: Record<string, string> = {};
     for (;;) {
       const m = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=("[^"]*"|'[^']*'|\S*)\s*/.exec(line);
@@ -156,7 +156,7 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
     return r.code;
   };
 
-  // Les lignes, recollées après un « \ » final.
+  // The lines, joined after a trailing "\".
   const lines = text.replace(/\\\n/g, ' ').split('\n');
   for (let n = 0; n < lines.length; n++) {
     const line = lines[n].trim();

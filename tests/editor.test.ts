@@ -1,5 +1,5 @@
-// L'éditeur nano : ouvrir, écrire (^O) avec les bons droits, quitter (^X).
-// Enregistrer change l'état du système : les objectifs des quêtes suivent.
+// The nano editor: open, write (^O) with the right permissions, quit (^X).
+// Saving changes the system's state: the quests' objectives follow.
 
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
@@ -11,12 +11,12 @@ import { inLanguage, machinesInLanguage } from './names';
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
+  describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
-    // Le compte du joueur dans la langue (vous@poste, you@poste), comme les noms des lieux.
+    // The player's account in the language (vous@poste, you@desk), like the place names.
     const L = (line: string) => inLanguage(translator(language), line);
 
-    it('nouveau fichier : ouvrir, écrire, quitter, relire', () => {
+    it('new file: open, write, quit, reread', () => {
       const c = new Console({ language });
       c.execute('nano notes.txt');
       expect(c.edition?.path).toBe(L('/home/you/notes.txt'));
@@ -32,7 +32,7 @@ for (const language of LANGUAGES)
       if (fr) expect(c.edition?.message).toBe('[ 2 lignes lues ]');
     });
 
-    it('fichier de root : protégé sans sudo, écrit avec sudo ; l’objectif de la quête suit', () => {
+    it('root’s file: protected without sudo, written with sudo; the quest objective follows', () => {
       const s = new Shell(chapter('first-day'), language);
       const BLOCKED = '/etc/nginx/blocked.conf';
       s.execute(`nano ${BLOCKED}`);
@@ -50,7 +50,7 @@ for (const language of LANGUAGES)
       expect(s.read(BLOCKED)).toContain('deny 203.0.113.5;');
     });
 
-    it('Datacenter, chapitre 1 : bloquer le robot avec nano est une solution correcte', () => {
+    it('Datacenter, chapter 1: blocking the robot with nano is a correct solution', () => {
       const s = new Shell(chapter('first-day'), language);
       s.execute('sudo nano /etc/nginx/blocked.conf');
       s.execute(machinesInLanguage(s.t, 'welcome-2026'));
@@ -61,7 +61,7 @@ for (const language of LANGUAGES)
       expect(s.finished).toBe(true);
     });
 
-    it('fausses pistes : dossier, sans argument, dossier inexistant', () => {
+    it('false leads: directory, no argument, nonexistent directory', () => {
       const c = new Console({ language });
       const directory = c.execute('nano /etc');
       expect(c.edition).toBeNull();
@@ -73,7 +73,7 @@ for (const language of LANGUAGES)
       if (fr) expect(message).toBe("[ Erreur d'écriture de /nulle/part/notes.txt : Aucun fichier ou dossier de ce nom ]");
     });
 
-    it('une fin de chapitre atteinte dans l’éditeur est bien notée par la console', () => {
+    it('a chapter end reached in the editor is recorded by the console', () => {
       const dc = STORIES.find((h) => h.id === 'datacenter')!;
       const c = new Console({ language, finished: ['lighthouse', 'village', 'root'] });
       c.connect('datacenter', dc.chapters[0]);

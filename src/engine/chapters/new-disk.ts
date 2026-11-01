@@ -1,15 +1,14 @@
-// Histoire « Le Labo » — chapitre « Le disque neuf » : l'hébergeur a
-// remplacé sdb dans la nuit. Le nouveau disque est vierge, et les deux
-// grappes tournent sur sda seul ([U_]) : si sda lâchait maintenant, tout
-// serait perdu. On recopie la table de partitions de sda sur sdb (sfdisk -d
-// /dev/sda | sfdisk /dev/sdb : attention au sens), on ajoute chaque nouvelle
-// partition à sa grappe (--add), on suit la reconstruction dans
-// /proc/mdstat (une grappe à la fois), et on installe GRUB sur sdb pour que
-// le serveur sache démarrer sur l'un ou l'autre disque.
-// Objectif vérifié sur l'état : sdb découpé comme sda (avec sa partition
-// BIOS boot), md0 et md1 de nouveau complètes et à jour ([UU]), et GRUB
-// installé sur sdb.
-// Sources : https://raid.wiki.kernel.org/index.php/Replacing_a_failed_drive,
+// Story "The Lab", chapter "The new disk": the host replaced sdb during the
+// night. The new disk is blank, and both arrays run on sda alone ([U_]): if
+// sda failed now, everything would be lost. You copy sda's partition table
+// onto sdb (sfdisk -d /dev/sda | sfdisk /dev/sdb: mind the direction), add
+// each new partition to its array (--add), follow the rebuild in
+// /proc/mdstat (one array at a time), and install GRUB on sdb so the server
+// can boot from either disk.
+// Objective checked on the state: sdb partitioned like sda (with its BIOS
+// boot partition), md0 and md1 complete and up to date again ([UU]), and
+// GRUB installed on sdb.
+// Sources: https://raid.wiki.kernel.org/index.php/Replacing_a_failed_drive,
 // sfdisk(8), mdadm(8), https://www.gnu.org/software/grub/manual/grub/html_node/BIOS-installation.html
 
 import { f, type Chapter } from '../world';
@@ -18,7 +17,7 @@ import { devUpdate, healthy } from '../storage';
 import { beforeLabCommand, labAccounts, labState, M, PASSWORD, labWorld, labKernel, st } from './lab';
 
 const sdb = (j: Game) => st(j).disks.sdb;
-// sdb découpé comme sda : mêmes partitions, mêmes types, mêmes tailles.
+// sdb partitioned like sda: same partitions, same types, same sizes.
 const split = (j: Game) => {
   const a = st(j).disks.sda.partitions;
   const b = sdb(j).partitions;

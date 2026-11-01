@@ -1,13 +1,13 @@
-// Les liens vers Les rouages du net (https://rouages.net), le site de
-// vulgarisation d'où vient le jeu : après un chapitre, le module ou le mot du
-// glossaire qui explique ce qui se passe sous le capot (DNS, TLS, NAT…).
-// Les adresses visent des ancres stables du site (les étapes des modules,
-// les entrées du glossaire) ; les textes des liens sont dans interface.ftl
+// The links to Les rouages du net (https://rouages.net), the popular-science
+// site the game comes from: after a chapter, the module or glossary word
+// that explains what happens under the hood (DNS, TLS, NAT…).
+// The addresses target stable anchors of the site (the modules' steps, the
+// glossary's entries); the links' texts are in interface.ftl
 // (rouages-lien-<id>).
 
 export const ROUAGES = 'https://rouages.net';
 
-/** Les pages de rouages.net, par identifiant. */
+/** The pages of rouages.net, by identifier. */
 export const ROUAGES_PAGES: Record<string, string> = {
   'entree-nom': '/modules/entree-a-la-page/#nom',
   'entree-box': '/modules/entree-a-la-page/#box',
@@ -31,7 +31,7 @@ export const ROUAGES_PAGES: Record<string, string> = {
   'glossaire-octet': '/glossaire/#octet',
 };
 
-/** Pour chaque chapitre, les pages qui expliquent son concept. */
+/** For each chapter, the pages that explain its concept. */
 export const ROUAGES_LINKS: Record<string, string[]> = {
   'root': ['ordinateur-binaire'],
   'first-day': ['glossaire-datacenter'],
@@ -61,5 +61,5 @@ export const ROUAGES_LINKS: Record<string, string[]> = {
   'follow-up': ['glossaire-port'],
 };
 
-/** Les liens d'un chapitre : adresse complète et identifiant (pour son texte). */
+/** A chapter's links: full address and identifier (for its text). */
 export const rouagesLinks = (chapter: string) => (ROUAGES_LINKS[chapter] ?? []).map((id) => ({ id, address: `${ROUAGES}${ROUAGES_PAGES[id]}` }));

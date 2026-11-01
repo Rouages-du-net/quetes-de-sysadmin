@@ -1,15 +1,16 @@
-// Histoire « La Fabrique » — chapitre « La mise à jour » : Docker. Le fablab
-// prête des outils grâce à l'outilthèque, une appli lancée il y a deux
-// semaines avec un simple docker run, sans volume : sa base de données vit
-// dans la couche du conteneur. La version 1.5 est sortie ; mettre à jour,
-// c'est supprimer le conteneur et en créer un neuf… et sans précaution, les
-// 37 prêts en cours disparaissent avec lui.
-// Commandes : docker ps, logs, exec, inspect, cp, stop, rm, pull, run (-d,
+// Story "The Workshop", chapter "The Update": Docker. The fablab lends tools
+// through the tool library (outiltheque), an app started two weeks ago with
+// a plain docker run, without a volume: its database lives in the
+// container's layer. Version 1.5 is out; updating means removing the
+// container and creating a new one… and without care, the 37 current loans
+// disappear with it.
+// Commands: docker ps, logs, exec, inspect, cp, stop, rm, pull, run (-d,
 // --name, -p, -v, --restart), volume, curl.
-// Objectif vérifié sur l'état : un conteneur de la version 1.5 tourne, publie
-// le port 8080, garde sa base dans un volume ou un dossier de la machine
-// (plus dans sa couche), y retrouve les 37 prêts, et repartira avec la machine.
-// Sources : https://docs.docker.com/engine/storage/volumes/,
+// Objective checked on the state: a version 1.5 container runs, publishes
+// port 8080, keeps its database in a volume or a directory of the machine
+// (no longer in its layer), finds the 37 loans there, and will start again
+// with the machine.
+// Sources: https://docs.docker.com/engine/storage/volumes/,
 // https://docs.docker.com/reference/cli/docker/container/cp/,
 // https://docs.docker.com/engine/containers/start-containers-automatically/
 
@@ -24,8 +25,8 @@ const BASE = '/var/lib/outiltheque/outiltheque.db';
 const SCHEMAS: Record<string, number> = { '1.4': 3, '1.5': 4 };
 const LOANS = 37;
 
-// La base de l'outilthèque : un fichier SQLite (son contenu est simulé :
-// l'en-tête de SQLite, puis les données lisibles par le jeu).
+// The tool library's database: an SQLite file (its contents are simulated:
+// SQLite's header, then data the game can read).
 interface Base {
   schema: number;
   loans: { tool: string; person: string; until: string }[];
@@ -49,9 +50,9 @@ function loans(tools: string[], people: string[]): Base['loans'] {
   }));
 }
 
-// L'appli de l'image : elle lit et écrit sa base à chaque démarrage et requête.
+// The image's app: it reads and writes its database on each start and request.
 APPS.outiltheque = {
-  // L'image crée son propre compte et s'en sert (USER outil dans son Dockerfile).
+  // The image creates its own account and uses it (USER outil in its Dockerfile).
   user: 'outil',
   accounts: { outil: 1000 },
   start: (game, c, image) => {
@@ -117,7 +118,7 @@ const dockerState = (t: (id: string) => string): DockerState => {
   const v14 = image('1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
   const v15 = image('1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
   const base = writeBase({ schema: 3, loans: loans(t('update-tools').split(', '), t('update-people').split(', ')) });
-  // Lancé il y a deux semaines : docker run -d --name outiltheque -p 8080:8080 …:1.4
+  // Started two weeks ago: docker run -d --name outiltheque -p 8080:8080 …:1.4
   const old: Container = {
     id: identifier('conteneur-outiltheque-1.4'),
     name: 'outiltheque',
@@ -152,7 +153,7 @@ const dockerState = (t: (id: string) => string): DockerState => {
 };
 
 const state = (j: Game) => docker(j)!;
-// Où se trouvent les prêts : une base qui en contient autant, n'importe où.
+// Where the loans are: a database containing that many, anywhere.
 const baseComplete = (content: string | null) => (readBase(content)?.loans.length ?? 0) === LOANS;
 
 function somePart(j: Game): boolean {
@@ -168,7 +169,7 @@ function somePart(j: Game): boolean {
   return search('/home', 0) || search('/srv', 0) || search('/tmp', 0) || search('/root', 0) || search('/opt', 0);
 }
 
-// Le conteneur à jour qui tourne et publie 8080.
+// The up-to-date container that runs and publishes 8080.
 const fresh = (j: Game) =>
   state(j).containers.find((c) => c.state === 'running' && c.image.endsWith(':1.5') && c.ports.some((p) => p.host === 8080 && p.container === 8080));
 const onMount = (c: Container) => c.mounts.some((m) => BASE.startsWith(m.target.replace(/\/$/, '') + '/'));
@@ -226,7 +227,7 @@ export const update: Chapter = {
         process: [
           { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
         ],
-        // Au démarrage de la machine, docker relance les conteneurs selon --restart.
+        // When the machine boots, docker restarts the containers according to --restart.
         load: (j) => startDocker(j),
       },
     }),
@@ -252,7 +253,7 @@ export const update: Chapter = {
   events: [
     {
       id: 'layer',
-      // docker inspect montre un conteneur sans volume ni dossier monté.
+      // docker inspect shows a container with no volume or mounted directory.
       condition: (j) =>
         j.last.line.includes('docker') &&
         (j.last.output.includes('"Mounts": []') || (j.last.line.includes('Mounts') && j.last.output.trim() === '[]')),

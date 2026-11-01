@@ -1,26 +1,26 @@
-// Apache httpd simulé (le paquet apache2 de Debian) : la configuration lue
-// comme Apache la lit (apache2.conf, ses Include, les modules chargés par
-// LoadModule, les sections <VirtualHost>, <Directory>, <IfModule>…), vérifiée
-// comme `apache2ctl configtest`, puis appliquée au démarrage et au
-// rechargement. Une requête choisit son hôte virtuel, puis Apache trouve le
-// fichier, en lisant les .htaccess (si AllowOverride le permet) et les
-// règles de mod_rewrite. nginx et curl s'adressent à lui comme à une appli
-// (etat.applis, adresse 127.0.0.1:port).
-// D'après la documentation d'Apache 2.4 :
-// https://httpd.apache.org/docs/2.4/configuring.html (fichiers, sections, modules),
-// https://httpd.apache.org/docs/2.4/vhosts/details.html (choix de l'hôte virtuel :
-// d'abord l'adresse et le port, puis le nom demandé, sinon le premier),
-// https://httpd.apache.org/docs/2.4/sections.html#merging (ordre de fusion),
-// https://httpd.apache.org/docs/2.4/howto/htaccess.html et
+// Simulated Apache httpd (Debian's apache2 package): the configuration read
+// as Apache reads it (apache2.conf, its Include, the modules loaded by
+// LoadModule, the <VirtualHost>, <Directory>, <IfModule>… sections), checked
+// like `apache2ctl configtest`, then applied on start and on
+// reload. A request picks its virtual host, then Apache finds the
+// file, reading the .htaccess files (if AllowOverride allows it) and the
+// mod_rewrite rules. nginx and curl talk to it as to an app
+// (etat.applis, address 127.0.0.1:port).
+// Based on the Apache 2.4 documentation:
+// https://httpd.apache.org/docs/2.4/configuring.html (files, sections, modules),
+// https://httpd.apache.org/docs/2.4/vhosts/details.html (choosing the virtual host:
+// first the address and port, then the requested name, otherwise the first one),
+// https://httpd.apache.org/docs/2.4/sections.html#merging (merge order),
+// https://httpd.apache.org/docs/2.4/howto/htaccess.html and
 // https://httpd.apache.org/docs/2.4/mod/core.html#allowoverride (.htaccess),
-// https://httpd.apache.org/docs/2.4/mod/mod_rewrite.html et
-// https://httpd.apache.org/docs/2.4/rewrite/tech.html (règles par répertoire),
-// https://httpd.apache.org/docs/2.4/bind.html (Listen) ; et le README.Debian
-// du paquet (sites-available, a2ensite, envvars).
-// Écarts : une partie des directives seulement (les autres sont refusées
-// comme celles d'un module absent), pas de PHP ni de CGI, pas d'en-têtes
-// d'expiration ni de compression ; les jokers des chemins de <Directory> ne
-// sont pas lus.
+// https://httpd.apache.org/docs/2.4/mod/mod_rewrite.html and
+// https://httpd.apache.org/docs/2.4/rewrite/tech.html (per-directory rules),
+// https://httpd.apache.org/docs/2.4/bind.html (Listen); and the package's
+// README.Debian (sites-available, a2ensite, envvars).
+// Differences: only some of the directives (the others are refused
+// like those of a missing module), no PHP nor CGI, no expiry
+// headers nor compression; wildcards in <Directory> paths are
+// not read.
 
 import type { Game } from './shell';
 import { wildcard } from './tools';
@@ -32,10 +32,10 @@ export const VERSION = '2.4.65';
 export const SIGNATURE = `Apache/${VERSION} (Debian)`;
 export const ROOT = '/etc/apache2';
 export const CONF = `${ROOT}/apache2.conf`;
-// Le PID du processus principal (root) et ceux des processus qui servent (www-data).
+// The PID of the main process (root) and those of the serving processes (www-data).
 export const PID = 2301;
 
-// Les variables de /etc/apache2/envvars, lues par apache2ctl.
+// The variables of /etc/apache2/envvars, read by apache2ctl.
 const ENV: Record<string, string> = {
   APACHE_RUN_USER: 'www-data',
   APACHE_RUN_GROUP: 'www-data',
@@ -45,12 +45,12 @@ const ENV: Record<string, string> = {
   APACHE_LOG_DIR: '/var/log/apache2',
 };
 
-// Les modules compilés dans le binaire de Debian (apache2ctl -M : « static »).
+// The modules compiled into Debian's binary (apache2ctl -M: "static").
 export const STATIC = ['core', 'so', 'watchdog', 'http', 'log_config', 'logio', 'version', 'unixd'];
 
-// Où une directive est permise (S : configuration du serveur, V : <VirtualHost>,
-// D : <Directory>, <Location>, <Files>, H : .htaccess), le module qui la
-// définit, et, dans un .htaccess, la catégorie d'AllowOverride qu'elle demande.
+// Where a directive is allowed (S: server configuration, V: <VirtualHost>,
+// D: <Directory>, <Location>, <Files>, H: .htaccess), the module that
+// defines it, and, in a .htaccess, the AllowOverride category it requires.
 interface Rule {
   module: string;
   or: string;
@@ -172,10 +172,10 @@ const DIRECTIVES: Record<string, Rule> = {
   Limit: S('core', 'DH'),
   LimitExcept: S('core', 'DH'),
 };
-// Les noms de directives ne tiennent pas compte de la casse.
+// Directive names are case-insensitive.
 const BY_MINUSCULES = Object.fromEntries(Object.keys(DIRECTIVES).map((n) => [n.toLowerCase(), n]));
 
-// Les modules de mods-available (fichiers .load et .conf) et leurs dépendances (a2enmod).
+// The modules of mods-available (.load and .conf files) and their dependencies (a2enmod).
 export const DEPENDENCIES: Record<string, string[]> = { ssl: ['setenvif', 'mime', 'socache_shmcb'], proxy_http: ['proxy'] };
 
 export class ApacheError extends Error {}
@@ -186,8 +186,8 @@ const invalidCommand = (name: string) => `Invalid command '${name}', perhaps mis
 
 // ——— Lecture ———
 
-// Une directive lue : son nom (tel qu'écrit), ses arguments, d'où elle vient ;
-// une section a ses enfants.
+// A directive read: its name (as written), its arguments, where it comes from;
+// a section has its children.
 export interface Line {
   name: string;
   args: string[];
@@ -196,14 +196,14 @@ export interface Line {
   children?: Line[];
 }
 
-// Les mots d'une ligne : séparés par des espaces, les guillemets regroupent.
+// The words of a line: separated by spaces, quotes group them.
 function words(text: string): string[] {
   const listing: string[] = [];
   for (const m of text.matchAll(/"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g)) listing.push(m[1] ?? m[2] ?? m[3]);
   return listing;
 }
 
-// Les lignes logiques d'un fichier : commentaires et lignes vides retirés, « \ » en fin de ligne continue.
+// The logical lines of a file: comments and empty lines removed, "\" at the end of a line continues it.
 function linesFor(text: string): { text: string; line: number }[] {
   const result: { text: string; line: number }[] = [];
   const raw = text.split('\n');
@@ -217,10 +217,10 @@ function linesFor(text: string): { text: string; line: number }[] {
   return result;
 }
 
-// Un nom de module : « rewrite_module », « mod_rewrite.c » → « rewrite ».
+// A module name: "rewrite_module", "mod_rewrite.c" → "rewrite".
 const module = (name: string) => name.replace(/^mod_/, '').replace(/\.c$/, '').replace(/_module$/, '');
 
-// L'état de la lecture : modules chargés (dans l'ordre), variables définies, avertissements.
+// The reading state: loaded modules (in order), defined variables, warnings.
 interface Read {
   modules: string[];
   defined: Set<string>;
@@ -228,13 +228,13 @@ interface Read {
 }
 
 /**
- * Lit un fichier de configuration (ou un .htaccess, contexte « H ») et ses
- * Include ; lève une ErreurApache au format d'Apache.
+ * Reads a configuration file (or a .htaccess, context "H") and its
+ * Include; throws an ErreurApache in Apache's format.
  */
 function readFile(game: Game, file: string, context: string, read: Read, text?: string): Line[] {
   const lines = linesFor(text ?? game.read(file) ?? '');
   let i = 0;
-  // Les variables ${VAR} : celles d'envvars, puis Define.
+  // ${VAR} variables: those of envvars, then Define.
   const replace = (l: string) =>
     l.replace(/\$\{([A-Za-z0-9_]+)\}/g, (all, v: string) => {
       if (ENV[v] !== undefined) return ENV[v];
@@ -317,7 +317,7 @@ function readFile(game: Game, file: string, context: string, read: Read, text?: 
 
 const isLoad = (read: Read, m: string) => STATIC.includes(m) || read.modules.includes(m);
 
-// Quelques vérifications d'arguments, avec les messages d'Apache.
+// A few argument checks, with Apache's messages.
 function checkArguments(name: string, args: string[], file: string, line: number) {
   const one: Record<string, string> = {
     DocumentRoot: 'Root directory of the document tree',
@@ -341,7 +341,7 @@ function checkArguments(name: string, args: string[], file: string, line: number
   }
 }
 
-// Les fichiers d'un Include (relatif à ServerRoot), triés ; un lien cassé ne s'ouvre pas.
+// The files of an Include (relative to ServerRoot), sorted; a broken link doesn't open.
 function included(game: Game, pattern: string, optional: boolean, file: string, line: number): string[] {
   const path = pattern.startsWith('/') ? pattern : `${ROOT}/${pattern}`;
   const open = (c: string) => {
@@ -369,20 +369,20 @@ function included(game: Game, pattern: string, optional: boolean, file: string, 
   return found.map(open);
 }
 
-// ——— Configuration chargée ———
+// ——— Loaded configuration ———
 
 export interface Address {
-  // « * » (toutes), ou une adresse.
+  // "*" (all), or an address.
   ip: string;
   port: number | '*';
 }
 
 export interface Rewrite {
-  // RewriteEngine On/Off ; undefined : pas dit à ce niveau (hérité).
+  // RewriteEngine On/Off; undefined: not set at this level (inherited).
   engine?: boolean;
   rules: Line[];
   base?: string;
-  // Le lieu (répertoire) des règles par répertoire.
+  // The place (directory) of per-directory rules.
   directory?: string;
 }
 
@@ -404,7 +404,7 @@ export interface Host {
   line: number;
   sections: Section[];
   rewrite: Rewrite;
-  // Les directives hors section (DirectoryIndex, Options… au niveau du serveur ou de l'hôte).
+  // Directives outside any section (DirectoryIndex, Options… at server or host level).
   lines: Line[];
 }
 
@@ -413,7 +413,7 @@ export interface Configuration {
   listeners: { ip: string; port: number }[];
   principal: Host;
   hosts: Host[];
-  // ServerName au niveau global (sinon : AH00558).
+  // Global ServerName (otherwise: AH00558).
   globalName?: string;
   warnings: string[];
   accessFile: string;
@@ -437,7 +437,7 @@ const sections = (lines: Line[]): Section[] =>
       return { type, pattern: type === 'Directory' && !match ? pattern.replace(/\/+$/, '') || '/' : pattern, regex, lines: l.children! };
     });
 
-// Les règles de réécriture d'un niveau (serveur, hôte, section, .htaccess).
+// The rewrite rules of one level (server, host, section, .htaccess).
 function rewriteFor(lines: Line[], directory?: string): Rewrite {
   const engine = val(lines, 'RewriteEngine');
   return {
@@ -448,7 +448,7 @@ function rewriteFor(lines: Line[], directory?: string): Rewrite {
   };
 }
 
-// « *:80 », « 127.0.0.1:8080 », « _default_:443 », « [::1]:80 » → adresse et port.
+// "*:80", "127.0.0.1:8080", "_default_:443", "[::1]:80" → address and port.
 function readAddress(text: string): Address {
   const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+|\*))?$/.exec(text);
   const ip = !m || m[1] === '_default_' ? '*' : m[1];
@@ -472,7 +472,7 @@ function host(lines: Line[], file: string, line: number, addresses: Address[]): 
   };
 }
 
-// Listen 80 → toutes les adresses (IPv6 et IPv4), Listen 127.0.0.1:8080 → une seule.
+// Listen 80 → all addresses (IPv6 and IPv4), Listen 127.0.0.1:8080 → only one.
 function listeners(lines: Line[]): { ip: string; port: number }[] {
   return lines
     .filter((l) => l.name === 'Listen')
@@ -485,7 +485,7 @@ function listeners(lines: Line[]): { ip: string; port: number }[] {
     });
 }
 
-/** Lit et vérifie toute la configuration ; lève une ErreurApache. */
+/** Reads and checks the whole configuration; throws an ErreurApache. */
 export function build(game: Game): Configuration {
   if (!game.find(CONF)) throw new ApacheError(`apache2: Could not open configuration file ${CONF}: No such file or directory`);
   const read: Read = { modules: [], defined: new Set(), warnings: [] };
@@ -516,7 +516,7 @@ export function build(game: Game): Configuration {
   };
 }
 
-/** La configuration, ou l'erreur : comme apache2ctl configtest. */
+/** The configuration, or the error: like apache2ctl configtest. */
 export function test(game: Game): { config: Configuration; error: null } | { config: null; error: string } {
   try {
     return { config: build(game), error: null };
@@ -526,20 +526,20 @@ export function test(game: Game): { config: Configuration; error: null } | { con
   }
 }
 
-// Sans ServerName global, Apache le dit à chaque lecture de la configuration.
+// Without a global ServerName, Apache says so each time it reads the configuration.
 export const AH00558 =
   "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to suppress this message";
 
-// ——— Démarrage : les adresses d'écoute ———
+// ——— Start: the listening addresses ———
 
 const loop = (ip: string) => ip === '127.0.0.1' || ip === '[::1]' || ip === 'localhost';
 
-// Les sockets qu'Apache ouvre pour Listen (comme ss les montre).
+// The sockets Apache opens for Listen (as ss shows them).
 function sockets(config: Configuration): Listening[] {
   return config.listeners.map((e) => ({ proto: 'tcp' as const, address: e.ip, port: e.port, process: 'apache2', pid: PID }));
 }
 
-// Une adresse déjà prise par un autre programme (etat.ecoute) : l'erreur d'Apache.
+// An address already taken by another program (etat.ecoute): Apache's error.
 function listenSockets(game: Game, config: Configuration): string[] {
   const other = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2' && e.proto === 'tcp');
   const overlaps = (ip: string, port: number, e: Listening) =>
@@ -555,7 +555,7 @@ function listenSockets(game: Game, config: Configuration): string[] {
   return messages;
 }
 
-/** Pour systemd : les messages d'apachectl quand Apache ne démarre pas (null s'il démarre). */
+/** For systemd: apachectl's messages when Apache doesn't start (null if it starts). */
 export function checkApache(game: Game): string[] | null {
   const res = test(game);
   if (!res.config) return [...res.error.split('\n'), "Action 'start' failed.", 'The Apache error log may have more information.'];
@@ -565,7 +565,7 @@ export function checkApache(game: Game): string[] | null {
   return [...before, ...busy, 'no listening sockets available, shutting down', 'AH00015: Unable to open logs', "Action 'start' failed.", 'The Apache error log may have more information.'];
 }
 
-// [Fri Nov 20 10:02:03.123456 2026] : l'heure des journaux d'Apache.
+// [Fri Nov 20 10:02:03.123456 2026]: the time in Apache's logs.
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const apacheTime = (ms: number) => {
@@ -573,7 +573,7 @@ export const apacheTime = (ms: number) => {
   return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, '0')} ${d.toISOString().slice(11, 19)}.${String(100000 + (ms % 900000)).slice(0, 6)} ${d.getUTCFullYear()}`;
 };
 
-// Une ligne dans un journal d'erreurs d'Apache (le fichier doit exister).
+// A line in one of Apache's error logs (the file must exist).
 function writeLog(game: Game, file: string, level: string, message: string, client?: string) {
   const n = game.find(file);
   if (n?.type !== 'file' || typeof n.content !== 'string') return;
@@ -582,15 +582,15 @@ function writeLog(game: Game, file: string, level: string, message: string, clie
   n.content = n.content ? `${n.content}\n${line}` : line;
 }
 
-/** Au démarrage et au rechargement : la configuration lue devient celle qui sert, sur ses adresses. */
+/** On start and reload: the configuration read becomes the one in use, on its addresses. */
 export function loadApache(game: Game) {
   const config = test(game).config;
   const old = game.state.apache?.load as Configuration | null | undefined;
   game.state.apache = { ...(game.state.apache ?? {}), load: config };
   if (!config) return;
-  // ss : les sockets d'Apache remplacent les anciennes.
+  // ss: Apache's sockets replace the old ones.
   game.state.listening = [...((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2'), ...sockets(config)];
-  // nginx et curl joignent Apache sur 127.0.0.1 : une « appli » par port d'écoute.
+  // nginx and curl reach Apache on 127.0.0.1: one "app" per listening port.
   const apps: Record<string, App> = (game.state.apps ??= {});
   for (const [key, a] of Object.entries(apps)) if (a.service === 'apache2') delete apps[key];
   for (const { ip, port } of config.listeners)
@@ -602,7 +602,7 @@ export function loadApache(game: Game) {
   writeLog(game, log, 'core:notice', "AH00094: Command line: '/usr/sbin/apache2'");
 }
 
-/** À l'arrêt : plus de sockets, plus de configuration servie. */
+/** On stop: no more sockets, no more configuration in use. */
 export function stopApache(game: Game) {
   game.state.listening = ((game.state.listening ?? []) as Listening[]).filter((e) => e.process !== 'apache2');
   const log = (game.state.apache?.load as Configuration | null)?.principal.log;
@@ -610,7 +610,7 @@ export function stopApache(game: Game) {
   game.state.apache = { ...(game.state.apache ?? {}), load: null };
 }
 
-// ——— Requêtes ———
+// ——— Requests ———
 
 const REASONS: Record<number, string> = {
   200: 'OK',
@@ -639,7 +639,7 @@ export interface ApacheResponse {
   headers?: string[];
 }
 
-// Ce que la requête a trouvé : l'hôte virtuel qui la sert, et l'adresse qu'il donne dans ses pages.
+// What the request found: the virtual host that serves it, and the address it gives in its pages.
 interface Context {
   config: Configuration;
   host: Host;
@@ -658,7 +658,7 @@ const errorPage = (c: Context, code: number, link = ''): ApacheResponse => ({
 
 const correspond = (a: Address, ip: string, port: number) => (a.port === '*' || a.port === port) && (a.ip === '*' || a.ip === ip);
 
-/** L'hôte virtuel qui sert une connexion (adresse, port) pour ce nom : d'abord l'adresse, puis le nom, sinon le premier. */
+/** The virtual host that serves a connection (address, port) for this name: first the address, then the name, otherwise the first one. */
 export function chooseHost(config: Configuration, ip: string, port: number, name: string): Host {
   const exacts = config.hosts.filter((h) => h.addresses.some((a) => a.ip !== '*' && correspond(a, ip, port)));
   const candidates = exacts.length ? exacts : config.hosts.filter((h) => h.addresses.some((a) => a.ip === '*' && correspond(a, ip, port)));
@@ -667,7 +667,7 @@ export function chooseHost(config: Configuration, ip: string, port: number, name
   return candidates.find((h) => h.name === n || h.alias.some((a) => wildcard(a).test(n))) ?? candidates[0];
 }
 
-// Les réglages fusionnés pour un fichier : sections <Directory>, .htaccess, <Files>, <Location>.
+// The merged settings for a file: <Directory> sections, .htaccess, <Files>, <Location>.
 interface Settings {
   overrides: Set<string>;
   refuse?: boolean;
@@ -676,7 +676,7 @@ interface Settings {
   rewrite: Rewrite;
 }
 
-// AllowOverride All, None, ou une liste de catégories.
+// AllowOverride All, None, or a list of categories.
 function readOverrides(args: string[]): Set<string> {
   if (args.some((a) => /^all$/i.test(a))) return new Set(['AuthConfig', 'FileInfo', 'Indexes', 'Limit', 'Options']);
   if (args.some((a) => /^none$/i.test(a))) return new Set();
@@ -696,19 +696,19 @@ function apply(r: Settings, lines: Line[], directory?: string) {
         if (/^[+]?indexes$/i.test(o) || /^all$/i.test(o)) r.lists = true;
         else if (/^-indexes$/i.test(o) || /^none$/i.test(o)) r.lists = false;
       }
-      // Options sans + ni - remplace toute la liste.
+      // Options without + or - replaces the whole list.
       if (l.args.every((o) => !/^[+-]/.test(o)) && !l.args.some((o) => /^(indexes|all)$/i.test(o))) r.lists = false;
     }
   }
-  // mod_rewrite, par répertoire : l'état (On/Off) s'hérite, les règles non
-  // (celles du niveau le plus profond remplacent celles du dessus).
+  // mod_rewrite, per directory: the state (On/Off) is inherited, the rules are not
+  // (those of the deepest level replace those above).
   if (directory !== undefined) {
     const n = rewriteFor(lines, directory);
     r.rewrite = { engine: n.engine ?? r.rewrite.engine, rules: n.rules, base: n.base, directory };
   }
 }
 
-// Lire un .htaccess comme Apache : chaque directive doit être connue, et permise par AllowOverride.
+// Read a .htaccess like Apache: each directive must be known, and allowed by AllowOverride.
 function readHtaccess(game: Game, path: string, overrides: Set<string>, modules: string[]): Line[] {
   const read: Read = { modules: modules.filter((m) => !STATIC.includes(m)), defined: new Set(), warnings: [] };
   const lines = readFile(game, path, 'H', read, game.read(path) ?? '');
@@ -725,14 +725,14 @@ function readHtaccess(game: Game, path: string, overrides: Set<string>, modules:
 
 const dirname = (path: string) => path.slice(0, path.lastIndexOf('/')) || '/';
 
-/** Les réglages qui s'appliquent à un fichier (null : un .htaccess illisible, l'erreur au journal). */
+/** The settings that apply to a file (null: an unreadable .htaccess, the error in the log). */
 function settingsFor(game: Game, c: Context, file: string, url: string): Settings | { error: string } {
-  // Par défaut (Apache 2.4) : AllowOverride None ; puis le serveur, puis l'hôte virtuel.
+  // By default (Apache 2.4): AllowOverride None; then the server, then the virtual host.
   const r: Settings = { overrides: new Set(), index: ['index.html'], lists: true, rewrite: { rules: [] } };
   apply(r, c.config.principal.lines);
   if (c.host !== c.config.principal) apply(r, c.host.lines);
   const all = [...c.config.principal.sections, ...c.host.sections];
-  // Les répertoires du chemin, de / au plus profond qui existe.
+  // The directories of the path, from / to the deepest one that exists.
   const parts = file.split('/').filter(Boolean);
   const directories = ['/'];
   for (let i = 1; i <= parts.length; i++) {
@@ -760,7 +760,7 @@ function settingsFor(game: Game, c: Context, file: string, url: string): Setting
   return r;
 }
 
-// Une règle de mod_rewrite : [motif, cible, drapeaux] et ses conditions.
+// A mod_rewrite rule: [pattern, target, flags] and its conditions.
 interface Result {
   path?: string;
   httpRequest?: string;
@@ -778,7 +778,7 @@ function flags(text: string | undefined): Record<string, string> {
   return d;
 }
 
-/** Applique les règles (contexte serveur : sur l'URL ; par répertoire : sur le chemin sans le préfixe du répertoire). */
+/** Applies the rules (server context: on the URL; per directory: on the path without the directory's prefix). */
 function rewrite(
   game: Game,
   rules: Line[],
@@ -805,7 +805,7 @@ function rewrite(
       continue;
     }
     if (not ? m : !m) continue;
-    // Les conditions (toutes, ou l'une avec [OR]) ; %1 renvoie à la dernière qui a réussi.
+    // The conditions (all of them, or one with [OR]); %1 refers to the last one that matched.
     let last: RegExpExecArray | null = null;
     let ok = true;
     for (let i = 0; i < conds.length; i++) {
@@ -826,7 +826,7 @@ function rewrite(
       if (negation) yes = !yes;
       if ('OR' in c.flags) {
         if (yes) {
-          // Les conditions liées par [OR] : une suffit, on saute les suivantes du groupe.
+          // Conditions joined by [OR]: one is enough, the following ones of the group are skipped.
           while (i < conds.length - 1 && 'OR' in conds[i].flags) i++;
           continue;
         }
@@ -859,8 +859,8 @@ const listPage = (url: string, names: string[]) =>
   `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n<html>\n <head>\n  <title>Index of ${url}</title>\n </head>\n <body>\n<h1>Index of ${url}</h1>\n<ul>${names.map((n) => `<li><a href="${n}"> ${n}</a></li>`).join('\n')}</ul>\n</body></html>`;
 
 /**
- * Une requête vers Apache, sur 127.0.0.1:port : null si Apache n'écoute pas
- * là. `demande` porte les en-têtes reçus (Host choisit l'hôte virtuel).
+ * A request to Apache, on 127.0.0.1:port: null if Apache isn't listening
+ * there. `demande` carries the headers received (Host picks the virtual host).
  */
 export function answer(game: Game, port: number, path: string, request: Request = { headers: {}, address: '127.0.0.1' }): ApacheResponse {
   const config: Configuration = game.state.apache.load;
@@ -884,7 +884,7 @@ export function answer(game: Game, port: number, path: string, request: Request 
     SERVER_NAME: h.name ?? name,
   });
   const link = (target: string) => `http://${requestHost}${target.startsWith('/') ? target : `/${target}`}`;
-  // Le contexte serveur (RewriteEngine dans le VirtualHost) : une seule fois, sur l'URL.
+  // The server context (RewriteEngine in the VirtualHost): only once, on the URL.
   if (h.rewrite.engine && h.rewrite.rules.length) {
     const r = rewrite(game, h.rewrite.rules, url, variables(root + url), link);
     if (r?.code) return errorPage(c, r.code, r.link);
@@ -893,7 +893,7 @@ export function answer(game: Game, port: number, path: string, request: Request 
       if (r.httpRequest !== undefined) httpRequest = r.httpRequest;
     }
   }
-  // Une redirection interne (règle par répertoire) recommence le traitement ; au plus 10 fois.
+  // An internal redirect (per-directory rule) restarts processing; at most 10 times.
   let finished = false;
   for (let turn = 0; turn <= 10; turn++) {
     const file = root + url;
@@ -904,7 +904,7 @@ export function answer(game: Game, port: number, path: string, request: Request 
     }
     const rr = r.rewrite;
     if (!finished && rr.engine && rr.rules.length && rr.directory) {
-      // Le chemin, sans le répertoire des règles (ni barre au début).
+      // The path, without the rules' directory (nor a leading slash).
       const prefix = rr.directory === '/' ? '/' : `${rr.directory}/`;
       const subject = file.startsWith(prefix) ? file.slice(prefix.length) : file === rr.directory ? '' : null;
       if (subject !== null) {
@@ -937,7 +937,7 @@ export function answer(game: Game, port: number, path: string, request: Request 
     const n = game.find(file);
     if (!n) return errorPage(c, 404);
     if (n.type === 'directory') {
-      // mod_dir : un répertoire sans barre finale est redirigé vers l'adresse avec la barre.
+      // mod_dir: a directory without a trailing slash is redirected to the address with the slash.
       if (!url.endsWith('/')) return errorPage(c, 301, link(`${url}/`));
       const index = r.index.find((i) => game.find(`${file}${i}`)?.type === 'file');
       if (index) {
@@ -962,23 +962,23 @@ export function answer(game: Game, port: number, path: string, request: Request 
   return errorPage(c, 500);
 }
 
-/** Pour les vérifications du jeu : ce qu'Apache répond (sans rien écrire au journal), null s'il n'écoute pas sur ce port. */
+/** For the game's checks: what Apache answers (without writing anything to the log), null if it isn't listening on this port. */
 export function ask(game: Game, port: number, path: string, host: string): ApacheResponse | null {
   const app: App | undefined = game.state.apps?.[`127.0.0.1:${port}`];
   if (!app || app.service !== 'apache2' || systemd(game)?.services.apache2?.state !== 'active' || !game.state.apache?.load) return null;
   return answer(game, port, path, { headers: { host: host }, address: '127.0.0.1', trace: false });
 }
 
-/** Les adresses où Apache écoute (pour vérifier qu'il reste sur la boucle locale). */
+/** The addresses Apache listens on (to check that it stays on the loopback). */
 export const apacheListeners = (game: Game): { ip: string; port: number }[] =>
   systemd(game)?.services.apache2?.state === 'active' ? ((game.state.apache?.load as Configuration | null)?.listeners ?? []) : [];
 export const onlyLocal = (game: Game) => apacheListeners(game).length > 0 && apacheListeners(game).every((e) => loop(e.ip));
 
-// ——— apache2ctl -S et -M ———
+// ——— apache2ctl -S and -M ———
 
 const shows = (a: Address) => `${a.ip}:${a.port}`;
 
-/** apache2ctl -S : les hôtes virtuels, par adresse, puis le reste de la configuration. */
+/** apache2ctl -S: the virtual hosts, by address, then the rest of the configuration. */
 export function vhosts(config: Configuration): string {
   const nameFor = (h: Host) => h.name ?? config.globalName ?? '127.0.1.1';
   const byAddress = new Map<string, Host[]>();
@@ -1016,6 +1016,6 @@ export function vhosts(config: Configuration): string {
   return lines.join('\n');
 }
 
-/** apache2ctl -M : les modules chargés, dans l'ordre. */
+/** apache2ctl -M: the loaded modules, in order. */
 export const modulesCharges = (config: Configuration) =>
   ['Loaded Modules:', ...config.modules.map((m) => ` ${m}_module (${STATIC.includes(m) ? 'static' : 'shared'})`)].join('\n');

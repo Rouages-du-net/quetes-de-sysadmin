@@ -1,6 +1,6 @@
-// freeradius (radiusd) et radtest (freeradius-utils), sur le serveur RADIUS
-// simulé (../radius.ts). Sorties en anglais, comme les vrais outils.
-// Sources : https://manpages.debian.org/trixie/freeradius/freeradius.8.en.html,
+// freeradius (radiusd) and radtest (freeradius-utils), on the simulated
+// RADIUS server (../radius.ts). Outputs in English, like the real tools.
+// Sources: https://manpages.debian.org/trixie/freeradius/freeradius.8.en.html,
 // https://manpages.debian.org/trixie/freeradius-utils/radtest.1.en.html
 
 import type { Shell } from '../shell';
@@ -9,7 +9,7 @@ import type { Command } from './index';
 
 const VERSION = 'FreeRADIUS Version 3.2.7';
 
-// Une réponse comme radclient l'affiche : « Received Access-Accept … », puis les attributs.
+// A reply as radclient displays it: "Received Access-Accept …", then the attributes.
 function received(r: Response, id: number, forEachOf: string, to: string): string[] {
   const type = r.what === 'accept' ? 'Access-Accept' : 'Access-Reject';
   const length = 20 + r.attributes.reduce((t, a) => t + 3 + a.value.length, 0);
@@ -70,7 +70,7 @@ function freeradius(game: Shell, args: string[]): string {
       ].join('\n'),
       1,
     );
-  // radiusd -X : la configuration lue, puis les demandes des bornes traitées une à une.
+  // radiusd -X: the configuration read, then the access points' requests handled one by one.
   const before = game.state.radius;
   loadRadius(game);
   const conf = game.state.radius.conf;

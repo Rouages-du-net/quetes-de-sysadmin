@@ -1,14 +1,14 @@
-// Histoire « L'Effaceur » — chapitre 4 « La Sauvegarde » : rsync et cron.
-// Plus jamais ça : sauvegarder les souvenirs sur le disque de sauvegarde,
-// chaque nuit, automatiquement, et vérifier qu'on sait restaurer.
-//   1. rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/ (piège : sans la
-//      barre finale, on obtient souvenirs/souvenirs) ;
-//   2. crontab -e : une tâche de nuit. Le jeu fait passer la nuit dès que la
-//      crontab change : un nouveau souvenir arrivé dans la journée doit se
-//      retrouver dans la sauvegarde ; sinon, le courrier de cron explique ;
-//   3. au matin, un souvenir est effacé par erreur : le restaurer.
-// Piège : --delete recopie aussi les effacements.
-// Sources : https://download.samba.org/pub/rsync/rsync.1,
+// Story "L'Effaceur" — chapter 4 "The Backup": rsync and cron.
+// Never again: back up the memories onto the backup disk,
+// every night, automatically, and check that we know how to restore.
+//   1. rsync -a ~/memories/ /mnt/backup/memories/ (trap: without the
+//      trailing slash, you get memories/memories);
+//   2. crontab -e: a nightly job. The game makes the night pass as soon as the
+//      crontab changes: a new memory that arrived during the day must end up
+//      in the backup; otherwise, cron's mail explains;
+//   3. in the morning, a memory is deleted by mistake: restore it.
+// Trap: --delete also copies the deletions.
+// Sources: https://download.samba.org/pub/rsync/rsync.1,
 // https://manpages.debian.org/bookworm/cron/crontab.5.en.html
 
 import { path, d, f, name, type Chapter } from '../world';
@@ -21,11 +21,11 @@ const BACKUP = '/mnt/backup/memories';
 const FILES = ['first-letter.txt', 'lighthouse.txt', 'village.txt', 'nour.txt', 'eraser.txt'];
 const NEW = 'lighthouse-festival.txt';
 const ERASES = 'first-letter.txt';
-// La nuit du vendredi au samedi 24 octobre 2026, de minuit à 6 h.
+// The night from Friday to Saturday 24 October 2026, from midnight to 6 am.
 const NIGHT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
 
 const originals = (j: Game): Record<string, string> => j.state.originals;
-// La sauvegarde contient-elle ces souvenirs, à l'identique ?
+// Does the backup contain these memories, identical?
 const saved = (j: Game, names: string[]) => names.every((n) => j.read(path(j.t, `${BACKUP}/${n}`)) === originals(j)[n]);
 const nightTasks = (j: Game) =>
   parse(j.state.crontabs?.[j.player] ?? '', '').tasks.filter((t) => {
@@ -60,13 +60,13 @@ export const backup: Chapter = {
       mnt: d({ backup: d({}) }, undefined, { owner: 'root' }),
       tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwx' }),
     }),
-  // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
+  // As soon as the crontab changes, the night passes: cron runs what falls between midnight and 6 am.
   afterCommand: (j) => {
     if ((j.state.crontabVersion ?? 0) === j.state.nightVersion || !j.state.crontabs?.[j.player] || j.flags.has('night-ok')) return;
     j.state.nightVersion = j.state.crontabVersion;
     const chunks: string[] = [];
     if (!j.flags.has('day')) {
-      // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
+      // The day's memory, arrived before the night: the job must take it along.
       j.flags.add('day');
       const n = j.find(path(j.t, MEMORIES));
       if (n?.type === 'directory') n.children[name(j.t, NEW)] = f(j.t('backup-memory-lighthouse-festival'));
@@ -80,7 +80,7 @@ export const backup: Chapter = {
       .join('\n\n');
     if (saved(j, [...FILES, NEW])) {
       j.flags.add('night-ok');
-      // Au matin, l'erreur humaine.
+      // In the morning, the human error.
       j.erase(path(j.t, `${MEMORIES}/${ERASES}`));
       chunks.push(j.t('backup-night-ok', { file: name(j.t, NEW) }), j.t('backup-morning', { file: name(j.t, ERASES) }));
     } else if (!executions.length) chunks.push(j.t('backup-night-nothing'));

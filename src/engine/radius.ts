@@ -1,20 +1,20 @@
-// FreeRADIUS 3 sur une machine (etat.radius) : le serveur qui dit oui ou non
-// aux bornes Wi-Fi d'entreprise (802.1X), d'après l'annuaire LDAP.
-//   - la configuration (/etc/freeradius/3.0) : clients.conf (les bornes qui
-//     ont le droit de poser des questions, et leur secret partagé), le module
-//     ldap (mods-enabled/ldap, un lien vers mods-available/ldap), le fichier
-//     des réponses (mods-config/files/authorize, « users ») ; lue au
-//     démarrage du service, comme radiusd ;
-//   - une demande (Access-Request) : la borne doit être un client connu, avec
-//     le bon secret ; le module ldap trouve la personne (uid) et son
-//     userPassword, pap compare le mot de passe ; le fichier users ajoute
-//     les réponses (le VLAN : Tunnel-Private-Group-Id), d'après Ldap-Group.
-// Sources : https://www.freeradius.org/documentation/freeradius-server/3.2.8/,
+// FreeRADIUS 3 on a machine (state.radius): the server that says yes or no
+// to enterprise Wi-Fi access points (802.1X), based on the LDAP directory.
+//   - the configuration (/etc/freeradius/3.0): clients.conf (the access points
+//     allowed to ask questions, and their shared secret), the ldap
+//     module (mods-enabled/ldap, a link to mods-available/ldap), the
+//     answers file (mods-config/files/authorize, "users"); read when the
+//     service starts, like radiusd;
+//   - a request (Access-Request): the access point must be a known client, with
+//     the right secret; the ldap module finds the person (uid) and their
+//     userPassword, pap compares the password; the users file adds
+//     the replies (the VLAN: Tunnel-Private-Group-Id), based on Ldap-Group.
+// Sources: https://www.freeradius.org/documentation/freeradius-server/3.2.8/,
 // https://wiki.freeradius.org/modules/Rlm_ldap, https://wiki.freeradius.org/config/Users,
-// https://www.rfc-editor.org/rfc/rfc3580 (VLAN par RADIUS)
-// Écarts : pas d'EAP simulé (les bornes parlent PAP, comme EAP-TTLS/PAP
-// dans le tunnel), pas de comptabilité (accounting), ni de sites autres que
-// default ; une syntaxe de configuration simplifiée (sections, clé = valeur).
+// https://www.rfc-editor.org/rfc/rfc3580 (VLAN through RADIUS)
+// Differences: no simulated EAP (the access points speak PAP, like EAP-TTLS/PAP
+// inside the tunnel), no accounting, no sites other than
+// default; a simplified configuration syntax (sections, key = value).
 
 import type { Game } from './shell';
 import { directory, normalise, find as findLdap, check, type Directory, type Input } from './ldap';
@@ -24,7 +24,7 @@ import { writeLog, systemd } from './systemd';
 
 export const DIRECTORY = '/etc/freeradius/3.0';
 
-// ——— La syntaxe des fichiers de configuration ———
+// ——— Configuration file syntax ———
 
 export interface Section {
   name: string;
@@ -33,7 +33,7 @@ export interface Section {
   sections: Section[];
 }
 
-/** Lit un fichier de configuration de FreeRADIUS ; lève une erreur au format de radiusd. */
+/** Reads a FreeRADIUS configuration file; throws an error in radiusd's format. */
 export function readConfRadius(text: string, file: string): Section {
   const root: Section = { name: '', args: [], values: {}, sections: [] };
   const stack = [root];
@@ -61,7 +61,7 @@ export function readConfRadius(text: string, file: string): Section {
       return;
     }
     if (/^[\w.-]+(\s+[\w.-]+)*$/.test(line)) {
-      // Un nom seul (un module listé dans authorize { … }), ou une section sans accolade.
+      // A bare name (a module listed in authorize { … }), or a section without a brace.
       if (/^(client|ldap|user|group)\b/.test(line) && stack.length === 1)
         throw new Error(`${place}: Expecting section start brace '{' after "${line}"`);
       stack.at(-1)!.values[line] = '';
@@ -73,7 +73,7 @@ export function readConfRadius(text: string, file: string): Section {
   return root;
 }
 
-// ——— Le fichier users (mods-config/files/authorize) ———
+// ——— The users file (mods-config/files/authorize) ———
 
 export interface UsersInput {
   name: string;
@@ -120,7 +120,7 @@ export function readUsers(text: string, file: string): UsersInput[] {
   return inputs;
 }
 
-// ——— La configuration chargée ———
+// ——— The loaded configuration ———
 
 export interface ConfRadius {
   clients: { name: string; network: string; secret: string }[];
@@ -128,7 +128,7 @@ export interface ConfRadius {
   users: UsersInput[];
 }
 
-/** Lit toute la configuration, comme radiusd au démarrage (ou freeradius -XC) ; les erreurs en lignes. */
+/** Reads the whole configuration, like radiusd at start-up (or freeradius -XC); errors as lines. */
 export function readRadius(j: Game): { conf: ConfRadius | null; errors: string[] } {
   const read = (f: string) => j.read(`${DIRECTORY}/${f}`);
   try {
@@ -169,10 +169,10 @@ export function readRadius(j: Game): { conf: ConfRadius | null; errors: string[]
 export const radius = (j: Game) => j.state.radius as { conf: ConfRadius | null } | undefined;
 export const inWorks = (j: Game) => systemd(j)?.services.freeradius?.state === 'active';
 
-// ——— Une demande ———
+// ——— A request ———
 
 export interface Request {
-  // D'où vient la demande : la borne (son adresse et l'interface du routeur), ou le routeur lui-même (radtest).
+  // Where the request comes from: the access point (its address and the router's interface), or the router itself (radtest).
   client: string;
   iif: string;
   secret: string;
@@ -181,10 +181,10 @@ export interface Request {
 }
 
 export interface Response {
-  // accept, reject, ou rien (la demande est ignorée : pas de réponse du tout).
+  // accept, reject, or nothing (the request is ignored: no reply at all).
   what: 'accept' | 'reject' | 'nothing';
   attributes: { attr: string; value: string }[];
-  // Ce que radiusd écrit (journal, ou radiusd -X).
+  // What radiusd writes (log, or radiusd -X).
   log: string[];
 }
 
@@ -196,19 +196,19 @@ const groupFor = (a: Directory, conf: NonNullable<ConfRadius['ldap']>, uid: stri
       ((e.attrs.cn ?? []).includes(group) || normalise(e.dn) === normalise(group)),
   );
   if (!g) return false;
-  // Par défaut, rlm_ldap cherche l'attribut memberOf de l'utilisateur ; membership_filter permet memberUid.
+  // By default, rlm_ldap looks for the user's memberOf attribute; membership_filter allows memberUid.
   if (conf.byMemberUid) return (g.attrs.memberuid ?? []).includes(uid);
   return (user.attrs.memberof ?? []).some((m) => normalise(m) === normalise(g.dn));
 };
 
-/** Ce que répond radiusd à une demande, avec cette configuration chargée. */
+/** What radiusd answers to a request, with this configuration loaded. */
 export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; ruleset?: Ruleset; works?: boolean } = {}): Response {
   const conf = o.conf !== undefined ? o.conf : (radius(j)?.conf ?? null);
   const works = o.works ?? inWorks(j);
   const log: string[] = [];
   const nothing = (): Response => ({ what: 'nothing', attributes: [], log });
   if (!works || !conf) return nothing();
-  // La chaîne input du pare-feu : UDP 1812 vers le routeur.
+  // The firewall's input chain: UDP 1812 to the router.
   const pkg = {
     iif: d.iif,
     oif: '',
@@ -236,7 +236,7 @@ export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; rules
     log.push(`Auth: (0) Login incorrect (${reason}): [${d.user}] (from client ${client.name} port 0)`);
     return { what: 'reject', attributes: [], log };
   };
-  // Le module ldap : se présenter, trouver la personne, lire son userPassword.
+  // The ldap module: bind, find the person, read their userPassword.
   const l = conf.ldap;
   const a = directory(j);
   let input: Input | undefined;
@@ -262,7 +262,7 @@ export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; rules
       return refusal('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
     }
   }
-  // Le mot de passe « connu » : seulement si l'identité du module a le droit de lire userPassword.
+  // The "known" password: only if the module's identity is allowed to read userPassword.
   const admin = !!l?.identity && normalise(l.identity) === normalise(a?.admin ?? '');
   const known = input && admin ? (input.attrs.userpassword ?? []) : [];
   if (!known.length) {
@@ -270,7 +270,7 @@ export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; rules
     return refusal('No Auth-Type found: rejecting the user via Post-Auth-Type = Reject');
   }
   if (!known.some((v) => check(v, d.password))) return refusal('pap: Password comparison failed');
-  // Le fichier users : la première entrée qui correspond (et les suivantes si Fall-Through).
+  // The users file: the first matching entry (and the next ones if Fall-Through).
   const attributes: Response['attributes'] = [];
   for (const u of conf.users) {
     if (u.name !== 'DEFAULT' && u.name !== d.user) continue;
@@ -295,7 +295,7 @@ export function handle(j: Game, d: Request, o: { conf?: ConfRadius | null; rules
   return { what: 'accept', attributes, log };
 }
 
-/** Le VLAN qu'une réponse donne (Tunnel-Private-Group-Id), s'il est complet (avec Tunnel-Type et Tunnel-Medium-Type). */
+/** The VLAN a reply gives (Tunnel-Private-Group-Id), if complete (with Tunnel-Type and Tunnel-Medium-Type). */
 export function vlanFor(r: Response): number | null {
   const v = (n: string) => r.attributes.find((x) => x.attr.replace(/:\d+$/, '') === n)?.value;
   if (r.what !== 'accept' || v('Tunnel-Type') !== 'VLAN' || !['IEEE-802', '6'].includes(v('Tunnel-Medium-Type') ?? '')) return null;
@@ -303,7 +303,7 @@ export function vlanFor(r: Response): number | null {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
-/** Au démarrage de freeradius : la configuration est lue (et gardée) ; les demandes des bornes sont journalisées. */
+/** When freeradius starts: the configuration is read (and kept); the access points' requests are logged. */
 export function loadRadius(j: Game, requests: Request[] = []) {
   const { conf } = readRadius(j);
   j.state.radius = { conf };

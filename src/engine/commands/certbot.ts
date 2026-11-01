@@ -1,21 +1,21 @@
-// certbot et openssl : les certificats TLS de Let's Encrypt.
+// certbot and openssl: Let's Encrypt's TLS certificates.
 //
-// certbot (https://eff-certbot.readthedocs.io/en/stable/using.html) garde
-// chaque certificat dans /etc/letsencrypt/live/<nom>/ et la façon de le
-// renouveler dans /etc/letsencrypt/renewal/<nom>.conf. Avec le module
-// webroot, il dépose un fichier « défi » dans le dossier du site
-// (<webroot>/.well-known/acme-challenge/) ; l'autorité de certification va
-// le chercher en HTTP, sur le port 80 : ici, c'est le nginx simulé qui
-// répond (nginx.ts). Les deploy hooks tournent après un renouvellement
-// réussi (jamais pendant --dry-run). L'autorité est simulée, sans réseau.
+// certbot (https://eff-certbot.readthedocs.io/en/stable/using.html) keeps
+// each certificate in /etc/letsencrypt/live/<name>/ and how to renew it in
+// /etc/letsencrypt/renewal/<name>.conf. With the webroot plugin, it puts a
+// "challenge" file in the site's directory
+// (<webroot>/.well-known/acme-challenge/); the certificate authority fetches
+// it over HTTP, on port 80: here, the simulated nginx answers (nginx.ts).
+// Deploy hooks run after a successful renewal (never during --dry-run).
+// The authority is simulated, with no network.
 //
-// openssl (https://docs.openssl.org/3.5/man1/) : x509 pour lire un
-// certificat, s_client pour voir celui que présente un serveur.
+// openssl (https://docs.openssl.org/3.5/man1/): x509 to read a
+// certificate, s_client to see the one a server presents.
 //
-// Écarts : un seul certificat géré (celui du chapitre) ; les fichiers de
-// live/ sont réécrits au lieu d'être des liens vers archive/ ; s_client
-// rend la main tout de suite ; le module nginx de certbot ne modifie pas la
-// configuration (il sert seulement le défi et recharge nginx).
+// Differences: a single managed certificate (the chapter's); the files in
+// live/ are rewritten instead of being links to archive/; s_client returns
+// immediately; certbot's nginx plugin does not change the configuration
+// (it only serves the challenge and reloads nginx).
 
 import type { Shell } from '../shell';
 import { reload, systemd, toUtc } from '../systemd';
@@ -29,13 +29,13 @@ const DASHES = '- '.repeat(40).trim();
 const DAY = 86_400_000;
 const LOG = 'Saving debug log to /var/log/letsencrypt/letsencrypt.log';
 
-// ——— Fichier de renouvellement (format ConfigObj de certbot) ———
+// ——— Renewal file (certbot's ConfigObj format) ———
 
 export interface Renewal {
-  // Les lignes du début (chemins des fichiers) et celles de [renewalparams].
+  // The lines at the top (file paths) and those of [renewalparams].
   header: Record<string, string>;
   params: Record<string, string>;
-  // [[webroot_map]] : le dossier du défi pour chaque nom.
+  // [[webroot_map]]: the challenge directory for each name.
   map: Record<string, string>;
 }
 
@@ -69,7 +69,7 @@ export function writeRenewal(r: Renewal): string {
   ].join('\n');
 }
 
-// ——— Le certificat géré ———
+// ——— The managed certificate ———
 
 const files = (name: string) => ({
   conf: `${FOR}/renewal/${name}.conf`,
@@ -79,7 +79,7 @@ const files = (name: string) => ({
   key: `${FOR}/live/${name}/privkey.pem`,
 });
 
-/** Le certificat intermédiaire de Let's Encrypt (pour chain.pem). */
+/** Let's Encrypt's intermediate certificate (for chain.pem). */
 export const INTERMEDIATE = pem({
   cn: 'E6',
   names: [],
@@ -89,11 +89,11 @@ export const INTERMEDIATE = pem({
   end: Date.UTC(2027, 2, 12, 23, 59, 59),
 });
 
-/** Une clé privée ECDSA (factice), au format PEM. */
+/** An ECDSA private key (fake), in PEM format. */
 export const privateKey = (seed: string) =>
   ['-----BEGIN PRIVATE KEY-----', ...btoa(`quetes-cle:${seed}:`.padEnd(138, '0')).match(/.{1,64}/g)!, '-----END PRIVATE KEY-----'].join('\n');
 
-/** Les fichiers d'un certificat, à poser dans live/<nom>/. */
+/** A certificate's files, to put in live/<name>/. */
 export function certificateFiles(c: Certificate) {
   const cert = pem(c);
   return { 'cert.pem': cert, 'chain.pem': INTERMEDIATE, 'fullchain.pem': `${cert}\n${INTERMEDIATE}`, 'privkey.pem': privateKey(c.serial) };
@@ -101,7 +101,7 @@ export function certificateFiles(c: Certificate) {
 
 const now = (game: Shell) => toUtc(systemd(game)?.clock ?? 0);
 
-// Le nom du certificat géré : le seul fichier de renewal/.
+// The name of the managed certificate: the only file in renewal/.
 function managedCertificate(game: Shell): string | null {
   const n = game.find(`${FOR}/renewal`);
   if (n?.type !== 'directory') return null;
@@ -112,7 +112,7 @@ function managedCertificate(game: Shell): string | null {
   );
 }
 
-// ——— Options de la ligne de commande ———
+// ——— Command-line options ———
 
 interface Options {
   dryRun: boolean;
@@ -154,7 +154,7 @@ function parse(args: string[]): Options {
     else if (a === '--nginx') o.plugin = 'nginx';
     else if (a === '--standalone') o.plugin = 'standalone';
     else if (a === '-m' || a === '--email') value();
-    // Options sans effet ici (questions, discrétion).
+    // Options with no effect here (questions, quietness).
     else if (
       !['-n', '--non-interactive', '--agree-tos', '-q', '--quiet', '--no-random-sleep-on-renew', '--keep-until-expiring', '--keep'].includes(a)
     )
@@ -163,19 +163,19 @@ function parse(args: string[]): Options {
   return o;
 }
 
-// ——— Le défi HTTP-01 ———
+// ——— The HTTP-01 challenge ———
 
-// Le jeton du défi, comme ceux de Let's Encrypt (base64url, 43 caractères).
+// The challenge token, like Let's Encrypt's (base64url, 43 characters).
 const token = (seed: string) => btoa(seed.padEnd(32, '-')).replace(/[+/=]/g, '').slice(0, 43).padEnd(43, 'Q');
 
 /**
- * L'autorité vient chercher le défi de chaque nom, sur le port 80. Renvoie
- * les erreurs au format de certbot (vide : tout est bon). `effets` : sinon,
- * on ne fait que vérifier (pas de fichier déposé, rien d'écrit).
+ * The authority fetches each name's challenge, on port 80. Returns the
+ * errors in certbot's format (empty: all is well). `trace`: otherwise, we
+ * only check (no file put in place, nothing written).
  */
 export function challenges(game: Shell, r: Renewal, names: string[], trial: number, trace = true): string[] {
   const errors: string[] = [];
-  // Le module nginx de certbot sert lui-même le défi, quel que soit le dossier du site.
+  // certbot's nginx plugin serves the challenge itself, whatever the site's directory.
   if (r.params.authenticator === 'nginx') return game.find('/usr/lib/python3/dist-packages/certbot_nginx') ? [] : ['plugin'];
   for (const name of names) {
     const directory = (r.map[name] ?? r.params.webroot_path ?? '').replace(/,$/, '').replace(/\/$/, '');
@@ -186,7 +186,7 @@ export function challenges(game: Shell, r: Renewal, names: string[], trial: numb
     }
     const t = token(`${name}-${trial}`);
     const path = `/.well-known/acme-challenge/${t}`;
-    // certbot (root) crée les dossiers et dépose le fichier, lisible par tous.
+    // certbot (root) creates the directories and puts the file there, readable by all.
     const before = game.who;
     game.who = 'root';
     let challengePlace = directory;
@@ -205,7 +205,7 @@ export function challenges(game: Shell, r: Renewal, names: string[], trial: numb
   return errors;
 }
 
-/** Le renouvellement automatique (celui du timer) réussirait-il, avec la configuration actuelle ? */
+/** Would the automatic renewal (the timer's) succeed with the current configuration? */
 export function possibleRenewal(game: Shell): boolean {
   const name = managedCertificate(game);
   if (!name) return false;
@@ -214,10 +214,10 @@ export function possibleRenewal(game: Shell): boolean {
   return !!c && challenges(game, r, c.names, 0, false).length === 0;
 }
 
-// Ce qui relance nginx dans une commande ou un script.
+// What restarts nginx in a command or a script.
 const RELOAD = /(systemctl\s+(reload|restart|reload-or-restart)\s+nginx|nginx\s+-s\s+reload|service\s+nginx\s+(reload|restart))/;
 
-/** Après un renouvellement, nginx sera-t-il rechargé tout seul (deploy hook, ou module nginx) ? */
+/** After a renewal, will nginx be reloaded on its own (deploy hook, or nginx plugin)? */
 export function automaticReload(game: Shell): boolean {
   const name = managedCertificate(game);
   if (!name) return false;
@@ -242,7 +242,7 @@ function deploymentScripts(game: Shell) {
     });
 }
 
-// Lance les deploy hooks (en root, comme certbot), et le rechargement du module nginx.
+// Runs the deploy hooks (as root, like certbot), and the nginx plugin's reload.
 function deployer(game: Shell, r: Renewal, sec: boolean): string[] {
   const lines: string[] = [];
   const execute = (command: string) => {
@@ -275,11 +275,11 @@ function deployer(game: Shell, r: Renewal, sec: boolean): string[] {
   return lines;
 }
 
-// Un nouveau certificat de 90 jours (Let's Encrypt antidate d'une heure).
+// A new 90-day certificate (Let's Encrypt backdates by one hour).
 function issue(game: Shell, name: string, old: Certificate) {
   const start = Math.floor((now(game) - 3600_000) / 1000) * 1000;
   const n = (game.state.certbotIssued = (game.state.certbotIssued ?? 0) + 1);
-  // Un nouveau numéro de série (hexadécimal, tiré du précédent).
+  // A new serial number (hexadecimal, derived from the previous one).
   const serial = [...`${old.serial}${n}`].reduce((h, car) => Math.imul(h ^ car.charCodeAt(0), 0x01000193) >>> 0, 0x811c9dc5);
   const hexSerial = Array.from({ length: 5 }, (_, i) => ((Math.imul(serial, i + 7) >>> 0) ^ (serial >>> i)).toString(16).padStart(8, '0'))
     .join('')
@@ -307,9 +307,9 @@ function issue(game: Shell, name: string, old: Certificate) {
 const namesList = (names: string[]) => (names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0]);
 
 /**
- * Un renouvellement (renew, certonly, reconfigure, ou le timer) : renvoie la
- * sortie, et si c'est réussi. `cli` : les options de la ligne de commande,
- * qui remplacent celles du fichier (et y sont enregistrées si ça réussit).
+ * A renewal (renew, certonly, reconfigure, or the timer): returns the
+ * output, and whether it succeeded. `cli`: the command-line options, which
+ * override those of the file (and are saved there if it succeeds).
  */
 function renew(
   game: Shell,
@@ -322,7 +322,7 @@ function renew(
   const text = game.read(f.conf);
   if (!old || text === null) return { lines: [], ok: false, error: `Renewal configuration file ${f.conf} is broken.` };
   const r = readRenewal(text);
-  // Les options données ici remplacent celles du fichier.
+  // The options given here override those of the file.
   const fresh: Renewal = { header: { ...r.header }, params: { ...r.params }, map: { ...r.map } };
   if (o.plugin === 'nginx') {
     fresh.params.authenticator = 'nginx';
@@ -332,7 +332,7 @@ function renew(
   } else if (o.paths.length) {
     fresh.params.authenticator = 'webroot';
     fresh.params.webroot_path = `${o.paths.join(', ')},`;
-    // -w s'applique aux -d qui le suivent ; sans -d, à tous les noms.
+    // -w applies to the -d options that follow it; without -d, to all names.
     fresh.map = Object.fromEntries(old.names.map((n) => [n, o.paths.at(-1)!]));
   }
   if (o.hook !== null) fresh.params.renew_hook = o.hook;
@@ -385,7 +385,7 @@ function renew(
     return { lines, ok: false };
   }
   if (!sec) issue(game, name, old);
-  // Réussi : certbot réécrit le fichier de renouvellement avec les options utilisées.
+  // Success: certbot rewrites the renewal file with the options used.
   if (!o.dryRun) {
     const before = game.who;
     game.who = 'root';
@@ -420,7 +420,7 @@ function renew(
   return { lines, ok: true };
 }
 
-/** Pour systemd : le service certbot (lancé par certbot.timer) renouvelle ce qui doit l'être. */
+/** For systemd: the certbot service (started by certbot.timer) renews what needs renewing. */
 export function serviceCertbot(game: Shell): string[] | null {
   const name = managedCertificate(game);
   if (!name) return null;
@@ -599,7 +599,7 @@ export const CERTBOT: Record<string, Command> = {
   },
 };
 
-// Pour les chapitres : le certificat présenté par nginx pour ce nom est-il bon maintenant ?
+// For the chapters: is the certificate nginx presents for this name good now?
 export const goodServedCertificate = (game: Shell, name: string) => {
   const r = httpRequest(game, name, '/', 443, false);
   return !!r?.certificate && checkCertificate(game, r.certificate, name) === null;

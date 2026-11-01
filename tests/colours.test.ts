@@ -1,6 +1,6 @@
-// Les couleurs des sorties : comme les vrais outils, seulement à l'écran
-// (--color=auto), jamais dans un tube ni un fichier, sauf --color=always ;
-// les événements lisent la sortie sans les codes.
+// Output colours: like the real tools, only on screen
+// (--color=auto), never in a pipe or a file, unless --color=always;
+// events read the output without the codes.
 import { describe, expect, it } from 'vitest';
 import { machinesInLanguage } from './names';
 import { Shell } from '../src/engine/shell';
@@ -15,8 +15,8 @@ const shell = (id: string) => {
   return s;
 };
 
-describe('Couleurs des sorties', () => {
-  it('ls : les lieux en bleu gras, le / hors de la couleur ; rien dans un tube ni un fichier', () => {
+describe('Output colours', () => {
+  it('ls: places in bold blue, the / outside the colour; nothing in a pipe or a file', () => {
     const s = shell('root');
     const screen = s.execute('ls')!;
     expect(screen).toContain(`${ESC}[01;34msouvenirs${ESC}[0m/`);
@@ -24,22 +24,22 @@ describe('Couleurs des sorties', () => {
     expect(s.execute('ls | cat')).not.toContain(ESC);
     expect(s.execute('ls | cat')).toContain('souvenirs');
     expect(s.execute('ls --color=never')).not.toContain(ESC);
-    // --color=always : les codes partent aussi dans le tube, comme sur un vrai système.
+    // --color=always: the codes also go into the pipe, as on a real system.
     expect(s.execute('ls --color=always | grep -c souvenirs')).toBe('1');
     expect(s.execute('ls --color=always | grep souvenirs')).toContain(`${ESC}[01;34m`);
-    // Sans couleurs à l'écran (réglage coupé), rien non plus.
+    // Without colours on screen (setting turned off), nothing either.
     s.colours = false;
     expect(s.execute('ls')).not.toContain(ESC);
   });
 
-  it('ls -l : seul le nom est coloré ; --color=n’importe-quoi donne le message de coreutils', () => {
+  it('ls -l: only the name is coloured; --color=anything gives coreutils’ message', () => {
     const s = shell('root');
     const long = s.execute('ls -l')!;
     expect(long.split('\n').find((l) => l.includes('souvenirs'))).toMatch(new RegExp(`^drwx.* ${ESC}\\[01;34msouvenirs${ESC}\\[0m/$`));
     expect(s.execute('ls --color=parfois')).toContain('argument « parfois » incorrect pour « --color »');
   });
 
-  it('grep : le motif surligné, pas avec -v ; la sortie des événements reste sans codes', () => {
+  it('grep: the pattern highlighted, not with -v; the output events read stays without codes', () => {
     const s = shell('root');
     const found = s.execute('grep -i effaceur journal.txt')!;
     expect(found).toMatch(new RegExp(`${ESC}\\[01;31m[Ee]ffaceur${ESC}\\[0m`));
@@ -49,7 +49,7 @@ describe('Couleurs des sorties', () => {
     expect(s.execute('grep --color=never -i effaceur journal.txt')).not.toContain(ESC);
   });
 
-  it('morceaux : les séquences lues comme un terminal', () => {
+  it('pieces: sequences read like a terminal', () => {
     expect(chunks(`a${ESC}[01;34mb${ESC}[0mc${ESC}[36m${ESC}[Kd`)).toEqual([
       { text: 'a', bold: false, before: null, background: null },
       { text: 'b', bold: true, before: 34, background: null },
@@ -60,18 +60,18 @@ describe('Couleurs des sorties', () => {
   });
 });
 
-describe('Couleurs de systemctl et de diff', () => {
-  it('systemctl status : le point vert d’un service actif, la croix rouge d’un échec', () => {
+describe('systemctl and diff colours', () => {
+  it('systemctl status: the green dot of an active service, the red cross of a failure', () => {
     const s = shell('reboot-night');
     const failure = s.execute('systemctl status catalogue')!;
     expect(failure).toContain(`${ESC}[0;1;31m×${ESC}[0m catalogue.service`);
     expect(failure).toContain(`${ESC}[0;1;31mfailed${ESC}[0m (Result:`);
     expect(s.execute('systemctl --failed')).toContain(`${ESC}[0;1;31m●${ESC}[0m`);
-    // Dans un tube : rien.
+    // In a pipe: nothing.
     expect(s.execute('systemctl status catalogue | head -n 1')).not.toContain(ESC);
   });
 
-  it('diff : sans couleur par défaut ; --color à l’écran : rouge et vert', () => {
+  it('diff: no colour by default; --color on screen: red and green', () => {
     const s = shell('bare-repo');
     s.execute('echo un > a.txt');
     s.execute('echo deux > b.txt');
@@ -83,8 +83,8 @@ describe('Couleurs de systemctl et de diff', () => {
   });
 });
 
-describe('Couleurs de journalctl, ip -c et git', () => {
-  it('journalctl : les erreurs en rouge gras, à l’écran seulement', () => {
+describe('journalctl, ip -c and git colours', () => {
+  it('journalctl: errors in bold red, on screen only', () => {
     const s = shell('reboot-night');
     s.execute('sudo -l');
     s.execute(machinesInLanguage(s.t, 'bienvenue-2026'));
@@ -95,7 +95,7 @@ describe('Couleurs de journalctl, ip -c et git', () => {
     expect(s.execute('sudo journalctl -u catalogue | head -n 3')).not.toContain(ESC);
   });
 
-  it('ip -c : nom en cyan, UP en vert, MAC en jaune, IPv4 en magenta ; sans -c, rien', () => {
+  it('ip -c: name in cyan, UP in green, MAC in yellow, IPv4 in magenta; without -c, nothing', () => {
     const s = shell('vlan');
     const a = s.execute('ip -c a')!;
     expect(a).toContain(`2: ${ESC}[36meth0${ESC}[0m:`);
@@ -104,11 +104,11 @@ describe('Couleurs de journalctl, ip -c et git', () => {
     expect(a).toContain(`inet ${ESC}[35m192.0.2.21/24${ESC}[0m`);
     expect(s.execute('ip a')).not.toContain(ESC);
     expect(s.execute('ip -br -color=never a')).not.toContain(ESC);
-    // -c (always) : même dans un tube, comme iproute2.
+    // -c (always): even in a pipe, like iproute2.
     expect(s.execute('ip -c -br a | grep eth0')).toContain(`${ESC}[36m`);
   });
 
-  it('git : diff en rouge et vert, status (non suivi en rouge), --no-color', () => {
+  it('git: diff in red and green, status (untracked in red), --no-color', () => {
     const s = shell('bare-repo');
     s.execute('cd gazette');
     s.execute('echo nouveau > essai.txt');
@@ -119,7 +119,7 @@ describe('Couleurs de journalctl, ip -c et git', () => {
     expect(d).toContain(`${ESC}[32m+ajout${ESC}[0m`);
     expect(d).toContain(`${ESC}[1mdiff --git`);
     expect(s.execute('git diff | cat')).not.toContain(ESC);
-    // git log : les commits en jaune.
+    // git log: commits in yellow.
     expect(s.execute('git log --oneline')).toMatch(new RegExp(`^${ESC}\\[33m[0-9a-f]{7}${ESC}\\[0m `));
   });
 });

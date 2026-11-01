@@ -1,17 +1,15 @@
-// Histoire « Les Lettres du quartier » — chapitre « Le soir du concert » :
-// lire les journaux d'accès avec awk, et limiter le débit avec nginx. Ce
-// soir, le café annonce un concert ; l'agenda (une appli qui sert 20
-// requêtes par seconde) ne répond plus : un robot aspire ses pages depuis
-// trois adresses, 24 requêtes par seconde en tout. Les visiteur·ses
-// reçoivent des 504.
-// Après chaque rechargement de nginx, le jeu fait passer une minute de
-// trafic (visiteur·ses : une page et ses quatre fichiers d'un coup, puis une
-// autre page ; robot : 8 requêtes par seconde et par adresse) ; le journal
-// d'accès la montre.
-// Objectif vérifié sur l'état : pendant la dernière minute, toutes les
-// requêtes des visiteur·ses ont été servies, et la limitation de débit a
-// refusé au moins 60 % des requêtes du robot (429 ou 503).
-// Sources : https://nginx.org/en/docs/http/ngx_http_limit_req_module.html,
+// Story "The Neighbourhood Letters" — chapter "Concert night": read the
+// access logs with awk, and limit the request rate with nginx. Tonight, the
+// café announces a concert; the events calendar (an app that serves 20
+// requests per second) no longer answers: a bot is scraping its pages from
+// three addresses, 24 requests per second in total. Visitors get 504s.
+// After each nginx reload, the game makes a minute of traffic pass
+// (visitors: a page and its four files at once, then another page; bot: 8
+// requests per second per address); the access log shows it.
+// Objective checked on the state: during the last minute, all the visitors'
+// requests were served, and rate limiting refused at least 60 % of the
+// bot's requests (429 or 503).
+// Sources: https://nginx.org/en/docs/http/ngx_http_limit_req_module.html,
 // https://blog.nginx.org/blog/rate-limiting-nginx, https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html
 
 import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
@@ -47,7 +45,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le site des Lettres à la fin de « La colocation ».
+// The Letters' site at the end of "Sharing a home".
 const LETTERS_CONF = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -76,8 +74,8 @@ interface Summary {
 }
 
 /**
- * Une minute de trafic à partir de `debut` (heure locale) : chaque requête
- * passe par le nginx simulé, et s'écrit dans access.log.
+ * One minute of traffic from `start` (local time): each request goes
+ * through the simulated nginx, and is written to access.log.
  */
 function minute(j: Game, start: number): Summary {
   const requests: { time: number; address: string; path: string; human: boolean }[] = [];
@@ -201,14 +199,14 @@ export const concert: Chapter = {
       } satisfies App,
     },
   }),
-  // Les deux dernières minutes de trafic, avant l'arrivée de la joueuse ou du joueur.
+  // The last two minutes of traffic, before the player arrives.
   initialise: (j) => {
     loadNginx(j);
     minute(j, Date.UTC(2027, 2, 27, 20, 3, 0));
     j.state.concertSummary = minute(j, Date.UTC(2027, 2, 27, 20, 4, 0));
     j.state.concertLoaded = j.state.nginx.load;
   },
-  // Après chaque rechargement réussi de nginx, une minute de trafic passe.
+  // After each successful nginx reload, one minute of traffic passes.
   afterCommand: (j) => {
     if (j.state.nginx.load === j.state.concertLoaded || systemd(j)!.services.nginx.state !== 'active') return;
     j.state.concertLoaded = j.state.nginx.load;

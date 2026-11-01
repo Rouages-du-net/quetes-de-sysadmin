@@ -1,19 +1,19 @@
-// Histoire « Les Lettres du quartier » — chapitre « La récidive » : d'autres
-// prisons de fail2ban. Les mêmes robots sont bannis une heure, reviennent,
-// sont rebannis, depuis des semaines ; et le robot de l'agenda, que nginx
-// limite depuis le soir du concert (« limiting requests » dans error.log),
-// insiste. jail.conf a des prisons toutes prêtes : recidive (qui lit
-// fail2ban.log et bannit longtemps, sur tous les ports, les adresses déjà
-// bannies plusieurs fois) et nginx-limit-req (qui lit error.log). Il suffit
-// de les activer, dans jail.local.
-// Pièges réels : « enabled = true » dans [DEFAULT] active TOUTES les prisons
-// de jail.conf, et fail2ban refuse de démarrer faute de trouver leurs
-// journaux (apache, postfix) ; une recidive qui ne bannit pas plus longtemps
-// que les autres prisons ne sert à rien.
-// Objectif vérifié sur l'état : recidive et nginx-limit-req chargées, les
-// récidivistes et le robot bannis, Rania et les visiteur·ses non, recidive
-// plus longue que sshd, l'état des prisons consulté.
-// Sources : https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
+// Story "Les Lettres du quartier" — chapter "Repeat offenders": other
+// fail2ban jails. The same robots are banned for an hour, come back, are
+// banned again, for weeks; and the calendar's robot, which nginx has been
+// limiting since the concert night ("limiting requests" in error.log),
+// keeps trying. jail.conf has ready-made jails: recidive (which reads
+// fail2ban.log and bans for a long time, on all ports, the addresses
+// already banned several times) and nginx-limit-req (which reads
+// error.log). Enabling them in jail.local is enough.
+// Real traps: "enabled = true" in [DEFAULT] enables ALL the jails of
+// jail.conf, and fail2ban refuses to start because it cannot find their
+// logs (apache, postfix); a recidive that does not ban longer than the
+// other jails is useless.
+// Objective checked on the state: recidive and nginx-limit-req loaded, the
+// repeat offenders and the robot banned, Rania and the visitors not,
+// recidive longer than sshd, the jails' status consulted.
+// Sources: https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
 // https://github.com/fail2ban/fail2ban/blob/master/config/jail.conf,
 // https://github.com/fail2ban/fail2ban/blob/master/config/filter.d/recidive.conf,
 // https://github.com/fail2ban/fail2ban/blob/master/config/filter.d/nginx-limit-req.conf
@@ -35,7 +35,7 @@ const OCCASIONAL = '192.0.2.200';
 const SCRAPERS = ['198.51.100.24', '198.51.100.25', '198.51.100.26'];
 const VISITOR = '203.0.113.41';
 
-// Les prisons de jail.conf que le jeu reprend (celles de fail2ban, abrégées).
+// The jails of jail.conf the game uses (fail2ban's, abridged).
 const COMPLETE_CONF_JAIL = `${JAIL_CONF}
 
 
@@ -94,7 +94,7 @@ banaction = %(banaction_allports)s
 bantime  = 1w
 findtime = 1d`;
 
-// Le jail.local laissé par « La sentinelle » et « Le port ».
+// The jail.local left by "The sentinel" and "The port".
 const JAIL_LOCAL = `[DEFAULT]
 bantime  = 1h
 ignoreip = ${RANIA} ${WORKSTATION.address}
@@ -102,7 +102,7 @@ ignoreip = ${RANIA} ${WORKSTATION.address}
 [sshd]
 port = 2222`;
 
-// fail2ban.log : depuis hier, les mêmes adresses bannies, débannies une heure plus tard, rebannies.
+// fail2ban.log: since yesterday, the same addresses banned, unbanned an hour later, banned again.
 const LOG = (() => {
   const events: [number, string][] = [];
   const bans = (ip: string, times: number, start: number, difference: number) => {
@@ -115,7 +115,7 @@ const LOG = (() => {
   bans(REPEAT_OFFENDERS[1], 7, 1500, 11000);
   bans(OCCASIONAL, 2, 4000, 30000);
   const start = Date.UTC(2026, 10, 11, 8, 0, 0);
-  // Les deux récidivistes sont encore bannis à l'instant (leur dernier Unban n'a pas eu lieu).
+  // Both repeat offenders are still banned right now (their last Unban has not happened).
   const end = Date.UTC(2026, 10, 12, 8, 50, 0);
   return events
     .map(([t, m]): [number, string] => [start + t * 1000, m])
@@ -128,7 +128,7 @@ const LOG = (() => {
     .join('\n');
 })();
 
-// error.log de nginx : la limite de débit refuse le robot de l'agenda (et, parfois, d'autres).
+// nginx's error.log: the rate limit refuses the calendar's robot (and, sometimes, others).
 const ERRORS = (() => {
   const who: [string, number][] = [
     [SCRAPERS[0], 15],
@@ -155,7 +155,7 @@ const ERRORS = (() => {
 const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
 const jail = (j: Game, name: string) => actives(f2b(j)).find((p) => p.name === name);
 const banned = (j: Game, ip: string, name: string) => !!jail(j, name) && bannedFor(f2b(j), name).includes(ip);
-// recidive ne sert que si elle bannit plus longtemps que la prison sshd.
+// recidive is only useful if it bans longer than the sshd jail.
 const moreLong = (j: Game) => {
   const r = jail(j, 'recidive');
   const s = jail(j, 'sshd');
@@ -215,7 +215,7 @@ export const repeatOffence: Chapter = {
     return c;
   },
   state: () => ({
-    // SSH écoute sur 2222 depuis « Le port ».
+    // SSH has listened on 2222 since "The port".
     sshd: { load: { port: '2222' }, reloads: 0 },
     listening: LISTENING,
     ufw: {

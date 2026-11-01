@@ -1,9 +1,9 @@
 ---
-// Les fiches pour les enseignant·es, dans une langue : une par chapitre
-// (objectif, ce qu'il faut avoir fait avant, commandes découvertes, durée
-// indicative), tirées des histoires elles-mêmes à la construction du site.
-// Les textes des histoires viennent de src/texts/<langue>/ ; ceux de la page,
-// d'ici (une page par langue, comme le reste du site).
+// The teachers' sheets, in one language: one per chapter
+// (objective, what must have been done before, new commands, approximate
+// time), drawn from the stories themselves when the site is built.
+// The stories' texts come from src/texts/<language>/; the page's own,
+// from here (one page per language, like the rest of the site).
 import { STORIES } from '../engine/chapters';
 import { allSheets } from '../engine/sheets';
 import { difficulty, stars } from '../engine/difficulty';
@@ -26,7 +26,7 @@ const hours = (minutes: number) =>
       ? `${minutes} min`
       : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')}` : ''}`;
 const fr = lang === 'fr';
-// Les chapitres à finir avant d'ouvrir une histoire, avec le titre de leur histoire.
+// The chapters to finish before a story opens, with the title of their story.
 const storyOf = (c: string) => STORIES.find((h) => h.chapters.some((x) => x.id === c))!;
 const after = (ids: string[]) =>
   new Intl.ListFormat(lang, { type: 'conjunction' }).format(

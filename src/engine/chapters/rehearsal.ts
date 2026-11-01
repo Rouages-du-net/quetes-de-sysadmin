@@ -1,15 +1,15 @@
-// Histoire « La flotte » — chapitre « La répétition » : un changement
-// risqué (plus de mot de passe pour SSH) répété avant d'être joué :
-// --check --diff, puis --limit sur un centre, puis tous. Le playbook de
-// Théo notifie « Recharger ssh », mais le handler s'appelle « recharger
-// ssh » ; et une fois le fichier changé, une nouvelle exécution ne notifie
-// plus rien : sshd garde l'ancienne configuration tant qu'on ne le recharge pas.
-// Commandes : ansible-playbook --check --diff, --limit, handlers, ansible -m
-// service, sshd -T (sur un centre).
-// Objectif vérifié sur l'état : sur les trois centres, sshd_config dit
-// PasswordAuthentication no et sshd l'a chargé ; la dernière exécution
-// complète n'a rien changé.
-// Sources : https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_checkmode.html,
+// Story "The Fleet" — chapter "The Rehearsal": a risky change (no more
+// password for SSH) rehearsed before being played for real: --check --diff,
+// then --limit on one centre, then all of them. Théo's playbook notifies
+// "Reload ssh", but the handler is called "reload ssh"; and once the file
+// has changed, a new run notifies nothing any more: sshd keeps the old
+// configuration until it is reloaded.
+// Commands: ansible-playbook --check --diff, --limit, handlers, ansible -m
+// service, sshd -T (on a centre).
+// Objective checked on the state: on all three centres, sshd_config says
+// PasswordAuthentication no and sshd has loaded it; the last complete run
+// changed nothing.
+// Sources: https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_checkmode.html,
 // https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html
 
 import { f, type Chapter } from '../world';

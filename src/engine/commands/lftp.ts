@@ -1,13 +1,13 @@
-// lftp, le client FTP (et FTPS) en ligne de commande, vers un hébergement
-// mutualisé simulé (../hebergeur.ts). Une session interactive (lftp> ), ou
-// des commandes données par -c et -e. Sorties en anglais, comme lftp 4.9.
-// Par défaut, lftp chiffre (ftp:ssl-allow yes : AUTH TLS) et vérifie le
-// certificat (ssl:verify-certificate yes) : le nom demandé doit être celui
-// du certificat.
-// Sources : https://lftp.yar.ru/lftp-man.html
-// Écarts : FTP seulement (pas de SFTP ni de HTTP par lftp), pas de
-// ~/.lftprc ni de ~/.netrc, pas de transferts en arrière-plan ni de
-// file d'attente ; la connexion se fait à la première commande distante.
+// lftp, the command-line FTP (and FTPS) client, to a simulated shared
+// hosting (../web-host.ts). An interactive session (lftp> ), or commands
+// given with -c and -e. Outputs in English, like lftp 4.9.
+// By default, lftp encrypts (ftp:ssl-allow yes: AUTH TLS) and checks the
+// certificate (ssl:verify-certificate yes): the name requested must be the
+// certificate's.
+// Sources: https://lftp.yar.ru/lftp-man.html
+// Differences: FTP only (no SFTP nor HTTP through lftp), no ~/.lftprc nor
+// ~/.netrc, no background transfers nor queue; the connection is made at
+// the first remote command.
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -23,24 +23,24 @@ interface Session {
   remote: string;
   local: string;
   settings: Record<string, string>;
-  // La connexion en cours : chiffrée, certificat vérifié.
+  // The current connection: encrypted, certificate checked.
   tls: boolean;
   checked: boolean;
 }
 
 const TRUE = (v: string | undefined) => /^(yes|on|true|1)$/i.test(v ?? '');
 
-// Les arguments d'une ligne lftp (guillemets simples ou doubles).
+// The arguments of an lftp line (single or double quotes).
 const words = (line: string) => (line.match(/"[^"]*"|'[^']*'|\S+/g) ?? []).map((m) => m.replace(/^(['"])(.*)\1$/, '$2'));
 
-// Les commandes séparées par « ; » (dans -c et -e).
+// The commands separated by ";" (in -c and -e).
 const commands = (text: string) =>
   text
     .split(';')
     .map((c) => c.trim())
     .filter(Boolean);
 
-/** Se connecter (à la première commande distante) : le nom, TLS, le certificat, le compte. Renvoie l'erreur, ou null. */
+/** Connect (at the first remote command): the name, TLS, the certificate, the account. Returns the error, or null. */
 function connect(game: Shell, s: Session, command: string): string | null {
   if (s.connected) return null;
   if (!s.host) return `${command}: Not connected`;
@@ -77,7 +77,7 @@ function lsLine(name: string, n: Node, account: string): string {
   return `${n.type === 'directory' ? 'drwxr-xr-x' : '-rw-r--r--'}   ${n.type === 'directory' ? 2 : 1} ${account.padEnd(8)} ${account.padEnd(8)} ${String(size).padStart(8)} ${date} ${name}`;
 }
 
-// Copier un dossier (et ses fichiers) d'un côté à l'autre : mirror.
+// Copy a directory (and its files) from one side to the other: mirror.
 interface Summary {
   directories: number;
   fresh: number;
@@ -102,7 +102,7 @@ function mirror(game: Shell, s: Session, args: string[]): string {
   const root = rootFor(game, s);
   const summary: Summary = { directories: 0, fresh: 0, modified: 0, removed: 0, bytes: 0, lines: [] };
   if (inverse) {
-    // Local → distant.
+    // Local → remote.
     const src = game.resolve(source ? (source.startsWith('/') ? source : `${s.local}/${source}`) : s.local);
     const n = game.find(src);
     if (n?.type !== 'directory') return game.error(`mirror: ${source ?? src}: No such file or directory`, 1);
@@ -142,7 +142,7 @@ function mirror(game: Shell, s: Session, args: string[]): string {
       log.push({ account: s.user!, tls: s.tls, checked: s.checked, send: true });
     }
   } else {
-    // Distant → local.
+    // Remote → local.
     const src = normalise(s.remote, source ?? '.');
     const n = node(root, src);
     if (n?.type !== 'directory') return game.error(`mirror: Access failed: 550 Can't change directory to ${src}: No such file or directory`, 1);
@@ -186,7 +186,7 @@ function walkLocal(game: Shell, n: Node, rel: string, file: (rel: string, f: Fil
   for (const [k, e] of Object.entries(n.children)) walkLocal(game, e, rel ? `${rel}/${k}` : k, file, directory);
 }
 
-// Le dossier distant (créé, avec ses parents, s'il n'existe pas).
+// The remote directory (created, with its parents, if it doesn't exist).
 function remoteDirectory(root: Directory, path: string): Directory {
   let d = root;
   for (const p of path.split('/').filter(Boolean)) {
@@ -202,7 +202,7 @@ function remove(root: Directory, path: string) {
   if (parent?.type === 'directory') delete parent.children[parts.at(-1)!];
 }
 
-/** Une commande lftp ; renvoie ce qu'elle affiche, ou null pour quitter. */
+/** An lftp command; returns what it prints, or null to quit. */
 function lftpCommand(game: Shell, s: Session, line: string): string | null {
   const [cmd, ...args] = words(line);
   if (!cmd) return '';
@@ -215,7 +215,7 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
         .join('\n');
     if (!/^(ftp|ssl|net|mirror|cmd):[\w-]+$/.test(name)) return game.error(`set: no such variable \`${name}'`, 1);
     s.settings[name] = TRUE(value) ? 'yes' : /^(no|off|false|0)$/i.test(value ?? '') ? 'no' : (value ?? '');
-    // Un nouveau réglage s'applique à la prochaine connexion.
+    // A new setting applies to the next connection.
     s.connected = false;
     return '';
   }
@@ -246,7 +246,7 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
   if (cmd === 'lpwd') return s.local;
   if (cmd === 'help') return game.t('lftp-help');
   if (cmd === 'mirror') return mirror(game, s, args);
-  // Les commandes distantes : la connexion d'abord.
+  // Remote commands: the connection first.
   if (!['ls', 'dir', 'cd', 'pwd', 'mkdir', 'rm', 'get', 'put', 'cat'].includes(cmd)) return game.error(`Unknown command \`${cmd}'.`, 1);
   if (cmd === 'pwd') return `ftp://${s.user ? `${s.user}@` : ''}${s.host ?? ''}${s.remote === '/' ? '' : s.remote}`;
   const e = connect(game, s, cmd);
@@ -308,7 +308,7 @@ function lftpCommand(game: Shell, s: Session, line: string): string | null {
 
 const prompt = (s: Session) => `lftp ${s.user ? `${s.user}@` : ''}${s.host ?? ''}:${s.remote === '/' ? '~' : `~${s.remote}`}> `;
 
-// La session interactive : une question par commande, jusqu'à bye.
+// The interactive session: one prompt per command, until bye.
 function interactive(game: Shell, s: Session) {
   const who = game.who;
   game.ask(prompt(s), (line) => {
@@ -381,7 +381,7 @@ function lftp(game: Shell, args: string[]): string {
     if (!finished) interactive(game, s);
     return outputs.join('\n');
   };
-  // -u compte sans mot de passe : lftp le demande tout de suite.
+  // -u account without a password: lftp asks for it right away.
   if (s.user && s.password === null) {
     const who = game.who;
     game.ask(

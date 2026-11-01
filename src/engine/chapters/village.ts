@@ -1,5 +1,5 @@
-// Chapitre 2 — Le Bourg : grep, rm, touch, cp, mkdir. Notre propre histoire
-// et nos propres énigmes, dans la suite de L'Île du Phare.
+// Chapter 2 — The Town: grep, rm, touch, cp, mkdir. Our own story and our
+// own puzzles, following The Lighthouse Island.
 
 import { path, d, f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -12,10 +12,10 @@ const YARD = `${ALLEY}/Yard`;
 const SEWER = `${YARD}/Sewer`;
 const CLASS = `${M}/School/Classroom`;
 
-// Les engrenages de l'Atelier (engrenage, engrenage_2…), sous leur nom dans la langue.
+// The Workshop's gears (gear, gear_2…), under their name in the language.
 const engrenages = (j: Game) => j.count(path(j.t, WORKSHOP), name(j.t, 'gear'));
 
-// Un avis : une phrase par ligne (grep les lit ligne par ligne).
+// A notice: one sentence per line (grep reads them line by line).
 const shows = (text: string) => f(text, { lines: true });
 
 export const village: Chapter = {
@@ -26,7 +26,7 @@ export const village: Chapter = {
   names: true,
   welcome: 'crier.txt',
   final: 'nour',
-  // Dans le jeu : le levain, les engrenages, la barricade, les rats, puis Nour et sa Classe.
+  // In the game: the sourdough, the gears, the barricade, the rats, then Nour and her Class.
   steps: ['sourdough', 'gear', 'gears', 'barricade', 'rats', 'nour-without-class', 'class', 'nour'],
   createWorld: (t) =>
     d({

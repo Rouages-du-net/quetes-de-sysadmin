@@ -1,5 +1,5 @@
-// Les parcours thématiques : des chapitres qui existent, chacun dans au moins
-// un parcours, des textes dans chaque langue, et l'état de chaque étape.
+// The thematic learning paths: chapters that exist, each in at least
+// one path, texts in every language, and each step's state.
 import { describe, expect, it } from 'vitest';
 import { STORIES } from '../src/engine/chapters';
 import { pathSteps, PATH } from '../src/engine/paths';
@@ -7,8 +7,8 @@ import { LANGUAGES, translator } from '../src/texts';
 
 const ALL = STORIES.flatMap((h) => h.chapters.map((c) => c.id));
 
-describe('Parcours thématiques', () => {
-  it('des chapitres qui existent, sans doublon, et chaque chapitre dans au moins un parcours', () => {
+describe('Learning paths', () => {
+  it('chapters that exist, no duplicates, and every chapter in at least one path', () => {
     for (const p of PATH) {
       expect(p.chapters.filter((id) => !ALL.includes(id))).toEqual([]);
       expect(new Set(p.chapters).size).toBe(p.chapters.length);
@@ -17,7 +17,7 @@ describe('Parcours thématiques', () => {
     expect(ALL.filter((id) => !covered.has(id))).toEqual([]);
   });
 
-  it('dans un parcours, les chapitres d’une même histoire gardent l’ordre de l’histoire', () => {
+  it('within a path, the chapters of one story keep the story’s order', () => {
     for (const p of PATH) {
       const rank = (id: string) => ALL.indexOf(id);
       for (const h of STORIES) {
@@ -28,7 +28,7 @@ describe('Parcours thématiques', () => {
   });
 
   for (const language of LANGUAGES)
-    it(`un titre et une description en ${language}`, () => {
+    it(`a title and a description in ${language}`, () => {
       const t = translator(language);
       for (const p of PATH) {
         expect(t.exists(`path-${p.id}`)).toBe(true);
@@ -36,7 +36,7 @@ describe('Parcours thématiques', () => {
       }
     });
 
-  it('l’état des étapes : fait, ouvert, verrouillé (avec le chapitre à finir d’abord), sans clé', () => {
+  it('the steps’ state: done, open, locked (with the chapter to finish first), without a key', () => {
     const security = PATH.find((p) => p.id === 'security')!;
     const { steps, next } = pathSteps(security, ['shut-the-door'], (h) => h !== 'coop');
     expect(steps[0].state).toBe('done');

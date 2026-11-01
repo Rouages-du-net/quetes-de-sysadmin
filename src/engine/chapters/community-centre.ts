@@ -1,10 +1,10 @@
-// Histoire « La Maison des associations » : ce que ses quatre chapitres ont
-// en commun. La machine maison est la passerelle : seule joignable depuis
-// internet, elle a le « vrai » ssh (acces.ts : clés, mot de passe,
-// authorized_keys). Derrière elle, le réseau interne de la Maison :
-// wiki (le wiki des associations) et archives (les sauvegardes), qu'on
-// joint en rebondissant par maison (ssh -J, ProxyJump).
-// Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/ssh
+// Story "The Community Centre": what its four chapters share. The
+// community machine is the gateway: the only one reachable from the
+// internet, it has the "real" ssh (access.ts: keys, password,
+// authorized_keys). Behind it, the Centre's internal network: wiki (the
+// associations' wiki) and archives (the backups), reached by jumping
+// through the gateway (ssh -J, ProxyJump).
+// Sources: https://man.openbsd.org/sshd_config, https://man.openbsd.org/ssh
 
 import { d, f, accountsFiles, type Accounts, type Directory, type InternalHost, type Node } from '../world';
 import { machineName } from '../machines';
@@ -16,10 +16,10 @@ import { internet, type ElementPlan } from '../plan';
 
 export const M = '/home/you';
 export const PASSWORD = 'lilac-2027';
-// Lundi 4 octobre 2027, 18 h 40.
+// Monday 4 October 2027, 6:40 p.m.
 export const NOW = Date.UTC(2027, 9, 4, 18, 40, 0);
 
-// sshd_config de Debian ; PasswordAuthentication donné en paramètre (null : la ligne commentée d'origine).
+// Debian's sshd_config; PasswordAuthentication given as a parameter (null: the original commented-out line).
 const sshdConfig = (passwords: 'yes' | 'no' | null) =>
   `
 # This is the sshd server system-wide configuration file.  See
@@ -63,14 +63,14 @@ export const HOSTS = `127.0.0.1\tlocalhost
 
 export interface SshdState {
   load: Record<string, string>;
-  // Connexions par clé reçues au moment du dernier chargement (se reconnecter après).
+  // Key logins received at the time of the last load (log in again afterwards).
   keysToLoad: number;
   reloads: number;
 }
 export const sshd = (j: Game) => j.state.sshd as SshdState;
 export const connectionsBy = (j: Game, comment: 'key' | 'password') => (j.state.sshConnections?.[comment] as number | undefined) ?? 0;
 
-// Le service ssh, comme celui de Debian : ExecReload vérifie d'abord (sshd -t).
+// The ssh service, like Debian's: ExecReload checks first (sshd -t).
 const serviceSsh = (): DefinitionService => ({
   description: 'OpenBSD Secure Shell server',
   active: true,
@@ -90,7 +90,7 @@ const serviceSsh = (): DefinitionService => ({
   },
 });
 
-/** L'état de maison : le vrai ssh, sshd et systemd (plus les services du chapitre). */
+/** The gateway's state: the real ssh, sshd and systemd (plus the chapter's services). */
 export const homeState = (services: Record<string, DefinitionService> = {}, more: Record<string, unknown> = {}) => ({
   realSsh: true,
   sshd: { load: {}, keysToLoad: 0, reloads: 0 },
@@ -98,7 +98,7 @@ export const homeState = (services: Record<string, DefinitionService> = {}, more
   ...more,
 });
 
-/** Au démarrage : sshd charge sa configuration. */
+/** At boot: sshd loads its configuration. */
 export const loadSshd = (j: Game) => {
   sshd(j).load = readConfig(j).values;
 };
@@ -117,10 +117,10 @@ export const homeAccounts = (): Accounts => ({
 const root = { owner: 'root' };
 const isPrivate = { mode: 'rwx------' };
 
-/** Le dossier ~/.ssh de vous (vide, ou avec ces fichiers). */
+/** The ~/.ssh directory of you (empty, or with these files). */
 export const sshDirectory = (files: Record<string, Node> = {}) => d(files, undefined, isPrivate);
 
-/** Le monde de maison : /etc (comptes, hosts, ssh), la maison de vous, et le reste du chapitre. */
+/** The gateway's world: /etc (accounts, hosts, ssh), the home of you, and the rest of the chapter. */
 export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<string, Node>; more?: Record<string, Node> }): Directory {
   return d(
     {
@@ -146,14 +146,14 @@ export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<stri
   );
 }
 
-// ——— Le réseau interne ———
+// ——— The internal network ———
 
 const internalAccounts = (): Accounts => ({
   users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
   groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['you'] }, you: { gid: 1000, members: [] } },
 });
 
-/** Une machine interne : son nom, son adresse, ce qu'il y a dans sa maison et ailleurs. */
+/** An internal machine: its name, its address, what is in its home and elsewhere. */
 export function internalHost(
   name: string,
   address: string,
@@ -191,7 +191,7 @@ export function internalHost(
 
 export const sd = (j: Game) => systemd(j)!;
 
-/** Le plan du réseau de la Maison : la passerelle, et derrière elle le wiki et les archives ; l'hébergeur du site, sur internet. */
+/** The Centre's network plan: the gateway, and behind it the wiki and the archives; the site's host, on the internet. */
 export const homePlan =
   (o: { host?: boolean } = {}) =>
   (t: Translate): ElementPlan =>

@@ -1,9 +1,8 @@
-// docker : la ligne de commande du moteur de conteneurs (docker.ts), avec
-// les sorties et les messages de Docker 27
-// (https://docs.docker.com/reference/cli/docker/).
-// Écarts : sans -d, docker run rend la main (le conteneur continue) ; docker
-// logs -f n'attend pas ; docker exec ne connaît que quelques commandes (ls,
-// cat, env, id, whoami) ; --format seulement {{.Champ.Sous.champ}}.
+// docker: the container engine's command line (docker.ts), with Docker 27's
+// outputs and messages (https://docs.docker.com/reference/cli/docker/).
+// Differences: without -d, docker run returns (the container keeps
+// running); docker logs -f does not wait; docker exec only knows a few
+// commands (ls, cat, env, id, whoami); --format only {{.Field.Sub.field}}.
 
 import type { Shell } from '../shell';
 import {
@@ -38,7 +37,7 @@ import type { Command } from './index';
 
 const SOCKET = 'permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock';
 
-/** Une durée comme units.HumanDuration de Docker : « 3 days », « About an hour ». */
+/** A duration like Docker's units.HumanDuration: "3 days", "About an hour". */
 export function duration(ms: number): string {
   const s = Math.round(ms / 1000);
   const m = Math.round(s / 60);
@@ -70,14 +69,14 @@ const ports = (c: Container) =>
 
 function status(c: Container, now: number): string {
   if (c.state === 'running') return `Up ${duration(now - c.start)}`;
-  // Un conteneur qui s'arrête en erreur et que sa politique relance sans fin.
+  // A container that stops with an error and that its policy restarts endlessly.
   if (c.state === 'exited' && c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0]))
     return `Restarting (${c.code}) ${duration(Math.min(now - c.end, 9000))} ago`;
   if (c.state === 'exited') return `Exited (${c.code}) ${duration(now - c.end)} ago`;
   return 'Created';
 }
 
-// Un tableau aligné, colonnes séparées par trois espaces (comme docker).
+// An aligned table, columns separated by three spaces (like docker).
 function grid(titres: string[], lines: string[][]): string {
   const widths = titres.map((t, i) => Math.max(t.length, ...lines.map((l) => l[i].length)));
   const line = (l: string[]) =>
@@ -118,7 +117,7 @@ function images(d: DockerState, game: Shell): string {
   );
 }
 
-// Télécharge une image depuis le registre ; renvoie la sortie, ou null si elle n'existe pas.
+// Pulls an image from the registry; returns the output, or null if it does not exist.
 function pull(d: DockerState, name: string): string | null {
   const full = complete(name);
   const source = d.registry[full];
@@ -192,7 +191,7 @@ function parseRun(args: string[]): OptionsRun {
       o.unknown = key;
       return o;
     } else {
-      // L'image, puis la commande (ignorée ici).
+      // The image, then the command (ignored here).
       o.image = a;
       return o;
     }
@@ -227,7 +226,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
     return game.error(
       `docker: Error response from daemon: Conflict. The container name "/${name}" is already in use by container "${existing.id}". You have to remove (or rename) that container to be able to reuse that name.\n\nRun 'docker run --help' for more information`,
     );
-  // -p [ip:]hôte:conteneur, ou -p conteneur (port de la machine au hasard).
+  // -p [ip:]host:container, or -p container (random port on the machine).
   const published: Port[] = [];
   for (const p of o.ports) {
     const parts = p.replace(/\/tcp$/, '').split(':');
@@ -237,7 +236,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
       return game.error(`docker: invalid publish opts format (should be name=value but got '${p}')\n\nRun 'docker run --help' for more information`);
     published.push({ ip, host: Number(host), container: Number(container) });
   }
-  // -v nom:/chemin (volume) ou /dossier:/chemin (dossier de la machine), :ro en lecture seule.
+  // -v name:/path (volume) or /dir:/path (directory of the machine), :ro for read-only.
   const mounts: Mount[] = [];
   for (const v of o.volumes) {
     const [source, target, mode] = v.split(':');
@@ -248,7 +247,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
     const bind = source.startsWith('/') || source.startsWith('.') || source.startsWith('~');
     if (bind) {
       const path = game.resolve(source);
-      // Docker crée le dossier de la machine s'il n'existe pas (à root).
+      // Docker creates the machine's directory if it does not exist (owned by root).
       if (!game.exists(path)) {
         const before = game.who;
         game.who = 'root';
@@ -284,7 +283,7 @@ function run(d: DockerState, game: Shell, args: string[]): string {
     ...(o.capDrop.length ? { capDrop: o.capDrop } : {}),
     ...(o.security.length ? { security: o.security } : {}),
   };
-  // Un port de la machine déjà publié par un conteneur qui tourne : refus au démarrage.
+  // A machine port already published by a running container: refused on start.
   const busy = published.find((p) => d.containers.some((x) => x.state === 'running' && x.ports.some((q) => q.host === p.host)));
   d.containers.push(c);
   if (busy) {
@@ -302,11 +301,11 @@ function run(d: DockerState, game: Shell, args: string[]): string {
     return game.error([...output, `docker: Error response from daemon: ${failure}.`, '', "Run 'docker run --help' for more information"].join('\n'));
   game.state.dockerRun = (game.state.dockerRun ?? 0) + 1;
   if (o.detached) return [...output, id].join('\n');
-  // Sans -d, docker resterait attaché au conteneur : on montre son journal.
+  // Without -d, docker would stay attached to the container: we show its log.
   return [...output, ...c.log.map((l) => l.text), game.t('docker-attached')].join('\n');
 }
 
-// docker cp conteneur:chemin chemin_machine, ou l'inverse.
+// docker cp container:path machine_path, or the reverse.
 function cp(d: DockerState, game: Shell, args: string[]): string {
   const [source, dest] = args.filter((a) => !a.startsWith('-'));
   if (!source || !dest)
@@ -327,7 +326,7 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
     const oneFile = files.length === 1 && files[0] === base;
     const destPlace = game.resolve(dest);
     const exists = game.find(destPlace);
-    // Un dossier copié vers un lieu qui existe : il y garde son nom (sauf avec /.).
+    // A directory copied to a place that exists: it keeps its name there (except with /.).
     const root = oneFile
       ? exists?.type === 'directory'
         ? `${destPlace}/${base.split('/').at(-1)}`
@@ -368,7 +367,7 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
       }
     return null;
   };
-  // Le contenu d'un dossier (source/.) va directement dans la cible.
+  // The contents of a directory (source/.) go straight into the target.
   const toPlace = n.type === 'directory' && !source.endsWith('/.') ? `${baseTarget}/${game.resolve(source).split('/').at(-1)}` : baseTarget;
   const e = copy(game.resolve(source), n.type === 'file' && listIn(game, c, baseTarget).length ? `${baseTarget}/${game.name(source)}` : toPlace);
   if (e) return game.error(`Error response from daemon: ${e}`);
@@ -376,7 +375,7 @@ function cp(d: DockerState, game: Shell, args: string[]): string {
 }
 
 function exec(d: DockerState, game: Shell, args: string[]): string {
-  // Les options avant le conteneur : -i, -t, -it, -u utilisateur (--user).
+  // The options before the container: -i, -t, -it, -u user (--user).
   let i = 0;
   let request: string | undefined;
   for (; i < args.length && args[i].startsWith('-'); i++) {
@@ -420,7 +419,7 @@ function exec(d: DockerState, game: Shell, args: string[]): string {
       return game.error(`ls: cannot access '${place}': No such file or directory`);
     const names = [...new Set(files.map((f) => (f === place ? f : f.slice(place.replace(/\/$/, '').length + 1).split('/')[0])))].sort();
     if (!long) return names.join('  ');
-    // Le propriétaire vu du conteneur : le nom de son uid dans l'image (sinon le numéro).
+    // The owner as seen from the container: the name of its uid in the image (otherwise the number).
     const accounts = imageAccounts(image);
     const nameIn = (uid: number) => Object.entries(accounts).find(([, x]) => x === uid)?.[0] ?? String(uid);
     const byDefault = imageUser(image);
@@ -446,7 +445,7 @@ function exec(d: DockerState, game: Shell, args: string[]): string {
   );
 }
 
-// ——— Le disque : system df, prune, rmi ———
+// ——— The disk: system df, prune, rmi ———
 
 const used = (d: DockerState) => new Set(d.containers.map((c) => c.image));
 const usedVolumes = (d: DockerState) => new Set(d.containers.flatMap((c) => c.mounts.filter((m) => m.type === 'volume').map((m) => m.source)));
@@ -488,7 +487,7 @@ const WARNINGS = {
   volumeTout: 'WARNING! This will remove all local volumes not used by at least one container.',
 };
 
-// docker image|container|volume|system prune : demande confirmation, sauf avec -f.
+// docker image|container|volume|system prune: asks for confirmation, except with -f.
 function prune(d: DockerState, game: Shell, what: 'image' | 'container' | 'volume' | 'system', options: string[]): string {
   const all = options.some((o) => o === '-a' || o === '--all');
   const force = options.some((o) => o === '-f' || o === '--force');
@@ -514,7 +513,7 @@ function prune(d: DockerState, game: Shell, what: 'image' | 'container' | 'volum
         );
       recovered += parts.reduce((t, [, i]) => t + i.size, 0);
     }
-    // Les volumes nommés ne partent qu'avec volume prune -a (depuis Docker 23).
+    // Named volumes only go with volume prune -a (since Docker 23).
     if (what === 'volume' && all) {
       const inService = usedVolumes(d);
       const partis = Object.keys(d.volumes).filter((n) => !inService.has(n));
@@ -551,7 +550,7 @@ function prune(d: DockerState, game: Shell, what: 'image' | 'container' | 'volum
   return warning;
 }
 
-// docker rmi : une image utilisée par un conteneur (même arrêté) est protégée.
+// docker rmi: an image used by a container (even a stopped one) is protected.
 function rmi(d: DockerState, game: Shell, args: string[]): string {
   const force = args.some((a) => a === '-f' || a === '--force');
   const lines: string[] = [];
@@ -626,7 +625,7 @@ function compose(d: DockerState, game: Shell, args: string[]): string {
         d.containers = d.containers.filter((x) => x !== c);
         lines.push(` ✔ Container ${c.name}  Removed`);
       }
-      // down -v efface aussi les volumes du projet : leurs données sont perdues.
+      // down -v also removes the project's volumes: their data is lost.
       if (volumes)
         for (const v of project.volumes) {
           const name = `${project.name}_${v}`;
@@ -645,7 +644,7 @@ function compose(d: DockerState, game: Shell, args: string[]): string {
     }
     case 'ps': {
       const now = clock(game);
-      // Sans -a : ceux qui tournent, et ceux que leur politique relance en boucle.
+      // Without -a: the running ones, and those their policy keeps restarting in a loop.
       const inLoop = (c: Container) => c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0]);
       const listing = containers().filter((c) => options.includes('-a') || options.includes('--all') || c.state === 'running' || inLoop(c));
       return [
@@ -705,7 +704,7 @@ function compose(d: DockerState, game: Shell, args: string[]): string {
   }
 }
 
-// docker compose config : le projet tel que Compose l'a compris (variables remplacées).
+// docker compose config: the project as Compose understood it (variables substituted).
 function showProject(p: Project): string {
   const lines = [`name: ${p.name}`, 'services:'];
   for (const s of p.services) {
@@ -727,7 +726,7 @@ function showProject(p: Project): string {
   return lines.join('\n');
 }
 
-// --format '{{.State.Status}}' : un chemin dans l'objet JSON.
+// --format '{{.State.Status}}': a path in the JSON object.
 function formatGo(object: unknown, template: string): string {
   return template.replace(/\{\{\s*(json\s+)?\.([\w.]*)\s*\}\}/g, (_, json: string | undefined, path: string) => {
     let v: unknown = object;
@@ -771,7 +770,7 @@ function inspect(game: Shell, c: Container) {
 const HELP = (game: Shell) => game.error(game.t('docker-usage'));
 
 export const DOCKER: Record<string, Command> = {
-  // Le paquet docker-compose de Debian : la même chose que docker compose.
+  // Debian's docker-compose package: the same thing as docker compose.
   'docker-compose': {
     ownOptions: true,
     launch: (context) => DOCKER.docker.launch({ ...context, args: ['compose', ...context.args] }),
@@ -782,14 +781,14 @@ export const DOCKER: Record<string, Command> = {
       if (args[0] === '--version' || args[0] === '-v') return 'Docker version 27.5.1, build 9f9e405';
       const d = docker(game);
       if (!d) return game.error(game.t('command-missing', { command: 'docker' }));
-      // Le groupe docker donne les droits de root sur la machine : ici, sudo.
+      // The docker group gives root's rights on the machine: here, sudo.
       if (game.who !== 'root' && !game.groupsFor(game.who).includes('docker'))
         return game.error(
           `${SOCKET}: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.47/containers/json": dial unix /var/run/docker.sock: connect: permission denied`,
         );
       if (systemd(game)?.services.docker && systemd(game)!.services.docker.state !== 'active')
         return game.error('Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?');
-      // Chaque commande prend un peu de temps (l'horloge de la machine avance).
+      // Each command takes a little time (the machine's clock moves on).
       const sd = systemd(game);
       if (sd) sd.clock += 2000;
       const output = execute(d, game, args);
@@ -801,7 +800,7 @@ export const DOCKER: Record<string, Command> = {
 
 function execute(d: DockerState, game: Shell, args: string[]): string {
   let [action, ...rest] = args;
-  // docker container ls, docker image ls, docker container rm… : les mêmes commandes.
+  // docker container ls, docker image ls, docker container rm…: the same commands.
   if (action === 'container' || action === 'image') {
     const group = action;
     const under = rest.shift() ?? '';
@@ -859,7 +858,7 @@ function execute(d: DockerState, game: Shell, args: string[]): string {
             );
             continue;
           }
-          // La couche du conteneur disparaît avec lui ; les volumes restent.
+          // The container's layer disappears with it; the volumes remain.
           d.containers = d.containers.filter((x) => x !== c);
           game.state.dockerRemoved = [...(game.state.dockerRemoved ?? []), c];
         } else {

@@ -1,6 +1,6 @@
-// Histoire « La Machine à remonter le temps » : git, pour garder l'historique
-// d'un texte et revenir en arrière. Inès, romancière, a abîmé son manuscrit ;
-// heureusement, il est suivi par git. Ses poèmes, eux, ne le sont pas.
+// Story "The Time Machine": git, to keep a text's history and go back in
+// time. Inès, a novelist, has damaged her manuscript; luckily, it is tracked
+// by git. Her poems, however, are not.
 
 import { path, d, f, name, type Chapter } from '../world';
 import type { Translate } from '../../texts';
@@ -10,8 +10,8 @@ const M = '/home/you';
 const NOVEL = `${M}/novel`;
 const POEMS = `${M}/poems`;
 
-// Les versions du roman, les commits et les poèmes sont des textes de
-// l'histoire, dans la langue du jeu (chapter-manuscript.ftl).
+// The novel's versions, the commits and the poems are texts of the story,
+// in the game's language (chapter-manuscript.ftl).
 const INES_POEMS = ['sea.txt', 'lighthouse.txt', 'zohra.txt'];
 
 function versions(t: Translate) {
@@ -27,7 +27,7 @@ function versions(t: Translate) {
 function history(t: Translate): Repo {
   const v = versions(t);
   const commits: Commit[] = [];
-  // Le fichier suivi, sous son nom dans la langue (novel.txt…).
+  // The tracked file, under its name in the language (novel.txt…).
   const novel = name(t, 'novel.txt');
   const add = (message: string, date: string, text: string) =>
     commits.push(newCommit(commits.at(-1) ?? null, message, t('manuscript-author'), date, { [novel]: text }));

@@ -1,6 +1,6 @@
-// Toutes les commandes du jeu. Chaque chapitre choisit celles qu'il connaît
-// (Chapitre.commandes). Une commande lit ses arguments et l'entrée du tube,
-// renvoie sa sortie, et signale ses erreurs avec jeu.erreur().
+// All the game's commands. Each chapter chooses the ones it knows
+// (Chapter.commands). A command reads its arguments and the pipe's input,
+// returns its output, and reports its errors with game.error().
 
 import type { Shell } from '../shell';
 import { FILES } from './files';
@@ -58,32 +58,32 @@ import { CADDY } from './caddy';
 
 export interface Context {
   args: string[];
-  // Ce qui arrive par un tube (null : rien, la commande est en tête).
+  // What comes in through a pipe (null: nothing, the command is first).
   input: string | null;
   game: Shell;
-  // Vrai si la sortie va à l'écran (dernière commande, sans redirection).
+  // True if the output goes to the screen (last command, without redirection).
   last: boolean;
 }
 
 export interface Command {
-  // Le texte de la page man est dans src/texts/<langue>/manual.ftl
-  // (man-<commande>) ; ici, la partie technique (voir pages.ts).
-  // Options courtes acceptées. Si présent, une option inconnue donne le
-  // vrai message d'erreur, qui renvoie vers --help.
+  // The man page's text is in src/texts/<language>/manual.ftl
+  // (man-<command>); here, the technical part (see pages.ts).
+  // Short options accepted. If present, an unknown option gives the real
+  // error message, which points to --help.
   options?: string[];
-  // Options longues de GNU que le jeu comprend : leur équivalent court (« all » → « a »),
-  // ou '' pour une option longue lue telle quelle (--max-depth=1). Les autres :
-  // « unrecognized option '--x' », comme les vrais outils.
+  // GNU long options the game understands: their short equivalent ("all" → "a"),
+  // or '' for a long option read as is (--max-depth=1). The others:
+  // "unrecognized option '--x'", like the real tools.
   long?: Record<string, string>;
-  // Commandes d'exemple (leur explication : .example-N dans manual.ftl).
+  // Example commands (their explanation: .example-N in manual.ftl).
   examples?: string[];
   see?: string[];
-  // La commande analyse elle-même ses options (pas de contrôle générique).
+  // The command parses its options itself (no generic check).
   ownOptions?: boolean;
-  // Section du manuel : 1 (commandes), 8 (administration, ex. usermod).
+  // Manual section: 1 (commands), 8 (administration, e.g. usermod).
   section?: number;
-  // Une commande hors du PATH (un plugin de supervision) : on ne la lance que
-  // par son chemin complet, dans ce dossier.
+  // A command outside the PATH (a monitoring plugin): it only runs by its
+  // full path, in this directory.
   directory?: string;
   launch: (c: Context) => string;
 }
@@ -140,8 +140,8 @@ export const COMMANDS: Record<string, Command> = {
   ...MAIL,
   ...ANSIBLE,
   ...CADDY,
-  // Traités par le shell lui-même (voir shell.ts) : une entrée ici pour le
-  // manuel et la complétion.
+  // Handled by the shell itself (see shell.ts): an entry here for the
+  // manual and completion.
   sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },
   clear: { launch: () => '' },
   man: { launch: () => '' },
@@ -150,5 +150,5 @@ export const COMMANDS: Record<string, Command> = {
   aide: { launch: () => '' },
 };
 
-// Options, exemples et renvois du manuel (pages.ts).
+// The manual's options, examples and cross-references (pages.ts).
 for (const [name, complement] of Object.entries(PAGES)) if (COMMANDS[name]) Object.assign(COMMANDS[name], complement);

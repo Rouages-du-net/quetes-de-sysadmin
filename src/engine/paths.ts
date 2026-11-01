@@ -1,9 +1,9 @@
-// Les parcours thématiques : des chapitres de plusieurs histoires, rangés
-// autour d'un thème (sécuriser un serveur, le web, le réseau…). Un parcours
-// ne change pas les règles : dans une histoire, un chapitre s'ouvre quand le
-// précédent est fini, et une histoire sans sa clé reste fermée. Le parcours
-// dit seulement par où passer, et montre ce qui reste à faire.
-// Textes : parcours-<id> et son attribut .description (interface.ftl).
+// Thematic learning paths: chapters from several stories, grouped
+// around a theme (securing a server, the web, the network…). A path
+// doesn't change the rules: within a story, a chapter opens when the
+// previous one is finished, and a story without its key stays closed. The
+// path only says which way to go, and shows what remains to do.
+// Texts: path-<id> and its .description attribute (interface.ftl).
 
 import { STORIES } from './chapters';
 
@@ -41,15 +41,15 @@ export type StepState = 'done' | 'open' | 'locked' | 'no-key';
 export interface PathStep {
   chapter: string;
   story: string;
-  // Indices dans HISTOIRES et dans les chapitres de l'histoire (pour l'ouvrir).
+  // Indexes in STORIES and in the story's chapters (to open it).
   h: number;
   c: number;
   state: StepState;
-  // Pour un chapitre verrouillé : le chapitre à finir d'abord dans son histoire.
+  // For a locked chapter: the chapter to finish first in its story.
   before: string | null;
 }
 
-/** Où en est-on dans ce parcours : chaque chapitre, son état, et le prochain à faire. */
+/** Where the player stands in this path: each chapter, its state, and the next one to do. */
 export function pathSteps(p: Path, finished: string[], isOpen: (story: string) => boolean): { steps: PathStep[]; next: number } {
   const steps = p.chapters.map((id) => {
     const h = STORIES.findIndex((x) => x.chapters.some((c) => c.id === id));

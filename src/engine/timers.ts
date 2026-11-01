@@ -1,13 +1,13 @@
-// Les unités écrites à la main et les timers de systemd : un fichier
-// /etc/systemd/system/NOM.service (Type=oneshot, ExecStart=, User=) et
-// NOM.timer (OnCalendar=, OnBootSec=, OnUnitActiveSec=), chargés à la
-// demande ou par daemon-reload. D'après systemd.timer(5), systemd.time(7)
-// et systemd.service(5) :
+// Hand-written units and systemd timers: a file
+// /etc/systemd/system/NAME.service (Type=oneshot, ExecStart=, User=) and
+// NAME.timer (OnCalendar=, OnBootSec=, OnUnitActiveSec=), loaded on
+// demand or by daemon-reload. After systemd.timer(5), systemd.time(7)
+// and systemd.service(5):
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html
-// Écarts : OnCalendar= comprend un jour de la semaine, *-*-* et une heure
-// H:M[:S] (*, nombres, listes, a/pas), plus minutely, hourly, daily,
-// weekly ; à la minute près ; pas de Persistent= ni de RandomizedDelaySec=.
+// Differences: OnCalendar= understands a day of the week, *-*-* and a time
+// H:M[:S] (*, numbers, lists, start/step), plus minutely, hourly, daily,
+// weekly; to the minute; no Persistent= nor RandomizedDelaySec=.
 
 import type { Game, Shell } from './shell';
 import { writeLog, systemd, type Systemd } from './systemd';
@@ -16,7 +16,7 @@ import { send } from './commands/monitoring';
 
 export interface Timer {
   description: string;
-  // Le service qu'il lance (Unit=, sinon NOM.service).
+  // The service it starts (Unit=, otherwise NAME.service).
   unit: string;
   calendar: string[];
   // OnBootSec=, OnActiveSec=, OnUnitActiveSec= (ms).
@@ -26,7 +26,7 @@ export interface Timer {
   active: boolean;
   state: 'active' | 'inactive';
   since: number;
-  // Dernier déclenchement.
+  // Last trigger.
   last?: number;
   file: string;
 }
@@ -37,11 +37,11 @@ interface Calendar {
   days: Set<number> | null;
   hours: Set<number>;
   minutes: Set<number>;
-  // La forme normalisée, comme systemd-analyze calendar.
+  // The normalised form, like systemd-analyze calendar.
   normal: string;
 }
 
-// Un champ : *, 5, 0/15 (de 0 en 0 par 15), */10, 1,15,30, 8..18.
+// A field: *, 5, 0/15 (from 0 in steps of 15), */10, 1,15,30, 8..18.
 function field(text: string, max: number): { values: Set<number>; normal: string } | null {
   const values = new Set<number>();
   const normal: string[] = [];
@@ -68,7 +68,7 @@ const SHORTCUTS: Record<string, string> = {
   weekly: 'Mon *-*-* 00:00:00',
 };
 
-/** OnCalendar= → les minutes où le timer se déclenche ; null si systemd refuserait l'expression. */
+/** OnCalendar= → the minutes at which the timer triggers; null if systemd would refuse the expression. */
 export function readCalendar(text: string): Calendar | null {
   let rest = (SHORTCUTS[text.trim()] ?? text).trim().split(/\s+/);
   let days: Set<number> | null = null;
@@ -100,7 +100,7 @@ export function readCalendar(text: string): Calendar | null {
   return { days, hours: hours.values, minutes: minutes.values, normal: `${prefix}*-*-* ${hours.normal}:${minutes.normal}:${sec}` };
 }
 
-/** La prochaine minute (après `apres`, exclue) où l'expression se déclenche (heure locale lue comme UTC). */
+/** The next minute (after `after`, excluded) at which the expression triggers (local time read as UTC). */
 export function nextCalendar(c: Calendar, after: number): number | null {
   let t = Math.floor(after / 60_000) * 60_000 + 60_000;
   for (let i = 0; i < 60 * 24 * 8; i++, t += 60_000) {
@@ -110,7 +110,7 @@ export function nextCalendar(c: Calendar, after: number): number | null {
   return null;
 }
 
-/** « 5min », « 1h », « 30s », « 300 » (secondes), « 1h 30min » → ms ; null si illisible. */
+/** "5min", "1h", "30s", "300" (seconds), "1h 30min" → ms; null if unreadable. */
 export function readDuration(text: string): number | null {
   const units: Record<string, number> = { '': 1000, s: 1000, sec: 1000, m: 60_000, min: 60_000, h: 3_600_000, hr: 3_600_000, d: 86_400_000 };
   let total = 0;
@@ -123,10 +123,10 @@ export function readDuration(text: string): number | null {
   return chunks.length ? total : null;
 }
 
-/** Le démarrage de la machine (le premier message de ce démarrage). */
+/** The machine's boot (the first message of this boot). */
 const machineBoot = (sd: Systemd) => sd.log.find((e) => e.boot === sd.boot)?.time ?? sd.clock;
 
-/** Le prochain déclenchement d'un timer après `apres` ; null s'il n'en a plus (ex. OnUnitActiveSec= seul, service jamais lancé). */
+/** A timer's next trigger after `after`; null if it has none left (e.g. OnUnitActiveSec= alone, service never started). */
 export function nextTrigger(sd: Systemd, m: Timer, after: number): number | null {
   if (m.state !== 'active') return null;
   const candidates: number[] = [];
@@ -144,13 +144,13 @@ export function nextTrigger(sd: Systemd, m: Timer, after: number): number | null
     const t = moreLate(m.since + m.afterActivation);
     if (t) candidates.push(t);
   }
-  // OnUnitActiveSec= : compté depuis le dernier lancement du service (rien tant qu'il n'a jamais tourné).
+  // OnUnitActiveSec=: counted from the service's last start (nothing as long as it has never run).
   if (m.afterLast !== undefined && m.last !== undefined)
     candidates.push(Math.max(m.last + m.afterLast, Math.floor(after / 60_000) * 60_000 + 60_000));
   return candidates.length ? Math.min(...candidates) : null;
 }
 
-// ——— Les fichiers d'unité ———
+// ——— Unit files ———
 
 function sections(text: string): Record<string, Record<string, string[]>> {
   const r: Record<string, Record<string, string[]>> = {};
@@ -170,7 +170,7 @@ function sections(text: string): Record<string, Record<string, string[]>> {
   return r;
 }
 
-/** Lit les unités de /etc/systemd/system (services et timers écrits à la main). */
+/** Reads the units of /etc/systemd/system (hand-written services and timers). */
 export function loadUnits(game: Shell, sd: Systemd): void {
   const place = game.find('/etc/systemd/system');
   if (place?.type !== 'directory') return;
@@ -235,7 +235,7 @@ export function loadUnits(game: Shell, sd: Systemd): void {
   }
 }
 
-/** ExecStart= : la commande tourne sous son compte (User=), sa sortie va au journal. */
+/** ExecStart=: the command runs under its account (User=), its output goes to the journal. */
 function execute(game: Shell, sd: Systemd, name: string, command: string, account: string): number {
   if (!command) {
     writeLog(sd, `${name}.service`, 'systemd', 1, `${name}.service: Service has no ExecStart=, ExecStop=, or SuccessAction=. Refusing.`, 3);
@@ -254,19 +254,19 @@ function execute(game: Shell, sd: Systemd, name: string, command: string, accoun
   }
 }
 
-/** Le timer qui lance ce service (pour « TriggeredBy: »). */
+/** The timer that starts this service (for "TriggeredBy:"). */
 export const timerFor = (sd: Systemd, service: string) => Object.entries(sd.timers ?? {}).find(([, m]) => m.unit === service)?.[0];
 
 /**
- * Faire passer le temps minute par minute (de `debut` à `fin`) : à chaque
- * minute, `chaqueMinute` (ce qui arrive dans l'histoire), puis les timers
- * et les tâches cron qui tombent à cette minute. Renvoie combien de tâches
- * écrites à la main (timers de /etc, crontabs) ont tourné.
+ * Make time pass minute by minute (from `start` to `end`): at each
+ * minute, `eachMinute` (what happens in the story), then the timers
+ * and cron jobs that fall on that minute. Returns how many hand-written
+ * jobs (timers in /etc, crontabs) ran.
  */
 export function passTime(game: Shell, start: number, end: number, eachMinute?: (t: number) => void): number {
   const sd = systemd(game)!;
   let launches = 0;
-  // Minute par minute, à la minute ronde (comme cron et les timers).
+  // Minute by minute, on the round minute (like cron and timers).
   for (let t = Math.ceil(start / 60_000) * 60_000; t < end; t += 60_000) {
     sd.clock = t;
     eachMinute?.(t);
@@ -276,7 +276,7 @@ export function passTime(game: Shell, start: number, end: number, eachMinute?: (
       if (!s) continue;
       m.last = t;
       sd.clock = t;
-      // On compte les timers écrits à la main (pas ceux livrés avec le système).
+      // Count the hand-written timers (not those shipped with the system).
       if (m.file.startsWith('/etc/')) launches++;
       writeLog(sd, `${m.unit}.service`, 'systemd', 1, `Starting ${m.unit}.service - ${s.description}...`, 6, false);
       launchOneshot(game, sd, m.unit);
@@ -288,7 +288,7 @@ export function passTime(game: Shell, start: number, end: number, eachMinute?: (
           game.who = account;
           launches++;
           try {
-            // Comme cron : ce qu'une tâche écrit part par courrier à son compte.
+            // Like cron: what a job writes is mailed to its account.
             const output = game.runTask(task.command);
             if (output.trim()) send(game, [account], `Cron <${account}@${sd.host}> ${task.command}`, output);
           } finally {
@@ -300,7 +300,7 @@ export function passTime(game: Shell, start: number, end: number, eachMinute?: (
   return launches;
 }
 
-// Un service ponctuel lancé par son timer (sans « Started », déjà écrit).
+// A oneshot service started by its timer (without "Started", already written).
 function launchOneshot(game: Shell, sd: Systemd, name: string) {
   const s = sd.services[name];
   const code = s.execute?.(game) ?? 0;

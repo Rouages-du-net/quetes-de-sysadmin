@@ -1,11 +1,11 @@
-// Histoire « Le Datacenter » — chapitre « Deuxième jour » : comptes et
-// groupes. Malo doit lire les journaux nginx sans sudo (groupe adm, comme
-// sur Debian : https://wiki.debian.org/SystemGroups), et l'équipe web a
-// besoin d'un dossier partagé. Commandes : id, groups, ls -l, usermod -aG,
+// Story "The Data Centre", chapter "Second day": accounts and
+// groups. Malo must read nginx's logs without sudo (adm group, as
+// on Debian: https://wiki.debian.org/SystemGroups), and the web team
+// needs a shared directory. Commands: id, groups, ls -l, usermod -aG,
 // chgrp, chown, chmod.
-// Pièges réels : usermod -G sans -a remplace les groupes secondaires ;
-// chmod o+r ouvre les journaux (adresses IP : données personnelles) à tous.
-// Les objectifs sont vérifiés sur l'état du système, pas sur la commande.
+// Real traps: usermod -G without -a replaces the supplementary groups;
+// chmod o+r opens the logs (IP addresses: personal data) to everyone.
+// The objectives are checked on the system's state, not on the command.
 
 import { path, d, f, accountsFiles, type Chapter, type File } from '../world';
 import type { Game } from '../shell';
@@ -19,12 +19,12 @@ const ERRORS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/ru
 2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET /agenda HTTP/1.1"
 2026/10/13 21:02:44 [notice] 612#612: signal process started`;
 
-// Sur Debian, les journaux de nginx appartiennent à www-data, groupe adm, en 640.
+// On Debian, nginx's logs belong to www-data, group adm, mode 640.
 const log = (text: string): File => f(text, { lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' });
 const files = (j: Game) => [`${LOGS}/access.log`, `${LOGS}/error.log`].map((c) => j.find(c)!);
 
 const malo = {
-  // Malo lit les deux journaux, comme un membre d'adm, et toujours membre d'web-team.
+  // Malo reads both logs, as a member of adm, and is still a member of web-team.
   lit: (j: Game) => files(j).every((n) => j.can(n, 'r', 'malo')) && j.groupsFor('malo').includes('web-team'),
 };
 const openLogs = (j: Game) => files(j).some((n) => j.can(n, 'r', 'nobody'));

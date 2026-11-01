@@ -1,17 +1,17 @@
-// Les disques : lsblk (util-linux) pour les voir, mount et umount pour
-// brancher un système de fichiers dans l'arborescence. D'après
-// https://man7.org/linux/man-pages/man8/mount.8.html et lsblk(8).
+// Disks: lsblk (util-linux) to see them, mount and umount to attach a
+// file system to the tree. Based on
+// https://man7.org/linux/man-pages/man8/mount.8.html and lsblk(8).
 //
-//   etat.peripheriques = { '/dev/sdb1': { disque, taille, systeme, etiquette, arbre } }
-//   etat.montages = [{ chemin, capacite, nom, systeme, lectureSeule }]
+//   state.devices = { '/dev/sdb1': { disk, size, system, label, tree } }
+//   state.mounts = [{ path, capacity, name, system, onlyRead }]
 //
-// Monter, c'est faire apparaître l'arbre du périphérique au point de montage
-// (ce qu'il y avait dans le dossier est caché, pas effacé) ; démonter le
-// détache. Monté en lecture seule (-o ro), rien ne peut y être écrit.
-// Sur une machine au stockage décrit, mount lit /etc/fstab (voir fstab.ts) : mount -a,
-// mount point_de_montage, sources UUID= et LABEL=.
-// Écarts : pas d'options autres que ro/rw ; un seul type
-// de système de fichiers par périphérique.
+// Mounting makes the device's tree appear at the mount point (what was in
+// the directory is hidden, not erased); unmounting detaches it. Mounted
+// read-only (-o ro), nothing can be written to it.
+// On a machine with described storage, mount reads /etc/fstab (see fstab.ts): mount -a,
+// mount mount_point, UUID= and LABEL= sources.
+// Differences: no options other than ro/rw; a single file system type
+// per device.
 
 import type { Directory, Node } from '../world';
 import type { Shell } from '../shell';
@@ -21,7 +21,7 @@ import { readFstab, resolveSource, systemFor } from '../fstab';
 import { lsblkStockage } from './storage';
 
 export interface Device {
-  // Le disque entier (/dev/sdb) et ses numéros (MAJ:MIN), amovible ou non.
+  // The whole disk (/dev/sdb) and its numbers (MAJ:MIN), removable or not.
   disk: string;
   majmin: [number, number];
   removable: boolean;
@@ -39,14 +39,14 @@ export interface Mount {
   system?: string;
   onlyRead?: boolean;
   options?: string;
-  // Ce que cachait le point de montage, rendu au démontage.
+  // What the mount point hid, given back on unmount.
   cache?: { children: Record<string, Node>; owner?: string; group?: string; mode?: string };
 }
 
 const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};
 const mounts = (game: Shell): Mount[] => (game.state.mounts ??= []);
 
-/** « 29.3G », « 20G », comme lsblk (puissances de 1024). */
+/** "29.3G", "20G", like lsblk (powers of 1024). */
 function lsblkSize(bytes: number): string {
   const units = ['B', 'K', 'M', 'G', 'T'];
   let v = bytes;
@@ -60,11 +60,11 @@ function lsblkSize(bytes: number): string {
 }
 
 function lsblk(game: Shell, args: string[]): string {
-  // Une machine aux disques décrits (stockage.ts) : disques, partitions, RAID, colonnes au choix.
+  // A machine with described disks (storage.ts): disks, partitions, RAID, chosen columns.
   const st = storageOf(game);
   if (st) return lsblkStockage(game, st, args);
   const complete = args.includes('-f') || args.includes('--fs');
-  // Le disque de la machine (vda) et ses partitions montées, puis les périphériques.
+  // The machine's disk (vda) and its mounted partitions, then the devices.
   type Line = {
     name: string;
     majmin: string;
@@ -145,7 +145,7 @@ function lsblk(game: Shell, args: string[]): string {
 
 const DMESG = '\n       dmesg(1) may have more information after failed mount system call.';
 
-// Sur une machine au stockage décrit (stockage.ts), un système de fichiers qu'on peut monter.
+// On a machine with described storage (storage.ts), a file system that can be mounted.
 function periphStockage(game: Shell, source: string): (Device & { name: string }) | null {
   const st = storageOf(game);
   if (!st) return null;
@@ -155,7 +155,7 @@ function periphStockage(game: Shell, source: string): (Device & { name: string }
   return { name: dev, disk: dev, majmin: [8, 0], removable: false, size: fs.bytes ?? 0, system: fs.type, label: fs.label, uuid: fs.uuid, tree: fs.tree };
 }
 
-// mount -a : tout ce que décrit /etc/fstab (sauf noauto), et qui n'est pas déjà monté.
+// mount -a: everything /etc/fstab describes (except noauto) that isn't already mounted.
 function mountAll(game: Shell): string {
   if (game.who !== 'root') return game.error('mount: only root can use "--all" option');
   const text = game.read('/etc/fstab') ?? '';
@@ -166,7 +166,7 @@ function mountAll(game: Shell): string {
     if (e.type === 'swap' || e.options.includes('noauto') || mounts(game).some((m) => m.path === e.target)) continue;
     const dev = st ? resolveSource(st, e.source) : null;
     if (!dev || !st || !systemFor(st, dev)) {
-      // nofail : un support absent n'est pas une erreur.
+      // nofail: a missing medium is not an error.
       if (!e.options.includes('nofail')) game.error(`mount: ${e.target}: special device ${e.source} does not exist.${DMESG}`, 32);
       continue;
     }
@@ -174,13 +174,13 @@ function mountAll(game: Shell): string {
     const r = brancher(game, e.source, e.target, e.options.join(','));
     if (r) game.error(r, 32);
   }
-  // util-linux prévient quand fstab a changé depuis que systemd l'a lue.
+  // util-linux warns when fstab changed since systemd read it.
   if (game.state.fstabRead !== undefined && game.state.fstabRead !== text)
     game.error("mount: (hint) your fstab has been modified, but systemd still uses\n       the old version; use 'systemctl daemon-reload' to reload.");
   return '';
 }
 
-/** Monte une source sur un point (renvoie le message d'erreur de mount, ou ''). */
+/** Mounts a source on a point (returns mount's error message, or ''). */
 function brancher(game: Shell, source: string, point: string, options: string): string {
   const absolute = game.resolve(point);
   const p = devices(game)[source] ? { ...devices(game)[source], name: source } : periphStockage(game, source);
@@ -199,7 +199,7 @@ function brancher(game: Shell, source: string, point: string, options: string): 
   return '';
 }
 
-/** Au démarrage : monte ce que décrit fstab et qui peut l'être (le reste a été vérifié avant). */
+/** At boot: mounts what fstab describes and can be mounted (the rest was checked before). */
 export function mountToBoot(game: Shell): void {
   const before = game.who;
   game.who = 'root';
@@ -225,7 +225,7 @@ function mount(game: Shell, args: string[]): string {
     else if (args[i] === '-a' || args[i] === '--all') return mountAll(game);
     else if (!args[i].startsWith('-')) positional.push(args[i]);
   }
-  // Un seul argument : le point de montage (ou la source) d'une ligne de fstab.
+  // A single argument: the mount point (or the source) of an fstab line.
   if (positional.length === 1) {
     const only = positional[0];
     const e = readFstab(game.read('/etc/fstab') ?? '').inputs.find((x) => x.target === game.resolve(only) || x.source === only);
@@ -257,7 +257,7 @@ function mount(game: Shell, args: string[]): string {
       `mount: ${absolute}: ${source} already mounted on ${already.path}.\n       dmesg(1) may have more information after failed mount system call.`,
     );
   const onlyRead = options.split(',').includes('ro');
-  // Le contenu du dossier est caché (pas effacé) tant que le périphérique y est monté.
+  // The directory's content is hidden (not erased) while the device is mounted on it.
   const cache = { children: place.children, owner: place.owner, group: place.group, mode: place.mode };
   place.children = p.tree.children;
   place.owner = p.tree.owner;
@@ -274,7 +274,7 @@ function unmount(game: Shell, args: string[]): string {
   const shows = m?.path ?? game.resolve(target);
   if (game.who !== 'root') return game.error(`umount: ${shows}: must be superuser to unmount.`);
   if (!m || !m.cache) return game.error(`umount: ${shows}: not mounted.`);
-  // On ne démonte pas un lieu où l'on se trouve (comme un processus qui y travaille).
+  // You can't unmount a place you are in (like a process working there).
   if (game.cwd === m.path || game.cwd.startsWith(m.path + '/')) return game.error(`umount: ${m.path}: target is busy.`);
   const place = game.find(m.path) as Directory;
   const p = devices(game)[m.name];

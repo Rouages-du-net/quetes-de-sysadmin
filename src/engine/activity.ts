@@ -1,31 +1,31 @@
-// La machine vit pendant qu'on joue : un chapitre peut déclarer une activité
-// (Chapitre.activite) — des visiteurs, des robots, une attaque — qui écrit
-// dans ses journaux au fil du temps. Le temps avance de quelques secondes à
-// chaque commande tapée, et pendant un suivi (tail -f, journalctl -f), au
-// rythme de l'écran. Tout reste déterministe : l'activité ne dépend que de
-// l'horloge de la machine, jamais de l'heure réelle (le moteur ne la lit pas).
+// The machine lives while you play: a chapter can declare an activity
+// (Chapter.activity) — visitors, robots, an attack — that writes
+// into its logs over time. Time moves forward a few seconds at
+// each typed command, and during a follow (tail -f, journalctl -f), at
+// the screen's pace. Everything stays deterministic: the activity depends only on
+// the machine's clock, never on the real time (the engine doesn't read it).
 
 import type { Shell } from './shell';
 import { systemd } from './systemd';
 
 export interface Activity {
-  // Les secondes qui passent à chaque commande tapée.
+  // The seconds that pass with each typed command.
   not: number;
-  // Ce qui arrive entre deux instants (en ms, horloge de la machine) : écrire
-  // dans les journaux, bannir, relancer… L'horloge de systemd suit.
+  // What happens between two instants (in ms, machine clock): write
+  // into the logs, ban, restart… systemd's clock follows.
   advance: (game: Shell, forEachOf: number, a: number) => void;
-  // L'instant de départ (par défaut, l'horloge de systemd).
+  // The starting instant (by default, systemd's clock).
   departure?: (game: Shell) => number;
 }
 
-/** L'horloge de l'activité d'une machine (ms) ; null si son chapitre n'en a pas. */
+/** The clock of a machine's activity (ms); null if its chapter has none. */
 export function activityClock(game: Shell): number | null {
   const a = game.chapter.activity;
   if (!a) return null;
   return ((game.state.activity ??= { clock: a.departure?.(game) ?? systemd(game)?.clock ?? 0 }) as { clock: number }).clock;
 }
 
-/** Fait passer des secondes sur la machine : son activité écrit ce qui se passe pendant ce temps. */
+/** Makes seconds pass on the machine: its activity writes what happens meanwhile. */
 export function live(game: Shell, seconds: number): void {
   const a = game.chapter.activity;
   const forEachOf = activityClock(game);
@@ -37,7 +37,7 @@ export function live(game: Shell, seconds: number): void {
   if (sd && sd.clock < end) sd.clock = end;
 }
 
-/** Les instants réguliers d'une source (toutes les `periode` secondes depuis `debut`) compris dans ]de, a]. */
+/** A source's regular instants (every `period` seconds from `start`) within ]forEachOf, a]. */
 export function instants(forEachOf: number, a: number, period: number, start = 0): number[] {
   const p = period * 1000;
   const first = start + Math.floor((forEachOf - start) / p + 1) * p;

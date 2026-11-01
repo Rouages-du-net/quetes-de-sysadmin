@@ -1,21 +1,20 @@
-// nftables, le pare-feu du noyau Linux, sur un routeur (etat.nft) : des
-// tables (famille ip, ip6, inet), des chaînes accrochées au trajet des
-// paquets (hook input, forward, output, prerouting, postrouting) avec une
-// politique, et des règles lues de gauche à droite (des conditions, puis
-// des instructions : counter, log, accept, drop, masquerade…).
-// Le langage est celui de nft(8) : https://www.netfilter.org/projects/nftables/manpage.html,
-// https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes ;
-// sur Debian, /etc/nftables.conf est chargé par nftables.service (nft -f).
-// Le trafic des appareils du réseau local (Lan.flux) traverse le routeur :
-// hook forward (paquet « new », puis la réponse « established »), puis la
-// traduction d'adresse (masquerade, snat) au hook postrouting d'une chaîne
-// de type nat. Une adresse privée (RFC 1918) qui sort vers internet sans
-// traduction ne reçoit jamais de réponse. Rien ne passe sans
-// net.ipv4.ip_forward = 1 (/proc/sys, voir sysctl).
-// Écarts : IPv4 seulement ; pas d'ensembles nommés (set), de maps, de
-// limit, ni de règles sur le contenu des paquets ; les compteurs comptent
-// le trafic simulé (un passage de chaque flux) ; la chaîne input ne coupe
-// pas la session ssh du jeu.
+// nftables, the Linux kernel's firewall, on a router (state.nft): tables
+// (family ip, ip6, inet), chains hooked onto the packets' path (hook input,
+// forward, output, prerouting, postrouting) with a policy, and rules read
+// from left to right (conditions, then statements: counter, log, accept,
+// drop, masquerade…).
+// The language is nft(8)'s: https://www.netfilter.org/projects/nftables/manpage.html,
+// https://wiki.nftables.org/wiki-nftables/index.php/Quick_reference-nftables_in_10_minutes;
+// on Debian, /etc/nftables.conf is loaded by nftables.service (nft -f).
+// The traffic of the local network's devices (Lan.flux) goes through the
+// router: hook forward (a "new" packet, then the "established" reply), then
+// address translation (masquerade, snat) at the postrouting hook of a chain
+// of type nat. A private address (RFC 1918) going out to the internet
+// without translation never gets a reply. Nothing goes through without
+// net.ipv4.ip_forward = 1 (/proc/sys, see sysctl).
+// Differences: IPv4 only; no named sets, maps, limit, nor rules on the
+// packets' content; the counters count the simulated traffic (one pass of
+// each flow); the input chain does not cut the game's ssh session.
 
 import type { Game } from './shell';
 import { addressFor, inside, inService, isIp, vlanInterface, interfaceFor, reach, lan, isPrivate, networkFor, toCount, type Lan } from './lan';
@@ -25,7 +24,7 @@ export const CONF = '/etc/nftables.conf';
 export const FAMILIES = ['ip', 'ip6', 'inet', 'arp', 'bridge', 'netdev'];
 const HOOKS = ['prerouting', 'input', 'forward', 'output', 'postrouting', 'ingress'];
 const PRIORITIES: Record<string, number> = { raw: -300, mangle: -150, dstnat: -100, filter: 0, security: 50, srcnat: 100 };
-// Les services de /etc/services que le jeu connaît (tcp dport https…).
+// The services of /etc/services the game knows (tcp dport https…).
 export const SERVICES: Record<string, number> = {
   ssh: 22,
   smtp: 25,
@@ -42,14 +41,14 @@ export const SERVICES: Record<string, number> = {
 };
 const CT_STATES = ['new', 'established', 'related', 'invalid', 'untracked'];
 
-// ——— Le modèle ———
+// ——— The model ———
 
 export interface Condition {
   // iifname, oifname, ip saddr, ip daddr, ip protocol, meta l4proto, ct state, tcp dport, udp sport…
   field: string;
   negation: boolean;
   values: string[];
-  // Écrit entre accolades ({ 80, 443 }).
+  // Written between braces ({ 80, 443 }).
   set: boolean;
 }
 
@@ -79,7 +78,7 @@ export interface Table {
   name: string;
   strings: String[];
   handshake: number;
-  // Le prochain numéro (handle) à donner dans cette table.
+  // The next number (handle) to give in this table.
   next: number;
 }
 
@@ -90,7 +89,7 @@ export interface Ruleset {
 export const nft = (j: Game): Ruleset => (j.state.nft ??= { tables: [] });
 export const copyOf = (r: Ruleset): Ruleset => structuredClone(r);
 
-// ——— Le lexique ———
+// ——— The lexer ———
 
 interface Token {
   t: string;
@@ -107,7 +106,7 @@ function split(text: string): Token[] {
     while (k < rawValue.length) {
       const c = rawValue[k];
       if (c === '#') break;
-      if (c === '\\' && k === rawValue.trimEnd().length - 1) return; // la ligne continue
+      if (c === '\\' && k === rawValue.trimEnd().length - 1) return; // the line continues
       if (/\s/.test(c)) {
         k++;
         continue;
@@ -140,7 +139,7 @@ function split(text: string): Token[] {
   return tokens;
 }
 
-// Une erreur de nft : le message, et où (ligne, colonnes).
+// An nft error: the message, and where (line, columns).
 export class NftError extends Error {
   constructor(
     message: string,
@@ -164,7 +163,7 @@ const describe = (j: Token) =>
             : 'string';
 const unexpected = (j: Token) => new NftError(`syntax error, unexpected ${describe(j)}`, j);
 
-// ——— L'analyse ———
+// ——— The parser ———
 
 class Reader {
   k = 0;
@@ -209,7 +208,7 @@ class Reader {
   }
 }
 
-/** Ce qu'une commande de liste demande (nft list …), pour l'affichage. */
+/** What a list command asks for (nft list …), for display. */
 export interface List {
   what: 'ruleset' | 'tables' | 'table' | 'chain';
   family?: string;
@@ -218,9 +217,9 @@ export interface List {
 }
 
 /**
- * Exécute un texte nft (un fichier, ou une commande) sur une copie du
- * ruleset : renvoie la copie modifiée et les listes demandées. Lève
- * ErreurNft (rien n'est appliqué : nft est atomique).
+ * Runs an nft text (a file, or a command) on a copy of the ruleset: returns
+ * the modified copy and the requested listings. Throws NftError (nothing is
+ * applied: nft is atomic).
  */
 export function runNft(j: Game, text: string, departure: Ruleset, depth = 0): { ruleset: Ruleset; lists: List[] } {
   const r = copyOf(departure);
@@ -426,7 +425,7 @@ function stringBody(l: Reader, t: Table, c: String) {
   }
 }
 
-// Une valeur, une liste (a,b) ou un ensemble ({ a, b }).
+// A value, a list (a,b) or a set ({ a, b }).
 function values(l: Reader): { values: string[]; set: boolean } {
   if (l.is('{')) {
     l.take();
@@ -486,7 +485,7 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
       else if (k.t === 'protocol') condition('l4proto', (v) => ['tcp', 'udp', 'icmp'].includes(v));
       else throw unexpected(k);
     } else if (m === 'ip6') {
-      // Une règle IPv6 : elle ne voit jamais les paquets IPv4 du jeu.
+      // An IPv6 rule: it never sees the game's IPv4 packets.
       const k = l.word();
       if (!['saddr', 'daddr', 'nexthdr'].includes(k.t)) throw unexpected(k);
       condition(`ip6 ${k.t}`);
@@ -552,7 +551,7 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
   return rule;
 }
 
-// ——— L'affichage (nft list) ———
+// ——— The display (nft list) ———
 
 const priorityName = (p: number) => Object.entries(PRIORITIES).find(([, v]) => v === p)?.[0] ?? String(p);
 const guillemets = (field: string, v: string) => (field.endsWith('ifname') ? `"${v}"` : v);
@@ -595,7 +594,7 @@ export function show(r: Ruleset, listing: List, handshakes: boolean): string {
   return tables.flatMap((t) => tableLines(t, handshakes, listing.string)).join('\n');
 }
 
-// ——— Le trajet d'un paquet ———
+// ——— A packet's path ———
 
 export interface Package {
   iif: string;
@@ -649,10 +648,10 @@ function correspond(c: Condition, p: Package): boolean {
       case 'icmp type':
         return p.proto === 'icmp';
       default:
-        return false; // ip6, icmpv6 : jamais pour un paquet IPv4
+        return false; // ip6, icmpv6: never for an IPv4 packet
     }
   };
-  // Un champ de protocole ne s'applique qu'à son protocole, même nié.
+  // A protocol field only applies to its protocol, even negated.
   if (/^(tcp|udp) /.test(c.field) && !c.field.startsWith(p.proto)) return false;
   if (c.field.startsWith('ip6') || c.field === 'icmpv6 type') return false;
   const yes = c.values.some(one);
@@ -702,9 +701,9 @@ function walk(t: Table, c: String, p: Package, count: boolean, depth = 0): End {
 }
 
 /**
- * Un paquet passe par un hook : chaque chaîne de base de ce hook (familles
- * ip et inet), dans l'ordre des priorités. Le premier drop l'arrête ; un
- * accept le laisse aller à la chaîne suivante ; sans verdict, la politique.
+ * A packet goes through a hook: each base chain of this hook (families ip
+ * and inet), in priority order. The first drop stops it; an accept lets it
+ * go on to the next chain; without a verdict, the policy.
  */
 export function traverse(
   r: Ruleset,
@@ -731,13 +730,13 @@ export function traverse(
   return { pass: true, nat, logs, trace };
 }
 
-// ——— Le trafic du réseau local ———
+// ——— The local network's traffic ———
 
 /**
- * Un échange qu'un appareil essaie à travers le routeur : depuis un appareil
- * du réseau local (son nom) ou depuis internet (une adresse publique), vers
- * un appareil (son nom) ou une adresse (d'internet, ou celle du routeur, que
- * la traduction de destination, dnat, renvoie vers un appareil).
+ * An exchange a device attempts through the router: from a device of the
+ * local network (its name) or from the internet (a public address), to a
+ * device (its name) or an address (on the internet, or the router's, which
+ * destination translation, dnat, sends on to a device).
  */
 export interface Flux {
   forEachOf: string;
@@ -748,33 +747,33 @@ export interface Flux {
 
 export interface Result {
   flux: Flux;
-  // ok : échange établi ; sans-reponse : la question passe, la réponse ne revient pas ; bloque : jeté au passage ; impossible : pas d'adresse, pas de route.
+  // ok: exchange established; no-response: the question goes through, the reply does not come back; blocked: dropped on the way; impossible: no address, no route.
   state: 'ok' | 'no-response' | 'blocked' | 'impossible';
-  // Le premier paquet, tel qu'il arrive au routeur (avant toute traduction).
+  // The first packet, as it reaches the router (before any translation).
   go?: Package;
-  // L'adresse source après traduction (masquerade, snat), si elle change.
+  // The source address after translation (masquerade, snat), if it changes.
   translated?: string;
-  // La destination après traduction (dnat), si elle change : adresse, et port.
+  // The destination after translation (dnat), if it changes: address, and port.
   destination?: { address: string; port: number };
   logs: { prefix: string; pkg: Package }[];
 }
 
-/** La valeur d'une clé sysctl (/proc/sys/…), ou null si elle n'existe pas. */
+/** The value of a sysctl key (/proc/sys/…), or null if it does not exist. */
 export const readSysctl = (j: Game, key: string) => j.read(`/proc/sys/${key.replace(/\./g, '/')}`)?.trim() ?? null;
 export const routing = (j: Game) => readSysctl(j, 'net.ipv4.ip_forward') === '1' || readSysctl(j, 'net.ipv4.conf.all.forwarding') === '1';
 
-// Un port source tiré du nom de l'appareil (toujours le même).
+// A source port derived from the device's name (always the same).
 const portSource = (name: string, port: number) => {
   let h = port;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return 40000 + (h % 20000);
 };
 
-/** Ce que devient un flux à travers le routeur, avec ce ruleset et ce réglage d'ip_forward. */
+/** What becomes of a flow through the router, with this ruleset and this ip_forward setting. */
 export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = false): Result {
   const res = (state: Result['state'], o: Partial<Result> = {}): Result => ({ flux: f, state, logs: [], ...o });
   const gw = l.gateway && l.interfaces[l.gateway.dev] && inService(l, l.interfaces[l.gateway.dev]) ? l.interfaces[l.gateway.dev] : null;
-  // La source : un appareil du réseau local, ou une adresse d'internet (qui arrive par la passerelle).
+  // The source: a device of the local network, or an internet address (arriving through the gateway).
   const external = isIp(f.forEachOf) && !isPrivate(f.forEachOf);
   const source = external ? null : l.devices.find((a) => a.name === f.forEachOf);
   const saddr = external ? f.forEachOf : source && addressFor(source);
@@ -796,7 +795,7 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   };
   const logs: Result['logs'] = [];
   const note = (t: { logs: string[] }, p: Package) => logs.push(...t.logs.map((prefix) => ({ prefix, pkg: p })));
-  // La traduction de destination : prerouting, chaînes de type nat (premier paquet seulement).
+  // Destination translation: prerouting, chains of type nat (first packet only).
   const pre = traverse(r, 'prerouting', 'nat', go, count);
   note(pre, go);
   if (!pre.pass) return res('blocked', { go, logs });
@@ -807,7 +806,7 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   }
   const dest = destination?.address ?? daddr;
   const dport = destination?.port ?? f.port;
-  // Pour le routeur lui-même (sans traduction) : la chaîne input, que ces échanges ne regardent pas.
+  // For the router itself (without translation): the input chain, which these exchanges do not look at.
   if (Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === dest))) return res('blocked', { go, destination, logs });
   const internal = interfaceFor(l, dest);
   const oif = internal ?? (isPrivate(dest) ? null : gw);
@@ -817,14 +816,14 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   const before = traverse(r, 'forward', 'filter', traverses, count);
   note(before, traverses);
   if (!before.pass) return res('blocked', { go, destination, logs });
-  // La traduction de source : postrouting, chaînes de type nat (premier paquet seulement).
+  // Source translation: postrouting, chains of type nat (first packet only).
   const nat = traverse(r, 'postrouting', 'nat', traverses, count);
   note(nat, traverses);
   if (!nat.pass) return res('blocked', { go, destination, logs });
   const translated =
     nat.nat?.what === 'masquerade' ? oif.addresses[0]?.split('/')[0] : nat.nat?.what === 'snat' ? nat.nat.to!.split(':')[0] : undefined;
   const view = translated ?? saddr;
-  // La réponse : d'un appareil du réseau local s'il existe ; d'internet seulement vers une adresse publique.
+  // The reply: from a device of the local network if it exists; from the internet only to a public address.
   const device = l.devices.find((a) => addressFor(a) === dest);
   const answers = device ? reach(l, dest).what === 'device' : internal ? false : !isPrivate(view);
   if (!answers) return res('no-response', { go, translated, destination, logs });
@@ -844,20 +843,20 @@ export function attempt(l: Lan, r: Ruleset, transfer: boolean, f: Flux, count = 
   return res(r2.pass ? 'ok' : 'no-response', { go, translated, destination, logs });
 }
 
-/** Les flux du réseau local, maintenant (ruleset chargé, ip_forward du noyau). */
+/** The local network's flows, now (ruleset loaded, the kernel's ip_forward). */
 export const results = (j: Game, count = false, r = nft(j)): Result[] => {
   const l = lan(j);
   return (l?.flux ?? []).map((f) => attempt(l!, r, routing(j), f, count));
 };
 
-/** Le ruleset avec les compteurs du trafic simulé (un passage de chaque flux), pour nft list. */
+/** The ruleset with the counters of the simulated traffic (one pass of each flow), for nft list. */
 export function withCounters(j: Game): Ruleset {
   const r = copyOf(nft(j));
   for (const t of r.tables)
     for (const c of t.strings)
       for (const rule of c.rules) for (const i of rule.instructions) if (i.what === 'counter') Object.assign(i, { packages: 0, bytes: 0 });
   results(j, true, r);
-  // Ce qui a déjà été compté à la main (counter packets N bytes M) s'ajoute.
+  // What was already counted by hand (counter packets N bytes M) is added.
   const base = nft(j);
   r.tables.forEach((t, a) =>
     t.strings.forEach((c, b) =>
@@ -875,7 +874,7 @@ export function withCounters(j: Game): Ruleset {
   return r;
 }
 
-/** Après un chargement : les lignes « log » du noyau pour le trafic du moment (journalctl -k). */
+/** After a load: the kernel's "log" lines for the current traffic (journalctl -k). */
 export function logTraffic(j: Game) {
   const sd = systemd(j);
   const l = lan(j);
@@ -893,9 +892,9 @@ export function logTraffic(j: Game) {
     }
 }
 
-// ——— Le fichier /etc/nftables.conf ———
+// ——— The /etc/nftables.conf file ———
 
-/** Lit /etc/nftables.conf comme nft -f (sur un ruleset vide, sauf s'il ne le vide pas lui-même). */
+/** Reads /etc/nftables.conf like nft -f (on an empty ruleset, unless it does not flush it itself). */
 export function readConf(j: Game, departure: Ruleset = nft(j)): { ruleset: Ruleset | null; error: string | null } {
   const text = j.read(CONF);
   if (text === null) return { ruleset: null, error: `Error: Could not open file "${CONF}": No such file or directory` };
@@ -908,7 +907,7 @@ export function readConf(j: Game, departure: Ruleset = nft(j)): { ruleset: Rules
   }
 }
 
-/** Une erreur au format de nft : « fichier:ligne:col-col: Error: … », la ligne, et des ^ dessous. */
+/** An error in nft's format: "file:line:col-col: Error: …", the line, and ^ under it. */
 export function formatError(e: NftError, file: string | null, text: string): string {
   const fic = (e as { file?: string }).file ?? file;
   const j = e.token;
@@ -920,5 +919,5 @@ export function formatError(e: NftError, file: string | null, text: string): str
   return `${place}Error: ${e.message}\n${line}\n${offset}${'^'.repeat(width)}`;
 }
 
-/** Le ruleset que donnerait le fichier au démarrage (sur un ruleset vide). */
+/** The ruleset the file would give at boot (on an empty ruleset). */
 export const toBoot = (j: Game) => readConf(j, { tables: [] }).ruleset;

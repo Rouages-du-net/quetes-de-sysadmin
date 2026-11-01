@@ -1,6 +1,6 @@
-// Les histoires de Quêtes de Sysadmin et leurs chapitres, dans l'ordre. Voir
-// docs/SCENARIOS.md. Les histoires sont indépendantes ; dans une
-// histoire, un chapitre s'ouvre quand le précédent est terminé.
+// The stories of Sysadmin Quests and their chapters, in order. See
+// docs/SCENARIOS.md. The stories are independent; within a
+// story, a chapter opens when the previous one is finished.
 import type { Chapter, Story } from '../world';
 import { awakening } from './lighthouse';
 import { village } from './village';
@@ -84,8 +84,8 @@ import { playbook } from './playbook';
 import { rehearsal } from './rehearsal';
 import { padlock } from './padlock';
 
-// Les histoires s'ouvrent peu à peu : chacune dit, dans `apres`, les chapitres
-// à finir avant d'en recevoir la clé (voir deverrouillage.ts et docs/SCENARIOS.md).
+// Stories open little by little: each one says, in `after`, the chapters
+// to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
 export const STORIES: Story[] = [
   {
     id: 'eraser',
@@ -183,5 +183,5 @@ export const STORIES: Story[] = [
   },
 ];
 
-// Tous les chapitres, toutes histoires confondues (identifiants uniques).
+// All chapters, across all stories (unique identifiers).
 export const CHAPTERS: Chapter[] = STORIES.flatMap((h) => h.chapters);

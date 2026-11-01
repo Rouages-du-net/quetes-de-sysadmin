@@ -1,13 +1,13 @@
-// Histoire « L'Astreinte » — chapitre « L'horloge » : lundi matin, la
-// matinale (6 h – 9 h) ne s'est enregistrée qu'à partir de 8 h 09. Le
-// serveur, migré ce week-end, vit à l'heure UTC (cron lance l'enregistrement
-// à 6 h UTC, 8 h à Paris) et son horloge retarde : NTP est arrêté, et la
-// configuration de timesyncd vise le serveur NTP de l'ancien hébergeur, qui
-// ne répond pas. On règle le fuseau, on donne le bon serveur NTP, on active
-// la synchronisation, et on redémarre cron (qui lit le fuseau au démarrage).
-// Objectif vérifié sur l'état : fuseau Europe/Paris, horloge synchronisée
-// par timesyncd (activé au démarrage), cron redémarré après le changement.
-// Sources : https://www.freedesktop.org/software/systemd/man/latest/timedatectl.html,
+// Story "On Call" — chapter "The clock": Monday morning, the morning show
+// (6–9 a.m.) was only recorded from 8:09. The server, migrated this
+// weekend, lives on UTC time (cron starts the recording at 6:00 UTC, 8:00
+// in Paris) and its clock is late: NTP is stopped, and timesyncd's
+// configuration points to the former host's NTP server, which doesn't
+// answer. Set the time zone, give the right NTP server, enable
+// synchronization, and restart cron (which reads the time zone at start).
+// Objective checked on the state: time zone Europe/Paris, clock synchronized
+// by timesyncd (enabled at boot), cron restarted after the change.
+// Sources: https://www.freedesktop.org/software/systemd/man/latest/timedatectl.html,
 // https://www.freedesktop.org/software/systemd/man/latest/timesyncd.conf.html,
 // https://wiki.debian.org/TimeZoneChanges
 
@@ -17,7 +17,7 @@ import { newSystemd, systemd } from '../systemd';
 import { desync, timeOfDay, displayUpdate, synchronise } from '../time';
 
 const M = '/home/you';
-// La vraie heure : lundi 30 août 2027, 9 h 12 à Paris (heure locale lue comme UTC).
+// The real time: Monday 30 August 2027, 9:12 a.m. in Paris (local time read as UTC).
 const NOW = Date.UTC(2027, 7, 30, 9, 12, 0);
 
 const accounts = (): Accounts => ({
@@ -43,7 +43,7 @@ const sd = (j: Game) => systemd(j)!;
 const h = (j: Game) => timeOfDay(j)!;
 const timesyncd = (j: Game) => sd(j).services['systemd-timesyncd'];
 const aParis = (j: Game) => h(j).zone === 'Europe/Paris';
-// cron lit le fuseau à son démarrage : a-t-il redémarré depuis le changement ?
+// cron reads the time zone at start: has it restarted since the change?
 const dayACron = (j: Game) =>
   h(j).changeZone !== undefined && sd(j).services.cron.state === 'active' && sd(j).services.cron.since >= h(j).changeZone!;
 const commands = (j: Game, ...names: string[]) => j.last.commands.some((c) => names.includes(c[0]) || (c[0] === 'sudo' && names.includes(c[1])));
@@ -116,13 +116,13 @@ export const clock: Chapter = {
       { pid: 611, user: 'root', cpu: 0, mem: 0.1, command: '/usr/sbin/cron -f' },
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
-    // La machine : en UTC, et son horloge retarde de 9 minutes.
+    // The machine: on UTC, and its clock is 9 minutes late.
     clockTime: {
       zone: 'Etc/UTC',
       offset: -9 * 60_000 - 17_000,
       synchronised: false,
       servers: { 'ntp.hosting.example': '192.0.2.123' },
-      // Les serveurs NTP publics sont filtrés par l'hébergeur ; l'ancien ne répond plus.
+      // Public NTP servers are filtered by the host; the former one no longer answers.
       muted: {
         'ntp.old-hosting.example': '198.51.100.7',
         '0.debian.pool.ntp.org': '203.0.113.10',
@@ -136,7 +136,7 @@ export const clock: Chapter = {
     },
   }),
   initialise: (j) => displayUpdate(j),
-  // Chaque commande, quelques secondes passent ; sans NTP, l'horloge prend encore du retard.
+  // With each command, a few seconds pass; without NTP, the clock falls further behind.
   afterCommand: (j) => {
     sd(j).clock += 5000;
     if (!h(j).synchronised) h(j).offset -= 1000;

@@ -1,15 +1,15 @@
-// Histoire « La Veille » — chapitre « Le bulletin » : chaque semaine, un
-// bulletin de sécurité (comme les avis Debian) liste plusieurs CVE. Avant de
-// s'inquiéter, il faut vérifier que chacune concerne VRAIMENT ce serveur :
-// un paquet absent, ou déjà à une version au-delà de celle corrigée, n'est
-// pas une alerte. Deux CVE concernent le Fournil (nginx, rsync) ; une n'est
-// pas installée (certbot) ; une est déjà corrigée par une mise à jour
-// précédente (curl) ; une s'applique en théorie mais ne change rien ici
-// (openssh-server : KbdInteractiveAuthentication est déjà à « no »).
-// Objectif vérifié sur l'état : le tri dans veille.md classe chaque CVE du
-// bon côté. Pièges prévus : classer certbot (absent) comme pertinent,
-// classer curl (déjà corrigé) comme pertinent, oublier nginx ou rsync.
-// Sources : https://www.debian.org/security/, https://www.cve.org/,
+// Story "The Watch", chapter "The Bulletin": every week, a
+// security bulletin (like Debian's advisories) lists several CVEs. Before
+// worrying, you must check that each one REALLY concerns this server:
+// a package that isn't installed, or already at a version beyond the fixed one, is
+// not an alert. Two CVEs concern Le Fournil (nginx, rsync); one is
+// not installed (certbot); one is already fixed by a previous
+// update (curl); one applies in theory but changes nothing here
+// (openssh-server: KbdInteractiveAuthentication is already "no").
+// Objective checked on the state: the triage in veille.md puts each CVE on the
+// right side. Expected traps: classing certbot (absent) as relevant,
+// classing curl (already fixed) as relevant, forgetting nginx or rsync.
+// Sources: https://www.debian.org/security/, https://www.cve.org/,
 // https://www.first.org/cvss/calculator/4-0
 
 import { path, f, name, type Chapter } from '../world';
@@ -19,7 +19,7 @@ import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initial
 
 const DOC = `${M}/watch.md`;
 const SECTIONS = ['affected', 'not-applicable'];
-// Dix jours avant le début du chapitre : la machine tourne déjà depuis un moment.
+// Ten days before the chapter starts: the machine has already been running for a while.
 const STARTED = NOW - 10 * 86_400_000;
 
 const readDoc = (j: Game) => j.read(path(j.t, DOC));

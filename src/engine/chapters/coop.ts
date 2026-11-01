@@ -1,26 +1,25 @@
-// Histoire « La Coopérative » : ce que ses chapitres ont en commun. Le
-// serveur de l'épicerie coopérative du quartier (machine cooperative) : la
-// till (un service), le dossier partagé de l'équipe caisse, un compte de
-// déploiement partagé (deploy). Des bénévoles arrivent et partent : les
-// comptes, les groupes, sudo.
+// Story "The Co-op": what its chapters share. The server of the
+// neighbourhood food co-op (machine cooperative): the till (a service), the
+// till team's shared folder, a shared deployment account (deploy).
+// Volunteers come and go: accounts, groups, sudo.
 
 import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
 import { generateKey } from '../access';
 
 export const M = '/home/you';
 export const PASSWORD = 'radish-2027';
-// Mardi 19 octobre 2027, 9 h 30.
+// Tuesday 19 October 2027, 9:30.
 export const NOW = Date.UTC(2027, 9, 19, 9, 30, 0);
 export const TODAY = '2027-10-19';
 
-// Les clés publiques de l'équipe (fausses, de la bonne forme).
+// The team's public keys (fake, with the right shape).
 export const KEYS = {
   marc: generateKey('cooperative-marc', 'marc@portable').isPublic,
   lina: generateKey('cooperative-lina', 'lina@atelier').isPublic,
   ci: generateKey('cooperative-ci', 'deploy@ci').isPublic,
 };
 
-// Les comptes ; après « Le départ », celui de Marc n'existe plus.
+// The accounts; after "The departure", Marc's no longer exists.
 export const cooperativeAccounts = (withMarc = true): Accounts => {
   const c: Accounts = {
     users: {
@@ -55,7 +54,7 @@ export const cooperativeAccounts = (withMarc = true): Accounts => {
 const root = { owner: 'root' };
 const file = (content: string, owner = 'root', mode?: string) => f(content, { lines: true, owner, ...(mode ? { mode } : {}) });
 
-// sudoers de Debian : le groupe sudo a tous les droits ; @includedir lit /etc/sudoers.d.
+// Debian's sudoers: the sudo group has every right; @includedir reads /etc/sudoers.d.
 export const SUDOERS = `#
 # This file MUST be edited with the 'visudo' command as root.
 #
@@ -79,7 +78,7 @@ root	ALL=(ALL:ALL) ALL
 
 @includedir /etc/sudoers.d`;
 
-// /etc/cron.d de Debian : une tâche par ligne, avec le compte qui la lance (6e colonne).
+// Debian's /etc/cron.d: one job per line, with the account that runs it (6th column).
 const E2SCRUB = `30 3 * * 0 root test -e /run/systemd/system || SERVICE_MODE=1 /usr/lib/x86_64-linux-gnu/e2fsprogs/e2scrub_all_cron
 10 3 * * * root test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r`;
 
@@ -108,15 +107,15 @@ const README_SUDOERS = `#
 # See the man page for visudo and sudoers for more information.
 #`;
 
-/** Le monde commun : /etc (comptes, sudoers), les maisons, et ce que le chapitre ajoute. */
+/** The shared world: /etc (accounts, sudoers), the homes, and what the chapter adds. */
 export function cooperativeWorld(o: {
   home: Record<string, Node>;
   homes?: Record<string, Node>;
   etc?: Record<string, Node>;
   more?: Record<string, Node>;
-  // Après « Le départ » : plus de clé de Marc dans deploy.
+  // After "The departure": no more key of Marc's in deploy.
   withoutMarc?: boolean;
-  // Les programmes installés dans /usr/sbin (ex. nginx).
+  // The programs installed in /usr/sbin (e.g. nginx).
   sbin?: Record<string, Node>;
 }): Directory {
   return d(

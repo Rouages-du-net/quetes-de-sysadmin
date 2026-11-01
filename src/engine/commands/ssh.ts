@@ -1,19 +1,19 @@
-// ssh : se connecter à une autre machine du réseau simulé (machines.ts).
-// Comme OpenSSH (https://man.openbsd.org/ssh, https://man.openbsd.org/ssh_config) :
-//   1. ~/.ssh/config (Host, HostName, User, Port, IdentityFile) ;
-//   2. résolution du nom par /etc/hosts ;
-//   3. connexion au port : ceux où écoute le sshd d'en face (22 par défaut) ;
-//   4. clé d'hôte : vérifiée dans ~/.ssh/known_hosts, sinon question
-//      « yes/no/[fingerprint] » (confiance à la première connexion) ; sur un
-//      autre port que 22, l'hôte est noté « [nom]:port » ; une clé
-//      différente de celle qu'on connaît arrête tout (machine réinstallée,
-//      ou quelqu'un qui se fait passer pour elle) ;
-//   5. authentification par clé uniquement (comme PasswordAuthentication no) ;
-//      une clé privée lisible par d'autres est ignorée, comme le vrai ssh.
-// La session elle-même est ouverte par la console (console.ts).
-// Écarts : pas d'agent, pas de mot de passe, pas de commande à distance ;
-// message d'usage raccourci. OpenSSH n'est pas traduit : ses messages
-// restent en anglais.
+// ssh: connect to another machine of the simulated network (machines.ts).
+// Like OpenSSH (https://man.openbsd.org/ssh, https://man.openbsd.org/ssh_config):
+//   1. ~/.ssh/config (Host, HostName, User, Port, IdentityFile);
+//   2. name resolution through /etc/hosts;
+//   3. connection to the port: those the remote sshd listens on (22 by default);
+//   4. host key: checked in ~/.ssh/known_hosts, otherwise the
+//      "yes/no/[fingerprint]" question (trust on first use); on a
+//      port other than 22, the host is recorded as "[name]:port"; a key
+//      different from the known one stops everything (reinstalled machine,
+//      or someone impersonating it);
+//   5. key authentication only (like PasswordAuthentication no);
+//      a private key readable by others is ignored, like the real ssh.
+// The session itself is opened by the console (console.ts).
+// Differences: no agent, no password, no remote command;
+// shortened usage message. OpenSSH is not translated: its messages
+// stay in English.
 
 import type { File } from '../world';
 import type { Shell } from '../shell';
@@ -30,7 +30,7 @@ interface Destination {
   host: string;
   port: string;
   identities: string[];
-  // Le nom sous lequel known_hosts connaît l'hôte : « nom », ou « [nom]:port » hors du port 22.
+  // The name under which known_hosts knows the host: "name", or "[name]:port" off port 22.
   known: string;
 }
 
@@ -43,7 +43,7 @@ function resolve(game: Shell, host: string): string | null {
   return null;
 }
 
-// Mode « rw------- » → « 0600 ».
+// Mode "rw-------" → "0600".
 const octal = (mode: string) =>
   '0' + [0, 3, 6].map((i) => (mode[i] === 'r' ? 4 : 0) + (mode[i + 1] === 'w' ? 2 : 0) + (mode[i + 2] === 'x' ? 1 : 0)).join('');
 
@@ -76,19 +76,19 @@ function authenticate(game: Shell, d: Destination, m: Machine): string {
       break;
     }
   }
-  // La configuration appliquée par le serveur d'en face (sshd_config).
+  // The configuration applied by the remote server (sshd_config).
   const config: Record<string, string> | null = game.state.remoteSshd?.(m.name) ?? null;
   const refuse = accepted && config !== null && !allowed(config, d.user);
   if (accepted && !refuse) {
     game.connectionRequest = m.name;
     game.state.connectionPort = Number(d.port);
   } else output.push(`${d.user}@${d.host}: Permission denied (${config ? methods(config) : 'publickey'}).`);
-  // La bonne clé, mais un serveur qui refuse le compte : on s'est enfermé dehors.
+  // The right key, but a server that refuses the account: you've locked yourself out.
   if (refuse && d.user === game.player) output.push(game.t('ssh-locked-out', { machine: machineName(game.t, m.name) }));
   return output.join('\n');
 }
 
-// La génération de clé d'hôte de la machine d'en face (machines.ts).
+// The host key generation of the remote machine (machines.ts).
 const generation = (game: Shell, m: Machine): string => game.state.remoteKey?.(m.name) ?? '';
 
 function addKnownHost(game: Shell, d: Destination, m: Machine) {
@@ -98,7 +98,7 @@ function addKnownHost(game: Shell, d: Destination, m: Machine) {
   else game.place('ssh', '~/.ssh/known_hosts', { type: 'file', content: line, lines: true });
 }
 
-// Question de la première connexion : yes, no, ou l'empreinte elle-même.
+// The first-connection question: yes, no, or the fingerprint itself.
 function confirmer(game: Shell, d: Destination, m: Machine, prompt: string) {
   game.ask(prompt, (response) => {
     if (response === 'yes' || response === fingerprint(m, generation(game, m))) {
@@ -111,8 +111,8 @@ function confirmer(game: Shell, d: Destination, m: Machine, prompt: string) {
   });
 }
 
-// La clé envoyée par le serveur n'est pas celle de known_hosts : OpenSSH
-// refuse (StrictHostKeyChecking), et dit comment retirer l'ancienne.
+// The key sent by the server isn't the one in known_hosts: OpenSSH
+// refuses (StrictHostKeyChecking), and says how to remove the old one.
 function changedKey(game: Shell, d: Destination, m: Machine, line: number): string {
   const file = game.resolve('~/.ssh/known_hosts');
   const cadre = '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@';
@@ -136,10 +136,10 @@ function changedKey(game: Shell, d: Destination, m: Machine, line: number): stri
   ].join('\n');
 }
 
-// La machine d'histoire visée gère-t-elle ses clés (authorized_keys, mot de passe) ? Ou faut-il rebondir ?
+// Does the target story machine manage its keys (authorized_keys, password)? Or is a jump needed?
 function trueSsh(game: Shell, target: string): boolean {
   const alias = target.includes('@') ? target.split('@', 2)[1] : target;
-  // Un rebond demandé par ~/.ssh/config (ProxyJump).
+  // A jump requested by ~/.ssh/config (ProxyJump).
   const hop = configuration(game, alias).proxyjump?.[0];
   if (hop && hop !== 'none') return true;
   const address = resolve(game, (configuration(game, alias).hostname?.[0] ?? alias).toLowerCase());
@@ -156,7 +156,7 @@ interface OptionsSsh {
   planBack: boolean;
 }
 
-/** -L [adresse:]port:hôte:port → le tunnel ; null si la forme est fausse. */
+/** -L [address:]port:host:port → the tunnel; null if the form is wrong. */
 function readTunnel(text: string): { port: number; host: string; remotePort: number } | null {
   const m = /^(?:[^:]+:)?(\d+):([^:]+):(\d+)$/.exec(text);
   return m ? { port: Number(m[1]), host: m[2], remotePort: Number(m[3]) } : null;
@@ -168,16 +168,16 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
   if (typeof jumps === 'string') return game.error(jumps);
   const last = jumps.at(-1)!;
   return pass(game, jumps, () => {
-    // Les tunnels : un port de cette machine mène à un service vu depuis la machine d'en face.
+    // Tunnels: a port of this machine leads to a service as seen from the remote machine.
     for (const t of o.tunnels.map(readTunnel)) {
       const to = t!.host === 'localhost' || t!.host === '127.0.0.1' ? last.shell : null;
       const address = to ? null : resolve(last.shell, t!.host);
       const internal = address ? last.shell.internal_().find((h) => h.address === address) : null;
       const shell = to ?? (internal ? last.shell.internal(internal.name) : null);
       if (!shell) continue;
-      // Le tunnel vit tant que ce processus ssh tourne (kill le ferme).
+      // The tunnel lives as long as this ssh process runs (kill closes it).
       const pid = 4100 + (game.state.tunnels?.length ?? 0) * 7;
-      // En passant par une autre adresse que localhost, un service qui n'écoute que sur 127.0.0.1 reste injoignable.
+      // Through an address other than localhost, a service listening only on 127.0.0.1 stays unreachable.
       (game.state.tunnels ??= []).push({ port: t!.port, shell, remotePort: t!.remotePort, machine: last.machine.name, pid, loop: !!to });
       (game.state.process ??= []).push({
         pid,
@@ -191,7 +191,7 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
           ),
       });
     }
-    // Une commande à distance : elle tourne sous le compte d'en face, sa sortie revient ici.
+    // A remote command: it runs under the remote account, its output comes back here.
     if (command.length) {
       const before = last.shell.who;
       last.shell.who = last.user;
@@ -210,7 +210,7 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
   });
 }
 
-// ssh -G : les options qui s'appliqueraient (un extrait, dans l'ordre d'OpenSSH), sans se connecter.
+// ssh -G: the options that would apply (an excerpt, in OpenSSH's order), without connecting.
 function configurationEffective(game: Shell, target: string, o: { identities: string[]; port: string; hop?: string }): string {
   const [user, alias] = target.includes('@') ? target.split('@', 2) : [null, target];
   const c = configuration(game, alias);
@@ -226,15 +226,15 @@ function configurationEffective(game: Shell, target: string, o: { identities: st
   ].join('\n');
 }
 
-// L'image de la clé (randomart), comme ssh-keygen : l'« évêque ivre » part
-// du centre d'un plateau de 17 × 9 et se déplace en diagonale selon chaque
-// paire de bits de l'empreinte ; plus une case est visitée, plus son
-// caractère est dense. S : le départ, E : l'arrivée.
+// The key's picture (randomart), like ssh-keygen: the "drunken bishop" starts
+// at the centre of a 17 × 9 board and moves diagonally according to each
+// pair of bits of the fingerprint; the more a square is visited, the denser its
+// character. S: the start, E: the end.
 function randomart(emp: string): string[] {
   const [L, H] = [17, 9];
   const visits = Array.from({ length: H }, () => Array<number>(L).fill(0));
   let [x, y] = [8, 4];
-  // Les 32 octets de l'empreinte (tirés d'elle, toujours les mêmes).
+  // The 32 bytes of the fingerprint (derived from it, always the same).
   for (let o = 0; o < 32; o++)
     for (let b = parseInt(condensed(emp + o).slice(0, 2), 16), k = 0; k < 4; k++, b >>= 2) {
       x = Math.max(0, Math.min(L - 1, x + (b & 1 ? 1 : -1)));
@@ -248,9 +248,9 @@ function randomart(emp: string): string[] {
   );
 }
 
-// ssh-keygen sans -R/-F/-l : une nouvelle paire de clés (ed25519), comme
-// ssh-keygen -t ed25519 [-C commentaire] [-N phrase] [-f fichier]. Les
-// questions (fichier, phrase de passe) ne sont posées que pour ce qui manque.
+// ssh-keygen without -R/-F/-l: a new key pair (ed25519), like
+// ssh-keygen -t ed25519 [-C comment] [-N passphrase] [-f file]. The
+// questions (file, passphrase) are only asked for what is missing.
 function generate(game: Shell, args: string[]): string {
   const value = (o: string) => (args.includes(o) ? args[args.indexOf(o) + 1] : undefined);
   const type = value('-t') ?? 'ed25519';
@@ -295,7 +295,7 @@ function generate(game: Shell, args: string[]): string {
       '+----[SHA256]-----+',
     ].join('\n');
   };
-  // La phrase de passe (deux fois), sauf si -N la donne.
+  // The passphrase (twice), unless -N gives it.
   const phrase = (file: string): string => {
     const data = value('-N');
     if (data !== undefined) return write(file, data);
@@ -313,7 +313,7 @@ function generate(game: Shell, args: string[]): string {
     );
     return '';
   };
-  // Le fichier : -f, sinon la question ; s'il existe, on demande avant d'écraser.
+  // The file: -f, otherwise the question; if it exists, ask before overwriting.
   const file = (path: string): string => {
     if (!game.exists(path)) return phrase(path);
     game.ask(`${game.resolve(path)} already exists.\nOverwrite (y/n)?`, (r) => (r.trim().toLowerCase().startsWith('y') ? phrase(path) : ''));
@@ -354,7 +354,7 @@ export const SSH: Record<string, Command> = {
       const [target, ...command] = rest;
       if (!target) return game.error(USAGE);
       if (args.includes('-G')) return configurationEffective(game, target, { identities, port, hop });
-      // Le « vrai » ssh (acces.ts) : rebonds, tunnels, réseau interne, machines où l'on gère ses clés.
+      // The "real" ssh (acces.ts): jumps, tunnels, internal network, machines where you manage your keys.
       if (game.host !== 'desk' || hop || tunnels.length || withoutSession || trueSsh(game, target))
         return completeSsh(game, target, command, { identities, port, hop, tunnels, withoutSession, planBack });
       const [givesUser, alias] = target.includes('@') ? target.split('@', 2) : [null, target];
@@ -371,23 +371,23 @@ export const SSH: Record<string, Command> = {
       const address = resolve(game, d.host);
       if (!address) return game.error(`ssh: Could not resolve hostname ${d.host}: Name or service not known`);
       const m = machineByAddress(address);
-      // Le poste n'a pas de serveur SSH ; les machines écoutent sur les ports de leur sshd.
+      // The workstation has no SSH server; machines listen on their sshd's ports.
       if (m === WORKSTATION || address.startsWith('127.')) return game.error(`ssh: connect to host ${d.host} port ${d.port}: Connection refused`);
       const listening = m ? portsSshd(game.state.remoteSshd?.(m.name)) : [];
       if (m && !listening.includes(Number(d.port)))
         return game.error(
           `ssh: connect to host ${d.host} port ${d.port}: Connection refused` +
-            // Un serveur qu'on a soi-même déplacé : rappeler où il écoute.
+            // A server you moved yourself: remind where it listens.
             (listening.join() !== '22' ? `\n${game.t('ssh-other-port', { machine: machineName(game.t, m.name), port: d.port, ports: listening.join(', ') })}` : ''),
         );
       if (!m) return game.error(`ssh: connect to host ${d.host} port ${d.port}: No route to host`);
-      // fail2ban d'en face a banni le poste : sur Debian, l'action par défaut
-      // rejette (REJECT) les paquets de l'adresse vers les ports de la prison.
+      // The remote fail2ban banned the workstation: on Debian, the default action
+      // rejects (REJECT) the address's packets to the jail's ports.
       if ((game.state.remoteBanned?.(m.name, Number(d.port)) ?? []).includes(WORKSTATION.address))
         return game.error(
           `ssh: connect to host ${d.host} port ${d.port}: Connection refused\n` + game.t('ssh-banned', { machine: machineName(game.t, m.name), address: WORKSTATION.address }),
         );
-      // Le pare-feu d'en face : deny laisse attendre (timeout), reject refuse tout de suite.
+      // The remote firewall: deny leaves you waiting (timeout), reject refuses at once.
       const pf: Firewall | null = game.state.remoteFirewall?.(m.name) ?? null;
       const pass = pf ? verdict(pf, Number(d.port), WORKSTATION.address) : 'accepted';
       if (pass !== 'accepted')
@@ -403,7 +403,7 @@ export const SSH: Record<string, Command> = {
         if (lines[number].endsWith(` ${key}`)) return remarque + authenticate(game, d, m);
         return game.error(changedKey(game, d, m, number + 1));
       }
-      // La même clé déjà connue sous un autre nom (le même hôte, sur le port 22) : OpenSSH le signale.
+      // The same key already known under another name (the same host, on port 22): OpenSSH points it out.
       const other = lines.map((l, i) => [l, i + 1] as const).filter(([l]) => l.endsWith(` ${key}`));
       const file = game.resolve('~/.ssh/known_hosts');
       confirmer(game, d, m, 'Are you sure you want to continue connecting (yes/no/[fingerprint])?');
@@ -419,9 +419,9 @@ export const SSH: Record<string, Command> = {
         .join('\n');
     },
   },
-  // ssh-keygen (https://man.openbsd.org/ssh-keygen) : seulement la gestion
-  // de known_hosts (-R, -F) et les empreintes (-l). Écart : il ne crée pas
-  // de clés (le jeu les donne).
+  // ssh-keygen (https://man.openbsd.org/ssh-keygen): only managing
+  // known_hosts (-R, -F) and fingerprints (-l). Difference: it doesn't create
+  // keys (the game provides them).
   'ssh-keygen': {
     ownOptions: true,
     launch: ({ args, game }) => {
@@ -452,7 +452,7 @@ export const SSH: Record<string, Command> = {
         return lines
           .map((l) => {
             const [name, ...key] = l.split(' ');
-            // Une ligne de known_hosts commence par le nom ; une clé .pub finit par un commentaire.
+            // A known_hosts line starts with the name; a .pub key ends with a comment.
             return name.startsWith('ssh-')
               ? `256 ${keyFingerprint(l)} ${key.slice(1).join(' ') || 'no comment'} (ED25519)`
               : `256 ${keyFingerprint(key.join(' '))} ${name} (ED25519)`;
@@ -474,6 +474,6 @@ export const SSH: Record<string, Command> = {
       ].join('\n');
     },
   },
-  // exit est intégré au shell (shell.ts) ; cette entrée sert au manuel.
+  // exit is a shell builtin (shell.ts); this entry is for the manual.
   exit: { launch: () => '' },
 };

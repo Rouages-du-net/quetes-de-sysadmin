@@ -1,15 +1,15 @@
-// awk : un petit langage pour découper des lignes en champs, filtrer et
-// compter. Debian installe mawk (awk est un lien vers lui) ; on suit POSIX
-// (https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html) et
-// les messages de mawk.
-// Ce qui est simulé : BEGIN, END, motifs (expressions, /regex/), actions
-// (print, printf, if/else, for, for…in, while, next, delete), champs ($1,
-// $NF, $0), NR, NF, FS, OFS, tableaux associatifs, opérateurs (arithmétique,
-// comparaisons, ~ et !~, &&, ||, !, concaténation, ++, +=…), fonctions
-// length, substr, index, split, sub, gsub, tolower, toupper, int, sprintf ;
-// options -F et -v.
-// Écarts : pas de getline, de redirection dans print, de fonctions définies
-// par l'utilisateur, ni d'opérateur ternaire.
+// awk: a small language to split lines into fields, filter and count.
+// Debian installs mawk (awk is a link to it); we follow POSIX
+// (https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html) and
+// mawk's messages.
+// What is simulated: BEGIN, END, patterns (expressions, /regex/), actions
+// (print, printf, if/else, for, for…in, while, next, delete), fields ($1,
+// $NF, $0), NR, NF, FS, OFS, associative arrays, operators (arithmetic,
+// comparisons, ~ and !~, &&, ||, !, concatenation, ++, +=…), the functions
+// length, substr, index, split, sub, gsub, tolower, toupper, int, sprintf;
+// options -F and -v.
+// Differences: no getline, no redirection in print, no user-defined
+// functions, no ternary operator.
 
 import type { Command } from './index';
 
@@ -17,7 +17,7 @@ type Value = string | number;
 
 class AwkError extends Error {}
 
-// ——— Découpage en jetons ———
+// ——— Tokenizing ———
 
 interface Token {
   type: 'number' | 'string' | 'regex' | 'name' | 'word' | 'op' | 'end';
@@ -65,7 +65,7 @@ const OPS = [
 function tokens(source: string): Token[] {
   const listing: Token[] = [];
   let i = 0;
-  // Un / commence une regex là où on attend une valeur.
+  // A / starts a regex where a value is expected.
   const waitsValue = () => {
     const d = listing.at(-1);
     if (!d) return true;
@@ -135,7 +135,7 @@ function tokens(source: string): Token[] {
   return listing;
 }
 
-// ——— Arbre ———
+// ——— Tree ———
 
 type Node =
   | { t: 'num'; v: number }
@@ -187,7 +187,7 @@ function parse(source: string): Rule[] {
     while (see('\n')) p++;
   };
 
-  // Expressions, de la priorité la plus basse à la plus haute.
+  // Expressions, from the lowest precedence to the highest.
   const expression = (withoutSup = false): Node => affectation(withoutSup);
   const affectation = (withoutSup: boolean): Node => {
     const gauche = or(withoutSup);
@@ -234,7 +234,7 @@ function parse(source: string): Rule[] {
   };
   const comparison = (s: boolean): Node => {
     const a = concat();
-    // Dans print, > serait une redirection (non simulée) : pas une comparaison.
+    // In print, > would be a redirection (not simulated): not a comparison.
     const op = ['==', '!=', '<=', '>=', '<', '>'].find((o) => see(o) && !(s && o === '>'));
     if (op) {
       p++;
@@ -242,11 +242,11 @@ function parse(source: string): Rule[] {
     }
     return a;
   };
-  // Deux valeurs côte à côte : concaténation.
+  // Two values side by side: concatenation.
   const valueStart = () => {
     const t = j[p];
     if (t.type === 'number' || t.type === 'string' || t.type === 'regex' || t.type === 'name') return true;
-    // (+ et - entre deux valeurs sont des opérations, pas une concaténation.)
+    // (+ and - between two values are operations, not a concatenation.)
     return t.type === 'op' && ['$', '(', '++', '--'].includes(t.value);
   };
   const concat = (): Node => {
@@ -303,7 +303,7 @@ function parse(source: string): Rule[] {
     if (see('(')) {
       p++;
       const e = expression();
-      // (a, b) in tableau
+      // (a, b) in array
       wait(')');
       return { t: 'groupe', e };
     }
@@ -338,7 +338,7 @@ function parse(source: string): Rule[] {
     }
     return error();
   };
-  // Après $ : un nombre, une variable, ou (expression).
+  // After $: a number, a variable, or (expression).
   const incrementWithoutPostfix = (): Node => {
     if (see('-')) {
       p++;
@@ -350,7 +350,7 @@ function parse(source: string): Rule[] {
   const expressionsList = (): Node[] => {
     const args: Node[] = [];
     if (see(';') || see('\n') || see('}') || j[p].type === 'end') return args;
-    // print (a, b) : les parenthèses entourent la liste.
+    // print (a, b): the parentheses surround the list.
     args.push(expression(true));
     while (see(',')) {
       p++;
@@ -460,13 +460,13 @@ function parse(source: string): Rule[] {
   return rules;
 }
 
-// ——— Exécution ———
+// ——— Execution ———
 
 class Next {}
 
 const isCount = (v: Value) => typeof v === 'number' || /^\s*[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?\s*$/.test(v);
 const count = (v: Value): number => (typeof v === 'number' ? v : parseFloat(v) || 0);
-// Un nombre affiché : entier tel quel, sinon %.6g (CONVFMT).
+// A number printed: an integer as is, otherwise %.6g (CONVFMT).
 const text = (v: Value): string => {
   if (typeof v === 'string') return v;
   if (Number.isInteger(v)) return String(v);
@@ -597,7 +597,7 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
         const b = evaluate(n.b);
         if (n.op === 'concat') return text(a) + text(b);
         if (['==', '!=', '<', '>', '<=', '>='].includes(n.op)) {
-          // Comparaison numérique si les deux ressemblent à des nombres.
+          // Numeric comparison if both look like numbers.
           const num = isCount(a) && isCount(b);
           const x = num ? count(a) : text(a);
           const y = num ? count(b) : text(b);
@@ -649,7 +649,7 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
       case 'sub':
       case 'gsub': {
         const re = new RegExp(args[0].t === 'regex' ? args[0].v : text(a(0)), name === 'gsub' ? 'g' : '');
-        // Dans le remplacement, & est le texte trouvé, et \& un vrai &.
+        // In the replacement, & is the matched text, and \& a literal &.
         const template = text(a(1));
         const target: Node = args[2] ?? { t: 'champ', e: { t: 'num', v: 0 } };
         const before = text(read(target));
@@ -732,7 +732,7 @@ function execute(rules: Rule[], lines: string[], variables: Record<string, Value
     }
   }
   for (const r of rules.filter((x) => x.when === 'END')) run(r.action!);
-  // printf n'ajoute pas de fin de ligne : on recolle avec ce qui précède.
+  // printf adds no line ending: glue it back to what came before.
   let outputText = '';
   for (const s of output) outputText += s.startsWith('\u0001') ? s.slice(1) : s + '\n';
   return outputText.replace(/\n$/, '');

@@ -1,6 +1,6 @@
-// Le bilan de fin de chapitre : les commandes tapées (et en erreur), les
-// indices, et la commande qui a franchi chaque étape, à côté de la solution
-// de référence.
+// The end-of-chapter summary: the commands typed (and those in error), the
+// hints, and the command that passed each step, next to the reference
+// solution.
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
@@ -12,8 +12,8 @@ import { inLanguage } from './names';
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 const L = (text: string) => inLanguage(translator('fr'), text);
 
-describe('Bilan de fin de chapitre', () => {
-  it('compte les commandes, les erreurs, et note la commande de chaque étape', () => {
+describe('End-of-chapter summary', () => {
+  it('counts the commands, the errors, and records each step\'s command', () => {
     const s = new Shell(chapter('lighthouse'), 'fr');
     s.requestsHints.add(`${hint(s).step}:piste`);
     for (const l of ['lss', 'cat message.txt', 'cd Hill/SignalSchool/PracticeRoom', 'mv crab Bucket', 'cd ~/Pier', 'mv net ~/Harbour/Boathouse', 'cd ~/Harbour/Storeroom', 'mv .spare_bulb ~/Pier/Lighthouse/Stairs/Lantern/bulb'])
@@ -24,12 +24,12 @@ describe('Bilan de fin de chapitre', () => {
     expect(b.errors).toBe(1);
     expect(b.hints).toBe(1);
     expect(b.steps.length).toBeGreaterThan(0);
-    // Chaque étape a sa solution de référence ; la dernière a été franchie par le mv final.
+    // Each step has its reference solution; the last one was passed by the final mv.
     expect(b.steps.every((e) => e.solution.length > 0)).toBe(true);
     expect(b.steps.some((e) => e.line === L('mv .spare_bulb ~/Pier/Lighthouse/Stairs/Lantern/bulb'))).toBe(true);
   });
 
-  it('un mot de passe demandé par sudo n’est pas une commande de plus', () => {
+  it('a password asked by sudo is not one more command', () => {
     const s = new Shell(chapter('root'), 'fr');
     s.execute('sudo ls');
     s.execute(chapter('root').password!);

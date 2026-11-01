@@ -1,6 +1,6 @@
-// « La Rustine », « Le cadenas » : Caddy et son HTTPS automatique. Rejoué
-// dans chaque langue : la solution, une autre (une liste d'adresses, caddy
-// reload, ufw allow http), et les fausses pistes.
+// "La Rustine", "The padlock": Caddy and its automatic HTTPS. Replayed in
+// every language: the solution, another one (a list of addresses, caddy
+// reload, ufw allow http), and the false leads.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -15,13 +15,13 @@ const BEFORE = [...new Set([...ERASER, ...prerequisites('patch')])];
 const CADDYFILE = '/etc/caddy/Caddyfile';
 const WWW = '\nwww.cycles.example {\n\tredir https://cycles.example{uri} permanent\n}\n';
 
-describe('Le Caddyfile', () => {
-  it('adresses, options globales, erreurs de Caddy', () => {
+describe('The Caddyfile', () => {
+  it('addresses, global options, Caddy errors', () => {
     const c = readCaddyfile('{\n\temail admin@cycles.example\n}\n\ncycles.example, www.cycles.example {\n\troot * /srv\n\tfile_server\n}\n\n:8080 {\n\trespond "ok"\n}');
     expect(c.sites.map((s) => s.addresses.map((a) => `${a.host}:${a.port}`))).toEqual([['cycles.example:443', 'www.cycles.example:443'], [':8080']]);
     expect(c.global[0].args).toEqual(['admin@cycles.example']);
     expect(c.notFormatted).toBeNull();
-    // Un seul site, sans accolades.
+    // A single site, without braces.
     expect(readCaddyfile('cycles.example\nfile_server').sites[0].directives[0].name).toBe('file_server');
     expect(() => readCaddyfile('cycles.example {\n\tfile-server\n}')).toThrow('/etc/caddy/Caddyfile:2: unrecognized directive: file-server');
     expect(() => readCaddyfile('{\n\temial x\n}')).toThrow('unrecognized global option: emial');
@@ -35,7 +35,7 @@ describe('Le Caddyfile', () => {
 });
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
+  describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
       const c = new Console({ language, finished: BEFORE });
@@ -59,7 +59,7 @@ for (const language of LANGUAGES)
       return { c, jouer: play, ecrire: write, L };
     };
 
-    it('solution : le nom du site, le pare-feu, puis www', () => {
+    it('solution: the site name, the firewall, then www', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = play(['cat message_from_ines.txt', 'systemctl status caddy', 'curl -I http://localhost', 'curl https://cycles.example']);
       expect(all).toContain('"msg":"server is listening only on the HTTP port, so no automatic HTTPS will be applied to this server"');
@@ -90,7 +90,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('padlock');
     });
 
-    it('autre solution : une liste d’adresses, ufw allow http et https, caddy reload', () => {
+    it('another solution: a list of addresses, ufw allow http and https, caddy reload', () => {
       const { c, jouer: play, ecrire: write } = part();
       play(['sudo ufw allow http', 'sudo ufw allow https']);
       write(CADDYFILE, (t) => t.replace(':80 {', 'cycles.example, www.cycles.example {'));
@@ -104,24 +104,24 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('padlock');
     });
 
-    it('fausses pistes : http://, une directive mal écrite, caddy run, le seul port 443, le format', () => {
+    it('false leads: http://, a misspelt directive, caddy run, port 443 alone, the format', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = play(['caddy reload', 'caddy run', 'caddy frobnicate', 'caddy validate --config /nulle/part']);
       expect(all).toContain('Error: no config file to load');
       expect(all).toContain('bind: address already in use');
       expect(all).toContain('Error: unknown command "frobnicate" for "caddy"');
       expect(all).toContain('Error: reading config from file: open /nulle/part: no such file or directory');
-      // http:// : un site en HTTP seulement.
+      // http://: a site over HTTP only.
       all = write(CADDYFILE, (t) => t.replace(':80 {', 'http://cycles.example {'));
       all += play(['sudo systemctl reload caddy']);
       if (fr) expect(all).toContain('le nom seul suffit');
-      // Une directive mal écrite : le rechargement échoue, Caddy garde l'ancienne configuration.
+      // A misspelt directive: the reload fails, Caddy keeps the old configuration.
       write(CADDYFILE, (t) => t.replace('http://cycles.example {', 'cycles.example {').replace('\tfile_server', '\tfile-server'));
       all = play(['caddy validate --config /etc/caddy/Caddyfile', 'sudo systemctl reload caddy', 'journalctl -u caddy -n 3', 'systemctl is-active caddy']);
       expect(all).toContain('Error: adapting config using caddyfile: /etc/caddy/Caddyfile:16: unrecognized directive: file-server');
       expect(all).toContain('Job for caddy.service failed');
       expect(all).toContain('active');
-      // Le seul port 443 : Caddy a son certificat (TLS-ALPN), mais HTTP reste fermé dehors.
+      // Port 443 alone: Caddy has its certificate (TLS-ALPN), but HTTP stays closed from outside.
       write(CADDYFILE, (t) => t.replace('\tfile-server', '    file_server'));
       all = play(['sudo ufw allow 443/tcp', 'sudo systemctl reload caddy', 'caddy validate --config /etc/caddy/Caddyfile']);
       expect(all).toContain("Caddyfile input is not formatted; run 'caddy fmt --overwrite' to fix inconsistencies");

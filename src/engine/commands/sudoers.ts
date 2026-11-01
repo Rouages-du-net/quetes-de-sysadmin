@@ -1,20 +1,20 @@
-// visudo et sudo -l (https://www.sudo.ws/docs/man/visudo.man/,
-// https://www.sudo.ws/docs/man/sudo.man/). Comme le vrai visudo : on édite
-// une copie (fichier.tmp), vérifiée à la fermeture de l'éditeur ; si elle a
-// une erreur, visudo la montre et demande « Et maintenant ? » (e : reprendre,
-// x : quitter sans enregistrer, Q : enregistrer quand même). Le fichier
-// enregistré appartient à root, en mode 0440. Messages : la traduction
-// française de sudo.
+// visudo and sudo -l (https://www.sudo.ws/docs/man/visudo.man/,
+// https://www.sudo.ws/docs/man/sudo.man/). Like the real visudo: you edit
+// a copy (file.tmp), checked when the editor closes; if it has
+// an error, visudo shows it and asks "What now?" (e: edit again,
+// x: exit without saving, Q: save anyway). The saved
+// file belongs to root, with mode 0440. Messages: sudo's French
+// translation.
 
 import type { Shell } from '../shell';
 import { parse, read, rulesFor, SUDOERS, type SudoersError } from '../sudoers';
 import type { Command } from './index';
 
-// L'erreur comme sudo l'affiche : fichier:ligne:colonne: message, la ligne, et ^~~~ sous le morceau fautif.
+// The error as sudo shows it: file:line:column: message, the line, and ^~~~ under the faulty part.
 export const showError = (game: Shell, e: SudoersError) =>
   [`${e.file}:${e.line}:${e.column}: ${game.t(e.key)}`, e.text, `${' '.repeat(e.column - 1)}^${'~'.repeat(e.length - 1)}`].join('\n');
 
-// Ouvre la copie dans l'éditeur ; à la fermeture, la vérifie et l'installe.
+// Opens the copy in the editor; on closing, checks it and installs it.
 function edit(game: Shell, target: string, temp: string) {
   const text = game.read(temp) ?? '';
   game.edition = {
@@ -76,7 +76,7 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
       const i = args.indexOf('-f');
       const target = i >= 0 ? (args[i + 1] ?? '') : SUDOERS;
       if (i >= 0 && !target) return game.error(game.t('visudo-usage'), 1);
-      // -c : vérifier sans rien modifier.
+      // -c: check without changing anything.
       if (args.includes('-c')) {
         if (game.who !== 'root') return game.error(game.t('visudo-permission', { file: target }), 1);
         if (i >= 0) {
@@ -101,16 +101,16 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
   },
 };
 
-/** sudo -l [-U compte] : les commandes permises (la politique de /etc/sudoers). */
+/** sudo -l [-U account]: the allowed commands (the policy of /etc/sudoers). */
 export function listSudo(game: Shell, args: string[]): string {
   const i = args.indexOf('-U');
   const account = i >= 0 ? (args[i + 1] ?? '') : game.player;
   if (i >= 0 && !game.accounts.users[account]) return game.error(game.t('sudo-account-unknown', { account: account }), 1);
   const host = game.read('/etc/hostname')?.trim() || game.host;
-  // Une machine sans /etc/sudoers décrit par le chapitre : celui de Debian (le groupe sudo a tous les droits).
+  // A machine with no /etc/sudoers described by the chapter: Debian's (the sudo group has all rights).
   const rules = game.exists(SUDOERS) ? rulesFor(game, account) : game.groupsFor(account).includes('sudo') || account === 'root' ? ['(ALL : ALL) ALL'] : [];
   if (!rules.length) return game.t('sudo-none', { account: account, host: host });
-  // Comme sudo -l : sans les guillemets, les deux-points échappés.
+  // Like sudo -l: without the quotes, colons escaped.
   const defaults = game.exists(SUDOERS)
     ? read(game)
         .defaults.flatMap((x) => x.split(','))

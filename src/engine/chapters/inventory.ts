@@ -1,13 +1,13 @@
-// Histoire « La flotte » — chapitre « L'inventaire » : Ansible joint-il les
-// trois maisons de quartier ? Théo a commencé ~/ansible : un ansible.cfg
-// (remote_user = theo, alors que le compte des centres est deploy) et un
-// inventaire où manque east. Et known_hosts est vide : Ansible ne pose pas
-// de question, il refuse (« Host key verification failed »).
-// Commandes : cd, ansible centres -m ping, ansible-inventory --graph, ssh
-// (accepter la clé d'hôte), nano (remote_user, l'inventaire).
-// Objectif vérifié sur l'état : le groupe centres de l'inventaire contient
-// north, south et east, et le dernier ping les a tous joints.
-// Sources : https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
+// Story "La flotte" — chapter "The inventory": does Ansible reach the three
+// community centres? Théo started ~/ansible: an ansible.cfg (remote_user =
+// theo, whereas the centres' account is deploy) and an inventory missing
+// east. And known_hosts is empty: Ansible asks no question, it refuses
+// ("Host key verification failed").
+// Commands: cd, ansible centres -m ping, ansible-inventory --graph, ssh
+// (accept the host key), nano (remote_user, the inventory).
+// Objective checked on the state: the inventory's centres group contains
+// north, south and east, and the last ping reached them all.
+// Sources: https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
 // https://docs.ansible.com/ansible/latest/inventory_guide/connection_details.html
 
 import { path, f, type Chapter } from '../world';
@@ -23,7 +23,7 @@ const INVENTORY = `[centres]
 north
 south`;
 
-// Les hôtes du groupe centres, tels qu'Ansible les lit depuis ~/ansible.
+// The hosts of the centres group, as Ansible reads them from ~/ansible.
 function inventoryCentres(j: Game): string[] {
   const s = j as Shell;
   const cwd = s.cwd;

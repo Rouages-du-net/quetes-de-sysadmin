@@ -1,15 +1,15 @@
-// Histoire « La Ludothèque » — chapitre « Les instantanés » : après
-// l'attaque, Malo veut pouvoir revenir à n'importe quel jour des deux
-// dernières semaines. rsnapshot est installé avec la configuration de
-// Debian ; il faut la régler (tabulations !) pour /srv/partage vers le second
-// disque (/mnt/instantanes), 7 instantanés quotidiens et 4 hebdomadaires, et
-// le lancer avec cron. Le jeu fait alors passer deux semaines : Bérénice
-// travaille chaque jour, et le dernier soir écrase l'inventaire par erreur.
-// Il faut le reprendre dans l'instantané de la veille.
-// Objectif vérifié sur l'état : 7 instantanés du niveau le plus fréquent et
-// au moins un du niveau suivant sur /mnt/instantanes, tous avec le partage,
-// et l'inventaire du partage revenu à sa version de l'avant-veille.
-// Sources : https://rsnapshot.org/rsnapshot/docs/docs.html,
+// Story "La Ludothèque" — chapter "The snapshots": after the attack, Malo
+// wants to be able to go back to any day of the last two weeks. rsnapshot is
+// installed with Debian's configuration; it must be set up (tabs!) for
+// /srv/share to the second disk (/mnt/snapshots), 7 daily and 4 weekly
+// snapshots, and started by cron. The game then lets two weeks pass:
+// Bérénice works every day, and on the last evening overwrites the
+// inventory by mistake. It must be taken back from the previous day's
+// snapshot.
+// Objective checked on the state: 7 snapshots of the most frequent level
+// and at least one of the next level on /mnt/snapshots, all with the share,
+// and the share's inventory back to its version of the day before yesterday.
+// Sources: https://rsnapshot.org/rsnapshot/docs/docs.html,
 // https://manpages.debian.org/bookworm/rsnapshot/rsnapshot.1.en.html
 
 import { path, d, f, accountsFiles, type Chapter, type Accounts, type Rights, type Node } from '../world';
@@ -44,7 +44,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// L'inventaire au soir du jour n (un jeu de plus chaque jour).
+// The inventory on the evening of day n (one more game each day).
 const inventory = (t: Game['t'], n: number) =>
   [t('ransom-inventory'), ...Array.from({ length: n }, (_, k) => t('snapshots-line-inventory', { number: k + 1 }))].join('\n');
 
@@ -74,14 +74,14 @@ const crontabsRsnapshot = (j: Game) =>
     .join('\n')
     .includes('rsnapshot');
 
-/** Deux semaines passent : le jour, Bérénice tient l'inventaire ; la nuit, cron. */
+/** Two weeks pass: by day, Bérénice keeps the inventory; at night, cron. */
 function twoWeeks(j: Game): string[] {
   const game = j as Shell;
   const mails: string[] = [];
   for (let n = 1; n <= 14; n++) {
     const evening = START + (n - 1) * DAY + 8 * 3600_000;
     sd(j).clock = evening;
-    // Le quatorzième soir, une vieille copie de l'inventaire écrase la bonne.
+    // On the fourteenth evening, an old copy of the inventory overwrites the good one.
     game.place(
       'cp',
       path(j.t, INVENTORY),
@@ -164,14 +164,14 @@ export const chapterSnapshots: Chapter = {
     };
   },
   initialise: (j) => {
-    // Le second disque, monté au démarrage.
+    // The second disk, mounted at boot.
     const game = j as Shell;
     const before = game.who;
     game.who = 'root';
     game.underCommand(`mount /dev/sdc1 ${path(j.t, DISK)}`, '/');
     game.who = before;
   },
-  // Une fois rsnapshot programmé avec une configuration valable, deux semaines passent.
+  // Once rsnapshot is scheduled with a valid configuration, two weeks pass.
   afterCommand: (j) => {
     if (j.state.pastWeeks || !crontabsRsnapshot(j) || conf(j).errors.length) return;
     j.state.pastWeeks = true;
@@ -198,7 +198,7 @@ export const chapterSnapshots: Chapter = {
           'goose-game.txt': file(t('ransom-rules-goose'), ludo('berenice')),
           'ludo.txt': file(t('ransom-rules-horses'), ludo('berenice')),
           'draughts.txt': file(t('ransom-rules-ladies'), ludo('berenice')),
-          // Les règles numérisées : de gros fichiers qui ne changent jamais.
+          // The scanned rules: big files that never change.
           'rules-scans.pdf': f(t('archives-document-pdf'), { lines: true, ...ludo('berenice', 48_000_000) }),
         },
         { owner: 'berenice', group: 'ludo', mode: 'rwxrwxr-x' },

@@ -1,5 +1,5 @@
-// « La flotte » : Ansible. Chaque chapitre rejoué dans chaque langue : la
-// solution, une autre, et les fausses pistes.
+// "The Fleet": Ansible. Each chapter replayed in each language: the
+// solution, another one, and the false leads.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -12,7 +12,7 @@ const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id)
 const BEFORE = [...new Set([...ERASER, ...prerequisites('fleet')])];
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
+  describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);
     const part = (finished: string[], chapter: string) => {
@@ -29,8 +29,8 @@ for (const language of LANGUAGES)
       return { c, jouer: play, ecrire: write, centre };
     };
 
-    describe("L'inventaire", () => {
-      it('solution : le bon dossier, les clés d’hôte, le bon compte, le centre qui manque', () => {
+    describe("The Inventory", () => {
+      it('solution: the right directory, the host keys, the right account, the missing centre', () => {
         const { c, jouer: play, ecrire: write } = part([], 'inventory');
         let all = play(['ansible centres -m ping']);
         expect(all).toContain('[WARNING]: No inventory was parsed, only implicit localhost is available');
@@ -54,7 +54,7 @@ for (const language of LANGUAGES)
         expect(c.finished).toContain('inventory');
       });
 
-      it('autre solution : host_key_checking coupé, -u deploy ; et les commandes', () => {
+      it('other solution: host_key_checking off, -u deploy; and the commands', () => {
         const { c, jouer: play, ecrire: write } = part([], 'inventory');
         play(['cd ansible']);
         write('ansible.cfg', (t) => `${t}\nhost_key_checking = False\n`);
@@ -71,13 +71,13 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('Le playbook', () => {
+    describe('The Playbook', () => {
       const fix = (line: string) => (t: string) =>
         t
           .replace(/shell: echo "(.*)" >> \/etc\/motd/, `copy:\n            content: "${line}\\n"\n            dest: /etc/motd`)
           .replace('command: mkdir /srv/shared', 'file:\n            path: /srv/shared\n            state: directory\n            mode: "0755"');
 
-      it('solution : copy et file, puis une deuxième exécution qui ne change rien', () => {
+      it('solution: copy and file, then a second run that changes nothing', () => {
         const { c, jouer: play, ecrire: write, centre } = part(['inventory'], 'playbook');
         let all = play(['cd ansible', 'ansible-playbook site.yml']);
         expect(all).toMatch(/fatal: \[north\]: FAILED! => \{"changed": true, "cmd": \["mkdir", "\/srv\/shared"\], "rc": 1/);
@@ -86,7 +86,7 @@ for (const language of LANGUAGES)
         expect(c.remote!.shell.status).toBe(2);
         const line = c.t('playbook-line-motd');
         write('site.yml', fix(line));
-        // La répétition ne change rien.
+        // The rehearsal changes nothing.
         all = play(['ansible-playbook site.yml --check --diff']);
         expect(all).toContain('--- before: /etc/motd');
         expect(centre('south').read('/etc/motd')!.split(line).length - 1).toBe(1);
@@ -100,11 +100,11 @@ for (const language of LANGUAGES)
         expect(c.finished).toContain('playbook');
       });
 
-      it('autre solution : command avec creates ; fausses pistes : lineinfile qui garde le doublon, YAML et module mal écrits', () => {
+      it('other solution: command with creates; false leads: lineinfile keeping the duplicate, badly written YAML and module', () => {
         const { c, jouer: play, ecrire: write, centre } = part(['inventory'], 'playbook');
         const line = c.t('playbook-line-motd');
         play(['cd ansible']);
-        // Une erreur de YAML : Ansible montre la ligne fautive.
+        // A YAML error: Ansible shows the faulty line.
         write('site.yml', (t) => t.replace('      apt:\n', '      apt: name: htop\n'));
         let all = play(['ansible-playbook site.yml --syntax-check']);
         expect(all).toContain('ERROR! Syntax Error while loading YAML.\n  mapping values are not allowed in this context');
@@ -118,7 +118,7 @@ for (const language of LANGUAGES)
             .replace('command: mkdir /srv/shared', 'command: mkdir /srv/shared creates=/srv/shared'),
         );
         play(['ansible-playbook site.yml', 'ansible-playbook site.yml']);
-        // lineinfile remplace la dernière ligne trouvée : sur north, la ligne en double reste.
+        // lineinfile replaces the last line found: on north, the duplicate line remains.
         expect(centre('north').read('/etc/motd')!.split(line).length - 1).toBe(2);
         expect(c.finished).not.toContain('playbook');
         write('site.yml', (t) => t.replace(`lineinfile:\n            path: /etc/motd\n            regexp: Ansible\n            line: "${line}"`, `copy:\n            content: "${line}\\n"\n            dest: /etc/motd`));
@@ -127,17 +127,17 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La répétition', () => {
+    describe('The Rehearsal', () => {
       const sameName = (t: string) => t.replace(/notify: (\S+) ssh/, (_, word: string) => `notify: ${word.toLowerCase()} ssh`);
 
-      it('solution : la répétition, le handler, un centre, puis tous', () => {
+      it('solution: the rehearsal, the handler, one centre, then all of them', () => {
         const { c, jouer: play, ecrire: write, centre } = part(['inventory', 'playbook'], 'rehearsal');
         let all = play(['cd ansible', 'ansible-playbook ssh.yml --check --diff']);
         expect(all).toContain('+PasswordAuthentication no');
         expect(all).toContain("ERROR! The requested handler '");
         expect(centre('north').read('/etc/ssh/sshd_config')).not.toContain('PasswordAuthentication no');
         if (fr) expect(all).toContain('majuscules comprises');
-        // Sans corriger, sur north : le fichier change, sshd n'est pas rechargé.
+        // Without fixing, on north: the file changes, sshd is not reloaded.
         all = play(['ansible-playbook ssh.yml --limit north']);
         expect(centre('north').state.sshd.load.passwordauthentication).toBe('yes');
         if (fr) expect(all).toContain('ne notifie plus');
@@ -156,7 +156,7 @@ for (const language of LANGUAGES)
         expect(c.finished).toContain('rehearsal');
       });
 
-      it('autre solution : le handler renommé dès la répétition, puis --limit et tous', () => {
+      it('other solution: the handler renamed from the rehearsal on, then --limit and all', () => {
         const { c, jouer: play, ecrire: write } = part(['inventory', 'playbook'], 'rehearsal');
         play(['cd ansible']);
         write('ssh.yml', (t) => t.replace(/- name: (\S+) ssh\n/, (_, word: string) => `- name: ${word[0].toUpperCase()}${word.slice(1)} ssh\n`));

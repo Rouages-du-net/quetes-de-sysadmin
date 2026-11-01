@@ -1,9 +1,9 @@
-// Commandes système : processus (ps, kill, pkill) et sessions (who). Les services (systemctl,
-// journalctl) sont dans systemd.ts. Les processus sont simulés dans l'état de
-// l'histoire :
-//   etat.processus : liste de { pid, utilisateur, cpu, mem, commande }
-//   etat.surKill(jeu, processus), etat.surSystemctl(jeu, action, nom) :
-//   réactions propres à l'histoire, qui renvoient un message éventuel.
+// System commands: processes (ps, kill, pkill) and sessions (who). Services (systemctl,
+// journalctl) are in systemd.ts. Processes are simulated in the story's
+// state:
+//   state.process: list of { pid, user, cpu, mem, command }
+//   state.onKill(game, process), state.onSystemctl(game, action, name):
+//   the story's own reactions, which return an optional message.
 
 import type { Command } from './index';
 import { dockerProcess } from '../docker';
@@ -14,7 +14,7 @@ export interface Process {
   cpu: number;
   mem: number;
   command: string;
-  // Le parent, et un processus zombie (terminé, que son parent n'a pas récupéré).
+  // The parent, and a zombie process (finished, not reaped by its parent).
   ppid?: number;
   zombie?: boolean;
 }
@@ -23,13 +23,13 @@ export const SYSTEM: Record<string, Command> = {
   ps: {
     launch: ({ args, game }) => {
       const all = args.some((a) => /^-?\w*[ae]/.test(a) && !/^-\w*u$/.test(a));
-      // -u compte[,compte] : seulement les processus de ces comptes.
+      // -u account[,account]: only the processes of these accounts.
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
       const accounts = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
       const listing: Process[] = [...(game.state.process ?? []), ...dockerProcess(game)]
         .filter((p: Process) => (accounts ? accounts.includes(p.user) : all || p.user === game.who || p.user === game.player))
         .sort((a: Process, b: Process) => a.pid - b.pid);
-      // -f (ps -ef) : le format complet, avec le parent (PPID).
+      // -f (ps -ef): the full format, with the parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {
         const fLine = (p: Process) =>
           `${p.user.slice(0, 8).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.command}`;
@@ -51,7 +51,7 @@ export const SYSTEM: Record<string, Command> = {
         const p = listing.find((q) => String(q.pid) === raw);
         if (!p) game.error(game.t('kill-none', { pid: raw }));
         else if (game.who !== 'root' && p.user !== game.who) game.error(game.t('kill-not-allowed', { pid: raw }));
-        // Un zombie est déjà mort : aucun signal n'y fait rien, seul son parent peut le récupérer.
+        // A zombie is already dead: no signal does anything to it, only its parent can reap it.
         else if (p.zombie) continue;
         else {
           game.state.process = listing.filter((q) => q !== p);
@@ -63,8 +63,8 @@ export const SYSTEM: Record<string, Command> = {
     },
   },
 
-  // pkill : arrête les processus choisis par nom (motif dans le nom du programme) ou par compte (-u).
-  // Code de retour 1 si aucun processus ne correspond (procps).
+  // pkill: stops the processes chosen by name (pattern in the program's name) or by account (-u).
+  // Exit code 1 if no process matches (procps).
   pkill: {
     launch: ({ args, game }) => {
       const iu = args.indexOf('-u');
@@ -78,7 +78,7 @@ export const SYSTEM: Record<string, Command> = {
         return game.error(`pkill: invalid regular expression: ${pattern}`, 2);
       }
       const listing: Process[] = game.state.process ?? [];
-      // Le nom du programme : le premier mot de la commande, sans son chemin (comme /proc/pid/comm).
+      // The program's name: the first word of the command, without its path (like /proc/pid/comm).
       const name = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
       const chosen = listing.filter((p) => (!accounts || accounts.includes(p.user)) && (!re || re.test(name(p))) && !p.zombie);
       if (!chosen.length) {
@@ -99,7 +99,7 @@ export const SYSTEM: Record<string, Command> = {
     },
   },
 
-  // who : les sessions ouvertes (une session vit tant que son processus sshd tourne).
+  // who: the open sessions (a session lives as long as its sshd process runs).
   who: {
     launch: ({ game }) => {
       const sessions: { user: string; tty: string; since: string; forEachOf: string; pid?: number }[] = game.state.sessions ?? [];

@@ -1,7 +1,7 @@
-// Le carnet du sysadmin : chaque commande du jeu, la première fois qu'on la
-// lance, s'ajoute à un aide-mémoire personnel (sa ligne du manuel, la
-// première ligne tapée, le chapitre). Gardé dans le navigateur avec la
-// progression, exportable en Markdown.
+// The sysadmin's notebook: each command of the game, the first time it is
+// run, is added to a personal cheat sheet (its line from the manual, the
+// first line typed, the chapter). Kept in the browser with the progress,
+// exportable as Markdown.
 
 import type { Shell } from './shell';
 import type { Translate } from '../texts';
@@ -11,17 +11,17 @@ import { STORIES } from './chapters';
 import { grade } from './achievements';
 
 export interface NotebookInput {
-  // La première ligne où la commande a servi, et le chapitre (identifiant ; vide sur le poste).
+  // The first line where the command was used, and the chapter (identifier; empty on the workstation).
   line: string;
   chapter: string;
 }
 
 export type Notebook = Record<string, NotebookInput>;
 
-// Les commandes du manuel lui-même, que le shell traite à part.
+// The manual's own commands, which the shell handles separately.
 const MANUAL = ['man', 'apropos', 'whatis'];
 
-/** Après une ligne tapée dans ce shell : les commandes lancées pour la première fois rejoignent le carnet. Renvoie les nouvelles. */
+/** After a line typed in this shell: the commands run for the first time join the notebook. Returns the new ones. */
 export function note(notebook: Notebook, sh: Shell): string[] {
   const fresh: string[] = [];
   const { line, commands } = sh.last;
@@ -35,10 +35,10 @@ export function note(notebook: Notebook, sh: Shell): string[] {
   return fresh;
 }
 
-/** La ligne du carnet : ce que fait la commande, en une phrase (comme whatis). */
+/** The notebook's line: what the command does, in one sentence (like whatis). */
 export const description = (name: string, t: Translate) => recap(t(page(name)));
 
-/** La progression : pour chaque histoire commencée, les chapitres terminés. */
+/** The progress: for each story started, the finished chapters. */
 export function progress(finished: string[], t: Translate): string[] {
   const lines = STORIES.flatMap((h) => {
     const done = h.chapters.filter((c) => finished.includes(c.id));
@@ -51,7 +51,7 @@ export function progress(finished: string[], t: Translate): string[] {
   return [`## ${t('notebook-progress')}`, '', ...(lines.length ? lines : [t('notebook-progress-empty')]), ''];
 }
 
-/** Le carnet en Markdown : son titre (au nom de la joueuse ou du joueur, s'il est donné), la progression (si elle est donnée), puis les commandes, triées par nom. */
+/** The notebook in Markdown: its title (in the player's name, if given), the progress (if given), then the commands, sorted by name. */
 export function inMarkdown(notebook: Notebook, t: Translate, finished?: string[], playerName = ''): string {
   const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
   return [

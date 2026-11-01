@@ -1,22 +1,22 @@
-// Histoire « La Coopérative » — chapitre « Le départ » : Marc, le bénévole
-// qui tenait le serveur, part s'installer loin. Il faut lui retirer tous ses
-// accès, proprement, sans rien casser :
-//   - son compte : usermod -L ne verrouille que le mot de passe (sa clé SSH
-//     passe toujours, comme le dit man usermod) ; il faut le faire expirer
-//     (usermod -e 1, chage -E 0), lui retirer son shell, ou le supprimer ;
-//   - sa clé est AUSSI dans le compte partagé deploy (le piège classique) :
-//     retirer cette ligne-là, sans toucher aux autres ;
-//   - sudo : le retirer du groupe sudo ;
-//   - sa session est encore ouverte (who, ps -u marc) : la fermer ;
-//   - sa crontab lance la sauvegarde de la caisse depuis son dossier : la
-//     confier à un compte qui reste (root, ou deploy) avant de supprimer quoi
-//     que ce soit (userdel -r effacerait le script ; cron ignore la crontab
-//     d'un compte supprimé).
-// Objectif vérifié sur l'état : marc ne peut plus entrer (ni mot de passe, ni
-// clé, ni dans deploy), n'a plus sudo ni aucun processus, et la sauvegarde
-// tourne toujours (le même script, hors de /home/marc, dans la crontab de
-// root ou de deploy, ou dans /etc/cron.d).
-// Sources : https://man7.org/linux/man-pages/man8/usermod.8.html,
+// Story "The Co-op", chapter "The departure": Marc, the volunteer
+// who ran the server, is moving far away. All his access must be
+// removed, cleanly, without breaking anything:
+//   - his account: usermod -L only locks the password (his SSH key
+//     still works, as man usermod says); it must be expired
+//     (usermod -e 1, chage -E 0), have its shell removed, or be deleted;
+//   - his key is ALSO in the shared deploy account (the classic trap):
+//     remove that line, without touching the others;
+//   - sudo: remove him from the sudo group;
+//   - his session is still open (who, ps -u marc): close it;
+//   - his crontab runs the till's backup from his directory: hand it
+//     over to an account that stays (root, or deploy) before deleting
+//     anything (userdel -r would erase the script; cron ignores the crontab
+//     of a deleted account).
+// Objective checked on the state: marc can no longer get in (no password,
+// no key, not through deploy), no longer has sudo nor any process, and the backup
+// still runs (the same script, outside /home/marc, in the crontab of
+// root or deploy, or in /etc/cron.d).
+// Sources: https://man7.org/linux/man-pages/man8/usermod.8.html,
 // https://man7.org/linux/man-pages/man8/userdel.8.html,
 // https://man7.org/linux/man-pages/man1/chage.1.html
 
@@ -26,7 +26,7 @@ import type { Game, Shell } from '../shell';
 import { parse } from '../cron';
 import { TODAY, KEYS, cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
 
-// Le script de Marc, avec le dossier des sauvegardes dans la langue (/srv/backups…).
+// Marc's script, with the backups directory in the language (/srv/backups…).
 const script = (t: Translate) => {
   const backups = path(t, '/srv/backups');
   return `#!/bin/sh
@@ -46,7 +46,7 @@ const sh = (j: Game) => j as Shell;
 const key = (line: string) => line.trim().split(/\s+/).slice(0, 2).join(' ');
 const MARC = key(KEYS.marc);
 
-// Les clés autorisées d'un compte.
+// An account's authorised keys.
 const allowed = (j: Game, account: string, home: string) =>
   (j.read(`${home}/.ssh/authorized_keys`) ?? '')
     .split('\n')
@@ -60,7 +60,7 @@ const openAccount = (j: Game, name: string) => {
   return !/(nologin|false)$/.test(u.shell ?? '/bin/bash');
 };
 
-// Marc peut-il encore entrer ? Par son compte (mot de passe, ou sa clé : -L n'y fait rien), ou par deploy.
+// Can Marc still get in? Through his account (password, or his key: -L does nothing about it), or through deploy.
 const byItsAccount = (j: Game) => {
   if (!openAccount(j, 'marc')) return false;
   const locked = ((j.state.lockedAccounts ?? []) as string[]).includes('marc');
@@ -71,7 +71,7 @@ const deployIntact = (j: Game) => [KEYS.ci, KEYS.lina].map(key).every((c) => all
 const sudoForMarc = (j: Game) => !!j.accounts.users.marc && sh(j).groupsFor('marc').includes('sudo');
 const marcProcess = (j: Game) => ((j.state.process ?? []) as { user: string }[]).some((p) => p.user === 'marc');
 
-// Les tâches cron (commande et compte) : crontabs des comptes qui existent, et /etc/cron.d (avec la colonne du compte).
+// The cron jobs (command and account): crontabs of the accounts that exist, and /etc/cron.d (with the account column).
 function tasks(j: Game): { account: string; command: string }[] {
   const res: { account: string; command: string }[] = [];
   for (const [account, text] of Object.entries((j.state.crontabs ?? {}) as Record<string, string>))
@@ -86,7 +86,7 @@ function tasks(j: Game): { account: string; command: string }[] {
   return res;
 }
 
-// La sauvegarde tourne-t-elle encore, confiée à un compte qui n'est pas celui d'une personne ?
+// Does the backup still run, handed to an account that isn't a person's?
 const entrustedBackup = (j: Game, accounts = ['root', 'deploy']) =>
   tasks(j).some(({ account, command }) => {
     const path = command.split(/\s+/).find((m) => m.startsWith('/'));
@@ -168,7 +168,7 @@ export const departure: Chapter = {
         srv: d(
           {
             till: d({}, undefined, { owner: 'till', group: 'till' }),
-            // La sauvegarde de la nuit dernière (elle contient /home : le script de Marc y est).
+            // Last night's backup (it contains /home: Marc's script is in it).
             backups: d(
               {
                 '2027-10-18': d({ home: d({ marc: d({ bin: d({ [SCRIPT]: file(script(t), 'root', 'rwxr-xr-x') }) }) }) }, undefined, {

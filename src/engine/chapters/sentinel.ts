@@ -1,12 +1,12 @@
-// Histoire « Les Lettres du quartier » — chapitre « La sentinelle » :
-// fail2ban. Il tourne avec les réglages de Debian (prison sshd, bantime de
-// 10 minutes) : les robots reviennent dès la fin de leur bannissement, et
-// Rania, la webmestre, a été bannie après s'être trompée de nom. Débannir
-// Rania, régler jail.local (bantime plus long, ignoreip pour Rania et pour
-// son propre poste), recharger, vérifier.
-// Piège : un maxretry trop strict sans ignoreip, et le poste (qui a raté
-// trois connexions hier) se bannit lui-même.
-// Sources : https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
+// Story "The Neighbourhood Letters", chapter "The sentinel":
+// fail2ban. It runs with Debian's settings (sshd jail, bantime of
+// 10 minutes): the bots come back as soon as their ban ends, and
+// Rania, the webmaster, was banned after mistyping her name. Unban
+// Rania, configure jail.local (longer bantime, ignoreip for Rania and for
+// your own workstation), reload, check.
+// Trap: a maxretry too strict without ignoreip, and the workstation (which failed
+// three connections yesterday) bans itself.
+// Sources: https://manpages.debian.org/bookworm/fail2ban/jail.conf.5.en.html,
 // https://manpages.debian.org/bookworm/fail2ban/fail2ban-client.1.en.html
 
 import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
@@ -20,7 +20,7 @@ const M = '/home/you';
 const RANIA = '198.51.100.40';
 const ROBOTS = ['203.0.113.66', '198.51.100.23'];
 
-// L'en-tête et l'essentiel du jail.conf livré avec fail2ban.
+// The header and the essentials of the jail.conf shipped with fail2ban.
 export const JAIL_CONF = `#
 # WARNING: heavily refactored in 0.9.0 release.  Please review and
 #          customize settings for your setup.
@@ -69,7 +69,7 @@ port    = ssh
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s`;
 
-// Ce que fail2ban a écrit ce matin : le va-et-vient des robots, et Rania.
+// What fail2ban wrote this morning: the bots coming and going, and Rania.
 const LOG = [
   ['07:12:04', 'Ban 203.0.113.66'],
   ['07:22:04', 'Unban 203.0.113.66'],
@@ -85,7 +85,7 @@ const LOG = [
   .map(([h, m]) => `2026-10-22 ${h},412 fail2ban.actions        [701]: NOTICE  [sshd] ${m}`)
   .join('\n');
 
-// Les échecs de connexion de la nuit et de la matinée, dans le journal de ssh (les vôtres sous le nom de votre compte).
+// The failed logins of the night and morning, in ssh's log (yours under your account's name).
 const FAILURES = (player: string): [string, string][] => [
   ...[51234, 51240, 51251].map((p): [string, string] => [WORKSTATION.address, `Failed publickey for ${player} from ${WORKSTATION.address} port ${p} ssh2`]),
   ...['oracle', 'git', 'admin', 'test', 'oracle', 'pi', 'git'].map((u, i): [string, string] => ['203.0.113.66', `Invalid user ${u} from 203.0.113.66 port ${40100 + i}`]),
@@ -95,20 +95,20 @@ const FAILURES = (player: string): [string, string][] => [
 
 const f2b = (j: Game) => j.state.fail2ban as Fail2banState;
 
-// Les robots ne s'arrêtent pas pendant qu'on joue : chacun retente sa chance
-// à son rythme, avec un nom au hasard de sa liste. Banni, il ne passe plus
-// (le pare-feu le rejette avant sshd) ; à la fin du bantime, fail2ban le
-// relâche et il recommence (« ils reviennent toutes les dix minutes »).
+// The bots don't stop while you play: each tries its luck again
+// at its own pace, with a random name from its list. Once banned, it no longer gets through
+// (the firewall rejects it before sshd); at the end of the bantime, fail2ban
+// releases it and it starts again ("they come back every ten minutes").
 const IN_DIRECT = [
   { ip: ROBOTS[0], period: 20, accounts: ['root', 'admin', 'oracle', 'postgres', 'ubuntu', 'git'] },
   { ip: ROBOTS[1], period: 12, accounts: ['admin', 'test', 'user', 'ftp', 'guest'] },
 ];
-// Le bruit de fond d'internet : des scanners qui essaient un ou deux noms puis
-// passent à une autre cible (trop peu pour fail2ban). Adresses de documentation.
+// The internet's background noise: scanners that try one or two names then
+// move on to another target (too few for fail2ban). Documentation addresses.
 const SCANNERS = ['203.0.113.', '192.0.2.', '198.51.100.'];
 const COURANTS_ACCOUNTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
 const scanner = (n: number) => `${SCANNERS[n % 3]}${150 + ((n * 37) % 50)}`;
-// Depuis quand chaque robot est banni (pour le relâcher à la fin du bantime).
+// Since when each bot has been banned (to release it at the end of the bantime).
 const since = (j: Game): Record<string, number> => (j.state.bannedSince ??= {}) as Record<string, number>;
 
 function release(j: Game, t: number) {
@@ -130,7 +130,7 @@ function robotsInDirect(j: Game, forEachOf: number, a: number) {
   const sd = systemd(j)!;
   const state = f2b(j);
   const watch = () => sd.services.fail2ban?.state === 'active' && !!state.load?.enabled;
-  // Un scanner toutes les 9 s, deux essais chacun (le second 9 s après le premier).
+  // A scanner every 9 s, two tries each (the second 9 s after the first).
   const scanners = instants(forEachOf, a, 9).map((t) => {
     const k = Math.floor(t / 9000);
     const n = Math.floor(k / 2);
@@ -172,7 +172,7 @@ export const sentinel: Chapter = {
   },
   activity: { not: 15, advance: robotsInDirect },
   state: () => ({
-    // Le second robot vient d'être relâché (09:35) : il recommence pendant qu'on joue, et fail2ban le rattrape.
+    // The second bot has just been released (09:35): it starts again while you play, and fail2ban catches it.
     fail2ban: { load: null, banned: [ROBOTS[0], RANIA], bannedTotal: 6, log: [], loads: 0, consulted: false, restored: { [ROBOTS[1]]: Date.UTC(2026, 9, 22, 9, 35, 40) } } satisfies Fail2banState,
     systemd: newSystemd('letters', Date.UTC(2026, 9, 19, 22, 4, 0), Date.UTC(2026, 9, 22, 6, 0, 0), {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd' },

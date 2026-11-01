@@ -1,26 +1,26 @@
-// /etc/fstab, lu comme le lisent mount et systemd : une ligne par système de
-// fichiers (source, point de montage, type, options, dump, pass). La source
-// se donne par UUID=, LABEL=, ou un chemin de /dev (/dev/sde1,
-// /dev/mapper/vg-lv, /dev/disk/by-uuid/…). Au démarrage, systemd attend
-// chaque source (90 s) : une source introuvable sans l'option nofail fait
-// échouer local-fs.target, et la machine s'arrête en mode secours
-// (emergency). D'après fstab(5) (https://man7.org/linux/man-pages/man5/fstab.5.html),
+// /etc/fstab, read the way mount and systemd read it: one line per file
+// system (source, mount point, type, options, dump, pass). The source
+// is given by UUID=, LABEL=, or a /dev path (/dev/sde1,
+// /dev/mapper/vg-lv, /dev/disk/by-uuid/…). At boot, systemd waits for
+// each source (90 s): a missing source without the nofail option makes
+// local-fs.target fail, and the machine stops in rescue mode
+// (emergency). After fstab(5) (https://man7.org/linux/man-pages/man5/fstab.5.html),
 // systemd.mount(5) (https://www.freedesktop.org/software/systemd/man/latest/systemd.mount.html)
-// et findmnt(8).
-// Écarts : pas de swap, de montages réseau, ni de x-systemd.* autres que nofail
-// et noauto ; un seul type de système de fichiers par périphérique.
+// and findmnt(8).
+// Differences: no swap, no network mounts, no x-systemd.* other than nofail
+// and noauto; a single file system type per device.
 
 import type { Game } from './shell';
 import type { Directory } from './world';
 import { partitionFor, type StorageState } from './storage';
 import { readLv } from './lvm';
 
-/** Un système de fichiers sur un périphérique (/dev/md0, /dev/mapper/labo-photos, /dev/sde1). */
+/** A file system on a device (/dev/md0, /dev/mapper/labo-photos, /dev/sde1). */
 export interface FilesSystem {
   type: string;
   uuid: string;
   label?: string;
-  // Ce qu'il contient, pour un support qu'on monte pendant la partie (un disque USB).
+  // What it contains, for a medium mounted during the game (a USB disk).
   tree?: Directory;
   bytes?: number;
 }
@@ -34,7 +34,7 @@ export interface FstabInput {
   pass: number;
 }
 
-/** Les lignes de fstab, et celles qu'on ne sait pas lire (moins de quatre champs). */
+/** The fstab lines, and those that can't be read (fewer than four fields). */
 export function readFstab(text: string): { inputs: FstabInput[]; errors: number[] } {
   const inputs: FstabInput[] = [];
   const errors: number[] = [];
@@ -53,7 +53,7 @@ export function readFstab(text: string): { inputs: FstabInput[]; errors: number[
 
 export const systems = (st: StorageState): Record<string, FilesSystem> => (st.fs ??= {});
 
-/** Le périphérique (/dev/…) que désigne une source de fstab ou de mount, s'il existe. */
+/** The device (/dev/…) an fstab or mount source designates, if it exists. */
 export function resolveSource(st: StorageState, source: string): string | null {
   const fs = systems(st);
   const by = (key: 'uuid' | 'label', value: string) => Object.keys(fs).find((d) => fs[d][key] === value) ?? null;
@@ -68,12 +68,12 @@ export function resolveSource(st: StorageState, source: string): string | null {
   return st.disks[n] || st.arrays[n] || partitionFor(st, n) ? source : null;
 }
 
-/** Le système de fichiers d'un périphérique, s'il en a un. */
+/** A device's file system, if it has one. */
 export const systemFor = (st: StorageState, dev: string): FilesSystem | null => systems(st)[dev] ?? null;
 
 /**
- * Ce que systemd trouverait au démarrage avec cette fstab : les entrées dont la
- * source manque (sans nofail), qui bloquent local-fs.target.
+ * What systemd would find at boot with this fstab: the entries whose
+ * source is missing (without nofail), which block local-fs.target.
  */
 export function blocking(st: StorageState, text: string): FstabInput[] {
   return readFstab(text).inputs.filter(
@@ -81,10 +81,10 @@ export function blocking(st: StorageState, text: string): FstabInput[] {
   );
 }
 
-/** Le nom de l'unité de montage de systemd pour un point de montage (/srv/scans → srv-scans.mount). */
+/** The name of systemd's mount unit for a mount point (/srv/scans → srv-scans.mount). */
 export const mountUnit = (target: string) => (target === '/' ? '-.mount' : `${target.replace(/^\//, '').replace(/\//g, '-')}.mount`);
-/** Le nom de l'unité d'un périphérique (/dev/sdc1 → dev-sdc1.device). */
+/** The name of a device's unit (/dev/sdc1 → dev-sdc1.device). */
 export const deviceUnit = (source: string) => `${source.replace(/^\//, '').replace(/-/g, '\\x2d').replace(/\//g, '-')}.device`;
 
-/** La fstab telle que systemd l'a lue (au démarrage, ou au dernier daemon-reload). */
+/** The fstab as systemd read it (at boot, or at the last daemon-reload). */
 export const systemdFstab = (j: Game): string => j.state.fstabRead ?? j.read('/etc/fstab') ?? '';

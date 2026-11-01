@@ -1,20 +1,19 @@
-// Histoire « La Coopérative » — chapitre « Le proxy » : depuis ce matin,
-// plus personne ne peut se connecter à la caisse (« Too many attempts »).
-// Un robot essaie des mots de passe ; l'appli verrouille l'adresse qui
-// échoue cinq fois… mais derrière nginx, toutes les requêtes lui arrivent de
-// 127.0.0.1 : elle a verrouillé tout le monde.
-//   - nginx doit dire à l'appli qui est le vrai client :
-//     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for (ou $remote_addr) ;
-//   - l'appli ne doit croire cet en-tête que s'il vient de nginx :
-//     TRUST_PROXY=loopback (et pas true : le robot écrit lui-même un faux
-//     X-Forwarded-For à chaque essai, que nginx ne fait que compléter) ;
-//   - recharger nginx, relancer l'appli (qui oublie ses verrous).
-// À chaque rechargement de nginx ou démarrage de l'appli, le jeu rejoue cinq
-// minutes de trafic : le robot (198.51.100.66, un faux X-Forwarded-For
-// différent à chaque essai), puis Lina qui se connecte.
-// Objectif vérifié sur ce trafic : Lina entre, et c'est bien l'adresse du
-// robot qui est verrouillée.
-// Sources : https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header,
+// Story "The Co-op" — chapter "The proxy": since this morning, nobody can
+// log in to the till any more ("Too many attempts"). A bot is trying
+// passwords; the app locks the address that fails five times… but behind
+// nginx, every request reaches it from 127.0.0.1: it has locked everyone out.
+//   - nginx must tell the app who the real client is:
+//     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for (or $remote_addr);
+//   - the app must only trust that header if it comes from nginx:
+//     TRUST_PROXY=loopback (and not true: the bot writes its own fake
+//     X-Forwarded-For on each attempt, which nginx merely appends to);
+//   - reload nginx, restart the app (which forgets its locks).
+// On each nginx reload or app start, the game replays five minutes of
+// traffic: the bot (198.51.100.66, a different fake X-Forwarded-For on each
+// attempt), then Lina logging in.
+// Objective checked on that traffic: Lina gets in, and it is indeed the
+// bot's address that is locked.
+// Sources: https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header,
 // https://expressjs.com/en/guide/behind-proxies.html
 
 import { f, type Chapter } from '../world';
@@ -26,7 +25,7 @@ import { till, NEW_KEY, tillEnv, tillState, tillWorld, BINARY_NGINX, nginxCooper
 const ROBOT = '198.51.100.66';
 const LINA = '192.0.2.44';
 
-// Le site, avec la correction du chapitre précédent.
+// The site, with the previous chapter's fix.
 const SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -64,7 +63,7 @@ const APP_LOG = [
   '2027-10-19 07:12:03 rejected login for karim from 127.0.0.1 (locked)',
 ].join('\n');
 
-// Cinq minutes de trafic : le robot (un faux X-Forwarded-For à chaque essai), puis Lina.
+// Five minutes of traffic: the bot (a fake X-Forwarded-For on each attempt), then Lina.
 function simulate(j: Game) {
   const c = till(j);
   if (!c || !j.state.nginx?.load) return;
@@ -116,7 +115,7 @@ export const proxy: Chapter = {
   state: () => ({ ...tillState(tillEnv(NEW_KEY)), systemd: tillSystemd(simulate, simulate) }),
   initialise: (j) => {
     loadNginx(j);
-    // Ce matin : le robot a fait verrouiller 127.0.0.1, c'est-à-dire tout le monde.
+    // This morning: the bot got 127.0.0.1 locked, that is, everyone.
     till(j).banned = ['127.0.0.1'];
   },
   createWorld: (t) =>

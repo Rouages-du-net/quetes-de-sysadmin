@@ -1,6 +1,6 @@
-// La page « Tableau de classe » : l'enseignant·e y glisse les fichiers de
-// sauvegarde de ses élèves (ou colle leurs codes) ; tout est lu dans son
-// navigateur, rien n'est envoyé. La logique est dans src/engine/classroom.ts.
+// The "Class table" page: the teacher drops their students' save files
+// there (or pastes their codes); everything is read in their browser,
+// nothing is sent. The logic is in src/engine/classroom.ts.
 
 import { STORIES } from '../engine/chapters';
 import { progress, fileStudent, codesStudents, inCsv, gradeFor, bestTime, chaptersTotal, type Student, type ClassError } from '../engine/classroom';
@@ -91,7 +91,7 @@ export function mountClass(root: HTMLElement, language: Language) {
     for (const x of read) {
       if ('error' in x) errors.push(x);
       else {
-        // Le même élève (même nom) remplace sa ligne : la sauvegarde la plus récente l'emporte.
+        // The same student (same name) replaces their row: the most recent save wins.
         const i = students.findIndex((e) => e.name === x.name);
         if (i >= 0) students[i] = x;
         else students.push(x);

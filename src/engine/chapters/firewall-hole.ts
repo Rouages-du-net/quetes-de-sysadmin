@@ -1,16 +1,16 @@
-// Histoire « La Fabrique » — chapitre « Le trou dans le pare-feu » : Docker
-// et ufw, et la place que prend Docker. Rania (des Lettres du quartier) a
-// testé le serveur du fablab depuis l'extérieur : PostgreSQL répond sur le
-// port 5432, alors qu'ufw ne l'autorise pas. Yasmine avait ajouté
-// « ports: - "5432:5432" » à la base pour s'y connecter depuis son portable.
-// Docker publie ce port avec ses propres règles iptables, consultées avant
-// celles d'ufw : la base est ouverte au monde entier. En prime, le disque est
-// plein à 91 % : images inutiles, une image de 9,6 Go, des conteneurs
-// arrêtés… et un volume à ne surtout pas jeter.
-// Objectif vérifié sur l'état : le port 5432 ne répond plus depuis
-// l'extérieur, les deux applis répondent toujours, le disque est sous 75 %,
-// et aucun volume utile n'a disparu.
-// Sources : https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw,
+// Story "La Fabrique" — chapter "The hole in the firewall": Docker
+// and ufw, and the space Docker takes. Rania (from Les Lettres du quartier)
+// tested the fablab's server from outside: PostgreSQL answers on
+// port 5432, although ufw doesn't allow it. Yasmine had added
+// 'ports: - "5432:5432"' to the database to connect to it from her laptop.
+// Docker publishes this port with its own iptables rules, consulted before
+// ufw's: the database is open to the whole world. On top of that, the disk is
+// 91 % full: useless images, a 9.6 GB image, stopped
+// containers… and a volume that must not be thrown away.
+// Objective checked on the state: port 5432 no longer answers from
+// outside, both apps still answer, the disk is below 75 %,
+// and no useful volume has disappeared.
+// Sources: https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw,
 // https://docs.docker.com/engine/network/#published-ports,
 // https://docs.docker.com/engine/manage-resources/pruning/
 
@@ -53,7 +53,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le compose.yaml de la fin du chapitre 2… plus le port de la base, ajouté par Yasmine.
+// The compose.yaml from the end of chapter 2… plus the database port, added by Yasmine.
 const COMPOSE = `services:
   appli:
     image: registry.example/reservations:2.1
@@ -100,7 +100,7 @@ function dockerState(): DockerState {
     image('registry.example/reservations', '2.1', 'reservations', 3000, 'docker-entrypoint.sh node serveur.js', 212_400_000, 16),
     image('postgres', '16', 'postgres', 5432, 'docker-entrypoint.sh postgres', 431_700_000, 60),
     image('postgres', '17', 'postgres', 5432, 'docker-entrypoint.sh postgres', 438_900_000, 22),
-    // L'essai d'un modèle d'IA en local, oublié là.
+    // A local AI model trial, forgotten there.
     image('registry.example/ia-locale', 'latest', 'aucune', 8000, 'python -m serveur', 9_600_000_000, 31),
     image('node', '22', 'aucune', 0, 'docker-entrypoint.sh node', 1_120_000_000, 45),
     ...[0, 1, 2].map((k) => image('<none>', '<none>', 'aucune', 0, '', 410_000_000 + k * 7_000_000, 50 + k * 9)),
@@ -113,7 +113,7 @@ function dockerState(): DockerState {
     volumes: {
       'outiltheque-donnees': { created: Date.UTC(2027, 3, 3, 10, 12, 0), data: {}, size: 2_400_000 },
       reservations_donnees: { created: Date.UTC(2027, 3, 10, 14, 30, 0), data: {}, size: 162_000_000 },
-      // Les pages de l'ancien wiki du fablab, gardées pour les extraire un jour.
+      // The pages of the fablab's old wiki, kept to extract them some day.
       'wiki-ancien': { created: Date.UTC(2026, 10, 2, 9, 0, 0), data: { 'wiki.sqlite': 'SQLite format 3' }, size: 48_100_000 },
     },
     next: 10,
@@ -234,7 +234,7 @@ export const bypass: Chapter = {
       docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
     };
   },
-  // Les conteneurs du fablab, tels qu'ils tournent depuis le dernier démarrage.
+  // The fablab's containers, as they have run since the last boot.
   initialise: (j) => {
     const e = state(j);
     const tool = container(
@@ -257,7 +257,7 @@ export const bypass: Chapter = {
     );
     e.containers.push(old, tool);
     writeIn(j, tool, '/var/lib/outiltheque/outiltheque.db', writeBase({ schema: 4, loans: [] }));
-    // La base de réservations existe déjà dans son volume (mot de passe de .env).
+    // The bookings database already exists in its volume (password from .env).
     e.volumes.reservations_donnees.data = {
       PG_VERSION: '17',
       'pg_hba_qds.json': JSON.stringify({ user: 'fablab', password: password(j.t, 'workshop2027'), base: 'reservations' }),
@@ -280,7 +280,7 @@ export const bypass: Chapter = {
           '.env': f(`POSTGRES_PASSWORD=${password(t, 'workshop2027')}`, { lines: true, owner: 'root', mode: 'rw-------' }),
         }),
       }),
-      // Le système et ses journaux : la place qui n'est pas à Docker.
+      // The system and its logs: the space that isn't Docker's.
       usr: place({ systeme: f('', { size: 3_100_000_000, owner: 'root' }) }),
       var: place({
         lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }),

@@ -1,16 +1,16 @@
-// Histoire « L'Astreinte » — chapitre « La mémoire » : à 4 h 12, le direct
-// de Radio Quartier passe du silence. La playlist automatique de la nuit
-// (radio-playlist, un programme Node) a été tuée par l'OOM killer du noyau :
-// elle garde en mémoire tout ce qu'elle lit, sans jamais rien oublier (une
-// fuite). La relancer ne suffit pas : elle regrossit, et le noyau finit par
-// tuer le plus gros processus. On la contient avec une limite systemd
-// (MemoryMax=), qu'on fait relancer en cas d'échec (Restart=on-failure),
-// le temps que les développeur·ses corrigent la fuite. Au passage, des
-// processus zombies que kill ne tue pas : seul leur parent peut les
-// récupérer (le redémarrer).
-// Objectif vérifié sur l'état : la playlist tourne, avec une limite de
-// mémoire raisonnable et une relance automatique, et plus aucun zombie.
-// Sources : https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html,
+// Story "L'Astreinte" — chapter "Memory": at 4:12 am, Radio
+// Quartier's live stream goes silent. The automatic night playlist
+// (radio-playlist, a Node program) was killed by the kernel's OOM killer:
+// it keeps in memory everything it reads, never forgetting anything (a
+// leak). Restarting it isn't enough: it grows again, and the kernel ends up
+// killing the biggest process. We contain it with a systemd limit
+// (MemoryMax=), and have it restarted on failure (Restart=on-failure),
+// while the developers fix the leak. Along the way, zombie
+// processes that kill doesn't kill: only their parent can
+// reap them (restart it).
+// Objective checked on the state: the playlist runs, with a reasonable memory
+// limit and automatic restart, and no zombie left.
+// Sources: https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html,
 // https://www.freedesktop.org/software/systemd/man/latest/systemd.service.html#Restart=,
 // https://man7.org/linux/man-pages/man1/free.1.html, https://man7.org/linux/man-pages/man2/wait.2.html
 
@@ -22,7 +22,7 @@ import type { Process } from '../commands/system';
 
 const M = '/home/you';
 const Mo = 1024 * 1024;
-// La playlist démarre avec 200 Mio et en prend 60 de plus à chaque instant.
+// The playlist starts with 200 MiB and takes 60 more at each moment.
 const DEPARTURE = 200 * Mo;
 const LEAK = 60 * Mo;
 const PODCAST = 2305;
@@ -52,14 +52,14 @@ const zombies = (j: Game) => process(j).filter((p) => p.zombie);
 const killed = (j: Game): { service: string; cgroup: boolean; restart: boolean }[] =>
   (j.state.oomKilled ?? []).filter((t: { service: string }) => t.service === 'radio-playlist');
 
-// Une limite qui protège la machine sans empêcher la playlist de démarrer.
+// A limit that protects the machine without preventing the playlist from starting.
 const reasonableLimit = (j: Game) => {
   const max = playlist(j).maxMemory;
   return max !== undefined && max >= 256 * Mo && max <= 1024 * Mo;
 };
 const restart = (j: Game) => ['on-failure', 'always', 'on-abnormal'].includes(playlist(j).reboot ?? '');
 
-// Chaque démarrage : un nouveau processus, qui repart de 200 Mio.
+// Each start: a new process, which starts again from 200 MiB.
 function launchPlaylist(j: Game) {
   const pid = (j.state.nextPid = (j.state.nextPid ?? 2600) + 1);
   const s = playlist(j);
@@ -70,7 +70,7 @@ function launchPlaylist(j: Game) {
 
 function launchPodcast(j: Game) {
   const s = sd(j).services['radio-podcast'];
-  // Au premier démarrage, le parent des zombies ; ensuite, un nouveau processus.
+  // On the first start, the zombies' parent; afterwards, a new process.
   const pid = j.state.podcastStarted ? (j.state.nextPid = (j.state.nextPid ?? 2600) + 1) : PODCAST;
   j.state.podcastStarted = true;
   s.process = [{ pid, user: 'radio', cpu: 0.3, mem: 0, command: '/usr/bin/python3 /opt/podcast/convertir.py' }];
@@ -154,11 +154,11 @@ export const chapterMemory: Chapter = {
     ],
     memory: { total: 2048 * Mo, kernel: 380 * Mo, rss: { 1: 12 * Mo, 598: 8 * Mo, 611: 4 * Mo, 1730: 420 * Mo } },
   }),
-  // La nuit jusqu'ici : la playlist grossit depuis son démarrage, et à 4 h 12, plus de mémoire.
+  // The night so far: the playlist has grown since it started, and at 4:12 am, no memory left.
   initialise: (j) => {
     const s = sd(j);
     const start = s.log[0].time;
-    // Quelques lignes du démarrage, pour dmesg.
+    // A few lines from boot, for dmesg.
     const clock = s.clock;
     [
       'Linux version 6.12.0-quetes (radio)',
@@ -183,9 +183,9 @@ export const chapterMemory: Chapter = {
     s.clock = Date.UTC(2027, 7, 22, 4, 31, 0);
     j.state.oomKilled = [];
   },
-  // La playlist (si elle tourne) prend de la mémoire à chaque instant ; le noyau et systemd veillent.
+  // The playlist (if it runs) takes memory at each moment; the kernel and systemd keep watch.
   afterCommand: (j) => {
-    // Chaque commande, une demi-minute de la nuit.
+    // Each command, half a minute of the night.
     sd(j).clock += 30_000;
     if (active(j)) {
       const pid = playlist(j).process[0].pid;

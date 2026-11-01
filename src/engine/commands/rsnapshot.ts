@@ -1,16 +1,16 @@
-// rsnapshot : des instantanés d'un dossier, à intervalles réguliers, qui ne
-// coûtent presque rien en place : d'un instantané au suivant, les fichiers
-// qui n'ont pas changé sont des liens physiques (le même fichier sous deux
-// noms). D'après https://rsnapshot.org/rsnapshot/docs/docs.html et
-// rsnapshot(1) :
-//   - /etc/rsnapshot.conf, champs séparés par des TABULATIONS ;
-//   - « rsnapshot daily » (le plus petit intervalle) : on fait tourner
-//     daily.0 → daily.1 → …, on supprime le plus vieux, on recopie daily.1
-//     en daily.0 par liens physiques (cp -al), puis rsync met daily.0 à jour ;
-//   - un intervalle plus grand (weekly) reprend le plus vieux daily.
-// Écarts : une partie des directives ; pas de backup_script, de link_dest,
-// de sync_first ni de sauvegarde distante (user@host:) ; messages d'erreur
-// proches de ceux de rsnapshot 1.4.
+// rsnapshot: snapshots of a directory, at regular intervals, that
+// cost almost nothing in space: from one snapshot to the next, files
+// that haven't changed are hard links (the same file under two
+// names). Based on https://rsnapshot.org/rsnapshot/docs/docs.html and
+// rsnapshot(1):
+//   - /etc/rsnapshot.conf, fields separated by TABS;
+//   - "rsnapshot daily" (the smallest interval): rotates
+//     daily.0 → daily.1 → …, deletes the oldest, copies daily.1
+//     to daily.0 with hard links (cp -al), then rsync updates daily.0;
+//   - a larger interval (weekly) takes the oldest daily.
+// Differences: only some of the directives; no backup_script, link_dest,
+// sync_first nor remote backup (user@host:); error messages
+// close to those of rsnapshot 1.4.
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -19,7 +19,7 @@ import type { Command } from './index';
 
 export const CONF = '/etc/rsnapshot.conf';
 
-// La configuration livrée par Debian (rsnapshot 1.4.5), abrégée ; tabulations comprises.
+// The configuration shipped by Debian (rsnapshot 1.4.5), abridged; tabs included.
 export const CONF_DEBIAN = `#################################################
 # rsnapshot.conf - rsnapshot configuration file #
 #################################################
@@ -127,7 +127,7 @@ export interface ConfRsnapshot {
   withoutRootCreate: boolean;
 }
 
-/** Lit la configuration ; renvoie les erreurs au format de rsnapshot. */
+/** Reads the configuration; returns the errors in rsnapshot's format. */
 export function readConf(text: string, file = CONF): { conf: ConfRsnapshot; errors: string[] } {
   const conf: ConfRsnapshot = { root: '', levels: [], backups: [], withoutRootCreate: false };
   const errors: string[] = [];
@@ -170,14 +170,14 @@ const BANNER = (args: string[]) =>
     '----------------------------------------------------------------------------',
   ].join('\n');
 
-// Une copie par liens physiques (cp -al) : de nouveaux lieux, les mêmes fichiers.
+// A copy with hard links (cp -al): new places, the same files.
 const linkedCopy = (n: Directory): Directory => ({
   ...n,
   children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, e.type === 'directory' ? linkedCopy(e) : e])),
 });
 
-// rsync -a --delete de `source` vers `cible` : un fichier inchangé garde son
-// nœud (il reste lié aux instantanés précédents), un fichier changé est remplacé.
+// rsync -a --delete from `source` to `cible`: an unchanged file keeps its
+// node (it stays linked to the previous snapshots), a changed file is replaced.
 function synchronise(game: Shell, source: Directory, target: Directory) {
   for (const name of Object.keys(target.children)) if (!(name in source.children)) delete target.children[name];
   for (const [name, e] of Object.entries(source.children)) {
@@ -192,7 +192,7 @@ function synchronise(game: Shell, source: Directory, target: Directory) {
   }
 }
 
-// Le lieu `chemin` (absolu), créé au besoin.
+// The place `chemin` (absolute), created if needed.
 function place(game: Shell, path: string): Directory {
   let n = game.find('/') as Directory;
   for (const part of path.split('/').filter(Boolean)) {
@@ -202,7 +202,7 @@ function place(game: Shell, path: string): Directory {
   return n;
 }
 
-/** Fait tourner un niveau (rsnapshot daily) ; renvoie les commandes équivalentes. */
+/** Rotates one level (rsnapshot daily); returns the equivalent commands. */
 export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: boolean): { commands: string[]; error?: string } {
   const i = conf.levels.findIndex((n) => n.name === level);
   const { count } = conf.levels[i];
@@ -218,7 +218,7 @@ export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: bool
     }
   }
   const root = () => place(game, r);
-  // Un niveau plus grand : il lui faut le plus vieux instantané du niveau d'avant.
+  // A larger level: it needs the oldest snapshot of the level before.
   if (i > 0) {
     const before = conf.levels[i - 1];
     const moreOld = `${before.name}.${before.count - 1}`;
@@ -259,7 +259,7 @@ export function run(game: Shell, conf: ConfRsnapshot, level: string, trial: bool
       if (trial) continue;
       const source = game.find(b.source);
       if (source?.type !== 'directory') return { commands, error: `rsync: [sender] change_dir "${b.source}" failed: No such file or directory (2)` };
-      // --relative : le chemin complet de la source est recréé sous la destination.
+      // --relative: the source's full path is recreated under the destination.
       synchronise(game, source, place(game, `${dest}${b.source}`));
     }
     commands.push(`touch ${r}${level}.0/`);
@@ -301,7 +301,7 @@ export const RSNAPSHOT: Record<string, Command> = {
       if (command === 'du') {
         const root = game.find(conf.root);
         if (root?.type !== 'directory') return game.error(`${BANNER(args)}\nERROR: snapshot_root ${conf.root} does not exist.`);
-        // Comme du -csh : un fichier lié dans plusieurs instantanés n'est compté qu'une fois.
+        // Like du -csh: a file linked in several snapshots is counted only once.
         const seen = new Set<Node>();
         const size = (n: Node): number => {
           if (n.type === 'directory') return Object.values(n.children).reduce((t, e) => t + size(e), 0) + 4096;

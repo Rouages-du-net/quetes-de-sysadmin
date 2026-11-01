@@ -1,10 +1,10 @@
-// Les journaux qui grossissent : lsof (qui tient quel fichier ouvert),
-// truncate (vider un fichier sans le supprimer) et logrotate (faire tourner
-// les journaux). D'après lsof(8), truncate (coreutils) et logrotate(8)
+// Growing logs: lsof (who holds which file open), truncate (empty a file
+// without deleting it) and logrotate (rotate logs). Based on lsof(8),
+// truncate (coreutils) and logrotate(8)
 // (https://man7.org/linux/man-pages/man8/logrotate.8.html).
-// Écarts : lsof ne connaît que les fichiers ouverts décrits par le jeu
-// (etat.ouverts) ; logrotate : une partie des directives, un état par
-// journal, sorties de -d et -v abrégées.
+// Differences: lsof only knows the open files described by the game
+// (state.openFiles); logrotate: part of the directives, one state per
+// log, shortened -d and -v outputs.
 
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -24,7 +24,7 @@ function lsof(game: Shell, args: string[]): string {
   const pid = args.includes('-p') ? args[args.indexOf('-p') + 1] : undefined;
   const account = args.includes('-u') ? args[args.indexOf('-u') + 1] : undefined;
   const paths = args.filter((a, i) => !a.startsWith('-') && !a.startsWith('+') && !['-p', '-u'].includes(args[i - 1])).map((a) => game.resolve(a));
-  // Sans être root, on ne voit que ses propres processus.
+  // Without being root, you only see your own processes.
   const lines = openSet(game).filter(
     (o) =>
       held(game, o) &&
@@ -50,7 +50,7 @@ function lsof(game: Shell, args: string[]): string {
 
 // ——— truncate ———
 
-// « 0 », « 10K », « 1M », « 2G » → octets.
+// "0", "10K", "1M", "2G" → bytes.
 function bytes(text: string): number | null {
   const m = /^(\d+)([KMG]?)$/i.exec(text);
   if (!m) return null;
@@ -135,7 +135,7 @@ const WITH_ARGUMENT = [
   'tabooext',
 ];
 
-/** Lit un fichier de configuration de logrotate (et ce qu'il inclut). */
+/** Reads a logrotate configuration file (and what it includes). */
 function readConfig(game: Shell, file: string, errors: string[], fallback?: Partial<Block>, read: string[] = []): Block[] {
   read.push(file);
   const text = game.read(file);
@@ -222,7 +222,7 @@ function readConfig(game: Shell, file: string, errors: string[], fallback?: Part
   return blocks;
 }
 
-// Les journaux qu'un motif désigne (un joker dans le nom du fichier).
+// The logs a pattern designates (a wildcard in the file name).
 function logs(game: Shell, pattern: string): string[] {
   const directory = pattern.slice(0, pattern.lastIndexOf('/')) || '/';
   const name = pattern.slice(pattern.lastIndexOf('/') + 1);
@@ -281,7 +281,7 @@ function logrotate(game: Shell, args: string[]): string {
       const n = game.find(path) as File;
       if (verbose) output.push(`considering log ${path}`);
       const last = state[path];
-      // Un journal jamais vu : logrotate note la date, sans le faire tourner (sauf -f).
+      // A log never seen before: logrotate records the date, without rotating it (except with -f).
       const deadline = b.size !== null ? size(n) >= b.size : last !== undefined && now - last >= PERIODS[b.period ?? 'daily'];
       if (last === undefined && !debug) state[path] = now;
       if (!force && !deadline) {
@@ -302,7 +302,7 @@ function logrotate(game: Shell, args: string[]): string {
       }
       const place = parent(path);
       const nameFor = (k: number, gz: boolean) => `${name(path)}.${k}${gz ? '.gz' : ''}`;
-      // Les anciens journaux remontent d'un cran ; le plus vieux disparaît.
+      // Old logs move up one step; the oldest disappears.
       for (let k = b.rotation; k >= 1; k--)
         for (const gz of [true, false]) {
           const e = place.children[nameFor(k, gz)];
@@ -314,11 +314,11 @@ function logrotate(game: Shell, args: string[]): string {
         if (b.copyTruncate) Object.assign(n, { content: '', size: 0 });
         else delete place.children[name(path)];
       } else if (b.copyTruncate) {
-        // Une copie, puis le fichier vidé : le programme continue d'écrire dans le même fichier.
+        // A copy, then the file emptied: the program keeps writing to the same file.
         place.children[nameFor(1, false)] = { ...n };
         Object.assign(n, { content: '', size: 0 });
       } else {
-        // Renommé : le programme qui l'a ouvert écrit toujours dedans, sous son nouveau nom.
+        // Renamed: the program that opened it still writes into it, under its new name.
         place.children[nameFor(1, false)] = n;
         for (const o of openSet(game)) if (o.node === n) o.path = `${path}.1`;
         if (b.create)
@@ -339,8 +339,8 @@ function logrotate(game: Shell, args: string[]): string {
         if (r.output) output.push(r.output);
         if (r.code !== 0) errors.push(`error: error running non-shared postrotate script for ${path} of '${b.patterns.join(' ')}'`);
       }
-      // Puis la compression (après le postrotate, comme logrotate).
-      // compress (sans delaycompress, dès .1) : gzip écrit le .gz et efface l'original.
+      // Then compression (after postrotate, like logrotate).
+      // compress (without delaycompress, from .1 on): gzip writes the .gz and deletes the original.
       const compressA = b.compress ? (b.delay ? 2 : 1) : 0;
       if (compressA) {
         const e = place.children[nameFor(compressA, false)];

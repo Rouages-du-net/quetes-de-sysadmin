@@ -1,19 +1,19 @@
-// apt : installer des paquets Debian, d'après apt(8) et la sortie d'apt 3.0
-// (Debian 13 « trixie ») : https://manpages.debian.org/trixie/apt/apt.8.en.html
-// Comme sur un serveur tout neuf, la liste des paquets est vide tant qu'on
-// n'a pas lancé `apt update` (« Unable to locate package »). Installer un
-// service le démarre et l'active aussitôt, comme le font les paquets Debian.
-// L'état est dans etat.apt :
-//   { listes: liste téléchargée ?, installes: { paquet: version },
-//     mises: { paquet: nouvelle version } (les mises à jour en attente),
-//     interrompu: [paquets dépaquetés mais pas configurés] }
-// apt upgrade (et full-upgrade) installe les mises à jour ; si la connexion
-// tombe pendant ce temps (etat.coupureReseau, sauf dans tmux), dpkg est
-// interrompu : il faut dpkg --configure -a. Un nouveau noyau ou une nouvelle
-// libc écrit /var/run/reboot-required (comme update-notifier-common) ; le
-// noyau ne change qu'au redémarrage (etat.noyau, uname -r).
-// Écarts : un petit catalogue, des versions et des tailles indicatives ;
-// seulement update, install, upgrade, full-upgrade, list ; aucun vrai téléchargement.
+// apt: installing Debian packages, after apt(8) and the output of apt 3.0
+// (Debian 13 "trixie"): https://manpages.debian.org/trixie/apt/apt.8.en.html
+// As on a brand-new server, the package list is empty until
+// `apt update` has been run ("Unable to locate package"). Installing a
+// service starts and enables it at once, as Debian packages do.
+// The state is in state.apt:
+//   { lists: list downloaded?, installed: { package: version },
+//     updates: { package: new version } (the pending updates),
+//     interrupted: [packages unpacked but not configured] }
+// apt upgrade (and full-upgrade) installs the updates; if the connection
+// drops meanwhile (state.networkCut, except inside tmux), dpkg is
+// interrupted: dpkg --configure -a is needed. A new kernel or a new
+// libc writes /var/run/reboot-required (like update-notifier-common); the
+// kernel only changes on reboot (state.kernel, uname -r).
+// Differences: a small catalogue, indicative versions and sizes;
+// only update, install, upgrade, full-upgrade, list; no real download.
 
 import { d, f, type Directory } from '../world';
 import type { Shell } from '../shell';
@@ -24,16 +24,16 @@ import type { Command } from './index';
 interface Package {
   version: string;
   architecture: 'amd64' | 'all';
-  // Taille à télécharger et place prise une fois installé (ko).
+  // Size to download and space taken once installed (kB).
   download: number;
   installed: number;
   dependencies?: string[];
   suggestions?: string[];
-  // Les fichiers et le service que pose le paquet.
+  // The files and the service the package installs.
   put?: (game: Shell) => void;
 }
 
-// Les pages et la configuration de nginx sur Debian (en anglais, comme les vraies).
+// nginx's pages and configuration on Debian (in English, like the real ones).
 export const NGINX_CONF = `user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
@@ -108,8 +108,8 @@ working. Further configuration is required.</p>
 const NGINX_DESCRIPTION = 'A high performance web server and a reverse proxy server';
 const root = { owner: 'root' };
 
-// Pose des fichiers sans écraser ceux qui sont déjà là (les fichiers de
-// configuration restaurés restent, comme les « conffiles » de dpkg).
+// Puts files in place without overwriting those already there (restored
+// configuration files stay, like dpkg's "conffiles").
 function put(game: Shell, path: string, tree: Directory) {
   const here = game.find(path);
   if (!here) return void game.place('apt', path, tree);
@@ -138,7 +138,7 @@ export const PACKAGES: Record<string, Package> = {
             'conf.d': d({}, undefined, root),
             'modules-enabled': d({}, undefined, root),
             'sites-available': d({ default: file(SITE_BY_DEFAULT) }, undefined, root),
-            // Sur Debian, sites-enabled/default est un lien vers sites-available/default.
+            // On Debian, sites-enabled/default is a link to sites-available/default.
             'sites-enabled': d({ default: file(SITE_BY_DEFAULT) }, undefined, root),
           },
           undefined,
@@ -193,7 +193,7 @@ export const PACKAGES: Record<string, Package> = {
     installed: 1530,
     put: (game) => put(game, '/usr/bin', d({ certbot: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 966 }) }, undefined, root)),
   },
-  // Le module nginx de certbot : il sert le défi et recharge nginx après un renouvellement.
+  // certbot's nginx module: it serves the challenge and reloads nginx after a renewal.
   'python3-certbot-nginx': {
     version: '4.0.0-1',
     architecture: 'all',
@@ -209,7 +209,7 @@ export const PACKAGES: Record<string, Package> = {
   'openssh-server': { version: '1:10.0p1-7', architecture: 'amd64', download: 610, installed: 2132 },
 };
 
-// Les paquets déjà là sur l'image Debian de l'hébergeur.
+// The packages already present on the host's Debian image.
 export const BASE_INSTALLED = ['curl', 'rsync', 'tar', 'openssh-server'];
 
 const SOURCES = [
@@ -224,45 +224,45 @@ const SOURCES = [
 const ko = (n: number) => `${n.toLocaleString('en-US')} kB`;
 const READ = ['Reading package lists... Done', 'Building dependency tree... Done', 'Reading state information... Done'];
 
-/** D'où vient une mise à jour (champs du fichier Release, comme apt-cache policy les montre). */
+/** Where an update comes from (fields of the Release file, as apt-cache policy shows them). */
 export interface Origin {
   o: string;
   n: string;
   l: string;
   site: string;
 }
-// Par défaut : les mises à jour de sécurité de Debian.
+// By default: Debian's security updates.
 export const SECURITY: Origin = { o: 'Debian', n: 'trixie-security', l: 'Debian-Security', site: 'security.debian.org' };
 
 export interface AptState {
   lists: boolean;
   installed: Record<string, string>;
-  // Les mises à jour en attente : paquet → nouvelle version ; un nouveau paquet (le noyau) à installer avec elles.
+  // Pending updates: package → new version; a new package (the kernel) to install with them.
   updates?: Record<string, string>;
   fresh?: Record<string, string>;
-  // L'origine de chaque mise à jour (sinon SECURITE).
+  // The origin of each update (otherwise SECURITY).
   origins?: Record<string, Origin>;
-  // Paquets dépaquetés mais pas configurés (dpkg interrompu).
+  // Packages unpacked but not configured (dpkg interrupted).
   interrupted?: string[];
   inWaiting?: Record<string, string>;
 }
 
-// Le noyau installé et celui qui tourne (uname -r).
+// The installed kernel and the running one (uname -r).
 export interface Kernel {
   active: string;
   installed: string;
 }
 
-// Les paquets dont la mise à jour demande un redémarrage (comme update-notifier-common).
+// Packages whose update requires a reboot (like update-notifier-common).
 const REBOOT = /^(linux-image|libc6$|libssl|systemd$|dbus$)/;
 
-/** Les mises à jour à appliquer (une fois la liste téléchargée). */
+/** The updates to apply (once the list is downloaded). */
 export const availableUpdates = (e: AptState) =>
   e.lists ? Object.entries(e.updates ?? {}).filter(([n, v]) => e.installed[n] && e.installed[n] !== v) : [];
 
 const INTERRUPTED_ERROR = "Error: dpkg was interrupted, you must manually run 'dpkg --configure -a' to correct the problem.";
 
-// La fin de dpkg : configurer chaque paquet, les déclencheurs, et noter s'il faut redémarrer.
+// The end of dpkg: configure each package, the triggers, and note whether a reboot is needed.
 export function configure(game: Shell, e: AptState, packages: [string, string][]): string[] {
   const lines: string[] = [];
   for (const [n, v] of packages) {
@@ -325,11 +325,11 @@ function putDayA(game: Shell, yes: boolean): string {
         `Preparing to unpack .../${n}_${v.replace(/^\d+:/, '')}_amd64.deb ...`,
         e.installed[n] ? `Unpacking ${n} (${v}) over (${e.installed[n]}) ...` : `Unpacking ${n} (${v}) ...`,
       );
-    // La connexion tombe pendant la configuration : sans tmux, dpkg meurt avec la session.
+    // The connection drops during configuration: without tmux, dpkg dies with the session.
     if (game.state.networkCut && !game.tmux) {
       game.state.networkCut = false;
       e.interrupted = all.map(([n]) => n);
-      // Ce qui est dépaqueté attend sa nouvelle version : on la garde en mémoire pour dpkg --configure -a.
+      // What is unpacked waits for its new version: we keep it in memory for dpkg --configure -a.
       e.inWaiting = Object.fromEntries(all);
       game.cut = true;
       lines.push(`Setting up ${all[0][0]} (${all[0][1]}) ...`);
@@ -359,7 +359,7 @@ function putDayA(game: Shell, yes: boolean): string {
 export const state = (game: Shell): AptState =>
   (game.state.apt ??= { lists: false, installed: Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])) });
 
-// Seul root peut toucher à la base des paquets : apt s'arrête au verrou.
+// Only root may touch the package database: apt stops at the lock.
 const lock = (game: Shell, file: string, what: string) =>
   game.error(`Error: Could not open lock file ${file} - open (13: Permission denied)\nError: ${what}`);
 
@@ -415,7 +415,7 @@ function installer(game: Shell, names: string[], yes: boolean): string {
       lines.push(`Setting up ${n} (${p.version}) ...`);
       p.put?.(game);
       e.installed[n] = p.version;
-      // Le paquet d'un service l'active et le démarre (deb-systemd-helper, invoke-rc.d).
+      // A service's package enables and starts it (deb-systemd-helper, invoke-rc.d).
       const sd = systemd(game);
       const service = sd?.services[n];
       if (sd && service) {
@@ -445,7 +445,7 @@ function installer(game: Shell, names: string[], yes: boolean): string {
     return lines.join('\n');
   };
   if (yes) return [...output, '', next()].join('\n');
-  // La réponse arrive à la ligne suivante, hors de sudo : on reprend le compte root.
+  // The answer comes on the next line, outside sudo: we take the root account back.
   game.ask('Continue? [Y/n] ', (response) => {
     if (response !== '' && !/^y(es)?$/i.test(response)) return 'Abort.';
     const before = game.who;
@@ -509,7 +509,7 @@ export const APT: Record<string, Command> = {
       return game.error(`Error: Invalid operation ${action}`);
     },
   },
-  // dpkg --configure -a : finir la configuration des paquets dépaquetés (après une interruption).
+  // dpkg --configure -a: finish configuring the unpacked packages (after an interruption).
   dpkg: {
     section: 1,
     ownOptions: true,
@@ -522,8 +522,8 @@ export const APT: Record<string, Command> = {
       return configure(game, e, waiting).join('\n');
     },
   },
-  // nginx : le serveur web. Ici, on s'en sert pour vérifier la configuration
-  // (-t), l'afficher en entier (-T) et connaître sa version (-v).
+  // nginx: the web server. Here it is used to check the configuration
+  // (-t), print it whole (-T) and get its version (-v).
   nginx: {
     section: 8,
     ownOptions: true,
@@ -537,7 +537,7 @@ export const APT: Record<string, Command> = {
       }
       const res = test(game);
       const output: string[] = [];
-      // Hors de root, nginx ne peut ouvrir ni son journal ni son fichier de PID.
+      // Without root, nginx can open neither its log nor its PID file.
       if (game.who !== 'root')
         output.push('nginx: [alert] could not open error log file: open() "/var/log/nginx/error.log" failed (13: Permission denied)');
       if (res.error) {

@@ -1,11 +1,11 @@
-// Les fichiers qu'un service garde ouverts (un journal, le plus souvent).
-// Comme sous Linux, un fichier effacé (rm) alors qu'un processus l'a encore
-// ouvert n'existe plus dans aucun dossier, mais sa place n'est rendue qu'à
-// la fermeture : df le compte, du ne le voit plus (lsof +L1 le montre).
-// Un fichier renommé reste celui que le processus écrit (d'où le
-// postrotate de logrotate, ou copytruncate).
+// The files a service keeps open (a log, most often).
+// As on Linux, a file deleted (rm) while a process still has it open no
+// longer exists in any directory, but its space is only given back when it
+// is closed: df counts it, du no longer sees it (lsof +L1 shows it).
+// A renamed file stays the one the process writes to (hence logrotate's
+// postrotate, or copytruncate).
 //
-//   etat.ouverts = [{ service, pid, utilisateur, commande, fd, chemin, noeud }]
+//   state.openFiles = [{ service, pid, user, command, fd, path, node }]
 
 import type { File } from './world';
 import type { Game } from './shell';
@@ -17,22 +17,22 @@ export interface Open {
   user: string;
   command: string;
   fd: number;
-  // Le chemin sous lequel le processus l'a ouvert (mis à jour si logrotate le renomme).
+  // The path under which the process opened it (updated if logrotate renames it).
   path: string;
   node: File;
 }
 
 export const openSet = (j: Game): Open[] => (j.state.openFiles ??= []);
 
-/** Le fichier tient-il encore (son service tourne) ? */
+/** Is the file still held (its service is running)? */
 export const held = (j: Game, o: Open) => systemd(j)?.services[o.service]?.state === 'active';
 
-/** Ce fichier a-t-il été effacé (plus aucun nom ne mène à lui) ? */
+/** Has this file been deleted (no name leads to it any more)? */
 export const erases = (j: Game, o: Open) => j.find(o.path) !== o.node;
 
 /**
- * Au démarrage d'un service : il ouvre son journal (le crée s'il n'existe
- * pas) en ajout. Remplace ce que le service tenait avant.
+ * When a service starts: it opens its log (creating it if it doesn't
+ * exist) in append mode. Replaces what the service held before.
  */
 export function open(j: Game, o: Omit<Open, 'node'>, owner: string, group?: string): File {
   const here = j.find(o.path);
@@ -48,7 +48,7 @@ export function open(j: Game, o: Omit<Open, 'node'>, owner: string, group?: stri
   return node;
 }
 
-/** La place que tiennent les fichiers effacés mais encore ouverts, sous un point de montage. */
+/** The space held by files deleted but still open, under a mount point. */
 export function ghostPlace(j: Game, mount: string): number {
   return openSet(j)
     .filter((o) => held(j, o) && erases(j, o) && (mount === '/' || o.path === mount || o.path.startsWith(mount + '/')))

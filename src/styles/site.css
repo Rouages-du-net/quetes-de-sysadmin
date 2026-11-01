@@ -1,9 +1,9 @@
-/* Page autonome de sysadmin.rouages.net : « la salle des machines ».
-   Sombre et lumière de console (phosphore vert, voyants ambre) ; clair si le
-   système le demande (« la salle blanche »). Titres en police monospace
-   servie par le site (JetBrains Mono, licence OFL), texte courant dans la
-   police du système pour rester lisible. Le jeu reçoit les mêmes couleurs
-   par ses variables --qds-* (voir docs/INTEGRER.md). */
+/* Standalone page of sysadmin.rouages.net: "the machine room".
+   Dark with console light (green phosphor, amber indicator lights); light if the
+   system asks for it ("the clean room"). Headings in a monospace font
+   served by the site (JetBrains Mono, OFL licence), body text in the
+   system font to stay readable. The game receives the same colours
+   through its --qds-* variables (see docs/EMBEDDING.md). */
 :root {
   --background: #0e1319;
   --background-2: #121a22;
@@ -52,7 +52,7 @@
 body {
   margin: 0;
   background-color: var(--background);
-  /* Une grille légère, comme le sol technique d'une salle de serveurs. */
+  /* A light grid, like the raised floor of a server room. */
   background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 2rem 2rem;
   color: var(--text);
@@ -60,7 +60,7 @@ body {
 }
 header, main, footer { max-width: 62rem; margin: 0 auto; padding: 0 1rem; }
 
-/* L'en-tête : une invite de commande, avec son curseur. */
+/* The header: a command prompt, with its cursor. */
 header {
   padding-top: 1rem;
   padding-bottom: 0.75rem;
@@ -81,7 +81,7 @@ header {
 
 h1, h2, h3 { font-family: var(--mono); letter-spacing: -0.02em; }
 h1 { font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.15; margin: 1.75rem 0 0.75rem; }
-/* « $ » devant le titre : la page se lit comme une session. */
+/* "$" before the title: the page reads like a session. */
 h1::before { content: '$ '; color: var(--phosphor); }
 h2 { font-size: 1.3rem; margin-top: 2.5rem; }
 h2::before { content: '## '; color: var(--muted); font-weight: 400; }
@@ -98,7 +98,7 @@ quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
 footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
 .warning { padding: 1rem; border: 1px solid var(--amber); border-radius: 0.4rem; color: var(--amber); }
 
-/* Les fiches pour les enseignant·es : des étiquettes de baie. */
+/* The teachers' sheets: rack labels. */
 .muted { color: var(--muted); }
 .sheet-story { margin-top: 2.5rem; }
 .sheets { padding-left: 0; list-style: none; display: grid; gap: 1rem; }
@@ -112,8 +112,8 @@ footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top
   .sheet dd { margin-bottom: 0.5rem; }
 }
 
-/* Le tableau de classe : la zone où glisser les fichiers, puis le tableau,
-   qui défile dans sa boîte s'il est plus large que l'écran. */
+/* The class table: the zone to drop files onto, then the table,
+   which scrolls inside its box if it is wider than the screen. */
 .class-zone { padding: 1rem; border: 2px dashed var(--border); border-radius: 0.4rem; background: var(--background-2); }
 .class-zone.hover { border-color: var(--phosphor); }
 .class-zone p { margin: 0.25rem 0; }

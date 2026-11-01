@@ -1,37 +1,37 @@
-// Un hébergement mutualisé, sur internet : un serveur FTP (Pure-FTPd, comme
-// sur cPanel) qui n'accepte plus que les connexions chiffrées (FTPS
-// explicite : AUTH TLS sur le port 21), avec un certificat au nom de
-// l'hébergeur (*.hosting.example), un compte, et son dossier (public_html :
-// le site publié). lftp s'y connecte (commands/lftp.ts).
-// L'état d'un hébergement vit sur le poste (etat.hebergements), créé à la
-// première connexion depuis sa définition, que déclare l'histoire qui s'en
-// sert (HEBERGEMENTS).
-// Sources : https://lftp.yar.ru/lftp-man.html, https://www.pureftpd.org/project/pure-ftpd/doc/,
-// https://www.rfc-editor.org/rfc/rfc4217 (FTP sur TLS)
+// Shared hosting, on the internet: an FTP server (Pure-FTPd, as on cPanel)
+// that only accepts encrypted connections now (explicit FTPS: AUTH TLS on
+// port 21), with a certificate in the host's name (*.hosting.example), an
+// account, and its directory (public_html: the published site). lftp
+// connects to it (commands/lftp.ts).
+// A hosting's state lives on the workstation (state.hostings), created on
+// the first connection from its definition, declared by the story that
+// uses it (HOSTINGS).
+// Sources: https://lftp.yar.ru/lftp-man.html, https://www.pureftpd.org/project/pure-ftpd/doc/,
+// https://www.rfc-editor.org/rfc/rfc4217 (FTP over TLS)
 
 import type { Directory, Node } from './world';
 import type { Game } from './shell';
 import type { Translate } from '../texts';
 
 export interface HostingDef {
-  // Les noms qui mènent au serveur (le nom de l'hébergeur, et ceux des clients qui pointent dessus).
+  // The names leading to the server (the host's name, and those of the customers pointing to it).
   names: string[];
   address: string;
-  // Les noms couverts par son certificat (*.hosting.example).
+  // The names covered by its certificate (*.hosting.example).
   certificate: string[];
   accounts: Record<string, string>;
-  // Le dossier de chaque compte, au départ.
+  // Each account's directory, at the start.
   files: (t: Translate) => Record<string, Directory>;
 }
 
 export interface Hosting {
   def: string;
   roots: Record<string, Directory>;
-  // Chaque connexion réussie : le compte, chiffrée ou non, le certificat vérifié ou non.
+  // Each successful connection: the account, encrypted or not, certificate verified or not.
   log: { account: string; tls: boolean; checked: boolean; send: boolean }[];
 }
 
-/** Les hébergements que déclarent les histoires (par nom de serveur). */
+/** The hostings the stories declare (by server name). */
 export const HOSTINGS: Record<string, HostingDef> = {};
 
 export const definition = (name: string): [string, HostingDef] | null => {
@@ -40,17 +40,17 @@ export const definition = (name: string): [string, HostingDef] | null => {
   return e ?? null;
 };
 
-/** L'état de l'hébergement (créé à la première connexion). */
+/** The hosting's state (created on the first connection). */
 export function hosting(j: Game, key: string): Hosting {
   const all = (j.state.hostings ??= {}) as Record<string, Hosting>;
   return (all[key] ??= { def: key, roots: HOSTINGS[key].files(j.t), log: [] });
 }
 
-/** Un certificat couvre-t-il ce nom ? (* : un seul niveau) */
+/** Does a certificate cover this name? (*: a single level) */
 export const covers = (certificate: string[], name: string) =>
   certificate.some((c) => (c.startsWith('*.') ? name.endsWith(c.slice(1)) && !name.slice(0, -c.length + 1).includes('.') : c === name));
 
-// ——— Les chemins du dossier distant ———
+// ——— The remote directory's paths ———
 
 export const normalise = (cwd: string, path: string) => {
   const parts = (path.startsWith('/') ? path : `${cwd}/${path}`).split('/');
@@ -74,7 +74,7 @@ export function node(root: Directory, path: string): Node | null {
   return n;
 }
 
-/** Tous les fichiers d'un dossier distant, par chemin relatif, avec leur contenu. */
+/** All the files of a remote directory, by relative path, with their contents. */
 export function filesFor(root: Directory, path: string): Record<string, string> | null {
   const n = node(root, path);
   if (n?.type !== 'directory') return null;

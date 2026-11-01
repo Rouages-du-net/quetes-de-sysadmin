@@ -1,17 +1,17 @@
-// Docker simulé : images, conteneurs, volumes, ports publiés. D'après la
-// documentation de Docker (https://docs.docker.com/reference/cli/docker/,
-// https://docs.docker.com/engine/storage/volumes/) : un conteneur écrit dans
-// sa propre couche, qui disparaît avec lui (docker rm) ; un volume ou un
-// dossier monté (bind mount) survit au conteneur ; un port publié (-p) relie
-// un port de la machine à celui du conteneur.
+// Simulated Docker: images, containers, volumes, published ports. Based on
+// Docker's documentation (https://docs.docker.com/reference/cli/docker/,
+// https://docs.docker.com/engine/storage/volumes/): a container writes into
+// its own layer, which disappears with it (docker rm); a volume or a
+// mounted folder (bind mount) outlives the container; a published port (-p)
+// links a port of the machine to the container's.
 //
-//   etat.docker = { images, registre, conteneurs, volumes, prochain }
+//   state.docker = { images, registry, containers, volumes, next }
 //
-// Les applications des images sont simulées (APPLIS) : elles écrivent leur
-// journal, lisent et écrivent leurs fichiers, et répondent en HTTP.
-// Écarts : pas de vraie couche d'image (les fichiers de l'appli sont
-// décrits par elle), pas de réseau entre conteneurs dans ce fichier
-// (voir docker compose), une seule plateforme.
+// The images' applications are simulated (APPS): they write their
+// log, read and write their files, and answer over HTTP.
+// Differences: no real image layer (the app's files are described by
+// the app), no network between containers in this file
+// (see docker compose), a single platform.
 
 import type { Node } from './world';
 import type { Game } from './shell';
@@ -23,12 +23,12 @@ export interface Image {
   id: string;
   size: number;
   created: number;
-  // L'application qu'elle contient (APPLIS), et son port.
+  // The application it contains (APPS), and its port.
   app: string;
   port: number;
   command: string;
-  // USER de l'image (vide : root), et les comptes de son /etc/passwd (nom → uid,
-  // le groupe principal porte le même numéro).
+  // The image's USER (empty: root), and the accounts of its /etc/passwd (name → uid,
+  // the primary group has the same number).
   user?: string;
   accounts?: Record<string, number>;
 }
@@ -59,13 +59,13 @@ export interface Container {
   created: number;
   start: number;
   end: number;
-  // La couche du conteneur : les fichiers qu'il a écrits (chemin → contenu).
+  // The container's layer: the files it has written (path → content).
   layer: Record<string, string>;
   log: { time: number; text: string }[];
   ip: string;
-  // Arrêté à la main (docker stop) : unless-stopped ne le relance pas.
+  // Stopped by hand (docker stop): unless-stopped does not restart it.
   mainAStopped?: boolean;
-  // --user (vide : celui de l'image), --read-only, --cap-drop, --security-opt.
+  // --user (empty: the image's), --read-only, --cap-drop, --security-opt.
   user?: string;
   onlyRead?: boolean;
   capDrop?: string[];
@@ -76,7 +76,7 @@ export interface DockerState {
   images: Record<string, Image>;
   registry: Record<string, Image>;
   containers: Container[];
-  // taille : ce que le volume occupe en plus de ses fichiers simulés (une vraie base, par exemple).
+  // size: what the volume takes beyond its simulated files (a real database, for example).
   volumes: Record<string, { created: number; data: Record<string, string>; size?: number }>;
   next: number;
 }
@@ -84,7 +84,7 @@ export interface DockerState {
 export const docker = (game: Game): DockerState | undefined => game.state.docker;
 export const clock = (game: Game) => systemd(game)?.clock ?? 0;
 
-/** Un identifiant de 64 caractères hexadécimaux, toujours le même pour une graine. */
+/** An ID of 64 hexadecimal characters, always the same for a given seed. */
 export function identifier(seed: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193) >>> 0;
@@ -97,42 +97,42 @@ export function identifier(seed: string): string {
 }
 
 export const imageName = (i: Image) => `${i.repo}:${i.tag}`;
-/** « registry.example/outiltheque » → « registry.example/outiltheque:latest ». */
+/** "registry.example/outiltheque" → "registry.example/outiltheque:latest". */
 export const complete = (name: string) => (/:[^/]+$/.test(name) ? name : `${name}:latest`);
 
-/** Un conteneur par son nom ou le début de son identifiant. */
+/** A container by its name or the start of its ID. */
 export function findContainer(d: DockerState, key: string): Container | null {
   return d.containers.find((c) => c.name === key) ?? d.containers.find((c) => key.length >= 3 && c.id.startsWith(key)) ?? null;
 }
 
-// ——— L'utilisateur d'un conteneur ———
-// Sans --user ni USER dans l'image, le processus tourne en root (uid 0). Sans
-// espace de noms utilisateur (userns-remap, désactivé par défaut), l'uid du
-// conteneur est le MÊME uid sur la machine : root dedans, c'est root sur les
-// fichiers montés ; l'uid 1000 dedans, c'est le compte 1000 de la machine.
+// ——— A container's user ———
+// Without --user nor USER in the image, the process runs as root (uid 0).
+// Without a user namespace (userns-remap, disabled by default), the
+// container's uid is the SAME uid on the machine: root inside is root on the
+// mounted files; uid 1000 inside is the machine's account 1000.
 // https://docs.docker.com/reference/cli/docker/container/run/#user,
 // https://docs.docker.com/engine/security/userns-remap/
 
 export interface Identity {
   uid: number;
   gid: number;
-  // Les noms dans le /etc/passwd de l'image (null : inconnus).
+  // The names in the image's /etc/passwd (null: unknown).
   name: string | null;
   group: string | null;
 }
 
 export const imageOfContainer = (game: Game, c: Container): Image | undefined => Object.values(docker(game)!.images).find((i) => imageName(i) === c.image);
 
-/** Les comptes du /etc/passwd d'une image (ceux de son appli, et root). */
+/** The accounts of an image's /etc/passwd (those of its app, and root). */
 export const imageAccounts = (image: Image | undefined): Record<string, number> => ({
   root: 0,
   ...(image ? (APPS[image.app]?.accounts ?? {}) : {}),
   ...(image?.accounts ?? {}),
 });
-/** L'utilisateur par défaut d'une image (USER du Dockerfile ; root s'il n'y en a pas). */
+/** An image's default user (the Dockerfile's USER; root if there is none). */
 export const imageUser = (image: Image | undefined) => image?.user || (image && APPS[image.app]?.user) || 'root';
 
-/** L'identité du processus : --user, sinon USER de l'image, sinon root ; ou l'erreur de runc. */
+/** The process's identity: --user, else the image's USER, else root; or runc's error. */
 export function identity(image: Image | undefined, c: Container, request?: string): Identity | { error: string } {
   const accounts = imageAccounts(image);
   const nameFor = (n: number) => Object.entries(accounts).find(([, x]) => x === n)?.[0] ?? null;
@@ -141,7 +141,7 @@ export function identity(image: Image | undefined, c: Container, request?: strin
   if (/^\d+$/.test(u)) uid = Number(u);
   else if (u in accounts) uid = accounts[u];
   else return { error: `unable to find user ${u}: no matching entries in passwd file` };
-  // Sans groupe : celui du compte dans l'image ; un uid inconnu de l'image prend le groupe 0.
+  // Without a group: the account's group in the image; a uid unknown to the image gets group 0.
   let gid = nameFor(uid) === null ? 0 : uid;
   if (g !== undefined) {
     if (/^\d+$/.test(g)) gid = Number(g);
@@ -151,11 +151,11 @@ export function identity(image: Image | undefined, c: Container, request?: strin
   return { uid, gid, name: nameFor(uid), group: nameFor(gid) };
 }
 
-/** Le nom, sur la machine, du compte qui porte cet uid (sinon le numéro). */
+/** The name, on the machine, of the account with this uid (otherwise the number). */
 export const machineAccount = (game: Game, uid: number) => Object.entries(game.accounts.users).find(([, u]) => u.uid === uid)?.[0] ?? String(uid);
 export const machineGroup = (game: Game, gid: number) => Object.entries(game.accounts.groups).find(([, g]) => g.gid === gid)?.[0] ?? String(gid);
 
-/** Les droits d'un uid et d'un gid sur un fichier de la machine (comme le noyau : par numéro). */
+/** The rights of a uid and a gid on a file of the machine (like the kernel: by number). */
 export function numericAccess(game: Game, n: Node, right: 'r' | 'w' | 'x', uid: number, gid: number): boolean {
   if (uid === 0) return true;
   const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
@@ -167,15 +167,15 @@ export function numericAccess(game: Game, n: Node, right: 'r' | 'w' | 'x', uid: 
   return triplet.includes(right);
 }
 
-// L'identité d'un conteneur qui tourne (root si elle n'a pas pu être lue).
+// The identity of a running container (root if it could not be read).
 function who(game: Game, c: Container): Identity {
   const id = identity(imageOfContainer(game, c), c);
   return 'error' in id ? { uid: 0, gid: 0, name: 'root', group: 'root' } : id;
 }
 
-// ——— Fichiers d'un conteneur ———
+// ——— A container's files ———
 
-// Le montage qui contient ce chemin (le plus long), et le chemin relatif.
+// The mount that contains this path (the longest one), and the relative path.
 function mount(c: Container, path: string): { m: Mount; relative: string } | null {
   const m = c.mounts
     .filter((x) => path === x.target || path.startsWith(x.target.replace(/\/$/, '') + '/'))
@@ -183,7 +183,7 @@ function mount(c: Container, path: string): { m: Mount; relative: string } | nul
   return m ? { m, relative: path.slice(m.target.replace(/\/$/, '').length).replace(/^\//, '') } : null;
 }
 
-/** Lit un fichier vu depuis le conteneur : volume, dossier monté, ou sa couche. */
+/** Reads a file as seen from the container: volume, mounted folder, or its layer. */
 export function readIn(game: Game, c: Container, path: string): string | null {
   const d = docker(game)!;
   const found = mount(c, path);
@@ -193,9 +193,9 @@ export function readIn(game: Game, c: Container, path: string): string | null {
 }
 
 /**
- * Écrit un fichier vu depuis le conteneur ; renvoie une erreur si le montage
- * est en lecture seule, ou si l'utilisateur du conteneur n'a pas le droit
- * d'écrire dans le dossier monté (il est soumis aux droits de la machine).
+ * Writes a file as seen from the container; returns an error if the mount
+ * is read-only, or if the container's user may not write into the mounted
+ * folder (it is subject to the machine's rights).
  */
 export function writeIn(game: Game, c: Container, path: string, content: string): string | null {
   const d = docker(game)!;
@@ -213,7 +213,7 @@ export function writeIn(game: Game, c: Container, path: string, content: string)
       const parent = game.find(place.replace(/\/[^/]+$/, ''));
       if (parent?.type !== 'directory') return 'no such file or directory';
       if (!numericAccess(game, parent, 'w', id.uid, id.gid) || !numericAccess(game, parent, 'x', id.uid, id.gid)) return 'permission denied';
-      // Le fichier créé appartient, sur la machine, à l'uid du conteneur.
+      // The created file belongs, on the machine, to the container's uid.
       parent.children[place.split('/').at(-1)!] = {
         type: 'file',
         content,
@@ -226,7 +226,7 @@ export function writeIn(game: Game, c: Container, path: string, content: string)
   return null;
 }
 
-/** Crée un dossier vu depuis le conteneur (mkdir) ; mêmes règles qu'ecrireDans. */
+/** Creates a folder as seen from the container (mkdir); same rules as writeIn. */
 export function createDirectoryIn(game: Game, c: Container, path: string): string | null {
   const found = mount(c, path);
   if (found?.m.type !== 'bind') return null;
@@ -241,21 +241,21 @@ export function createDirectoryIn(game: Game, c: Container, path: string): strin
   return null;
 }
 
-/** Le fichier de la machine derrière un chemin du conteneur (dossier monté), s'il y en a un. */
+/** The machine's file behind a container path (mounted folder), if there is one. */
 export function nodeIn(game: Game, c: Container, path: string): Node | null {
   const found = mount(c, path);
   if (found?.m.type !== 'bind') return null;
   return game.find(`${found.m.source.replace(/\/$/, '')}/${found.relative}`.replace(/\/$/, '')) ?? null;
 }
 
-/** L'utilisateur du conteneur peut-il faire cela sur ce chemin (dossier monté) ? */
+/** May the container's user do this on this path (mounted folder)? */
 export function canIn(game: Game, c: Container, path: string, right: 'r' | 'w' | 'x'): boolean {
   const n = nodeIn(game, c, path);
   const id = who(game, c);
   return !n || numericAccess(game, n, right, id.uid, id.gid);
 }
 
-/** Les fichiers visibles sous un lieu du conteneur (chemins absolus). */
+/** The files visible under a place of the container (absolute paths). */
 export function listIn(game: Game, c: Container, place: string): string[] {
   const d = docker(game)!;
   const base = place.replace(/\/$/, '');
@@ -269,33 +269,33 @@ export function listIn(game: Game, c: Container, place: string): string[] {
   return Object.keys(c.layer).filter((p) => p.startsWith(base + '/'));
 }
 
-// ——— Les applications ———
+// ——— The applications ———
 
 export interface App {
-  // Au démarrage : écrit son journal, prépare ses fichiers ; renvoie le code
-  // de sortie si elle s'arrête aussitôt (sinon null : elle tourne).
+  // On start: writes its log, prepares its files; returns the exit code
+  // if it stops right away (otherwise null: it runs).
   start(game: Game, c: Container, image: Image): number | null;
-  // Une requête HTTP sur son port.
+  // An HTTP request on its port.
   answer(game: Game, c: Container, path: string): { code: number; body: string };
-  // Les fichiers de l'image (ce que contient un conteneur neuf).
+  // The image's files (what a new container contains).
   files?: (image: Image) => Record<string, string>;
-  // USER de l'image (absent : root) et les comptes de son /etc/passwd.
+  // The image's USER (absent: root) and the accounts of its /etc/passwd.
   user?: string;
   accounts?: Record<string, number>;
 }
 
-// Les applications des images, déclarées par les chapitres.
+// The images' applications, declared by the chapters.
 export const APPS: Record<string, App> = {};
 
-/** Une ligne du journal d'un conteneur (docker logs). */
+/** A line of a container's log (docker logs). */
 export function log(game: Game, c: Container, text: string) {
   c.log.push({ time: clock(game), text });
 }
 
 /**
- * Démarre un conteneur : son appli prépare ses fichiers et écrit son journal.
- * Renvoie l'erreur de runc si le processus n'a pas pu être créé (utilisateur
- * inconnu de l'image) : le conteneur reste alors « Created ».
+ * Starts a container: its app prepares its files and writes its log.
+ * Returns runc's error if the process could not be created (user unknown to
+ * the image): the container then stays "Created".
  */
 export function launch(game: Game, c: Container): string | null {
   const d = docker(game)!;
@@ -319,10 +319,10 @@ export function launch(game: Game, c: Container): string | null {
 }
 
 /**
- * Docker relance de lui-même un conteneur tombé en erreur, avec une attente
- * qui double à chaque échec, si sa politique --restart le permet (always,
- * unless-stopped, on-failure) : appelé après chaque commande par les
- * chapitres qui en ont besoin (une tentative par commande).
+ * Docker restarts by itself a container that failed, with a delay that
+ * doubles at each failure, if its --restart policy allows it (always,
+ * unless-stopped, on-failure): called after each command by the chapters
+ * that need it (one attempt per command).
  */
 export function restartInLoop(game: Game) {
   const d = docker(game);
@@ -336,16 +336,16 @@ export function restartInLoop(game: Game) {
 export function stop(game: Game, c: Container, mainA = true) {
   if (c.state !== 'running') return;
   c.state = 'exited';
-  // SIGTERM : l'appli s'arrête proprement (code 0 ici).
+  // SIGTERM: the app stops cleanly (exit code 0 here).
   c.code = 0;
   c.end = clock(game);
   if (mainA) c.mainAStopped = true;
 }
 
 /**
- * Au démarrage du service docker (après un redémarrage de la machine) : les
- * conteneurs arrêtés par l'arrêt du démon repartent selon leur politique
- * --restart (always, unless-stopped s'ils n'ont pas été arrêtés à la main).
+ * When the docker service starts (after a reboot of the machine): the
+ * containers stopped by the daemon's shutdown start again according to their
+ * --restart policy (always, unless-stopped if they were not stopped by hand).
  */
 export function startDocker(game: Game) {
   const d = docker(game);
@@ -364,18 +364,18 @@ export function startDocker(game: Game) {
 }
 
 /**
- * Une requête HTTP vers un port de la machine : le conteneur qui le publie
- * répond (undefined : aucun conteneur ne publie ce port ; null : il ne
- * répond pas, arrêté).
+ * An HTTP request to a port of the machine: the container that publishes it
+ * answers (undefined: no container publishes this port; null: it does not
+ * answer, stopped).
  */
 export function dockerRequest(game: Game, address: string, port: number, path: string): { code: number; body: string } | null | undefined {
   const d = docker(game);
   if (!d) return undefined;
   const local = ['127.0.0.1', 'localhost'].includes(address);
-  // Depuis la machine, l'adresse du conteneur (réseau bridge) répond aussi sur son port.
+  // From the machine, the container's address (bridge network) also answers on its port.
   const direct = d.containers.find((c) => c.ip === address && c.state === 'running');
   const published = (x: Container) => x.ports.some((p) => p.host === port && (p.ip === '0.0.0.0' || (p.ip === '127.0.0.1' && local)));
-  // Le conteneur qui tourne d'abord ; un conteneur arrêté ne répond plus (le port n'est plus relayé).
+  // The running container first; a stopped container no longer answers (the port is no longer forwarded).
   const c = direct ?? d.containers.find((x) => x.state === 'running' && published(x)) ?? d.containers.find((x) => x.state === 'exited' && published(x));
   if (!c) return undefined;
   if (c.state !== 'running') return null;
@@ -386,7 +386,7 @@ export function dockerRequest(game: Game, address: string, port: number, path: s
 
 // ——— Affichage ———
 
-/** « 2 weeks ago », « 3 minutes ago », comme docker. */
+/** "2 weeks ago", "3 minutes ago", like docker. */
 export function yaIt(ms: number): string {
   const s = Math.max(0, Math.round(ms / 1000));
   const units: [number, string][] = [
@@ -408,7 +408,7 @@ export function yaIt(ms: number): string {
   return `${s} seconds`;
 }
 
-/** « 148MB », comme docker images. */
+/** "148MB", like docker images. */
 export function dockerSize(bytes: number): string {
   if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(2).replace(/\.?0+$/, '')}GB`;
   if (bytes >= 1e6) return `${Math.round(bytes / 1e5) / 10}MB`.replace(/\.0MB$/, 'MB');
@@ -416,12 +416,12 @@ export function dockerSize(bytes: number): string {
   return `${bytes}B`;
 }
 
-/** L'heure UTC d'un instant local, au format RFC 3339 (docker logs -t, inspect). */
+/** The UTC time of a local instant, in RFC 3339 format (docker logs -t, inspect). */
 export const rfc3339 = (local: number) => new Date(toUtc(local)).toISOString().replace(/\.\d+Z$/, '.000000000Z');
 
-// ——— Le réseau et le disque vus de la machine ———
+// ——— The network and the disk seen from the machine ———
 
-/** Les sockets de docker-proxy pour les ports publiés (pour ss). */
+/** The docker-proxy sockets for the published ports (for ss). */
 export function dockerListeners(game: Game): { proto: 'tcp'; address: string; port: number; process: string; pid: number }[] {
   const d = docker(game);
   if (!d) return [];
@@ -437,10 +437,10 @@ export function dockerListeners(game: Game): { proto: 'tcp'; address: string; po
 }
 
 /**
- * Un port publié vers l'extérieur sur toutes les adresses (0.0.0.0) : Docker
- * écrit ses propres règles iptables (chaîne DOCKER, table nat), consultées
- * AVANT celles d'ufw. Le paquet est redirigé vers le conteneur sans jamais
- * passer par les règles d'ufw : il entre, quoi qu'en dise ufw status.
+ * A port published to the outside on all addresses (0.0.0.0): Docker
+ * writes its own iptables rules (DOCKER chain, nat table), consulted
+ * BEFORE ufw's. The packet is redirected to the container without ever
+ * going through ufw's rules: it gets in, whatever ufw status says.
  * https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-and-ufw
  */
 export function publishedToWorld(game: Game, port: number): boolean {
@@ -449,8 +449,8 @@ export function publishedToWorld(game: Game, port: number): boolean {
 }
 
 /**
- * Les processus des conteneurs, vus de la machine (ps aux) : ils y sont des
- * processus comme les autres, au nom du compte qui porte leur uid.
+ * The containers' processes, seen from the machine (ps aux): there they are
+ * processes like any other, under the name of the account with their uid.
  */
 export function dockerProcess(game: Game): { pid: number; user: string; cpu: number; mem: number; command: string }[] {
   const d = docker(game);
@@ -466,13 +466,13 @@ export function dockerProcess(game: Game): { pid: number; user: string; cpu: num
     }));
 }
 
-/** La place prise par Docker sur le disque (images, conteneurs, volumes), en octets. */
+/** The space Docker takes on the disk (images, containers, volumes), in bytes. */
 export function placeDocker(d: DockerState): { images: number; containers: number; volumes: number } {
   const volumes = Object.values(d.volumes).reduce((t, v) => t + Object.values(v.data).reduce((a, x) => a + x.length, 0) + (v.size ?? 0), 0);
   return { images: Object.values(d.images).reduce((t, i) => t + i.size, 0), containers: d.containers.length * 4096, volumes };
 }
 
-/** Met à jour /var/lib/docker sur le disque simulé (pour df et du). */
+/** Updates /var/lib/docker on the simulated disk (for df and du). */
 export function diskUpdate(game: Game) {
   const d = docker(game);
   const n = game.find('/var/lib/docker');

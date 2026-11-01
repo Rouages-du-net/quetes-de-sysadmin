@@ -1,10 +1,10 @@
-// systemd simulé : services, journal et horloge d'une machine, rangés dans
-// etat.systemd. Comportements et messages d'après la documentation de
-// systemd (https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
-// .../journalctl.html) : systemctl et journalctl répondent en anglais, les
-// dates suivent la langue du système, comme sur un vrai Linux.
-// Écarts : pas de cibles ni de dépendances entre unités, un seul processus
-// principal par service, horloge qui avance d'une seconde par action.
+// Simulated systemd: a machine's services, journal and clock, kept in
+// state.systemd. Behaviours and messages based on systemd's documentation
+// (https://www.freedesktop.org/software/systemd/man/latest/systemctl.html,
+// .../journalctl.html): systemctl and journalctl answer in English, dates
+// follow the system's language, as on a real Linux.
+// Differences: no targets nor dependencies between units, a single main
+// process per service, a clock that moves one second per action.
 
 import { sgr } from './colours';
 import type { Game } from './shell';
@@ -13,42 +13,42 @@ import type { Process } from './commands/system';
 export interface Service {
   description: string;
   state: 'active' | 'inactive' | 'failed';
-  // Lancé au démarrage de la machine (systemctl enable).
+  // Started when the machine boots (systemctl enable).
   active: boolean;
-  // Processus du service quand il tourne (le premier est le principal).
+  // The service's processes when it runs (the first one is the main one).
   process: Process[];
-  // Exécutable, pour « Main PID: 612 (nginx) ».
+  // Executable, for "Main PID: 612 (nginx)".
   executable: string;
   since: number;
-  // Au démarrage : null si tout va bien, sinon les messages d'erreur que le
-  // programme écrit dans le journal avant de s'arrêter.
+  // On start: null if all is well, otherwise the error messages the
+  // program writes to the journal before stopping.
   check?: (game: Game) => string[] | null;
-  // Après un démarrage ou un rechargement réussi : le service applique sa
-  // configuration (ex. sshd).
+  // After a successful start or reload: the service applies its
+  // configuration (e.g. sshd).
   load?: (game: Game) => void;
-  // reload vérifie d'abord la configuration avec `verifier` (comme
-  // ExecReload=/usr/sbin/sshd -t) ; sinon, il recharge sans vérifier.
+  // reload first checks the configuration with `check` (like
+  // ExecReload=/usr/sbin/sshd -t); otherwise, it reloads without checking.
   checkToReload?: boolean;
-  // Type=oneshot : le service fait son travail puis s'arrête (ex. certbot,
-  // lancé par un timer) ; il ne reste pas « active (running) ».
+  // Type=oneshot: the service does its work then stops (e.g. certbot,
+  // started by a timer); it doesn't stay "active (running)".
   oneshot?: boolean;
-  // Type=oneshot avec RemainAfterExit=yes (networking, nftables) : le travail
-  // fait, il reste « active (exited) », sans processus.
+  // Type=oneshot with RemainAfterExit=yes (networking, nftables): once the work
+  // is done, it stays "active (exited)", with no process.
   activeRest?: boolean;
-  // À l'arrêt du service (ex. timesyncd : l'horloge n'est plus suivie).
+  // When the service stops (e.g. timesyncd: the clock is no longer synchronized).
   stop?: (game: Game) => void;
-  // Comment il s'est arrêté en échec (exit-code, oom-kill…).
+  // How it stopped in failure (exit-code, oom-kill…).
   result?: string;
-  // Les réglages des fichiers de surcharge (systemctl edit) : MemoryMax=, Restart=.
+  // The settings from override files (systemctl edit): MemoryMax=, Restart=.
   maxMemory?: number;
   reboot?: string;
-  // IOReadBandwidthMax= et IOWriteBandwidthMax= (le disque visé, en octets par seconde).
+  // IOReadBandwidthMax= and IOWriteBandwidthMax= (the target disk, in bytes per second).
   readIo?: { device: string; bytes: number };
   writeIo?: { device: string; bytes: number };
   overrides?: string[];
   overridesFingerprint?: string;
-  // Une unité écrite à la main (/etc/systemd/system/NOM.service) : son fichier,
-  // et ce qu'elle lance (ExecStart=) ; renvoie le code de retour.
+  // A hand-written unit (/etc/systemd/system/NAME.service): its file,
+  // and what it runs (ExecStart=); returns the exit code.
   file?: string;
   execute?: (game: Game) => number;
 }
@@ -60,7 +60,7 @@ export interface Input {
   ident: string;
   pid: number;
   message: string;
-  // 3 = erreur, 4 = avertissement, 6 = information (syslog).
+  // 3 = error, 4 = warning, 6 = info (syslog).
   priority: number;
 }
 
@@ -68,32 +68,32 @@ export interface Systemd {
   host: string;
   services: Record<string, Service>;
   log: Input[];
-  // Heure locale simulée (millisecondes, lue comme UTC), démarrage en cours.
+  // Simulated local time (milliseconds, read as UTC), current boot.
   clock: number;
   boot: number;
-  // Vrai après un redémarrage, une fois l'état des services consulté.
+  // True after a reboot, once the services' state has been looked at.
   checkedAfterBoot?: boolean;
-  // Un service a été démarré à la main depuis le dernier démarrage : ce qui
-  // tourne ne prouve plus que la machine repart toute seule.
+  // A service was started by hand since the last boot: what is running
+  // no longer proves that the machine comes back up on its own.
   mainAStarted?: boolean;
-  // L'heure affichée par la machine (son fuseau, son horloge qui dérive) :
-  // l'écart avec la vraie heure, et l'abréviation du fuseau (voir heure.ts).
+  // The time the machine shows (its time zone, its drifting clock):
+  // the offset from the real time, and the time zone's abbreviation (see time.ts).
   difference?: number;
   zone?: string;
-  // Les timers (NOM.timer), voir minuteries.ts.
+  // The timers (NAME.timer), see timers.ts.
   timers?: Record<string, import('./timers').Timer>;
 }
 
 export const systemd = (game: Game): Systemd | undefined => game.state.systemd;
 
-// Une entrée du journal, et l'horloge qui avance d'une seconde (sauf pour
-// les lignes qui suivent dans la même seconde).
+// A journal entry, and the clock moving one second forward (except for
+// the lines that follow in the same second).
 export function writeLog(sd: Systemd, unit: string, ident: string, pid: number, message: string, priority = 6, advance = true) {
   if (advance) sd.clock += 1000;
   sd.log.push({ time: sd.clock, boot: sd.boot, unit, ident, pid, message, priority });
 }
 
-/** Démarre un service ; renvoie false s'il échoue (erreurs au journal). */
+/** Starts a service; returns false if it fails (errors in the journal). */
 export function start(game: Game, sd: Systemd, name: string, toBoot = false): boolean {
   const s = sd.services[name];
   if (!toBoot) sd.mainAStarted = true;
@@ -112,7 +112,7 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
     return false;
   }
   if (s.oneshot) {
-    // Un service écrit à la main : son programme tourne, et son code de retour décide.
+    // A hand-written service: its program runs, and its exit code decides.
     const code = s.execute?.(game) ?? 0;
     if (code !== 0) {
       writeLog(
@@ -137,7 +137,7 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
     return true;
   }
   writeLog(sd, unit, 'systemd', 1, `Started ${unit} - ${s.description}.`);
-  // Le service tourne déjà quand il applique sa configuration (il peut recevoir des requêtes).
+  // The service is already running when it applies its configuration (it can receive requests).
   s.state = 'active';
   s.result = undefined;
   s.load?.(game);
@@ -147,7 +147,7 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
   return true;
 }
 
-// Les processus du service s'arrêtent ; leurs enfants zombies disparaissent avec eux (init les récupère).
+// The service's processes stop; their zombie children disappear with them (init reaps them).
 function processRetirer(game: Game, s: Service) {
   if (game.state.process)
     game.state.process = (game.state.process as Process[]).filter(
@@ -166,28 +166,28 @@ export function stop(game: Game, sd: Systemd, name: string) {
   s.stop?.(game);
 }
 
-/** Redémarrage de la machine : seuls les services activés (enable) repartent. */
+/** Machine reboot: only the enabled services (enable) come back. */
 export function restart(game: Game, sd: Systemd) {
   writeLog(sd, '', 'systemd-logind', 512, 'The system will reboot now!');
   for (const [name, s] of Object.entries(sd.services)) if (s.state === 'active') stop(game, sd, name);
   sd.clock += 90_000;
   sd.boot++;
   game.state.process = (game.state.process as Process[] | undefined)?.filter((p) => p.pid === 1) ?? [];
-  // Le noyau installé devient celui qui tourne ; /run (tmpfs) repart vide, avec reboot-required.
+  // The installed kernel becomes the running one; /run (tmpfs) starts empty again, with reboot-required.
   const kernel = game.state.kernel as { active: string; installed: string } | undefined;
   if (kernel) kernel.active = kernel.installed;
   for (const f of ['/var/run/reboot-required', '/var/run/reboot-required.pkgs']) if (game.exists(f)) game.erase(f);
-  // Les sessions tmux meurent avec la machine ; les règles du pare-feu aussi (nftables.service les recharge s'il est activé).
+  // tmux sessions die with the machine; so do the firewall rules (nftables.service reloads them if it is enabled).
   if (game.state.tmux) game.state.tmux = {};
   if (game.state.nft) game.state.nft = { tables: [] };
-  // Les interfaces WireGuard aussi (wg-quick@wg0 les remonte s'il est activé).
+  // So do WireGuard interfaces (wg-quick@wg0 brings them back up if it is enabled).
   if (game.state.wg) {
     for (const name of Object.keys(game.state.wg)) delete game.state.lan?.interfaces[name];
     game.state.wg = {};
   }
   writeLog(sd, '', 'kernel', 0, `Linux version ${kernel?.active ?? '6.12.0-quetes'} (${sd.host})`);
-  // Une machine qui monte ses disques selon /etc/fstab (voir fstab.ts) : si ce n'est
-  // pas possible, elle s'arrête en mode secours, sans lancer ses services.
+  // A machine that mounts its disks according to /etc/fstab (see fstab.ts): if that is
+  // not possible, it stops in emergency mode, without starting its services.
   const mounts = game.state.startMounts as ((j: Game) => boolean) | undefined;
   if (mounts && !mounts(game)) {
     for (const s of Object.values(sd.services)) {
@@ -213,29 +213,29 @@ const parts = (ms: number, language: string, options: Intl.DateTimeFormatOptions
   Object.fromEntries(new Intl.DateTimeFormat(language, { timeZone: 'UTC', ...options }).formatToParts(new Date(ms)).map((p) => [p.type, p.value]));
 const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 19);
 
-/** « oct. 13 21:02:44 », comme journalctl (mois abrégé de la langue). */
+/** "Oct 13 21:02:44", like journalctl (abbreviated month in the language). */
 export function logDate(ms: number, language: string): string {
   const { month } = parts(ms, language, { month: 'short' });
   return `${month} ${new Date(ms).toISOString().slice(8, 10)} ${timeOfDay(ms)}`;
 }
 
-// Le dernier dimanche d'un mois, à 1 h UTC : changement d'heure en Europe.
+// The last Sunday of a month, at 1 a.m. UTC: daylight saving change in Europe.
 const lastSunday = (year: number, month: number) => {
   const d = new Date(Date.UTC(year, month + 1, 0, 1));
   return d.getTime() - d.getUTCDay() * 86_400_000;
 };
 
-/** L'horloge des machines suit l'heure de Paris : vrai en heure d'été (CEST, UTC+2). */
+/** The machines' clock follows Paris time: true in summer time (CEST, UTC+2). */
 export function summerTime(local: number): boolean {
   const year = new Date(local).getUTCFullYear();
   const utc = local - 3600_000;
   return utc >= lastSunday(year, 2) && utc < lastSunday(year, 9);
 }
 
-/** Heure locale de la machine → heure UTC (millisecondes). */
+/** Machine local time → UTC time (milliseconds). */
 export const toUtc = (local: number) => local - (summerTime(local) ? 2 : 1) * 3600_000;
 
-/** « mar. 2026-10-13 20:00:01 CEST », comme systemctl status. */
+/** "Tue 2026-10-13 20:00:01 CEST", like systemctl status. */
 export function dateComplete(ms: number, language: string, sd?: Systemd): string {
   const zone = sd?.zone ?? (summerTime(ms) ? 'CEST' : 'CET');
   const shows = ms + (sd?.difference ?? 0);
@@ -243,7 +243,7 @@ export function dateComplete(ms: number, language: string, sd?: Systemd): string
   return `${weekday} ${new Date(shows).toISOString().slice(0, 10)} ${timeOfDay(shows)} ${zone}`;
 }
 
-/** « 1h 2min », « 3min 12s », « 5s », comme systemd. */
+/** "1h 2min", "3min 12s", "5s", like systemd. */
 export function duration(ms: number): string {
   let s = Math.max(0, Math.round(ms / 1000));
   const h = Math.floor(s / 3600);
@@ -254,9 +254,9 @@ export function duration(ms: number): string {
   return `${s}s`;
 }
 
-// Sur un terminal, journalctl met en valeur le message selon sa priorité :
-// erreur et plus grave en rouge gras, avertissement en jaune gras, notice
-// en gras (couleurs de systemd, voir journalctl(1) et SYSTEMD_COLORS).
+// On a terminal, journalctl highlights the message according to its priority:
+// error and worse in bold red, warning in bold yellow, notice
+// in bold (systemd's colours, see journalctl(1) and SYSTEMD_COLORS).
 const PRIORITY_COLOUR = (p: number) => (p <= 3 ? '1;31' : p === 4 ? '1;33' : p === 5 ? '1' : '');
 
 export const logLine = (e: Input, sd: Systemd, language: string, colour = false) =>
@@ -265,9 +265,9 @@ export const logLine = (e: Input, sd: Systemd, language: string, colour = false)
 export type DefinitionService = Omit<Service, 'since' | 'state' | 'process'> & { state?: Service['state']; process?: Process[] };
 
 /**
- * L'état systemd d'une machine allumée à `demarre` (heure locale, lue comme
- * UTC) : les services actifs ont démarré à ce moment-là ; `maintenant` est
- * l'heure au début du chapitre.
+ * The systemd state of a machine booted at `started` (local time, read as
+ * UTC): the active services started at that moment; `now` is the time at
+ * the start of the chapter.
  */
 export function newSystemd(host: string, started: number, now: number, definitions: Record<string, DefinitionService>): Systemd {
   const sd: Systemd = { host, services: {}, log: [], clock: started, boot: 1 };
@@ -285,7 +285,7 @@ export function newSystemd(host: string, started: number, now: number, definitio
   return sd;
 }
 
-/** systemctl reload : renvoie false si la configuration est refusée (le service garde l'ancienne). */
+/** systemctl reload: returns false if the configuration is rejected (the service keeps the old one). */
 export function reload(game: Game, sd: Systemd, name: string): boolean {
   const s = sd.services[name];
   const unit = `${name}.service`;

@@ -1,7 +1,7 @@
-// Chaque chapitre est rejoué jusqu'au bout (solution attendue), avec des
-// fausses pistes en chemin : le moteur doit les refuser sans bloquer la
-// partie. Les parties sont rejouées dans chaque langue disponible ; les
-// textes attendus, eux, sont vérifiés en français (langue de référence).
+// Each chapter is replayed to the end (expected solution), with false
+// leads along the way: the engine must refuse them without blocking the
+// game. Games are replayed in every available language; the expected
+// texts are checked in French (the reference language of these tests).
 
 import { describe, expect, it } from 'vitest';
 import { machineName } from '../src/engine/machines';
@@ -17,20 +17,20 @@ import { withoutColours } from '../src/engine/colours';
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 
 for (const language of LANGUAGES)
-  describe(`Langue : ${language}`, () => {
+  describe(`Language: ${language}`, () => {
     const reference = language === 'fr';
-    // Une ligne écrite avec les noms français, dans la langue de la partie.
+    // A line written with the French names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
-    // Un texte attendu, vérifié seulement dans la langue de référence.
+    // An expected text, checked only in the reference language.
     const contains = (all: string, text: string) => {
       if (reference) expect(all).toContain(text);
     };
 
     function play(id: string, commands: string[]) {
       const s = new Shell(chapter(id), language);
-      // Dans la langue de référence, la partie se joue avec les couleurs, comme
-      // dans l'interface : les événements doivent les ignorer (voir couleurs.ts).
-      // Les sorties comparées ici sont lues sans les couleurs.
+      // In the reference language, the game is played with colours, as in the
+      // interface: events must ignore them (see colours.ts).
+      // The outputs compared here are read without colours.
       s.colours = reference;
       const execute = s.execute.bind(s);
       s.execute = (line: string) => {
@@ -41,8 +41,8 @@ for (const language of LANGUAGES)
       return { s, outputs, tout: outputs.join('\n') };
     }
 
-    describe('L’Effaceur', () => {
-      it('chapitre 1 — L’Île du Phare', () => {
+    describe('The Eraser', () => {
+      it('chapter 1 — The Lighthouse Island', () => {
         const { s, tout: all } = play('lighthouse', [
           'cat message.txt',
           'cd Hill/SignalSchool/PracticeRoom',
@@ -65,7 +65,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('chapitre 1 — l’ampoule portée et renommée d’un coup', () => {
+      it('chapter 1 — the bulb moved and renamed in one go', () => {
         const { s } = play('lighthouse', [
           'mv Pier/net Harbour/Boathouse',
           'cd Harbour/Storeroom',
@@ -74,7 +74,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('chapitre 2 — Le Bourg', () => {
+      it('chapter 2 — The Town', () => {
         const { s, tout: all } = play('village', [
           'cd TownHall',
           'cd Archives',
@@ -113,7 +113,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('chapitre 3 — La Racine', () => {
+      it('chapter 3 — The Root', () => {
         const { s, tout: all } = play('root', [
           'cat arrival.txt',
           'ls -l',
@@ -135,15 +135,15 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('L’Effaceur, chapitre 4 — La Sauvegarde', () => {
-      // crontab -e : écrire la crontab dans l'éditeur, puis la fermer.
+    describe('The Eraser, chapter 4 — The Backup', () => {
+      // crontab -e: write the crontab in the editor, then close it.
       const crontab = (s: Shell, change: (text: string) => string) => {
         s.execute('crontab -e');
         s.saveEdition(change(s.edition!.text));
         return s.quitEdition();
       };
 
-      it('solution : rsync, crontab, la nuit, la restauration', () => {
+      it('solution: rsync, crontab, the night, the restore', () => {
         const { s, tout: all } = play('backup', [
           'cat note_from_maelle.txt',
           'rsync memories /mnt/backup',
@@ -166,7 +166,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
+      it('another solution: @daily, copy into a folder, restore with cp', () => {
         const s = new Shell(chapter('backup'), language);
         crontab(s, (t) => t + L('@daily rsync -a memories /mnt/backup/\n'));
         expect(s.flags.has('night-ok')).toBe(true);
@@ -174,7 +174,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : une tâche qui ne tourne pas la nuit, une tâche fausse, --delete après l’effacement', () => {
+      it('false leads: a job that does not run at night, a wrong job, --delete after the erasing', () => {
         const s = new Shell(chapter('backup'), language);
         const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         contains(nothing, 'aucune tâche de ta crontab ne tombait cette nuit');
@@ -188,8 +188,8 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('Autres histoires', () => {
-      it('Le Datacenter', () => {
+    describe('Other stories', () => {
+      it('The Datacenter', () => {
         const L = '/var/log/nginx/access.log';
         const { s } = play('first-day', [
           'cat notes_awa.txt',
@@ -209,10 +209,10 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter — fausses pistes : tout lire, grep sans compter, les adresses sans les regrouper', () => {
+      it('The Datacenter — false leads: reading everything, grep without counting, addresses not grouped', () => {
         const J = '/var/log/nginx/access.log';
         const tr = translator(language);
-        // Le texte tel que le jeu l'affiche (paragraphes recollés, typographie de la langue).
+        // The text as the game displays it (paragraphs joined, the language's typography).
         const t = (id: string, v?: Record<string, string>) => typography(clean(tr(id, v)), language);
         const { s, outputs } = play('first-day', [
           `cat ${J}`,
@@ -221,17 +221,17 @@ for (const language of LANGUAGES)
           `cut -d " " -f 1 ${J}`,
           `cut -d " " -f 1 ${J} | sort | uniq -c | sort -n | tail -3`,
         ]);
-        // Chaque piste trop longue renvoie aux notes d'Awa, sans donner la commande ; la bonne passe ensuite.
+        // Each too-long lead points to Awa's notes without giving the command; the right one passes afterwards.
         expect(outputs[1]).toContain(t('first-day-event-all-read'));
         expect(outputs[2]).toContain(t('first-day-event-grep-only'));
         expect(outputs[3]).toContain(t('first-day-event-account', { errors: outputs[3].split('\n')[0] }).slice(0, 12));
         expect(outputs[4]).toContain(t('first-day-event-addresses-only'));
         expect(s.flags.has('robot')).toBe(true);
-        // Une fois le compte fait, relire le journal ne redit rien.
+        // Once the count is done, rereading the log says nothing more.
         expect(s.execute(`cat ${J}`)).not.toContain(t('first-day-event-all-read'));
       });
 
-      it('Le Datacenter, chapitre 2 — Deuxième jour', () => {
+      it('The Datacenter, chapter 2 — Second day', () => {
         const { s, tout: all } = play('second-day', [
           'id',
           'id malo',
@@ -261,7 +261,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 2 — une autre solution correcte', () => {
+      it('The Datacenter, chapter 2 — another correct solution', () => {
         const { s } = play('second-day', [
           'sudo usermod -aG adm malo',
           'welcome-2026',
@@ -271,7 +271,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 3 — La nuit du redémarrage', () => {
+      it('The Datacenter, chapter 3 — The reboot night', () => {
         const { s, tout: all } = play('reboot-night', [
           'systemctl --failed',
           'systemctl status nginx',
@@ -304,7 +304,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 3 — une autre solution correcte', () => {
+      it('The Datacenter, chapter 3 — another correct solution', () => {
         const { s } = play('reboot-night', [
           'sudo chown -R www-data:www-data /var/log/catalogue',
           'welcome-2026',
@@ -315,7 +315,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 3 — réparer sans redémarrer ne suffit pas', () => {
+      it('The Datacenter, chapter 3 — repairing without rebooting is not enough', () => {
         const { s } = play('reboot-night', [
           'sudo chown www-data: /var/log/catalogue',
           'welcome-2026',
@@ -326,21 +326,21 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
       });
 
-      it('Le Datacenter, chapitre 4 — Le grand incendie', () => {
+      it('The Datacenter, chapter 4 — The great fire', () => {
         const { s, tout: all } = play('fire', [
           'cat /mnt/backup/DRP.txt',
-          // Fausse piste : une machine neuve ne connaît encore aucun paquet.
+          // False lead: a new machine does not know any package yet.
           'sudo apt install nginx',
           'welcome-2026',
           'sudo apt update',
           'sudo apt install nginx',
           'y',
           'curl http://localhost',
-          // Fausse piste : l'archive de cette nuit a été coupée par le feu.
+          // False lead: last night's archive was cut off by the fire.
           'tar -tzf /mnt/backup/medialibrary-2026-10-23.tar.gz',
           'tar -tzf /mnt/backup/medialibrary-2026-10-22.tar.gz',
           'sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz -C /',
-          // Fausse piste : deux sites « default_server » sur le port 80.
+          // False lead: two "default_server" sites on port 80.
           'sudo nginx -t',
           'sudo systemctl reload nginx',
           'sudo rm /etc/nginx/sites-enabled/default',
@@ -361,20 +361,20 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
+      it('The Datacenter, chapter 4 — restore first, install next, keep the Debian site', () => {
         const { s, tout: all } = play('fire', [
           'cd /',
           'sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz',
           'welcome-2026',
           'sudo apt update',
-          // nginx ne démarre pas : deux serveurs par défaut.
+          // nginx does not start: two default servers.
           'sudo apt install -y nginx',
           'systemctl is-active nginx',
         ]);
         expect(all).toContain('dpkg: error processing package nginx (--configure):');
         expect(all).toContain('failed');
         expect(s.finished).toBe(false);
-        // Autre solution : la médiathèque n'est plus le site par défaut ; on la joint par son nom.
+        // Another solution: the media library is no longer the default site; it is reached by its name.
         const conf = '/etc/nginx/sites-enabled/medialibrary';
         s.execute(`sudo nano ${conf}`);
         s.saveEdition(s.edition!.text.replaceAll(' default_server', ''));
@@ -385,7 +385,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 4 — fausses pistes : extraire dans ~, l’archive coupée, celle de mercredi', () => {
+      it('The Datacenter, chapter 4 — false leads: extracting into ~, the cut-off archive, Wednesday’s one', () => {
         const { s, tout: all } = play('fire', [
           'sudo apt update',
           'welcome-2026',
@@ -399,7 +399,7 @@ for (const language of LANGUAGES)
           'sudo systemctl reload nginx',
         ]);
         contains(all, 'extraite là où tu étais');
-        // L'archive coupée rend la configuration, mais aucune page : 404.
+        // The cut-off archive gives back the configuration, but no page: 404.
         expect(all).toContain('HTTP/1.1 404 Not Found');
         contains(all, 'avec la page de mercredi');
         expect(s.finished).toBe(false);
@@ -407,7 +407,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 5 — Le certificat a expiré', () => {
+      it('The Datacenter, chapter 5 — The certificate has expired', () => {
         const { s, tout: all } = play('certificate', [
           'curl https://medialibrary.example',
           'journalctl -u certbot -n 8',
@@ -415,10 +415,10 @@ for (const language of LANGUAGES)
           'welcome-2026',
           'sudo certbot renew --dry-run',
           'sudo cat /etc/letsencrypt/renewal/medialibrary.example.conf',
-          // Fausse piste : --dry-run n'enregistre rien.
+          // False lead: --dry-run saves nothing.
           'sudo certbot renew --dry-run --webroot -w /var/www/medialibrary',
           'sudo certbot renew --webroot -w /var/www/medialibrary',
-          // Fausse piste : renouvelé sur le disque, mais nginx sert encore l'ancien.
+          // False lead: renewed on disk, but nginx still serves the old one.
           'curl https://medialibrary.example',
           'sudo certbot reconfigure --cert-name medialibrary.example --deploy-hook "systemctl reload nginx"',
           'sudo systemctl reload nginx',
@@ -437,7 +437,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 5 — corriger le fichier de renouvellement, script de deploy hook', () => {
+      it('The Datacenter, chapter 5 — fix the renewal file, deploy hook script', () => {
         const { s, tout: all } = play('certificate', [
           'sudo certbot renew',
           'welcome-2026',
@@ -449,7 +449,7 @@ for (const language of LANGUAGES)
         const next = [
           'sudo certbot renew --dry-run',
           'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx',
-          // Fausse piste : un script qui n'est pas exécutable est ignoré.
+          // False lead: a script that is not executable is ignored.
           'sudo certbot renew',
         ].map((l) => s.execute(l) ?? '');
         expect(next.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/recharger-nginx' as it is not executable.");
@@ -459,7 +459,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Datacenter, chapitre 5 — le module nginx de certbot', () => {
+      it('The Datacenter, chapter 5 — certbot’s nginx plugin', () => {
         const { s, tout: all } = play('certificate', [
           'sudo certbot renew --nginx',
           'welcome-2026',
@@ -472,7 +472,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Le Paquet perdu', () => {
+      it('The Lost Package', () => {
         const { s } = play('lost-packet', [
           'cat notebook.txt',
           'ping 192.168.1.1',
@@ -490,7 +490,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('La Machine à remonter le temps', () => {
+      it('The Time Machine', () => {
         const { s } = play('manuscript', [
           'cd novel',
           'git log --oneline',
@@ -507,7 +507,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('Les Archives', () => {
+      it('The Archives', () => {
         const { s } = play('archives', [
           'cat notes_rosa.txt',
           'du -sh collection',
@@ -521,9 +521,9 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('Les Archives, chapitre 2 — Les versions (restic)', () => {
+    describe('The Archives, chapter 2 — The versions (restic)', () => {
       const R = 'restic -r /mnt/townhall/restic-library --password-file ~/.config/restic/password';
-      // Les identifiants des instantanés, du plus ancien au plus récent.
+      // The snapshot IDs, from oldest to newest.
       const snapshotList = (s: Shell) => [...(s.execute(L(`${R} snapshots`)) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
 
       it('solution : find, restore, forget, prune, check, chmod', () => {
@@ -537,7 +537,7 @@ for (const language of LANGUAGES)
           `${R} restore ${good} --target /tmp/restauration --include /home/you/collection/manuscripts/marie_diary.txt`,
           'cp /tmp/restauration/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
-          // Fausse piste : forget seul ne rend pas la place.
+          // False lead: forget alone does not free the space.
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
           `${R} prune`,
           'chmod 600 ~/.config/restic/password',
@@ -555,7 +555,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : le mot de passe tapé, dump, forget --prune, puis une sauvegarde', () => {
+      it('another solution: the password typed, dump, forget --prune, then a backup', () => {
         const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'mauvais']);
         expect(all).toContain('Fatal: wrong password or no key found');
         contains(all, 'Mauvais mot de passe');
@@ -570,22 +570,22 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausse piste : forget trop sévère avant de restaurer', () => {
+      it('false lead: a forget too strict before restoring', () => {
         const { s, tout: all } = play('versions', [`${R} forget --keep-last 3 --prune`, `${R} check`, 'chmod 600 ~/.config/restic/password']);
         contains(all, 'Plus aucun instantané ne contient la bonne version');
         expect(s.finished).toBe(false);
       });
     });
 
-    describe('Les Lettres du quartier, chapitre 4 — La colocation (nginx)', () => {
-      // nano : remplace du texte dans un fichier et enregistre.
+    describe('The Neighbourhood Letters, chapter 4 — The flatshare (nginx)', () => {
+      // nano: replaces text in a file and saves.
       const modify = (s: Shell, file: string, before: string | RegExp, after: string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(s.edition!.text.replace(before, after));
         s.quitEdition();
       };
 
-      it('solution, avec les fausses pistes : lien relatif, nom en double, 502, barre finale', () => {
+      it('solution, with the false leads: relative link, duplicate name, 502, trailing slash', () => {
         const { s, tout: all } = play('sharing', [
           'curl http://cafe.example',
           'cd /etc/nginx',
@@ -623,7 +623,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : un nouveau fichier écrit à la main, location exacte du préfixe, agenda démarré puis activé', () => {
+      it('another solution: a new file written by hand, exact location of the prefix, calendar started then enabled', () => {
         const { s } = play('sharing', ['sudo systemctl start agenda', 'ants-2026']);
         s.execute('sudo nano /etc/nginx/sites-available/cafe');
         s.saveEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
@@ -637,7 +637,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('Les Lettres du quartier, chapitre 5 — Ça marche chez moi (DNS)', () => {
+    describe('The Neighbourhood Letters, chapter 5 — Works on my machine (DNS)', () => {
       const ZONE = '/etc/bind/zones/db.cafe.example';
       const modify = (s: Shell, change: (text: string) => string) => {
         s.execute(`sudo nano ${ZONE}`);
@@ -645,18 +645,18 @@ for (const language of LANGUAGES)
         s.quitEdition();
       };
 
-      it('solution, avec les fausses pistes : serial oublié, point final oublié, zone fausse', () => {
+      it('solution, with the false leads: serial forgotten, trailing dot forgotten, wrong zone', () => {
         const { s, tout: all } = play('works-for-me', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'ants-2026']);
         expect(all).toContain('198.51.100.80');
         expect(all).toContain('status: NXDOMAIN');
         expect(all).toContain('server is up and running');
-        // Une adresse mal tapée : named garde l'ancienne zone.
+        // A mistyped address: named keeps the old zone.
         modify(s, (t) => t.replace('198.51.100.80', '203.0.113.310'));
         const no = ['named-checkzone cafe.example ' + ZONE, 'sudo rndc reload cafe.example'].map((l) => s.execute(l) ?? '').join('\n');
         expect(no).toContain("near '203.0.113.310': bad dotted quad");
         expect(no).toContain("rndc: 'reload' failed: failure");
         contains(no, 'named refuse la zone');
-        // Le bon contenu, mais ni serial ni point final.
+        // The right content, but neither serial nor trailing dot.
         modify(s, (t) => t.replace('203.0.113.310', '203.0.113.10') + '\nwww     IN CNAME cafe.example');
         const half = ['sudo rndc reload cafe.example', 'journalctl -u named', 'dig @localhost www.cafe.example', 'dig @ns2.registry.example cafe.example +short', 'dig cafe.example']
           .map((l) => s.execute(l) ?? '')
@@ -674,7 +674,7 @@ for (const language of LANGUAGES)
         expect(s.execute('dig @ns2.registry.example www.cafe.example +short')).toBe('cafe.example.\n203.0.113.10');
       });
 
-      it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
+      it('another solution: an A record for www, and systemctl reload named', () => {
         const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
         modify(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
         s.execute('sudo systemctl reload named');
@@ -682,7 +682,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('Les Lettres du quartier, chapitre 6 — Le soir du concert (awk, limit_req)', () => {
+    describe('The Neighbourhood Letters, chapter 6 — The concert night (awk, limit_req)', () => {
       const SITE = '/etc/nginx/sites-available/letters';
       const modify = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
@@ -690,7 +690,7 @@ for (const language of LANGUAGES)
         s.quitEdition();
       };
 
-      it('solution, avec les fausses pistes : zone inconnue, limite sans rafale', () => {
+      it('solution, with the false leads: unknown zone, limit without burst', () => {
         const { s, tout: all } = play('concert', [
           "sudo awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c",
           'ants-2026',
@@ -698,7 +698,7 @@ for (const language of LANGUAGES)
         ]);
         expect(all).toMatch(/\d+ 504/);
         contains(all, 'robot qui aspire le site');
-        // limit_req sans limit_req_zone : nginx -t refuse.
+        // limit_req without limit_req_zone: nginx -t refuses.
         modify(s, SITE, (t) => t.replace('proxy_pass http://127.0.0.1:3000/;', 'limit_req zone=agenda;\n        proxy_pass http://127.0.0.1:3000/;'));
         expect(s.execute('sudo nginx -t')).toContain('zero size shared memory zone "agenda"');
         modify(s, SITE, (t) => 'limit_req_zone $binary_remote_addr zone=agenda:10m rate=2r/s;\n\n' + t);
@@ -711,7 +711,7 @@ for (const language of LANGUAGES)
         expect(s.execute("sudo awk '$9 == 429' /var/log/nginx/access.log | wc -l")).toMatch(/^\d{3,}$/);
       });
 
-      it('fausse piste : bloquer les adresses du robot ne suffit pas à Kofi', () => {
+      it('false lead: blocking the robot’s addresses is not enough for Kofi', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
         modify(s, SITE, (t) => t.replace('    location /agenda/ {', '    deny 198.51.100.0/24;\n\n    location /agenda/ {'));
         const output = s.execute('sudo systemctl reload nginx') ?? '';
@@ -719,7 +719,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
       });
 
-      it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
+      it('another solution: the zone in conf.d, the limit on the whole site, 1 request per second', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
         s.execute('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
@@ -728,21 +728,21 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Fabrique, chapitre 1 — La mise à jour (docker)', () => {
-      it('docker inspect sans -f donne le JSON du conteneur (pas [])', () => {
+    describe('The Factory, chapter 1 — The update (docker)', () => {
+      it('docker inspect without -f gives the container’s JSON (not [])', () => {
         const { outputs } = play('update', ['sudo docker inspect outiltheque', 'fablab-2027']);
         expect(outputs.at(-1)).toContain('"Mounts"');
         expect(outputs.at(-1)).toContain('outiltheque');
       });
 
-      it('solution : copier la base, volume, nouveau conteneur, --restart, et ça tient après un redémarrage', () => {
+      it('solution: copy the database, volume, new container, --restart, and it holds after a reboot', () => {
         const { s, tout: all } = play('update', [
           'docker ps',
           'sudo docker ps -a',
           'fablab-2027',
           "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
           'sudo docker cp outiltheque:/var/lib/outiltheque ./backup',
-          // Fausse piste : l'ancien conteneur occupe encore le port 8080.
+          // False lead: the old container still holds port 8080.
           'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registry.example/outiltheque:1.5',
           'sudo docker stop outiltheque',
           'sudo docker start outiltheque-15',
@@ -764,7 +764,7 @@ for (const language of LANGUAGES)
         expect(s.execute('curl http://localhost:8080')).toContain('outiltheque 1.5');
       });
 
-      it('autre solution : un dossier de la machine (bind mount), --restart always, l’ancien supprimé', () => {
+      it('another solution: a folder of the machine (bind mount), --restart always, the old one removed', () => {
         const { s } = play('update', [
           'sudo mkdir /srv/outiltheque',
           'fablab-2027',
@@ -775,7 +775,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausse piste : supprimer le conteneur avant de copier sa base', () => {
+      it('false lead: removing the container before copying its database', () => {
         const { s, tout: all } = play('update', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
         expect(all).toContain('container is running: stop the container before removing or force remove');
         contains(all, 'Les 37 prêts ont disparu');
@@ -784,13 +784,13 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Fabrique, chapitre 2 — La composition (docker compose)', () => {
+    describe('The Factory, chapter 2 — The composition (docker compose)', () => {
       const modify = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(change(s.edition!.text));
         s.quitEdition();
       };
-      // Le fichier corrigé : nom du service, variable, volume, redémarrage, sans version:.
+      // The fixed file: service name, variable, volume, restart, without version:.
       const fix = (t: string) =>
         t
           .replace('version: "3.8"\n\n', '')
@@ -799,7 +799,7 @@ for (const language of LANGUAGES)
           .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
           .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
 
-      it('solution, avec la fausse piste localhost', () => {
+      it('solution, with the localhost false lead', () => {
         const { s, tout: all } = play('compose', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
         expect(all).toContain('the attribute `version` is obsolete');
         expect(all).toContain('Error: connect ECONNREFUSED 127.0.0.1:5432');
@@ -818,12 +818,12 @@ for (const language of LANGUAGES)
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('Réserver une machine');
       });
 
-      it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
+      it('false lead: changing POSTGRES_PASSWORD after the database was created, then down -v', () => {
         const { s } = play('compose', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
         modify(s, '/srv/reservations/compose.yaml', (t) => fix(t).replaceAll('${POSTGRES_PASSWORD}', L('workshop2027')));
         s.execute('sudo docker compose up -d');
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('base de données connectée');
-        // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
+        // The password goes into .env… but not the one of the existing database.
         modify(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('workshop2027'), '${POSTGRES_PASSWORD}'));
         s.execute('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
         s.execute('sudo chmod 600 .env');
@@ -837,7 +837,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Fabrique, chapitre 3 — Le trou dans le pare-feu (docker et ufw)', () => {
+    describe('The Factory, chapter 3 — The hole in the firewall (docker and ufw)', () => {
       const BEFORE = [...prerequisites('fablab'), 'update', 'compose'];
       const modify = (s: Shell, change: (text: string) => string) => {
         s.execute('sudo nano /srv/reservations/compose.yaml');
@@ -845,7 +845,7 @@ for (const language of LANGUAGES)
         s.quitEdition();
       };
 
-      it('solution, testée depuis le poste : ufw ne suffit pas, port lié à 127.0.0.1, ménage', () => {
+      it('solution, tested from the workstation: ufw is not enough, port bound to 127.0.0.1, clean-up', () => {
         const c = new Console({ language, finished: BEFORE });
         const playC = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
         expect(playC(['nc -zv workshop 5432'])).toContain(`Connection to ${machineName(c.t, 'workshop')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
@@ -863,7 +863,7 @@ for (const language of LANGUAGES)
         expect(outside).toContain('timed out');
       });
 
-      it('autre solution : plus de port pour la base, docker system prune -a -f', () => {
+      it('another solution: no more port for the database, docker system prune -a -f', () => {
         const { s } = play('firewall-hole', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
         modify(s, (t) => t.replace('    # Pour pgAdmin, depuis mon portable (Yasmine)\n    ports:\n      - "5432:5432"\n', ''));
         s.execute('sudo docker compose up -d');
@@ -873,7 +873,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausse piste : docker volume prune -a emporte le wiki', () => {
+      it('false lead: docker volume prune -a takes the wiki away', () => {
         const { s, tout: all } = play('firewall-hole', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
         expect(all).toContain('WARNING! This will remove anonymous local volumes not used by at least one container.');
         expect(all).toContain('Deleted Volumes:\nwiki-ancien');
@@ -882,7 +882,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Fabrique, chapitre 4 — Les pleins pouvoirs (conteneur sans root)', () => {
+    describe('The Factory, chapter 4 — Full powers (container without root)', () => {
       const modify = (s: Shell, change: (text: string) => string) => {
         s.execute('sudo nano /srv/galerie/compose.yaml');
         s.saveEdition(change(s.edition!.text));
@@ -890,7 +890,7 @@ for (const language of LANGUAGES)
       };
       const withUser = (u: string) => (t: string) => t.replace('    restart: unless-stopped', `    restart: unless-stopped\n    user: ${u}`);
 
-      it('solution : user: "1001:1001" dans compose.yaml, puis chown -R', () => {
+      it('solution: user: "1001:1001" in compose.yaml, then chown -R', () => {
         const { s, tout: all } = play('full-powers', [
           'cd /srv/galerie',
           'sudo docker exec galerie-galerie-1 id',
@@ -909,7 +909,7 @@ for (const language of LANGUAGES)
         expect(failure).toContain("Error: EACCES: permission denied, open '/app/photos/.miniatures/index.json'");
         contains(failure, 'EACCES, permission refusée');
         expect(s.finished).toBe(false);
-        // Sans -R, le dossier change de propriétaire, pas ce qu'il contient.
+        // Without -R, the folder changes owner, not what it contains.
         s.execute('sudo chown 1001:1001 /srv/galerie/photos');
         expect(s.finished).toBe(false);
         const end = ['sudo chown -R 1001:1001 /srv/galerie/photos', 'sudo docker exec galerie-galerie-1 id', 'ps aux', 'curl -s localhost:8082']
@@ -922,7 +922,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : docker run -u node, le groupe de Yasmine et chmod -R g+w', () => {
+      it('another solution: docker run -u node, Yasmine’s group and chmod -R g+w', () => {
         const { s, tout: all } = play('full-powers', [
           'sudo docker rm -f galerie-galerie-1',
           'fablab-2027',
@@ -941,7 +941,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("fausses pistes : un nom inconnu de l'image, chmod 777, une photo effacée", () => {
+      it("false leads: a name unknown to the image, chmod 777, an erased photo", () => {
         const { s } = play('full-powers', ['cd /srv/galerie', 'sudo id', 'fablab-2027']);
         modify(s, withUser('galerie'));
         const unknown = s.execute('sudo docker compose up -d') ?? '';
@@ -960,7 +960,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Gazette, chapitre 1 — Le dépôt nu (déployer par git)', () => {
+    describe('The Gazette, chapter 1 — The bare repository (deploying with git)', () => {
       const edit = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`nano ${file}`);
         s.saveEdition(change(s.edition!.text));
@@ -968,7 +968,7 @@ for (const language of LANGUAGES)
       };
       const HOOK = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site publié"';
 
-      it("solution : la dérive d'abord, un dépôt nu à soi, un crochet exécutable, puis chaque correction par git push", () => {
+      it("solution: the drift first, a bare repository of one's own, an executable hook, then each fix through git push", () => {
         const { s, tout: all } = play('bare-repo', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
         if (reference) expect(all).toContain('Seulement dans gazette : fete-des-voisins.html');
         if (reference) expect(all).toContain('> <h1>La Gazette du quartier</h1>');
@@ -995,7 +995,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : dépôt à root, crochet non exécutable, checkout sans -f, correction de Théo perdue, retouche sur le serveur', () => {
+      it('false leads: repository owned by root, non-executable hook, checkout without -f, Théo’s fix lost, edit on the server', () => {
         const { s } = play('bare-repo', [
           'sudo git init --bare /srv/git/gazette.git',
           'gazette-2027',
@@ -1023,13 +1023,13 @@ for (const language of LANGUAGES)
         edit(s, 'agenda.html', (t) => t.replace('8 h', '9 h'));
         s.execute('git commit -am "Ouverture à 9 h"');
         contains(s.execute('git push prod main') ?? '', 'La correction de Théo a disparu');
-        // Corriger l'agenda sur le serveur, sans git : refusé.
+        // Fixing the calendar on the server, without git: refused.
         s.execute('echo \'<time datetime="2027-06-12">\' > /var/www/gazette/agenda.html');
         expect(s.finished).toBe(false);
       });
     });
 
-    describe('La Gazette, chapitre 2 — Le retour arrière (versions, lien current, tests)', () => {
+    describe('The Gazette, chapter 2 — The rollback (versions, current link, tests)', () => {
       const hook = (s: Shell, change: (text: string) => string) => {
         s.execute('nano /srv/git/gazette.git/hooks/post-receive');
         s.saveEdition(change(s.edition!.text));
@@ -1048,7 +1048,7 @@ for (const language of LANGUAGES)
           .map((l) => s.execute(l))
           .join('\n');
 
-      it("solution : ln -sfn vers la version d'avant, tests.sh dans le crochet avant de basculer, puis la mise en page réparée", () => {
+      it("solution: ln -sfn to the previous version, tests.sh in the hook before switching, then the layout repaired", () => {
         const { s, tout: all } = play('rollback', [
           'curl -I http://gazette.example/',
           'ls -l /srv/gazette',
@@ -1074,24 +1074,24 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : ln sans -n, tests après la bascule, tests lancés depuis le dépôt', () => {
+      it('false leads: ln without -n, tests after the switch, tests run from the repository', () => {
         const { s, tout: all } = play('rollback', ['cd /srv/gazette', 'ln -sf releases/20270514101502 current', 'curl -I http://gazette.example/']);
         contains(all, 'Le nouveau lien a été créé DANS la version cassée');
         expect(all).toContain('HTTP/1.1 403 Forbidden');
         s.execute('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
-        // Les tests après la bascule : trop tard, la version de Théo est en ligne.
+        // Tests after the switch: too late, Théo's version is live.
         const trop = hook(s, (t) => t.replace('echo', 'sh tests.sh\necho'));
         contains(trop, 'Le push cassé de Théo est passé en ligne');
         expect(s.execute('curl -I http://gazette.example/')).toContain('403 Forbidden');
         s.execute('ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current');
-        // Avant la bascule, mais depuis le dépôt : tout est refusé, même une bonne version.
+        // Before the switch, but from the repository: everything is refused, even a good version.
         hook(s, (t) => t.replace('sh tests.sh\necho', 'echo').replace('ln -sfn', 'sh tests.sh\nln -sfn'));
         contains(publishTheo(s), 'tests.sh cherche index.html dans le lieu');
         expect(s.finished).toBe(false);
       });
     });
 
-    describe('La Gazette, chapitre 3 — Bleu et vert (déployer sans coupure)', () => {
+    describe('The Gazette, chapter 3 — Blue and green (deploying without downtime)', () => {
       const edit = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(change(s.edition!.text));
@@ -1100,7 +1100,7 @@ for (const language of LANGUAGES)
       const TO_GREEN = (t: string) => t.replace('127.0.0.1:3001', '127.0.0.1:3002');
       const SMTP = (t: string) => `${t}\nKIOSK_SMTP=smtp.gazette.example`;
 
-      it('solution : la 1.5.0 sur vert, /health, la configuration des notes, puis nginx bascule et bleu reste allumé', () => {
+      it('solution: 1.5.0 on green, /health, the notes configuration, then nginx switches and blue stays up', () => {
         const { s, tout: all } = play('blue-green', [
           'curl -s http://localhost:3001/health',
           'ln -sfn /srv/kiosk/versions/1.5.0 /srv/kiosk/green',
@@ -1124,7 +1124,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : sans redémarrer, bascule avant /health, sans reload, puis bleu arrêté trop tôt', () => {
+      it('false leads: without restarting, switch before /health, without reload, then blue stopped too early', () => {
         const { s, tout: all } = play('blue-green', [
           'sudo systemctl start kiosk-green',
           'gazette-2027',
@@ -1140,12 +1140,12 @@ for (const language of LANGUAGES)
         edit(s, '/etc/kiosk/kiosk.env', SMTP);
         s.execute('sudo systemctl restart kiosk-green');
         expect(s.finished).toBe(true);
-        // Une fois la bascule faite, arrêter bleu enlève le filet.
+        // Once the switch is done, stopping blue removes the safety net.
         contains(s.execute('sudo systemctl stop kiosk-blue') ?? '', 'plus de retour arrière instantané');
       });
     });
 
-    describe('La Gazette, chapitre 4 — Le canari (upstream, weight, access.log)', () => {
+    describe('The Gazette, chapter 4 — The canary (upstream, weight, access.log)', () => {
       const site = (s: Shell, change: (text: string) => string) => {
         s.execute('sudo nano /etc/nginx/sites-available/gazette');
         s.saveEdition(change(s.edition!.text));
@@ -1155,7 +1155,7 @@ for (const language of LANGUAGES)
         `upstream kiosk {\n    server 127.0.0.1:3002 weight=9;\n    server 127.0.0.1:3001 weight=1;\n}\n\n${t.replace('http://127.0.0.1:3002/', 'http://kiosk/')}`;
       const reload = (s: Shell) => ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.execute(l)).join('\n');
 
-      it('solution : canari de la 1.6.0, les 500 dans access.log, arrêt, 1.6.1, canari propre, bascule', () => {
+      it('solution: canary of 1.6.0, the 500s in access.log, stop, 1.6.1, clean canary, switch', () => {
         const { s } = play('canary', [
           'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
           'sudo systemctl restart kiosk-blue',
@@ -1184,7 +1184,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("fausses pistes : tout d'un coup sur la 1.6.0, puis un « canari » à 50 %", () => {
+      it("false leads: everything at once on 1.6.0, then a \"canary\" at 50 %", () => {
         const { s } = play('canary', [
           'ln -sfn /srv/kiosk/versions/1.6.0 /srv/kiosk/blue',
           'sudo systemctl restart kiosk-blue',
@@ -1202,7 +1202,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Gazette, chapitre 5 — La migration (réparer en avant)', () => {
+    describe('The Gazette, chapter 5 — The migration (fixing forward)', () => {
       const edit = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(change(s.edition!.text));
@@ -1210,7 +1210,7 @@ for (const language of LANGUAGES)
       };
       const SMTP_URL = (t: string) => `${t}\nKIOSK_SMTP_URL=smtp://smtp.gazette.example:587`;
 
-      it('solution : le journal raconte la migration, la variable renommée, puis bleu en 2.0.0', () => {
+      it('solution: the log tells the migration, the renamed variable, then blue on 2.0.0', () => {
         const { s, tout: all } = play('migration', [
           'curl -s localhost:3002/health',
           'curl -s localhost:3001/health',
@@ -1230,7 +1230,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausse piste : revenir sur bleu (1.6.1) ne répare rien, la base a changé', () => {
+      it('false lead: going back to blue (1.6.1) repairs nothing, the database has changed', () => {
         const { s } = play('migration', ['sudo id', 'gazette-2027']);
         const back = edit(s, '/etc/nginx/sites-available/gazette', (t) => t.replace('127.0.0.1:3002/', '127.0.0.1:3001/'));
         const reload = (s.execute('sudo systemctl reload nginx') ?? '') + back;
@@ -1240,11 +1240,11 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Ludothèque, chapitre 1 — La rançon (rançongiciel, sauvegarde hors ligne)', () => {
+    describe('The Game Library, chapter 1 — The ransom (ransomware, offline backup)', () => {
       const RESTIC = 'sudo restic -r /mnt/usb/repo';
       const MDP = 'pawn-knight-rook-27';
 
-      it('solution : arrêter le chiffreur et sa crontab, verrouiller le compte, restaurer depuis la clé en lecture seule, la démonter', () => {
+      it('solution: stop the encryptor and its crontab, lock the account, restore from the read-only key, unmount it', () => {
         const { s, tout: all } = play('ransom', [
           'find /srv/share -name "*.locked" | wc -l',
           'ps aux',
@@ -1286,7 +1286,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("fausses pistes : restaurer avant d'arrêter le chiffreur, l'oublier dans la crontab, démonter depuis dedans", () => {
+      it("false leads: restoring before stopping the encryptor, forgetting it in the crontab, unmounting from inside", () => {
         const { s, tout: all } = play('ransom', [
           'sudo mount /dev/sdb1 /mnt/usb',
           'ludo-2027',
@@ -1297,7 +1297,7 @@ for (const language of LANGUAGES)
         contains(all, 'le disque de sauvegarde est branché alors que le chiffreur tourne encore');
         contains(all, "Des fichiers restaurés viennent d'être chiffrés à leur tour");
         expect(all).not.toMatch(new RegExp(`${L('inventory.csv').replace('.', '\\.')}(?!\\.locked)`));
-        // Arrêté, mais sa crontab le relance.
+        // Stopped, but its crontab starts it again.
         const back = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.execute(L(l))).join('\n');
         contains(back, 'Le chiffreur est revenu');
         expect(s.execute('ps aux')).toContain(L('system-update'));
@@ -1307,7 +1307,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Ludothèque, chapitre 2 — Les instantanés (rsnapshot, liens physiques, cron)', () => {
+    describe('The Game Library, chapter 2 — The snapshots (rsnapshot, hard links, cron)', () => {
       const edit = (s: Shell, command: string, change: (text: string) => string) => {
         s.execute(command);
         s.saveEdition(change(s.edition!.text));
@@ -1320,10 +1320,10 @@ for (const language of LANGUAGES)
           .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', L('backup\t/srv/share/\tlocalhost/'));
       const CRON = (t: string) => `${t}0 3 * * 1 /usr/bin/rsnapshot weekly\n30 3 * * * /usr/bin/rsnapshot daily\n`;
       const D = L('/mnt/snapshots');
-      // Le partage, dans la langue (/srv/share en anglais).
+      // The share, in the language (/srv/share in English).
       const P = L('/srv/share');
 
-      it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
+      it("solution: the configuration (tabs), configtest, root's cron, then the previous day's inventory", () => {
         const { s } = play('snapshots', ['sudo rsnapshot configtest', 'ludo-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', SETTINGS);
         expect(s.execute('sudo rsnapshot configtest')).toBe('Syntax OK');
@@ -1353,7 +1353,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
+      it("false leads: spaces instead of tabs, an ordinary account's crontab, last night's version", () => {
         const { s } = play('snapshots', ['sudo id', 'ludo-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => SETTINGS(t).replace(L('snapshot_root\t/mnt/snapshots/'), L('snapshot_root /mnt/snapshots/')));
         const error = s.execute('sudo rsnapshot configtest') ?? '';
@@ -1368,12 +1368,12 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe('La Ludothèque, chapitre 3 — La base (pg_dump, restauration de test, pg_restore -t)', () => {
+    describe('The Game Library, chapter 3 — The database (pg_dump, test restore, pg_restore -t)', () => {
       const PG = 'sudo -u postgres';
       const DUMP = '/var/backups/postgresql/ludo.dump';
       const count = (s: Shell, base: string, table: string) => s.execute(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table};"`) ?? '';
 
-      it('solution : pg_dump -Fc sous postgres, restauration dans ludo_test, la table prets remise, crontab de postgres', () => {
+      it('solution: pg_dump -Fc as postgres, restore into ludo_test, the prets table put back, postgres’s crontab', () => {
         const { s, tout: all } = play('database', [
           'psql -l',
           `${PG} psql -l`,
@@ -1387,7 +1387,7 @@ for (const language of LANGUAGES)
         expect(all).toContain(' public | prets   | table | ludo');
         contains(all, 'sudo -u postgres (man sudo)');
         contains(all, 'la sauvegarde se restaure');
-        // La commande suivante : l'incident.
+        // The next command: the incident.
         const test = count(s, 'ludo_test', 'prets');
         expect(test).toContain('  1873 ');
         contains(test, 'Un bénévole a cliqué');
@@ -1401,7 +1401,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : la redirection, restaurer par-dessus ludo, réinjecter dans une table pleine, cron de root', () => {
+      it('false leads: the redirection, restoring over ludo, reloading into a full table, root’s cron', () => {
         const { s, tout: all } = play('database', [
           'sudo -u postgres pg_dump ludo > /var/backups/postgresql/ludo.sql',
           'ludo-2027',
@@ -1419,7 +1419,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 1 — Le disque plein (du, lsof, truncate, logrotate)", () => {
+    describe("On-call, chapter 1 — The full disk (du, lsof, truncate, logrotate)", () => {
       const edit = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(change(s.edition!.text));
@@ -1428,7 +1428,7 @@ for (const language of LANGUAGES)
       const ROTATION = (end: string) => () =>
         `/var/log/radio/*.log {\n    daily\n    rotate 7\n    compress\n    delaycompress\n    missingok\n    notifempty\n${end}}`;
 
-      it('solution : du, le debug, truncate, info, logrotate avec copytruncate', () => {
+      it('solution: du, the debug, truncate, info, logrotate with copytruncate', () => {
         const { s, tout: all } = play('full-disk', [
           'df -h',
           'sudo du -sh /var/log/*',
@@ -1449,7 +1449,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
+      it("false leads: rm of an open file, logrotate renaming without reopening, an unknown directive", () => {
         const { s, tout: all } = play('full-disk', ['sudo rm /var/log/radio/stream.log', 'antenna-2027', 'df -h', 'sudo lsof +L1']);
         expect(all).toContain('100% /');
         expect(all).toContain('/var/log/radio/stream.log (deleted)');
@@ -1469,8 +1469,8 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 2 — La mémoire (OOM killer, MemoryMax=, Restart=, zombies)", () => {
-      it('solution : dmesg, top, systemctl edit (MemoryMax=, Restart=), le parent des zombies redémarré', () => {
+    describe("On-call, chapter 2 — Memory (OOM killer, MemoryMax=, Restart=, zombies)", () => {
+      it('solution: dmesg, top, systemctl edit (MemoryMax=, Restart=), the zombies’ parent restarted', () => {
         const { s, tout: all } = play('memory', [
           'systemctl status radio-playlist',
           'sudo dmesg -T',
@@ -1489,7 +1489,7 @@ for (const language of LANGUAGES)
         expect(s.read('/etc/systemd/system/radio-playlist.service.d/override.conf')).toBe('[Service]\nMemoryMax=600M\nRestart=on-failure');
         s.execute('sudo systemctl start radio-playlist');
         expect(s.execute('systemctl status radio-playlist')).toMatch(/Memory: \d+\.\dM \(max: 600\.0M/);
-        // La fuite atteint la limite : systemd tue la playlist et la relance, la machine ne sent rien.
+        // The leak reaches the limit: systemd kills the playlist and restarts it, the machine feels nothing.
         let outputs = '';
         for (let i = 0; i < 8; i++) outputs += s.execute('top -b -n 1 -o %MEM');
         contains(outputs, 'systemd l');
@@ -1501,7 +1501,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : systemctl set-property, puis Restart= écrit à la main et daemon-reload', () => {
+      it('another solution: systemctl set-property, then Restart= written by hand and daemon-reload', () => {
         const { s } = play('memory', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenna-2027']);
         expect(s.read('/etc/systemd/system.control/radio-playlist.service.d/50-MemoryMax.conf')).toContain('MemoryMax=536870912');
         expect(s.execute('sudo systemctl set-property radio-playlist Restart=on-failure')).toContain('Cannot set property Restart');
@@ -1516,7 +1516,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : kill -9 sur un zombie, relancer sans limite, une limite sans relance', () => {
+      it('false leads: kill -9 on a zombie, restarting without a limit, a limit without restart', () => {
         const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenna-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
         expect(all).toContain('[convertir] <defunct>');
         contains(all, 'kill ne fait rien à un zombie');
@@ -1535,14 +1535,14 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 3 — Les inodes (df -i, du --inodes, find -mtime -delete, cron)", () => {
+    describe("On-call, chapter 3 — Inodes (df -i, du --inodes, find -mtime -delete, cron)", () => {
       const crontab = (s: Shell, command: string, line: string) => {
         s.execute(command);
         s.saveEdition(`${s.edition!.text}${line}\n`);
         return s.quitEdition();
       };
 
-      it('solution : df -i, du --inodes, find -mtime +30 -delete, puis une tâche cron', { timeout: 30_000 }, () => {
+      it('solution: df -i, du --inodes, find -mtime +30 -delete, then a cron job', { timeout: 30_000 }, () => {
         const { s, tout: all } = play('inodes', [
           'df -h',
           'sudo df -i',
@@ -1565,25 +1565,25 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : la tâche cron du compte radio fait aussi le grand ménage', { timeout: 30_000 }, () => {
+      it('another solution: the radio account’s cron job also does the big clean-up', { timeout: 30_000 }, () => {
         const { s } = play('inodes', ['sudo df -i /srv/radio', 'antenna-2027']);
         const night = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
         contains(night, 'Une journée et une nuit passent');
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : rm *, une crontab sans les droits, une tâche qui efface tout', { timeout: 30_000 }, () => {
+      it('false leads: rm *, a crontab without the rights, a job that erases everything', { timeout: 30_000 }, () => {
         const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/essai', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
         if (reference) expect(all).toContain('Aucun espace disponible sur le périphérique');
         if (reference) expect(all).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
         contains(all, 'le shell remplace * par tous les noms du lieu');
-        // La crontab de « vous » : pas le droit d'effacer les fichiers du compte radio.
+        // The crontab of "you": no right to erase the radio account's files.
         const night = crontab(s, 'crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
         contains(night, 'Courrier de cron');
         if (reference) expect(night).toContain('Permission non accordée');
         contains(night, 'la tâche n');
         expect(s.finished).toBe(false);
-        // Une tâche qui efface tout, sans regarder l'âge.
+        // A job that erases everything, without looking at the age.
         contains(
           crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -delete'),
           'des statistiques de moins de 30 jours ont disparu',
@@ -1592,14 +1592,14 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 4 — L'horloge (timedatectl, NTP, fuseau, cron)", () => {
+    describe("On-call, chapter 4 — The clock (timedatectl, NTP, time zone, cron)", () => {
       const fixNtp = (s: Shell) => {
         s.execute('sudo nano /etc/systemd/timesyncd.conf');
         s.saveEdition(s.edition!.text.replace('NTP=ntp.old-hosting.example', 'NTP=ntp.hosting.example'));
         return s.quitEdition();
       };
 
-      it('solution : timedatectl, set-timezone, set-ntp, le bon serveur NTP, cron redémarré', () => {
+      it('solution: timedatectl, set-timezone, set-ntp, the right NTP server, cron restarted', () => {
         const { s, tout: all } = play('clock', [
           'date',
           'timedatectl',
@@ -1628,7 +1628,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it("autre solution : le serveur NTP d'abord, puis systemctl enable --now, le fuseau et cron", () => {
+      it("another solution: the NTP server first, then systemctl enable --now, the time zone and cron", () => {
         const { s } = play('clock', ['sudo timedatectl', 'antenna-2027']);
         fixNtp(s);
         s.execute('sudo systemctl enable --now systemd-timesyncd');
@@ -1637,7 +1637,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : date -s à la main, un fuseau mal écrit, set-time avec NTP actif, démarrer sans activer', () => {
+      it('false leads: date -s by hand, a misspelt time zone, set-time with NTP active, starting without enabling', () => {
         const { s, tout: all } = play('clock', ['sudo date -s "2027-08-30 09:12:00"', 'antenna-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
         contains(all, 'pour l');
         expect(all).toContain("Failed to set time zone: Invalid or not installed time zone 'Europe/Pariss'");
@@ -1655,7 +1655,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 5 — La sonde (plugins de supervision, mail, timer systemd)", () => {
+    describe("On-call, chapter 5 — The probe (monitoring plugins, mail, systemd timer)", () => {
       const write = (s: Shell, file: string, change: (text: string) => string) => {
         s.execute(`sudo nano ${file}`);
         s.saveEdition(change(s.edition!.text));
@@ -1667,13 +1667,13 @@ for (const language of LANGUAGES)
       const TIMER = (trigger: string) =>
         `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
 
-      it('solution : les plugins, la sonde complétée, un timer systemd, et la nuit d exercice', { timeout: 30_000 }, () => {
+      it('solution: the plugins, the probe completed, a systemd timer, and the drill night', { timeout: 30_000 }, () => {
         const { s, tout: all } = play('probe', [
           'check_disk -w 20% -c 10% -p /',
           '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
           "systemd-analyze calendar '*:0/5'",
         ]);
-        // Une adresse web (/direct), pas un chemin du monde : tapée telle quelle dans chaque langue.
+        // A web address (/direct), not a path of the world: typed as is in every language.
         expect(s.execute('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live')).toContain('HTTP OK: HTTP/1.1 200 OK');
         if (reference) expect(all).toContain('check_disk : commande introuvable');
         contains(all, 'ne sont pas dans le PATH');
@@ -1696,7 +1696,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('autre solution : une ligne de crontab, check_procs pour le relais', { timeout: 30_000 }, () => {
+      it('another solution: a crontab line, check_procs for the relay', { timeout: 30_000 }, () => {
         const { s } = play('probe', ['sudo true', 'antenna-2027']);
         write(
           s,
@@ -1711,7 +1711,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
+      it('false leads: the starting probe, OnUnitActiveSec alone, thresholds too tight', { timeout: 60_000 }, () => {
         const { s } = play('probe', ['sudo true', 'antenna-2027']);
         write(s, '/etc/systemd/system/probe.service', () => SERVICE);
         write(s, '/etc/systemd/system/probe.timer', () => TIMER('OnUnitActiveSec=5min'));
@@ -1728,8 +1728,8 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 7 — Le goulot (iowait, iostat, pidstat, IOWriteBandwidthMax=)", () => {
-      it('solution : top, iostat, pidstat, puis une limite de débit avec set-property', () => {
+    describe("On-call, chapter 7 — The bottleneck (iowait, iostat, pidstat, IOWriteBandwidthMax=)", () => {
+      it('solution: top, iostat, pidstat, then a bandwidth limit with set-property', () => {
         const { s, tout: all } = play('bottleneck', [
           'top',
           'iostat -x',
@@ -1751,7 +1751,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('une autre solution : systemctl edit, IOReadBandwidthMax= sur un chemin, daemon-reload', () => {
+      it('another solution: systemctl edit, IOReadBandwidthMax= on a path, daemon-reload', () => {
         const { s } = play('bottleneck', ['sudo systemctl edit radio-archives', 'antenna-2027']);
         s.saveEdition(`[Service]\nIOReadBandwidthMax=/srv 30M\n${s.edition!.text}`);
         s.quitEdition();
@@ -1760,7 +1760,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : ionice (ordonnanceur none), arrêter l’archivage, le mauvais disque, trop bas', () => {
+      it('false leads: ionice (none scheduler), stopping the archiving, the wrong disk, too low', () => {
         const { s, tout: all } = play('bottleneck', [
           'pidstat -d',
           'ionice -p 2190',
@@ -1787,7 +1787,7 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe("L'Astreinte, chapitre 6 — Le post-mortem (journalctl --since, last, sans reproche)", () => {
+    describe("On-call, chapter 6 — The post-mortem (journalctl --since, last, blameless)", () => {
       const POSTMORTEM = [
         '# Post-mortem : coupure du direct, nuit du 11 au 12 septembre 2027',
         '',
@@ -1813,7 +1813,7 @@ for (const language of LANGUAGES)
         '- Vérifier la configuration avant chaque redémarrage (ExecStartPre=).',
         '- Relancer le relais après chaque modification.',
       ].join('\n');
-      // Le même post-mortem, écrit en anglais (titres et mots attendus de la version anglaise).
+      // The same post-mortem, written in English (headings and expected words of the English version).
       const POSTMORTEM_IN = [
         '# Post-mortem: live stream outage, night of 11 to 12 September 2027',
         '',
@@ -1840,7 +1840,7 @@ for (const language of LANGUAGES)
         '- Restart the relay after every change.',
       ].join('\n');
 
-      it('solution : les journaux de la nuit, puis le post-mortem complet', () => {
+      it('solution: the night’s logs, then the complete post-mortem', () => {
         const { s, tout: all } = play('post-mortem', [
           'cat notes_theo.txt',
           'last',
@@ -1863,7 +1863,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(true);
       });
 
-      it('fausses pistes : les heures des notes de Théo, un coupable, une seule action', () => {
+      it('false leads: the times in Théo’s notes, a culprit, a single action', () => {
         const { s } = play('post-mortem', []);
         s.execute('nano postmortem.md');
         s.saveEdition(
@@ -1879,9 +1879,9 @@ for (const language of LANGUAGES)
       });
     });
 
-    describe.runIf(reference)('Le manuel, premier réflexe', () => {
+    describe.runIf(reference)('The manual, first reflex', () => {
       const s = new Shell(chapter('lighthouse'), language);
-      it('man affiche une vraie page', () => {
+      it('man shows a real page', () => {
         const page = s.execute('man ls')!;
         for (const section of ['NOM', 'SYNOPSIS', 'DESCRIPTION', 'OPTIONS', 'EXEMPLES', 'VOIR AUSSI']) expect(page).toContain(section);
       });
@@ -1890,18 +1890,18 @@ for (const language of LANGUAGES)
         expect(s.execute('man -k copie')).toContain('cp (1)');
         expect(s.execute('whatis mv')).toMatch(/^mv \(1\)/);
       });
-      it('option inconnue : le vrai message', () => {
+      it('unknown option: the real message', () => {
         expect(s.execute('ls -z')).toBe("ls : option invalide -- 'z'\nSaisissez « ls --help » pour plus d'informations.");
       });
-      it('messages de man-db', () => {
+      it('man-db messages', () => {
         expect(s.execute('man')).toContain(L('Quelle page de manuel voulez-vous ?'));
         expect(s.execute('man xyz')).toBe("Il n'y a pas de page de manuel pour xyz.");
       });
-      it('chaque commande du jeu a une page', () => {
+      it('every command of the game has a page', () => {
         for (const h of STORIES) for (const c of h.chapters) for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toContain('NOM');
       });
     });
-    it('chaque commande du jeu a une page de manuel', () => {
+    it('every command of the game has a manual page', () => {
       const s = new Shell(chapter('lighthouse'), language);
       for (const h of STORIES)
         for (const c of h.chapters)

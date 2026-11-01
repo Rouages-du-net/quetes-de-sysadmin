@@ -1,11 +1,11 @@
-// Histoire « Le Datacenter » — chapitre « Premier jour » : lire un journal
-// de serveur avec head, tail, wc, grep, cut, sort, uniq et les tubes |,
-// écrire avec > et >>, gérer les processus (ps, kill) et un service
-// (systemctl), écrire dans un fichier de root avec sudo tee.
+// Story "The Data Centre" — chapter "First day": reading a server log with
+// head, tail, wc, grep, cut, sort, uniq and | pipes, writing with > and >>,
+// managing processes (ps, kill) and a service (systemctl), writing to a
+// root-owned file with sudo tee.
 //
-// Le journal suit le format « combined » de nginx, sans les deux derniers
-// champs (page d'origine et navigateur). Toutes les adresses IP sont
-// réservées à la documentation (RFC 5737).
+// The log follows nginx's "combined" format, without the last two fields
+// (referrer and user agent). All IP addresses are reserved for
+// documentation (RFC 5737).
 
 import { path, d, f, player, type Chapter, type Accounts } from '../world';
 import type { Game } from '../shell';
@@ -18,8 +18,8 @@ const M = '/home/you';
 const ROBOT = '198.51.100.77';
 const BLOCKED = '/etc/nginx/blocked.conf';
 
-// Journal d'accès déterministe : des visiteurs, puis un robot qui aspire le
-// catalogue et fait tomber le service (erreurs 503).
+// Deterministic access log: visitors, then a bot that scrapes the catalogue
+// and brings the service down (503 errors).
 const VISITORS = ['192.0.2.14', '192.0.2.31', '192.0.2.58', '203.0.113.9', '203.0.113.42', '203.0.113.87', '192.0.2.120', '203.0.113.150'];
 const PAGES = ['/', '/agenda', '/catalogue', '/horaires', '/catalogue/livre/1984', '/expositions', '/contact', '/catalogue/livre/beloved'];
 
@@ -52,10 +52,10 @@ export const NGINX_LOG = LOG.text;
 export const ERRORS_503 = LOG.erreurs503;
 export const ROBOT_REQUESTS = LOG.robotRequests;
 
-// Pendant qu'on enquête, le site vit (activite.ts) : le robot continue
-// d'aspirer le catalogue toutes les 2 s (503 tant que le service sature,
-// 403 une fois bloqué par nginx), des visiteurs passent toutes les 7 s. Le
-// journal grandit : tail -f /var/log/nginx/access.log le montre en direct.
+// While you investigate, the site lives on (activity.ts): the bot keeps
+// scraping the catalogue every 2 s (503 while the service is saturated, 403
+// once blocked by nginx), visitors come by every 7 s. The log grows:
+// tail -f /var/log/nginx/access.log shows it live.
 const DIRECT_START = Date.UTC(2026, 9, 13, 18, 42, 0);
 const inDirect = (j: Game): string[] => (j.state.liveAccess ??= []) as string[];
 const accessLine = (t: number, ip: string, page: string, status: number, size: number) =>
@@ -78,9 +78,9 @@ function visits(j: Game, forEachOf: number, a: number) {
   }
 }
 
-// Les erreurs 503 du journal, à cet instant.
+// The log's 503 errors, at this moment.
 const erreurs503 = (j: Game) => (j.read('/var/log/nginx/access.log') ?? '').split('\n').filter((l) => / 503 /.test(l)).length;
-// Le nombre que donne le rapport : une ligne qui commence par un nombre (la sortie de wc -l).
+// The number the report gives: a line that starts with a number (the output of wc -l).
 const reportCount = (r: string) =>
   r
     .split('\n')
@@ -88,8 +88,8 @@ const reportCount = (r: string) =>
     .filter((x): x is string => x !== undefined)
     .map(Number);
 
-// Les comptes de la machine datacenter (chapitres 2 et 3), comme une Debian :
-// www-data fait tourner le site, adm lit les journaux.
+// The accounts of the datacenter machine (chapters 2 and 3), like a Debian:
+// www-data runs the site, adm reads the logs.
 export const datacenterAccounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
@@ -128,8 +128,8 @@ export const datacenter: Chapter = {
   final: 'report',
   password: 'welcome-2026',
   activity: { not: 5, departure: () => DIRECT_START, advance: visits },
-  // t : les textes dans la langue du jeu (français tant que le shell ne le
-  // transmet pas).
+  // t: the texts in the game's language (French as long as the shell does
+  // not pass it on).
   state: (t) => ({
     process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
@@ -148,11 +148,11 @@ export const datacenter: Chapter = {
           { pid: 613, user: 'www-data', cpu: 4.8, mem: 0.6, command: 'nginx: worker process' },
         ],
       },
-      // Ses processus sont gérés par l'histoire (surKill).
+      // Its processes are managed by the story (onKill).
       catalogue: { description: t('first-day-service-catalogue'), active: true, executable: 'php-fpm' },
     }),
-    // Configuration que nginx a réellement chargée (il ne relit le fichier
-    // qu'au reload ou au restart).
+    // The configuration nginx actually loaded (it only rereads the file on
+    // reload or restart).
     loadedConf: initialBlocked(t),
     onSystemctl: (game: any, action: string, name: string) => {
       if (name !== 'nginx' || action === 'stop') return '';
@@ -161,7 +161,7 @@ export const datacenter: Chapter = {
     },
     onKill: (game: any, p: Process) => {
       if (p.command !== 'php-fpm: pool catalogue') return '';
-      // systemd relance automatiquement le service (Restart=always).
+      // systemd restarts the service automatically (Restart=always).
       const blocked = game.state.loadedConf.includes(`deny ${ROBOT};`);
       const fresh = blocked ? catalogueStable() : { ...catalogueStable(), pid: p.pid + 2, cpu: 99.1, mem: 37.9 };
       game.state.process.push(fresh);
@@ -219,7 +219,7 @@ export const datacenter: Chapter = {
       { owner: 'root' },
     ),
   events: [
-    // Coups de pouce : une piste trop longue (tout lire, compter à la main) renvoie aux notes d'Awa.
+    // Hints: a lead that is too long (reading everything, counting by hand) points back to Awa's notes.
     {
       id: 'all-read',
       condition: (j) =>
@@ -247,7 +247,7 @@ export const datacenter: Chapter = {
     },
     {
       id: 'account',
-      // Le journal grandit : le bon compte est celui du journal à cet instant.
+      // The log grows: the right count is that of the log at this moment.
       condition: (j) => {
         const cmds = j.last.commands.flat();
         return cmds.includes('grep') && j.last.output.trim().split(/\s+/)[0] === String(erreurs503(j));
@@ -292,7 +292,7 @@ export const datacenter: Chapter = {
     },
     {
       id: 'report',
-      // Un compte pris à un moment de l'enquête : entre le journal du début et celui de maintenant.
+      // A count taken at some point during the investigation: between the log at the start and the log now.
       condition: (j) => {
         const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
         return j.flags.has('repaired') && r.includes(ROBOT) && reportCount(r).some((n) => n >= ERRORS_503 && n <= erreurs503(j));

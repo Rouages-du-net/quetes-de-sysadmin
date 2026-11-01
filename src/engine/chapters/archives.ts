@@ -1,6 +1,6 @@
-// Histoire « Les Archives » : sauver le fonds d'une bibliothèque de quartier
-// sur une petite clé USB, avec du, df, find et tar. Les tailles des images,
-// sons et PDF sont simulées (champ `taille`).
+// Story "The Archives": saving a neighbourhood library's collection onto a
+// small USB stick, with du, df, find and tar. The sizes of the images,
+// sounds and PDFs are simulated (the `size` field).
 
 import { path, d, f, name, type Chapter, type File } from '../world';
 import type { Game } from '../shell';
@@ -8,13 +8,13 @@ import type { Game } from '../shell';
 const M = '/home/you';
 const KEY = '/media/usb';
 const Mo = 1024 * 1024;
-// Les commandes qui écrivent sur la clé (bash : une redirection >).
+// The commands that write to the stick (bash: a > redirection).
 const WRITERS = ['tar', 'cp', 'mv', 'mkdir', 'bash'];
 
 const binary = (description: string, size: number) => f(description, { size: Math.round(size * Mo) });
 const text = (t: string, size: number) => f(t, { size: Math.round(size * Mo), lines: true });
 
-// Les fichiers qu'il faut absolument sauver (chemins relatifs à ~).
+// The files that absolutely must be saved (paths relative to ~).
 const PRECIOUS = [
   'collection/manuscripts/marie_diary.txt',
   'collection/manuscripts/letters_1914.txt',
@@ -27,7 +27,7 @@ const PRECIOUS = [
   'collection/recordings/interview_fatou.ogg',
 ];
 
-// Une archive tar sur la clé qui contient tous les fichiers précieux.
+// A tar archive on the stick containing all the precious files.
 function archiveComplete(j: Pick<Game, 'find' | 'player' | 't'>): File | null {
   const key = j.find(path(j.t, KEY));
   if (key?.type !== 'directory') return null;

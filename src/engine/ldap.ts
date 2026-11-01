@@ -1,20 +1,19 @@
-// Un annuaire LDAP (OpenLDAP, slapd) sur une machine (etat.ldap) : des
-// entrées rangées en arbre sous une base (dc=thehive,dc=example), chacune
-// avec ses classes d'objets (objectClass) et ses attributs.
-//   - le format LDIF (RFC 2849) : entrées à ajouter, ou changements
-//     (changetype: add, modify, delete ; add:, replace:, delete: dans un modify) ;
-//   - un petit schéma (core, cosine, inetorgperson, nis) : les attributs
-//     connus et ceux que chaque classe exige ;
-//   - les filtres de recherche (RFC 4515) : (&…), (|…), (!…), (attr=valeur),
-//     (attr=*), (attr=déb*fin) ;
-//   - les mots de passe : {SSHA} (slappasswd), ou en clair (à éviter) ;
-//   - les droits, comme le paquet Debian : lecture anonyme sauf userPassword,
-//     écriture par l'administrateur (cn=admin) ou par root sur ldapi:/// (-Y EXTERNAL).
-// Sources : https://www.openldap.org/doc/admin26/, https://www.rfc-editor.org/rfc/rfc2849,
+// An LDAP directory (OpenLDAP, slapd) on a machine (state.ldap): entries
+// arranged in a tree under a base (dc=thehive,dc=example), each with its
+// object classes (objectClass) and its attributes.
+//   - the LDIF format (RFC 2849): entries to add, or changes
+//     (changetype: add, modify, delete; add:, replace:, delete: in a modify);
+//   - a small schema (core, cosine, inetorgperson, nis): the known
+//     attributes and those each class requires;
+//   - search filters (RFC 4515): (&…), (|…), (!…), (attr=value),
+//     (attr=*), (attr=start*end);
+//   - passwords: {SSHA} (slappasswd), or in clear text (to avoid);
+//   - access rights, like the Debian package: anonymous read except userPassword,
+//     write by the administrator (cn=admin) or by root over ldapi:/// (-Y EXTERNAL).
+// Sources: https://www.openldap.org/doc/admin26/, https://www.rfc-editor.org/rfc/rfc2849,
 // https://www.rfc-editor.org/rfc/rfc4515, https://wiki.debian.org/LDAP/OpenLDAPSetup
-// Écarts : pas de cn=config modifiable, de réplication, d'index, de
-// référentiel ni de base64 (::) ; un schéma réduit ; l'empreinte {SSHA}
-// n'est pas un vrai SHA-1.
+// Differences: no editable cn=config, no replication, indexes, referrals
+// or base64 (::); a reduced schema; the {SSHA} hash is not a real SHA-1.
 
 import type { Game } from './shell';
 
@@ -31,9 +30,9 @@ export interface Directory {
 
 export const directory = (j: Game) => j.state.ldap as Directory | undefined;
 
-// ——— Les noms (DN) ———
+// ——— Names (DN) ———
 
-/** Un DN sous une forme comparable : minuscules, sans blancs autour des virgules et des =. */
+/** A DN in a comparable form: lower case, without blanks around commas and =. */
 export const normalise = (dn: string) =>
   dn
     .split(',')
@@ -50,9 +49,9 @@ export const parent = (dn: string) => dn.split(',').slice(1).join(',');
 export const find = (a: Directory, dn: string) => a.inputs.find((e) => normalise(e.dn) === normalise(dn));
 export const under = (dn: string, base: string) => normalise(dn) === normalise(base) || normalise(dn).endsWith(',' + normalise(base));
 
-// ——— Le schéma ———
+// ——— The schema ———
 
-// Les attributs connus (en minuscules), avec leurs noms officiels.
+// The known attributes (lower case), with their official names.
 const ATTRIBUTES = [
   'objectClass',
   'dc',
@@ -81,7 +80,7 @@ const ATTRIBUTES = [
 const ATTRIBUTE_NAME = Object.fromEntries(ATTRIBUTES.map((a) => [a.toLowerCase(), a]));
 export const attributeName = (a: string) => ATTRIBUTE_NAME[a.toLowerCase()] ?? a;
 
-// Les classes connues : les attributs qu'elles exigent (MUST) et permettent (MAY).
+// The known classes: the attributes they require (MUST) and allow (MAY).
 const CLASSES: Record<string, { must: string[]; may: string[]; structural: boolean }> = {
   top: { must: [], may: [], structural: false },
   dcobject: { must: ['dc'], may: ['description'], structural: false },
@@ -130,7 +129,7 @@ const CODES_NAMES: Record<number, string> = {
 };
 export const error = (code: number, info?: string): LdapError => ({ code, text: CODES_NAMES[code], ...(info ? { info } : {}) });
 
-/** Une entrée respecte-t-elle le schéma ? null si oui. */
+/** Does an entry respect the schema? null if so. */
 export function checkSchema(e: Input): LdapError | null {
   for (const a of Object.keys(e.attrs)) if (!ATTRIBUTE_NAME[a]) return error(17, `${a}: attribute type undefined`);
   const classes = (e.attrs.objectclass ?? []).map((c) => c.toLowerCase());
@@ -142,7 +141,7 @@ export function checkSchema(e: Input): LdapError | null {
       if (!e.attrs[m.toLowerCase()]?.length) return error(65, `object class '${className(c)}' requires attribute '${m}'`);
   const permitted = new Set(['objectclass', ...classes.flatMap((c) => [...CLASSES[c].must, ...CLASSES[c].may].map((x) => x.toLowerCase()))]);
   for (const a of Object.keys(e.attrs)) if (!permitted.has(a)) return error(65, `attribute '${attributeName(a)}' not allowed`);
-  // L'attribut du nom (uid=sami…) doit être dans l'entrée.
+  // The naming attribute (uid=sami…) must be in the entry.
   const [rdnA, rdnV] = e.dn
     .split(',')[0]
     .split('=')
@@ -177,9 +176,9 @@ export type Change =
   | { what: 'delete'; dn: string; line: number }
   | { what: 'modify'; dn: string; ops: { op: 'add' | 'replace' | 'delete'; attr: string; values: string[] }[]; line: number };
 
-/** Lit un texte LDIF ; `ajout` : sans changetype, une entrée est un ajout (ldapadd). Lève une erreur au format d'ldapmodify. */
+/** Reads an LDIF text; `addition`: without changetype, an entry is an addition (ldapadd). Throws an error in ldapmodify's format. */
 export function readLdif(text: string, addition: boolean): Change[] {
-  // Les lignes repliées (qui commencent par une espace) continuent la précédente.
+  // Folded lines (starting with a space) continue the previous one.
   const lines: { t: string; n: number }[] = [];
   text.split('\n').forEach((rawValue, i) => {
     if (rawValue.startsWith(' ') && lines.length && lines.at(-1)!.t !== '') lines.at(-1)!.t += rawValue.slice(1);
@@ -195,7 +194,7 @@ export function readLdif(text: string, addition: boolean): Change[] {
   const changes: Change[] = [];
   for (const block of blocks.filter((b) => b.length)) {
     const pairs = block.map((l) => {
-      // « - » sépare deux changements d'un même modify.
+      // "-" separates two changes of the same modify.
       if (l.t.trim() === '-') return { a: '-', v: '', n: l.n };
       const k = l.t.indexOf(':');
       if (k < 0) throw new Error(`ldapmodify: invalid format (line ${l.n}) entry: ""`);
@@ -235,7 +234,7 @@ export function readLdif(text: string, addition: boolean): Change[] {
   return changes;
 }
 
-/** Applique un changement ; renvoie l'erreur de slapd, ou null. */
+/** Applies a change; returns slapd's error, or null. */
 export function apply(a: Directory, c: Change): LdapError | null {
   if (c.what === 'add') {
     if (!/^[\w-]+=[^,]+(,[\w-]+=[^,]+)*$/.test(c.input.dn.replace(/\s*,\s*/g, ','))) return error(34, 'invalid DN');
@@ -284,7 +283,7 @@ export function apply(a: Directory, c: Change): LdapError | null {
   return null;
 }
 
-// ——— Les filtres (RFC 4515) ———
+// ——— Filters (RFC 4515) ———
 
 type Filter = { and: Filter[] } | { or: Filter[] } | { not: Filter } | { attr: string; pattern: string };
 
@@ -348,7 +347,7 @@ export function correspond(f: Filter, e: Input): boolean {
   return values.some((v) => re.test(v));
 }
 
-// ——— Les mots de passe ———
+// ——— Passwords ———
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 function fingerprint(secret: string, salt: string): string {
@@ -364,17 +363,17 @@ function fingerprint(secret: string, salt: string): string {
   return bytes.map((o) => B64[o]).join('');
 }
 
-/** Une empreinte {SSHA} avec un sel donné (pour les entrées de départ d'un chapitre). */
+/** A {SSHA} hash with a given salt (for a chapter's starting entries). */
 export const hashWithSalt = (secret: string, salt: string) => `{SSHA}${fingerprint(secret, salt)}${salt}`;
 
-/** slappasswd : une empreinte {SSHA} (salée : deux fois le même mot de passe ne donne pas la même). */
+/** slappasswd: a {SSHA} hash (salted: the same password twice doesn't give the same hash). */
 export function hash(j: Game, secret: string): string {
   const n = (j.state.ldapSalt = (j.state.ldapSalt ?? 0) + 1);
   const salt = fingerprint(String(n), 'sel').slice(0, 8);
   return `{SSHA}${fingerprint(secret, salt)}${salt}`;
 }
 
-/** Un mot de passe correspond-il à la valeur de userPassword (empreinte, ou en clair) ? */
+/** Does a password match the value of userPassword (hash, or clear text)? */
 export function check(stores: string, secret: string): boolean {
   if (stores.startsWith('{SSHA}')) {
     const body = stores.slice(6);

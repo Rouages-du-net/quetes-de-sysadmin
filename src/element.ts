@@ -1,4 +1,4 @@
-// L'élément <quetes-de-sysadmin>, à poser dans n'importe quelle page :
+// The <quetes-de-sysadmin> element, to put in any page:
 //
 //   <script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
 //   <quetes-de-sysadmin></quetes-de-sysadmin>
@@ -7,9 +7,9 @@
 // save-key="…" (the localStorage key of the save), theme="light" | "dark",
 // lang="fr" (without it: the page's language, otherwise English). The older
 // French names still work: histoire, cle, theme="clair" | "sombre", langue.
-// Le jeu vit dans une racine fantôme (Shadow DOM) : ses styles ne débordent
-// pas sur la page, et ceux de la page ne le cassent pas. Les couleurs se
-// règlent de l'extérieur avec les variables --qds-* (voir styles.css).
+// The game lives in a shadow root (Shadow DOM): its styles do not spill
+// onto the page, and the page's styles do not break it. Colours are set
+// from outside with the --qds-* variables (see styles.css).
 
 import { mount } from './interface/game';
 

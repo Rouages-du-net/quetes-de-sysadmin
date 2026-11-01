@@ -1,7 +1,7 @@
-// nc (netcat-openbsd, le netcat de Debian) : ici, seulement pour tester si
-// un port TCP répond (nc -zv machine port). D'après
+// nc (netcat-openbsd, Debian's netcat): here, only to test whether
+// a TCP port answers (nc -zv machine port). Based on
 // https://manpages.debian.org/trixie/netcat-openbsd/nc.1.en.html
-// Écart : sans -z, nc rend la main au lieu d'attendre des données.
+// Difference: without -z, nc returns immediately instead of waiting for data.
 
 import { machineDomain, machineByAddress, MACHINES, WORKSTATION } from '../machines';
 import { portState, type PortState } from '../ports';
@@ -31,7 +31,7 @@ export const NC: Record<string, Command> = {
         return game.error(
           'usage: nc [-46CDdFhklNnrStUuvZz] [-I length] [-i interval] [-M ttl]\n\t  [-m minttl] [-O length] [-P proxy_username] [-p source_port]\n\t  [-q seconds] [-s sourceaddr] [-T keyword] [-V rtable] [-W recvlimit]\n\t  [-w timeout] [-X proxy_protocol] [-x proxy_address[:port]]\n\t  [destination] [port]',
         );
-      // Le nom : /etc/hosts, comme le système.
+      // The name: /etc/hosts, like the system.
       let address = /^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : null;
       if (!address && host === 'localhost') address = '127.0.0.1';
       for (const line of (game.read('/etc/hosts') ?? '').split('\n')) {
@@ -45,7 +45,7 @@ export const NC: Record<string, Command> = {
       const lines: string[] = [];
       for (let port = start; port <= end && port - start < 1024; port++) {
         const name = SERVICES[port] ?? '*';
-        // Vers soi-même : la boucle locale ; vers une autre machine : son pare-feu, ses conteneurs.
+        // To itself: the loopback; to another machine: its firewall, its containers.
         const local = address.startsWith('127.') || machine?.name === game.host;
         const other = !local && machine && machine !== WORKSTATION ? (game.state.remotePort?.(machine.name, port) as PortState | undefined) : undefined;
         const state: PortState = local ? portState(game, port, true, '127.0.0.1') : (other ?? 'refused');

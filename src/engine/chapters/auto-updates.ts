@@ -1,21 +1,20 @@
-// Histoire « La Coopérative » — chapitre « Les mises à jour automatiques » :
-// après la mise à jour à la main du chapitre précédent, de nouvelles mises
-// à jour de sécurité sont déjà là. Marc avait installé unattended-upgrades…
-// sans jamais l'activer (20auto-upgrades à « 0 »). L'activer, recevoir le
-// rapport par courrier, redémarrer seul mais la nuit (la coopérative ouvre
-// de 7 h à 20 h), et ne pas laisser passer nodejs (dépôt de NodeSource :
-// une nouvelle version majeure que la caisse ne supporte pas).
-// Preuve : lancer le service apt-daily-upgrade, comme le fera son timer.
-// Pièges réels : un « ; » oublié (apt-config refuse tout le fichier) ;
-// « origin=* » dans Origins-Pattern (nodejs passe en 22, la caisse ne
-// redémarrera pas) ; Automatic-Reboot sans heure (redémarrage immédiat, en
-// pleine journée) ; le service lancé avant d'activer 20auto-upgrades (il ne
-// fait rien).
-// Objectif vérifié sur l'état : les deux tâches activées, une passe
-// automatique a installé les mises à jour de sécurité, nodejs reste en 20,
-// un rapport est parti, le redémarrage automatique est réglé la nuit, la
-// till tourne.
-// Sources : https://wiki.debian.org/UnattendedUpgrades,
+// Story "La Coopérative" — chapter "Automatic updates": after the manual
+// update of the previous chapter, new security updates are already there.
+// Marc had installed unattended-upgrades… without ever enabling it
+// (20auto-upgrades at "0"). Enable it, receive the report by mail, reboot
+// on its own but at night (the co-op is open from 7 am to 8 pm), and do not
+// let nodejs through (NodeSource repository: a new major version the till
+// does not support).
+// Proof: start the apt-daily-upgrade service, as its timer will.
+// Real traps: a forgotten ";" (apt-config refuses the whole file);
+// "origin=*" in Origins-Pattern (nodejs goes to 22, the till will not
+// restart); Automatic-Reboot without a time (immediate reboot, in the
+// middle of the day); the service started before enabling 20auto-upgrades
+// (it does nothing).
+// Objective checked on the state: both tasks enabled, an automatic run
+// installed the security updates, nodejs stays at 20, a report was sent,
+// the automatic reboot is set at night, the till is running.
+// Sources: https://wiki.debian.org/UnattendedUpgrades,
 // https://github.com/mvo5/unattended-upgrades/blob/master/data/50unattended-upgrades.Debian
 
 import { d, f, type Chapter } from '../world';
@@ -33,7 +32,7 @@ const KERNEL = '6.12.48+deb13-amd64';
 const NEW_KERNEL = '6.12.57+deb13-amd64';
 const NODE = '20.19.5-1nodesource1';
 
-// Après « Les mises à jour » : tout est à jour… jusqu'aux annonces de cette semaine.
+// After "Updates": everything is up to date… until this week's announcements.
 const INSTALLED: Record<string, string> = {
   ...Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])),
   nginx: '1.26.3-3+deb13u2',
@@ -52,7 +51,7 @@ const ORIGINS = {
   nodejs: { o: 'Node Source', n: 'nodistro', l: 'Node Source', site: 'deb.nodesource.com' },
 };
 
-// Le fichier livré par Debian (abrégé), tel que Marc l'a laissé.
+// The file shipped by Debian (abridged), as Marc left it.
 const FIFTY = `// Unattended-Upgrade::Origins-Pattern controls which packages are
 // upgraded.
 //
@@ -120,7 +119,7 @@ Unattended-Upgrade::Package-Blacklist {
 //Unattended-Upgrade::Automatic-Reboot-Time "02:00";
 `;
 
-// dpkg-reconfigure unattended-upgrades, à qui Marc a répondu « Non ».
+// dpkg-reconfigure unattended-upgrades, to which Marc answered "No".
 const TWENTY = 'APT::Periodic::Update-Package-Lists "0";\nAPT::Periodic::Unattended-Upgrade "0";\n';
 
 const apt = (j: Game) => j.state.apt as AptState;
@@ -131,7 +130,7 @@ const active = (j: Game) => {
 };
 const installedSecurity = (j: Game) => Object.entries(SECURITY).every(([n, v]) => apt(j).installed[n] === v);
 const nodeIntact = (j: Game) => apt(j).installed.nodejs === NODE;
-// Une heure où la coopérative est fermée (20 h – 7 h).
+// A time when the co-op is closed (8 pm – 7 am).
 const night = (j: Game) => {
   const c = conf(j).values;
   const m = /^(\d{1,2}):(\d{2})$/.exec(c[`${UU}::Automatic-Reboot-Time`] ?? 'now');
@@ -174,7 +173,7 @@ export const automatic: Chapter = {
   state: () => {
     const e = tillState(tillEnv(NEW_KEY, 'loopback'));
     const s = tillSystemd();
-    // La caisse ne démarre qu'avec Node.js 20 (son package.json l'exige).
+    // The till only starts with Node.js 20 (its package.json requires it).
     s.services.till.check = (j) =>
       /^20\./.test(apt(j).installed.nodejs ?? '')
         ? null

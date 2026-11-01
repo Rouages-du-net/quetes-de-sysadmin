@@ -1,7 +1,7 @@
-// Les outils d'OpenLDAP (ldap-utils et slapd) sur l'annuaire simulé
-// (../ldap.ts) : ldapsearch, ldapadd, ldapmodify, ldapdelete, ldappasswd,
-// ldapwhoami, slappasswd, slapcat. Sorties en anglais, comme les vrais outils.
-// Sources : https://manpages.debian.org/trixie/ldap-utils/ldapsearch.1.en.html,
+// OpenLDAP's tools (ldap-utils and slapd) on the simulated directory
+// (../ldap.ts): ldapsearch, ldapadd, ldapmodify, ldapdelete, ldappasswd,
+// ldapwhoami, slappasswd, slapcat. Outputs in English, like the real tools.
+// Sources: https://manpages.debian.org/trixie/ldap-utils/ldapsearch.1.en.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldappasswd.1.en.html,
 // https://manpages.debian.org/trixie/slapd/slappasswd.8.en.html
@@ -102,7 +102,7 @@ function readOptions(args: string[], withS: 'scope' | 'new'): Options | string {
   return o;
 }
 
-// /etc/ldap/ldap.conf : BASE et URI par défaut.
+// /etc/ldap/ldap.conf: default BASE and URI.
 function defaults(game: Shell): { base: string | null; uri: string } {
   const text = game.read('/etc/ldap/ldap.conf') ?? '';
   const value = (key: string) =>
@@ -116,7 +116,7 @@ function defaults(game: Shell): { base: string | null; uri: string } {
 
 type Identity = { who: 'anonymous' } | { who: 'admin' } | { who: 'root' } | { who: 'person'; dn: string } | { who: 'local'; uid: number };
 
-/** Se présenter à slapd (bind) ; renvoie l'identité, ou l'erreur à afficher (avec son code de retour). */
+/** Introduce yourself to slapd (bind); returns the identity, or the error to show (with its exit code). */
 function bindSelf(game: Shell, o: Options, mdp: string | null): { id: Identity; log: string[] } | { error: string; code: number } {
   const a = directory(game);
   const uri = o.uri ?? defaults(game).uri;
@@ -154,7 +154,7 @@ function bindSelf(game: Shell, o: Options, mdp: string | null): { id: Identity; 
 const adminMdp = (game: Shell): string => game.state.ldapAdmin ?? '';
 const written = (id: Identity) => id.who === 'admin' || id.who === 'root';
 
-/** Lance `faire` une fois le mot de passe connu : donné (-w), demandé (-W), ou sans (anonyme, SASL). */
+/** Runs `run` once the password is known: given (-w), prompted (-W), or none (anonymous, SASL). */
 function withMdp(game: Shell, o: Options, run: (mdp: string | null) => string): string {
   if (!o.askMdp || o.mdp !== null) return run(o.mdp);
   const who = game.who;
@@ -175,7 +175,7 @@ function withMdp(game: Shell, o: Options, run: (mdp: string | null) => string): 
   return '';
 }
 
-// « # sami, people, thehive.example » : le commentaire de ldapsearch devant chaque entrée.
+// "# sami, people, thehive.example": ldapsearch's comment before each entry.
 function title(dn: string): string {
   const rdns = dn.split(',').map((r) => r.split('=').map((x) => x.trim()));
   const dcs = rdns.filter(([a]) => a.toLowerCase() === 'dc').map(([, v]) => v);
@@ -187,7 +187,7 @@ function inputLines(e: Input, id: Identity, requests: string[]): string[] {
   const lines = [`dn: ${e.dn}`];
   for (const [a, values] of Object.entries(e.attrs)) {
     if (requests.length && !requests.includes('*') && !requests.some((d) => d.toLowerCase() === a)) continue;
-    // userPassword : seulement pour l'administrateur, root, ou la personne elle-même.
+    // userPassword: only for the administrator, root, or the person themselves.
     if (a === 'userpassword' && !(written(id) || (id.who === 'person' && normalise(id.dn) === normalise(e.dn)))) continue;
     for (const v of values) lines.push(`${attributeName(a)}: ${v}`);
   }
@@ -249,7 +249,7 @@ function ldapsearch(game: Shell, args: string[]): string {
   });
 }
 
-// ldapadd, ldapmodify, ldapdelete : écrire dans l'annuaire.
+// ldapadd, ldapmodify, ldapdelete: writing to the directory.
 function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', args: string[], input: string | null): string {
   const o = readOptions(args, 'scope');
   if (typeof o === 'string') return game.error(`${name}: invalid option -- '${o}'`, 1);
@@ -293,7 +293,7 @@ function writeIn(game: Shell, name: 'ldapadd' | 'ldapmodify' | 'ldapdelete', arg
   });
 }
 
-// Une personne peut changer son propre mot de passe (et rien d'autre).
+// A person can change their own password (and nothing else).
 const mine = (id: Identity, c: Change) =>
   id.who === 'person' &&
   c.what === 'modify' &&
@@ -351,7 +351,7 @@ function ldappasswd(game: Shell, args: string[]): string {
   return '';
 }
 
-// Le mot de passe que choisit ldappasswd quand on ne lui en donne pas.
+// The password ldappasswd chooses when it isn't given one.
 const generated = (game: Shell) => {
   const n = (game.state.ldapGenerated = (game.state.ldapGenerated ?? 0) + 1);
   return ['aB3dEf9h', 'Qw7rTy2u', 'Zx5cVb8n'][(n - 1) % 3];

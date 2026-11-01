@@ -1,22 +1,22 @@
-// DNS simulé : des zones au format de BIND, un serveur primaire (named, sur
-// la machine), un serveur secondaire chez le registre (qui ne recopie la zone
-// que si son numéro de série augmente, après NOTIFY), et un résolveur public
-// qui garde ses réponses en cache pendant leur TTL.
-// D'après la documentation de BIND 9 (https://bind9.readthedocs.io/en/stable/) :
-// format des fichiers de zone (RFC 1035), named-checkzone, rndc reload,
-// transferts de zone vers les secondaires quand le serial augmente.
+// Simulated DNS: zones in BIND format, a primary server (named, on
+// the machine), a secondary server at the registry (which only copies the zone
+// if its serial number increases, after NOTIFY), and a public resolver
+// that caches its answers for their TTL.
+// Based on the BIND 9 documentation (https://bind9.readthedocs.io/en/stable/):
+// zone file format (RFC 1035), named-checkzone, rndc reload,
+// zone transfers to the secondaries when the serial increases.
 //
 //   etat.dns = {
 //     conf: '/etc/bind/named.conf.local',
-//     primaire: { zone: { serie, rrs } },     ce que named a chargé
-//     secondaire: { zone: { serie, rrs } },   la copie du registre
-//     cache: { 'nom TYPE': { rrs, expire } }, le résolveur public (heure UTC)
+//     primaire: { zone: { serie, rrs } },     what named has loaded
+//     secondaire: { zone: { serie, rrs } },   the registry's copy
+//     cache: { 'nom TYPE': { rrs, expire } }, the public resolver (UTC time)
 //     serveurs: { primaire: [noms, adresses], secondaire: [...], resolveur: [...] }
 //   }
 //
-// Écarts : types A, AAAA, CNAME, MX, NS, TXT, SOA ; pas de DNSSEC, de
-// délégation ni de zones inverses ; le transfert vers le secondaire est
-// immédiat.
+// Differences: types A, AAAA, CNAME, MX, NS, TXT, SOA; no DNSSEC,
+// delegation nor reverse zones; the transfer to the secondary is
+// immediate.
 
 import type { Game } from './shell';
 import { writeLog, systemd } from './systemd';
@@ -39,11 +39,11 @@ export interface DnsState {
   secondary: Record<string, Zone>;
   cache: Record<string, { rrs: Rr[]; expires: number }>;
   servers: { primary: string[]; secondary: string[]; resolver: string[] };
-  // Les fichiers de zone tels qu'ils étaient au dernier chargement (pour « up-to-date »).
+  // The zone files as they were at the last load (for "up-to-date").
   charges: Record<string, string>;
-  // Le serveur de la machine est aussi un résolveur (récursif) : pour les noms
-  // hors de ses zones, il répond comme le reste d'internet (le secondaire et
-  // les zones des autres, rangées avec lui).
+  // The machine's server is also a (recursive) resolver: for names
+  // outside its zones, it answers like the rest of the internet (the secondary and
+  // the others' zones, stored with it).
   recursive?: boolean;
 }
 
@@ -52,7 +52,7 @@ export const dns = (game: Game): DnsState | undefined => game.state.dns;
 const TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA'];
 const fqdn = (name: string, origin: string) => (name === '@' ? origin : name.endsWith('.') ? name : `${name}.${origin}`).toLowerCase();
 
-// Une durée de zone : 86400, ou 1d, 2h, 30m, 1w.
+// A zone duration: 86400, or 1d, 2h, 30m, 1w.
 function duration(text: string): number | null {
   if (/^\d+$/.test(text)) return Number(text);
   const m = /^(\d+)([smhdw])$/i.exec(text);
@@ -60,19 +60,19 @@ function duration(text: string): number | null {
   return Number(m[1]) * { s: 1, m: 60, h: 3600, d: 86400, w: 604800 }[m[2].toLowerCase() as 's']!;
 }
 
-// Un « ; » commence un commentaire, sauf entre guillemets (« v=DKIM1; k=rsa; »).
+// A ";" starts a comment, except between quotes ("v=DKIM1; k=rsa;").
 const withoutComment = (line: string) => line.replace(/^((?:"[^"]*"|[^";])*);.*$/, '$1');
 const outsideGuillemets = (line: string) => line.replace(/"[^"]*"/g, '');
 
-/** Le texte d'un enregistrement TXT : ses chaînes entre guillemets, mises bout à bout (RFC 7208, 3.3). */
+/** The text of a TXT record: its quoted strings, joined end to end (RFC 7208, 3.3). */
 export const txtText = (data: string) => {
   const strings = [...data.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
   return strings.length ? strings.join('') : data;
 };
 
 /**
- * Lit un fichier de zone comme named-checkzone ; renvoie les enregistrements
- * et le serial, ou les erreurs au format de BIND (fichier:ligne: message).
+ * Reads a zone file like named-checkzone; returns the records
+ * and the serial, or the errors in BIND's format (file:line: message).
  */
 export function readZone(text: string, zone: string, file: string): { zone: Zone; errors: string[] } {
   const zoneOrigin = zone.replace(/\.?$/, '.').toLowerCase();
@@ -84,7 +84,7 @@ export function readZone(text: string, zone: string, file: string): { zone: Zone
   const lines = text.split('\n');
   for (let i = 0; i < lines.length; i++) {
     const number = i + 1;
-    // Les parenthèses regroupent plusieurs lignes (le SOA, une clé DKIM).
+    // Parentheses group several lines (the SOA, a DKIM key).
     let line = withoutComment(lines[i]);
     if (outsideGuillemets(line).includes('(')) {
       while (!outsideGuillemets(line).includes(')') && i + 1 < lines.length) line += ' ' + withoutComment(lines[++i]);
@@ -101,7 +101,7 @@ export function readZone(text: string, zone: string, file: string): { zone: Zone
       origin = fqdn(words[1] ?? '@', zoneOrigin);
       continue;
     }
-    // Un nom en début de ligne ; sinon, le même que la ligne précédente.
+    // A name at the start of the line; otherwise, the same as the previous line.
     let name = previous;
     if (!/^\s/.test(line)) name = fqdn(words.shift()!, origin);
     previous = name;
@@ -128,7 +128,7 @@ export function readZone(text: string, zone: string, file: string): { zone: Zone
       errors.push(`dns_rdata_fromtext: ${file}:${number}: near '${data}': bad IPv6 address`);
       continue;
     }
-    // Les noms dans les données : relatifs à l'origine s'ils ne finissent pas par un point.
+    // Names in the data: relative to the origin if they don't end with a dot.
     if (type === 'CNAME' || type === 'NS') data = fqdn(data, origin);
     if (type === 'MX') {
       const [prio, target] = words;
@@ -154,13 +154,13 @@ export function readZone(text: string, zone: string, file: string): { zone: Zone
   }
   const soa = rrs.find((r) => r.type === 'SOA' && r.name === zoneOrigin);
   if (!soa && !errors.length) errors.push(`zone ${zone}/IN: has no SOA record`);
-  // Un CNAME ne peut pas cohabiter avec d'autres données du même nom.
+  // A CNAME can't coexist with other data for the same name.
   for (const c of rrs.filter((r) => r.type === 'CNAME'))
     if (rrs.some((r) => r.name === c.name && r.type !== 'CNAME')) errors.push(`zone ${zone}/IN: ${c.name.slice(0, -1)}: CNAME and other data`);
   return { zone: { serial: soa ? Number(soa.data.split(' ')[2]) : 0, rrs }, errors };
 }
 
-/** Les zones déclarées dans named.conf.local : nom → fichier. */
+/** The zones declared in named.conf.local: name → file. */
 export function declaredZones(game: Game): Record<string, string> {
   const d = dns(game);
   const text = d ? (game.read(d.conf) ?? '') : '';
@@ -173,9 +173,9 @@ export function declaredZones(game: Game): Record<string, string> {
 }
 
 /**
- * rndc reload : named relit les fichiers de zone. Une zone fausse garde son
- * ancienne version. Si le serial augmente, le secondaire est prévenu (NOTIFY)
- * et recopie la zone ; sinon, il garde l'ancienne. Renvoie les zones en erreur.
+ * rndc reload: named rereads the zone files. A broken zone keeps its
+ * old version. If the serial increases, the secondary is notified (NOTIFY)
+ * and copies the zone; otherwise, it keeps the old one. Returns the zones in error.
  */
 export function reloadZones(game: Game, only?: string): { errors: string[]; changed: string[] } {
   const d = dns(game)!;
@@ -208,7 +208,7 @@ export function reloadZones(game: Game, only?: string): { errors: string[]; chan
     d.primary[zone] = z;
     d.charges[zone] = text;
     changed.push(zone);
-    // NOTIFY : le secondaire ne recopie que si le serial a augmenté.
+    // NOTIFY: the secondary only copies if the serial has increased.
     const copyOf = d.secondary[zone];
     if (!copyOf || z.serial > copyOf.serial) {
       log(`zone ${zone}/IN: sending notifies (serial ${z.serial})`);
@@ -232,13 +232,13 @@ export interface Response {
   authority: boolean;
 }
 
-// La zone qui contient ce nom, parmi celles qu'un serveur connaît.
+// The zone that contains this name, among those a server knows.
 const zoneFor = (zones: Record<string, Zone>, name: string) =>
   Object.keys(zones)
     .filter((z) => name === `${z}.` || name.endsWith(`.${z}.`))
     .sort((a, b) => b.length - a.length)[0];
 
-/** Ce que répond un serveur faisant autorité (primaire ou secondaire), en suivant les CNAME de ses zones. */
+/** What an authoritative server (primary or secondary) answers, following the CNAMEs of its zones. */
 function authoritative(zones: Record<string, Zone>, name: string, type: string): Response {
   const z = zoneFor(zones, name);
   if (!z) return { status: 'REFUSED', responses: [], authority: false };
@@ -261,9 +261,9 @@ function authoritative(zones: Record<string, Zone>, name: string, type: string):
 }
 
 /**
- * Une question DNS posée à un serveur. Le résolveur public répond depuis son
- * cache tant que le TTL court, sinon il demande au serveur secondaire
- * (celui que ses requêtes atteignent ici) et garde la réponse.
+ * A DNS question asked to a server. The public resolver answers from its
+ * cache while the TTL runs, otherwise it asks the secondary server
+ * (the one its queries reach here) and keeps the answer.
  */
 export function query(game: Game, server: Server, name: string, type: string, now: number): Response & { remainingTtl?: number } {
   const d = dns(game)!;

@@ -1,22 +1,22 @@
-// Histoire « L'Audit » — chapitre « L'exposition » : deuxième partie du
-// rapport de Salomé. Son balayage de ports, depuis internet, trouve la base
-// PostgreSQL (5432) et Redis (6379) joignables par tout le monde ; le
-// pare-feu (ufw) est installé mais éteint. Redis n'a pas de mot de passe et
-// écoute sur toutes les interfaces (bind * -::*, protected-mode no).
-//   - ss -tlnp : qui écoute où ;
-//   - ufw : autoriser SSH (depuis le poste), 80 et 443 AVANT d'activer ;
-//   - Redis : en plus du pare-feu, le faire écouter seulement sur
-//     127.0.0.1 (bind dans /etc/redis/redis.conf, puis restart : un
-//     programme ne relit pas sa configuration tout seul). Le pare-feu seul
-//     laisserait Redis à une erreur de règle d'être public.
-// Pièges réels : activer ufw avant d'autoriser SSH, couper le site, arrêter
-// Redis (l'appli de commandes en a besoin), modifier redis.conf sans
-// redémarrer.
-// Objectif vérifié sur l'état : ufw actif (entrant refusé par défaut), SSH
-// du poste, 80 et 443 joignables depuis internet, 5432 et 6379 fermés,
-// Redis actif et à l'écoute sur 127.0.0.1 seulement, et une nouvelle
-// connexion ssh réussie depuis l'activation.
-// Sources : https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html,
+// Story "The Audit" — chapter "The Exposure": second part of Salomé's
+// report. Her port scan, from the internet, finds the PostgreSQL database
+// (5432) and Redis (6379) reachable by everyone; the firewall (ufw) is
+// installed but off. Redis has no password and listens on every interface
+// (bind * -::*, protected-mode no).
+//   - ss -tlnp: who listens where;
+//   - ufw: allow SSH (from the workstation), 80 and 443 BEFORE enabling;
+//   - Redis: on top of the firewall, make it listen only on 127.0.0.1
+//     (bind in /etc/redis/redis.conf, then restart: a program does not
+//     reread its configuration on its own). The firewall alone would leave
+//     Redis one rule mistake away from being public.
+// Real traps: enabling ufw before allowing SSH, cutting off the site,
+// stopping Redis (the orders app needs it), editing redis.conf without
+// restarting.
+// Objective checked on the state: ufw active (incoming denied by default),
+// SSH from the workstation, 80 and 443 reachable from the internet, 5432
+// and 6379 closed, Redis active and listening on 127.0.0.1 only, and a new
+// successful ssh connection since enabling.
+// Sources: https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html,
 // https://redis.io/docs/latest/operate/oss_and_stack/management/security/,
 // https://www.postgresql.org/docs/current/runtime-config-connection.html
 
@@ -31,7 +31,7 @@ import { loadSshd, bakeryAccounts, file, INTERNET, M, NOW, PASSWORD, bakeryWorld
 
 const REDIS_CONF = '/etc/redis/redis.conf';
 
-// Le balayage de Salomé, comme nmap l'affiche.
+// Salomé's scan, as nmap shows it.
 const SCAN = `Starting Nmap 7.94 ( https://nmap.org ) at 2028-03-13 17:41 CET
 Nmap scan report for bakery.example (192.0.2.22)
 Host is up (0.011s latency).
@@ -45,7 +45,7 @@ PORT     STATE SERVICE
 
 Nmap done: 1 IP address (1 host up) scanned in 2.07 seconds`;
 
-// redis.conf de Debian (extrait), tel que l'a laissé l'installation « pour que ça marche ».
+// Debian's redis.conf (excerpt), as the "just make it work" installation left it.
 const REDIS_CONFIG = `# Redis configuration file (excerpt)
 bind * -::*
 port 6379
@@ -64,7 +64,7 @@ const listening = (): Listening[] => [
   { proto: 'tcp', address: '127.0.0.1', port: 3000, process: 'node', pid: 731 },
 ];
 
-/** Redis écoute-t-il seulement sur la boucle locale d'après ce redis.conf ? (sans « bind » : partout) */
+/** According to this redis.conf, does Redis listen only on the loopback? (without "bind": everywhere) */
 export const redisLocal = (conf: string) => {
   const words = conf
     .split('\n')
@@ -111,7 +111,7 @@ export const exposure: Chapter = {
         active: true,
         executable: 'redis-server',
         process: [{ pid: 760, user: 'redis', cpu: 0.2, mem: 0.6, command: '/usr/bin/redis-server *:6379' }],
-        // Redis lit redis.conf au démarrage : c'est là qu'il choisit où écouter.
+        // Redis reads redis.conf on start: that is where it chooses where to listen.
         load: (j) => {
           const e = redis(j);
           if (e) e.address = redisLocal(j.read(REDIS_CONF) ?? '') ? '127.0.0.1' : '0.0.0.0';

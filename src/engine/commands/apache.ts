@@ -1,18 +1,18 @@
-// Les commandes d'Apache sur Debian : apache2ctl (et apachectl, le même
-// script) pour vérifier la configuration (configtest, -S, -M) et piloter le
-// service ; a2ensite, a2dissite, a2enmod, a2dismod, a2enconf, a2disconf, qui
-// créent ou retirent les liens symboliques de sites-enabled, mods-enabled
-// et conf-enabled. Messages d'après apache2ctl(8), a2enmod(8) et le script
-// a2enmod du paquet apache2 (https://salsa.debian.org/apache-team/apache2/-/blob/master/debian/a2enmod).
-// Écarts : apache2ctl configtest marche aussi hors de root ; sans argument,
-// a2ensite & co. listent les choix sans les demander.
+// Apache's commands on Debian: apache2ctl (and apachectl, the same script)
+// to check the configuration (configtest, -S, -M) and control the service;
+// a2ensite, a2dissite, a2enmod, a2dismod, a2enconf, a2disconf, which create
+// or remove the symbolic links of sites-enabled, mods-enabled and
+// conf-enabled. Messages based on apache2ctl(8), a2enmod(8) and the a2enmod
+// script of the apache2 package (https://salsa.debian.org/apache-team/apache2/-/blob/master/debian/a2enmod).
+// Differences: apache2ctl configtest also works without root; without an
+// argument, a2ensite & co. list the choices without asking.
 
 import type { Command } from './index';
 import type { Shell } from '../shell';
 import { stop, start, reload, systemd } from '../systemd';
 import { AH00558, DEPENDENCIES, ROOT, SIGNATURE, modulesCharges, test, vhosts } from '../apache';
 
-// Ce que le script apache2ctl affiche sans argument valable.
+// What the apache2ctl script shows without a valid argument.
 const USAGE = [
   'Usage: /usr/sbin/apache2ctl start|stop|restart|graceful|graceful-stop|configtest|status|fullstatus|help',
   '       /usr/sbin/apache2ctl <apache2 args>',
@@ -21,14 +21,14 @@ const USAGE = [
 
 const installed = (game: Shell) => !!game.find('/usr/sbin/apache2ctl');
 
-// Vérifier la configuration ; renvoie les lignes d'avertissement, ou l'erreur.
+// Checks the configuration; returns the warning lines, or the error.
 function check(game: Shell, action: string): { lines: string[]; error: string | null; config: ReturnType<typeof test>['config'] } {
   const res = test(game);
   if (!res.config) return { lines: [], error: `${res.error}\nAction '${action}' failed.\nThe Apache error log may have more information.`, config: null };
   return { lines: [...res.config.warnings, ...(res.config.globalName ? [] : [AH00558])], error: null, config: res.config };
 }
 
-// apache2ctl start|stop|restart|graceful : sous systemd, le script passe par systemctl.
+// apache2ctl start|stop|restart|graceful: under systemd, the script goes through systemctl.
 function drive(game: Shell, action: string): string {
   const sd = systemd(game);
   const s = sd?.services.apache2;
@@ -43,7 +43,7 @@ function drive(game: Shell, action: string): string {
     return '';
   }
   if (action === 'graceful' && s.state === 'active') {
-    // apache2ctl graceful vérifie d'abord la configuration.
+    // apache2ctl graceful checks the configuration first.
     const v = check(game, 'graceful');
     if (v.error) return game.error(v.error);
     return reload(game, sd, 'apache2') ? '' : failure();
@@ -99,7 +99,7 @@ const apache2ctl: Command = {
   },
 };
 
-// a2ensite & co. : le type d'objet, ses dossiers, l'extension et la commande à lancer ensuite.
+// a2ensite & co.: the type of object, its directories, the extension and the command to run next.
 interface Kind {
   word: string;
   Word: string;

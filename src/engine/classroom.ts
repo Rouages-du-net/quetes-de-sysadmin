@@ -1,9 +1,8 @@
-// Le tableau de classe des enseignant·es : les sauvegardes des élèves (les
-// fichiers de « Ma progression », ou leurs codes courts), lues dans le
-// navigateur de l'enseignant·e, sans rien envoyer nulle part. Une ligne par
-// élève : chapitres terminés, grade, succès, records du mode examen, et
-// l'avancée dans chaque histoire. Ce n'est pas une preuve de travail (un
-// fichier se modifie, un code se recopie) : un point de situation.
+// The teachers' class table: the students' saves (the "My progress" files,
+// or their short codes), read in the teacher's browser, without sending
+// anything anywhere. One row per student: chapters finished, rank,
+// achievements, exam-mode records, and progress in each story. It isn't
+// proof of work (a file can be edited, a code copied): a status check.
 
 import { STORIES } from './chapters';
 import { grade } from './achievements';
@@ -11,13 +10,13 @@ import { readCode, readFile } from './progress';
 
 export interface Student {
   name: string;
-  // D'où vient la ligne : un fichier (son nom) ou un code.
+  // Where the row comes from: a file (its name) or a code.
   source: string;
   finished: string[];
   achievements: number;
   // Meilleurs temps en mode examen, par chapitre (ms).
   records: Record<string, number>;
-  // Date de la sauvegarde (ISO), pour un fichier.
+  // Date of the save (ISO), for a file.
   date: string | null;
 }
 
@@ -25,7 +24,7 @@ export type ClassError = { source: string; error: string };
 
 const ALL = () => STORIES.flatMap((h) => h.chapters.map((c) => c.id));
 
-/** Un élève d'après son fichier de sauvegarde ; sans nom dans le fichier, celui du fichier. */
+/** A student from their save file; with no name in the file, the file's name. */
 export function fileStudent(fileName: string, text: string): Student | ClassError {
   const read = readFile(text);
   if ('error' in read) return { source: fileName, error: read.error };
@@ -46,8 +45,8 @@ export function fileStudent(fileName: string, text: string): Student | ClassErro
 }
 
 /**
- * Des élèves d'après leurs codes, un par ligne : « Nom QDS-XXXX-… » (le nom
- * est tout ce qui précède le code ; sans nom, le code lui-même).
+ * Students from their codes, one per line: "Name QDS-XXXX-…" (the name is
+ * everything before the code; with no name, the code itself).
  */
 export function codesStudents(text: string): (Student | ClassError)[] {
   return text
@@ -63,7 +62,7 @@ export function codesStudents(text: string): (Student | ClassError)[] {
     });
 }
 
-/** Les chapitres terminés d'une histoire, et combien elle en a. */
+/** A story's finished chapters, and how many it has. */
 export const progress = (e: Student, story: string) => {
   const h = STORIES.find((x) => x.id === story)!;
   return { done: h.chapters.filter((c) => e.finished.includes(c.id)).length, total: h.chapters.length };
@@ -73,11 +72,11 @@ export const gradeFor = (e: Student) => grade(e.finished);
 export const bestTime = (e: Student) => (Object.keys(e.records).length ? Math.min(...Object.values(e.records)) : null);
 export const chaptersTotal = () => ALL().length;
 
-/** Le tableau en CSV (séparateur ;, comme les tableurs en français), avec ses en-têtes ; sans formule possible. */
+/** The table as CSV (separator ;, like spreadsheets in French), with its headers; no formula possible. */
 export function inCsv(students: Student[], headers: string[], line: (e: Student) => (string | number)[]): string {
   const cell = (x: string | number) => {
-    // Un nom écrit par un·e élève qui commence par = + - @ deviendrait une formule
-    // dans le tableur (injection CSV) : on le neutralise avec une apostrophe.
+    // A name written by a student starting with = + - @ would become a formula
+    // in the spreadsheet (CSV injection): it is neutralised with an apostrophe.
     const s = typeof x === 'string' && /^[=+\-@\t\r]/.test(x) ? `'${x}` : String(x);
     return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };

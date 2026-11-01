@@ -1,20 +1,20 @@
-// Histoire « La Ruche » — chapitre « Le Wi-Fi des bureaux » : fini le mot de
-// passe Wi-Fi commun, écrit sur un post-it. L'électricien a installé une
-// borne Wi-Fi d'entreprise (WPA2-Entreprise, 802.1X) : chaque personne se
-// connecte avec son compte de l'annuaire, et la borne la place dans le VLAN
-// que le serveur RADIUS lui indique. Le serveur, c'est FreeRADIUS, sur le
-// routeur ; il reste à le régler :
-//   - laisser la borne lui parler : UDP 1812 dans la chaîne input ;
-//   - la déclarer dans clients.conf (son adresse, le secret partagé) ;
-//   - activer le module ldap (mods-enabled/ldap, un lien) et le régler :
-//     base_dn, une identité qui a le droit de lire les mots de passe,
-//     membership_filter (les groupes posixGroup n'ont pas de memberOf) ;
-//   - le fichier users : Ldap-Group == "bureaux" → VLAN 10, les autres
-//     comptes → VLAN 20 (l'ordre compte) ; et redémarrer freeradius.
-// Objectif vérifié sur l'état : les demandes simulées de la borne (Malik,
-// Inès, Sami → VLAN 10 ; Léo, de l'équipe du café → VLAN 20 ; Camille,
-// partie → refusée) ont la bonne réponse, maintenant ET au démarrage.
-// Sources : https://wiki.freeradius.org/modules/Rlm_ldap, https://wiki.freeradius.org/config/Users,
+// Story "The Hive", chapter "The Office Wi-Fi": no more shared Wi-Fi
+// password written on a sticky note. The electrician installed an
+// enterprise Wi-Fi access point (WPA2-Enterprise, 802.1X): each person
+// connects with their directory account, and the access point puts them in the VLAN
+// the RADIUS server tells it. The server is FreeRADIUS, on the
+// router; it remains to configure it:
+//   - let the access point talk to it: UDP 1812 in the input chain;
+//   - declare it in clients.conf (its address, the shared secret);
+//   - enable the ldap module (mods-enabled/ldap, a link) and configure it:
+//     base_dn, an identity allowed to read passwords,
+//     membership_filter (posixGroup groups have no memberOf);
+//   - the users file: Ldap-Group == "bureaux" → VLAN 10, the other
+//     accounts → VLAN 20 (order matters); and restart freeradius.
+// Objective checked on the state: the access point's simulated requests (Malik,
+// Inès, Sami → VLAN 10; Léo, from the café team → VLAN 20; Camille,
+// who left → rejected) get the right answer, now AND at boot.
+// Sources: https://wiki.freeradius.org/modules/Rlm_ldap, https://wiki.freeradius.org/config/Users,
 // https://www.rfc-editor.org/rfc/rfc3580, https://wiki.debian.org/FreeRADIUS
 
 import { d, f, type Chapter } from '../world';
@@ -49,7 +49,7 @@ import {
 const BOUND = '10.10.30.20';
 export const BOUND_SECRET = 'Rk7-borne-2028';
 
-/** L'annuaire à la fin de « L'annuaire » : Camille partie, Sami arrivé ; et Léo, de l'équipe du café. */
+/** The directory at the end of "The Directory": Camille gone, Sami arrived; and Léo, from the café team. */
 function wifiDirectory(): Directory {
   const a = departureDirectory();
   a.inputs = a.inputs.filter((e) => !e.dn.startsWith('uid=camille'));
@@ -77,7 +77,7 @@ function wifiDirectory(): Directory {
   return a;
 }
 
-// Ce que la borne demande (chaque personne avec son mot de passe), et la réponse attendue.
+// What the access point asks (each person with their password), and the expected answer.
 const ATTEMPTS: { user: string; password: string; expected: number | 'refused' }[] = [
   { user: 'malik', password: 'ruche-malik-2027', expected: 10 },
   { user: 'ines', password: 'ruche-ines-2027', expected: 10 },
@@ -97,7 +97,7 @@ const REQUESTS = ATTEMPTS.map(request);
 type O = Parameters<typeof handle>[2];
 const responses = (j: Game, o: O = {}) => ATTEMPTS.map((e) => ({ e, r: handle(j, request(e), o) }));
 const compliant = (j: Game, o: O = {}) => responses(j, o).every(({ e, r }) => (e.expected === 'refused' ? r.what !== 'accept' : vlanFor(r) === e.expected));
-// Au prochain démarrage : la configuration des fichiers, nftables d'après son fichier, slapd et freeradius activés.
+// At the next boot: the files' configuration, nftables from its file, slapd and freeradius enabled.
 const toRadiusBoot = (j: Game): O => {
   const sd = systemd(j);
   return {
@@ -107,7 +107,7 @@ const toRadiusBoot = (j: Game): O => {
   };
 };
 
-// Le paquet de la borne passe-t-il la chaîne input ?
+// Does the access point's packet get through the input chain?
 const filteredBound = (j: Game) =>
   !traverse(nft(j), 'input', 'filter', {
     iif: 'eth1.30',
@@ -344,7 +344,7 @@ export const wifi: Chapter = {
     }),
   events: [
     {
-      // Dès que la borne est déclarée : ses demandes ne passent pas la chaîne input.
+      // As soon as the access point is declared: its requests don't get through the input chain.
       id: 'filter',
       condition: (j) => filteredBound(j) && !!readRadius(j).conf?.clients.some((c) => inside(BOUND, c.network)),
       message: (j) => j.t('wifi-event-filter'),

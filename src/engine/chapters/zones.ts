@@ -1,20 +1,20 @@
-// Histoire « La Ruche » — chapitre « Les zones » : chaque VLAN a ses
-// adresses, mais rien ne sort. Le routeur ne transmet pas les paquets
-// (net.ipv4.ip_forward = 0), et personne ne traduit les adresses privées
-// (NAT). L'ancien bénévole l'avait fait à la main, sans l'écrire nulle part :
-// tout est parti au redémarrage. Et Malik veut des zones :
-//   - les bureaux (VLAN 10) vont partout : internet, l'imprimante ;
-//   - les invité·es (VLAN 20) : internet, et rien d'autre (ni le NAS, ni les caméras) ;
-//   - les équipements (VLAN 30) : rien vers internet (les caméras « appellent
-//     la maison » chez leur fabricant), mais le NAS enregistre les caméras.
-// À faire : sysctl (et /etc/sysctl.d pour que ça dure), une chaîne forward
-// en politique drop avec ct state established,related, une chaîne nat avec
-// masquerade sur eth0, dans /etc/nftables.conf, et nftables activé.
-// Objectif vérifié sur l'état : le trafic simulé des appareils (Lan.flux)
-// passe ou est bloqué comme prévu, maintenant ET avec ce qui serait chargé
-// au démarrage (fichiers sysctl, /etc/nftables.conf, service activé), sans
-// fermer ssh au poste d'administration.
-// Sources : https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT),
+// Story "The Hive", chapter "The Zones": each VLAN has its addresses, but
+// nothing gets out. The router doesn't forward packets
+// (net.ipv4.ip_forward = 0), and nobody translates the private addresses
+// (NAT). The former volunteer had done it by hand, without writing it down
+// anywhere: everything was lost on reboot. And Malik wants zones:
+//   - the offices (VLAN 10) go everywhere: the internet, the printer;
+//   - the guests (VLAN 20): the internet, and nothing else (neither the NAS nor the cameras);
+//   - the equipment (VLAN 30): nothing to the internet (the cameras "phone
+//     home" to their manufacturer), but the NAS records the cameras.
+// To do: sysctl (and /etc/sysctl.d so it lasts), a forward chain with a
+// drop policy and ct state established,related, a nat chain with
+// masquerade on eth0, in /etc/nftables.conf, and nftables enabled.
+// Objective checked on the state: the devices' simulated traffic (Lan.flux)
+// passes or is blocked as intended, now AND with what would be loaded at
+// boot (sysctl files, /etc/nftables.conf, service enabled), without
+// closing ssh to the administration computer.
+// Sources: https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT),
 // https://wiki.nftables.org/wiki-nftables/index.php/Simple_ruleset_for_a_home_router,
 // https://www.netfilter.org/projects/nftables/manpage.html, https://man7.org/linux/man-pages/man5/sysctl.d.5.html
 
@@ -27,7 +27,7 @@ import { systemd } from '../systemd';
 import { WORKSTATION } from '../machines';
 import { hiveAccounts, DNSMASQ_VLAN, initialiseHive, INTERFACES_VLAN, M, hiveWorld, PASSWORD, newLan, hiveSystemd, hivePlan } from './hive';
 
-// Le trafic des appareils, et ce qui doit passer.
+// The devices' traffic, and what must get through.
 export const FLUX: (Flux & { permitted: boolean })[] = [
   { forEachOf: 'poste-malik', to: '198.51.100.80', proto: 'tcp', port: 443, permitted: true },
   { forEachOf: 'poste-accueil', to: 'imprimante', proto: 'tcp', port: 631, permitted: true },
@@ -38,12 +38,12 @@ export const FLUX: (Flux & { permitted: boolean })[] = [
   { forEachOf: 'camera-entree', to: '203.0.113.50', proto: 'tcp', port: 443, permitted: false },
 ];
 const permitted = (r: Result) => FLUX.find((x) => x.forEachOf === r.flux.forEachOf && x.to === r.flux.to)!.permitted;
-// Un échange vers internet (une adresse), et non vers un appareil du réseau local (un nom).
+// An exchange with the internet (an address), not with a device on the local network (a name).
 const internet = (r: Result) => isIp(r.flux.to);
 
 const compliant = (rs: Result[]) => rs.every((r) => (permitted(r) ? r.state === 'ok' : r.state === 'blocked'));
 
-// ssh depuis le poste d'administration vers le routeur (chaîne input), pour une nouvelle connexion.
+// ssh from the administration computer to the router (input chain), for a new connection.
 export const openSsh = (r: Ruleset) =>
   traverse(r, 'input', 'filter', {
     iif: 'eth0',
@@ -58,7 +58,7 @@ export const openSsh = (r: Ruleset) =>
   }).pass;
 
 const now = (j: Game) => compliant(results(j)) && openSsh(nft(j));
-// Au prochain démarrage : les fichiers sysctl, /etc/nftables.conf si nftables.service est activé.
+// At the next boot: the sysctl files, /etc/nftables.conf if nftables.service is enabled.
 const toReboot = (j: Game) => {
   const l = lan(j)!;
   const active = !!systemd(j)?.services.nftables?.active;

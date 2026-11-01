@@ -1,16 +1,16 @@
-// Histoire « Le Datacenter » — chapitre « Le certificat a expiré » : TLS et
-// Let's Encrypt. Trois mois après l'incendie, le certificat HTTPS de la
-// médiathèque a expiré ce matin. Le jour de l'incendie, Awa l'avait demandé
-// avec certbot avant que le site soit restauré : certbot a noté le dossier
-// du site par défaut de Debian (/var/www/html). Depuis un mois, chaque
-// tentative de renouvellement automatique échoue (le défi est déposé là où
-// nginx ne le sert pas), sans que personne ne le voie.
-// Commandes : curl https, openssl x509 / s_client, certbot certificates,
+// Story "The Data Centre", chapter "The certificate has expired": TLS and
+// Let's Encrypt. Three months after the fire, the media library's HTTPS
+// certificate expired this morning. On the day of the fire, Awa requested it
+// with certbot before the site was restored: certbot recorded the directory
+// of Debian's default site (/var/www/html). For a month, every
+// automatic renewal attempt has failed (the challenge is put where
+// nginx doesn't serve it), without anyone noticing.
+// Commands: curl https, openssl x509 / s_client, certbot certificates,
 // renew --dry-run, --webroot -w, --deploy-hook, journalctl -u certbot.
-// Objectif vérifié sur l'état : nginx présente un certificat valide pour les
-// deux noms du site, le prochain renouvellement automatique réussirait, et
-// nginx sera rechargé tout seul après (deploy hook, ou module nginx).
-// Sources : https://eff-certbot.readthedocs.io/en/stable/using.html,
+// Objective checked on the state: nginx presents a valid certificate for the
+// site's two names, the next automatic renewal would succeed, and
+// nginx will be reloaded by itself afterwards (deploy hook, or nginx plugin).
+// Sources: https://eff-certbot.readthedocs.io/en/stable/using.html,
 // https://letsencrypt.org/docs/challenge-types/, https://docs.openssl.org/3.5/man1/openssl-x509/
 
 import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
@@ -35,7 +35,7 @@ const SITE = 'medialibrary.example';
 const NAMES = [SITE, `www.${SITE}`];
 const ROBOT = '198.51.100.77';
 
-// Le certificat demandé le jour de l'incendie, valable 90 jours.
+// The certificate requested on the day of the fire, valid for 90 days.
 const OLD: Certificate = {
   cn: SITE,
   names: NAMES,
@@ -60,7 +60,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Le site : en HTTP sur le port 80 (et pour les défis de Let's Encrypt), en HTTPS sur le 443.
+// The site: over HTTP on port 80 (and for Let's Encrypt's challenges), over HTTPS on 443.
 const CONF_SITE = `server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -110,7 +110,7 @@ const RENEWAL = writeRenewal({
   map: { [SITE]: '/var/www/html', [`www.${SITE}`]: '/var/www/html' },
 });
 
-// Le journal de certbot : la dernière tentative a échoué, comme toutes depuis un mois.
+// certbot's log: the last attempt failed, like all of them for a month.
 const CERTBOT_LOG = `2027-01-21 03:24:11,307:DEBUG:certbot._internal.main:certbot version: 4.0.0
 2027-01-21 03:24:11,308:DEBUG:certbot._internal.main:Arguments: ['-q', '--no-random-sleep-on-renew']
 2027-01-21 03:24:11,512:INFO:certbot._internal.renewal:Renewing an existing certificate for ${NAMES.join(' and ')}
@@ -125,8 +125,8 @@ const CERTBOT_LOG = `2027-01-21 03:24:11,307:DEBUG:certbot._internal.main:certbo
 2027-01-21 03:24:15,122:ERROR:certbot._internal.renewal:All renewals failed. The following certificates could not be renewed:
 2027-01-21 03:24:15,122:ERROR:certbot._internal.renewal:  ${FOR}/live/${SITE}/fullchain.pem (failure)`;
 
-// Depuis le 22 décembre (30 jours avant l'expiration), le timer lance certbot
-// deux fois par jour ; chaque fois, le renouvellement échoue.
+// Since 22 December (30 days before expiry), the timer runs certbot
+// twice a day; each time, the renewal fails.
 function serverLog(): Systemd {
   const sd = newSystemd('datacenter', Date.UTC(2027, 0, 4, 9, 2, 0), Date.UTC(2027, 0, 21, 9, 20, 0), {
     ssh: {
@@ -184,13 +184,13 @@ function serverLog(): Systemd {
     write(t + 5000, 'systemd', 1, "certbot.service: Failed with result 'exit-code'.", 4);
     write(t + 5000, 'systemd', 1, 'Failed to start certbot.service - Certbot.', 3);
   });
-  // Le journal est dans l'ordre du temps (le démarrage du 4 janvier en premier).
+  // The journal is in time order (the 4 January boot first).
   sd.log.sort((a, b) => a.time - b.time);
   sd.services.certbot = { ...sd.services.certbot, state: 'failed', since: Date.UTC(2027, 0, 21, 3, 24, 5) };
   return sd;
 }
 
-// Les paquets installés sur la machine reconstruite.
+// The packages installed on the rebuilt machine.
 const VERSIONS: Record<string, string> = {
   curl: '8.14.1-2',
   rsync: '3.4.1+ds1-5',
@@ -203,7 +203,7 @@ const VERSIONS: Record<string, string> = {
 
 const sd = (j: Game) => systemd(j)!;
 const onDisk = (j: Game) => read(j.read(`${FOR}/live/${SITE}/fullchain.pem`));
-// Les événements reçoivent le shell de la machine.
+// Events receive the machine's shell.
 const shell = (j: Game) => j as Shell;
 const served = (j: Game) => NAMES.every((n) => goodServedCertificate(shell(j), n));
 
@@ -244,7 +244,7 @@ export const certificate: Chapter = {
   names: true,
   final: 'end',
   password: 'welcome-2026',
-  // La machine reconstruite après l'incendie : même clé d'hôte qu'au chapitre 4.
+  // The machine rebuilt after the fire: same host key as in chapter 4.
   hostKey: '-apres-incendie',
   accounts,
   state: () => ({
@@ -259,7 +259,7 @@ export const certificate: Chapter = {
     apt: { lists: true, installed: { ...VERSIONS } },
     nginx: { load: null, names: ['datacenter', 'datacenter.internal', ...NAMES, '192.0.2.11'] },
   }),
-  // nginx tourne depuis le démarrage : il a chargé le certificat d'octobre.
+  // nginx has been running since boot: it loaded October's certificate.
   initialise: (j) => loadNginx(j),
   createWorld: (t) => {
     const root = { owner: 'root' };

@@ -1,17 +1,17 @@
-// Le manuel : pages « man » au format habituel (NOM, SYNOPSIS, DESCRIPTION,
-// OPTIONS, EXEMPLES, VOIR AUSSI), « commande --help », « man -k » (apropos)
-// et « whatis ». Les pages sont fabriquées à partir du texte de chaque
-// commande (man-<commande> dans manual.ftl) et de sa partie technique
-// (pages.ts), pour apprendre le bon réflexe : chercher dans le manuel avant
-// de demander. Les messages reprennent ceux de man-db et des coreutils.
+// The manual: "man" pages in the usual format (NAME, SYNOPSIS, DESCRIPTION,
+// OPTIONS, EXAMPLES, SEE ALSO), "command --help", "man -k" (apropos)
+// and "whatis". The pages are built from each command's text
+// (man-<command> in manual.ftl) and from its technical part
+// (pages.ts), to learn the right reflex: look in the manual before
+// asking. The messages follow those of man-db and coreutils.
 
 import { translator, type Translate } from '../../texts';
 import { translateHosts } from '../machines';
 import { COMMANDS, type Command } from './index';
 import { player } from '../world';
 
-// Identifiant Fluent de la page : le point est réservé aux attributs
-// (« jail.conf » → man-jail_conf).
+// The page's Fluent identifier: the dot is reserved for attributes
+// ("jail.conf" → man-jail_conf).
 export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
 
 const section = (name: string) => COMMANDS[name]?.section ?? 1;
@@ -19,18 +19,18 @@ const section = (name: string) => COMMANDS[name]?.section ?? 1;
 function texts(name: string, t: Translate) {
   const synopsis = t.exists(`${page(name)}.synopsis`) ? t(`${page(name)}.synopsis`) : '';
   const options = (name: string, c: Command): [string, string][] => (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]);
-  // Une langue peut adapter la commande d'un exemple qui contient des mots (.command-N) : grep "my password".
+  // A language can adapt the command of an example that contains words (.command-N): grep "my password".
   const examples = (name: string, c: Command): [string, string][] =>
     (c.examples ?? []).map((e, i) => {
       const own = `${page(name)}.command-${i + 1}`;
-      // Le compte du joueur (vous@wiki, /home/vous) et les machines (ssh royaume) prennent leur nom dans la langue (you@wiki, ssh kingdom).
+      // The player's account (vous@wiki, /home/vous) and the machines (ssh royaume) take their name in the language (you@wiki, ssh kingdom).
       const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\byou\b/g, player(t)), t, [translator('en')]);
       return [command, t(`${page(name)}.example-${i + 1}`)];
     });
   return { synopsis, description: t(page(name)), options, examples };
 }
 
-// La première phrase, sans point final, pour la ligne NOM et whatis.
+// The first sentence, without a final full stop, for the NAME line and whatis.
 export const recap = (text: string) => text.split(/(?<=\.)\s|(?<=。)|\n/)[0].replace(/[.。]$/, '');
 
 const indent = (text: string, n = 7) =>
@@ -50,7 +50,7 @@ export function pageMan(name: string, c: Command, t: Translate): string {
   const title = `${name.toUpperCase()}(${section(name)})`;
   const middle = t('manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
-  // Comme une vraie page : le titre de section, puis son texte en retrait.
+  // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
   if (synopsis) sections.push([t('manual-section-synopsis'), indent(synopsis)]);
   sections.push([t('manual-section-description'), indent(majuscule(description))]);
@@ -75,7 +75,7 @@ export function help(name: string, c: Command, t: Translate): string {
   return lines.join('\n');
 }
 
-/** man -k / apropos : les commandes dont le nom, le synopsis ou la description contient le mot. */
+/** man -k / apropos: the commands whose name, synopsis or description contains the word. */
 export function apropos(word: string, names: string[], t: Translate): string[] {
   const m = word.toLowerCase();
   return names
@@ -87,10 +87,10 @@ export function apropos(word: string, names: string[], t: Translate): string[] {
 }
 
 /**
- * Vérifie les options courtes (-a, -la…) d'une commande qui déclare les
- * siennes. Renvoie le message d'erreur des coreutils, ou null.
+ * Checks the short options (-a, -la…) of a command that declares
+ * its own. Returns coreutils' error message, or null.
  */
-/** Les options longues connues, réécrites en options courtes (--all → -a), comme les lit la commande. */
+/** The known long options, rewritten as short options (--all → -a), as the command reads them. */
 export const shorten = (c: Command, args: string[]): string[] => {
   const end = args.indexOf('--');
   return args.map((a, i) => (c.long && a.startsWith('--') && !a.includes('=') && (end < 0 || i < end) && c.long[a.slice(2)] ? `-${c.long[a.slice(2)]}` : a));
@@ -99,7 +99,7 @@ export const shorten = (c: Command, args: string[]): string[] => {
 export function invalidOption(name: string, c: Command, args: string[], t: Translate): string | null {
   if (!c.options || c.ownOptions) return null;
   for (const a of args) {
-    // Après « -- », plus aucune option.
+    // After "--", no more options.
     if (a === '--') break;
     if (a.startsWith('--')) {
       const long = a.slice(2).split('=')[0];

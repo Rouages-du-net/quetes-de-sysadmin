@@ -1,28 +1,28 @@
-// Comptes et groupes : id, groups (coreutils), chgrp, chown (coreutils),
-// usermod, userdel, gpasswd, chage (shadow-utils). Sources : https://man7.org/linux/man-pages/man1/id.1.html,
+// Accounts and groups: id, groups (coreutils), chgrp, chown (coreutils),
+// usermod, userdel, gpasswd, chage (shadow-utils). Sources: https://man7.org/linux/man-pages/man1/id.1.html,
 // https://man7.org/linux/man-pages/man1/chown.1.html,
 // https://man7.org/linux/man-pages/man8/usermod.8.html,
 // https://man7.org/linux/man-pages/man8/userdel.8.html, https://man7.org/linux/man-pages/man1/gpasswd.1.html,
 // https://man7.org/linux/man-pages/man1/chage.1.html
-// Règles réelles : seul root change le propriétaire ; le propriétaire d'un
-// fichier peut en changer le groupe pour un groupe dont il est membre ;
-// usermod -G remplace les groupes secondaires, usermod -aG en ajoute.
+// Real rules: only root changes the owner; a file's owner can change its
+// group to a group they are a member of; usermod -G replaces the
+// supplementary groups, usermod -aG adds to them.
 
 import type { Node } from '../world';
 import type { Shell } from '../shell';
 import { options } from '../tools';
 import type { Command } from './index';
 
-// « 1000(vous) »
+// "1000(you)"
 const withNumber = (name: string, number: number | undefined) => `${number ?? '?'}(${name})`;
 
-// Applique une modification à une cible, et à tout son contenu avec -R.
+// Applies a change to a target, and to all its contents with -R.
 function forEach(n: Node, recursive: boolean, run: (n: Node) => void) {
   run(n);
   if (recursive && n.type === 'directory') for (const e of Object.values(n.children)) forEach(e, true, run);
 }
 
-// Les cibles de chown et chgrp : vérifie l'accès, puis applique `faire`.
+// The targets of chown and chgrp: checks access, then applies `run`.
 function change(game: Shell, command: string, targets: string[], recursive: boolean, allowed: (n: Node) => boolean, run: (n: Node) => void) {
   for (const target of targets) {
     const n = game.find(target);
@@ -77,7 +77,7 @@ export const ACCOUNTS: Record<string, Command> = {
       const { letters, rest } = options(args);
       const [owner, ...targets] = rest;
       if (!owner || !targets.length) return game.error(game.t('chown-usage'));
-      // Un numéro (uid, gid) est accepté même sans compte qui le porte : ls -l l'affiche alors tel quel.
+      // A number (uid, gid) is accepted even with no account holding it: ls -l then shows it as is.
       const byUid = (x: string) => Object.entries(game.accounts.users).find(([, u]) => String(u.uid) === x)?.[0] ?? x;
       const byGid = (x: string) => Object.entries(game.accounts.groups).find(([, g]) => String(g.gid) === x)?.[0] ?? x;
       const [nameRaw, groupRaw] = owner.split(':');
@@ -85,7 +85,7 @@ export const ACCOUNTS: Record<string, Command> = {
       const group = groupRaw && /^\d+$/.test(groupRaw) ? byGid(groupRaw) : groupRaw;
       if (name && !/^\d+$/.test(name) && !game.accounts.users[name]) return game.error(game.t('chown-user-incorrect', { owner: owner }));
       if (group && !/^\d+$/.test(group) && !game.accounts.groups[group]) return game.error(game.t('chown-group-incorrect', { owner: owner }));
-      // « chown malo: f » : le groupe principal de malo.
+      // "chown malo: f": malo's primary group.
       const newGroup = group || (owner.endsWith(':') && name ? (game.accounts.users[name]?.group ?? name) : undefined);
       return change(game, 'chown', targets, letters.has('R'), () => game.who === 'root', (n) => {
         if (name) n.owner = name;
@@ -106,11 +106,11 @@ export const ACCOUNTS: Record<string, Command> = {
         const a = args[i];
         if (/^-[a-zA-Z]+$/.test(a)) {
           if (a.includes('a')) addition = true;
-          // -L verrouille le mot de passe (un « ! » devant son empreinte dans /etc/shadow), -U le déverrouille.
+          // -L locks the password (a "!" in front of its hash in /etc/shadow), -U unlocks it.
           if (a.includes('L')) lock = true;
           if (a.includes('U')) lock = false;
           if (a.includes('G')) listing = args[++i] ?? '';
-          // -e : date de fin de validité du compte (AAAA-MM-JJ, ou 1 : le 2 janvier 1970) ; -s : le shell de connexion.
+          // -e: the account's expiry date (YYYY-MM-DD, or 1: 2 January 1970); -s: the login shell.
           if (a.includes('e')) expires = args[++i] ?? '';
           if (a.includes('s')) shell = args[++i] ?? '';
         } else rest.push(a);
@@ -131,7 +131,7 @@ export const ACCOUNTS: Record<string, Command> = {
         const groups = listing.split(',').filter(Boolean);
         const unknown = groups.find((g) => !game.accounts.groups[g]);
         if (unknown) return game.error(game.t('usermod-group-missing', { group: unknown }));
-        // Sans -a, les groupes secondaires sont REMPLACÉS par la liste.
+        // Without -a, the supplementary groups are REPLACED by the list.
         if (!addition) for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
         for (const g of groups) if (!game.accounts.groups[g].members.includes(name)) game.accounts.groups[g].members.push(name);
       }
@@ -148,7 +148,7 @@ export const ACCOUNTS: Record<string, Command> = {
     },
   },
 
-  // userdel : supprime un compte (et, avec -r, son dossier personnel et sa boîte aux lettres).
+  // userdel: deletes an account (and, with -r, its home directory and mailbox).
   userdel: {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
@@ -157,12 +157,12 @@ export const ACCOUNTS: Record<string, Command> = {
       if (game.who !== 'root') return game.error(game.t('userdel-permission'));
       const u = game.accounts.users[name];
       if (!u) return game.error(game.t('userdel-missing', { user: name }), 6);
-      // Un compte encore utilisé par un processus n'est pas supprimé (sauf -f).
+      // An account still used by a process is not deleted (unless -f).
       const p = ((game.state.process ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
       if (p && !letters.has('f')) return game.error(game.t('userdel-used', { user: name, pid: String(p.pid) }), 8);
       delete game.accounts.users[name];
       for (const g of Object.values(game.accounts.groups)) g.members = g.members.filter((m) => m !== name);
-      // Son groupe personnel (même nom) part aussi, s'il n'a pas d'autre membre.
+      // Its personal group (same name) goes too, if it has no other member.
       if (game.accounts.groups[u.group] && u.group === name && !game.accounts.groups[name].members.length) delete game.accounts.groups[name];
       if (letters.has('r')) {
         const home = u.home ?? `/home/${name}`;
@@ -176,7 +176,7 @@ export const ACCOUNTS: Record<string, Command> = {
     },
   },
 
-  // gpasswd -a / -d : ajoute ou retire un compte d'un groupe.
+  // gpasswd -a / -d: adds an account to a group or removes it.
   gpasswd: {
     launch: ({ args, game }) => {
       const i = args.findIndex((a) => a === '-a' || a === '-d');
@@ -197,7 +197,7 @@ export const ACCOUNTS: Record<string, Command> = {
     },
   },
 
-  // chage -l (les dates du compte) et -E (sa fin de validité).
+  // chage -l (the account's dates) and -E (its expiry date).
   chage: {
     launch: ({ args, game }) => {
       const i = args.indexOf('-E');
@@ -223,7 +223,7 @@ export const ACCOUNTS: Record<string, Command> = {
   },
 };
 
-// Une date de fin de validité : AAAA-MM-JJ, ou un nombre de jours depuis le 1er janvier 1970.
+// An expiry date: YYYY-MM-DD, or a number of days since 1 January 1970.
 function dateExpiration(text: string): string | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(text) && !Number.isNaN(Date.parse(text))) return text;
   if (/^\d+$/.test(text)) return new Date(Number(text) * 86_400_000).toISOString().slice(0, 10);

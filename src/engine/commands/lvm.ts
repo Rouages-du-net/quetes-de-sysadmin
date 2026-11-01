@@ -1,12 +1,12 @@
-// LVM (lvm2 2.03, Debian 13) : pvs, vgs, lvs pour voir ; pvcreate,
-// vgextend, vgreduce, pvmove et lvextend pour agrandir ; resize2fs
-// (e2fsprogs 1.47) pour le système de fichiers ; update-initramfs pour que
-// le démarrage connaisse les grappes (mdadm.conf). Sorties et messages
-// d'après lvm(8), lvextend(8), pvmove(8), resize2fs(8) et
-// update-initramfs(8) : https://man7.org/linux/man-pages/man8/lvm.8.html,
+// LVM (lvm2 2.03, Debian 13): pvs, vgs, lvs to look; pvcreate, vgextend,
+// vgreduce, pvmove and lvextend to grow; resize2fs (e2fsprogs 1.47) for
+// the file system; update-initramfs so that boot knows the arrays
+// (mdadm.conf). Outputs and messages based on lvm(8), lvextend(8),
+// pvmove(8), resize2fs(8) and
+// update-initramfs(8): https://man7.org/linux/man-pages/man8/lvm.8.html,
 // https://man7.org/linux/man-pages/man8/resize2fs.8.html,
 // https://manpages.debian.org/trixie/initramfs-tools-core/update-initramfs.8.en.html
-// Écarts : voir docs/SCENARIOS.md (LVM).
+// Differences: see docs/SCENARIOS.md (LVM).
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -33,7 +33,7 @@ import {
 const withoutDev = (name: string) => name.replace(/^\/dev\//, '');
 const KERNEL = '6.12.48+deb13-amd64';
 
-// Sans être root, LVM ne peut pas prendre son verrou.
+// Without being root, LVM cannot take its lock.
 const notRoot = (game: Shell) =>
   game.error('  WARNING: Running as a non-root user. Functionality may be unavailable.\n  /run/lock/lvm/P_global:aux: open failed: Permission denied', 5);
 
@@ -82,7 +82,7 @@ function lvs(st: StorageState): string {
   ).replace(/ +$/gm, '');
 }
 
-/** Un périphérique qu'on peut donner à LVM : il existe, et rien d'autre ne le tient. */
+/** A device that can be given to LVM: it exists, and nothing else holds it. */
 function usable(game: Shell, st: StorageState, path: string): string | null {
   const n = withoutDev(path);
   if (sizeFor(st, n) === null || !path.startsWith('/dev/')) return game.error(`  No device found for ${path}.`, 5), null;
@@ -110,7 +110,7 @@ function pvcreate(game: Shell, st: StorageState, targets: string[]): string {
   return outputs.join('\n');
 }
 
-// Les UUID de LVM : 32 caractères en groupes 6-4-4-4-4-4-6, tirés d'un nom.
+// LVM's UUIDs: 32 characters in groups of 6-4-4-4-4-4-6, derived from a name.
 function uuidLvm(seed: string): string {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let h = 0x811c9dc5;
@@ -152,7 +152,7 @@ function vgextend(game: Shell, st: StorageState, args: string[]): string {
     const pv = lvm(st).pvs[withoutDev(c)];
     if (pv?.vg) return game.error(`  Physical volume '${c}' is already in volume group '${pv.vg}'\n  Unable to add physical volume '${c}' to volume group '${vg}'\n  ${c}: physical volume not initialized.`, 5);
     if (!pv) {
-      // vgextend initialise lui-même un périphérique qui n'est pas encore un PV.
+      // vgextend itself initialises a device that is not a PV yet.
       const n = usable(game, st, c);
       if (!n) return '';
       lvm(st).pvs[n] = { vg: null, uuid: uuidLvm(`pv-${n}`) };
@@ -201,7 +201,7 @@ function pvmove(game: Shell, st: StorageState, args: string[]): string {
   for (const c of targets) if (lvm(st).pvs[c]?.vg !== vg) return game.error(`  Physical Volume "/dev/${c}" not found in Volume Group "${vg}".`, 5);
   const place = targets.reduce((t, c) => t + freeOn(st, c), 0);
   if (place < a) return game.error(`  Insufficient free space: ${a} extents needed, but only ${place} available\n  Unable to allocate mirror extents for ${vg}/pvmove0.\n  Failed to convert pvmove LV to mirrored.`, 5);
-  // Chaque morceau posé sur la source part sur les destinations.
+  // Each piece placed on the source moves to the destinations.
   for (const lv of Object.values(lvm(st).vgs[vg].lvs)) {
     const on = lv.segments.filter((s) => s.pv === n).reduce((t, s) => t + s.extents, 0);
     if (!on) continue;
@@ -211,7 +211,7 @@ function pvmove(game: Shell, st: StorageState, args: string[]): string {
   return [25, 50, 75, 100].map((p) => `  ${source}: Moved: ${p.toFixed(2)}%`).join('\n');
 }
 
-// « +1.5T », « 500G », « +100%FREE » : la taille voulue, en étendues, ou une erreur.
+// "+1.5T", "500G", "+100%FREE": the wanted size, in extents, or an error.
 function wantedSize(st: StorageState, vg: string, current: number, l: string | null, L: string | null): number | string {
   if (L !== null) {
     const m = /^(\+?)(\d+(?:\.\d+)?)([bkmgtpBKMGTP]?)$/.exec(L);
@@ -274,10 +274,10 @@ function lvextend(game: Shell, st: StorageState, args: string[]): string {
 }
 
 const E2FS_HEADER = 'resize2fs 1.47.2 (1-Jan-2025)';
-// Les groupes de blocs d'ext4 (32 768 blocs de 4 Kio) et leurs descripteurs (64 par bloc).
+// ext4's block groups (32,768 blocks of 4 KiB) and their descriptors (64 per block).
 const descriptors = (bytes: number) => Math.ceil(Math.ceil(bytes / 4096 / 32_768) / 64);
 
-/** Le système de fichiers prend toute la place du LV ; renvoie ce qu'écrit resize2fs. */
+/** The file system takes up the whole LV; returns what resize2fs writes. */
 function growFs(st: StorageState, vg: string, name: string): string[] {
   const lv = lvm(st).vgs[vg].lvs[name];
   const before = lv.fs;
@@ -307,12 +307,12 @@ function resize2fs(game: Shell, st: StorageState | null, args: string[]): string
 function updateInitramfs(game: Shell, args: string[]): string {
   if (!args.includes('-u') && !args.includes('-c')) return game.error(game.t('update-initramfs-usage'), 1);
   if (game.who !== 'root') return game.error(`update-initramfs: Generating /boot/initrd.img-${KERNEL}\ncp: cannot create regular file '/boot/initrd.img-${KERNEL}.new': Permission denied`, 1);
-  // L'initramfs emporte la configuration de mdadm telle qu'elle est maintenant.
+  // The initramfs carries mdadm's configuration as it is now.
   game.state.initramfs = { mdadm: game.read('/etc/mdadm/mdadm.conf') ?? '' };
   return `update-initramfs: Generating /boot/initrd.img-${KERNEL}`;
 }
 
-// Les commandes de LVM : root d'abord, puis un modèle de stockage.
+// LVM's commands: root first, then a storage model.
 const withLvm =
   (f: (game: Shell, st: StorageState, args: string[]) => string, name: string) =>
   ({ args, game }: { args: string[]; game: Shell }) => {

@@ -1,20 +1,20 @@
-// Le serveur SSH (sshd) d'une machine : lecture de /etc/ssh/sshd_config
-// comme OpenSSH (https://man.openbsd.org/sshd_config) :
-//   - mots-clés insensibles à la casse, commentaires « # » ;
-//   - Include, avec jokers, lu à l'endroit où il apparaît ;
-//   - pour chaque mot-clé, la PREMIÈRE valeur lue l'emporte : un fichier de
-//     sshd_config.d inclus en tête (comme sur Debian) gagne sur la suite ;
-//   - sauf Port, qui peut être répété : sshd écoute sur chacun (les ports
-//     sont gardés séparés par des espaces dans valeurs.port).
-// La configuration appliquée est celle chargée au dernier démarrage ou
-// rechargement du service ssh (etat.sshd.charge), pas celle du fichier.
+// A machine's SSH server (sshd): /etc/ssh/sshd_config read like OpenSSH
+// (https://man.openbsd.org/sshd_config):
+//   - case-insensitive keywords, "#" comments;
+//   - Include, with wildcards, read where it appears;
+//   - for each keyword, the FIRST value read wins: a sshd_config.d file
+//     included at the top (as on Debian) wins over what follows;
+//   - except Port, which can be repeated: sshd listens on each (the ports
+//     are kept separated by spaces in values.port).
+// The applied configuration is the one loaded at the ssh service's last
+// start or reload (state.sshd.load), not the file's.
 
 import type { Game } from './shell';
 import { wildcard } from './tools';
 
 export const CONFIG = '/etc/ssh/sshd_config';
 
-// Les mots-clés que le jeu connaît, et leurs valeurs permises (null : libre).
+// The keywords the game knows, and their allowed values (null: free).
 const NOT_YES = ['yes', 'no'];
 const KEYS_WORDS: Record<string, string[] | null> = {
   include: null,
@@ -42,7 +42,7 @@ const KEYS_WORDS: Record<string, string[] | null> = {
   authorizedkeysfile: null,
 };
 
-// Valeurs par défaut d'OpenSSH (celles que sshd -T affiche).
+// OpenSSH's defaults (those sshd -T displays).
 const DEFAULTS: Record<string, string> = {
   port: '22',
   permitrootlogin: 'prohibit-password',
@@ -63,7 +63,7 @@ export interface ConfigSshd {
   errors: string[];
 }
 
-/** Lit la configuration comme sshd -t : valeurs effectives et erreurs. */
+/** Reads the configuration like sshd -t: effective values and errors. */
 export function readConfig(game: Game, path = CONFIG): ConfigSshd {
   const values: Record<string, string> = {};
   const errors: string[] = [];
@@ -112,14 +112,14 @@ export function readConfig(game: Game, path = CONFIG): ConfigSshd {
   return { values: { ...DEFAULTS, ...values }, errors };
 }
 
-/** Ce que sshd -T affiche : « mot-clé valeur », en minuscules. */
+/** What sshd -T displays: "keyword value", in lower case. */
 export const showConfig = (c: ConfigSshd) =>
   Object.entries(c.values)
     .sort(([a], [b]) => a.localeCompare(b))
     .flatMap(([k, v]) => (k === 'port' ? v.split(' ').map((p) => `port ${p}`) : [`${k} ${v}`]))
     .join('\n');
 
-/** La configuration appliquée laisse-t-elle entrer ce compte avec sa clé ? */
+/** Does the applied configuration let this account in with its key? */
 export function allowed(values: Record<string, string>, user: string): boolean {
   if (values.pubkeyauthentication === 'no') return false;
   if (user === 'root' && values.permitrootlogin === 'no') return false;
@@ -130,9 +130,9 @@ export function allowed(values: Record<string, string>, user: string): boolean {
   return true;
 }
 
-/** Les méthodes que ssh annonce en cas de refus : « publickey » ou « publickey,password ». */
+/** The methods ssh announces on refusal: "publickey" or "publickey,password". */
 export const methods = (values: Record<string, string>) =>
   [values.pubkeyauthentication !== 'no' && 'publickey', values.passwordauthentication === 'yes' && 'password'].filter(Boolean).join(',');
 
-/** Les ports sur lesquels sshd écoute avec cette configuration. */
+/** The ports sshd listens on with this configuration. */
 export const portsSshd = (values: Record<string, string> | null | undefined): number[] => (values?.port ?? '22').split(' ').map(Number);

@@ -1,14 +1,14 @@
-// Les disques d'un serveur : smartctl (smartmontools) pour leur santé,
-// mdadm pour le RAID logiciel, sfdisk pour les tables de partitions,
-// grub-install pour la zone de démarrage, et lsblk quand la machine a un
-// modèle de stockage (voir stockage.ts). Sorties et messages d'après
+// A server's disks: smartctl (smartmontools) for their health,
+// mdadm for software RAID, sfdisk for partition tables,
+// grub-install for the boot area, and lsblk when the machine has a
+// storage model (see stockage.ts). Outputs and messages based on
 // smartctl(8) (smartmontools 7.4), mdadm(8) (mdadm 4.3, Manage.c),
-// sfdisk(8) (util-linux 2.40) et grub-install(8) (GRUB 2.12) :
+// sfdisk(8) (util-linux 2.40) and grub-install(8) (GRUB 2.12):
 // https://www.smartmontools.org/browser/trunk/smartmontools/smartctl.8.in,
 // https://man7.org/linux/man-pages/man8/mdadm.8.html,
 // https://man7.org/linux/man-pages/man8/sfdisk.8.html,
 // https://www.gnu.org/software/grub/manual/grub/html_node/Installing-GRUB-using-grub_002dinstall.html
-// Écarts : voir le tableau de docs/SCENARIOS.md (smartctl, mdadm, sfdisk).
+// Differences: see the table in docs/SCENARIOS.md (smartctl, mdadm, sfdisk).
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -46,7 +46,7 @@ import {
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const two = (n: number) => String(n).padStart(2, '0');
-/** « Sat Nov 13 07:42:10 2027 », comme ctime(3). */
+/** "Sat Nov 13 07:42:10 2027", like ctime(3). */
 const dateC = (ms: number) => {
   const d = new Date(ms);
   return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2)} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}:${two(d.getUTCSeconds())} ${d.getUTCFullYear()}`;
@@ -80,7 +80,7 @@ function informations(game: Shell, d: Disk): string {
 
 function attributes(d: Disk): string {
   const s = d.smart;
-  // VALUE baisse quand les secteurs réalloués s'accumulent ; sous THRESH, l'attribut « échoue ».
+  // VALUE drops as reallocated sectors pile up; below THRESH, the attribute "fails".
   const realloc = Math.max(1, 200 - Math.ceil(s.reallocated / 26));
   const line = (id: number, name: string, flag: string, value: number, worst: number, threshold: number, type: string, update: string, raw: number | string) =>
     `${String(id).padStart(3)} ${name.padEnd(23)} ${flag}   ${String(value).padStart(3, '0')}   ${String(worst).padStart(3, '0')}   ${String(threshold).padStart(3, '0')}    ${type.padEnd(9)} ${update.padEnd(8)} ${value <= threshold && threshold > 0 ? 'FAILING_NOW' : '    -      '} ${raw}`;
@@ -178,7 +178,7 @@ function smartctl(game: Shell, args: string[]): string {
       'Use smartctl -X to abort test.',
     ].join('\n');
   }
-  // Le code de retour de smartctl est un masque : 64, le journal d'erreurs n'est pas vide ; 128, un test a échoué.
+  // smartctl's exit code is a bit mask: 64, the error log isn't empty; 128, a self-test failed.
   const codes = (d.smart.ataErrors ? 64 : 0) | (d.smart.inWaiting && tests.length ? 128 : 0) | (d.smart.failure ? 8 : 0);
   const log = value('-l', '--log');
   const parts: string[] = [SMART_HEADER, ''];
@@ -272,7 +272,7 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           game.error(`mdadm: set device faulty failed for ${target}:  No such device`);
           continue;
         }
-        // RAID 1 : le noyau refuse de marquer défectueux le dernier membre à jour.
+        // RAID 1: the kernel refuses to mark the last up-to-date member as faulty.
         if (m.state === 'active' && active(g).length === 1) {
           game.error(`mdadm: set device faulty failed for ${target}:  Device or resource busy`);
           continue;
@@ -288,7 +288,7 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           continue;
         }
         for (const v of targeted) {
-          // On ne retire qu'un membre défectueux (ou un spare) : un membre actif est occupé.
+          // Only a faulty member (or a spare) can be removed: an active member is busy.
           if (v.state === 'active') {
             game.error(`mdadm: hot remove failed for /dev/${v.part}: Device or resource busy`);
             continue;
@@ -298,7 +298,7 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           outputs.push(`mdadm: hot removed /dev/${v.part} from ${md}`);
         }
       } else {
-        // add, re-add : la partition (ou le disque) doit exister, être libre, et assez grande.
+        // add, re-add: the partition (or disk) must exist, be free, and be large enough.
         const disk = /^sd[a-z]$/.test(part) ? st.disks[part] : undefined;
         const p = partitionFor(st, part);
         if (!disk && !p) {
@@ -319,12 +319,12 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
           game.error(`mdadm: --re-add for ${target} to ${md} is not possible`);
           continue;
         }
-        // Le disque entier dans la grappe : son superbloc md écrase la table de partitions.
+        // The whole disk in the array: its md superblock overwrites the partition table.
         if (disk) {
           disk.partitions = [];
           disk.table = null;
         }
-        // Une place libre (grappe dégradée) : il la reprend en se reconstruisant ; sinon, il attend en spare.
+        // A free slot (degraded array): it takes it by rebuilding; otherwise, it waits as a spare.
         const place = freePlace(g);
         g.members.push({
           part,
@@ -338,7 +338,7 @@ function manage(game: Shell, st: StorageState, name: string, ops: [string, strin
         outputs.push(`mdadm: ${op === 're-add' ? 're-added' : 'added'} ${target}`);
       }
     }
-    // On garde la trace des anciens membres (pour --re-add).
+    // Former members are remembered (for --re-add).
     for (const x of g.members) (game.state.oldMembers ??= {})[`${name}:${x.part}`] = x.number;
   }
   devUpdate(game);
@@ -372,7 +372,7 @@ function mdadm(game: Shell, args: string[]): string {
     }
     const targets = args.filter((a) => !a.startsWith('-'));
     if (!targets.length) return game.error('mdadm: No devices given.', 1);
-    // --brief : une ligne ARRAY par grappe, celle de mdadm.conf.
+    // --brief: one ARRAY line per array, the one for mdadm.conf.
     const short = args.includes('--brief') || args.includes('-b');
     const outputs: string[] = [];
     for (const c of targets) {
@@ -390,7 +390,7 @@ function mdadm(game: Shell, args: string[]): string {
     }
     return outputs.join('\n');
   }
-  // Le mode « manage » : mdadm [--manage] /dev/mdX --fail dev … --remove dev … --add dev …
+  // The "manage" mode: mdadm [--manage] /dev/mdX --fail dev … --remove dev … --add dev …
   const rest = args.filter((a) => a !== '--manage');
   const unknown = rest.find((a) => a.startsWith('-') && !(a in OPERATIONS));
   if (unknown) return game.error(`mdadm: unrecognised option ${unknown}\nUsage: mdadm --help\n  for help`, 2);
@@ -409,7 +409,7 @@ function mdadm(game: Shell, args: string[]): string {
   return manage(game, st!, n, ops);
 }
 
-// mdadm --create : une grappe RAID 1 neuve, sur des disques ou des partitions libres.
+// mdadm --create: a new RAID 1 array, on free disks or partitions.
 function create(game: Shell, st: StorageState | null, args: string[]): string {
   let level = '';
   let count = 0;
@@ -439,7 +439,7 @@ function create(game: Shell, st: StorageState | null, args: string[]): string {
   if (members.length > count) return game.error(`mdadm: You have listed more devices (${members.length}) than are in the array(${count})!`, 2);
   if (members.length < count) return game.error("mdadm: You haven't given enough devices (real or missing) to create this array", 2);
   const warnings: string[] = [];
-  // « missing » : une place laissée vide (la grappe naît dégradée, on la complétera avec --add).
+  // "missing": a slot left empty (the array starts degraded, to be completed with --add).
   const presents = members.filter((m) => m !== 'missing');
   if (!presents.length) return game.error('mdadm: at least one device must be given', 2);
   for (const m of presents) {
@@ -456,7 +456,7 @@ function create(game: Shell, st: StorageState | null, args: string[]): string {
     return st.disks[n] ? st.disks[n].sectors : partitionFor(st, n)!.p.sectors;
   });
   const run = () => {
-    // La taille utile : celle du plus petit membre, moins la place du superbloc (128 Mio en tête).
+    // The usable size: that of the smallest member, minus the superblock's space (128 MiB at the start).
     const blocks = Math.floor((Math.min(...sizes) * SECTOR - 134_217_728) / 1024 / 64) * 64;
     const rank = Number(name.slice(2));
     for (const m of presents) {
@@ -479,7 +479,7 @@ function create(game: Shell, st: StorageState | null, args: string[]): string {
       events: 0,
       creation: now(game),
       bitmap: blocks * 1024 > 100e9,
-      // Une grappe complète synchronise ses membres ; une grappe dégradée n'a rien à synchroniser.
+      // A complete array syncs its members; a degraded array has nothing to sync.
       ...(presents.length === count && count > 1 ? { synchro: 0 } : {}),
       rank,
     };
@@ -499,7 +499,7 @@ function create(game: Shell, st: StorageState | null, args: string[]): string {
   return note;
 }
 
-// Huit chiffres hexadécimaux tirés d'un texte (FNV-1a) : un UUID qui ne change jamais.
+// Eight hexadecimal digits derived from a text (FNV-1a): a UUID that never changes.
 const condenser = (text: string) => {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
@@ -548,7 +548,7 @@ function flush(name: string, d: Disk): string {
   ].join('\n');
 }
 
-/** Lit un script sfdisk (celui de sfdisk -d) : la table et ses partitions. */
+/** Reads an sfdisk script (the one from sfdisk -d): the table and its partitions. */
 function readScript(text: string): { table: string | null; partitions: Omit<Partition, 'number'>[]; numbers: number[] } | string {
   let table: string | null = null;
   const partitions: Omit<Partition, 'number'>[] = [];
@@ -613,7 +613,7 @@ function sfdisk(game: Shell, args: string[], input: string | null): string {
     if (!d.table) return game.error(`sfdisk: ${targets[0]}: does not contain a recognized partition table`, 1);
     return flush(withoutDev(targets[0]), d);
   }
-  // Écrire une table : le script arrive sur l'entrée standard.
+  // Writing a table: the script comes on standard input.
   if (!targets.length) return game.error('sfdisk: no disk device specified', 1);
   const name = withoutDev(targets[0]);
   const d = open(targets[0]);
@@ -677,7 +677,7 @@ function grubInstall(game: Shell, args: string[]): string {
   if (st && partitionFor(st, name)) return game.error(`grub-install: error: unable to identify a filesystem in ${target}; safety check can't be performed.`, 1);
   const d = st?.disks[name];
   if (!d || !target.startsWith('/dev/')) return game.error(`grub-install: error: cannot find a GRUB drive for ${target}.  Check your device.map.`, 1);
-  // Sur une table GPT, GRUB (en mode BIOS) s'installe dans la partition « BIOS boot ».
+  // On a GPT table, GRUB (in BIOS mode) installs itself in the "BIOS boot" partition.
   if (!d.partitions.some((p) => p.type === 'bios'))
     return game.error(
       `Installing for i386-pc platform.\ngrub-install: warning: this GPT partition label contains no BIOS Boot Partition; embedding won't be possible.\ngrub-install: error: embedding is not possible, but this is required for cross-disk install.`,
@@ -687,7 +687,7 @@ function grubInstall(game: Shell, args: string[]): string {
   return 'Installing for i386-pc platform.\nInstallation finished. No error reported.';
 }
 
-// ——— lsblk, sur une machine qui a un modèle de stockage ———
+// ——— lsblk, on a machine with a storage model ———
 
 interface LsblkLine {
   name: string;
@@ -710,10 +710,10 @@ export function lsblkStockage(game: Shell, st: StorageState, args: string[]): st
   const withoutChildren = args.some((a) => /^-\w*d/.test(a) || a === '--nodeps');
   const lines: LsblkLine[] = [];
   const pvs = st.lvm?.pvs ?? {};
-  // Les volumes logiques qui ont un morceau sur ce PV (vg-lv).
+  // The logical volumes with a segment on this PV (vg-lv).
   const lvsOn = (pv: string) =>
     Object.entries(st.lvm?.vgs ?? {}).flatMap(([vg, g]) => Object.entries(g.lvs).filter(([, lv]) => lv.segments.some((x) => x.pv === pv)).map(([n]) => `${vg}-${n}`));
-  // Ce qui est posé sur un périphérique : sa grappe, ses volumes logiques, ou ses partitions.
+  // What sits on a device: its array, its logical volumes, or its partitions.
   const children = (n: string): string[] => {
     const g = arrayFor(st, n);
     if (g) return [g[0]];
@@ -751,7 +751,7 @@ export function lsblkStockage(game: Shell, st: StorageState, args: string[]): st
     listing.forEach((e, i) => put(e, next, i === listing.length - 1, false));
   };
   for (const [n] of Object.entries(st.disks).sort(([, a], [, b]) => a.rank - b.rank)) put(n, '', true, true);
-  // Les colonnes : -o liste, -f les systèmes de fichiers, sinon celles par défaut.
+  // The columns: -o list, -f the file systems, otherwise the default ones.
   const iO = args.findIndex((a) => a === '-o' || a === '--output');
   const requested = iO >= 0 ? (args[iO + 1] ?? '').toUpperCase().split(',').filter(Boolean) : args.some((a) => /^-\w*f/.test(a)) ? ['NAME', 'FSTYPE', 'LABEL', 'UUID', 'MOUNTPOINTS'] : ['NAME', 'MAJ:MIN', 'RM', 'SIZE', 'RO', 'TYPE', 'MOUNTPOINTS'];
   const columns: Record<string, { right?: boolean; value: (l: LsblkLine) => string }> = {
@@ -788,7 +788,7 @@ export const STOCKAGE: Record<string, Command> = {
   'grub-install': { section: 8, ownOptions: true, launch: ({ args, game }) => grubInstall(game, args) },
 };
 
-/** Le temps passe d'une commande sur la machine : la reconstruction avance. */
+/** Time passes by one command on the machine: the rebuild progresses. */
 export function timeWhoPass(game: Shell): void {
   const st = storageOf(game);
   if (st) advance(st);

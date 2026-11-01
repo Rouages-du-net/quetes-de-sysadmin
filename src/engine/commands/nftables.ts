@@ -1,7 +1,7 @@
-// nft (nftables), sysctl (procps-ng) et conntrack (conntrack-tools), sur le
-// routeur simulé (../nftables.ts, ../lan.ts). Sorties en anglais, comme les
-// vrais outils.
-// Sources : https://www.netfilter.org/projects/nftables/manpage.html,
+// nft (nftables), sysctl (procps-ng) and conntrack (conntrack-tools), on the
+// simulated router (../nftables.ts, ../lan.ts). Outputs in English, like the
+// real tools.
+// Sources: https://www.netfilter.org/projects/nftables/manpage.html,
 // https://man7.org/linux/man-pages/man8/sysctl.8.html,
 // https://man7.org/linux/man-pages/man5/sysctl.d.5.html,
 // https://manpages.debian.org/trixie/conntrack/conntrack.8.en.html
@@ -46,7 +46,7 @@ function commandNft(game: Shell, args: string[]): string {
     if (read === null) return game.error(`Error: Could not open file "${file}": No such file or directory`, 1);
     text = read;
     fileName = file;
-  } else text = rest.join(' '); // comme nft : les arguments mis bout à bout (le shell a déjà retiré les guillemets)
+  } else text = rest.join(' '); // like nft: the arguments joined together (the shell has already removed the quotes)
   try {
     const { ruleset, lists } = runNft(game, text, nft(game));
     if (check) return '';
@@ -62,7 +62,7 @@ function commandNft(game: Shell, args: string[]): string {
   }
 }
 
-// Sur une machine où ufw et fail2ban tiennent le pare-feu : lire leurs tables, sans y toucher.
+// On a machine where ufw and fail2ban hold the firewall: read their tables, without touching them.
 function preview(game: Shell, words: string[]): string {
   const tables = previewTables(game);
   const [verb, object, family, name] = words;
@@ -85,7 +85,7 @@ const keyFor = (text: string) =>
     .trim()
     .replace(/^\/proc\/sys\//, '')
     .replace(/\//g, '.');
-// Le noyau lie ces deux clés : écrire l'une change l'autre.
+// The kernel links these two keys: writing one changes the other.
 const LINKED: Record<string, string> = {
   'net.ipv4.ip_forward': 'net.ipv4.conf.all.forwarding',
   'net.ipv4.conf.all.forwarding': 'net.ipv4.ip_forward',
@@ -103,7 +103,7 @@ function writeKey(game: Game, key: string, value: string): string | null {
   return null;
 }
 
-/** Les réglages d'un fichier sysctl.conf : « clé = valeur » (les lignes « - » ignorent les erreurs). */
+/** The settings of a sysctl.conf file: "key = value" (lines starting with "-" ignore errors). */
 export function sysctlLines(text: string): { key: string; value: string; tolerant: boolean }[] {
   return text
     .split('\n')
@@ -118,7 +118,7 @@ export function sysctlLines(text: string): { key: string; value: string; toleran
 
 const SYSCTL_DIRECTORIES = ['/etc/sysctl.d', '/run/sysctl.d', '/usr/local/lib/sysctl.d', '/usr/lib/sysctl.d'];
 
-/** Les fichiers que lit sysctl --system (et systemd-sysctl au démarrage), dans l'ordre. */
+/** The files sysctl --system reads (and systemd-sysctl at boot), in order. */
 export function sysctlFiles(game: Game): string[] {
   const byName = new Map<string, string>();
   for (const d of SYSCTL_DIRECTORIES) {
@@ -131,11 +131,11 @@ export function sysctlFiles(game: Game): string[] {
   return listing;
 }
 
-/** Au démarrage : les valeurs par défaut du noyau, puis les fichiers (systemd-sysctl). */
+/** At boot: the kernel's default values, then the files (systemd-sysctl). */
 export function applySysctl(game: Game, defaults: Record<string, string>) {
   for (const [key, v] of Object.entries(defaults)) {
     const n = game.find(path(key));
-    // Le nom de la machine, dans la langue (ruche → hive).
+    // The machine's name, in the language (ruche → hive).
     if (n?.type === 'file') n.content = key === 'kernel.hostname' ? game.hostName : v;
   }
   const who = game.who;
@@ -144,7 +144,7 @@ export function applySysctl(game: Game, defaults: Record<string, string>) {
   game.who = who;
 }
 
-/** La valeur qu'aurait cette clé après un redémarrage (la dernière écrite par les fichiers). */
+/** The value this key would have after a reboot (the last one written by the files). */
 export function sysctlToBoot(game: Game, key: string, fallback: string): string {
   let v = fallback;
   for (const f of sysctlFiles(game)) for (const l of sysctlLines(game.read(f) ?? '')) if (l.key === key || LINKED[key] === l.key) v = l.value;
@@ -228,7 +228,7 @@ function conntrack(game: Shell, args: string[]): string {
   if (game.who !== 'root') return game.error(`${CONNTRACK}: Operation failed: Operation not permitted`, 1);
   if (action === '-E' || action === '--event') return game.error(game.t('conntrack-events'), 1);
   if (action === '-F' || action === '--flush') {
-    // Les échanges en cours se recréent aussitôt : les appareils continuent de parler.
+    // The ongoing exchanges are recreated at once: the devices keep talking.
     game.error(`${CONNTRACK}: connection tracking table has been emptied.`, 0);
     return '';
   }
@@ -240,7 +240,7 @@ function conntrack(game: Shell, args: string[]): string {
   const source = after(['-s', '--src', '--orig-src']);
   const destination = after(['-d', '--dst', '--orig-dst']);
   const lines: string[] = [];
-  // La session ssh du jeu, vers le routeur lui-même.
+  // The game's ssh session, to the router itself.
   const ssh = {
     proto: 'tcp' as const,
     saddr: WORKSTATION.address,
@@ -259,7 +259,7 @@ function conntrack(game: Shell, args: string[]): string {
     const state = e.proto === 'tcp' ? (e.ok ? ' ESTABLISHED' : ' SYN_SENT') : '';
     const delay = e.proto === 'tcp' ? (e.ok ? 431999 : 119) : e.ok ? 119 : 29;
     const go = `src=${e.saddr} dst=${e.daddr} sport=${e.sport} dport=${e.dport}`;
-    // La réponse vient de la vraie destination (après dnat), vers l'adresse vue (après masquerade).
+    // The reply comes from the real destination (after dnat), to the address seen (after masquerade).
     const real = 'real' in e && e.real ? e.real : { address: e.daddr, port: e.dport };
     const back = `src=${real.address} dst=${e.view} sport=${real.port} dport=${e.sport}`;
     lines.push(
@@ -275,6 +275,6 @@ export const NFTABLES: Record<string, Command> = {
   nft: { section: 8, ownOptions: true, launch: ({ args, game }) => commandNft(game, args) },
   sysctl: { section: 8, ownOptions: true, launch: ({ args, game }) => sysctl(game, args) },
   conntrack: { section: 8, ownOptions: true, launch: ({ args, game }) => conntrack(game, args) },
-  // La page de manuel des fichiers de réglages (man 5 sysctl.d).
+  // The manual page of the settings files (man 5 sysctl.d).
   'sysctl.d': { section: 5, launch: () => '' },
 };

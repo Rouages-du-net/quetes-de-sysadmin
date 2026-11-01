@@ -1,9 +1,9 @@
-// Sauvegardes : rsync (https://download.samba.org/pub/rsync/rsync.1) et
+// Backups: rsync (https://download.samba.org/pub/rsync/rsync.1) and
 // crontab (https://manpages.debian.org/bookworm/cron/crontab.1.en.html).
-// rsync : « source/ » copie le CONTENU du dossier, « source » le dossier
-// lui-même ; seuls les fichiers qui ont changé sont copiés ; --delete retire
-// de la destination ce qui n'est plus dans la source ; -n n'écrit rien.
-// Sortie et messages en anglais, comme rsync et cron.
+// rsync: "source/" copies the CONTENTS of the directory, "source" the directory
+// itself; only changed files are copied; --delete removes
+// from the destination what is no longer in the source; -n writes nothing.
+// Output and messages in English, like rsync and cron.
 
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -48,7 +48,7 @@ function rsync(game: Shell, args: string[]): string {
   }
   if (paths.length < 2) return game.error(game.t('rsync-usage'));
   const rawDest = paths.pop()!;
-  // Une machine d'en face (« machine:chemin ») : rsync passe par ssh.
+  // A machine across the network ("machine:path"): rsync goes through ssh.
   const toRemote = remotePath(rawDest);
   const sinceRemote = paths.map(remotePath);
   const other = toRemote ?? sinceRemote.find(Boolean);
@@ -66,7 +66,7 @@ function rsync(game: Shell, args: string[]): string {
       const output = toRemote
         ? transfer(game, game, d.shell, o, paths, toRemote.path || '.')
         : transfer(game, d.shell, game, o, sinceRemote.map((x) => x!.path || '.'), rawDest);
-      // Une réponse à une question (mot de passe) : les erreurs s'affichent avec la sortie.
+      // An answer to a question (password): errors are shown with the output.
       return [...game.recoverErrors(), output].filter(Boolean).join('\n');
     } finally {
       d.shell.who = before;
@@ -75,7 +75,7 @@ function rsync(game: Shell, args: string[]): string {
   });
 }
 
-/** La copie elle-même, de la machine `src` vers la machine `dst` ; les erreurs vont à `jeu` (où rsync tourne). */
+/** The copy itself, from machine `src` to machine `dst`; errors go to `game` (where rsync runs). */
 function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string[], dest: string): string {
   const lines: string[] = [];
   const errors: string[] = [];
@@ -83,7 +83,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
   let sent = 0;
   let files = 0;
 
-  // Crée un dossier dans la destination (sauf en essai) ; null si impossible.
+  // Creates a directory in the destination (except in a dry run); null if impossible.
   const createDirectory = (path: string, template: Node): boolean => {
     const n = dst.find(path);
     if (n?.type === 'directory') return true;
@@ -117,7 +117,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
     if (error) errors.push(`rsync: [Receiver] mkstemp "${dst.resolve(path)}" failed: Permission denied (13)`);
   };
 
-  // Copie récursive d'un dossier source vers un dossier destination.
+  // Recursive copy of a source directory to a destination directory.
   const copyDirectory = (source: Node & { type: 'directory' }, sourcePath: string, path: string, relative: string) => {
     const existed = dst.find(path)?.type === 'directory';
     if (!createDirectory(path, source)) return;
@@ -126,7 +126,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
     if (o.erase && target?.type === 'directory')
       for (const name of Object.keys(target.children).sort())
         if (!(name in source.children)) {
-          // Comme rsync : le contenu d'un dossier effacé d'abord, du plus profond au plus haut.
+          // Like rsync: a directory's contents deleted first, from the deepest up.
           const effaces = (n: Node, rel: string): string[] =>
             n.type === 'directory'
               ? [...Object.keys(n.children).sort().reverse().flatMap((e) => effaces(n.children[e], `${rel}/${e}`)), `deleting ${rel}/`]
@@ -152,7 +152,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
         lines.push(`skipping directory ${name}`);
         continue;
       }
-      // « src/ » : le contenu ; « src » : le dossier lui-même, dans dest.
+      // "src/": the contents; "src": the directory itself, inside dest.
       if (path.endsWith('/')) copyDirectory(n, path.replace(/\/+$/, ''), dest.replace(/\/+$/, ''), '');
       else {
         if (!createDirectory(dest, n)) continue;
@@ -181,7 +181,7 @@ function transfer(game: Shell, src: Shell, dst: Shell, o: Options, paths: string
 
 const TEMP = '/tmp/crontab.Zx81Ab';
 
-// Installe une crontab après vérification, comme crontab(1).
+// Installs a crontab after checking it, like crontab(1).
 function installer(game: Shell, text: string, file: string): string {
   const { errors } = parse(text, file);
   if (errors.length) return [...errors, game.t('crontab-retry')].join('\n');
@@ -198,10 +198,10 @@ export const BACKUP: Record<string, Command> = {
     ownOptions: true,
     launch: ({ args, game }) => {
       const crontabs: Record<string, string> = (game.state.crontabs ??= {});
-      // -u compte, où qu'il soit (crontab -l -u marc) : on le ramène devant.
+      // -u account, wherever it is (crontab -l -u marc): we bring it to the front.
       const iu = args.indexOf('-u');
       if (iu > 0) args = ['-u', args[iu + 1], ...args.filter((_, k) => k !== iu && k !== iu + 1)];
-      // -u compte : la crontab d'un autre compte (root seulement).
+      // -u account: another account's crontab (root only).
       if (args[0] === '-u') {
         if (game.who !== 'root') return game.error('crontab: must be privileged to use -u');
         const target = args[1];
@@ -210,7 +210,7 @@ export const BACKUP: Record<string, Command> = {
         game.who = target;
         try {
           const output = BACKUP.crontab.launch({ args: args.slice(2), game, input: null, last: true });
-          // crontab -e : l'installation, à la fermeture de l'éditeur, se fait aussi pour ce compte.
+          // crontab -e: the installation, when the editor closes, is also for this account.
           const after = game.edition?.after;
           if (game.edition && after)
             game.edition.after = () => {
@@ -237,8 +237,8 @@ export const BACKUP: Record<string, Command> = {
         return '';
       }
       if (action === '-e') {
-        // Comme le vrai crontab -e : une copie dans /tmp, ouverte dans l'éditeur,
-        // vérifiée et installée à la fermeture.
+        // Like the real crontab -e: a copy in /tmp, opened in the editor,
+        // checked and installed when it closes.
         const account = game.who;
         const text = crontabs[game.who] ?? TEMPLATE;
         if (!game.exists(TEMP)) game.place('crontab', TEMP, { type: 'directory', children: {}, owner: game.who, mode: 'rwx------' });
@@ -249,7 +249,7 @@ export const BACKUP: Record<string, Command> = {
           text: text.endsWith('\n') ? text : text + '\n',
           root: game.who === 'root',
           message: game.t('nano-lines-read', { lines: text.split('\n').length - (text.endsWith('\n') ? 1 : 0) }),
-          // La crontab est installée pour le compte qui l'a ouverte (root avec sudo), à la fermeture de l'éditeur.
+          // The crontab is installed for the account that opened it (root with sudo), when the editor closes.
           after: () => {
             const who = game.who;
             game.who = account;
@@ -262,7 +262,7 @@ export const BACKUP: Record<string, Command> = {
             }
           },
         };
-        // Écart : l'éditeur est toujours nano (pas de select-editor).
+        // Difference: the editor is always nano (no select-editor).
         return game.who in crontabs ? '' : `no crontab for ${game.who} - using an empty one`;
       }
       if (action && !action.startsWith('-')) {

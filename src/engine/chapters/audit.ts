@@ -1,9 +1,9 @@
-// Histoire « L'Audit » : ce que ses chapitres ont en commun. Le serveur du
-// Fournil (machine fournil), la boulangerie de Nadia qui prend ses commandes
-// en ligne : un nginx, une appli de commandes (un compte de service), une base
-// PostgreSQL et un Redis. Salomé, auditrice indépendante, a passé le serveur au
-// crible et laisse un rapport : chaque chapitre en traite une partie. Les
-// exemples restent défensifs : on lit le rapport, on vérifie, on répare.
+// Story "L'Audit": what its chapters share. The server of
+// Le Fournil (machine fournil), Nadia's bakery, which takes its orders
+// online: an nginx, an orders app (a service account), a PostgreSQL
+// database and a Redis. Salomé, an independent auditor, went through the
+// server with a fine-tooth comb and left a report: each chapter handles one
+// part. The examples stay defensive: read the report, check, repair.
 
 import { d, f, accountsFiles, player, type Accounts, type Directory, type Node } from '../world';
 import { generateKey } from '../access';
@@ -19,21 +19,21 @@ import { SUDOERS } from './coop';
 
 export const M = '/home/you';
 export const PASSWORD = 'flour-2028';
-// Mardi 14 mars 2028, 9 h 30.
+// Tuesday 14 March 2028, 9:30 am.
 export const NOW = Date.UTC(2028, 2, 14, 9, 30, 0);
-// Une adresse quelconque d'internet (RFC 5737).
+// Some address on the internet (RFC 5737).
 export const INTERNET = '198.51.100.23';
 
-// Les clés publiques (fausses, de la bonne forme).
+// The public keys (fake, with the right form).
 export const KEYS = {
   nadia: generateKey('audit-nadia', 'nadia@boutique').isPublic,
   lucas: generateKey('audit-lucas', 'lucas@portable').isPublic,
-  // Une clé qui se fait passer pour une clé de Nadia : seule son empreinte la trahit.
+  // A key passing itself off as one of Nadia's: only its fingerprint gives it away.
   unknown: generateKey('audit-inconnue', 'nadia@portable').isPublic,
 };
 
-// Les comptes : Nadia (la gérante), Lucas (le stagiaire, parti fin février) et
-// commandes, le compte de service de l'appli.
+// The accounts: Nadia (the manager), Lucas (the intern, gone at the end of February) and
+// orders, the app's service account.
 export const bakeryAccounts = (withLucas = true): Accounts => {
   const c: Accounts = {
     users: {
@@ -64,7 +64,7 @@ export const bakeryAccounts = (withLucas = true): Accounts => {
 const root = { owner: 'root' };
 export const file = (content: string, owner = 'root', mode?: string) => f(content, { lines: true, owner, ...(mode ? { mode } : {}) });
 
-// sshd_config de Debian, tel que l'hébergeur l'a laissé : root peut entrer.
+// Debian's sshd_config, as the host left it: root can log in.
 export const SSHD_CONFIG = `
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -91,7 +91,7 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 type SshdState = { load: Record<string, string>; connectionsToLoad: number; reloads: number };
 export const sshd = (j: Game) => j.state.sshd as SshdState;
 
-/** Le service ssh : comme celui de Debian, il vérifie sshd_config avant de recharger. */
+/** The ssh service: like Debian's, it checks sshd_config before reloading. */
 export const serviceSsh = (): DefinitionService => ({
   description: 'OpenBSD Secure Shell server',
   active: true,
@@ -111,12 +111,12 @@ export const serviceSsh = (): DefinitionService => ({
   },
 });
 
-/** Au début du chapitre, sshd tourne avec la configuration du disque. */
+/** At the start of the chapter, sshd runs with the configuration on disk. */
 export const loadSshd = (j: Game) => {
   sshd(j).load = readConfig(j).values;
 };
 
-/** Une ligne au journal de ssh, à l'heure donnée (heure locale lue comme UTC). */
+/** A line in ssh's log, at the given time (local time read as UTC). */
 export const sshLog = (j: Game, timeOfDay: number, pid: number, message: string) => {
   const sd = systemd(j)!;
   const before = sd.clock;
@@ -125,7 +125,7 @@ export const sshLog = (j: Game, timeOfDay: number, pid: number, message: string)
   sd.clock = before;
 };
 
-/** Le monde commun : /etc (comptes, sudoers, ssh), les maisons, /srv, et ce que le chapitre ajoute. */
+/** The shared world: /etc (accounts, sudoers, ssh), the home directories, /srv, and what the chapter adds. */
 export function bakeryWorld(
   t: Translate,
   o: {
@@ -135,7 +135,7 @@ export function bakeryWorld(
     sudoersD?: Record<string, Node>;
     ssh?: Record<string, Node>;
     more?: Record<string, Node>;
-    // Après « Le rapport » : le compte de Lucas n'existe plus.
+    // After "Le rapport": Lucas's account no longer exists.
     withoutLucas?: boolean;
   },
 ): Directory {
@@ -180,11 +180,11 @@ export function bakeryWorld(
 }
 
 
-// ——— Le réseau vu par nmap, et les paquets ———
+// ——— The network seen by nmap, and the packages ———
 
 export const SCOPE = ['192.0.2.22'];
 export const NEIGHBOUR = { name: 'voisin.internal', address: '192.0.2.24' };
-// Le nom d'un paquet installé, tel que le service le dit à nmap : « Debian 7 » puis « Debian 7+deb13u1 ».
+// The name of an installed package, as the service tells nmap: "Debian 7" then "Debian 7+deb13u1".
 const revision = (j: Game) => ((j.state.apt as AptState | undefined)?.installed['openssh-server'] ?? '1:10.0p1-7').split('-').slice(1).join('-');
 
 const SERVICES: ServiceScan[] = [
@@ -196,7 +196,7 @@ const SERVICES: ServiceScan[] = [
   { port: 6379, service: 'redis', product: 'Redis key-value store 8.0.2' },
 ];
 
-/** Ce que nmap peut sonder : le Fournil (son état suit la machine) et le serveur du voisin, hors périmètre. */
+/** What nmap can probe: Le Fournil (its state follows the machine) and the neighbour's server, out of scope. */
 export const bakeryScan = (): ScanState => {
   const bakery: ScanHost = { address: '192.0.2.22', names: ['bakery.internal', 'bakery.example', 'bakery'], local: true, services: SERVICES, latency: 0.011 };
   const neighbour: ScanHost = {
@@ -212,7 +212,7 @@ export const bakeryScan = (): ScanState => {
   return { hosts: [bakery, neighbour], scope: [...SCOPE] };
 };
 
-/** Les sockets en écoute au départ : tout est ouvert, sauf l'appli de commandes (en local). */
+/** The listening sockets at the start: everything is open, except the orders app (local). */
 export const bakeryListening = (redisLocal = false): Listening[] => [
   { proto: 'tcp', address: '0.0.0.0', port: 22, process: 'sshd', pid: 612 },
   { proto: 'tcp', address: '0.0.0.0', port: 80, process: 'nginx', pid: 701 },
@@ -222,14 +222,14 @@ export const bakeryListening = (redisLocal = false): Listening[] => [
   { proto: 'tcp', address: '127.0.0.1', port: 3000, process: 'node', pid: 731 },
 ];
 
-/** L'état d'apt : la liste est à jour ; `mises` : les mises à jour de sécurité en attente. */
+/** apt's state: the list is up to date; `updates`: the pending security updates. */
 export const bakeryApt = (inWaiting: boolean): AptState => ({
   lists: true,
   installed: { ...Object.fromEntries(BASE_INSTALLED.map((p) => [p, PACKAGES[p].version])), nginx: '1.26.3-3+deb13u1', openssl: '3.5.1-1' },
   updates: inWaiting ? { 'openssh-server': '1:10.0p1-7+deb13u1', openssl: '3.5.4-1~deb13u1' } : {},
 });
 
-/** Un document Markdown rédigé par le joueur, section par section (titres « ## », lus dans la langue du jeu : <prefixe>-<nom>). */
+/** A Markdown document written by the player, section by section ("##" headings, read in the game's language: <prefix>-<name>). */
 export function sectionsMd(j: Game, text: string, prefix: string, names: string[]): Record<string, string> {
   const titres = Object.fromEntries(names.map((n) => [j.t(`${prefix}-${n}`).toLowerCase(), n]));
   const r: Record<string, string> = {};

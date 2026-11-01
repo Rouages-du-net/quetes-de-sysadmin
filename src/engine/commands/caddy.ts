@@ -1,11 +1,11 @@
-// La commande caddy (https://caddyserver.com/docs/command-line) : version,
-// validate, adapt, fmt, reload, run, start, stop. Les sous-commandes qui lisent
-// une configuration prennent --config (sinon le Caddyfile du dossier courant).
-// reload passe par l'API d'administration (localhost:2019) du Caddy qui
-// tourne : le service, sans besoin d'être root. Les messages de la console
-// suivent le format de zap (date, niveau, message, champs JSON).
-// Écarts : run et start, quand le service est arrêté, le démarrent (au lieu de
-// lancer un Caddy à part) ; adapt donne une configuration JSON simplifiée.
+// The caddy command (https://caddyserver.com/docs/command-line): version,
+// validate, adapt, fmt, reload, run, start, stop. The subcommands that read
+// a configuration take --config (otherwise the Caddyfile of the current directory).
+// reload goes through the admin API (localhost:2019) of the running
+// Caddy: the service, without needing root. The console messages
+// follow zap's format (date, level, message, JSON fields).
+// Differences: run and start, when the service is stopped, start it (instead of
+// launching a separate Caddy); adapt gives a simplified JSON configuration.
 
 import type { Command } from './index';
 import type { Shell } from '../shell';
@@ -124,7 +124,7 @@ https://caddyserver.com/docs/command-line`;
 
 const UNDER_COMMANDS = ['adapt', 'fmt', 'help', 'reload', 'run', 'start', 'stop', 'validate', 'version'];
 
-// « 2026/11/20 09:31:02.123	INFO	message	{"champ": "valeur"} », comme la console de zap.
+// "2026/11/20 09:31:02.123	INFO	message	{"field": "value"}", like zap's console.
 function consoleLine(game: Shell, level: string, msg: string, fields?: Record<string, unknown>): string {
   const d = new Date(systemd(game)?.clock ?? 0).toISOString();
   const when = `${d.slice(0, 10).replaceAll('-', '/')} ${d.slice(11, 23)}`;
@@ -164,13 +164,13 @@ function readOptions(game: Shell, under: string, args: string[]): Options | stri
   return o;
 }
 
-// Le fichier de configuration : --config, sinon le Caddyfile du dossier courant.
+// The configuration file: --config, otherwise the Caddyfile of the current directory.
 function configFile(game: Shell, o: Options): string | null {
   if (o.config) return o.config;
   return game.exists('Caddyfile') ? 'Caddyfile' : null;
 }
 
-// Lit et adapte la configuration ; les lignes de la console, ou l'erreur.
+// Reads and adapts the configuration; the console lines, or the error.
 function adapter(game: Shell, o: Options): { lines: string[]; config: ConfigCaddy } | { error: string } {
   const file = configFile(game, o);
   if (!file) return { error: 'Error: no config file to load' };
@@ -189,7 +189,7 @@ function adapter(game: Shell, o: Options): { lines: string[]; config: ConfigCadd
   return { lines, config: r.config };
 }
 
-// Les lignes de journal de la console (sur la sortie d'erreur), sans faire échouer la commande.
+// The console's log lines (on standard error), without failing the command.
 function log(game: Shell, lines: string[]) {
   for (const l of lines) game.error(l);
   game.status = 0;
@@ -249,11 +249,11 @@ const caddy: Command = {
       if ('error' in r) return game.error(r.error);
       log(game, r.lines);
       if (!sd || s?.state !== 'active') return game.error(unreachable, 1);
-      // Caddy charge la configuration envoyée : on la relit depuis le même fichier.
+      // Caddy loads the configuration sent: we reread it from the same file.
       logCaddy(game, 'info', 'admin.api', 'received request', { method: 'POST', host: 'localhost:2019', uri: '/load', remote_ip: '127.0.0.1', remote_port: '43122', headers: { 'Content-Type': ['application/json'], 'User-Agent': ['Go-http-client/1.1'] } });
       const absolute = game.resolve(configFile(game, o)!);
       if (absolute !== CADDYFILE) {
-        // Une autre configuration que celle du service : Caddy la prend quand même.
+        // A configuration other than the service's: Caddy takes it anyway.
         const text = game.read(absolute) ?? '';
         const kept = game.read(CADDYFILE);
         const n = game.find(CADDYFILE);
@@ -271,9 +271,9 @@ const caddy: Command = {
       return '';
     }
 
-    // run, start : le service tient déjà les ports.
+    // run, start: the service already holds the ports.
     if (s?.state === 'active') {
-      // Sans fichier, Caddy démarre avec une configuration vide… et bute aussi sur l'API d'administration.
+      // Without a file, Caddy starts with an empty configuration… and also runs into the admin API.
       const r = configFile(game, o) ? adapter(game, o) : { lines: [] };
       if ('error' in r) return game.error(r.error);
       return game.error([...r.lines, 'Error: loading initial config: loading new config: starting caddy administration endpoint: listen tcp 127.0.0.1:2019: bind: address already in use'].join('\n'));

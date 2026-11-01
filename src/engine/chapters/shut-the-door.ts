@@ -1,13 +1,12 @@
-// Histoire « Les Lettres du quartier » — chapitre « Fermer la porte » :
-// durcir SSH sur un serveur tout neuf, attaqué par force brute. Désactiver
-// la connexion en root et les mots de passe (sshd_config), vérifier avec
-// sshd -t, recharger ssh, puis se reconnecter pour prouver qu'on ne s'est
-// pas enfermé dehors.
-// Pièges réels : l'Include de Debian en tête de sshd_config (le fichier
-// 50-cloud-init.conf garde PasswordAuthentication yes : la première valeur
-// lue l'emporte), une faute de frappe (sshd -t ; reload refuse et garde
-// l'ancienne configuration), un AllowUsers qui oublie son propre compte.
-// Sources : https://man.openbsd.org/sshd_config, https://man.openbsd.org/sshd
+// Story "The Neighbourhood Letters", chapter "Shut the Door": hardening SSH
+// on a brand-new server under brute-force attack. Disable root login and
+// passwords (sshd_config), check with sshd -t, reload ssh, then reconnect
+// to prove you haven't locked yourself out.
+// Real traps: Debian's Include at the top of sshd_config (the file
+// 50-cloud-init.conf keeps PasswordAuthentication yes: the first value read
+// wins), a typo (sshd -t; reload refuses and keeps the old configuration),
+// an AllowUsers that forgets your own account.
+// Sources: https://man.openbsd.org/sshd_config, https://man.openbsd.org/sshd
 
 import { accountsByDefault, d, f, accountsFiles, player, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -18,7 +17,7 @@ import { allowed, CONFIG, readConfig } from '../sshd';
 const M = '/home/you';
 const SSH = 'OpenBSD Secure Shell server';
 
-// sshd_config de Debian, modifié par l'hébergeur (PermitRootLogin yes).
+// Debian's sshd_config, modified by the host (PermitRootLogin yes).
 const SSHD_CONFIG = `
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -61,7 +60,7 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 
 const CLOUD_INIT = 'PasswordAuthentication yes';
 
-// Les tentatives de force brute de la nuit, dans le journal de ssh.
+// The night's brute-force attempts, in ssh's log.
 const ATTACKS: [string, number, string][] = [
   ['203.0.113.66', 51022, 'Failed password for root from 203.0.113.66 port 51022 ssh2'],
   ['198.51.100.23', 40112, 'Invalid user admin from 198.51.100.23 port 40112'],
@@ -100,7 +99,7 @@ export const door: Chapter = {
         active: true,
         executable: 'sshd',
         process: [{ pid: 612, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' }],
-        // Comme le service ssh de Debian : ExecReload vérifie d'abord (sshd -t).
+        // Like Debian's ssh service: ExecReload checks first (sshd -t).
         check: (j) => {
           const e = readConfig(j).errors;
           return e.length ? e : null;
@@ -112,7 +111,7 @@ export const door: Chapter = {
           c.load = readConfig(j).values;
           c.connectionsToLoad = j.state.connections ?? 1;
           c.reloads++;
-          // Les robots reviennent… et se font éconduire avant même d'essayer un mot de passe.
+          // The bots come back… and are turned away before even trying a password.
           if (closed(c.load)) {
             const sd = systemd(j)!;
             writeLog(sd, 'ssh.service', 'sshd', 2690, 'Connection closed by authenticating user root 203.0.113.66 port 51533 [preauth]');
@@ -122,7 +121,7 @@ export const door: Chapter = {
       },
     }),
   }),
-  // La configuration chargée au démarrage du serveur, et les attaques de la nuit.
+  // The configuration loaded when the server starts, and the night's attacks.
   initialise: (j) => {
     config(j).load = readConfig(j).values;
     const sd = systemd(j)!;

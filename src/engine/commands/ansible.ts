@@ -1,7 +1,7 @@
-// Les commandes d'Ansible : ansible (commandes ad-hoc), ansible-playbook,
-// ansible-inventory et ansible-doc. Messages d'après ansible-core
-// (https://docs.ansible.com/ansible/latest/cli/). Le moteur est dans ansible.ts.
-// L'historique des exécutions est gardé dans etat.ansible (pour les histoires).
+// Ansible's commands: ansible (ad-hoc commands), ansible-playbook,
+// ansible-inventory and ansible-doc. Messages based on ansible-core
+// (https://docs.ansible.com/ansible/latest/cli/). The engine is in ansible.ts.
+// The history of runs is kept in state.ansible (for the stories).
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -42,7 +42,7 @@ const LONG_VERSION = (program: string, home: string, config: string | null) =>
     '  libyaml = True',
   ].join('\n');
 
-// Les options communes : -i inventaire, -u compte, -b (become), --check, --diff, --limit.
+// The common options: -i inventory, -u account, -b (become), --check, --diff, --limit.
 function readOptions(args: string[]) {
   const o: { inventory?: string; user?: string; become: boolean; check: boolean; difference: boolean; limit: string | null; rest: string[]; module?: string; arguments?: string; unknown?: string; flags: Set<string> } = {
     become: false,
@@ -73,13 +73,13 @@ function readOptions(args: string[]) {
   return o;
 }
 
-// Le contexte : configuration, inventaire (avec les avertissements d'Ansible s'il manque).
+// The context: configuration, inventory (with Ansible's warnings if it is missing).
 function context(game: Shell, o: ReturnType<typeof readOptions>): { c: Context; warnings: string[] } {
   const config = readConfig(game);
   const warnings: string[] = [];
   const path = game.resolve(o.inventory ?? config.inventory);
   let inventory: Inventory;
-  // -i nom1,nom2, : une liste d'hôtes directement.
+  // -i name1,name2,: a list of hosts directly.
   if (o.inventory?.includes(',')) inventory = readInventory(o.inventory.split(',').filter(Boolean).join('\n'));
   else {
     const text = game.read(path);

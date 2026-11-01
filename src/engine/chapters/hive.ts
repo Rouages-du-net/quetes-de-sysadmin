@@ -1,9 +1,9 @@
-// Histoire « La Ruche » : un tiers-lieu (des bureaux d'associations, un café
-// avec un wifi pour les invité·es, une imprimante et des caméras). Son
-// routeur est une Debian (machine ruche) : eth0 vers le fournisseur d'accès,
-// eth1 vers le commutateur. L'électricien vient de découper le réseau en
-// VLAN sur le commutateur (port 1 : trunk 802.1Q vers le routeur) ; le
-// routeur, lui, n'a pas suivi. Ce que les chapitres ont en commun.
+// Story "The Hive": a community space (offices for associations, a café
+// with guest Wi-Fi, a printer and cameras). Its router is a Debian (machine
+// hive): eth0 to the internet provider, eth1 to the switch. The electrician
+// has just split the network into VLANs on the switch (port 1: 802.1Q
+// trunk to the router); the router hasn't followed. What the chapters have
+// in common.
 
 import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
 import { machineName } from '../machines';
@@ -21,14 +21,14 @@ export const PASSWORD = 'bee-2027';
 // Lundi 8 novembre 2027, 8 h 15.
 export const NOW = Date.UTC(2027, 10, 8, 8, 15, 0);
 
-// Le plan des VLAN (celui de l'électricien) : numéro, nom, réseau, adresse du routeur.
+// The VLAN plan (the electrician's): number, name, network, router address.
 export const VLANS = [
   { id: 10, name: 'bureaux', network: '10.10.10.0/24', routeur: '10.10.10.1/24' },
   { id: 20, name: 'invites', network: '10.10.20.0/24', routeur: '10.10.20.1/24' },
   { id: 30, name: 'equipements', network: '10.10.30.0/24', routeur: '10.10.30.1/24' },
 ];
 
-// Les appareils branchés au commutateur (adresses MAC de documentation, RFC 7042).
+// The devices plugged into the switch (documentation MAC addresses, RFC 7042).
 export const devices = (printerInDhcp: boolean): Device[] => [
   { name: 'nas', mac: '00:00:5e:00:53:05', vlan: 10, fixed: '10.10.10.5' },
   { name: 'poste-malik', mac: '00:00:5e:00:53:10', vlan: 10 },
@@ -50,7 +50,7 @@ export const hiveAccounts = (): Accounts => ({
   },
 });
 
-// /etc/network/interfaces de Debian ; le LAN est encore un seul réseau à plat.
+// Debian's /etc/network/interfaces; the LAN is still a single flat network.
 export const FLAT_A_INTERFACES = `# This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
@@ -71,11 +71,11 @@ auto eth1
 iface eth1 inet static
     address 192.168.1.1/24`;
 
-/** Le même fichier, avec les trois VLAN (la solution du chapitre « Les VLAN »). */
+/** The same file, with the three VLANs (the solution of the chapter "VLANs"). */
 export const INTERFACES_VLAN = `${FLAT_A_INTERFACES.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
 ${VLANS.map((v) => `\n# VLAN ${v.id}: ${v.name}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
 
-/** dnsmasq une fois le chapitre « Le DHCP » fini : une plage par VLAN, l'imprimante réservée. */
+/** dnsmasq once the chapter "DHCP" is finished: one range per VLAN, the printer reserved. */
 export const DNSMASQ_VLAN = `# The DHCP server of the LAN: one range per VLAN
 interface=eth1.10,eth1.20,eth1.30
 dhcp-range=10.10.10.100,10.10.10.200,12h
@@ -83,7 +83,7 @@ dhcp-range=10.10.20.100,10.10.20.250,2h
 dhcp-range=10.10.30.100,10.10.30.200,24h
 dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10`;
 
-// /etc/nftables.conf, tel que l'installe le paquet Debian : tout est permis.
+// /etc/nftables.conf, as Debian's package installs it: everything is allowed.
 export const NFTABLES_DEBIAN = `#!/usr/sbin/nft -f
 
 flush ruleset
@@ -100,7 +100,7 @@ table inet filter {
 	}
 }`;
 
-// /etc/sysctl.conf de Debian (abrégé) : le transfert de paquets y est commenté.
+// Debian's /etc/sysctl.conf (shortened): packet forwarding is commented out in it.
 const SYSCTL_CONF = `#
 # /etc/sysctl.conf - Configuration file for setting system variables
 # See /etc/sysctl.d/ for additional system variables.
@@ -135,7 +135,7 @@ const SYSCTL_CONF = `#
 #  based on Router Advertisements for this host
 #net.ipv6.conf.all.forwarding=1`;
 
-// Les réglages du noyau que le jeu connaît (/proc/sys), à leur valeur au démarrage.
+// The kernel settings the game knows (/proc/sys), at their boot value.
 export const DEFAULTS_SYSCTL: Record<string, string> = {
   'kernel.hostname': 'ruche',
   'net.ipv4.conf.all.forwarding': '0',
@@ -159,7 +159,7 @@ function procSys(): Directory {
   return sysRoot;
 }
 
-/** L'état du réseau local de départ (reconstruit depuis /etc/network/interfaces au démarrage). */
+/** The initial state of the local network (rebuilt from /etc/network/interfaces at boot). */
 export function newLan(printerInDhcp: boolean): Lan {
   const l: Lan = {
     interfaces: {},
@@ -176,7 +176,7 @@ export function newLan(printerInDhcp: boolean): Lan {
 const root = { owner: 'root' };
 const file = (content: string, owner = 'root') => f(content, { lines: true, owner });
 
-/** Les services : networking (ifup -a), systemd-sysctl, ssh, dnsmasq (le DHCP) et nftables (désactivé, comme sur Debian). */
+/** The services: networking (ifup -a), systemd-sysctl, ssh, dnsmasq (DHCP) and nftables (disabled, as on Debian). */
 export function hiveSystemd(services: Record<string, DefinitionService> = {}) {
   return newSystemd('hive', NOW - 40 * 86_400_000, NOW, {
     networking: {
@@ -221,7 +221,7 @@ export function hiveSystemd(services: Record<string, DefinitionService> = {}) {
       checkToReload: true,
       load: (j) => startDnsmasq(j),
     },
-    // ExecStart et ExecReload : nft -f /etc/nftables.conf ; ExecStop : nft flush ruleset.
+    // ExecStart and ExecReload: nft -f /etc/nftables.conf; ExecStop: nft flush ruleset.
     nftables: {
       description: 'nftables',
       active: false,
@@ -247,13 +247,13 @@ export function hiveSystemd(services: Record<string, DefinitionService> = {}) {
   });
 }
 
-/** Au début du chapitre : le réseau monté depuis le fichier, puis dnsmasq. */
+/** At the start of the chapter: the network brought up from the file, then dnsmasq. */
 export function initialiseHive(j: Game) {
   startNetwork(j);
   startDnsmasq(j);
 }
 
-/** Le monde commun : /etc (comptes, réseau, dnsmasq, nftables, sysctl), la maison de vous, /var/lib/misc, /proc/sys. */
+/** The common world: /etc (accounts, network, dnsmasq, nftables, sysctl), your home, /var/lib/misc, /proc/sys. */
 export function hiveWorld(o: {
   interfaces: string;
   dnsmasq: string;
@@ -297,7 +297,7 @@ export function hiveWorld(o: {
   );
 }
 
-// Le pare-feu à la fin des zones, avec une chaîne input fermée par défaut.
+// The firewall at the end of "The Zones", with an input chain closed by default.
 export const NFTABLES_ZONES = `#!/usr/sbin/nft -f
 
 flush ruleset
@@ -331,23 +331,23 @@ table ip nat {
 	}
 }`;
 
-/** Au début : le réseau, les réglages du noyau et le pare-feu du chapitre « Les zones ». */
+/** At the start: the network, the kernel settings and the firewall of the chapter "The Zones". */
 export function initialiseFirewall(j: Game) {
   initialiseHive(j);
   applySysctl(j, DEFAULTS_SYSCTL);
   j.state.nft = readConf(j, { tables: [] }).ruleset ?? { tables: [] };
 }
 
-// Le réglage du routage, écrit dans le chapitre « Les zones ».
+// The routing setting, written in the chapter "The Zones".
 export const ROUTER_SYSCTL = { '90-router.conf': f('net.ipv4.ip_forward = 1', { lines: true, owner: 'root' }) };
 
-// Le pare-feu à la fin du « télétravail » : WireGuard entre (UDP 51820) et va vers les bureaux.
+// The firewall at the end of "Working from home": WireGuard comes in (UDP 51820) and goes to the offices.
 export const REMOTE_WORK_NFTABLES = NFTABLES_ZONES.replace(
   'icmp type echo-request accept',
   'icmp type echo-request accept\n\t\t# WireGuard\n\t\tudp dport 51820 accept',
 ).replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
 
-/** Le réseau à la fin de « La DMZ » : eth1.40 dans le fichier, et le pare-feu qui publie le site. */
+/** The network at the end of "The DMZ": eth1.40 in the file, and the firewall that publishes the site. */
 export const INTERFACES_DMZ = `${INTERFACES_VLAN}
 
 # VLAN 40: dmz (the public web server)
@@ -363,7 +363,7 @@ export const NFTABLES_DMZ = REMOTE_WORK_NFTABLES.replace(
   '\t\toifname "eth0" masquerade\n\t}\n\tchain prerouting {\n\t\ttype nat hook prerouting priority dstnat;\n\t\tiifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10\n\t}',
 );
 
-/** Le réseau local avec la DMZ (VLAN 40, le serveur web). */
+/** The local network with the DMZ (VLAN 40, the web server). */
 export function lanWithDmz(): Lan {
   const l = newLan(true);
   l.vlans.push(40);
@@ -372,14 +372,14 @@ export function lanWithDmz(): Lan {
 }
 
 /**
- * Le plan du réseau de La Ruche, tel que l'équipe l'a prévu (celui du
- * plan-commutateur.txt) : le routeur, ses VLAN et leurs appareils ; puis, au
- * fil des chapitres, le télétravail, la DMZ, l'Annexe, l'annuaire, la borne Wi-Fi.
+ * The Hive's network plan, as the team designed it (the one in
+ * switch-plan.txt): the router, its VLANs and their devices; then, as the
+ * chapters go, remote work, the DMZ, the Annex, the directory, the Wi-Fi access point.
  */
 export const hivePlan =
   (o: { remoteWork?: boolean; dmz?: boolean; annex?: boolean; directory?: boolean; wifi?: boolean } = {}) =>
   (t: Translate): ElementPlan => {
-    // Les rôles du routeur : des étiquettes, séparées comme sur un schéma.
+    // The router's roles: labels, separated as on a diagram.
     const listing = (words: string[]) => words.join(' · ');
     const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, name: 'dmz', network: '10.10.40.0/24' }] : [])];
     const all = [

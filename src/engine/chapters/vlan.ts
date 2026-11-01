@@ -1,16 +1,15 @@
-// Histoire « La Ruche » — chapitre « Les VLAN » : l'électricien a découpé
-// le réseau en trois VLAN sur le commutateur (bureaux, invité·es,
-// équipements), avec un port trunk vers le routeur. Depuis, plus rien ne
-// marche : le routeur parle encore à plat (sans étiquette 802.1Q, donc au
-// VLAN natif, où il n'y a plus personne).
-//   - créer une interface par VLAN sur eth1 (ip link add … type vlan id …),
-//     avec l'adresse du routeur dans chaque réseau ;
-//   - l'écrire dans /etc/network/interfaces (eth1.10, eth1.20, eth1.30),
-//     pour que ça tienne au prochain démarrage, et ifup.
-// Objectif vérifié sur l'état : pour chaque VLAN, une interface montée sur
-// eth1 avec le bon numéro et l'adresse .1 de son réseau, ET la même chose
-// dans /etc/network/interfaces (auto, static).
-// Sources : https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html,
+// Story "La Ruche" — chapter "VLANs": the electrician split the network into
+// three VLANs on the switch (offices, guests, equipment), with a trunk port
+// to the router. Since then, nothing works: the router still talks flat
+// (without an 802.1Q tag, so on the native VLAN, where nobody is left).
+//   - create one interface per VLAN on eth1 (ip link add … type vlan id …),
+//     with the router's address in each network;
+//   - write it in /etc/network/interfaces (eth1.10, eth1.20, eth1.30),
+//     so that it holds at the next boot, and ifup.
+// Objective checked on the state: for each VLAN, an interface up on eth1
+// with the right number and the .1 address of its network, AND the same
+// thing in /etc/network/interfaces (auto, static).
+// Sources: https://manpages.debian.org/trixie/vlan/vlan-interfaces.5.en.html,
 // https://man7.org/linux/man-pages/man8/ip-link.8.html, IEEE 802.1Q
 
 import { f, type Chapter } from '../world';
@@ -22,17 +21,17 @@ const FLAT_A_DNSMASQ = `# The DHCP server of the LAN
 interface=eth1
 dhcp-range=192.168.1.100,192.168.1.200,12h`;
 
-// En ce moment : l'interface montée du VLAN, avec l'adresse du routeur.
+// Right now: the VLAN's interface up, with the router's address.
 const inPlace = (j: Game, v: (typeof VLANS)[number]) => {
   const l = lan(j)!;
   return Object.values(l.interfaces).some((i) => inService(l, i) && vlanFor(l, i) === v.id && i.addresses.includes(v.routeur));
 };
-// Dans le fichier : une strophe auto, static, sur eth1, avec le bon numéro et la bonne adresse.
+// In the file: an auto, static stanza, on eth1, with the right number and the right address.
 const written = (j: Game, v: (typeof VLANS)[number]) =>
   Object.values(readInterfaces(j).stanzas).some(
     (s) => s.auto && s.method === 'static' && s.vlan?.parent === 'eth1' && s.vlan.id === v.id && s.address === v.routeur,
   );
-// Une interface VLAN dont l'adresse est celle d'un autre numéro (10.10.30.1 sur le VLAN 3…).
+// A VLAN interface whose address belongs to another number (10.10.30.1 on VLAN 3…).
 const badNumber = (j: Game) => {
   const l = lan(j)!;
   return Object.values(l.interfaces).some((i) => i.vlan && VLANS.some((v) => i.addresses.includes(v.routeur) && i.vlan!.id !== v.id));

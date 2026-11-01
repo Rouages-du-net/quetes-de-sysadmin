@@ -1,11 +1,11 @@
-// tmux (https://man.openbsd.org/tmux) : des sessions de terminal qui vivent
-// sur la machine, indépendamment de la connexion. Si la connexion tombe, ce
-// qui tourne dans tmux continue ; on s'y rattache ensuite (tmux attach).
-// Les sessions sont dans etat.tmux ({ nom: { cree, lignes } }) ; la console y
-// recopie ce qui s'affiche tant qu'on y est attaché (Shell.tmux).
-// Écarts : une fenêtre par session, pas de raccourcis clavier (Ctrl+b d
-// s'écrit tmux detach), attach rejoue les dernières lignes de la session.
-// Et uname (coreutils) : le noyau qui tourne.
+// tmux (https://man.openbsd.org/tmux): terminal sessions that live
+// on the machine, independently of the connection. If the connection drops, what
+// runs in tmux carries on; you reattach to it afterwards (tmux attach).
+// Sessions are in etat.tmux ({ nom: { cree, lignes } }); the console
+// copies into them what is displayed while attached (Shell.tmux).
+// Differences: one window per session, no keyboard shortcuts (Ctrl+b d
+// is written tmux detach), attach replays the session's last lines.
+// And uname (coreutils): the running kernel.
 
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
@@ -19,7 +19,7 @@ export interface SessionTmux {
 const sessions = (game: Shell): Record<string, SessionTmux> => (game.state.tmux ??= {});
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-// « Tue Oct 19 21:32:10 2027 », comme tmux ls.
+// "Tue Oct 19 21:32:10 2027", like tmux ls.
 const date = (ms: number) => {
   const d = new Date(ms);
   return `${DAYS[d.getUTCDay()]} ${MONTH[d.getUTCMonth()]} ${d.getUTCDate()} ${d.toISOString().slice(11, 19)} ${d.getUTCFullYear()}`;
@@ -27,7 +27,7 @@ const date = (ms: number) => {
 const NESTED = 'sessions should be nested with care, unset $TMUX to force';
 const WITHOUT_SERVER = (game: Shell) => `no server running on /tmp/tmux-${game.accounts.users[game.who]?.uid ?? 1000}/default`;
 
-/** Ce qui s'affiche dans une session tmux : on le garde pour la prochaine fois qu'on s'y rattache. */
+/** What is displayed in a tmux session: kept for the next time you reattach. */
 export function noteTmux(game: Shell, name: string, text: string) {
   const s = sessions(game)[name];
   if (!s || !text) return;
@@ -35,7 +35,7 @@ export function noteTmux(game: Shell, name: string, text: string) {
   if (s.lines.length > 500) s.lines.splice(0, s.lines.length - 500);
 }
 
-// La valeur d'une option (-s nom, -t nom).
+// The value of an option (-s name, -t name).
 const value = (args: string[], option: string) => (args.includes(option) ? args[args.indexOf(option) + 1] : undefined);
 
 export const TMUX: Record<string, Command> = {

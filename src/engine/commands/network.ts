@@ -1,18 +1,18 @@
-// Commandes réseau simulées : ping, dig, traceroute, curl. Leurs sorties
-// reprennent le format des vrais outils (en anglais, comme sur un vrai
-// système) ; les machines et les routes viennent de l'état de l'histoire :
+// Simulated network commands: ping, dig, traceroute, curl. Their outputs
+// follow the real tools' format (in English, as on a real system); the
+// machines and routes come from the story's state:
 //
-//   etat.reseau = {
-//     machines:   { ip: { ping: répond-il au ping ?, ms: aller-retour } },
-//     noms:       { nom: ip }           ce que savent les vrais serveurs DNS
-//     resolveurs: [ip]                  serveurs DNS qui répondent
-//     routes:     { ip: [{ ip, nom?, ms }] }  sauts jusqu'à la destination
-//     web:        { nom: { entetes: [...], corps } }
+//   state.network = {
+//     machines:   { ip: { ping: does it answer ping?, ms: round trip } },
+//     names:      { name: ip }          what the real DNS servers know
+//     resolvers:  [ip]                  DNS servers that answer
+//     routes:     { ip: [{ ip, name?, ms }] }  hops to the destination
+//     web:        { name: { headers: [...], body } }
 //   }
 //
-// Le serveur DNS utilisé est lu, comme sous Linux, dans /etc/resolv.conf
-// (ligne « nameserver … »). Les adresses et les noms sont réservés à la
-// documentation (RFC 5737, RFC 6761), sauf 9.9.9.9 (le résolveur public Quad9).
+// The DNS server used is read, as on Linux, from /etc/resolv.conf
+// ("nameserver …" line). The addresses and names are reserved for
+// documentation (RFC 5737, RFC 6761), except 9.9.9.9 (the Quad9 public resolver).
 
 import type { Shell } from '../shell';
 import type { Command } from './index';
@@ -25,14 +25,14 @@ import { systemd, toUtc } from '../systemd';
 import { addressFor, interfaceFor, reach, lan } from '../lan';
 import { pingTunnel } from './wireguard';
 
-// Ce que curl ajoute quand la vérification du certificat échoue (curl 8).
+// What curl adds when certificate verification fails (curl 8).
 const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
 
 curl failed to verify the legitimacy of the server and therefore could not
 establish a secure connection to it. To learn more about this situation and
 how to fix it, please visit the webpage mentioned above.`;
 
-// La réponse d'une appli dans un conteneur, avec ses en-têtes.
+// The response of an app in a container, with its headers.
 function appResponse(game: Shell, r: { code: number; body: string; type?: string; headers?: string[] }): Response {
   const reasons: Record<number, string> = {
     200: 'OK',
@@ -58,7 +58,7 @@ function appResponse(game: Shell, r: { code: number; body: string; type?: string
   };
 }
 
-/** Le problème du certificat présenté, au format de curl ; null s'il est bon. */
+/** The problem with the presented certificate, in curl's format; null if it is fine. */
 export function checkCertificate(game: Shell, content: string | null, host: string): string | null {
   const c = read(content);
   if (!c) return 'SSL certificate problem: unable to get local issuer certificate';
@@ -77,7 +77,7 @@ interface Network {
   web: Record<string, { headers: string[]; body: string }>;
 }
 
-// Les noms sous lesquels une machine avec nginx se joint elle-même : etat.nginx.noms.
+// The names by which a machine with nginx reaches itself: state.nginx.names.
 const BASE_LOCAL = ['localhost', '127.0.0.1'];
 
 const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
@@ -88,7 +88,7 @@ function dnsServers(game: Shell): string[] {
   return [...conf.matchAll(/^\s*nameserver\s+(\S+)/gm)].map((m) => m[1]);
 }
 
-// Résout un nom comme le ferait le système. `serveur` : forcer un serveur DNS.
+// Resolves a name as the system would. `server`: force a DNS server.
 function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
   if (isIp(name)) return { ip: name };
   const r: Network = game.state.network;
@@ -98,17 +98,17 @@ function resolveName(game: Shell, name: string, server?: string): { ip: string }
   return ip ? { ip } : { error: 'unknown', servers };
 }
 
-// ping sur le réseau local : un appareil répond, ou l'interface du routeur dit qu'il est injoignable.
+// ping on the local network: a device answers, or the router's interface says it is unreachable.
 function pingLan(game: Shell, host: string, n: number): string {
   const l = lan(game)!;
-  // Sans DNS local : une adresse, ou un nom d'appareil connu par le jeu (/etc/hosts n'est pas simulé ici).
+  // Without local DNS: an address, or a device name known to the game (/etc/hosts is not simulated here).
   const ip = isIp(host) ? host : l.devices.find((a) => a.name === host) ? addressFor(l.devices.find((a) => a.name === host)!) : undefined;
   if (!ip) return game.error(`ping: ${host}: Name or service not known`, 2);
   const r = reach(l, ip);
   if (r.what === 'no-route') return game.error('ping: connect: Network is unreachable', 2);
   const lines = [`PING ${host} (${ip}) 56(84) bytes of data.`];
   const time: number[] = [];
-  // Par un tunnel WireGuard : il faut un pair pour cette adresse, et que la poignée de main ait eu lieu.
+  // Through a WireGuard tunnel: there must be a peer for this address, and the handshake must have happened.
   const tunnel = interfaceFor(l, ip)?.wireguard ? pingTunnel(game, ip) : null;
   for (let i = 1; i <= n; i++) {
     if (tunnel === 'no-peer') {
@@ -156,7 +156,7 @@ export const NETWORK: Record<string, Command> = {
       }
       const host = rest[0];
       if (!host) return game.error('ping: usage error: Destination address required');
-      // Une machine qui sert de routeur à un réseau local (lan.ts).
+      // A machine acting as the router of a local network (lan.ts).
       if (lan(game)) return pingLan(game, host, n);
       const res = resolveName(game, host);
       if ('error' in res)
@@ -189,7 +189,7 @@ export const NETWORK: Record<string, Command> = {
   dig: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      // Une machine avec un vrai DNS simulé (zones, serveurs, cache) : bind.ts.
+      // A machine with a real simulated DNS (zones, servers, cache): bind.ts.
       if (game.state.dns) return digDns(args, game);
       const server = args.find((a) => a.startsWith('@'))?.slice(1);
       const short = args.includes('+short');
@@ -239,7 +239,7 @@ export const NETWORK: Record<string, Command> = {
       const arrives = jumps.at(-1)?.ip === res.ip;
       if (!arrives) {
         for (let i = jumps.length + 1; i <= jumps.length + 3; i++) lines.push(`${String(i).padStart(2)}  * * *`);
-        // Écart volontaire : le vrai traceroute continue jusqu'à 30 sauts.
+        // Deliberate difference: the real traceroute goes on up to 30 hops.
         lines.push('    ' + game.t('traceroute-more-person'));
       }
       return lines.join('\n');
@@ -247,15 +247,15 @@ export const NETWORK: Record<string, Command> = {
   },
 
   curl: {
-    // curl a beaucoup d'options (-s, -L, -v…) : on ignore celles qu'on ne simule pas.
+    // curl has many options (-s, -L, -v…): the ones not simulated are ignored.
     ownOptions: true,
     launch: ({ args, game }) => {
-      // Les options qui prennent une valeur ; -H « Host: nom » choisit le site demandé.
+      // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];
       let requestHost: string | null = null;
-      // Les autres en-têtes donnés avec -H (noms en minuscules), transmis à nginx.
+      // The other headers given with -H (lower-case names), passed to nginx.
       const inTetes: Record<string, string> = {};
-      // -X, ou -d (POST) : la méthode, qu'on retrouve dans le journal de nginx.
+      // -X, or -d (POST): the method, which shows up in nginx's log.
       let method: string | undefined;
       const positional: string[] = [];
       for (let i = 0; i < args.length; i++) {
@@ -272,7 +272,7 @@ export const NETWORK: Record<string, Command> = {
         } else if (!args[i].startsWith('-')) positional.push(args[i]);
       }
       const headers = args.includes('-I') || args.includes('--head');
-      // -i : les en-têtes, puis le corps (include).
+      // -i: the headers, then the body (include).
       const withHeaders = args.includes('-i') || args.includes('--include');
       const follow = args.includes('-L') || args.includes('--location');
       const url = positional[0];
@@ -280,7 +280,7 @@ export const NETWORK: Record<string, Command> = {
       const m = /^(?:(https?):\/\/)?([^/:]+)(?::(\d+))?(.*)$/.exec(url);
       if (!m) return game.error(`curl: (3) URL rejected: Malformed input to a URL function`);
       const host = m[2];
-      // Un tunnel ssh (ssh -L) : le port local mène à un service vu depuis une autre machine.
+      // An ssh tunnel (ssh -L): the local port leads to a service seen from another machine.
       const tunnel = BASE_LOCAL.includes(host.toLowerCase())
         ? ((game.state.tunnels ?? []) as { port: number; shell: Shell; remotePort: number; pid: number; loop: boolean }[]).find(
             (t) => t.port === Number(m[3] ?? 80) && ((game.state.process ?? []) as { pid: number }[]).some((p) => p.pid === t.pid),
@@ -291,25 +291,25 @@ export const NETWORK: Record<string, Command> = {
         const path = m[4] || '/';
         const app = tunnel.loop ? appRequest(target, tunnel.remotePort, path) : null;
         const r = app ? appResponse(target, app) : target.state.nginx && tunnel.remotePort === 80 ? httpRequest(target, 'localhost', path, 80) : null;
-        // Personne n'écoute en face : ssh le signale (sur le terminal où il tourne), curl ne reçoit rien.
+        // Nobody listens on the other side: ssh reports it (on the terminal where it runs), curl receives nothing.
         if (!r) return game.error(`channel 2: open failed: connect failed: Connection refused\ncurl: (52) Empty reply from server`);
         return headers ? r.headers.join('\n') : withHeaders ? `${r.headers.join('\n')}\n\n${r.body}` : r.body;
       }
-      // Une machine avec nginx : la requête part vers elle-même (localhost,
-      // son nom, son adresse), et nginx répond selon sa configuration chargée.
+      // A machine with nginx: the request goes to itself (localhost,
+      // its name, its address), and nginx answers according to its loaded configuration.
       if (game.state.nginx || game.state.docker || game.state.apps || game.state.caddy) {
         const containers: string[] = (game.state.docker?.containers ?? []).map((c: { ip: string }) => c.ip);
         const local = [...BASE_LOCAL, ...(game.state.nginx?.names ?? game.state.docker?.names ?? game.state.caddy?.names ?? []), ...containers];
         const blocks: string[] = [];
         let [schema, target, port, path, name] = [m[1] ?? 'http', host, Number(m[3] ?? (m[1] === 'https' ? 443 : 80)), m[4] || '/', requestHost ?? host];
-        // -L suit les redirections (au plus 5 ici).
+        // -L follows redirects (at most 5 here).
         for (let hop = 0; hop < 6; hop++) {
           if (!local.includes(target.toLowerCase())) return game.error(`curl: (6) Could not resolve host: ${target}`);
-          // Un port publié par un conteneur (docker run -p) : c'est lui qui répond.
+          // A port published by a container (docker run -p): it is the one answering.
           const viaDocker = dockerRequest(game, target.toLowerCase() === 'localhost' ? '127.0.0.1' : target, port, path);
-          // Une appli de la machine, jointe sur son propre port (sans nginx).
+          // An app of the machine, reached on its own port (without nginx).
           const appVia = port !== 80 && port !== 443 && BASE_LOCAL.includes(target.toLowerCase()) ? appRequest(game, port, path, { ...inTetes, host: name === target ? `${target}:${port}` : name }) : null;
-          // Caddy : il répond sur ses ports ; sans certificat pour ce nom, la poignée de main TLS échoue.
+          // Caddy: it answers on its ports; without a certificate for this name, the TLS handshake fails.
           const viaCaddy = game.state.caddy ? caddyRequest(game, name, path, port) : null;
           if (viaCaddy && 'tls' in viaCaddy) return game.error('curl: (35) OpenSSL/3.5.1: error:0A000438:SSL routines::tlsv1 alert internal error');
           const r =
@@ -322,10 +322,10 @@ export const NETWORK: Record<string, Command> = {
                 : game.state.nginx && (port === 80 || port === 443)
                   ? httpRequest(game, name, path, port, true, Object.keys(inTetes).length || method ? { address: '127.0.0.1', time: systemd(game)?.clock ?? 0, agent: 'curl/8.14.1', headers: inTetes, method } : undefined)
                   : null;
-          // Un service qui ne parle pas HTTP (une base de données) : réponse vide.
+          // A service that doesn't speak HTTP (a database): empty reply.
           if (viaDocker?.code === 0) return game.error('curl: (52) Empty reply from server');
           if (!r) return game.error(`curl: (7) Failed to connect to ${target} port ${port} after 0 ms: Couldn't connect to server`);
-          // HTTPS : curl vérifie le certificat présenté (dates, nom), sauf avec -k.
+          // HTTPS: curl checks the presented certificate (dates, name), except with -k.
           const insecure = args.some((a) => a === '-k' || a === '--insecure');
           const problem = schema === 'https' && !insecure ? checkCertificate(game, r.certificate ?? null, target) : null;
           if (problem) return game.error(`curl: (60) ${problem}\n${SSL_HELP}`);
@@ -341,7 +341,7 @@ export const NETWORK: Record<string, Command> = {
         }
         return game.error('curl: (47) Maximum (5) redirects followed');
       }
-      // Une machine sans réseau simulé (le poste) : personne ne répond, sauf par un tunnel.
+      // A machine without a simulated network (the workstation): nobody answers, except through a tunnel.
       if (!game.state.network)
         return game.error(
           BASE_LOCAL.includes(host.toLowerCase())

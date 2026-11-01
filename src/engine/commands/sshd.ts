@@ -1,7 +1,7 @@
-// sshd -t (vérifier la configuration) et sshd -T (afficher la configuration
-// qui serait appliquée), d'après https://man.openbsd.org/sshd.
-// Comme le vrai sshd, il faut être root (lecture des clés d'hôte).
-// Messages d'OpenSSH, en anglais.
+// sshd -t (check the configuration) and sshd -T (show the configuration
+// that would be applied), after https://man.openbsd.org/sshd.
+// Like the real sshd, you must be root (reading the host keys).
+// OpenSSH's messages, in English.
 
 import { showConfig, CONFIG, readConfig } from '../sshd';
 import type { Command } from './index';
@@ -26,6 +26,6 @@ export const SSHD: Record<string, Command> = {
       return mode === 'T' ? showConfig(config) : '';
     },
   },
-  // Une page de manuel de la section 5 (fichiers) : ce n'est pas une commande.
+  // A manual page from section 5 (files): it isn't a command.
   sshd_config: { section: 5, launch: () => '' },
 };

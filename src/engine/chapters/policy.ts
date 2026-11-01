@@ -1,19 +1,19 @@
-// Histoire « Le courrier indésirable » — chapitre « La politique » : DMARC.
-// Les Jardins ont publié une politique DMARC p=none il y a une semaine, avec
-// rua= : les rapports agrégés des messageries sont arrivés. Nour voudrait
-// passer à p=quarantine (mailbox.example le demande aux expéditeurs qui
-// envoient beaucoup), sans perdre la lettre d'information, envoyée par un
-// prestataire (newsmail.example) qui signe… pour son propre domaine.
-// Commandes : lire les rapports (grep, less), dig TXT _dmarc, la zone (un
-// CNAME pour déléguer le sélecteur nm1 au prestataire, le point final !,
-// le serial), la balise p=.
-// Pièges réels : SPF qui passe pour le domaine du prestataire (l'enveloppe)
-// n'aligne rien ; un CNAME sans point final ; deux enregistrements DMARC ;
-// p=quarantine avant d'avoir aligné la lettre.
-// Objectif vérifié sur l'état : internet voit une politique quarantine ou
-// reject, avec rua ; la lettre et les courriels du serveur passent DMARC.
-// Sources : RFC 7489 (https://www.rfc-editor.org/rfc/rfc7489), notamment
-// l'alignement (3.1) et les rapports agrégés (7.2, annexe C).
+// Story "Junk Mail", chapter "The Policy": DMARC.
+// Les Jardins published a DMARC p=none policy a week ago, with
+// rua=: the mail providers' aggregate reports have arrived. Nour would like
+// to move to p=quarantine (mailbox.example asks it of senders who
+// send a lot), without losing the newsletter, sent by a
+// provider (newsmail.example) that signs… for its own domain.
+// Commands: read the reports (grep, less), dig TXT _dmarc, the zone (a
+// CNAME to delegate the nm1 selector to the provider, the trailing dot!,
+// the serial), the p= tag.
+// Real traps: SPF passing for the provider's domain (the envelope)
+// aligns nothing; a CNAME without a trailing dot; two DMARC records;
+// p=quarantine before aligning the newsletter.
+// Objective checked on the state: the internet sees a quarantine or
+// reject policy, with rua; the newsletter and the server's mails pass DMARC.
+// Sources: RFC 7489 (https://www.rfc-editor.org/rfc/rfc7489), in particular
+// alignment (3.1) and aggregate reports (7.2, appendix C).
 
 import { d, f, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -41,7 +41,7 @@ const SPOOFER = '192.0.2.66';
 
 const departure: Departure = { zone: [GOOD_SPF, goodDkim(), DMARC_NONE], serial: 2027051701, mainCf: MILTERS, opendkim: 'configure', now: NOW };
 
-// Un rapport agrégé DMARC (RFC 7489, annexe C), tel que les messageries l'envoient à l'adresse de rua=.
+// A DMARC aggregate report (RFC 7489, appendix C), as mail providers send it to the rua= address.
 type Line = { ip: string; n: number; dkim: [string, string, string]; spf: [string, string]; dmarcDkim: string; dmarcSpf: string };
 const report = (org: string, id: string, start: number, lines: Line[]) => `<?xml version="1.0" encoding="UTF-8" ?>
 <feedback>

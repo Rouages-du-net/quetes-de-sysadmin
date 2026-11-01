@@ -1,5 +1,5 @@
-// Petits outils du shell : découpage de la ligne de commande, permissions,
-// tailles, jokers.
+// Small shell tools: splitting the command line, permissions,
+// sizes, wildcards.
 
 import type { File } from './world';
 import type { Game } from './shell';
@@ -9,21 +9,21 @@ export const content = (n: File, game: Game) =>
   typeof n.content === 'function' ? n.content(game) : n.prose && !n.lines ? typography(n.content, game.t.language) : n.content;
 export const sizeFor = (n: File, game: Game) => n.size ?? new TextEncoder().encode(content(n, game)).length;
 
-// Motif de jokers (*, ?) → expression régulière.
+// Wildcard pattern (*, ?) → regular expression.
 export function wildcard(pattern: string): RegExp {
   return new RegExp('^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
 }
 
 export interface Word {
   text: string;
-  // Entre guillemets : pas de jokers, pas d'opérateurs.
+  // Inside quotes: no wildcards, no operators.
   city: boolean;
-  // Opérateur du shell : tube ou redirection.
+  // Shell operator: pipe or redirection.
   op?: '|' | '>' | '>>';
 }
 
-// Découpe une ligne en mots, comme le shell : les espaces séparent les mots,
-// sauf entre guillemets ("…" ou '…') ; | > et >> sont des opérateurs.
+// Splits a line into words, like the shell: spaces separate words,
+// except inside quotes ("…" or '…'); | > and >> are operators.
 export function split(line: string): Word[] {
   const words: Word[] = [];
   let active: Word | null = null;
@@ -60,13 +60,13 @@ export function split(line: string): Word[] {
   return words;
 }
 
-// « 755 », « 2775 » ou « u+x », « o-w », « go=r », « g+s », « +t »… → nouveau
-// mode rwxrwxrwx, où les bits spéciaux prennent la place du x, comme ls -l :
-// s/S (setuid, setgid : x présent ou non), t/T (sticky).
-// Écart volontaire : sans u/g/o/a, on agit sur tout le monde (a) sans
-// tenir compte du masque (umask).
+// "755", "2775" or "u+x", "o-w", "go=r", "g+s", "+t"… → new
+// rwxrwxrwx mode, where special bits take the place of the x, like ls -l:
+// s/S (setuid, setgid: x present or not), t/T (sticky).
+// Deliberate difference: without u/g/o/a, it applies to everyone (a) without
+// taking the mask (umask) into account.
 export function applyMode(current: string, rights: string): string | null {
-  // Les droits rwx d'un côté, les bits spéciaux de l'autre.
+  // The rwx permissions on one side, the special bits on the other.
   const bits = [...current].map((c, i) => (i % 3 === 2 ? (/[xst]/.test(c) ? 'x' : '-') : c));
   const specials = { u: /[sS]/.test(current[2] ?? ''), g: /[sS]/.test(current[5] ?? ''), t: /[tT]/.test(current[8] ?? '') };
   if (/^[0-7]{3,4}$/.test(rights)) {
@@ -78,7 +78,7 @@ export function applyMode(current: string, rights: string): string | null {
       bits[i * 3 + 1] = v & 2 ? 'w' : '-';
       bits[i * 3 + 2] = v & 1 ? 'x' : '-';
     });
-    // Comme GNU chmod : 3 chiffres ne retirent pas le setgid d'un dossier, 4 chiffres fixent tout.
+    // Like GNU chmod: 3 digits don't remove a directory's setgid, 4 digits set everything.
     if (rights.length === 4) Object.assign(specials, { u: !!(special & 4), g: !!(special & 2), t: !!(special & 1) });
   } else
     for (const clause of rights.split(',')) {
@@ -111,14 +111,14 @@ export function applyMode(current: string, rights: string): string | null {
   return bits.join('');
 }
 
-/** Le mode octal (« 2775 », « 644 ») d'un mode rwxrwxrwx. */
+/** The octal mode ("2775", "644") of an rwxrwxrwx mode. */
 export function octal(mode: string): string {
   const digit = (i: number) => (mode[i] === 'r' ? 4 : 0) + (mode[i + 1] === 'w' ? 2 : 0) + (/[xst]/.test(mode[i + 2]) ? 1 : 0);
   const special = (/[sS]/.test(mode[2]) ? 4 : 0) + (/[sS]/.test(mode[5]) ? 2 : 0) + (/[tT]/.test(mode[8]) ? 1 : 0);
   return `${special || ''}${digit(0)}${digit(3)}${digit(6)}`;
 }
 
-/** Le mode d'un nouveau fichier (base 666) ou dossier (base 777), moins le masque (umask, ex. « 0022 »). */
+/** The mode of a new file (base 666) or directory (base 777), minus the mask (umask, e.g. "0022"). */
 export function modeWithMask(directory: boolean, mask: string): string {
   const m = parseInt(mask, 8);
   const base = directory ? 0o777 : 0o666;
@@ -126,8 +126,8 @@ export function modeWithMask(directory: boolean, mask: string): string {
   return [6, 3, 0].map((d) => ((v >> d) & 4 ? 'r' : '-') + ((v >> d) & 2 ? 'w' : '-') + ((v >> d) & 1 ? 'x' : '-')).join('');
 }
 
-// Taille lisible : 1536 → « 1,5K », comme du -h ou ls -lh (en base 1024),
-// avec le séparateur décimal de la langue.
+// Readable size: 1536 → "1,5K", like du -h or ls -lh (base 1024),
+// with the language's decimal separator.
 export function readable(bytes: number, language = 'fr'): string {
   const units = ['', 'K', 'M', 'G'];
   let v = bytes;
@@ -141,9 +141,9 @@ export function readable(bytes: number, language = 'fr'): string {
   return text + units[u];
 }
 
-// Options courtes groupées : « -czf » → c, z, f. Renvoie les lettres et les
-// arguments qui ne sont pas des options.
-// Tri des noms comme ls en français (un seul Collator : bien plus rapide que localeCompare sur des milliers de noms).
+// Grouped short options: "-czf" → c, z, f. Returns the letters and the
+// arguments that are not options.
+// Sorts names like ls in French (a single Collator: much faster than localeCompare on thousands of names).
 export const compareNames = new Intl.Collator('fr').compare;
 
 export function options(args: string[]): { letters: Set<string>; rest: string[] } {

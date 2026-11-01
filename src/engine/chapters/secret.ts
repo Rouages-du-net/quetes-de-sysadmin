@@ -1,18 +1,18 @@
-// Histoire « La Coopérative » — chapitre « Le secret » : le prestataire de
-// paiement prévient que la clé de la coopérative traîne sur internet. Le site
-// est servi depuis le dossier de l'appli : nginx donne /.env (les secrets)
-// et /.git/config (un jeton) à qui les demande. Le journal d'accès dit qui
-// les a pris cette nuit.
-//   - fermer la fuite : une location qui refuse les fichiers cachés
-//     (location ~ /\. { deny all; }), ou un root qui ne contient que le site,
-//     ou des droits qui empêchent www-data de lire ;
-//   - bloquer l'adresse qui les a téléchargés (deny) ;
-//   - mettre la nouvelle clé dans .env et relancer l'appli (elle ne relit
-//     son .env qu'au démarrage).
-// Objectif vérifié sur l'état, par des requêtes au nginx simulé : /.env et
-// /.git/config ne sont plus servis, le site et la caisse répondent toujours,
-// l'adresse fautive reçoit 403, et l'appli a chargé la nouvelle clé.
-// Sources : https://nginx.org/en/docs/http/ngx_http_core_module.html#location,
+// Story "The Co-op", chapter "The secret": the payment provider
+// warns that the co-op's key is lying around on the internet. The site
+// is served from the app's directory: nginx gives /.env (the secrets)
+// and /.git/config (a token) to whoever asks. The access log says who
+// took them last night.
+//   - close the leak: a location that refuses hidden files
+//     (location ~ /\. { deny all; }), or a root that only contains the site,
+//     or permissions that stop www-data from reading;
+//   - block the address that downloaded them (deny);
+//   - put the new key in .env and restart the app (it only rereads
+//     its .env on start).
+// Objective checked on the state, through requests to the simulated nginx: /.env and
+// /.git/config are no longer served, the site and the till still answer,
+// the offending address gets 403, and the app has loaded the new key.
+// Sources: https://nginx.org/en/docs/http/ngx_http_core_module.html#location,
 // https://nginx.org/en/docs/http/ngx_http_access_module.html
 
 import { f, type Chapter } from '../world';

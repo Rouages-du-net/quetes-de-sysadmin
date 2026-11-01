@@ -1,22 +1,22 @@
-// git simulé : un dépôt garde des « commits », c'est-à-dire des photos de
-// tous les fichiers suivis, avec un message, un auteur et une date. Les
-// messages reprennent ceux de git en français.
+// Simulated git: a repository keeps "commits", that is snapshots of all
+// tracked files, with a message, an author and a date. The messages are
+// git's own (as in its French translation).
 //
-// Les dépôts distants sont des dossiers de la machine (dépôts nus, créés
-// par git init --bare) : git push y envoie les commits et lance leurs
-// crochets (hooks/pre-receive, hooks/post-receive), interprétés par
-// script.ts ; git --work-tree=lieu checkout -f y extrait les fichiers
+// Remote repositories are folders of the machine (bare repositories,
+// created by git init --bare): git push sends the commits there and runs
+// their hooks (hooks/pre-receive, hooks/post-receive), interpreted by
+// script.ts; git --work-tree=place checkout -f extracts the files there
 // (https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
 // https://git-scm.com/docs/githooks).
 //
-// Écarts volontaires : une seule branche (main) ; seuls les fichiers placés
-// directement dans le dossier du dépôt sont suivis (pas de sous-dossiers) ;
-// les identifiants sont calculés par le jeu (git utilise SHA-1 ou SHA-256) ;
-// git commit sans -m ouvrirait un éditeur de texte : ici, -m est obligatoire ;
-// pas de dépôt distant par le réseau (ssh://, https://), seulement des chemins.
+// Deliberate differences: a single branch (main); only the files placed
+// directly in the repository's folder are tracked (no subfolders); IDs are
+// computed by the game (git uses SHA-1 or SHA-256); git commit without -m
+// would open a text editor: here, -m is required; no remote repository
+// over the network (ssh://, https://), only paths.
 //
-//   etat.git = { '/chemin/du/depot': Depot } (un dépôt nu : son propre dossier)
-//   etat.auteur = 'Nom <adresse>' ; etat.date = 'Tue Oct 13 21:04:00 2026 +0200'
+//   state.git = { '/path/of/repo': Repo } (a bare repository: its own folder)
+//   state.author = 'Name <address>'; state.date = 'Tue Oct 13 21:04:00 2026 +0200'
 
 import type { Directory, File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -37,22 +37,22 @@ export interface Commit {
 export interface Repo {
   commits: Commit[];
   index: Record<string, string>;
-  // Un dépôt nu (sans copie de travail), comme ceux d'un serveur.
+  // A bare repository (without a working copy), like a server's.
   bare?: boolean;
-  // Les dépôts distants : nom → chemin.
+  // The remote repositories: name → path.
   remotes?: Record<string, string>;
-  // Ce que git --work-tree=… checkout a écrit dans chaque lieu (son index).
+  // What git --work-tree=… checkout wrote in each place (its index).
   excerpts?: Record<string, Record<string, string>>;
 }
 
-// Les options générales (git --git-dir=… --work-tree=… -C lieu commande).
+// The global options (git --git-dir=… --work-tree=… -C place command).
 let general: { gitDir?: string; workTree?: string; colour?: boolean } = {};
 
-// Les couleurs de git (color.ui=auto, par défaut depuis git 1.8.4) : à l'écran
-// seulement ; --color / --no-color sur la sous-commande. Couleurs par défaut
-// de git : en-têtes du diff en gras, @@ en cyan, lignes retirées en rouge,
-// ajoutées en vert, commits en jaune ; dans status, l'index en vert, le
-// reste en rouge. Voir https://git-scm.com/docs/git-config#Documentation/git-config.txt-colordiffltslotgt
+// git's colours (color.ui=auto, the default since git 1.8.4): on screen
+// only; --color / --no-color on the subcommand. git's default colours:
+// diff headers in bold, @@ in cyan, removed lines in red, added ones in
+// green, commits in yellow; in status, the index in green, the rest in red.
+// See https://git-scm.com/docs/git-config#Documentation/git-config.txt-colordiffltslotgt
 const paint = (code: string, text: string) => (general.colour ? sgr(code, text) : text);
 function colourDiff(text: string): string {
   return text
@@ -75,7 +75,7 @@ function colourDiff(text: string): string {
     .join('\n');
 }
 
-// Empreinte déterministe (FNV-1a), étirée sur 40 chiffres hexadécimaux.
+// Deterministic hash (FNV-1a), stretched over 40 hexadecimal digits.
 export function fingerprint(text: string): string {
   let output = '';
   for (let turn = 0; output.length < 40; turn++) {
@@ -94,8 +94,8 @@ export function newCommit(parent: Commit | null, message: string, author: string
   return { id, parent: parent?.id ?? null, message, author, date, files: { ...files } };
 }
 
-// Diff ligne à ligne (plus longue sous-suite commune), au format unifié,
-// avec tout le fichier comme contexte (les fichiers du jeu sont courts).
+// Line-by-line diff (longest common subsequence), in unified format,
+// with the whole file as context (the game's files are short).
 export function diff(name: string, before: string | null, after: string | null): string {
   if (before === after) return '';
   const a = before === null || before === '' ? [] : before.split('\n');
@@ -139,13 +139,13 @@ function account(before: Record<string, string>, after: Record<string, string>) 
   return { files, more, moins: less };
 }
 
-/** Le dépôt d'un chemin (un dépôt nu, ou un dossier qui contient .git). */
+/** The repository of a path (a bare repository, or a folder containing .git). */
 export function repoIn(game: Shell, path: string): Repo | null {
   const d: Repo | undefined = game.state.git?.[path];
   return d && (d.bare ? game.exists(path) : game.exists(`${path}/.git`)) ? d : null;
 }
 
-// Le dépôt qui contient le lieu courant (on remonte vers la racine), ou celui de --git-dir.
+// The repository that contains the current place (going up towards the root), or the one of --git-dir.
 function hereRepo(game: Shell): { path: string; repo: Repo } | null {
   if (general.gitDir) {
     const path = game.resolve(general.gitDir).replace(/\/\.git$/, '');
@@ -160,7 +160,7 @@ function hereRepo(game: Shell): { path: string; repo: Repo } | null {
   }
 }
 
-// Les fichiers de la copie de travail (directement dans le dossier du dépôt).
+// The working copy's files (directly in the repository's folder).
 function travail(game: Shell, path: string): Record<string, string> {
   const place = game.find(path) as Directory;
   return Object.fromEntries(
@@ -172,7 +172,7 @@ function travail(game: Shell, path: string): Record<string, string> {
 
 const headRef = (d: Repo) => d.commits.at(-1) ?? null;
 
-// Les crochets d'exemple que git init pose dans hooks/ (en .sample).
+// The sample hooks git init puts in hooks/ (as .sample).
 const EXAMPLES_CROCHETS = [
   'applypatch-msg',
   'commit-msg',
@@ -186,7 +186,7 @@ const EXAMPLES_CROCHETS = [
 ];
 const short = (c: Commit | null) => (c ? c.id.slice(0, 7) : '0000000');
 
-// HEAD, HEAD~2, HEAD^, main, ou le début d'un identifiant (4 caractères au moins).
+// HEAD, HEAD~2, HEAD^, main, or the start of an ID (at least 4 characters).
 function findCommit(d: Repo, ref: string): Commit | null {
   const m = /^(HEAD|main)((?:~\d*|\^+)*)$/.exec(ref);
   if (m) {
@@ -229,7 +229,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       owner: game.who,
       ...(mode ? { mode } : {}),
     });
-    // Ce que contient un dépôt : HEAD, config, les crochets d'exemple (non exécutables : .sample), les objets…
+    // What a repository contains: HEAD, config, the sample hooks (not executable: .sample), the objects…
     const inside: Record<string, Node> = {
       HEAD: file('ref: refs/heads/main'),
       config: file(`[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = ${bare}`),
@@ -313,7 +313,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     for (const name of names) {
       if (!(name in here.repo.index)) return game.error(game.t('git-path-unknown', { file: name }));
       delete here.repo.index[name];
-      // Sans --cached, git rm efface aussi le fichier de la copie de travail.
+      // Without --cached, git rm also erases the file from the working copy.
       if (!keep) delete (game.find(here.path) as Directory).children[name];
       outputs.push(`rm '${name}'`);
     }
@@ -324,7 +324,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const here = hereRepo(game);
     if (!here) return game.error(game.t('git-not-repo'));
     if (here.repo.bare) return game.error(game.t('git-not-tree'));
-    // -m message, -a (ajouter d'abord les fichiers suivis modifiés), ou les deux : -am.
+    // -m message, -a (first add the modified tracked files), or both: -am.
     const i = args.findIndex((a) => a === '-m' || /^-[a-z]*m$/.test(a));
     const message = i >= 0 ? args[i + 1] : undefined;
     if (!message) return game.error(game.t('git-commit-without-message'));
@@ -341,7 +341,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (!files) return game.error(game.t('git-nothing-a-validate'));
     const c = newCommit(parent, message, game.state.author ?? `${game.player} <${game.player}@example.org>`, game.state.date ?? 'Tue Oct 13 21:04:00 2026 +0200', here.repo.index);
     here.repo.commits.push(c);
-    // Comme git : on ne mentionne pas les insertions ou suppressions nulles.
+    // Like git: zero insertions or deletions are not mentioned.
     const summary = [
       game.t('git-commit-files', { count: files }),
       ...(more ? [game.t('git-commit-insertions', { count: more })] : []),
@@ -387,7 +387,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       rest = words.slice(1);
     }
     const names = rest.length ? rest.map((r) => game.name(r)) : [...new Set([...Object.keys(before), ...Object.keys(after)])].sort();
-    // Sans --staged, git diff ne montre pas les fichiers non suivis.
+    // Without --staged, git diff does not show untracked files.
     return names
       .filter((n) => indexed || n in before)
       .map((n) => diff(n, before[n] ?? null, after[n] ?? null))
@@ -433,8 +433,8 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     return '';
   },
 
-  // git checkout ID -- fichier : l'ancienne façon de restaurer un fichier.
-  // git --work-tree=lieu checkout [-f] [main] : extrait les fichiers dans un lieu (déploiement).
+  // git checkout ID -- file: the old way to restore a file.
+  // git --work-tree=place checkout [-f] [main]: extracts the files into a place (deployment).
   checkout: (game, args) => {
     const sep = args.indexOf('--');
     if (sep >= 0) {
@@ -455,7 +455,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (game.find(place)?.type !== 'directory') return game.error(game.t('git-work-tree-missing', { path: place }));
     const excerpts = (here.repo.excerpts ??= {});
     const before = excerpts[place];
-    // Sans -f, git refuse d'écraser ce qu'il ne connaît pas, ou ce qu'on a modifié à la main.
+    // Without -f, git refuses to overwrite what it does not know, or what was modified by hand.
     if (!force) {
       const overwritten = Object.keys(c.files)
         .sort()
@@ -474,11 +474,11 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
       const error = write(game, `${place}/${name}`, text);
       if (error) return game.error(error);
     }
-    // Les fichiers suivis qui ont disparu du commit sont effacés.
+    // Tracked files that disappeared from the commit are erased.
     const directory = game.find(place) as Directory;
     for (const name of Object.keys(before ?? {})) if (!(name in c.files)) delete directory.children[name];
     excerpts[place] = { ...c.files };
-    // Ce qu'un crochet a déployé, et où (pour les objectifs des chapitres).
+    // What a hook deployed, and where (for the chapters' objectives).
     if (game.state.gitHook) game.state.gitDeployments = { ...game.state.gitDeployments, [place]: c.id };
     return '';
   },
@@ -568,7 +568,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const before = headRef(remote);
     const local = headRef(here.repo)!;
     if (before?.id === local.id) return game.t('git-all-a-day');
-    // Le distant a des commits qu'on n'a pas : il faut d'abord les récupérer (git pull).
+    // The remote has commits we do not have: they must be fetched first (git pull).
     if (before && !here.repo.commits.some((c) => c.id === before.id))
       return game.error(
         `${game.t('git-to', { repository: url })}\n ! [rejected]        main -> main (fetch first)\n${game.t('git-push-impossible', { repository: url })}\n${game.t('git-push-rejected-tip')}`,
@@ -576,12 +576,12 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const fresh = here.repo.commits.length - (before ? here.repo.commits.findIndex((c) => c.id === before.id) + 1 : 0);
     const objets = fresh * 3;
     const lines = game.t('git-push-progress', { objects: String(objets), bytes: String(240 + objets * 37) }).split('\n');
-    // Écrire dans un dépôt nu : il faut le droit d'écrire dans ses objets.
+    // Writing into a bare repository requires the right to write into its objects.
     const objetsPlace = game.find(`${path}/objects`) ?? game.find(`${path}/.git/objects`);
     if (objetsPlace && !game.can(objetsPlace, 'w')) return game.error([...lines, game.t('git-push-rights'), refusal('unpacker error')].join('\n'));
-    // Pousser vers la branche extraite d'un dépôt non nu : refusé (receive.denyCurrentBranch).
+    // Pushing to the checked-out branch of a non-bare repository: refused (receive.denyCurrentBranch).
     if (!remote.bare) return game.error([...lines, game.t('git-push-branch-extracted'), refusal('branch is currently checked out')].join('\n'));
-    // Envoyer prend un peu de temps (l'horloge de la machine avance).
+    // Sending takes a little time (the machine's clock moves forward).
     const sd = systemd(game);
     if (sd) sd.clock += 20_000;
     const remoteRefs: string[] = [];
@@ -653,7 +653,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     for (const [f, text] of Object.entries(their.files)) write(game, `${here.path}/${f}`, text);
     for (const f of Object.keys(before)) if (!(f in their.files)) delete (game.find(here.path) as Directory).children[f];
     const { files, more, moins: less } = account(before, their.files);
-    // « index.html | 2 +- », comme git (un + par ligne ajoutée, un - par ligne retirée).
+    // "index.html | 2 +-", like git (one + per added line, one - per removed line).
     const names = [...new Set([...Object.keys(before), ...Object.keys(their.files)])]
       .filter((n) => before[n] !== their.files[n])
       .sort()
@@ -681,7 +681,7 @@ export const GIT: Record<string, Command> = {
     ownOptions: true,
     launch: (c) => {
       const { args, game } = c;
-      // Les options générales, avant la sous-commande.
+      // The global options, before the subcommand.
       const previous = general;
       general = { ...general };
       let i = 0;
@@ -696,7 +696,7 @@ export const GIT: Record<string, Command> = {
         else return game.error(game.t('git-option-unknown', { option: a }));
       }
       const [under, ...raw] = args.slice(i);
-      // --color[=QUAND] et --no-color, sur la sous-commande ; par défaut, à l'écran seulement.
+      // --color[=WHEN] and --no-color, on the subcommand; by default, on screen only.
       const colour = readColour(raw.filter((a) => a !== '--no-color'), raw.includes('--no-color') ? 'never' : 'auto');
       const rest = colour.args;
       general.colour = colourise(c, colour.when);

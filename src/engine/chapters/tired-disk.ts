@@ -1,15 +1,15 @@
-// Histoire « Le Labo » — chapitre « Le disque qui fatigue » : smartd écrit
-// depuis deux jours que le disque sdb a des secteurs illisibles, et le noyau
-// a dû relire des blocs sur l'autre miroir. SMART dit pourtant « PASSED » :
-// le verdict global ne bascule qu'au seuil du fabricant, les attributs
-// (secteurs réalloués, en attente) disent la vérité. On compare les deux
-// disques, on sort sdb de ses deux grappes (--fail puis --remove, dans md0
-// et dans md1), et on écrit le ticket de l'hébergeur avec le numéro de série
-// du disque à remplacer, et pas celui de l'autre.
-// Objectif vérifié sur l'état : plus aucune partition de sdb dans une
-// grappe, les membres de sda toujours actifs, et ~/ticket.txt qui donne le
-// numéro de série de sdb (et pas celui de sda).
-// Sources : https://www.smartmontools.org/wiki/FAQ, smartctl(8), mdadm(8),
+// Story "The Lab", chapter "The tired disk": for two days smartd has been
+// writing that disk sdb has unreadable sectors, and the kernel had to reread
+// blocks from the other mirror. Yet SMART says "PASSED": the overall
+// verdict only flips at the manufacturer's threshold, the attributes
+// (reallocated, pending sectors) tell the truth. You compare the two disks,
+// take sdb out of its two arrays (--fail then --remove, in md0 and in md1),
+// and write the host's ticket with the serial number of the disk to
+// replace, and not the other one's.
+// Objective checked on the state: no partition of sdb left in an array,
+// sda's members still active, and ~/ticket.txt giving sdb's serial number
+// (and not sda's).
+// Sources: https://www.smartmontools.org/wiki/FAQ, smartctl(8), mdadm(8),
 // https://raid.wiki.kernel.org/index.php/Replacing_a_failed_drive
 
 import { path, f, name, type Chapter } from '../world';
@@ -20,10 +20,10 @@ import { beforeLabCommand, smartdBox, labAccounts, labState, M, PASSWORD, labWor
 
 const TICKET = `${M}/ticket.txt`;
 
-// Les partitions de sdb encore dans une grappe (défectueuses comprises).
+// sdb's partitions still in an array (faulty ones included).
 const sdbRemains = (j: Game) => Object.values(st(j).arrays).flatMap((g) => g.members.filter((m) => m.part.startsWith('sdb')));
 const outSdb = (j: Game) => sdbRemains(j).length === 0;
-// Les deux grappes tournent toujours sur sda.
+// Both arrays still run on sda.
 const sdaIntact = (j: Game) => Object.values(st(j).arrays).every((g) => active(g).some((m) => m.part.startsWith('sda')));
 const keySda = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part.startsWith('sda') && m.state !== 'active'));
 const ticket = (j: Game) => j.read(path(j.t, TICKET)) ?? '';

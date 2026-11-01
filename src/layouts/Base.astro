@@ -2,7 +2,7 @@
 // Shared layout of the site's pages. Page texts live in the pages
 // themselves: one page per language, English at /en/, French at /fr/;
 // / picks one from the browser's language (see public/.htaccess).
-// La police des titres et du terminal, servie par le site (JetBrains Mono, licence OFL).
+// The font of the headings and the terminal, served by the site (JetBrains Mono, OFL licence).
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
 import '../styles/site.css';
@@ -11,7 +11,7 @@ interface Props {
   title: string;
   description: string;
   lang?: string;
-  // La même page dans une autre langue (lien en haut de page).
+  // The same page in another language (link at the top of the page).
   other?: { href: string; lang: string; name: string };
 }
 const { title, description, lang = 'en', other } = Astro.props;

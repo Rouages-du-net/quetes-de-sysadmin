@@ -1,12 +1,12 @@
-// Histoire « Les Lettres du quartier » — chapitre « Le pare-feu » : ufw.
-// Un scan montre la base de données du site (MariaDB, port 3306) joignable
-// depuis internet. ss -tlnp montre qui écoute ; ufw ferme tout sauf SSH et
-// le site web. Piège : activer ufw avant d'autoriser SSH (la session en
-// cours tient, la suivante est bloquée).
-// Objectif vérifié sur l'état : pare-feu actif, entrant refusé par défaut,
-// SSH (depuis le poste) et le site (80, 443) joignables, 3306 fermé, et une
-// nouvelle connexion ssh réussie depuis l'activation.
-// Source : https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html
+// Story "The Neighbourhood Letters", chapter "The firewall": ufw.
+// A scan shows the site's database (MariaDB, port 3306) reachable from the
+// internet. ss -tlnp shows who listens; ufw closes everything except SSH
+// and the website. Trap: enabling ufw before allowing SSH (the current
+// session holds, the next one is blocked).
+// Objective checked on the state: firewall active, incoming denied by
+// default, SSH (from the workstation) and the site (80, 443) reachable,
+// 3306 closed, and a new ssh connection successful since enabling.
+// Source: https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html
 
 import { d, f, accountsFiles, accountsByDefault, type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -16,10 +16,10 @@ import { newSystemd } from '../systemd';
 import type { Listening } from '../commands/ss';
 
 const M = '/home/you';
-// Une adresse quelconque d'internet (un robot de la nuit).
+// Any address on the internet (a bot in the night).
 const INTERNET = '198.51.100.23';
 
-// Le rapport de scan de Yasmine, comme nmap l'affiche.
+// Yasmine's scan report, as nmap displays it.
 const SCAN = `Starting Nmap 7.94 ( https://nmap.org ) at 2026-10-21 18:02 CEST
 Nmap scan report for letters.example (203.0.113.10)
 Host is up (0.012s latency).

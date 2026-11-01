@@ -1,6 +1,6 @@
-// Les noms des machines et les mots de passe des histoires se traduisent
-// (machines.ftl, passwords.ftl) : des noms valides, distincts, et des
-// textes qui emploient ceux de leur langue.
+// Machine names and the stories' passwords are translated
+// (machines.ftl, passwords.ftl): valid, distinct names, and
+// texts that use those of their language.
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';
@@ -9,7 +9,7 @@ import { LANGUAGES, translator } from '../src/texts';
 
 const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name);
 const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/passwords.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
-// Les valeurs des messages d'une langue (sans les commentaires ni les identifiants).
+// The values of a language's messages (without comments or identifiers).
 const values = (language: string) =>
   readdirSync(new URL(`../src/texts/${language}/`, import.meta.url))
     .filter((f) => f.endsWith('.ftl') && !['machines.ftl', 'passwords.ftl'].includes(f))
@@ -21,16 +21,16 @@ const values = (language: string) =>
     );
 
 for (const language of LANGUAGES)
-  describe(`Machines et mots de passe — ${language}`, () => {
+  describe(`Machines and passwords — ${language}`, () => {
     const t = translator(language);
 
-    it('chaque machine a un nom d’hôte valide (RFC 1123), distinct des autres', () => {
+    it('every machine has a valid host name (RFC 1123), distinct from the others', () => {
       const names = IDS.map((id) => machineName(t, id));
       for (const n of names) expect(n).toMatch(/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/);
       expect(new Set(names).size).toBe(names.length);
     });
 
-    it('les textes emploient les noms et les mots de passe de la langue', () => {
+    it('the texts use the names and passwords of the language', () => {
       // The names other languages give the machines (and the French passwords), where this language's differ.
       const other = [...new Set(LANGUAGES.filter((l) => l !== language).flatMap((l) => IDS.map((id) => machineName(translator(l), id))))].filter((n) => !IDS.some((id) => machineName(t, id) === n));
       const machine = other.length ? new RegExp(`(?:\\bssh |@|\\bid_|\\bHost )(${other.join('|')})\\b|(?<![\\w-])(${other.join('|')})\\.internal\\b`) : null;

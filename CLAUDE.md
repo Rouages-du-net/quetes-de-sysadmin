@@ -28,11 +28,9 @@ presents them for people.
 - **Code in English.** Files and identifiers (functions, variables,
   types, props), and the world (places, machines, accounts, passwords) are
   in English, and so are the `.ftl` files, keys and variables (`{ $target }`)
-  and the keys of a machine's state (`state.mounts`, `state.apps`…). Still
-  French: CSS classes and some comments; they are being moved to English.
-  Write new code (files, functions, variables, props, CSS classes, new
-  `.ftl` keys and variables)
-  in English; never mix a large rename with a feature. A public name (attribute of
+  and the keys of a machine's state (`state.mounts`, `state.apps`…), CSS
+  classes, `data-*` attributes, internal values and comments. Write all
+  new code in English; never mix a large rename with a feature. A public name (attribute of
   the element, URL) gets its English form first and keeps the French one
   as an alias.
 - Inclusive writing with the middle dot when natural, in French texts
@@ -164,13 +162,13 @@ presents them for people.
   `commands/backup.ts`. `sftp` (interactive session) in
   `commands/sftp.ts`; shared FTPS hosting (`src/engine/web-host.ts`,
   declared by the story) and `lftp` in `commands/lftp.ts`. The console
-  keeps a stack of internal sessions (`interieur`);
+  keeps a stack of internal sessions (`inside`);
   `Chapter.watchesWorkstation` checks events after commands typed on the
   workstation.
 - `src/engine/sudoers.ts`: sudo's policy (`/etc/sudoers`, `@includedir`,
   rules); `visudo` and `sudo -l` in `commands/sudoers.ts`; `userdel`,
   `gpasswd`, `chage` in `commands/accounts.ts`; `umask` (the session's mask,
-  `Shell.mask`) and setgid applied on creation (`placer`).
+  `Shell.mask`) and setgid applied on creation (`place`).
 - `chapters/till-web.ts`: La Coopérative's site and till app (simulated
   Express: `.env` read at start, `trust proxy`, locks per address); nginx
   passes `proxy_set_header` to the app (`Request`), and `grep` reads

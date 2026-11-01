@@ -1,14 +1,14 @@
-// Histoire « La Ludothèque » — chapitre « La base » : les prêts de jeux
-// vivent dans une base PostgreSQL. Malo la « sauvegarde » en copiant ses
-// fichiers (/var/lib/postgresql) avec rsnapshot, pendant qu'elle tourne :
-// rien ne garantit que la copie soit cohérente. Il faut une vraie sauvegarde
-// (pg_dump), chaque nuit, et vérifier qu'elle se restaure (dans une base de
-// test, jamais par-dessus la vraie). Puis, en début d'après-midi, un
-// bénévole vide la table des prêts par erreur : on ne remet que cette table.
-// Objectif vérifié sur l'état : une tâche cron fait le pg_dump de ludo sous
-// un rôle qui en a le droit, une archive existe, une restauration de test a
-// redonné les mêmes nombres de lignes, et la table prets est revenue.
-// Sources : https://www.postgresql.org/docs/16/backup-dump.html,
+// Story "La Ludothèque" — chapter "The database": the game loans
+// live in a PostgreSQL database. Malo "backs it up" by copying its
+// files (/var/lib/postgresql) with rsnapshot, while it runs:
+// nothing guarantees the copy is consistent. A real backup is needed
+// (pg_dump), every night, and checking that it restores (into a test
+// database, never over the real one). Then, early in the afternoon, a
+// volunteer empties the loans table by mistake: we restore only that table.
+// Objective checked on the state: a cron job runs the pg_dump of ludo under
+// a role allowed to do it, an archive exists, a test restore
+// gave back the same row counts, and the prets table is back.
+// Sources: https://www.postgresql.org/docs/16/backup-dump.html,
 // https://www.postgresql.org/docs/16/backup-file.html,
 // https://www.postgresql.org/docs/16/app-pgrestore.html
 
@@ -41,7 +41,7 @@ const accounts = (): Accounts => ({
   },
 });
 
-// Des données déterministes : des jeux, des membres (par numéro de carte, sans nom) et leurs prêts.
+// Deterministic data: games, members (by card number, no name) and their loans.
 function tables(t: Game['t']): Record<string, Table> {
   const names = t('database-names-games').split(',');
   const neighbourhoods = ['nord', 'sud', 'est', 'ouest', 'centre'];
@@ -75,7 +75,7 @@ function tables(t: Game['t']): Record<string, Table> {
 const pg = (j: Game): PostgresState => postgres(j)!;
 const lines = (j: Game, base: string, table: string) => pg(j).bases[base]?.tables[table]?.lines.length ?? -1;
 const crontabs = (j: Game): Record<string, string> => j.state.crontabs ?? {};
-// La tâche de sauvegarde : pg_dump de ludo, sous postgres (sa crontab, ou sudo -u postgres).
+// The backup job: pg_dump of ludo, as postgres (its crontab, or sudo -u postgres).
 const dumpTask = (j: Game) => {
   const c = crontabs(j);
   const line = (text: string) => text.split('\n').some((l) => !l.trim().startsWith('#') && /pg_dump/.test(l) && /\bludo\b/.test(l));
@@ -95,7 +95,7 @@ const archive = (j: Game) => {
     )
   );
 };
-// Une autre base que ludo (une base de test) où l'on retrouve les mêmes nombres de lignes.
+// A database other than ludo (a test database) where the same row counts are found.
 const succeededTest = (j: Game) =>
   Object.keys(pg(j).bases).some((b) => b !== 'ludo' && b !== 'postgres' && Object.entries(NUMBERS).every(([table, n]) => lines(j, b, table) === n));
 const allIsFor = (j: Game) => Object.entries(NUMBERS).every(([table, n]) => lines(j, 'ludo', table) === n);
@@ -172,7 +172,7 @@ export const base: Chapter = {
     mounts: [{ path: '/', capacity: 40 * Go, name: '/dev/vda1', system: 'ext4' }],
     lockedAccounts: ['accueil'],
   }),
-  // Après la restauration de test réussie : l'incident de 14 h 02.
+  // After the successful test restore: the 2:02 pm incident.
   afterCommand: (j) => {
     if (j.state.incident || !j.state.testPassed) return;
     j.state.incident = true;
@@ -234,7 +234,7 @@ export const base: Chapter = {
     {
       id: 'test-succeeded',
       condition: (j) => succeededTest(j),
-      // L'incident arrive à la commande suivante.
+      // The incident comes with the next command.
       action: (j) => (j.state.testPassed = true),
       message: (j) => j.t('database-event-test-succeeded'),
     },

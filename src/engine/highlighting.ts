@@ -1,12 +1,11 @@
-// La coloration de la ligne de commande, comme fish ou
-// zsh-syntax-highlighting : la commande en vert si elle existe, en rouge
-// sinon (on voit la faute de frappe avant d'appuyer sur Entrée), les
-// options, les chaînes entre guillemets, les opérateurs, et les chemins qui
-// existent soulignés. Elle suit le shell du jeu (decouper() dans outils.ts) :
-// tubes et redirections (|, >, >>), guillemets, jokers, sudo ; rien de ce
-// que ce shell ne comprend pas (pas de && ni de $VARIABLE) n'est mis en
-// valeur. La ligne découpée se recolle exactement (les espaces compris),
-// pour que l'interface puisse la dessiner sous le champ de saisie.
+// Command-line highlighting, like fish or zsh-syntax-highlighting: the
+// command in green if it exists, in red otherwise (you see the typo before
+// pressing Enter), the options, the quoted strings, the operators, and the
+// existing paths underlined. It follows the game's shell (split() in
+// tools.ts): pipes and redirections (|, >, >>), quotes, wildcards, sudo;
+// nothing that shell doesn't understand (no && nor $VARIABLE) is
+// highlighted. The split line joins back exactly (spaces included), so the
+// interface can draw it under the input field.
 
 import type { Shell } from './shell';
 import { COMMANDS } from './commands';
@@ -18,15 +17,15 @@ export interface Token {
   kind: Kind;
 }
 
-// Un mot de la ligne : ses morceaux (entre guillemets ou non), sa position.
+// A word of the line: its pieces (quoted or not), its position.
 interface Word {
   chunks: { text: string; city: boolean }[];
-  // Le mot tel que le shell le lira (sans les guillemets).
+  // The word as the shell will read it (without the quotes).
   value: string;
   op?: '|' | '>' | '>>';
 }
 
-/** La ligne en morceaux : des mots, des opérateurs et des espaces, dans l'ordre. */
+/** The line in pieces: words, operators and spaces, in order. */
 function lexer(line: string): (Word | string)[] {
   const output: (Word | string)[] = [];
   let word: Word | null = null;
@@ -49,7 +48,7 @@ function lexer(line: string): (Word | string)[] {
       else word!.value += c;
     } else if (c === '"' || c === "'") {
       quote = c;
-      // Une nouvelle chaîne commence : un morceau à elle.
+      // A new string begins: a piece of its own.
       word ??= { chunks: [], value: '' };
       word.chunks.push({ text: c, city: true });
     } else if (/\s/.test(c)) {
@@ -71,26 +70,26 @@ function lexer(line: string): (Word | string)[] {
   return output;
 }
 
-/** La commande existe-t-elle ici (le shell la lancerait-il) ? */
+/** Does the command exist here (would the shell run it)? */
 function exists(sh: Shell, name: string): boolean {
   if (!name) return false;
   if (name.includes('/')) {
-    // /usr/bin/ls : le chemin complet d'une commande du jeu.
+    // /usr/bin/ls: the full path of one of the game's commands.
     const only = name.split('/').at(-1)!;
     if (/^\/(usr\/)?s?bin\/[\w.-]+$/.test(name) && COMMANDS[only] && !COMMANDS[only].directory) return sh.known().includes(only);
     if (COMMANDS[only]?.directory && name === `${COMMANDS[only].directory}/${only}`) return sh.known().includes(only);
-    // Un script : il faut qu'il existe et qu'on puisse le lancer.
+    // A script: it must exist and be executable.
     const n = sh.find(name);
     return !!n && n.type === 'file' && sh.can(n, 'x');
   }
   if (COMMANDS[name]?.section === 5) return false;
-  // !!, !12, !cat : l'historique, que le shell développe avant de lancer la commande.
+  // !!, !12, !cat: the history, which the shell expands before running the command.
   if (/^!(!|-?\d+|[A-Za-z_./])/.test(name)) return true;
-  // help est intégré au shell (comme aide) : il répond toujours.
+  // help is built into the shell: it always answers.
   return name === 'help' || sh.known().includes(name);
 }
 
-/** Un argument qui désigne un fichier ou un dossier existant (comme le soulignement de zsh). */
+/** An argument naming an existing file or directory (like zsh's underlining). */
 function path(sh: Shell, value: string): boolean {
   if (!value || value.startsWith('-')) return false;
   try {
@@ -100,7 +99,7 @@ function path(sh: Shell, value: string): boolean {
   }
 }
 
-/** La ligne découpée en jetons colorés ; leurs textes recollés redonnent la ligne. */
+/** The line split into coloured tokens; their texts joined back give the line. */
 export function colourise(sh: Shell, line: string): Token[] {
   const tokens: Token[] = [];
   const push = (text: string, kind: Kind) => {
@@ -109,7 +108,7 @@ export function colourise(sh: Shell, line: string): Token[] {
     if (last && last.kind === kind) last.text += text;
     else tokens.push({ text, kind });
   };
-  // Où l'on en est dans la commande : on attend son nom, une option de sudo, ou des arguments.
+  // Where we are in the command: expecting its name, a sudo option, or arguments.
   let expected: 'command' | 'sudo' | 'sudo-value' | 'argument' | 'target' = 'command';
   for (const x of lexer(line)) {
     if (typeof x === 'string') {
@@ -118,7 +117,7 @@ export function colourise(sh: Shell, line: string): Token[] {
     }
     if (x.op) {
       push(x.value, 'operator');
-      // Après une redirection vient un fichier ; après un tube, une commande.
+      // After a redirection comes a file; after a pipe, a command.
       expected = x.op === '|' ? 'command' : 'target';
       continue;
     }
@@ -139,7 +138,7 @@ export function colourise(sh: Shell, line: string): Token[] {
     else if (notCity && /[*?]/.test(x.value)) kind = sh.expand(x.value)[0] !== x.value ? 'glob' : 'text';
     else kind = path(sh, x.value) ? 'path' : 'text';
     if (expected === 'target') expected = 'argument';
-    // Les morceaux entre guillemets restent des chaînes, sauf pour le nom de la commande.
+    // Quoted pieces stay strings, except for the command's name.
     for (const m of x.chunks) push(m.text, m.city && kind !== 'command' && kind !== 'unknown' && kind !== 'path' ? 'string' : kind);
   }
   return tokens;

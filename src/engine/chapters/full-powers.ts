@@ -1,14 +1,13 @@
-// Histoire « La Fabrique » — chapitre « Les pleins pouvoirs » : ne pas
-// faire tourner un conteneur en root. La galerie photo du fablab reçoit des
-// photos envoyées par les visiteur·ses ; elle tourne en root (son image n'a
-// pas de USER, et compose.yaml pas de user:). Ses fichiers, dans le dossier
-// monté /srv/galerie/photos, appartiennent donc à root sur la machine :
-// Yasmine ne peut plus les gérer sans sudo. Et une faille dans la galerie
-// donnerait root sur tout ce qui est monté.
-// Objectif vérifié sur l'état : la galerie tourne sous un autre uid que 0 et
-// répond, les 14 photos sont là, Yasmine peut écrire dans le dossier, et
-// celui-ci n'est pas ouvert en écriture à tout le monde (pas de chmod 777).
-// Sources : https://docs.docker.com/reference/cli/docker/container/run/#user,
+// Story "The Workshop" — chapter "Full powers": don't run a container as
+// root. The fablab's photo gallery receives photos sent by visitors; it
+// runs as root (its image has no USER, and compose.yaml no user:). Its
+// files, in the mounted directory /srv/galerie/photos, therefore belong to
+// root on the machine: Yasmine can no longer manage them without sudo. And a
+// flaw in the gallery would give root over everything mounted.
+// Objective checked on the state: the gallery runs under a uid other than 0
+// and answers, the 14 photos are there, Yasmine can write in the directory,
+// and it isn't open for writing to everyone (no chmod 777).
+// Sources: https://docs.docker.com/reference/cli/docker/container/run/#user,
 // https://docs.docker.com/reference/compose-file/services/#user,
 // https://docs.docker.com/engine/security/#linux-kernel-capabilities,
 // https://docs.docker.com/engine/security/userns-remap/,
@@ -80,9 +79,9 @@ const COMPOSE = `services:
       - ./photos:/app/photos
     restart: unless-stopped`;
 
-// La galerie : au démarrage, elle (re)fait l'index de ses miniatures dans
-// le dossier monté ; si elle ne peut pas y écrire, elle s'arrête, comme un
-// programme Node.js qui reçoit EACCES.
+// The gallery: at start, it (re)builds the index of its thumbnails in the
+// mounted directory; if it can't write there, it stops, like a Node.js
+// program receiving EACCES.
 function nodeError(game: Game, c: Container, code: 'EACCES' | 'EROFS', call: 'mkdir' | 'open', path: string) {
   const message = code === 'EACCES' ? 'permission denied' : 'read-only file system';
   for (const l of [
@@ -105,8 +104,8 @@ const presentPhotos = (j: Game) => {
 };
 
 APPS.galerie = {
-  // Construite sur l'image node : un compte node (uid 1000) existe, mais
-  // l'image ne s'en sert pas (pas de USER dans son Dockerfile).
+  // Built on the node image: a node account (uid 1000) exists, but
+  // the image doesn't use it (no USER in its Dockerfile).
   accounts: { node: 1000 },
   start: (game, c) => {
     log(game, c, '> galerie@3.2.0 start');
@@ -160,7 +159,7 @@ function dockerState(): DockerState {
 const state = (j: Game) => docker(j)!;
 const sd = (j: Game) => systemd(j)!;
 
-// Le conteneur de la galerie qui compte : celui qui tourne, sinon le plus récent.
+// The gallery container that counts: the running one, otherwise the most recent.
 const galleries = (j: Game) => state(j).containers.filter((c) => imageOfContainer(j, c)?.app === 'galerie');
 const gallery = (j: Game) => galleries(j).find((c) => c.state === 'running') ?? galleries(j).at(-1);
 const uid = (j: Game, c: Container | undefined) => {
@@ -177,7 +176,7 @@ const canYasmine = (j: Game) => {
   const n = directory(j, PHOTOS);
   return !!n && j.can(n, 'w', 'yasmine') && j.can(n, 'x', 'yasmine');
 };
-// Écrire pour « les autres » (chmod 777, o+w) : n'importe quel compte de la machine.
+// Writable by "others" (chmod 777, o+w): any account on the machine.
 const allAOpen = (j: Game) => [PHOTOS, `${PHOTOS}/.miniatures`].some((p) => directory(j, p)?.mode?.[7] === 'w');
 const inError = (j: Game) => {
   const c = gallery(j);
@@ -223,7 +222,7 @@ export const powersFull: Chapter = {
   password: 'fablab-2027',
   accounts,
   state: () => {
-    // Le pare-feu de la fin du chapitre 3, plus le port de la galerie.
+    // The firewall from the end of chapter 3, plus the gallery's port.
     const pf = newFirewall();
     pf.enabled = true;
     pf.rules = [22, 8080, 8081, 8082].map((p) => ({ action: 'allow', to: p === 22 ? 'OpenSSH' : `${p}/tcp`, ports: [p], forEachOf: null }));
@@ -257,7 +256,7 @@ export const powersFull: Chapter = {
   },
   initialise: (j) => {
     const e = state(j);
-    // L'outilthèque, bien faite : son image a un compte à elle (USER outil).
+    // The tool library, done right: its image has its own account (USER outil).
     const tool: Container = {
       id: identifier('conteneur-outiltheque-4'),
       name: 'outiltheque',
@@ -278,12 +277,12 @@ export const powersFull: Chapter = {
     e.containers.push(tool);
     writeIn(j, tool, '/var/lib/outiltheque/outiltheque.db', writeBase({ schema: 4, loans: [] }));
     startDocker(j);
-    // La galerie, lancée par Yasmine avec docker compose up -d (en root).
+    // The gallery, started by Yasmine with docker compose up -d (as root).
     mount(j as Shell, readProject(j, PROJECT), () => true);
     diskUpdate(j);
     sd(j).log = sd(j).log.filter((x) => x.unit !== 'docker.service');
   },
-  // Docker relance la galerie quand elle tombe (restart: unless-stopped).
+  // Docker restarts the gallery when it goes down (restart: unless-stopped).
   afterCommand: (j) => restartInLoop(j),
   createWorld: (t) => {
     const root: Rights = { owner: 'root' };
@@ -299,7 +298,7 @@ export const powersFull: Chapter = {
         galerie: place({
           'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
           'README.txt': f(t('full-powers-readme'), { owner: 'root' }),
-          // Créé par Docker au premier lancement (le dossier n'existait pas) : à root.
+          // Created by Docker on first start (the directory didn't exist): owned by root.
           photos: place(Object.fromEntries(PHOTOS_NAMES.map((p, i) => [p, photo(1_800_000 + i * 137_000)]))),
         }),
       }),

@@ -1,18 +1,18 @@
-// Lynis simulé (https://cisofy.com/documentation/lynis/) : l'audit d'un
-// serveur Debian, lu sur l'état de la machine. Lynis ne change rien : il
-// compare la configuration à de bonnes pratiques et range ses remarques en
-// avertissements (warnings) et suggestions, chacune avec un identifiant de
-// test (SSH-7408…), puis donne un « indice de durcissement » (hardening index).
-// Ce que le jeu lit sur la machine : sshd_config (valeurs effectives, comme
-// sshd -T), les mises à jour de sécurité en attente (apt), UMASK de
-// /etc/login.defs, la bannière /etc/issue, ufw. Le reste (surveillance de
-// l'intégrité des fichiers, logiciel antimalware, journalisation distante,
-// comptabilité des processus) est « à installer » et ne se corrige pas dans le
-// jeu : un audit sert aussi à décider ce qui vaut l'effort.
-// Écarts : une soixantaine de lignes au lieu d'environ 300 ; l'indice se calcule
-// par pénalités fixes (pas par la pondération de Lynis) ; pas de -Q, de
-// profils, ni de `show details` ; sans root, l'audit est refusé.
-// Sources : https://cisofy.com/documentation/lynis/, https://cisofy.com/lynis/controls/
+// Simulated Lynis (https://cisofy.com/documentation/lynis/): the audit of a
+// Debian server, read from the machine's state. Lynis changes nothing: it
+// compares the configuration with good practices and sorts its remarks into
+// warnings and suggestions, each with a test
+// identifier (SSH-7408…), then gives a hardening index.
+// What the game reads on the machine: sshd_config (effective values, like
+// sshd -T), pending security updates (apt), UMASK in
+// /etc/login.defs, the /etc/issue banner, ufw. The rest (file integrity
+// monitoring, antimalware software, remote logging,
+// process accounting) is "to install" and can't be fixed in the
+// game: an audit also serves to decide what is worth the effort.
+// Differences: about sixty lines instead of about 300; the index is computed
+// with fixed penalties (not with Lynis's weighting); no -Q, no
+// profiles, no `show details`; without root, the audit is refused.
+// Sources: https://cisofy.com/documentation/lynis/, https://cisofy.com/lynis/controls/
 
 import type { Game } from './shell';
 import { readConfig } from './sshd';
@@ -32,12 +32,12 @@ export interface Finding {
   weight: number;
 }
 
-// Les mots qui font d'une bannière un avertissement légal (comme Lynis, BANN-7126).
+// The words that make a banner a legal warning (like Lynis, BANN-7126).
 const LEGAL_WORDS = /authori[sz]ed|unauthori[sz]ed|prohibited|forbidden|legal|monitor|audit|consent|restricted|private/i;
 
 const yes = (v: string | undefined, fallback = 'yes') => (v ?? fallback).toLowerCase();
 
-/** L'umask par défaut de /etc/login.defs (la dernière ligne UMASK). */
+/** The default umask of /etc/login.defs (the last UMASK line). */
 export function umaskFor(game: Game): string {
   let u = '022';
   for (const l of (game.read('/etc/login.defs') ?? '').split('\n')) {
@@ -47,7 +47,7 @@ export function umaskFor(game: Game): string {
   return u;
 }
 
-/** Les constats d'un audit de cette machine, d'après son état. */
+/** The findings of an audit of this machine, based on its state. */
 export function findings(game: Game): Finding[] {
   const c: Finding[] = [];
   const apt: AptState | undefined = game.state.apt;
@@ -64,7 +64,7 @@ export function findings(game: Game): Finding[] {
     c.push({ id: 'AUTH-9328', type: 'suggestion', text: 'Default umask in /etc/login.defs could be more strict like 027', weight: 4 });
   if (!LEGAL_WORDS.test(game.read('/etc/issue') ?? ''))
     c.push({ id: 'BANN-7126', type: 'suggestion', text: 'Add a legal banner to /etc/issue, to warn unauthorized users', weight: 4 });
-  // Ce qui ne se corrige pas dans le jeu : de bonnes idées, pas des urgences.
+  // What can't be fixed in the game: good ideas, not emergencies.
   c.push(
     { id: 'HRDN-7230', type: 'suggestion', text: 'Harden the system by installing at least one malware scanner, to perform periodic file system scans', weight: 3 },
     { id: 'FINT-4350', type: 'suggestion', text: 'Install a file integrity tool to monitor changes to critical and sensitive files', weight: 3 },
@@ -78,7 +78,7 @@ export const hint = (listing: Finding[]) => Math.max(0, 100 - listing.reduce((n,
 
 const status = (text: string, state: string) => `  ${text.padEnd(58)}[ ${state} ]`;
 
-/** La sortie de « lynis audit system » et le contenu de /var/log/lynis-report.dat. */
+/** The output of "lynis audit system" and the contents of /var/log/lynis-report.dat. */
 export function audit(game: Game): { output: string; report: string; hint: number; findings: Finding[] } {
   const listing = findings(game);
   const a = (id: string) => listing.some((x) => x.id === id);

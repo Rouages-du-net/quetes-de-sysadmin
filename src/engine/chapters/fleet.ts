@@ -1,8 +1,8 @@
-// Ce que les chapitres de « La flotte » ont en commun : le poste de pilotage
-// des maisons de quartier (pilote, 192.0.2.25), où Ansible est installé, et
-// les trois serveurs des maisons de quartier (north, south, east, sur
-// 10.30.0.0/24), joints en ssh avec le compte deploy (sudo sans mot de passe).
-// Sources : https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
+// What the chapters of "La flotte" share: the community centres' control
+// station (pilote, 192.0.2.25), where Ansible is installed, and the three
+// community centres' servers (north, south, east, on 10.30.0.0/24), reached
+// over ssh with the deploy account (sudo without a password).
+// Sources: https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
 // https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html
 
 import { d, f, accountsFiles, player, type Accounts, type Directory, type InternalHost, type Node } from '../world';
@@ -20,7 +20,7 @@ export const CENTRES: Record<string, string> = { north: '10.30.0.11', south: '10
 export const NAMES = Object.keys(CENTRES);
 const NOW = Date.UTC(2027, 8, 14, 9, 0, 0);
 
-// La clé du compte vous sur pilote ; sa partie publique est dans ~deploy/.ssh/authorized_keys sur chaque centre.
+// The key of the vous account on pilote; its public part is in ~deploy/.ssh/authorized_keys on each centre.
 export const KEY = generateKey('pilote-ansible', 'you@pilot');
 
 export const HOSTS = `127.0.0.1\tlocalhost
@@ -55,7 +55,7 @@ PrintMotd no
 AcceptEnv LANG LC_*
 Subsystem\tsftp\t/usr/lib/openssh/sftp-server`;
 
-// Les paquets que le miroir Debian connaît (apt), et ceux déjà installés.
+// The packages the Debian mirror knows (apt), and those already installed.
 const REPO: Record<string, string> = { htop: '3.4.1-4', tree: '2.2.1-1', vim: '2:9.1.1230-2', curl: '8.14.1-2', nginx: '1.26.3-3', fail2ban: '1.1.0-8', chrony: '4.6.1-3', ncdu: '1.21-2' };
 const INSTALLED: Record<string, string> = { curl: '8.14.1-2', 'openssh-server': '1:10.0p1-7', sudo: '1.9.16p2-3' };
 
@@ -67,7 +67,7 @@ const centreAccounts = (): Accounts => ({
   groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['deploy'] }, deploy: { gid: 1001, members: [] } },
 });
 
-// Le service ssh d'un centre : sshd charge sa configuration au démarrage et au rechargement.
+// A centre's ssh service: sshd loads its configuration at start and on reload.
 const serviceSsh = {
   description: 'OpenBSD Secure Shell server',
   active: true,
@@ -90,7 +90,7 @@ export interface CentreState {
   sshd?: string;
 }
 
-/** Un centre : son monde (comptes, sshd, la clé autorisée de deploy, motd), ses paquets et son ssh. */
+/** A centre: its world (accounts, sshd, deploy's authorised key, motd), its packages and its ssh. */
 export function centre(name: string, e: CentreState = {}): InternalHost {
   return {
     address: CENTRES[name],
@@ -157,7 +157,7 @@ export const pilotState = () => ({
   }),
 });
 
-/** Le monde de pilote : /etc/hosts, la clé ssh de vous (et son known_hosts), ~/ansible, et Ansible. */
+/** pilote's world: /etc/hosts, vous's ssh key (and its known_hosts), ~/ansible, and Ansible. */
 export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]; ansible: Record<string, Node>; home: Record<string, Node> }): Directory {
   const root = { owner: 'root' };
   const binary = (size: number) => f('', { owner: 'root', mode: 'rwxr-xr-x', size });
@@ -206,20 +206,20 @@ export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]
   );
 }
 
-// La clé d'hôte d'un centre, telle que known_hosts la garde (celle que connecterSansQuestion attend).
+// A centre's host key, as known_hosts keeps it (the one connectWithoutQuestion expects).
 export const hostKeyFor = (name: string) => hostKey({ name, domain: `${name}.centres.internal`, address: CENTRES[name] }, '');
 
-// ——— Ce que les chapitres vérifient ———
+// ——— What the chapters check ———
 
-/** Une session sur un centre (créée à la première demande). */
+/** A session on a centre (created on first request). */
 export const onCentre = (j: Game, name: string) => (j as Shell).internal(name)!;
 
-/** La dernière exécution complète (sans --check, sans --limit) d'un playbook. */
+/** The last complete run (without --check, without --limit) of a playbook. */
 export function lastComplete(j: Game) {
   return [...history(j as Shell).executions].reverse().find((e) => !e.check && !e.limit && NAMES.every((n) => e.hosts[n]));
 }
 
-/** Idempotent : la dernière exécution complète n'a rien changé, rien raté, joint tout le monde. */
+/** Idempotent: the last complete run changed nothing, failed nothing, reached everyone. */
 export const idempotent = (j: Game) => {
   const e = lastComplete(j);
   return !!e && NAMES.every((n) => e.hosts[n].changed === 0 && e.hosts[n].failed === 0 && e.hosts[n].unreachable === 0);

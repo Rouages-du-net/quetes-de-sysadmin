@@ -1,5 +1,5 @@
-// Le carnet du sysadmin : les commandes lancées une première fois, leur ligne
-// du manuel, la première ligne tapée, et l'export en Markdown.
+// The sysadmin's notebook: the commands run for the first time, their
+// manual line, the first line typed, and the Markdown export.
 
 import { describe, expect, it } from 'vitest';
 import { machinesInLanguage } from './names';
@@ -11,7 +11,7 @@ import { allSheets } from '../src/engine/sheets';
 import { STORIES } from '../src/engine/chapters';
 
 for (const language of LANGUAGES)
-  describe(`Le carnet — ${language}`, () => {
+  describe(`The notebook — ${language}`, () => {
     const t = translator(language);
     const part = () => {
       const c = new Console({ language });
@@ -25,7 +25,7 @@ for (const language of LANGUAGES)
       return { c, notebook, jouer: play };
     };
 
-    it('note chaque commande une seule fois, avec sa première ligne et son chapitre', () => {
+    it('notes each command only once, with its first line and its chapter', () => {
       const { notebook, jouer: play } = part();
       play('ls -a | cat');
       play('ls');
@@ -36,12 +36,12 @@ for (const language of LANGUAGES)
       expect(Object.keys(notebook).sort()).toEqual(['cat', 'ls', 'pwd', 'ssh']);
       expect(notebook.ls).toEqual({ line: 'ls -a | cat', chapter: '' });
       expect(notebook.cat.line).toBe('ls -a | cat');
-      // head n'existe pas encore sur le poste : il n'entre pas au carnet.
+      // head does not exist yet on the workstation: it does not go into the notebook.
       expect(notebook.head).toBeUndefined();
       expect(notebook.pwd.chapter).toBe('lighthouse');
     });
 
-    it("ignore ce qui n'est pas une commande du jeu, mais garde man", () => {
+    it("ignores what is not a command of the game, but keeps man", () => {
       const { notebook, jouer: play } = part();
       play('frobnicate --now');
       play('man ls');
@@ -49,7 +49,7 @@ for (const language of LANGUAGES)
       expect(Object.keys(notebook)).toEqual(['man']);
     });
 
-    it('exporte en Markdown, trié, avec la ligne du manuel', () => {
+    it('exports to Markdown, sorted, with the manual line', () => {
       const { notebook, jouer: play } = part();
       play('pwd');
       play('ls');
@@ -61,9 +61,9 @@ for (const language of LANGUAGES)
     });
   });
 
-describe('Le carnet et la progression', () => {
+describe('The notebook and progress', () => {
   const t = translator('fr');
-  it('le Markdown commence par les chapitres terminés, histoire par histoire', () => {
+  it('the Markdown starts with the finished chapters, story by story', () => {
     const md = inMarkdown({}, t, ['lighthouse', 'village', 'shut-the-door']);
     expect(md).toContain('## Progression');
     expect(md).toMatch(/- L.Effaceur : 2 chapitres terminés sur 4/);
@@ -73,8 +73,8 @@ describe('Le carnet et la progression', () => {
   });
 });
 
-describe('Les fiches pour les enseignant·es', () => {
-  it('chaque chapitre a sa fiche, ses commandes nouvelles une seule fois, une durée', () => {
+describe('The sheets for teachers', () => {
+  it('each chapter has its sheet, its new commands only once, a duration', () => {
     const all = allSheets();
     expect(all.length).toBe(STORIES.flatMap((h) => h.chapters).length);
     const views = all.flatMap((f) => f.fresh);
@@ -86,12 +86,12 @@ describe('Les fiches pour les enseignant·es', () => {
   });
 });
 
-describe('Le mode examen', () => {
-  it("sans indice, mais l'étape finale et son débrief s'affichent", () => {
+describe('Exam mode', () => {
+  it("without hints, but the final step and its debrief are shown", () => {
     const c = new Console({ language: 'fr', finished: ['lighthouse', 'village', 'root', 'backup', ...prerequisites('letters')] });
     c.exam = true;
     const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
-    // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
+    // The Door, with sshd's configuration: the typo no longer gives a hint.
     let all = play(['ssh letters', 'yes']);
     c.execute('sudo nano /etc/ssh/sshd_config');
     c.execute(machinesInLanguage(c.t, 'ants-2026'));

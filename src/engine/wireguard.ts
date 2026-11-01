@@ -1,21 +1,21 @@
-// WireGuard sur un routeur (etat.wg) : des clés (wg genkey, wg pubkey), une
-// interface (wg0) décrite par /etc/wireguard/wg0.conf et montée par
-// wg-quick, et des pairs distants (Lan.distants) qui essaient de s'y
-// connecter depuis internet.
-// Le format est celui de wg(8) et wg-quick(8) :
+// WireGuard on a router (state.wg): keys (wg genkey, wg pubkey), an
+// interface (wg0) described by /etc/wireguard/wg0.conf and brought up by
+// wg-quick, and remote peers (Lan.remotes) that try to connect to it
+// from the internet.
+// The format is that of wg(8) and wg-quick(8):
 // https://man7.org/linux/man-pages/man8/wg.8.html,
 // https://man7.org/linux/man-pages/man8/wg-quick.8.html,
 // https://www.wireguard.com/quickstart/
-// Une poignée de main réussit si le pair a la bonne clé publique du routeur,
-// la bonne adresse et le bon port, si la chaîne input laisse passer l'UDP,
-// et si le routeur connaît la clé publique du pair. Ensuite, ses paquets
-// passent si l'adresse du tunnel est dans les AllowedIPs du pair (côté
-// routeur), la destination dans ses AllowedIPs à lui, et si la chaîne
-// forward les laisse aller (et revenir).
-// Écarts : les clés ont le bon format, mais la clé publique n'est pas
-// calculée par Curve25519 (une empreinte qui en tient lieu) ; pas de
-// PresharedKey vérifiée, de PostUp exécuté, de routage de tout le trafic
-// (0.0.0.0/0) côté routeur ni d'IPv6.
+// A handshake succeeds if the peer has the router's right public key,
+// the right address and port, if the input chain lets the UDP through,
+// and if the router knows the peer's public key. Then its packets
+// go through if the tunnel address is in the peer's AllowedIPs (on the
+// router's side), the destination in its own AllowedIPs, and if the forward
+// chain lets them go (and come back).
+// Differences: the keys have the right format, but the public key is not
+// computed with Curve25519 (a fingerprint stands in for it); no
+// PresharedKey checked, no PostUp run, no routing of all traffic
+// (0.0.0.0/0) on the router's side, no IPv6.
 
 import { path } from './world';
 import type { Game } from './shell';
@@ -24,7 +24,7 @@ import { nft, routing, traverse, type Ruleset } from './nftables';
 
 export const DIRECTORY = '/etc/wireguard';
 
-// ——— Les clés (32 octets en base64) ———
+// ——— Keys (32 bytes in base64) ———
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
@@ -44,14 +44,14 @@ function sinceB64(s: string): number[] | null {
     .split('')
     .map((c) => B64.indexOf(c).toString(2).padStart(6, '0'))
     .join('');
-  // 43 caractères : 258 bits, dont les 2 derniers doivent être nuls.
+  // 43 characters: 258 bits, the last 2 of which must be zero.
   if (!bits.endsWith('00')) return null;
   return Array.from({ length: 32 }, (_, i) => parseInt(bits.slice(i * 8, i * 8 + 8), 2));
 }
 
 export const validKey = (s: string) => sinceB64(s.trim()) !== null;
 
-/** wg genkey : une clé privée (toujours différente, mais rejouable : un compteur de l'état). */
+/** wg genkey: a private key (always different, but replayable: a counter in the state). */
 export function generateKey(j: Game): string {
   const n = (j.state.wgCounter = (j.state.wgCounter ?? 0) + 1);
   let x = (n * 2654435761) >>> 0 || 1;
@@ -63,13 +63,13 @@ export function generateKey(j: Game): string {
     x >>>= 0;
     return x & 255;
   });
-  // Comme une vraie clé Curve25519 : bits de poids faible et fort ajustés.
+  // Like a real Curve25519 key: low and high bits adjusted.
   o[0] &= 248;
   o[31] = (o[31] & 127) | 64;
   return toB64(o);
 }
 
-/** wg pubkey : la clé publique d'une clé privée (une empreinte qui tient lieu de Curve25519) ; null si la clé est mal formée. */
+/** wg pubkey: the public key of a private key (a fingerprint stands in for Curve25519); null if the key is malformed. */
 export function isPublic(key: string): string | null {
   const o = sinceB64(key.trim());
   if (!o) return null;
@@ -84,13 +84,13 @@ export function isPublic(key: string): string | null {
   return toB64(output);
 }
 
-// ——— La configuration (wg-quick) ———
+// ——— Configuration (wg-quick) ———
 
 export interface Peer {
   key: string;
   allowed: string[];
   endpoint?: string;
-  // PersistentKeepalive : un paquet toutes les N secondes, qui garde le passage ouvert dans une box (NAT).
+  // PersistentKeepalive: a packet every N seconds, which keeps the way open through a home router (NAT).
   keepalive?: number;
 }
 
@@ -99,13 +99,13 @@ export interface ConfWg {
   port?: number;
   key?: string;
   peers: Peer[];
-  // Les messages de wg setconf ou de wg-quick, s'il y a une faute.
+  // The messages of wg setconf or wg-quick, if there is a mistake.
   errors: string[];
 }
 
 const IFACE_WG_QUICK = ['address', 'dns', 'mtu', 'table', 'preup', 'postup', 'predown', 'postdown', 'saveconfig'];
 
-/** Lit un fichier de configuration comme wg-quick (ses clés à lui) puis wg setconf (le reste). */
+/** Reads a configuration file like wg-quick (its own keys) then wg setconf (the rest). */
 export function readConfWg(text: string): ConfWg {
   const c: ConfWg = { addresses: [], peers: [], errors: [] };
   let section: 'interface' | 'peer' | null = null;
@@ -172,18 +172,18 @@ export function readConfWg(text: string): ConfWg {
   return c;
 }
 
-// ——— L'état : les interfaces montées ———
+// ——— State: the interfaces brought up ———
 
 export interface InterfaceWg {
   conf: ConfWg;
-  // Montée par le service (wg-quick@wg0) ou à la main (wg-quick up).
+  // Brought up by the service (wg-quick@wg0) or by hand (wg-quick up).
   byService: boolean;
 }
 
 export const wg = (j: Game): Record<string, InterfaceWg> => (j.state.wg ??= {});
 export const confFor = (name: string) => `${DIRECTORY}/${name}.conf`;
 
-/** wg-quick up : renvoie les lignes « [#] … » et les erreurs, et monte l'interface si tout va bien. */
+/** wg-quick up: returns the "[#] …" lines and the errors, and brings the interface up if all is well. */
 export function mountWg(j: Game, name: string, byService: boolean): { lines: string[]; error: string | null } {
   const l = lan(j);
   const text = j.read(confFor(name));
@@ -192,12 +192,12 @@ export function mountWg(j: Game, name: string, byService: boolean): { lines: str
   const c = readConfWg(text);
   const lines = [`[#] ip link add ${name} type wireguard`, `[#] wg setconf ${name} /dev/fd/63`];
   if (c.errors.length) {
-    // Comme wg-quick : l'interface créée est retirée.
+    // Like wg-quick: the created interface is removed.
     return { lines: [...lines, ...c.errors, `[#] ip link delete dev ${name}`], error: '' };
   }
   for (const a of c.addresses) lines.push(`[#] ip -4 address add ${a} dev ${name}`);
   lines.push(`[#] ip link set mtu 1420 up dev ${name}`);
-  // Comme wg-quick : une route pour chaque AllowedIPs que le réseau de l'interface ne couvre pas déjà.
+  // Like wg-quick: a route for each AllowedIPs the interface's network doesn't already cover.
   const routes = [...new Set(c.peers.flatMap((p) => p.allowed))]
     .map(networkFor)
     .filter((r) => !c.addresses.some((a) => inside(r.split('/')[0], networkFor(a)) && Number(r.split('/')[1]) >= Number(a.split('/')[1])));
@@ -221,39 +221,39 @@ export function unmountWg(j: Game, name: string): string | null {
   return null;
 }
 
-// ——— Les pairs distants ———
+// ——— Remote peers ———
 
-/** Un appareil sur internet qui se connecte au routeur par WireGuard (le portable de Malik…). */
+/** A device on the internet that connects to the router through WireGuard (Malik's laptop…). */
 export interface Remote {
   name: string;
-  // Son adresse publique (d'où viennent ses paquets UDP).
+  // Its public address (where its UDP packets come from).
   address: string;
-  // Sa clé publique (sa clé privée ne quitte jamais l'appareil).
+  // Its public key (its private key never leaves the device).
   key: string;
-  // Son fichier de configuration, que le chapitre fait compléter (chemin
-  // écrit avec les noms français, comme ceux des chapitres : voir chemin()).
+  // Its configuration file, which the chapter has the player complete (path
+  // written with the reference names, like the chapters': see path()).
   conf: string;
-  // Ce qu'il essaie de joindre à travers le tunnel.
+  // What it tries to reach through the tunnel.
   to: string;
   port: number;
-  // Un site entier derrière ce pair (un autre routeur) : son réseau, et l'appareil d'où part l'échange.
+  // A whole site behind this peer (another router): its network, and the device the exchange starts from.
   network?: string;
   source?: string;
-  // Derrière la box de son fournisseur (NAT) : on ne peut pas le joindre sans qu'il garde le passage ouvert.
+  // Behind its provider's home router (NAT): it can't be reached unless it keeps the way open.
   behindNat?: boolean;
 }
 
 export type TunnelState =
-  | 'down' // pas d'interface WireGuard montée
-  | 'conf' // la configuration du pair est incomplète ou fausse
-  | 'address' // Endpoint : pas le routeur, ou pas le bon port
-  | 'filtered' // la chaîne input jette l'UDP
-  | 'cle-routeur' // le pair n'a pas la clé publique du routeur
-  | 'unknown' // le routeur ne connaît pas la clé publique du pair
-  | 'autorisees' // l'adresse d'où part l'échange n'est pas dans les AllowedIPs du pair (côté routeur)
-  | 'route' // la destination n'est pas dans les AllowedIPs du pair (de son côté)
-  | 'asleep' // le pair est derrière une box et ne garde pas le passage ouvert (PersistentKeepalive)
-  | 'forwarding' // ip_forward, ou la chaîne forward
+  | 'down' // no WireGuard interface up
+  | 'conf' // the peer's configuration is incomplete or wrong
+  | 'address' // Endpoint: not the router, or not the right port
+  | 'filtered' // the input chain drops the UDP
+  | 'cle-routeur' // the peer doesn't have the router's public key
+  | 'unknown' // the router doesn't know the peer's public key
+  | 'autorisees' // the address the exchange starts from is not in the peer's AllowedIPs (router side)
+  | 'route' // the destination is not in the peer's AllowedIPs (its own side)
+  | 'asleep' // the peer is behind a home router and doesn't keep the way open (PersistentKeepalive)
+  | 'forwarding' // ip_forward, or the forward chain
   | 'ok';
 
 interface Options {
@@ -273,8 +273,8 @@ interface Handshake {
   transfer: boolean;
 }
 
-/** La poignée de main entre le pair et le routeur : ce qu'il faut pour qu'ils se reconnaissent. */
-/** La configuration d'un pair distant, lue dans son fichier (sous son nom dans la langue). */
+/** The handshake between the peer and the router: what they need to recognise each other. */
+/** A remote peer's configuration, read from its file (under its name in the language). */
 export const remoteConf = (j: Game, d: Remote): ConfWg => readConfWg(j.read(path(j.t, d.conf)) ?? '');
 
 function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelState; name?: string } {
@@ -310,18 +310,18 @@ function handshake(j: Game, d: Remote, o: Options): Handshake | { state: TunnelS
   return { name, peer, client, clientAddress, ruleset, transfer };
 }
 
-// L'interface du routeur par où passe une adresse (hors tunnel).
+// The router interface an address goes through (outside the tunnel).
 const outputFor = (j: Game, ip: string, except: string) =>
   Object.values(lan(j)?.interfaces ?? {}).find((x) => x.name !== except && x.up && !x.wireguard && x.addresses.some((a) => inside(ip, networkFor(a))));
 
-// Un échange à travers la chaîne forward : le premier paquet, puis la réponse.
+// An exchange through the forward chain: the first packet, then the reply.
 function traversesForward(r: Ruleset, iif: string, oif: string, saddr: string, daddr: string, port: number): boolean {
   const go = { iif, oif, saddr, daddr, proto: 'tcp' as const, sport: 49152, dport: port, ct: 'new' as const, size: 60 };
   const back = { ...go, iif: oif, oif: iif, saddr: daddr, daddr: saddr, sport: port, dport: 49152, ct: 'established' as const, size: 1500 };
   return traverse(r, 'forward', 'filter', go).pass && traverse(r, 'forward', 'filter', back).pass;
 }
 
-/** Où en est le pair quand il essaie de joindre d.vers à travers le tunnel (maintenant, ou au démarrage). */
+/** Where the peer stands when it tries to reach d.to through the tunnel (now, or at start-up). */
 export function tunnelState(j: Game, d: Remote, o: Options): { state: TunnelState; name?: string } {
   const p = handshake(j, d, o);
   if ('state' in p) return p;
@@ -335,14 +335,14 @@ export function tunnelState(j: Game, d: Remote, o: Options): { state: TunnelStat
   return { state: 'ok', name };
 }
 
-/** Un échange dans l'autre sens : un appareil du réseau local (son adresse) vers une adresse derrière le pair. */
+/** An exchange in the other direction: a device on the local network (its address) to an address behind the peer. */
 export function stateToRemote(j: Game, d: Remote, forEachOf: string, to: string, port: number, o: Options): { state: TunnelState; name?: string } {
   const p = handshake(j, d, o);
   if ('state' in p) return p;
   const { name, peer, client, ruleset, transfer } = p;
-  // Côté routeur, c'est l'AllowedIPs du pair qui dit par où envoyer (et les routes de wg-quick).
+  // On the router's side, the peer's AllowedIPs say where to send (and wg-quick's routes).
   if (!peer.allowed.some((a) => inside(to, a))) return { state: 'autorisees', name };
-  // Côté pair, la réponse doit pouvoir repartir dans le tunnel (et le paquet être accepté).
+  // On the peer's side, the reply must be able to go back into the tunnel (and the packet be accepted).
   if (!client.peers[0].allowed.some((a) => inside(forEachOf, a))) return { state: 'route', name };
   if (d.behindNat && !client.peers[0].keepalive) return { state: 'asleep', name };
   if (!transfer) return { state: 'forwarding', name };

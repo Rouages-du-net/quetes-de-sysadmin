@@ -1,7 +1,7 @@
-// Chapitre 1 — L'Île du Phare : ls, cd, pwd, cat (less), ls -a, mv (déplacer
-// et renommer), chemins (.., ~, /). Notre propre histoire et nos propres
-// énigmes ; l'idée d'apprendre les commandes en se déplaçant de lieu en lieu
-// vient de Terminus (MIT).
+// Chapter 1 — Lighthouse Island: ls, cd, pwd, cat (less), ls -a, mv (move
+// and rename), paths (.., ~, /). Our own story and our own puzzles; the
+// idea of learning commands by moving from place to place comes from
+// Terminus (MIT).
 
 import { path, d, f, type Chapter } from '../world';
 

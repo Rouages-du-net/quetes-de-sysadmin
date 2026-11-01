@@ -1,7 +1,7 @@
-// L'éditeur nano dans le terminal : barre de titre, zone de texte, ligne
-// d'état et raccourcis. ^O écrit, ^X quitte (en proposant d'enregistrer si le
-// texte a changé : O, N ou ^C). Les raccourcis sont aussi des boutons, pour
-// les claviers sans touche Ctrl (mobiles).
+// The nano editor in the terminal: title bar, text area, status
+// line and shortcuts. ^O writes, ^X exits (offering to save if the
+// text has changed: O, N or ^C). The shortcuts are also buttons, for
+// keyboards without a Ctrl key (mobiles).
 
 import type { Translate } from '../texts';
 
@@ -10,9 +10,9 @@ export interface EditorOptions {
   path: string;
   text: string;
   message: string;
-  /** Écrit le texte ; renvoie le message de nano, et si c'est écrit. */
+  /** Writes the text; returns nano's message, and whether it was written. */
   save: (text: string) => { message: string; written: boolean };
-  /** L'éditeur est fermé. */
+  /** The editor is closed. */
   close: () => void;
 }
 
@@ -74,7 +74,7 @@ export function editor(o: EditorOptions): HTMLElement {
     question.hidden = !yes;
     state.textContent = yes ? t('nano-save') : '';
     (yes ? question.querySelector('button')! : zone).focus();
-    // Sur un petit écran, la question doit se voir.
+    // On a small screen, the question must be visible.
     if (yes) question.scrollIntoView?.({ block: 'nearest' });
   };
   const exit = () => (zone.value === saves ? close() : ask(true));

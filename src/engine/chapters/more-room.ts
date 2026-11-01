@@ -1,17 +1,15 @@
-// Histoire « Le Labo » — chapitre « La place qui manque » : le concours
-// d'hiver arrive, et /srv est plein à 97 %. Les photos sont dans un volume
-// logique (LVM) sur la grappe md1, dont le groupe n'a plus de place.
-// L'hébergeur a branché deux disques neufs de 4 To (sdc, sdd). On en fait
-// d'abord une grappe RAID 1 (mdadm --create), qu'on donne à LVM (pvcreate,
-// vgextend) ; on agrandit le volume, puis son système de fichiers
-// (lvextend -r, ou lvextend puis resize2fs). Enfin, la nouvelle grappe
-// entre dans /etc/mdadm/mdadm.conf, et l'initramfs est refait pour que le
-// démarrage la connaisse.
-// Objectif vérifié sur l'état : au moins 1,5 To libres sur /srv, aucun
-// disque seul dans le groupe labo (chaque PV est une grappe), chaque
-// nouvelle grappe une fois et une seule dans mdadm.conf, et l'initramfs
-// refait depuis.
-// Sources : lvm(8), lvextend(8), resize2fs(8), mdadm(8),
+// Story "The Lab" — chapter "Running out of room": the winter contest is
+// coming, and /srv is 97 % full. The photos are in a logical volume (LVM)
+// on the md1 array, whose group has no room left.
+// The host has plugged in two new 4 TB disks (sdc, sdd). First make them a
+// RAID 1 array (mdadm --create), give it to LVM (pvcreate, vgextend); grow
+// the volume, then its file system (lvextend -r, or lvextend then
+// resize2fs). Finally, the new array goes into /etc/mdadm/mdadm.conf, and
+// the initramfs is rebuilt so that boot knows it.
+// Objective checked on the state: at least 1.5 TB free on /srv, no bare
+// disk in the labo group (each PV is an array), each new array once and
+// only once in mdadm.conf, and the initramfs rebuilt since.
+// Sources: lvm(8), lvextend(8), resize2fs(8), mdadm(8),
 // https://manpages.debian.org/trixie/mdadm/mdadm.conf.5.en.html,
 // https://wiki.debian.org/SoftwareRAID
 
@@ -26,11 +24,11 @@ const CONF = '/etc/mdadm/mdadm.conf';
 const NEED = 1.5e12;
 
 const photos = (j: Game) => lvm(st(j)).vgs.labo.lvs.photos;
-// La place libre sur /srv, comme df : la taille du système de fichiers moins ce qu'il contient.
+// The free space on /srv, like df: the file system's size minus what it contains.
 const freeMem = (j: Game) => photos(j).fs - (j as Shell).size(j.find('/srv')!);
-// Les grappes créées pendant le chapitre.
+// The arrays created during the chapter.
 const fresh = (j: Game) => Object.entries(st(j).arrays).filter(([n]) => n !== 'md0' && n !== 'md1');
-// Un disque seul (pas une grappe) dans le groupe labo : la redondance est perdue.
+// A bare disk (not an array) in the labo group: redundancy is lost.
 const only = (j: Game) => pvsFor(st(j), 'labo').filter((pv) => !st(j).arrays[pv]);
 const extended = (j: Game) => pvsFor(st(j), 'labo').some((pv) => fresh(j).some(([n]) => n === pv));
 const arrayLines = (j: Game) => (j.read(CONF) ?? '').split('\n').filter((l) => /^\s*ARRAY\b/.test(l));

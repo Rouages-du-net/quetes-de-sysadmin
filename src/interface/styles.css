@@ -1,11 +1,12 @@
-/* Styles du jeu. Tout est rangé sous .qds pour ne rien changer à la page qui
-   l'accueille. Un site règle les couleurs avec les variables --qds-fond,
-   --qds-accent… (posées sur l'élément ou au-dessus) ; le jeu les lit dans
-   ses variables internes --_background, --_accent…, qui ont des valeurs par
-   défaut claires et sombres. Thème clair et sombre selon le système, ou
-   forcé par l'attribut theme="light" | "dark" de l'élément (ou "clair" | "sombre").
-   Par défaut, « la salle des machines » : lumière de console (phosphore
-   vert, voyants ambre) sur fond anthracite, ou « la salle blanche » en clair. */
+/* The game's styles. Everything is under .qds so as to change nothing on the
+   host page. A site sets the colours with the variables --qds-background,
+   --qds-accent… (set on the element or above it; the French names such as
+   --qds-fond still work); the game reads them into its internal variables
+   --_background, --_accent…, which have light and dark defaults. Light and
+   dark theme follow the system, or are forced by the element's attribute
+   theme="light" | "dark" (or "clair" | "sombre").
+   By default, "the machine room": console light (green phosphor, amber
+   lights) on a charcoal background, or "the clean room" in light mode. */
 
 .qds {
   --_background: var(--qds-background, var(--qds-fond, #eef2ee));
@@ -25,8 +26,8 @@
   line-height: 1.5;
 }
 
-/* Thème sombre : seulement les valeurs par défaut ; les variables --qds-*
-   données par la page d'accueil gardent la priorité. */
+/* Dark theme: only the defaults; the --qds-* variables given by the host
+   page keep priority. */
 @media (prefers-color-scheme: dark) {
   :host(:not([theme='clair']):not([theme='light'])) .qds,
   .qds:not([data-theme='clair']) {
@@ -64,7 +65,7 @@
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
 }
-/* Les histoires en lignes : le titre et l'état sur une ligne, le résumé dessous. */
+/* The stories in rows: title and state on one line, the summary below. */
 .qds .stories ol { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; align-items: start; }
 .qds .stories button { height: auto; grid-template-columns: 1fr auto; align-content: start; column-gap: 0.75rem; padding: 0.55rem 0.9rem; }
 .qds .stories .abstract { grid-column: 1 / -1; }
@@ -87,9 +88,9 @@
   cursor: pointer;
 }
 .qds .stories button:not(:disabled):hover, .qds .chapters button:not(:disabled):hover { border-color: var(--_accent); }
-/* Une baie de serveur par histoire : une diode par chapitre (éteinte, ambre
-   pour le prochain à faire, verte quand il est fini). L'état en toutes
-   lettres reste dans .state, pour les lecteurs d'écran. */
+/* One server rack per story: one LED per chapter (off, amber for the next
+   one to do, green when it is finished). The state in full words stays in
+   .state, for screen readers. */
 .qds .diodes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
 .qds .diode { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--_border); }
 .qds .diode.lit { background: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 70%, transparent); }
@@ -98,24 +99,24 @@
 @media (prefers-reduced-motion: reduce) { .qds .diode.in-progress { animation: none; } }
 .qds .chapters button { background: var(--_background); }
 .qds .chapters button:disabled { cursor: default; opacity: 0.6; }
-/* Histoire sans sa clé : grisée (couleurs discrètes plutôt que transparence,
-   qui nuirait au contraste), bordure en pointillés, sans résumé. */
+/* A story without its key: greyed out (muted colours rather than
+   transparency, which would hurt contrast), dotted border, no summary. */
 .qds .stories button:disabled { cursor: default; border-style: dashed; background: var(--_background); }
 .qds .stories button[data-locked] .title { font-weight: 600; color: var(--_muted); }
 .qds .stories button[data-locked] .state { color: var(--_muted); font-weight: 400; }
 .qds .stories button[data-locked] .abstract { display: none; }
-/* Le choix de la vue du menu : la carte du réseau ou les baies. */
+/* The choice of the menu's view: the network map or the racks. */
 .qds .view-choice { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
 .qds .stories .view-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 999px; background: var(--_background); color: var(--_muted); cursor: pointer; }
 .qds .stories .view-button[aria-pressed='true'] { border-color: var(--_accent); color: var(--_text); box-shadow: inset 0 0 0 1px var(--_accent); }
 .qds .host { display: none; font-family: var(--_font-mono); font-size: 0.75rem; color: var(--_muted); overflow-wrap: anywhere; }
 .qds .node-internet { display: none; }
 
-/* La carte du réseau : le poste en haut, internet dessous, et un câble (un
-   bus) d'où part une branche vers chaque machine. Le câble d'une machine
-   est en pointillés tant qu'elle est verrouillée, ambre quand on y joue,
-   vert quand l'histoire est finie. Sur un écran large, les machines se
-   rangent de part et d'autre du câble ; sur un écran étroit, à sa droite. */
+/* The network map: the workstation at the top, the internet below, and a
+   cable (a bus) from which a branch goes to each machine. A machine's cable
+   is dotted while it is locked, amber when you are playing there, green
+   when the story is finished. On a wide screen, the machines sit on both
+   sides of the cable; on a narrow screen, to its right. */
 .qds .stories[data-view='network'] { --_cable: 2px; --_branch: 1.5rem; }
 .qds .stories[data-view='network'] ol { position: relative; grid-template-columns: 1fr; gap: 0.6rem; padding-left: calc(var(--_branch) + 0.5rem); }
 .qds .stories[data-view='network'] ol::before {
@@ -154,7 +155,7 @@
 .qds .stories[data-view='network'] li[data-state='finished']::before { border-top-color: var(--_accent); box-shadow: 0 0 0.35rem color-mix(in oklab, var(--_accent) 60%, transparent); }
 .qds .stories[data-view='network'] li[data-state='finished'] button { border-left-color: var(--_accent); }
 .qds .stories[data-view='network'] li[data-state='in-progress'] button { border-left-color: var(--_amber); }
-/* Un paquet file sur la branche de la machine où l'on joue. */
+/* A packet runs along the branch of the machine being played. */
 .qds .stories[data-view='network'] li:has(> button[aria-current='true'])::after {
   content: '';
   position: absolute;
@@ -169,7 +170,7 @@
 @keyframes qds-packet { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(calc(var(--_branch) - 0.45rem)); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .qds .stories[data-view='network'] li::after { animation: none; display: none; } }
 @media (min-width: 46rem) {
-  /* Deux colonnes, le câble au milieu : la poste et internet le surmontent. */
+  /* Two columns, the cable in the middle: the workstation and the internet sit above it. */
   .qds .stories[data-view='network'] ol { grid-template-columns: 1fr 1fr; column-gap: calc(2 * var(--_branch)); padding-left: 0; }
   .qds .stories[data-view='network'] ol::before { left: calc(50% - var(--_cable) / 2); top: 3rem; }
   .qds .stories[data-view='network'] .node-workstation, .qds .stories[data-view='network'] .node-internet { grid-column: 1 / -1; justify-self: center; text-align: center; }
@@ -214,8 +215,8 @@
   cursor: text;
 }
 .qds .output pre { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: inherit; overflow-x: auto; }
-/* Un tableau trop large pour l'écran défile de côté : une ombre sur le bord
-   montre qu'il en reste à voir (elle disparaît une fois au bout). */
+/* A table too wide for the screen scrolls sideways: a shadow on the edge
+   shows there is more to see (it disappears once at the end). */
 .qds .output pre {
   background:
     linear-gradient(to right, var(--_terminal-background) 40%, transparent) left / 1.5rem 100% no-repeat local,
@@ -224,7 +225,7 @@
     radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--_terminal-text) 45%, transparent), transparent) right / 0.6rem 100% no-repeat scroll;
 }
 .qds .output .columns { white-space: pre; word-break: normal; }
-/* Pour mesurer la largeur d'un caractère (la largeur du terminal en colonnes). */
+/* To measure a character's width (the terminal's width in columns). */
 .qds .output .measure { position: absolute; visibility: hidden; pointer-events: none; white-space: pre; }
 .qds .output .cut { margin: 0; font-style: italic; color: var(--_terminal-prompt); }
 .qds .output .cmd { color: color-mix(in oklab, var(--_terminal-text) 75%, var(--_terminal-background)); }
@@ -252,11 +253,11 @@
   color: var(--_background);
   cursor: pointer;
 }
-/* Le mode examen : une case au-dessus du terminal, et le chrono. */
+/* Exam mode: a checkbox above the terminal, and the timer. */
 .qds .exam { margin: 0.75rem 0 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; }
 .qds .exam label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
 .qds .exam input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
-/* La carte : le bouton au bout de la barre, la fenêtre et l'arbre des lieux. */
+/* The map: the button at the end of the bar, the window and the tree of places. */
 .qds .tools { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
 .qds .map-button,
 .qds .mission-button,
@@ -293,7 +294,7 @@
 .qds .map-tabs[hidden] { display: none; }
 .qds .map-tabs [role='tab'] { font: inherit; font-size: 0.95rem; padding: 0.35rem 0.9rem; border: 1px solid transparent; border-bottom: 0; border-radius: 0.4rem 0.4rem 0 0; background: none; color: var(--_muted); cursor: pointer; margin-bottom: -1px; }
 .qds .map-tabs [role='tab'][aria-selected='true'] { color: var(--_text); font-weight: 600; border-color: var(--_border); background: var(--_background); }
-/* Le plan du réseau : le schéma défile dans sa boîte s'il est plus large que l'écran. */
+/* The network plan: the diagram scrolls in its box if it is wider than the screen. */
 .qds .map-window:has([role='tabpanel']:not([hidden]) .plan-diagram) { width: min(62rem, calc(100vw - 2rem)); }
 .qds .plan-diagram { overflow-x: auto; margin: 0 0 0.75rem; }
 .qds .plan-diagram svg { display: block; font-family: var(--_font); }
@@ -312,7 +313,7 @@
 .qds .plan-diagram .marker-here { fill: var(--_accent); font-size: 12px; font-weight: 700; }
 .qds .plan-text summary { cursor: pointer; font-size: 0.9rem; }
 .qds .plan-text .map-tree { margin-top: 0.5rem; }
-/* Ma progression : le nom, le code à recopier, le fichier. */
+/* My progress: the name, the code to copy, the file. */
 .qds .progress-window h3,
 .qds .mission-window h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
 .qds .progress-window input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.3rem; background: var(--_card); color: var(--_text); max-width: 100%; }
@@ -320,25 +321,25 @@
 .qds .progress-code { font-family: var(--_font-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; overflow-wrap: anywhere; }
 .qds .progress-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .qds .progress-state { min-height: 1.5em; color: var(--_accent); font-weight: 600; }
-/* La mission : consignes et messages de l'histoire, relus. */
+/* The mission: the story's instructions and messages, to reread. */
 .qds .mission-text { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: 0.85rem/1.5 var(--_font-mono); background: var(--_card); border: 1px solid var(--_border); border-radius: 0.3rem; padding: 0.5rem 0.75rem; max-height: 20rem; overflow-y: auto; }
 .qds .mission-log { padding-left: 1.5rem; margin: 0; }
-/* Ctrl-R : la commande trouvée, sous la ligne. */
+/* Ctrl-R: the command found, under the line. */
 .qds .search { flex-basis: 100%; margin: 0.25rem 0 0; color: var(--_terminal-prompt); font-size: 0.85rem; }
 .qds .search:empty { display: none; }
-/* La barre de touches : seulement sur les écrans tactiles. */
+/* The key bar: only on touch screens. */
 .qds .keys { display: none; }
 @media (pointer: coarse) {
   .qds .keys { display: flex; gap: 0.35rem; overflow-x: auto; padding: 0.5rem 0 0.25rem; scrollbar-width: none; }
   .qds .keys button { flex: none; min-width: 2.75rem; min-height: 2.75rem; padding: 0 0.6rem; font: 600 0.95rem var(--_font-mono); color: var(--_text); background: var(--_card); border: 1px solid var(--_border); border-radius: 0.35rem; }
   .qds .keys button:active { border-color: var(--_accent); color: var(--_accent); }
-  /* Pendant nano, la barre ne garde que ses raccourcis (et Ctrl-C). */
+  /* While in nano, the bar keeps only its shortcuts (and Ctrl-C). */
   .qds .keys:not([data-mode='nano']) .for-nano,
   .qds .keys[data-mode='nano'] button:not(.for-nano):not([data-key='ctrl-c']) { display: none; }
-  /* Pendant un suivi (tail -f), seulement Ctrl-C. */
+  /* While following (tail -f), only Ctrl-C. */
   .qds .keys[data-mode='follow'] button:not([data-key='ctrl-c']) { display: none; }
 }
-/* Les succès : obtenus en clair, les autres en discret ; l'annonce dans le terminal. */
+/* Achievements: obtained ones in full, the others muted; the announcement in the terminal. */
 .qds .achievement-rank { margin: 0 0 0.75rem; }
 .qds .achievement-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .qds .achievement-list li { padding: 0.4rem 0.6rem; border: 1px solid var(--_border); border-radius: 0.3rem; }
@@ -348,11 +349,11 @@
 .qds .achievement-description { display: block; }
 .qds .to-earn .achievement-name { color: var(--_muted); }
 .qds .output pre.achievements { color: var(--_terminal-prompt); font-weight: 700; }
-/* Besoin d'aide ? Les niveaux d'indice dans la mission. */
+/* Need help? The hint levels in the mission. */
 .qds .help { margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed var(--_border); }
 .qds .hint-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .qds .hint-text p { margin: 0.5rem 0; }
-/* L'affichage : thème du terminal, taille, plein écran. */
+/* Display: terminal theme, size, full screen. */
 .qds .settings { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 .qds .settings select { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.3rem; border: 1px solid var(--_border); border-radius: 0.35rem; background: var(--_card); color: var(--_text); }
 .qds .settings button:disabled { opacity: 0.5; cursor: default; }
@@ -364,7 +365,7 @@
 .qds .screen.focus { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; background: var(--_background); }
 .qds .screen.focus .terminal { flex: 1; max-height: none; min-height: 0; }
 .qds .screen.focus .leave-focus { display: block; align-self: flex-end; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.35rem; background: var(--_card); color: var(--_text); cursor: pointer; }
-/* Les mises en scène : une connexion qui s'établit (balayage), un redémarrage (écran éteint). */
+/* The staging: a connection being established (a sweep), a reboot (screen off). */
 .qds .terminal.scene-connection { animation: qds-connection 0.6s ease-out; }
 @keyframes qds-connection { from { box-shadow: inset 0 0 0 100vmax color-mix(in oklab, var(--_accent) 18%, transparent); } }
 .qds .terminal.scene-reboot { animation: qds-reboot 1.4s steps(1) both; }
@@ -373,11 +374,11 @@
 .qds .map-actions { margin: 0.75rem 0 0; text-align: right; }
 .qds .timer { font-family: var(--_font-mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--_accent); }
 .qds .output pre.exam-result { font-weight: 600; color: var(--_terminal-prompt); }
-/* Après un chapitre : les pages de Les rouages du net qui expliquent son concept. */
+/* After a chapter: the pages of Les rouages du net that explain its concept. */
 .qds .to-understand { margin-top: 1rem; padding: 0.5rem 0.75rem; border-left: 3px solid var(--_accent); background: var(--_card); }
 .qds .to-understand p { margin: 0 0 0.25rem; }
 .qds .to-understand ul { margin: 0; padding-left: 1.25rem; }
-/* Le carnet du sysadmin : un panneau replié sous le terminal. */
+/* The sysadmin's notebook: a folded panel under the terminal. */
 .qds .notebook { margin-top: 1rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); padding: 0.5rem 0.75rem; }
 .qds .notebook summary { cursor: pointer; font-weight: 600; }
 .qds .notebook summary .account { font-weight: normal; color: var(--_muted); }
@@ -401,14 +402,14 @@
   .qds .stories button { grid-template-columns: 1fr; }
   .qds .stories .state { grid-row: auto; grid-column: auto; align-self: start; }
   .qds .abstract { display: none; }
-  /* Les tabulations (nft list ruleset, nftables.conf) prennent moins de place sur un écran étroit. */
+  /* Tabs (nft list ruleset, nftables.conf) take less room on a narrow screen. */
   .qds .output pre, .qds .nano-text { tab-size: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
   .qds * { scroll-behavior: auto !important; transition: none !important; }
 }
 
-/* tail -f, journalctl -f : les lignes qui arrivent se suivent sans espace ; le bouton qui fait Ctrl-C, à la place de la ligne de commande. */
+/* tail -f, journalctl -f: incoming lines follow one another with no gap; the button that does Ctrl-C replaces the command line. */
 .qds .output pre.follow { margin-top: -0.5rem; }
 .qds .stop-follow {
   font: inherit; color: var(--_terminal-prompt); background: none; cursor: pointer;
@@ -417,7 +418,7 @@
 .qds .stop-follow:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 1px; }
 .qds .stop-follow kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
 
-/* L'éditeur nano, dans le terminal. */
+/* The nano editor, in the terminal. */
 .qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }
 .qds .nano-title {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 1ch;
@@ -439,12 +440,11 @@
 .qds .nano-key:focus-visible { outline: 2px solid var(--_terminal-prompt); }
 .qds .nano-key kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
 
-/* La coloration de la ligne de commande (voir src/engine/highlighting.ts) :
-   la copie colorée est dessinée sous le champ, dont le texte devient
-   transparent (le curseur reste visible). Les couleurs ont un contraste AA
-   au moins sur le fond de chaque thème ; une commande inconnue est aussi
-   soulignée d'une vague, un chemin existant d'un trait : la couleur n'est
-   jamais le seul signe. */
+/* Command-line highlighting (see src/engine/highlighting.ts): the
+   coloured copy is drawn under the field, whose text becomes transparent
+   (the cursor stays visible). The colours have at least AA contrast on
+   each theme's background; an unknown command is also underlined with a
+   wave, an existing path with a line: colour is never the only sign. */
 .qds .terminal {
   --_c-command: #5fe08a;
   --_c-unknown: #ff7a6b;
@@ -467,7 +467,7 @@
   display: none;
   line-height: inherit;
 }
-/* En bloc, pas en flex : dans une boîte flex, les espaces entre deux mots colorés disparaîtraient. */
+/* Block, not flex: in a flex box, the spaces between two coloured words would disappear. */
 .qds .field.coloured .highlighting { display: block; }
 .qds .field.coloured input { color: transparent; }
 .qds .field.coloured input::selection { color: var(--_terminal-text); }
@@ -479,9 +479,9 @@
 .qds .c-glob { color: var(--_c-glob); }
 .qds .c-path { text-decoration: underline; text-underline-offset: 0.2em; }
 
-/* Les couleurs des sorties (ls, grep, diff --color, systemctl), lues dans
-   les séquences ANSI (voir src/engine/colours.ts). Contraste AA au moins
-   sur le fond de chaque thème. */
+/* The outputs' colours (ls, grep, diff --color, systemctl), read from the
+   ANSI sequences (see src/engine/colours.ts). At least AA contrast on each
+   theme's background. */
 .qds .terminal {
   --_a-31: #ff7a6b;
   --_a-32: #5fe08a;
@@ -516,9 +516,9 @@
 .qds .a-42 { background: var(--_a-bg-42); }
 .qds .a-41.a-37 { color: #ffffff; }
 
-/* Le bilan de fin de chapitre (voir src/engine/summary.ts) : une ligne dans
-   le terminal, et le détail dans une fenêtre (le tableau défile de côté sur
-   un petit écran). */
+/* The end-of-chapter summary (see src/engine/summary.ts): one line in the
+   terminal, and the details in a window (the table scrolls sideways on a
+   small screen). */
 .qds .output .summary { margin: 0 0 0.5rem; color: var(--_terminal-prompt); font-weight: 700; }
 .qds .output .summary .link { color: inherit; font-weight: 400; }
 .qds .summary-window, .qds .exam-window { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
@@ -530,7 +530,7 @@
 .qds .summary-table thead th { background: var(--_card); }
 .qds .summary-table code { font-family: var(--_font-mono); overflow-wrap: anywhere; }
 .qds .summary-other { color: var(--_muted); font-style: italic; }
-/* Sur un écran étroit, une carte par étape : chaque case dit ce qu'elle contient. */
+/* On a narrow screen, one card per step: each cell says what it holds. */
 @media (max-width: 40rem) {
   .qds .summary-table table, .qds .summary-table tbody, .qds .summary-table tr, .qds .summary-table th, .qds .summary-table td { display: block; width: auto; }
   .qds .summary-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -540,10 +540,10 @@
   .qds .summary-table td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_muted); }
 }
 
-/* L'instantané de secours : des boutons grisés quand ce n'est pas possible. */
+/* The rescue snapshot: buttons greyed out when it isn't possible. */
 .qds .rescue-button:disabled { cursor: default; color: var(--_muted); border-style: dashed; }
 
-/* La vue « Parcours » : un thème, ses chapitres (les mêmes cartes que les baies). */
+/* The "Paths" view: a theme, its chapters (the same cards as the racks). */
 .qds .paths-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
 .qds .paths-choice select { font: inherit; padding: 0.25rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); max-width: 100%; }
 .qds .paths-description { margin: 0 0 0.25rem; color: var(--_muted); }
@@ -554,8 +554,8 @@
 .qds .paths button[data-next] .state { color: var(--_amber); }
 .qds .paths button:disabled .state { color: var(--_muted); font-weight: 400; }
 
-/* L'astreinte (voir src/engine/on-call.ts) : l'entrée dans le menu, la
-   jauge du budget dans la barre, et les deux fenêtres. */
+/* On-call duty (see src/engine/on-call.ts): the entry in the menu, the
+   budget gauge in the bar, and the two windows. */
 .qds .incident { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; margin: 0 0 0.75rem; }
 .qds .incident-button { font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_amber); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
 .qds .incident-button:hover:not(:disabled), .qds .incident-button:focus-visible { box-shadow: inset 0 0 0 1px var(--_amber); }

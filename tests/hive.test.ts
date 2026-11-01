@@ -1,5 +1,5 @@
-// La Ruche : le réseau d'un tiers-lieu (VLAN, DHCP…). Rejoué avec la
-// console, dans chaque langue.
+// La Ruche: the network of a third place (VLAN, DHCP…). Replayed with the
+// console, in each language.
 
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
@@ -8,7 +8,7 @@ import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
 import { inLanguage, machinesInLanguage } from './names';
 
-// L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
+// L'Effaceur, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('hive')])];
 const MDP = 'bee-2027';
 const VLANS = `
@@ -29,7 +29,7 @@ iface eth1.30 inet static
 for (const language of LANGUAGES)
   describe(`La Ruche — ${language}`, () => {
     const fr = language === 'fr';
-    // Une ligne écrite avec les noms français, dans la langue de la partie.
+    // A line written with the reference names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {
@@ -49,7 +49,7 @@ for (const language of LANGUAGES)
       return { c, jouer: play, editer: edit };
     };
 
-    it('chapitre 1 — solution : /etc/network/interfaces, ifup -a', () => {
+    it('chapter 1 — solution: /etc/network/interfaces, ifup -a', () => {
       const { c, jouer: play, editer: edit } = part();
       let all = play(['ip -br a', 'ping -c 1 10.10.10.5', 'man interfaces']);
       expect(all).toContain('INTERFACES(5)');
@@ -64,7 +64,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('vlan');
     });
 
-    it('chapitre 1 — autre solution : ip d’abord, puis le fichier', () => {
+    it('chapter 1 — other solution: ip first, then the file', () => {
       const { c, jouer: play, editer: edit } = part();
       let all = [10, 20, 30]
         .map((v) =>
@@ -79,7 +79,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('64 bytes from 10.10.30.11');
       contains(all, 'disparaîtra au prochain redémarrage');
       expect(c.finished).not.toContain('vlan');
-      // Le fichier, avec vlan-raw-device et des noms à soi.
+      // The file, with vlan-raw-device and names of one's own.
       all = edit(
         'sudo nano /etc/network/interfaces',
         (t) =>
@@ -89,7 +89,7 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('vlan');
     });
 
-    it('chapitre 1 — fausses pistes : le mauvais numéro, une faute dans le fichier, sans sudo', () => {
+    it('chapter 1 — false leads: the wrong number, a mistake in the file, without sudo', () => {
       const { c, jouer: play, editer: edit } = part();
       let all = play(['ip link add link eth1 name eth1.30 type vlan id 30', 'sudo ip link add link eth1 name eth1.30 type vlan id 3']);
       expect(all).toContain('RTNETLINK answers: Operation not permitted');
@@ -110,7 +110,7 @@ for (const language of LANGUAGES)
     const RANGES = 'dhcp-range=10.10.10.100,10.10.10.200,12h\ndhcp-range=10.10.20.100,10.10.20.250,2h\ndhcp-range=10.10.30.100,10.10.30.200,24h\n';
     const RESERVATION = 'dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10\n';
 
-    it('chapitre 2 — solution : une plage par VLAN, la réservation, interface=', () => {
+    it('chapter 2 — solution: one range per VLAN, the reservation, interface=', () => {
       const { c, jouer: play, editer: edit } = part(['vlan']);
       let all = play(['cat /var/lib/misc/dnsmasq.leases', 'journalctl -u dnsmasq']);
       expect(all).toContain('DHCP, IP range 192.168.1.100 -- 192.168.1.200');
@@ -123,18 +123,18 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('dhcp');
     });
 
-    it('chapitre 2 — autre solution : un joker, et except-interface', () => {
+    it('chapter 2 — other solution: a wildcard, and except-interface', () => {
       const { c, jouer: play, editer: edit } = part(['vlan']);
       edit(`sudo nano ${HIVE}`, () => 'except-interface=eth0\n' + RANGES.replace(/dhcp-range=/g, 'dhcp-range=set:x,') + RESERVATION);
       play(['sudo systemctl restart dnsmasq']);
       expect(c.finished).toContain('dhcp');
     });
 
-    it('chapitre 2 — fausses pistes : l’ancienne interface, la box qui entend, une faute, l’imprimante ailleurs', () => {
+    it('chapter 2 — false leads: the old interface, the home router that hears, a mistake, the printer elsewhere', () => {
       const { c, jouer: play, editer: edit } = part(['vlan']);
       edit(`sudo nano ${HIVE}`, (t) => t + '\n' + RANGES);
       let all = play(['sudo systemctl restart dnsmasq', 'cat /var/lib/misc/dnsmasq.leases']);
-      // interface=eth1 n'écoute pas eth1.10 : personne n'a d'adresse.
+      // interface=eth1 doesn't listen on eth1.10: nobody gets an address.
       expect(all).not.toContain('poste-malik');
       all = edit(`sudo nano ${HIVE}`, () => RANGES);
       contains(all, 'DHCP pirate');
@@ -174,7 +174,7 @@ table ip nat {
 }
 `;
 
-    it('chapitre 3 — solution : /etc/sysctl.d, /etc/nftables.conf, systemctl enable --now', () => {
+    it('chapter 3 — solution: /etc/sysctl.d, /etc/nftables.conf, systemctl enable --now', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp']);
       let all = play([L('cat notes-from-sacha.txt'), 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
       expect(all).toContain('SYSCTL.D(5)');
@@ -198,14 +198,14 @@ table ip nat {
       expect(all).not.toContain('dst=203.0.113.50');
       contains(all, 'https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT)');
       expect(c.finished).toContain('zones');
-      // Après un redémarrage, tout revient tout seul.
+      // After a reboot, everything comes back on its own.
       all = play(['sudo reboot', 'ssh hive', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L -s 10.10.20.197']);
       expect(all).toContain('net.ipv4.ip_forward = 1');
       expect(all).toContain('dst=198.51.100.80 sport=47099 dport=443 src=198.51.100.80 dst=192.0.2.21');
       expect(all).not.toContain('dport=445');
     });
 
-    it('chapitre 3 — autre solution : à la main d’abord, le redémarrage, puis les fichiers (adresses et ensembles)', () => {
+    it('chapter 3 — other solution: by hand first, the reboot, then the files (addresses and sets)', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp']);
       let all = play([
         'echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward',
@@ -244,7 +244,7 @@ table ip nat {
       expect(c.finished).toContain('zones');
     });
 
-    it('chapitre 3 — fausses pistes : sans sudo, une faute, ssh fermé, la caméra qui sort', () => {
+    it('chapter 3 — false leads: without sudo, a mistake, ssh closed, the camera going out', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp']);
       let all = play([
         'nft list ruleset',
@@ -259,12 +259,12 @@ table ip nat {
       all = play(['sudo nft -c -f /etc/nftables.conf', 'sudo systemctl start nftables']);
       expect(all).toContain('/etc/nftables.conf:15:21-26: Error: syntax error, unexpected string');
       expect(all).toContain('Job for nftables.service failed');
-      // L'entrée fermée : plus de nouvelle connexion ssh.
+      // Input closed: no more new ssh connection.
       edit('sudo nano /etc/nftables.conf', () => NFTABLES.replace('priority filter; policy accept;', 'priority filter; policy drop;'));
       all = play(['sudo sysctl -w net.ipv4.ip_forward=1', 'sudo nft -f /etc/nftables.conf']);
       contains(all, 'ne tient qu');
       expect(c.finished).not.toContain('zones');
-      // NAT pour tout le monde, sans filtrer : la caméra sort.
+      // NAT for everyone, without filtering: the camera goes out.
       edit('sudo nano /etc/nftables.conf', () => NFTABLES.replace('policy drop;\n\t\tct state', 'policy accept;\n\t\tct state'));
       all = play(['sudo nft -f /etc/nftables.conf', 'sudo conntrack -L -d 203.0.113.50']);
       expect(all).toContain('src=10.10.30.11 dst=203.0.113.50');
@@ -290,7 +290,7 @@ table ip nat {
         .replace('icmp type echo-request accept', 'icmp type echo-request accept\n\t\tudp dport 51820 accept')
         .replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
 
-    it('chapitre 4 — solution : umask 077, wg0.conf, le portable, le pare-feu, wg-quick@wg0', () => {
+    it('chapter 4 — solution: umask 077, wg0.conf, the laptop, the firewall, wg-quick@wg0', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones']);
       const k = keysFor(c);
       let all = play(['cat malik-laptop.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
@@ -315,7 +315,7 @@ table ip nat {
       expect(c.finished).toContain('remote-work');
     });
 
-    it('chapitre 4 — fausses pistes : la clé lisible, la porte fermée, les clés croisées, wg-quick puis le service', () => {
+    it('chapter 4 — false leads: the readable key, the closed door, the crossed keys, wg-quick then the service', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones']);
       const k = keysFor(c);
       let all = play(['wg genkey > privatekey', 'wg pubkey < privatekey', 'sudo wg show', 'wg show']);
@@ -324,11 +324,11 @@ table ip nat {
       play(['cat privatekey | wg pubkey > publickey']);
       all = edit('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       contains(all, 'comptes de la machine peuvent le lire');
-      // Les clés croisées : la clé PRIVÉE du routeur donnée au portable.
+      // Crossed keys: the router's PRIVATE key given to the laptop.
       edit('nano malik-laptop.conf', LAPTOP(k.privee()));
       all = play(['sudo wg-quick up wg0']);
       expect(all).toContain('[#] ip link set mtu 1420 up dev wg0');
-      // Porte fermée d'abord : la chaîne input jette l'UDP.
+      // Door closed first: the input chain drops the UDP.
       contains(all, 'la chaîne input les jette');
       play(['sudo nft add rule inet filter input udp dport 51820 accept']);
       all = play(['sudo wg show wg0']);
@@ -343,11 +343,11 @@ table ip nat {
       expect(all).toContain('latest handshake');
       expect(all).toContain("wg-quick: `wg0' already exists");
       play(['sudo nft add rule inet filter forward iifname wg0 accept', 'chmod 600 privatekey']);
-      // Tout marche… jusqu'au redémarrage : le pare-feu n'est pas dans le fichier.
+      // Everything works… until the reboot: the firewall is not in the file.
       expect(c.finished).not.toContain('remote-work');
       all = play(['sudo wg-quick down wg0', 'sudo systemctl start wg-quick@wg0', 'sudo reboot', 'ssh hive', 'sudo wg show wg0']);
       expect(all).toContain('[#] ip link delete dev wg0');
-      // wg0 est revenu (le service), mais pas la règle tapée à la main : plus de poignée de main.
+      // wg0 is back (the service), but not the rule typed by hand: no more handshake.
       expect(all).toContain('peer: ');
       expect(all).not.toContain('latest handshake');
       edit('sudo nano /etc/nftables.conf', FIREWALL);
@@ -367,10 +367,10 @@ table ip nat {
           '\t\toifname "eth0" masquerade\n\t}\n\tchain prerouting {\n\t\ttype nat hook prerouting priority dstnat;\n\t\tiifname "eth0" tcp dport { 80, 443 } dnat to 10.10.40.10\n\t}',
         );
 
-    it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
+    it('chapter 5 — solution: eth1.40, dnat in prerouting, forward to the DMZ only', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work']);
       let all = play([L('cat switch-plan.txt'), 'ping -c 1 web']);
-      // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
+      // Without an interface in this network, the ping goes to the home router and gets lost there.
       expect(all).toContain('1 packets transmitted, 0 received, 100% packet loss');
       edit('sudo nano /etc/network/interfaces', (t) => t + ETH140);
       edit('sudo nano /etc/nftables.conf', DMZ);
@@ -384,7 +384,7 @@ table ip nat {
       expect(c.finished).toContain('dmz');
     });
 
-    it('chapitre 5 — fausses pistes : sans forward, l’adresse publique, tout publier, la DMZ ouverte, à la main', () => {
+    it('chapter 5 — false leads: without forward, the public address, publishing everything, the open DMZ, by hand', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work']);
       let all = play([
         'sudo ip link add link eth1 name eth1.40 type vlan id 40',
@@ -396,14 +396,14 @@ table ip nat {
       contains(all, 'fermée par défaut');
       all = play(['sudo nft add rule inet filter forward ip daddr 192.0.2.21 accept']);
       contains(all, 'ne la verra jamais');
-      // Tout publier, et la DMZ qui voit tout : trop ouvert.
+      // Publishing everything, and the DMZ that sees everything: too open.
       all = play([
         'sudo nft add rule inet filter forward iifname eth0 oifname eth1.40 accept',
         'sudo nft add rule inet filter forward iifname eth1.40 accept',
       ]);
       contains(all, 'la DMZ est trop ouverte');
       expect(c.finished).not.toContain('dmz');
-      // Corrigé à la main : marche, mais ne tient pas.
+      // Fixed by hand: works, but doesn't last.
       all = play([
         'sudo nft flush chain ip nat prerouting',
         'sudo nft add rule ip nat prerouting iifname eth0 tcp dport { 80, 443 } dnat to 10.10.40.10',
@@ -437,7 +437,7 @@ table ip nat {
           .replace('Endpoint =', 'Endpoint = hive.example:51820')
           .replace('AllowedIPs =', `AllowedIPs = ${allowed}${keepalive ? '\nPersistentKeepalive = 25' : ''}`);
 
-    it('chapitre 6 — solution : un pair pour le site, ses AllowedIPs, PersistentKeepalive', () => {
+    it('chapter 6 — solution: one peer for the site, its AllowedIPs, PersistentKeepalive', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz']);
       let all = play(['sudo wg show']);
       const pub = all.match(/public key: (\S+)/)![1];
@@ -451,7 +451,7 @@ table ip nat {
       expect(c.finished).toContain('annex');
     });
 
-    it('chapitre 6 — fausses pistes : pas relu, l’adresse seule, l’Annexe qui s’endort, tout ouvert', () => {
+    it('chapter 6 — false leads: not reloaded, the address alone, the Annexe falling asleep, all open', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz']);
       const pub = play(['sudo wg show']).match(/public key: (\S+)/)![1];
       let all = edit('sudo nano /etc/wireguard/wg0.conf', ANNEX_PEER(annexKey(c), '10.10.99.3/32'));
@@ -464,7 +464,7 @@ table ip nat {
       expect(all).toContain("wg-quick: `wg0' already exists");
       expect(all).toContain('1 packets transmitted, 0 received, 100% packet loss');
       contains(all, 'PersistentKeepalive');
-      // Tout ouvert : tout La Ruche dans le tunnel côté Annexe, et forward qui laisse tout passer depuis wg0.
+      // All open: all of La Ruche in the tunnel on the Annexe side, and forward letting everything through from wg0.
       edit('nano annex-wg0.conf', (t) => t.replace('AllowedIPs = 10.10.10.0/24', 'AllowedIPs = 10.10.0.0/16'));
       all = play(['sudo nft add rule inet filter forward iifname wg0 accept']);
       contains(all, 'les caméras de La Ruche');
@@ -480,7 +480,7 @@ table ip nat {
       `dn: uid=sami,ou=people,${B}\nobjectClass: inetOrgPerson\nobjectClass: posixAccount\nuid: sami\ncn: Sami Lemaire\nsn: Lemaire\ngivenName: Sami\nuidNumber: ${number}\ngidNumber: 10000\nhomeDirectory: /home/sami\nloginShell: /bin/bash\nuserPassword: ${password}\n`;
     const GROUPS = `dn: cn=bureaux,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n-\nadd: memberUid\nmemberUid: sami\n\ndn: cn=equipe,ou=groups,${B}\nchangetype: modify\ndelete: memberUid\nmemberUid: camille\n`;
 
-    it('chapitre 7 — solution : ldapdelete, un LDIF avec slappasswd, les groupes', () => {
+    it('chapter 7 — solution: ldapdelete, an LDIF with slappasswd, the groups', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       let all = play([
         'cat modele-ines.ldif',
@@ -507,7 +507,7 @@ table ip nat {
       expect(c.finished).toContain('directory');
     });
 
-    it('chapitre 7 — autre solution : en root par ldapi, ldappasswd qui demande le mot de passe', () => {
+    it('chapter 7 — other solution: as root through ldapi, ldappasswd asking for the password', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       const EXT = '-Q -Y EXTERNAL -H ldapi:///';
       edit('nano sami.ldif', () => SAMI('provisoire').replace('userPassword: provisoire\n', ''));
@@ -525,7 +525,7 @@ table ip nat {
       expect(c.finished).toContain('directory');
     });
 
-    it('chapitre 7 — fausses pistes : anonyme, un attribut manquant, en clair, le même numéro, le groupe oublié, slapd arrêté', () => {
+    it('chapter 7 — false leads: anonymous, a missing attribute, in clear text, the same number, the forgotten group, slapd stopped', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex']);
       let all = play([`ldapdelete -x uid=camille,ou=people,${B}`, `ldapdelete -x -D cn=admin,${B} -w faux uid=camille,ou=people,${B}`]);
       expect(all).toContain('ldap_delete: Strong(er) authentication required (8)');
@@ -572,7 +572,7 @@ table ip nat {
         'iifname "eth1*" udp dport { 53, 67 } accept\n\t\t# RADIUS from the Wi-Fi access points\n\t\tiifname "eth1.30" udp dport 1812 accept',
       );
 
-    it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
+    it('chapter 8 — solution: the firewall, clients.conf, the ldap module, the users file', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'directory']);
       let all = play([L('cat ap-offices.txt'), 'radtest sami choisi-par-sami localhost 0 testing123']);
       if (fr) expect(all).toContain('Secret partagé         : Rk7-borne-2028');
@@ -602,7 +602,7 @@ table ip nat {
       expect(c.finished).toContain('wifi');
     });
 
-    it('chapitre 8 — fausses pistes : la porte fermée, pas relu, sans ldap, anonyme, memberOf, l’ordre, freeradius -X', () => {
+    it('chapter 8 — false leads: the closed door, not reloaded, without ldap, anonymous, memberOf, the order, freeradius -X', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'directory']);
       let all = play(['ls /etc/freeradius/3.0']);
       if (fr) expect(all).toContain('Permission non accordée');

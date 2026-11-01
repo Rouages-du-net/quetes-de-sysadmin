@@ -1,12 +1,12 @@
-// Docker Compose simulé : le fichier compose.yaml (un sous-ensemble de
-// YAML), ses variables (${VAR} lues dans .env), ses services, son réseau et
-// ses volumes. D'après la spécification Compose
-// (https://docs.docker.com/reference/compose-file/) et la commande
-// docker compose (https://docs.docker.com/reference/cli/docker/compose/).
-// Écarts : YAML réduit (correspondances, listes, chaînes, listes [a, b]) ;
-// clés de service : image, ports, volumes, environment, env_file,
-// depends_on, restart, user, read_only, cap_drop, security_opt, command
-// (ignorée) ; pas de build, de healthcheck, ni de profils.
+// Simulated Docker Compose: the compose.yaml file (a subset of YAML), its
+// variables (${VAR} read from .env), its services, its network and its
+// volumes. Based on the Compose specification
+// (https://docs.docker.com/reference/compose-file/) and the docker compose
+// command (https://docs.docker.com/reference/cli/docker/compose/).
+// Differences: reduced YAML (mappings, lists, strings, [a, b] lists);
+// service keys: image, ports, volumes, environment, env_file, depends_on,
+// restart, user, read_only, cap_drop, security_opt, command (ignored); no
+// build, healthcheck or profiles.
 
 import type { Game, Shell } from './shell';
 import { docker, clock, identifier, launch, stop, type Container, type DockerState, type Mount, type Port } from './docker';
@@ -15,7 +15,7 @@ type Value = string | Value[] | { [key: string]: Value };
 
 export class YamlError extends Error {}
 
-/** Lit un YAML simple : correspondances indentées, listes « - », chaînes. */
+/** Reads simple YAML: indented mappings, "-" lists, strings. */
 export function readYaml(text: string): Value {
   const lines = text.split('\n').map((rawValue, i) => ({ number: i + 1, rawValue }));
   for (const l of lines) if (/^\s*\t/.test(l.rawValue)) throw new YamlError(`yaml: line ${l.number}: found character that cannot start any token`);
@@ -79,7 +79,7 @@ export function readYaml(text: string): Value {
 
 const simulatedNotGame = (number: number) => `yaml: line ${number}: (long syntax is not simulated here)`;
 
-// Un # commence un commentaire, sauf entre guillemets.
+// A # starts a comment, except inside quotes.
 function commentRetirer(line: string): string {
   let quote: string | null = null;
   for (let i = 0; i < line.length; i++) {
@@ -92,7 +92,7 @@ function commentRetirer(line: string): string {
   return line.trimEnd();
 }
 
-/** Lit un fichier .env : VARIABLE=valeur par ligne. */
+/** Reads a .env file: VARIABLE=value per line. */
 export function readEnv(text: string | null): Record<string, string> {
   const vars: Record<string, string> = {};
   for (const line of (text ?? '').split('\n')) {
@@ -102,7 +102,7 @@ export function readEnv(text: string | null): Record<string, string> {
   return vars;
 }
 
-// ——— Le projet ———
+// ——— The project ———
 
 export interface Service {
   name: string;
@@ -142,7 +142,7 @@ const SERVICE_KEYS = [
   'security_opt',
 ];
 
-/** Lit compose.yaml et .env d'un dossier ; lève une erreur au format de docker compose. */
+/** Reads a directory's compose.yaml and .env; throws an error in docker compose's format. */
 export function readProject(game: Game, directory: string): Project {
   const file = ['compose.yaml', 'compose.yml', 'docker-compose.yml', 'docker-compose.yaml']
     .map((f) => `${directory}/${f}`)
@@ -150,7 +150,7 @@ export function readProject(game: Game, directory: string): Project {
   if (!file) throw new YamlError('no configuration file provided: not found');
   const env = readEnv(game.read(`${directory}/.env`));
   const warnings: string[] = [];
-  // ${VAR}, ${VAR:-défaut} : remplacées avant la lecture, comme Compose.
+  // ${VAR}, ${VAR:-default}: substituted before reading, like Compose.
   const raw = (game.read(file) ?? '').replace(
     /\$\{([A-Za-z_][A-Za-z0-9_]*)(?::?-([^}]*))?\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
     (_, a: string, fallback: string | undefined, b: string) => {
@@ -222,7 +222,7 @@ export function readProject(game: Game, directory: string): Project {
   return { name, directory, services: result, volumes, warnings };
 }
 
-/** L'ordre de démarrage : les dépendances d'abord (depends_on). */
+/** The start order: dependencies first (depends_on). */
 export function order(p: Project): Service[] {
   const done: Service[] = [];
   const visiter = (s: Service) => {
@@ -236,7 +236,7 @@ export function order(p: Project): Service[] {
 
 export const containerName = (p: Project, s: Service) => `${p.name}-${s.name}-1`;
 
-// L'empreinte de la configuration d'un service : si elle change, up recrée le conteneur.
+// The fingerprint of a service's configuration: if it changes, up recreates the container.
 export const fingerprint = (s: Service) =>
   JSON.stringify([
     s.image,
@@ -256,7 +256,7 @@ export interface ComposeContainer extends Container {
 export const projectContainers = (d: DockerState, project: string) =>
   d.containers.filter((c) => (c as ComposeContainer).project === project) as ComposeContainer[];
 
-/** Crée (ou recrée) et démarre les conteneurs du projet ; renvoie les lignes « ✔ … ». */
+/** Creates (or recreates) and starts the project's containers; returns the "✔ …" lines. */
 export function mount(game: Shell, p: Project, createImage: (name: string) => boolean): { lines: string[]; error?: string } {
   const d = docker(game)!;
   const lines: string[] = [];
@@ -340,14 +340,14 @@ export function mount(game: Shell, p: Project, createImage: (name: string) => bo
       return { lines: [...lines, ` ✔ Container ${name}  ${existing ? 'Recreated' : 'Created'}`], error: `Error response from daemon: ${failure}` };
     lines.push(` ✔ Container ${name}  ${existing ? 'Recreated' : 'Started'}`);
   }
-  // Un service qui s'est arrêté au démarrage (sa dépendance n'était pas prête)
-  // repart, comme le fait Docker, si sa politique de redémarrage le permet.
+  // A service that stopped at start (its dependency wasn't ready) starts
+  // again, as Docker does, if its restart policy allows it.
   for (const c of projectContainers(d, p.name))
     if (c.state === 'exited' && c.code !== 0 && ['always', 'unless-stopped', 'on-failure'].includes(c.reboot.split(':')[0])) launch(game, c);
   return { lines };
 }
 
-/** Le conteneur d'un service joignable par son nom depuis un autre conteneur du même projet. */
+/** A service's container, reachable by its name from another container of the same project. */
 export function reach(game: Game, since: Container, host: string): Container | null {
   const d = docker(game)!;
   const project = (since as ComposeContainer).project;

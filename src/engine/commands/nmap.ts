@@ -1,7 +1,7 @@
-// nmap, l'explorateur de réseau (https://nmap.org/book/man.html), sur le
-// réseau de l'histoire (src/engine/scan.ts). Sortie en anglais, comme le vrai
-// outil. Options comprises : -sV -sT -sS -sn -Pn -n -F -p -oN --open -T0..5 -v ;
-// les autres donnent le message de nmap.
+// nmap, the network explorer (https://nmap.org/book/man.html), on the
+// story's network (src/engine/scan.ts). Output in English, like the real
+// tool. Options understood: -sV -sT -sS -sn -Pn -n -F -p -oN --open -T0..5 -v;
+// the others give nmap's message.
 
 import { scan, VERSION_NMAP, type Options } from '../scan';
 import type { Command } from './index';
@@ -9,7 +9,7 @@ import { help } from './manual';
 
 const INVALID = (o: string) => `nmap: invalid option -- '${o}'\nSee the output of nmap -h for a summary of options.`;
 
-// Une liste de ports : 22,80 ; 1-1024 ; - (tous).
+// A list of ports: 22,80; 1-1024; - (all).
 function readPorts(spec: string): number[] | 'all' | null {
   if (spec === '-') return 'all';
   const ports: number[] = [];
@@ -28,7 +28,7 @@ export const NMAP: Record<string, Command> = {
   nmap: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      // -h : le résumé des options, comme --help.
+      // -h: the summary of options, like --help.
       if (args.includes('-h')) return help('nmap', NMAP.nmap, game.t);
       if (args.includes('-V') || args.includes('--version'))
         return `Nmap version ${VERSION_NMAP} ( https://nmap.org )\nPlatform: x86_64-pc-linux-gnu\nCompiled with: liblua-5.4.7 openssl-3.5.1 libssh2-1.11.1 libz-1.3.1 libpcre2-10.45 libpcap-1.10.5 nmap-libdnet-1.12 ipv6\nCompiled without:\nAvailable nsock engines: epoll poll select`;

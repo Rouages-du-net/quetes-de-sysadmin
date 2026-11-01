@@ -1,15 +1,15 @@
-// Histoire « La Maison des associations » — chapitre « Les transferts » :
-// rapatrier le rapport d'activité du wiki sur son poste (scp, qui rebondit
-// par maison grâce au raccourci du chapitre précédent), puis mettre la
-// sauvegarde du dossier partagé à jour sur archives (rsync, depuis maison,
-// avec la clé de sauvegarde que Gaspard a créée pour ça).
-// Piège réel : la barre oblique finale de la source de rsync (/srv/partage/
-// copie le CONTENU ; /srv/partage copie le dossier lui-même, qui se retrouve
-// dans /srv/sauvegardes/partage/partage).
-// Objectif vérifié sur l'état : le rapport (intact) sur le poste, et chaque
-// fichier de /srv/partage présent, identique, au même endroit sur archives,
-// sans le dossier copié en trop (rsync --delete le retire).
-// Sources : https://man.openbsd.org/scp, https://download.samba.org/pub/rsync/rsync.1
+// Story "The Community Centre", chapter "Transfers":
+// bring the wiki's activity report back to your workstation (scp, jumping
+// through maison thanks to the previous chapter's shortcut), then update the
+// backup of the shared directory on archives (rsync, from maison,
+// with the backup key Gaspard created for that).
+// A real trap: the trailing slash of rsync's source (/srv/partage/
+// copies the CONTENTS; /srv/partage copies the directory itself, which ends up
+// in /srv/sauvegardes/partage/partage).
+// Objective checked on the state: the report (intact) on the workstation, and every
+// file of /srv/partage present, identical, at the same place on archives,
+// without the extra copied directory (rsync --delete removes it).
+// Sources: https://man.openbsd.org/scp, https://download.samba.org/pub/rsync/rsync.1
 
 import { path, d, f, name, type Chapter, type Directory, type Node } from '../world';
 import type { Game, Shell } from '../shell';
@@ -19,15 +19,15 @@ import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, homeW
 const REPORT = 'report-2027.pdf';
 const SHARE = '/srv/share';
 const BACKUP = '/srv/backups/share';
-// Un PDF (son début) : le contenu exact sert à vérifier que la copie est intacte.
+// A PDF (its beginning): the exact content is used to check that the copy is intact.
 const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 12 >>\nendobj';
-// La clé de sauvegarde de maison vers archives (une clé par usage, pas celle d'une personne).
+// The backup key from maison to archives (one key per use, not a person's).
 const BACKUP_KEY = generateKey('maison-sauvegarde', 'backup@community');
 
 const you = { owner: 'you' };
 const file = (content: string) => f(content, { lines: true, owner: 'you' });
 
-// Le dossier partagé de maison : comptes rendus, affiches, planning.
+// maison's shared directory: minutes, posters, schedule.
 const share = (t: (id: string) => string): Directory =>
   d(
     {
@@ -43,7 +43,7 @@ const share = (t: (id: string) => string): Directory =>
     you,
   );
 
-// Tous les fichiers d'un dossier, par chemin relatif.
+// All the files of a directory, by relative path.
 function files(j: Game, root: string): Record<string, string> {
   const res: Record<string, string> = {};
   const walk = (n: Node, path: string) => {
@@ -58,7 +58,7 @@ function files(j: Game, root: string): Record<string, string> {
 const archives = (j: Game) => (j as Shell).internal('archives')!;
 const workstation = (j: Game) => (j.state.workstation as (() => Shell) | undefined)?.();
 
-// Le rapport, intact, quelque part dans la maison du poste.
+// The report, intact, somewhere in the workstation's home.
 const reportOnWorkstation = (j: Game) => {
   const p = workstation(j);
   if (!p) return false;
@@ -70,7 +70,7 @@ const dayABackup = (j: Game) => {
   const copyOf = files(archives(j), path(j.t, BACKUP));
   return Object.entries(files(j, path(j.t, SHARE))).every(([c, content]) => copyOf[c] === content);
 };
-// La copie en trop : /srv/sauvegardes/partage/partage (dans la langue).
+// The extra copy: /srv/sauvegardes/partage/partage (in the language).
 const nested = (j: Game) => path(j.t, `${BACKUP}/share`);
 
 export const transfers: Chapter = {
@@ -120,7 +120,7 @@ export const transfers: Chapter = {
     archives: internalHost('archives', '10.20.0.12', {
       commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'diff', 'id', 'whoami', 'hostname', 'rm', 'mv'],
       home: () => ({ '.ssh': sshDirectory({ authorized_keys: f(BACKUP_KEY.isPublic, { lines: true, owner: 'you', mode: 'rw-------' }) }) }),
-      // La sauvegarde de l'an dernier : un seul compte rendu.
+      // Last year's backup: a single set of minutes.
       more: (t) => ({
         srv: d(
           {

@@ -1,6 +1,6 @@
-// Les textes sont séparés du code (src/texts/<langue>/*.ftl, format Fluent) :
-// fichiers valides, identifiants uniques, traductions alignées sur
-// l'anglais (la langue de référence), et aucun texte en dur dans le moteur ni dans l'interface.
+// Texts are separate from the code (src/texts/<language>/*.ftl, Fluent
+// format): valid files, unique identifiers, translations aligned with
+// English (the reference language), and no hard-coded text in the engine or the interface.
 
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -15,9 +15,9 @@ const keys = (language: string) =>
     parse(readFileSync(join(TEXTS, language, f), 'utf8'), {}).body.flatMap((e) => (e instanceof Message ? [e.id.name] : [])),
   );
 
-describe('Fichiers de textes', () => {
+describe('Text files', () => {
   for (const language of LANGUAGES)
-    it(`${language} : Fluent valide, identifiants uniques`, () => {
+    it(`${language}: valid Fluent, unique identifiers`, () => {
       for (const f of files(language)) {
         const junk = parse(readFileSync(join(TEXTS, language, f), 'utf8'), {}).body.filter((e) => e instanceof Junk);
         expect(junk.map((j) => `${f} : ${(j as Junk).content.slice(0, 80)}`)).toEqual([]);
@@ -35,14 +35,14 @@ describe('Fichiers de textes', () => {
       expect([...reference].filter((id) => !translated.has(id))).toEqual([]);
     });
 
-  it('un texte absent est une erreur, pas un trou silencieux', () => {
+  it('a missing text is an error, not a silent gap', () => {
     expect(() => translator()('ce-texte-n-existe-pas')).toThrow('Texte manquant');
   });
 });
 
-describe('Aucun texte en dur', () => {
-  // Des lettres accentuées, des guillemets français ou une apostrophe
-  // typographique hors des commentaires : du français resté dans le code.
+describe('No hard-coded text', () => {
+  // Accented letters, French quotation marks or a typographic apostrophe
+  // outside comments: French left in the code.
   const FRENCH = /[À-ÿœŒ«»’]/;
   const withoutComments = (code: string) => code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1');
   const sources = (directory: string): string[] =>
