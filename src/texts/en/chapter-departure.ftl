@@ -50,8 +50,8 @@ departure-event-lock-only =
 departure-event-deploy-empty =
     Watch out: keys are missing from { $file }! The CI and Lina
     won't be able to release the till anymore. Only remove Marc's
-    line (his key ends with marc@portable). Put the others back: nano, keeping
-    the deploy@ci and lina@atelier lines.
+    line (his key ends with marc@laptop). Put the others back: nano, keeping
+    the deploy@ci and lina@workshop lines.
 departure-event-script-lost =
     Marc's directory is gone, and with it his backup script… and
     tonight's backup won't run (cron ignores the crontab of a
@@ -101,3 +101,8 @@ departure-event-end =
     - usermod: https://man7.org/linux/man-pages/man8/usermod.8.html
     - userdel: https://man7.org/linux/man-pages/man8/userdel.8.html
     - chage: https://man7.org/linux/man-pages/man1/chage.1.html
+
+## The computers named in the team's SSH keys (marc@laptop): host names,
+## lowercase, no accents or spaces (shared by the chapters of The Co-op)
+departure-host-marc = laptop
+departure-host-lina = workshop

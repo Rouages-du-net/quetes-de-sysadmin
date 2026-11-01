@@ -124,7 +124,7 @@ export const rescue: Chapter = {
   final: 'end',
   steps: ['journal', 'disks', 'fixed', 'mounted', 'end'],
   accounts: labAccounts,
-  state: () => ({ ...labState('rescue'), rescue: true, hostConsole: true }),
+  state: (t) => ({ ...labState(t, 'rescue'), rescue: true, hostConsole: true }),
   initialise: (j) => {
     labKernel(j, 'rescue');
     devUpdate(j);

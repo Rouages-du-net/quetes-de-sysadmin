@@ -1,5 +1,5 @@
 // Story "The Workshop", chapter "The Update": Docker. The fablab lends tools
-// through the tool library (outiltheque), an app started two weeks ago with
+// through the tool library (toolshed), an app started two weeks ago with
 // a plain docker run, without a volume: its database lives in the
 // container's layer. Version 1.5 is out; updating means removing the
 // container and creating a new one… and without care, the 37 current loans
@@ -14,14 +14,20 @@
 // https://docs.docker.com/reference/cli/docker/container/cp/,
 // https://docs.docker.com/engine/containers/start-containers-automatically/
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { APPS, startDocker, docker, writeIn, identifier, readIn, imageName, type Container, type DockerState, type Image } from '../docker';
 
 const M = '/home/you';
-const REPO = 'registry.example/outiltheque';
-const BASE = '/var/lib/outiltheque/outiltheque.db';
+// The tool library's names in the language: image, container, directory and
+// database file (outiltheque in French).
+type T = Game['t'];
+export const toolshed = (t: T) => name(t, 'toolshed');
+export const toolshedRepo = (t: T) => `registry.example/${toolshed(t)}`;
+export const toolshedDirectory = (t: T) => `/var/lib/${toolshed(t)}`;
+export const toolshedBase = (t: T) => `${toolshedDirectory(t)}/${name(t, 'toolshed.db')}`;
+export const toolshedCommand = (t: T) => `/usr/local/bin/${toolshed(t)} serve`;
 const SCHEMAS: Record<string, number> = { '1.4': 3, '1.5': 4 };
 const LOANS = 37;
 
@@ -51,15 +57,15 @@ function loans(tools: string[], people: string[]): Base['loans'] {
 }
 
 // The image's app: it reads and writes its database on each start and request.
-APPS.outiltheque = {
-  // The image creates its own account and uses it (USER outil in its Dockerfile).
-  user: 'outil',
-  accounts: { outil: 1000 },
+// The image creates its own account and uses it (USER toolshed in its
+// Dockerfile): the chapters give it in the language (Image.user).
+APPS.toolshed = {
   start: (game, c, image) => {
+    const BASE = toolshedBase(game.t);
     const write = (text: string) => c.log.push({ time: systemd(game)?.clock ?? 0, text });
     const version = image.tag;
     const schema = SCHEMAS[version] ?? 4;
-    write(`outiltheque ${version}.0 starting (pid 1)`);
+    write(`${toolshed(game.t)} ${version}.0 starting (pid 1)`);
     const base = readBase(readIn(game, c, BASE));
     if (!base) {
       write(`No database found at ${BASE}, creating a new one`);
@@ -76,11 +82,11 @@ APPS.outiltheque = {
     return null;
   },
   answer: (game, c, path) => {
-    const base = readBase(readIn(game, c, BASE));
+    const base = readBase(readIn(game, c, toolshedBase(game.t)));
     const version = c.image.split(':').at(-1)!;
     if (!base) return { code: 500, body: 'Internal Server Error: database is missing' };
     if (path === '/' || path === '') return { code: 200, body: game.t('update-app-welcome', { version, loans: base.loans.length }) };
-    if (path === '/prets')
+    if (path === `/${name(game.t, 'loans')}`)
       return {
         code: 200,
         body: [
@@ -103,25 +109,31 @@ const accounts = (): Accounts => ({
   },
 });
 
-const image = (tag: string, created: number): Image => ({
-  repo: REPO,
+/** The tool library's image, in the language (its repository, command and account). */
+export const toolshedImage = (t: T, tag: string, created: number, size: number, id = identifier(`registry.example/toolshed:${tag}`)): Image => ({
+  repo: toolshedRepo(t),
   tag,
-  id: identifier(`${REPO}:${tag}`),
-  size: tag === '1.4' ? 148_200_000 : 151_600_000,
+  id,
+  size,
   created,
-  app: 'outiltheque',
+  app: 'toolshed',
   port: 8080,
-  command: '/usr/local/bin/outiltheque serve',
+  command: toolshedCommand(t),
+  user: toolshed(t),
+  accounts: { [toolshed(t)]: 1000 },
 });
+const image = (t: T, tag: string, created: number) => toolshedImage(t, tag, created, tag === '1.4' ? 148_200_000 : 151_600_000);
 
-const dockerState = (t: (id: string) => string): DockerState => {
-  const v14 = image('1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
-  const v15 = image('1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
+const dockerState = (t: T): DockerState => {
+  const REPO = toolshedRepo(t);
+  const BASE = toolshedBase(t);
+  const v14 = image(t, '1.4', Date.UTC(2026, 11, 2, 10, 0, 0));
+  const v15 = image(t, '1.5', Date.UTC(2027, 3, 1, 9, 0, 0));
   const base = writeBase({ schema: 3, loans: loans(t('update-tools').split(', '), t('update-people').split(', ')) });
-  // Started two weeks ago: docker run -d --name outiltheque -p 8080:8080 …:1.4
+  // Started two weeks ago: docker run -d --name toolshed -p 8080:8080 …:1.4
   const old: Container = {
-    id: identifier('conteneur-outiltheque-1.4'),
-    name: 'outiltheque',
+    id: identifier('container-toolshed-1.4'),
+    name: toolshed(t),
     image: imageName(v14),
     state: 'running',
     code: 0,
@@ -134,10 +146,10 @@ const dockerState = (t: (id: string) => string): DockerState => {
     end: Date.UTC(2027, 2, 31, 8, 39, 0),
     layer: { [BASE]: base },
     log: [
-      { time: Date.UTC(2027, 2, 20, 14, 2, 1), text: 'outiltheque 1.4.0 starting (pid 1)' },
+      { time: Date.UTC(2027, 2, 20, 14, 2, 1), text: `${toolshed(t)} 1.4.0 starting (pid 1)` },
       { time: Date.UTC(2027, 2, 20, 14, 2, 1), text: `No database found at ${BASE}, creating a new one` },
       { time: Date.UTC(2027, 2, 20, 14, 2, 2), text: 'Listening on http://0.0.0.0:8080' },
-      { time: Date.UTC(2027, 2, 31, 8, 40, 1), text: 'outiltheque 1.4.0 starting (pid 1)' },
+      { time: Date.UTC(2027, 2, 31, 8, 40, 1), text: `${toolshed(t)} 1.4.0 starting (pid 1)` },
       { time: Date.UTC(2027, 2, 31, 8, 40, 1), text: `Database ready: ${LOANS} loans` },
       { time: Date.UTC(2027, 2, 31, 8, 40, 2), text: 'Listening on http://0.0.0.0:8080' },
     ],
@@ -158,6 +170,7 @@ const baseComplete = (content: string | null) => (readBase(content)?.loans.lengt
 
 function somePart(j: Game): boolean {
   const e = state(j);
+  const BASE = toolshedBase(j.t);
   if (e.containers.some((c) => baseComplete(readIn(j, c, BASE)))) return true;
   if (Object.values(e.volumes).some((v) => Object.values(v.data).some(baseComplete))) return true;
   const search = (path: string, depth: number): boolean => {
@@ -172,7 +185,7 @@ function somePart(j: Game): boolean {
 // The up-to-date container that runs and publishes 8080.
 const fresh = (j: Game) =>
   state(j).containers.find((c) => c.state === 'running' && c.image.endsWith(':1.5') && c.ports.some((p) => p.host === 8080 && p.container === 8080));
-const onMount = (c: Container) => c.mounts.some((m) => BASE.startsWith(m.target.replace(/\/$/, '') + '/'));
+const onMount = (j: Game, c: Container) => c.mounts.some((m) => toolshedBase(j.t).startsWith(m.target.replace(/\/$/, '') + '/'));
 
 export const update: Chapter = {
   id: 'update',
@@ -234,7 +247,7 @@ export const update: Chapter = {
     process: [
       { pid: 1, user: 'root', cpu: 0, mem: 0.1, command: '/sbin/init' },
       { pid: 702, user: 'root', cpu: 0.4, mem: 2.1, command: '/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock' },
-      { pid: 1188, user: '1000', cpu: 0.8, mem: 3.4, command: '/usr/local/bin/outiltheque serve' },
+      { pid: 1188, user: '1000', cpu: 0.8, mem: 3.4, command: toolshedCommand(t) },
     ],
     docker: { ...dockerState(t), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
   }),
@@ -273,7 +286,7 @@ export const update: Chapter = {
       id: 'new-empty',
       condition: (j) => {
         const c = fresh(j);
-        return !!c && (readBase(readIn(j, c, BASE))?.loans.length ?? 0) === 0;
+        return !!c && (readBase(readIn(j, c, toolshedBase(j.t)))?.loans.length ?? 0) === 0;
       },
       message: (j) => j.t('update-event-new-empty'),
     },
@@ -281,7 +294,7 @@ export const update: Chapter = {
       id: 'without-reboot',
       condition: (j) => {
         const c = fresh(j);
-        return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && !['always', 'unless-stopped'].includes(c.reboot);
+        return !!c && onMount(j, c) && baseComplete(readIn(j, c, toolshedBase(j.t))) && !['always', 'unless-stopped'].includes(c.reboot);
       },
       message: (j) => j.t('update-event-without-reboot'),
     },
@@ -289,7 +302,7 @@ export const update: Chapter = {
       id: 'end',
       condition: (j) => {
         const c = fresh(j);
-        return !!c && onMount(c) && baseComplete(readIn(j, c, BASE)) && ['always', 'unless-stopped'].includes(c.reboot);
+        return !!c && onMount(j, c) && baseComplete(readIn(j, c, toolshedBase(j.t))) && ['always', 'unless-stopped'].includes(c.reboot);
       },
       message: (j) => j.t('update-event-end'),
     },

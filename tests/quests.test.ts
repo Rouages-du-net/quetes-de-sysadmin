@@ -10,7 +10,7 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator, typography } from '../src/texts';
-import { clean } from '../src/engine/world';
+import { clean, name } from '../src/engine/world';
 import { inLanguage, machinesInLanguage } from './names';
 import { withoutColours } from '../src/engine/colours';
 
@@ -21,6 +21,8 @@ for (const language of LANGUAGES)
     const reference = language === 'fr';
     // A line written with the French names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
+    // A single name of the world, in the game's language (convert → convertir in French).
+    const N = (word: string) => name(translator(language), word);
     // An expected text, checked only in the reference language.
     const contains = (all: string, text: string) => {
       if (reference) expect(all).toContain(text);
@@ -78,7 +80,7 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('village', [
           'cd TownHall',
           'cd Archives',
-          'grep Effaceur *',
+          'grep Eraser *',
           'ls -a',
           'cat .doormat',
           'cd Archives',
@@ -121,9 +123,9 @@ for (const language of LANGUAGES)
           'cat /var/log/eraser.log',
           'grep target /var/log/eraser.log',
           'cp ~/eraser.conf.fixed /etc/eraser.conf',
-          'grep "mot de passe" journal.txt',
+          'grep password journal.txt',
           'sudo ls /root',
-          'mauvais',
+          'wrong',
           'sunflower',
           'sudo cd /root',
           'sudo cp ~/eraser.conf.fixed /etc/eraser.conf',
@@ -203,8 +205,8 @@ for (const language of LANGUAGES)
           'sudo systemctl reload nginx',
           'ps aux',
           'sudo kill 4244',
-          `grep " 503 " ${L} | wc -l > ~/rapport.txt`,
-          'echo "Coupable : 198.51.100.77" >> rapport.txt',
+          `grep " 503 " ${L} | wc -l > ~/report.txt`,
+          'echo "Culprit: 198.51.100.77" >> report.txt',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -448,13 +450,13 @@ for (const language of LANGUAGES)
         s.quitEdition();
         const next = [
           'sudo certbot renew --dry-run',
-          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx',
+          'echo "systemctl reload nginx" | sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx',
           // False lead: a script that is not executable is ignored.
           'sudo certbot renew',
         ].map((l) => s.execute(l) ?? '');
-        expect(next.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/recharger-nginx' as it is not executable.");
+        expect(next.join('\n')).toContain("Skipping deploy-hook '/etc/letsencrypt/renewal-hooks/deploy/reload-nginx' as it is not executable.");
         expect(s.finished).toBe(false);
-        s.execute('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/recharger-nginx');
+        s.execute('sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx');
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);
       });
@@ -498,11 +500,11 @@ for (const language of LANGUAGES)
           'git restore --source=HEAD~1 novel.txt',
           'git commit -m "x"',
           'git add novel.txt',
-          'git commit -m "Restaure le chapitre 3"',
+          'git commit -m "Restore chapter 3"',
           'cd ../poems',
           'git init',
           'git add .',
-          'git commit -m "Premiers poèmes"',
+          'git commit -m "First poems"',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -512,10 +514,10 @@ for (const language of LANGUAGES)
           'cat notes_rosa.txt',
           'du -sh collection',
           'df -h /media/usb',
-          'tar -czf /media/usb/fonds.tar.gz collection',
+          'tar -czf /media/usb/collection.tar.gz collection',
           'find collection -name "*.tmp" -delete',
-          'tar -czf /media/usb/fonds.tar.gz collection',
-          'tar -tzf /media/usb/fonds.tar.gz',
+          'tar -czf /media/usb/collection.tar.gz collection',
+          'tar -tzf /media/usb/collection.tar.gz',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -534,8 +536,8 @@ for (const language of LANGUAGES)
         const good = ids[25];
         const next = [
           `${R} diff ${good} ${ids[26]}`,
-          `${R} restore ${good} --target /tmp/restauration --include /home/you/collection/manuscripts/marie_diary.txt`,
-          'cp /tmp/restauration/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
+          `${R} restore ${good} --target /tmp/restore --include /home/you/collection/manuscripts/marie_diary.txt`,
+          'cp /tmp/restore/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
           // False lead: forget alone does not free the space.
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
@@ -556,7 +558,7 @@ for (const language of LANGUAGES)
       });
 
       it('another solution: the password typed, dump, forget --prune, then a backup', () => {
-        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'mauvais']);
+        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'wrong']);
         expect(all).toContain('Fatal: wrong password or no key found');
         contains(all, 'Mauvais mot de passe');
         const ids = snapshotList(s);
@@ -605,7 +607,7 @@ for (const language of LANGUAGES)
         const conflict = s.execute('sudo nginx -t') ?? '';
         expect(conflict).toContain('nginx: [warn] conflicting server name "letters.example" on 0.0.0.0:80, ignored');
         contains(conflict, 'deux sites répondent au même nom');
-        modify(s, '/etc/nginx/sites-available/cafe', /lettres|letters/g, 'cafe');
+        modify(s, '/etc/nginx/sites-available/cafe', /letters/g, 'cafe');
         s.execute('sudo systemctl reload nginx');
         if (reference) expect(s.execute('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
         modify(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
@@ -619,7 +621,9 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
         modify(s, '/etc/nginx/sites-available/letters', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
         s.execute('sudo systemctl reload nginx');
-        if (reference) expect(s.execute('curl http://letters.example/agenda/ateliers')).toContain('Les ateliers');
+        const workshops = s.execute(L('curl http://letters.example/agenda/workshops')) ?? '';
+        expect(workshops).toContain('<h1>');
+        contains(workshops, 'Les ateliers');
         expect(s.finished).toBe(true);
       });
 
@@ -721,8 +725,8 @@ for (const language of LANGUAGES)
 
       it('another solution: the zone in conf.d, the limit on the whole site, 1 request per second', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
-        s.execute('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
-        modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
+        s.execute('echo "limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limits.conf');
+        modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);
       });
@@ -730,9 +734,9 @@ for (const language of LANGUAGES)
 
     describe('The Factory, chapter 1 — The update (docker)', () => {
       it('docker inspect without -f gives the container’s JSON (not [])', () => {
-        const { outputs } = play('update', ['sudo docker inspect outiltheque', 'fablab-2027']);
+        const { outputs } = play('update', ['sudo docker inspect toolshed', 'fablab-2027']);
         expect(outputs.at(-1)).toContain('"Mounts"');
-        expect(outputs.at(-1)).toContain('outiltheque');
+        expect(outputs.at(-1)).toContain(L('toolshed'));
       });
 
       it('solution: copy the database, volume, new container, --restart, and it holds after a reboot', () => {
@@ -740,15 +744,15 @@ for (const language of LANGUAGES)
           'docker ps',
           'sudo docker ps -a',
           'fablab-2027',
-          "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
-          'sudo docker cp outiltheque:/var/lib/outiltheque ./backup',
+          "sudo docker inspect -f '{{json .Mounts}}' toolshed",
+          'sudo docker cp toolshed:/var/lib/toolshed ./backup',
           // False lead: the old container still holds port 8080.
-          'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registry.example/outiltheque:1.5',
-          'sudo docker stop outiltheque',
-          'sudo docker start outiltheque-15',
-          'sudo docker cp backup/. outiltheque-15:/var/lib/outiltheque',
-          'sudo docker restart outiltheque-15',
-          'sudo docker logs -n 3 outiltheque-15',
+          'sudo docker run -d --name toolshed-15 -p 8080:8080 -v toolshed-data:/var/lib/toolshed registry.example/toolshed:1.5',
+          'sudo docker stop toolshed',
+          'sudo docker start toolshed-15',
+          'sudo docker cp backup/. toolshed-15:/var/lib/toolshed',
+          'sudo docker restart toolshed-15',
+          'sudo docker logs -n 3 toolshed-15',
           'curl http://localhost:8080',
         ]);
         expect(all).toContain('permission denied while trying to connect to the Docker daemon socket');
@@ -758,28 +762,28 @@ for (const language of LANGUAGES)
         contains(all, 'la couche du conteneur');
         contains(all, 'une base toute neuve et vide');
         expect(s.finished).toBe(false);
-        s.execute('sudo docker update --restart unless-stopped outiltheque-15');
+        s.execute('sudo docker update --restart unless-stopped toolshed-15');
         expect(s.finished).toBe(true);
         s.execute('sudo reboot');
-        expect(s.execute('curl http://localhost:8080')).toContain('outiltheque 1.5');
+        expect(s.execute('curl http://localhost:8080')).toContain(L('toolshed 1.5'));
       });
 
       it('another solution: a folder of the machine (bind mount), --restart always, the old one removed', () => {
         const { s } = play('update', [
-          'sudo mkdir /srv/outiltheque',
+          'sudo mkdir /srv/toolshed',
           'fablab-2027',
-          'sudo docker cp outiltheque:/var/lib/outiltheque/outiltheque.db /srv/outiltheque/',
-          'sudo docker rm -f outiltheque',
-          'sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v /srv/outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5',
+          'sudo docker cp toolshed:/var/lib/toolshed/toolshed.db /srv/toolshed/',
+          'sudo docker rm -f toolshed',
+          'sudo docker run -d --name toolshed --restart always -p 8080:8080 -v /srv/toolshed:/var/lib/toolshed registry.example/toolshed:1.5',
         ]);
         expect(s.finished).toBe(true);
       });
 
       it('false lead: removing the container before copying its database', () => {
-        const { s, tout: all } = play('update', ['sudo docker rm outiltheque', 'fablab-2027', 'sudo docker rm -f outiltheque']);
+        const { s, tout: all } = play('update', ['sudo docker rm toolshed', 'fablab-2027', 'sudo docker rm -f toolshed']);
         expect(all).toContain('container is running: stop the container before removing or force remove');
         contains(all, 'Les 37 prêts ont disparu');
-        s.execute('sudo docker run -d --name outiltheque --restart always -p 8080:8080 -v outiltheque:/var/lib/outiltheque registry.example/outiltheque:1.5');
+        s.execute(L('sudo docker run -d --name toolshed --restart always -p 8080:8080 -v toolshed:/var/lib/toolshed registry.example/toolshed:1.5'));
         expect(s.finished).toBe(false);
       });
     });
@@ -797,10 +801,10 @@ for (const language of LANGUAGES)
           .replace('@localhost:', '@db:')
           .replaceAll(L('workshop2027'), '${POSTGRES_PASSWORD}')
           .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
-          .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
+          .replace('      - POSTGRES_DB=reservations', `      - POSTGRES_DB=reservations\n    volumes:\n      - ${L('pgdata')}:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  ${L('pgdata')}:`);
 
       it('solution, with the localhost false lead', () => {
-        const { s, tout: all } = play('compose', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs appli', 'curl http://localhost:8081']);
+        const { s, tout: all } = play('compose', ['cd /srv/reservations', 'sudo docker compose up -d', 'fablab-2027', 'sudo docker compose logs webapp', 'curl http://localhost:8081']);
         expect(all).toContain('the attribute `version` is obsolete');
         expect(all).toContain('Error: connect ECONNREFUSED 127.0.0.1:5432');
         expect(all).toContain("curl: (7) Failed to connect to localhost port 8081");
@@ -825,10 +829,10 @@ for (const language of LANGUAGES)
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('base de données connectée');
         // The password goes into .env… but not the one of the existing database.
         modify(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('workshop2027'), '${POSTGRES_PASSWORD}'));
-        s.execute('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
+        s.execute('echo POSTGRES_PASSWORD=new-secret | sudo tee .env');
         s.execute('sudo chmod 600 .env');
         const failure = s.execute('sudo docker compose up -d') ?? '';
-        expect(s.execute('sudo docker compose logs appli')).toContain('password authentication failed for user "fablab"');
+        expect(s.execute(L('sudo docker compose logs webapp'))).toContain('password authentication failed for user "fablab"');
         contains(failure, 'password authentication failed');
         expect(s.finished).toBe(false);
         const redone = ['sudo docker compose down -v', 'sudo docker compose up -d'].map((l) => s.execute(l) ?? '').join('\n');
@@ -865,18 +869,18 @@ for (const language of LANGUAGES)
 
       it('another solution: no more port for the database, docker system prune -a -f', () => {
         const { s } = play('firewall-hole', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
-        modify(s, (t) => t.replace('    # Pour pgAdmin, depuis mon portable (Yasmine)\n    ports:\n      - "5432:5432"\n', ''));
+        modify(s, (t) => t.replace(/    # .*\n    ports:\n      - "5432:5432"\n/, ''));
         s.execute('sudo docker compose up -d');
-        const menage = s.execute('sudo docker system prune -a -f') ?? '';
-        expect(menage).toContain('Deleted Containers:');
-        expect(menage).toContain('untagged: registry.example/ia-locale:latest');
+        const cleanUp = s.execute('sudo docker system prune -a -f') ?? '';
+        expect(cleanUp).toContain('Deleted Containers:');
+        expect(cleanUp).toContain(L('untagged: registry.example/local-ai:latest'));
         expect(s.finished).toBe(true);
       });
 
       it('false lead: docker volume prune -a takes the wiki away', () => {
         const { s, tout: all } = play('firewall-hole', ['sudo docker volume prune', 'fablab-2027', 'y', 'sudo docker volume ls', 'sudo docker volume prune -a', 'y']);
         expect(all).toContain('WARNING! This will remove anonymous local volumes not used by at least one container.');
-        expect(all).toContain('Deleted Volumes:\nwiki-ancien');
+        expect(all).toContain(L('Deleted Volumes:\nold-wiki'));
         contains(all, 'Le volume wiki-ancien a disparu');
         expect(s.finished).toBe(false);
       });
@@ -884,39 +888,41 @@ for (const language of LANGUAGES)
 
     describe('The Factory, chapter 4 — Full powers (container without root)', () => {
       const modify = (s: Shell, change: (text: string) => string) => {
-        s.execute('sudo nano /srv/galerie/compose.yaml');
+        s.execute(L('sudo nano /srv/gallery/compose.yaml'));
         s.saveEdition(change(s.edition!.text));
         s.quitEdition();
       };
+      // The compose project's container (galerie-galerie-1 in French).
+      const CONTAINER = `${L('gallery')}-${L('gallery')}-1`;
       const withUser = (u: string) => (t: string) => t.replace('    restart: unless-stopped', `    restart: unless-stopped\n    user: ${u}`);
 
       it('solution: user: "1001:1001" in compose.yaml, then chown -R', () => {
         const { s, tout: all } = play('full-powers', [
-          'cd /srv/galerie',
-          'sudo docker exec galerie-galerie-1 id',
+          'cd /srv/gallery',
+          `sudo docker exec ${CONTAINER} id`,
           'fablab-2027',
           'ps aux',
           'ls -lan photos',
         ]);
         expect(all).toContain('uid=0(root) gid=0(root) groups=0(root)');
-        expect(all).toMatch(/^root\s+\d+.*node serveur\.js$/m);
+        expect(all).toMatch(/^root\s+\d+.*node server\.js$/m);
         contains(all, "l'uid 0 du conteneur EST l'uid 0 de la machine");
         modify(s, withUser('"1001:1001"'));
-        const failure = ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs galerie']
-          .map((l) => s.execute(l))
+        const failure = ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs gallery']
+          .map((l) => s.execute(L(l)))
           .join('\n');
         expect(failure).toContain('Restarting (1)');
-        expect(failure).toContain("Error: EACCES: permission denied, open '/app/photos/.miniatures/index.json'");
+        expect(failure).toContain(L("Error: EACCES: permission denied, open '/app/photos/.thumbnails/index.json'"));
         contains(failure, 'EACCES, permission refusée');
         expect(s.finished).toBe(false);
         // Without -R, the folder changes owner, not what it contains.
-        s.execute('sudo chown 1001:1001 /srv/galerie/photos');
+        s.execute(L('sudo chown 1001:1001 /srv/gallery/photos'));
         expect(s.finished).toBe(false);
-        const end = ['sudo chown -R 1001:1001 /srv/galerie/photos', 'sudo docker exec galerie-galerie-1 id', 'ps aux', 'curl -s localhost:8082']
-          .map((l) => s.execute(l))
+        const end = ['sudo chown -R 1001:1001 /srv/gallery/photos', `sudo docker exec ${CONTAINER} id`, 'ps aux', 'curl -s localhost:8082']
+          .map((l) => s.execute(L(l)))
           .join('\n');
         expect(end).toContain('uid=1001 gid=1001 groups=1001');
-        expect(end).toMatch(/^yasmine\s+\d+.*node serveur\.js$/m);
+        expect(end).toMatch(/^yasmine\s+\d+.*node server\.js$/m);
         expect(end).toContain('14 photos');
         contains(end, 'Tu as terminé le chapitre 4 de La Fabrique');
         expect(s.finished).toBe(true);
@@ -924,38 +930,38 @@ for (const language of LANGUAGES)
 
       it('another solution: docker run -u node, Yasmine’s group and chmod -R g+w', () => {
         const { s, tout: all } = play('full-powers', [
-          'sudo docker rm -f galerie-galerie-1',
+          `sudo docker rm -f ${CONTAINER}`,
           'fablab-2027',
-          'sudo docker run -d --name galerie -u node -p 8082:3000 -v /srv/galerie/photos:/app/photos --restart unless-stopped registry.example/galerie:3.2',
-          'sudo chown -R 1000 /srv/galerie/photos',
-          'sudo docker exec galerie whoami',
-          'ls -l /srv/galerie',
+          'sudo docker run -d --name gallery -u node -p 8082:3000 -v /srv/gallery/photos:/app/photos --restart unless-stopped registry.example/gallery:3.2',
+          'sudo chown -R 1000 /srv/gallery/photos',
+          'sudo docker exec gallery whoami',
+          'ls -l /srv/gallery',
         ]);
         expect(all).toContain('node');
         expect(all).toMatch(new RegExp(`drwxr-xr-x ${L('you')} +${L('you')} +4096 photos`));
         contains(all, "l'uid 1000, c'est toi");
         expect(s.finished).toBe(false);
-        s.execute('sudo chgrp -R yasmine /srv/galerie/photos');
-        s.execute('sudo chmod -R g+w /srv/galerie/photos');
-        expect(s.execute('ls -ln /srv/galerie')).toMatch(/drwxrwxr-x 1000 +1001 +4096 photos/);
+        s.execute(L('sudo chgrp -R yasmine /srv/gallery/photos'));
+        s.execute(L('sudo chmod -R g+w /srv/gallery/photos'));
+        expect(s.execute(L('ls -ln /srv/gallery'))).toMatch(/drwxrwxr-x 1000 +1001 +4096 photos/);
         expect(s.finished).toBe(true);
       });
 
       it("false leads: a name unknown to the image, chmod 777, an erased photo", () => {
-        const { s } = play('full-powers', ['cd /srv/galerie', 'sudo id', 'fablab-2027']);
-        modify(s, withUser('galerie'));
+        const { s } = play('full-powers', ['cd /srv/gallery', 'sudo id', 'fablab-2027']);
+        modify(s, withUser(L('gallery')));
         const unknown = s.execute('sudo docker compose up -d') ?? '';
-        expect(unknown).toContain('unable to find user galerie: no matching entries in passwd file');
+        expect(unknown).toContain(`unable to find user ${L('gallery')}: no matching entries in passwd file`);
         contains(unknown, "DE L'IMAGE");
-        modify(s, (t) => t.replace('user: galerie', 'user: "1001:1001"'));
+        modify(s, (t) => t.replace(`user: ${L('gallery')}`, 'user: "1001:1001"'));
         s.execute('sudo docker compose up -d');
-        const open = s.execute('sudo chmod -R 777 /srv/galerie/photos') ?? '';
+        const open = s.execute(L('sudo chmod -R 777 /srv/gallery/photos')) ?? '';
         contains(open, 'ouvert en écriture à tous');
-        expect(s.execute('sudo docker exec galerie-galerie-1 id')).toContain('uid=1001');
+        expect(s.execute(`sudo docker exec ${CONTAINER} id`)).toContain('uid=1001');
         expect(s.finished).toBe(false);
-        const perdu = s.execute('sudo rm /srv/galerie/photos/velo-repare.jpg') ?? '';
-        contains(perdu, 'Une photo a disparu');
-        s.execute('sudo chmod -R o-w /srv/galerie/photos');
+        const lost = s.execute(L('sudo rm /srv/gallery/photos/repaired-bike.jpg')) ?? '';
+        contains(lost, 'Une photo a disparu');
+        s.execute(L('sudo chmod -R o-w /srv/gallery/photos'));
         expect(s.finished).toBe(false);
       });
     });
@@ -966,7 +972,7 @@ for (const language of LANGUAGES)
         s.saveEdition(change(s.edition!.text));
         s.quitEdition();
       };
-      const HOOK = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site publié"';
+      const HOOK = '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout -f main\necho "Site published"';
 
       it("solution: the drift first, a bare repository of one's own, an executable hook, then each fix through git push", () => {
         const { s, tout: all } = play('bare-repo', ['diff -r gazette /var/www/gazette', 'sudo git init --bare /srv/git/gazette.git', 'gazette-2027']);
@@ -979,15 +985,15 @@ for (const language of LANGUAGES)
         s.execute('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.execute('cd ~/gazette');
         edit(s, 'index.html', (t) => t.replaceAll('Gazzette', 'Gazette'));
-        if (reference) expect(s.execute('git commit -am "Titre : Gazette, sans faute"')).toContain('2 insertions(+), 2 suppressions(-)');
+        if (reference) expect(s.execute('git commit -am "Title: Gazette, no typo"')).toContain('2 insertions(+), 2 suppressions(-)');
         s.execute('git remote add prod /srv/git/gazette.git');
         const push = s.execute('git push prod main') ?? '';
-        expect(push).toContain('remote: Site publié');
+        expect(push).toContain('remote: Site published');
         expect(push).toContain(' * [new branch]      main -> main');
         contains(push, 'Mon article est en ligne');
         expect(s.finished).toBe(false);
         edit(s, 'agenda.html', (t) => t.replace('2027-06-21', '2027-06-12').replace('>21 ', '>12 '));
-        s.execute('git commit -am "Agenda : le vide-grenier est le 12 juin"');
+        s.execute('git commit -am "Agenda: the jumble sale is on 12 June"');
         const end = s.execute('git push prod') ?? '';
         expect(end).toMatch(/ {3}[0-9a-f]{7}\.\.[0-9a-f]{7} {2}main -> main/);
         contains(end, 'Tu as terminé le chapitre 1 de La Gazette');
@@ -1010,18 +1016,18 @@ for (const language of LANGUAGES)
         contains(s.execute('git push prod main') ?? '', 'rien ne les extrait');
         edit(s, '/srv/git/gazette.git/hooks/post-receive', () => '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout main');
         s.execute('git rm style.css');
-        s.execute('git commit -m "Sans style"');
+        s.execute('git commit -m "No style"');
         contains(s.execute('git push prod main') ?? '', "il n'est pas exécutable");
         s.execute('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.execute('git restore --source=HEAD~1 style.css');
         s.execute('git add style.css');
-        s.execute('git commit -m "Le style revient"');
+        s.execute('git commit -m "Style is back"');
         const withoutF = s.execute('git push prod main') ?? '';
         if (reference) expect(withoutF).toContain("remote: error: Les fichiers suivants non suivis de la copie de travail seraient écrasés par l'extraction :");
         contains(withoutF, 'Avec -f (force)');
         edit(s, '/srv/git/gazette.git/hooks/post-receive', (t) => t.replace('checkout main', 'checkout -f main'));
         edit(s, 'agenda.html', (t) => t.replace('8 h', '9 h'));
-        s.execute('git commit -am "Ouverture à 9 h"');
+        s.execute('git commit -am "Opening at 9"');
         contains(s.execute('git push prod main') ?? '', 'La correction de Théo a disparu');
         // Fixing the calendar on the server, without git: refused.
         s.execute('echo \'<time datetime="2027-06-12">\' > /var/www/gazette/agenda.html');
@@ -1040,9 +1046,9 @@ for (const language of LANGUAGES)
         [
           'cd ~/gazette',
           'git pull prod main',
-          'mv accueil.html index.html',
+          L('mv home.html index.html'),
           'git add .',
-          'git commit -m "Accueil : index.html"',
+          'git commit -m "Home: index.html"',
           'git push prod main',
         ]
           .map((l) => s.execute(l))
@@ -1062,7 +1068,7 @@ for (const language of LANGUAGES)
         expect(s.execute('readlink -f /srv/gazette/current')).toBe('/srv/gazette/releases/20270514101502');
         const theo = hook(s, WITH_TESTS);
         if (reference) expect(theo).toContain("remote: Vérification de la page d'accueil (index.html)...");
-        expect(theo).not.toContain('en ligne');
+        expect(theo).not.toContain(reference ? 'en ligne' : 'live');
         contains(theo, "le crochet s'est arrêté avant de basculer current");
         expect(s.finished).toBe(false);
         const end = publishTheo(s);
@@ -1070,7 +1076,7 @@ for (const language of LANGUAGES)
         expect(end).toContain('remote: Tests OK');
         if (reference) expect(end).toMatch(/remote: Version \d{14} en ligne/);
         contains(end, 'Tu as terminé le chapitre 2 de La Gazette');
-        expect(s.execute('curl -s http://gazette.example/')).toContain('class="une"');
+        expect(s.execute('curl -s http://gazette.example/')).toContain('class="lead"');
         expect(s.finished).toBe(true);
       });
 
@@ -1219,7 +1225,7 @@ for (const language of LANGUAGES)
         ]);
         expect(all).toContain('"error":"KIOSK_SMTP_URL is not set"');
         expect(all).toContain('"error":"database schema 4 is newer than supported (3)"');
-        expect(all).toContain('Running migration 004_rename_abonnes_courriel_to_email... done');
+        expect(all).toContain(`Running migration 004_${reference ? 'rename_abonnes_courriel_to_email' : 'rename_subscribers_mail_to_email'}... done`);
         contains(all, 'il reste à réparer en avant');
         edit(s, '/etc/kiosk/kiosk.env', SMTP_URL);
         contains(s.execute('sudo systemctl restart kiosk-green') ?? '', 'Le Kiosque répond de nouveau');
@@ -1249,26 +1255,27 @@ for (const language of LANGUAGES)
           'find /srv/share -name "*.locked" | wc -l',
           'ps aux',
           'sudo kill 3141',
-          'ludo-2027',
-          'sudo crontab -u accueil -l',
-          'sudo crontab -u accueil -r',
-          'sudo usermod -L accueil',
+          'dice-2027',
+          'sudo crontab -u frontdesk -l',
+          'sudo crontab -u frontdesk -r',
+          'sudo usermod -L frontdesk',
           'sudo journalctl -u ssh',
           'ls /mnt/nas/share',
           'lsblk -f',
           'sudo mount -o ro /dev/sdb1 /mnt/usb',
-          'touch /mnt/usb/essai',
+          'touch /mnt/usb/testfile',
           `${RESTIC} snapshots`,
           MDP,
           `${RESTIC} restore latest --target /`,
           MDP,
         ]);
         expect(all).toMatch(/^6$/m);
-        expect(all).toContain(L('accueil      3141  97.3   1.4 /home/accueil/.cache/.upd/system-update --silencieux'));
-        expect(all).toContain(L('*/10 * * * * /home/accueil/.cache/.upd/system-update --silencieux'));
-        expect(all).toContain('Accepted password for accueil from 203.0.113.66');
-        expect(all).toContain('SAUVEGARDE');
-        if (reference) expect(all).toContain('touch: /mnt/cle/essai: Système de fichiers accessible en lecture seulement');
+        const quiet = reference ? '--silencieux' : '--quiet';
+        expect(all).toMatch(new RegExp(`^${L('frontdesk')} +3141  97\\.3   1\\.4 ${L('/home/frontdesk/.cache/.upd/system-update')} ${quiet}$`, 'm'));
+        expect(all).toContain(`${L('*/10 * * * * /home/frontdesk/.cache/.upd/system-update')} ${quiet}`);
+        expect(all).toContain(`Accepted password for ${L('frontdesk')} from 203.0.113.66`);
+        expect(all).toContain(reference ? 'SAUVEGARDE' : 'BACKUP');
+        if (reference) expect(all).toContain('touch: /mnt/cle/testfile: Système de fichiers accessible en lecture seulement');
         expect(all).toContain('Summary: Restored 6 files/dirs');
         contains(all, 'On ne paie pas');
         contains(all, "Une copie synchronisée, toujours branchée, n'est pas une sauvegarde");
@@ -1289,7 +1296,7 @@ for (const language of LANGUAGES)
       it("false leads: restoring before stopping the encryptor, forgetting it in the crontab, unmounting from inside", () => {
         const { s, tout: all } = play('ransom', [
           'sudo mount /dev/sdb1 /mnt/usb',
-          'ludo-2027',
+          'dice-2027',
           `${RESTIC} restore latest --target /`,
           MDP,
           'ls /srv/share',
@@ -1324,7 +1331,7 @@ for (const language of LANGUAGES)
       const P = L('/srv/share');
 
       it("solution: the configuration (tabs), configtest, root's cron, then the previous day's inventory", () => {
-        const { s } = play('snapshots', ['sudo rsnapshot configtest', 'ludo-2027']);
+        const { s } = play('snapshots', ['sudo rsnapshot configtest', 'dice-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', SETTINGS);
         expect(s.execute('sudo rsnapshot configtest')).toBe('Syntax OK');
         expect(s.execute('sudo rsnapshot -t daily')).toContain(
@@ -1354,7 +1361,7 @@ for (const language of LANGUAGES)
       });
 
       it("false leads: spaces instead of tabs, an ordinary account's crontab, last night's version", () => {
-        const { s } = play('snapshots', ['sudo id', 'ludo-2027']);
+        const { s } = play('snapshots', ['sudo id', 'dice-2027']);
         edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => SETTINGS(t).replace(L('snapshot_root\t/mnt/snapshots/'), L('snapshot_root /mnt/snapshots/')));
         const error = s.execute('sudo rsnapshot configtest') ?? '';
         expect(error).toContain(L('ERROR: snapshot_root /mnt/snapshots/ - Unknown config directive'));
@@ -1370,50 +1377,50 @@ for (const language of LANGUAGES)
 
     describe('The Game Library, chapter 3 — The database (pg_dump, test restore, pg_restore -t)', () => {
       const PG = 'sudo -u postgres';
-      const DUMP = '/var/backups/postgresql/ludo.dump';
-      const count = (s: Shell, base: string, table: string) => s.execute(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table};"`) ?? '';
+      const DUMP = '/var/backups/postgresql/gamelib.dump';
+      const count = (s: Shell, base: string, table: string) => s.execute(L(`${PG} psql -d ${base} -c "SELECT count(*) FROM ${table}"`)) ?? '';
 
-      it('solution: pg_dump -Fc as postgres, restore into ludo_test, the prets table put back, postgres’s crontab', () => {
+      it('solution: pg_dump -Fc as postgres, restore into gamelib_test, the loans table put back, postgres’s crontab', () => {
         const { s, tout: all } = play('database', [
           'psql -l',
           `${PG} psql -l`,
-          'ludo-2027',
-          `${PG} psql -d ludo -c "\\dt"`,
-          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
-          `${PG} createdb ludo_test`,
-          `${PG} pg_restore -d ludo_test ${DUMP}`,
+          'dice-2027',
+          `${PG} psql -d gamelib -c "\\dt"`,
+          `${PG} pg_dump -Fc -f ${DUMP} gamelib`,
+          `${PG} createdb gamelib_test`,
+          `${PG} pg_restore -d gamelib_test ${DUMP}`,
         ]);
         expect(all).toContain(L('FATAL:  role "you" does not exist'));
-        expect(all).toContain(' public | prets   | table | ludo');
+        expect(all).toContain(reference ? ' public | prets   | table | ludo' : ' public | loans      | table | gamelib');
         contains(all, 'sudo -u postgres (man sudo)');
         contains(all, 'la sauvegarde se restaure');
         // The next command: the incident.
-        const test = count(s, 'ludo_test', 'prets');
+        const test = count(s, 'gamelib_test', 'loans');
         expect(test).toContain('  1873 ');
         contains(test, 'Un bénévole a cliqué');
-        expect(count(s, 'ludo', 'prets')).toMatch(/^\s+0 $/m);
-        contains(s.execute(`${PG} pg_restore -d ludo --data-only -t prets ${DUMP}`) ?? '', 'sont revenus');
-        expect(count(s, 'ludo', 'jeux')).toContain('   412 ');
+        expect(count(s, 'gamelib', 'loans')).toMatch(/^\s+0 $/m);
+        contains(s.execute(L(`${PG} pg_restore -d gamelib --data-only -t loans ${DUMP}`)) ?? '', 'sont revenus');
+        expect(count(s, 'gamelib', 'boardgames')).toContain('   412 ');
         expect(s.finished).toBe(false);
         s.execute('sudo crontab -u postgres -e');
-        s.saveEdition(`${s.edition!.text}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        s.saveEdition(`${s.edition!.text}15 2 * * * pg_dump -Fc -f ${DUMP} ${L('gamelib')}\n`);
         contains(s.quitEdition(), 'Tu as terminé le chapitre 3 de La Ludothèque');
         expect(s.finished).toBe(true);
       });
 
-      it('false leads: the redirection, restoring over ludo, reloading into a full table, root’s cron', () => {
+      it('false leads: the redirection, restoring over gamelib, reloading into a full table, root’s cron', () => {
         const { s, tout: all } = play('database', [
-          'sudo -u postgres pg_dump ludo > /var/backups/postgresql/ludo.sql',
-          'ludo-2027',
-          `${PG} pg_dump -Fc -f ${DUMP} ludo`,
-          `${PG} pg_restore -d ludo ${DUMP}`,
+          'sudo -u postgres pg_dump gamelib > /var/backups/postgresql/gamelib.sql',
+          'dice-2027',
+          `${PG} pg_dump -Fc -f ${DUMP} gamelib`,
+          `${PG} pg_restore -d gamelib ${DUMP}`,
         ]);
-        if (reference) expect(all).toContain('/var/backups/postgresql/ludo.sql : Permission non accordée');
-        expect(all).toContain('pg_restore: error: could not execute query: ERROR:  relation "jeux" already exists');
+        if (reference) expect(all).toContain('/var/backups/postgresql/gamelib.sql : Permission non accordée');
+        expect(all).toContain(`pg_restore: error: could not execute query: ERROR:  relation "${L('boardgames')}" already exists`);
         contains(all, 'Restaurer par-dessus la vraie base');
-        expect(count(s, 'ludo', 'prets')).toContain('  1873 ');
+        expect(count(s, 'gamelib', 'loans')).toContain('  1873 ');
         s.execute('sudo crontab -e');
-        s.saveEdition(`${s.edition!.text}15 2 * * * pg_dump -Fc -f ${DUMP} ludo\n`);
+        s.saveEdition(`${s.edition!.text}15 2 * * * pg_dump -Fc -f ${DUMP} ${L('gamelib')}\n`);
         contains(s.quitEdition(), "root, qui n'est pas un");
         expect(s.finished).toBe(false);
       });
@@ -1482,7 +1489,7 @@ for (const language of LANGUAGES)
         expect(all).toContain('Active: failed (Result: oom-kill)');
         expect(all).toContain('[Sun Aug 22 04:12:30 2027] Out of memory: Killed process 2601 (node)');
         expect(all).toMatch(/^Mem: +2\.0Gi +\d+Mi/m);
-        expect(all).toMatch(/radio +2411 +2305 .*\[convertir\] <defunct>/);
+        expect(all).toMatch(new RegExp(`radio +2411 +2305 .*\\[${N('convert')}\\] <defunct>`));
         contains(all, "l'OOM killer");
         s.saveEdition(`[Service]\nMemoryMax=600M\nRestart=on-failure\n${s.edition!.text}`);
         s.quitEdition();
@@ -1518,7 +1525,7 @@ for (const language of LANGUAGES)
 
       it('false leads: kill -9 on a zombie, restarting without a limit, a limit without restart', () => {
         const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenna-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
-        expect(all).toContain('[convertir] <defunct>');
+        expect(all).toContain(`[${N('convert')}] <defunct>`);
         contains(all, 'kill ne fait rien à un zombie');
         let outputs = '';
         for (let i = 0; i < 16; i++) outputs += s.execute('free -m');
@@ -1556,7 +1563,7 @@ for (const language of LANGUAGES)
         expect(all).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
         expect(all).toMatch(/^65519\t\/srv\/radio\/stats$/m);
         contains(all, "l'enregistrement de nuit a repris");
-        expect(s.find(L('/srv/radio/shows/nuit-2027-08-29.ogg'))).toBeTruthy();
+        expect(s.find(`${L('/srv/radio/shows')}/${N('night-show')}-2027-08-29.ogg`)).toBeTruthy();
         expect(s.finished).toBe(false);
         const night = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
         contains(night, 'Une journée et une nuit passent');
@@ -1567,13 +1574,13 @@ for (const language of LANGUAGES)
 
       it('another solution: the radio account’s cron job also does the big clean-up', { timeout: 30_000 }, () => {
         const { s } = play('inodes', ['sudo df -i /srv/radio', 'antenna-2027']);
-        const night = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
+        const night = crontab(s, 'sudo crontab -u radio -e', `0 3 * * * find /srv/radio/stats -name "${N('listen')}-*" -mtime +45 -delete`);
         contains(night, 'Une journée et une nuit passent');
         expect(s.finished).toBe(true);
       });
 
       it('false leads: rm *, a crontab without the rights, a job that erases everything', { timeout: 30_000 }, () => {
-        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/essai', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
+        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/test', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
         if (reference) expect(all).toContain('Aucun espace disponible sur le périphérique');
         if (reference) expect(all).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
         contains(all, 'le shell remplace * par tous les noms du lieu');
@@ -1661,11 +1668,12 @@ for (const language of LANGUAGES)
         s.saveEdition(change(s.edition!.text));
         return s.quitEdition();
       };
-      const CONTROLS =
-        '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /live | grep -v " OK" | $ALERTE\n';
-      const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
+      // The relay's web address: /live in English, /direct in French.
+      const LIVE = `/${N('live')}`;
+      const CONTROLS = `\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERT\n$P/check_http -H localhost -p 8000 -u ${LIVE} | grep -v " OK" | $ALERT\n`;
+      const SERVICE = '[Unit]\nDescription=Neighbourhood Radio probe\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
       const TIMER = (trigger: string) =>
-        `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
+        `[Unit]\nDescription=Probe every 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
 
       it('solution: the plugins, the probe completed, a systemd timer, and the drill night', { timeout: 30_000 }, () => {
         const { s, tout: all } = play('probe', [
@@ -1673,8 +1681,8 @@ for (const language of LANGUAGES)
           '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio',
           "systemd-analyze calendar '*:0/5'",
         ]);
-        // A web address (/direct), not a path of the world: typed as is in every language.
-        expect(s.execute('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live')).toContain('HTTP OK: HTTP/1.1 200 OK');
+        // A web address, not a path of the world: given in the language (LIVE), typed as is.
+        expect(s.execute(`/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u ${LIVE}`)).toContain('HTTP OK: HTTP/1.1 200 OK');
         if (reference) expect(all).toContain('check_disk : commande introuvable');
         contains(all, 'ne sont pas dans le PATH');
         expect(all).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
@@ -1703,7 +1711,7 @@ for (const language of LANGUAGES)
           '/usr/local/bin/probe',
           (t) =>
             t.replace('$P/check_disk -w 20% -c 10% -p /', '$P/check_disk -w 20% -c 10% -W 20% -K 10% -p / -p /srv/radio') +
-            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERTE\n',
+            '\n$P/check_procs -C stream -c 1: | grep -v " OK" | $ALERT\n',
         );
         s.execute('sudo crontab -e');
         s.saveEdition(`${s.edition!.text}*/5 * * * * /usr/local/bin/probe\n`);

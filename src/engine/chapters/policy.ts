@@ -1,5 +1,5 @@
 // Story "Junk Mail", chapter "The Policy": DMARC.
-// Les Jardins published a DMARC p=none policy a week ago, with
+// The Community Gardens published a DMARC p=none policy a week ago, with
 // rua=: the mail providers' aggregate reports have arrived. Nour would like
 // to move to p=quarantine (mailbox.example asks it of senders who
 // send a lot), without losing the newsletter, sent by a

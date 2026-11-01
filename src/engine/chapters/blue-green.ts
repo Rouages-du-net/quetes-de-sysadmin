@@ -1,4 +1,4 @@
-// Story "La Gazette" — chapter "Blue and green": updating the Kiosk (the
+// Story "The Gazette" — chapter "Blue and green": updating the Kiosk (the
 // subscriptions app) without downtime. 1.4.2 runs on the blue slot (port
 // 3001), which nginx serves under /kiosk/. You install 1.5.0 on the green
 // slot (port 3002) and check its health (/health): it lacks a configuration
@@ -12,7 +12,7 @@
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass,
 // https://nginx.org/en/docs/beginners_guide.html#control
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx, type Configuration } from '../nginx';
@@ -127,7 +127,7 @@ export const greenBlue: Chapter = {
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
-      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/server.js` },
     ],
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
     apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
@@ -147,7 +147,7 @@ export const greenBlue: Chapter = {
         ...accountsFiles(),
         hostname: file('gazette'),
         kiosk: place({
-          'kiosk.env': file('KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example', {
+          'kiosk.env': file(`KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=${name(t, 'newsletter')}@gazette.example`, {
             owner: 'root',
             group: 'kiosk',
             mode: 'rw-r-----',
@@ -181,7 +181,7 @@ export const greenBlue: Chapter = {
             blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
             green: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
           },
-          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'newsroom', mode: 'rwxrwxr-x' },
         ),
       }),
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),

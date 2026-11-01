@@ -88,7 +88,7 @@ full-powers-event-uid-1000 =
     ne voit que des numéros, et chaque /etc/passwd leur donne son nom (node
     dans l'image, vous sur la machine). Yasmine (uid 1001), elle, ne peut
     toujours pas écrire dans le dossier des photos.
-full-powers-event-open-a-all =
+full-powers-event-open-to-all =
     Un dossier ouvert en écriture à tous (chmod 777, o+w) : ça « marche »,
     mais n'importe quel compte, n'importe quel programme de la machine peut
     alors y déposer ou y effacer des fichiers. On donne plutôt le dossier au

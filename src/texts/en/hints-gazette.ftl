@@ -17,12 +17,12 @@ hint-bare-repo-end =
 hint-rollback-restored =
     .lead = nginx serves the link /srv/gazette/current, which points to the broken version. The previous version is intact in releases/: the link just has to point to it again. Careful, current points to a directory (man ln, option -n).
     .solution = ln -sfn /srv/gazette/releases/20270514101502 /srv/gazette/current (then curl -I http://gazette.example/ answers 200).
-hint-rollback-kept-fou =
+hint-rollback-safeguard =
     .lead = The hook (/srv/git/gazette.git/hooks/post-receive) must run tests.sh in the new version's directory, BEFORE switching current; with set -e, a failure stops the script. Théo will push again as soon as the hook changes.
     .solution = In the hook, just before the ln -sfn line, add: cd /srv/gazette/releases/$VERSION then sh tests.sh
 hint-rollback-end =
     .lead = Théo's layout is on the server, but it lacks index.html: fetch his commits into ~/gazette, give his page the right name, then publish through git.
-    .solution = cd ~/gazette, git pull prod main, mv accueil.html index.html, git add ., git commit -m "Home: index.html", git push prod main.
+    .solution = cd ~/gazette, git pull prod main, mv home.html index.html, git add ., git commit -m "Home: index.html", git push prod main.
 
 ## Chapter 3 — Blue and green
 

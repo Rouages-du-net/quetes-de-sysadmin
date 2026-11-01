@@ -26,18 +26,18 @@ more-room-message-odile =
 
 more-room-event-full =
     /srv is 97% full. It is not on a partition, but on
-    /dev/mapper/labo-photos: an LVM logical volume. What is left in its
+    /dev/mapper/lab-photos: an LVM logical volume. What is left in its
     group? (man vgs, man lvs, man pvs)
 more-room-event-lvm =
     LVM stacks three layers: physical volumes (PV, here the md1 array),
-    gathered into a group (VG labo), where logical volumes are carved out
+    gathered into a group (VG lab), where logical volumes are carved out
     (LV photos, mounted on /srv). The group has not a single free extent
     left. The two new disks, sdc and sdd, are waiting: first a RAID 1
     array with them, to keep the safety of two disks (man mdadm,
     --create).
 # { $disk }: the lone disk in the group
 more-room-event-only =
-    Careful: { $disk } joined the labo group as is, without RAID. If
+    Careful: { $disk } joined the lab group as is, without RAID. If
     this disk dies, everything LVM put on it is lost, and with it the
     whole photos volume. Take it out of the group (man vgreduce). If data
     is already on it, move it first (man pvmove) to an array: an array can
@@ -47,10 +47,10 @@ more-room-event-only =
 more-room-event-array =
     { $array } is created, and already usable: its first
     synchronization (resync, in /proc/mdstat) runs in the background. It
-    now becomes a physical volume of the labo group (man pvcreate, man
+    now becomes a physical volume of the lab group (man pvcreate, man
     vgextend).
 more-room-event-extended =
-    The labo group has room: vgs shows it (VFree). The photos volume has
+    The lab group has room: vgs shows it (VFree). The photos volume has
     not moved yet: grow it (man lvextend).
 more-room-event-lv-only =
     The logical volume grew (lvs), but df sees nothing: the file system it

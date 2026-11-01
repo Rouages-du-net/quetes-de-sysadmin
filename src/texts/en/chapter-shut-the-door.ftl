@@ -9,11 +9,11 @@ chapter-shut-the-door = Shut the Door
 ## Files
 
 door-email-kofi =
-    From:    Kofi (La Fourmilière)
+    From:    Kofi (The Anthill)
     To:      you
-    Subject: The Lettres' new server
+    Subject: The Letters' new server
 
-    Thanks to you, the Lettres du quartier website works again! So the
+    Thanks to you, the Neighbourhood Letters website works again! So the
     association has rented a small server just for it. The hosting company
     installed it last night and created an account for you (user name: you), with
     your SSH key: that's how you just got in.

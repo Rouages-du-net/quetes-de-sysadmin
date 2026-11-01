@@ -1,4 +1,4 @@
-// Story "La Maison des associations" — chapter "The keys": a
+// Story "The Community Centre" — chapter "The keys": a
 // brand-new account on the gateway, with a temporary password.
 // Create your key pair on your workstation (ssh-keygen), put the public key
 // on the other side (ssh-copy-id, or by hand in ~/.ssh/authorized_keys), log in
@@ -62,7 +62,7 @@ export const keys: Chapter = {
   initialise: loadSshd,
   hosts: { wiki: internalHost('wiki', '10.20.0.11'), archives: internalHost('archives', '10.20.0.12') },
   createWorld: (t) =>
-    homeWorld({ passwords: null, home: { 'email_yasmine.txt': f(t('keys-email-yasmine', { password: password(t, PASSWORD) })) } }),
+    homeWorld(t, { passwords: null, home: { 'email_yasmine.txt': f(t('keys-email-yasmine', { password: password(t, PASSWORD) })) } }),
   events: [
     { id: 'error', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('keys-event-error', { config: CONFIG }) },
     { id: 'locked-out', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('keys-event-locked-out') },

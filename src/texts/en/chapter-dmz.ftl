@@ -8,7 +8,7 @@ chapter-dmz = The DMZ
 ## Files
 
 dmz-email-ines =
-    From:    Inès (volunteer, La Ruche's website)
+    From:    Inès (volunteer, The Hive's website)
     To:      you
     Subject: The booking website, at our place!
 
@@ -36,13 +36,13 @@ dmz-email-ines =
     For sudo: bee-2027
 
 dmz-plan-switch =
-    SWITCH PLAN — La Ruche (electrician, updated January 2028)
+    SWITCH PLAN — The Hive (electrician, updated January 2028)
 
     Port 1     : to the router (eth1). 802.1Q TRUNK: VLAN 10, 20, 30, 40
                  tagged.
-    Ports 2-12 : VLAN 10 "bureaux"
-    Ports 13-16: VLAN 20 "invites"
-    Ports 17-20: VLAN 30 "equipements"
+    Ports 2-12 : VLAN 10 "offices"
+    Ports 13-16: VLAN 20 "guests"
+    Ports 17-20: VLAN 30 "equipment"
     Port 21    : VLAN 40 "dmz" (the web server)
 
     Addresses:

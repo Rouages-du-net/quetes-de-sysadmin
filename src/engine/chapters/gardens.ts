@@ -1,5 +1,5 @@
-// What the chapters of "Junk Mail" share: the server of the Shared
-// Gardens (jardin, 203.0.113.30, gardens.example), its DNS (BIND, primary
+// What the chapters of "Junk Mail" share: the server of the Community
+// Gardens (garden, 203.0.113.30, gardens.example), its DNS (BIND, primary
 // on the machine, secondary at the registry), Postfix and OpenDKIM as
 // Debian installs them, and the mail servers on the other side:
 // mailbox.example (a large, demanding mail provider), verifier.example (which
@@ -10,6 +10,7 @@
 
 import { d, f, accountsFiles, player, type Accounts, type Directory, type Rights } from '../world';
 import type { Game } from '../shell';
+import { machineName } from '../machines';
 import type { Translate } from '../../texts';
 import { reloadZones, type DnsState, type Rr, type Zone } from '../dns';
 import { newSystemd, systemd, type DefinitionService } from '../systemd';
@@ -45,7 +46,7 @@ export const OLD = { domain: 'old-hosting.example', network: '192.0.2.80/28' };
 // newsmail.example's DKIM key (published on their side, under nm1.dkim.newsmail.example).
 export const NEWSMAIL_KEY = publicKey(privateKey('newsmail.example:nm1:2048:1'))!;
 // The Gardens server's key, created in the chapter "The Signature" (and reused in the next one).
-export const GARDENS_PRIVATE = privateKey(`${DOMAIN}:mail:2048:jardins`);
+export const GARDENS_PRIVATE = privateKey(`${DOMAIN}:mail:2048:gardens`);
 
 const rr = (name: string, type: string, data: string, ttl = 3600): Rr => ({ name: name.replace(/\.?$/, '.'), ttl, type, data });
 
@@ -378,7 +379,7 @@ export function gardensState(t: Translate, departure: Departure): Record<string,
     secondary: {},
     cache: {},
     servers: {
-      primary: ['localhost', '127.0.0.1', 'garden', `ns1.${DOMAIN}`, IP],
+      primary: [...new Set(['localhost', '127.0.0.1', 'garden', machineName(t, 'garden'), `ns1.${DOMAIN}`, IP])],
       secondary: ['ns2.registry.example', '192.0.2.53'],
       resolver: ['9.9.9.9', 'dns.quad9.net'],
     },

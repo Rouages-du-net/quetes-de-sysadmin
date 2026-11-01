@@ -1,5 +1,5 @@
-// What the chapters of "La flotte" share: the community centres' control
-// station (pilote, 192.0.2.25), where Ansible is installed, and the three
+// What the chapters of "The Fleet" share: the community centres' control
+// station (pilot, 192.0.2.25), where Ansible is installed, and the three
 // community centres' servers (north, south, east, on 10.30.0.0/24), reached
 // over ssh with the deploy account (sudo without a password).
 // Sources: https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html,
@@ -12,7 +12,7 @@ import { generateKey } from '../access';
 import { readConfig } from '../sshd';
 import { newSystemd, systemd } from '../systemd';
 import { history } from '../commands/ansible';
-import { hostKey } from '../machines';
+import { hostKey, machineName } from '../machines';
 
 export const M = '/home/you';
 export const DIRECTORY = `${M}/ansible`;
@@ -20,11 +20,12 @@ export const CENTRES: Record<string, string> = { north: '10.30.0.11', south: '10
 export const NAMES = Object.keys(CENTRES);
 const NOW = Date.UTC(2027, 8, 14, 9, 0, 0);
 
-// The key of the vous account on pilote; its public part is in ~deploy/.ssh/authorized_keys on each centre.
-export const KEY = generateKey('pilote-ansible', 'you@pilot');
+// The key of the you account on pilot; its public part is in ~deploy/.ssh/authorized_keys on each centre.
+export const KEY = generateKey('pilot-ansible', 'you@pilot');
 
-export const HOSTS = `127.0.0.1\tlocalhost
-192.0.2.25\tpilote.internal pilote
+/** /etc/hosts of pilot and of the centres (the control station under its name in the language). */
+export const hosts = (t: Translate) => `127.0.0.1\tlocalhost
+192.0.2.25\t${machineName(t, 'pilot')}.internal ${machineName(t, 'pilot')}
 ${NAMES.map((n) => `${CENTRES[n]}\t${n}.centres.internal ${n}`).join('\n')}`;
 
 export const MOTD_DEBIAN = `
@@ -113,7 +114,7 @@ export function centre(name: string, e: CentreState = {}): InternalHost {
             {
               ...accountsFiles(),
               hostname: file(name),
-              hosts: file(HOSTS),
+              hosts: file(hosts(t)),
               motd: file(e.motd?.(t) ?? MOTD_DEBIAN),
               ssh: d({ sshd_config: file(e.sshd ?? SSHD_CONFIG), 'sshd_config.d': d({}, undefined, root) }, undefined, root),
               'sudoers.d': d({ deploy: f('deploy ALL=(ALL) NOPASSWD: ALL', { lines: true, owner: 'root', mode: 'r--r-----' }) }, undefined, root),
@@ -157,7 +158,7 @@ export const pilotState = () => ({
   }),
 });
 
-/** pilote's world: /etc/hosts, vous's ssh key (and its known_hosts), ~/ansible, and Ansible. */
+/** pilot's world: /etc/hosts, you's ssh key (and its known_hosts), ~/ansible, and Ansible. */
 export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]; ansible: Record<string, Node>; home: Record<string, Node> }): Directory {
   const root = { owner: 'root' };
   const binary = (size: number) => f('', { owner: 'root', mode: 'rwxr-xr-x', size });
@@ -169,7 +170,7 @@ export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]
         {
           ...accountsFiles(),
           hostname: f('pilot', { lines: true, owner: 'root' }),
-          hosts: f(HOSTS, { lines: true, owner: 'root' }),
+          hosts: f(hosts(t), { lines: true, owner: 'root' }),
           ansible: d({ 'ansible.cfg': f('# Since Ansible 2.12 (core):\n# To generate an example config file (a "disabled" one with all default settings, commented out):\n#               $ ansible-config init --disabled > ansible.cfg', { lines: true, owner: 'root' }) }, undefined, root),
         },
         undefined,

@@ -7,7 +7,7 @@
 // (referrer and user agent). All IP addresses are reserved for
 // documentation (RFC 5737).
 
-import { path, d, f, player, type Chapter, type Accounts } from '../world';
+import { path, name, d, f, player, type Chapter, type Accounts } from '../world';
 import type { Game } from '../shell';
 import { instants } from '../activity';
 import type { Process } from '../commands/system';
@@ -21,7 +21,22 @@ const BLOCKED = '/etc/nginx/blocked.conf';
 // Deterministic access log: visitors, then a bot that scrapes the catalogue
 // and brings the service down (503 errors).
 const VISITORS = ['192.0.2.14', '192.0.2.31', '192.0.2.58', '203.0.113.9', '203.0.113.42', '203.0.113.87', '192.0.2.120', '203.0.113.150'];
-const PAGES = ['/', '/agenda', '/catalogue', '/horaires', '/catalogue/livre/1984', '/expositions', '/contact', '/catalogue/livre/beloved'];
+// The pages are written with their English names; route() gives them in the
+// game's language (names.ftl: /catalogue/search → /catalogue/recherche).
+const PAGES = ['/', '/events', '/catalogue', '/opening-hours', '/catalogue/book/1984', '/exhibitions', '/contact', '/catalogue/book/beloved'];
+const SEARCH = '/catalogue/search?q=';
+
+/** A page of the site (with its query string) in the game's language. */
+export const route = (t: Translate, page: string) => {
+  const [where, query] = page.split('?');
+  const translated = where
+    .split('/')
+    .map((m) => (m ? name(t, m) : m))
+    .join('/');
+  return query === undefined ? translated : `${translated}?${query}`;
+};
+// The requests of an access log, in the game's language.
+const translateRequests = (t: Translate, text: string) => text.replace(/"GET (\S+) HTTP/g, (_, page: string) => `"GET ${route(t, page)} HTTP`);
 
 function log(): { text: string; erreurs503: number; robotRequests: number } {
   const visitors = VISITORS;
@@ -36,7 +51,7 @@ function log(): { text: string; erreurs503: number; robotRequests: number } {
     const timeOfDay = `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     const isRobot = i >= 120 && random() < 0.7;
     const ip = isRobot ? ROBOT : visitors[Math.floor(random() * visitors.length)];
-    const page = isRobot ? `/catalogue/recherche?q=${String.fromCharCode(97 + (i % 26))}${i}` : pages[Math.floor(random() * pages.length)];
+    const page = isRobot ? `${SEARCH}${String.fromCharCode(97 + (i % 26))}${i}` : pages[Math.floor(random() * pages.length)];
     const override = i >= 210 && random() < 0.75;
     const status = override ? 503 : 200;
     if (status === 503) e503++;
@@ -48,7 +63,8 @@ function log(): { text: string; erreurs503: number; robotRequests: number } {
 }
 
 const LOG = log();
-export const NGINX_LOG = LOG.text;
+/** The access log of the evening of 13 October, in the game's language. */
+export const nginxLog = (t: Translate) => translateRequests(t, LOG.text);
 export const ERRORS_503 = LOG.erreurs503;
 export const ROBOT_REQUESTS = LOG.robotRequests;
 
@@ -58,8 +74,8 @@ export const ROBOT_REQUESTS = LOG.robotRequests;
 // tail -f /var/log/nginx/access.log shows it live.
 const DIRECT_START = Date.UTC(2026, 9, 13, 18, 42, 0);
 const inDirect = (j: Game): string[] => (j.state.liveAccess ??= []) as string[];
-const accessLine = (t: number, ip: string, page: string, status: number, size: number) =>
-  `${ip} - - [13/Oct/2026:${new Date(t + 2 * 3_600_000).toISOString().slice(11, 19)} +0200] "GET ${page} HTTP/1.1" ${status} ${size}`;
+const accessLine = (j: Game, t: number, ip: string, page: string, status: number, size: number) =>
+  `${ip} - - [13/Oct/2026:${new Date(t + 2 * 3_600_000).toISOString().slice(11, 19)} +0200] "GET ${route(j.t, page)} HTTP/1.1" ${status} ${size}`;
 const override = (j: Game) => (j.state.process as Process[]).some((p) => p.cpu > 90);
 const blocked = (j: Game) => (j.state.loadedConf as string).includes(`deny ${ROBOT};`);
 
@@ -70,10 +86,10 @@ function visits(j: Game, forEachOf: number, a: number) {
     const n = Math.floor(t / 1000);
     if (isRobot) {
       const status = blocked(j) ? 403 : override(j) ? 503 : 200;
-      inDirect(j).push(accessLine(t, ROBOT, `/catalogue/recherche?q=${String.fromCharCode(97 + (n % 26))}${n % 1000}`, status, status === 403 ? 153 : status === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
+      inDirect(j).push(accessLine(j, t, ROBOT, `${SEARCH}${String.fromCharCode(97 + (n % 26))}${n % 1000}`, status, status === 403 ? 153 : status === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
     } else {
       const status = override(j) ? 503 : 200;
-      inDirect(j).push(accessLine(t, VISITORS[n % VISITORS.length], PAGES[(n * 3) % PAGES.length], status, status === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
+      inDirect(j).push(accessLine(j, t, VISITORS[n % VISITORS.length], PAGES[(n * 3) % PAGES.length], status, status === 503 ? 197 : 1200 + ((n * 7919) % 9000)));
     }
   }
 }
@@ -187,7 +203,7 @@ export const datacenter: Chapter = {
               {
                 nginx: d(
                   {
-                    'access.log': f((j) => [LOG.text, ...inDirect(j)].join('\n'), { owner: 'root', lines: true }),
+                    'access.log': f((j) => [nginxLog(j.t), ...inDirect(j)].join('\n'), { owner: 'root', lines: true }),
                   },
                   undefined,
                   { owner: 'root' },
@@ -294,11 +310,11 @@ export const datacenter: Chapter = {
       id: 'report',
       // A count taken at some point during the investigation: between the log at the start and the log now.
       condition: (j) => {
-        const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
+        const r = j.read(path(j.t, `${M}/report.txt`)) ?? '';
         return j.flags.has('repaired') && r.includes(ROBOT) && reportCount(r).some((n) => n >= ERRORS_503 && n <= erreurs503(j));
       },
       message: (j) => {
-        const r = j.read(path(j.t, `${M}/rapport.txt`)) ?? '';
+        const r = j.read(path(j.t, `${M}/report.txt`)) ?? '';
         const n = reportCount(r).find((x) => x >= ERRORS_503 && x <= erreurs503(j)) ?? ERRORS_503;
         return j.t('first-day-event-report', { errors: String(n) });
       },

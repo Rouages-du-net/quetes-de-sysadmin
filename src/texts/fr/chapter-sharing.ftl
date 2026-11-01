@@ -48,10 +48,12 @@ sharing-note-rania =
     Pour tester un site depuis le serveur, avant que le monde entier le voie :
       curl -H "Host: cafe.example" http://127.0.0.1
     Et toujours : sudo nginx -t avant de recharger.
+sharing-agenda-description = Agenda des ateliers (Node.js)
+# { $file } : le fichier du programme (server.js)
 sharing-agenda-readme =
     Agenda des ateliers — serveur Node.js
 
-    Écoute sur 127.0.0.1:3000 (voir serveur.js).
+    Écoute sur 127.0.0.1:3000 (voir { $file }).
     Pages : /  /semaine  /ateliers
     Service systemd : agenda
 sharing-agenda-code =

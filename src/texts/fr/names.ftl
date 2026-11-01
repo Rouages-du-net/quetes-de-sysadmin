@@ -285,3 +285,103 @@ name-message_from_theo-txt = message_de_theo.txt
 
 ## La Rustine
 name-message_from_ines-txt = message_de_ines.txt
+
+## Les Lettres du quartier (les pages de l'agenda, « La colocation » et « Le soir du concert »)
+name-week = semaine
+name-workshops = ateliers
+## Le Datacenter : le rapport pour Awa, les pages du site de la médiathèque (journal d'accès, sauvegardes)
+name-report-txt = rapport.txt
+name-events = agenda
+name-opening-hours = horaires
+name-opening-hours-html = horaires.html
+name-book = livre
+name-exhibitions = expositions
+name-search = recherche
+## L'Astreinte : les émissions (l'argument de l'enregistreur, et le début du nom des enregistrements), le convertisseur des podcasts, les statistiques d'écoute
+name-morning-show = matinale
+name-night-show = nuit
+name-convert = convertir
+name-convert-py = convertir.py
+name-listen = ecoute
+
+## La Maison des associations : les adresses de la page d'administration du wiki, la clé de sauvegarde, le compte chez l'hébergeur et les pages du site
+name-approve = valider
+name-reject = refuser
+name-id_backup = id_sauvegarde
+name-id_backup-pub = id_sauvegarde.pub
+name-commcentre = maisonasso
+name-membership-html = adhesion.html
+name-prices-2025-html = tarifs-2025.html
+## L'Audit, La Veille et Le Labo : les noms du monde (le compte, le service,
+## la base et le dossier de l'appli de commandes ; le domaine et le site du
+## Fournil ; le groupe de volumes du Labo, ses dossiers de photos et ses
+## numérisations)
+name-orders = commandes
+name-backup-sh = sauvegarde.sh
+name-neighbour-internal = voisin.internal
+name-shop = boutique
+name-laptop = portable
+name-bakery-example = fournil.example
+name-bakery = fournil
+name-lab = labo
+name-gallery = galerie
+name-spring-show = expo-printemps
+name-harbour-trip = sortie-port
+name-night-contest = concours-nuit
+name-autumn-archives = archives-automne
+name-prints-tar = tirages.tar
+name-negatives-001-tif = negatifs-001.tif
+name-negatives-002-tif = negatifs-002.tif
+name-prints-001-tif = tirages-001.tif
+## La Ruche : les appareils du réseau local (noms d'hôtes), les VLAN et
+## les groupes de l'annuaire (equipe : voir Le Datacenter), le modèle de Sacha
+name-printer = imprimante
+name-entrance-camera = camera-entree
+name-malik-pc = poste-malik
+name-reception-pc = poste-accueil
+name-visitor-phone = telephone-visiteur
+name-wifi-ap = borne-wifi
+name-annex-pc = poste-annexe
+name-annex-printer = imprimante-annexe
+name-offices = bureaux
+name-guests = invites
+name-equipment = equipements
+name-ines-template-ldif = modele-ines.ldif
+## The Workshop
+name-toolshed = outiltheque
+name-toolshed-db = outiltheque.db
+name-toolshed-old = outiltheque-ancien
+name-toolshed-data = outiltheque-donnees
+name-local-ai = ia-locale
+name-old-wiki = wiki-ancien
+name-base-system = systeme
+name-webapp = appli
+name-pgdata = donnees
+name-point-thumbnails = .miniatures
+name-benchy-first-try-jpg = benchy-premier-essai.jpg
+name-benchy-success-jpg = benchy-reussi.jpg
+name-laser-cut-lamp-jpg = lampe-decoupe-laser.jpg
+name-wooden-clock-jpg = horloge-en-bois.jpg
+name-line-following-robot-jpg = robot-suiveur-de-ligne.jpg
+name-kids-soldering-workshop-jpg = atelier-soudure-enfants.jpg
+name-repaired-bike-jpg = velo-repare.jpg
+name-revived-toaster-jpg = grille-pain-ressuscite.jpg
+name-led-sign-jpg = enseigne-led.jpg
+name-shared-toolbox-jpg = boite-a-outils-partagee.jpg
+name-digital-embroidery-jpg = brodeuse-numerique.jpg
+name-homemade-drone-jpg = drone-maison.jpg
+name-custom-keyboard-jpg = clavier-sur-mesure.jpg
+name-fablab-party-jpg = fete-du-fablab.jpg
+
+## The Gazette
+name-street-party-html = fete-des-voisins.html
+name-home-html = accueil.html
+name-newsroom = redaction
+name-newsletter = lettre
+
+## The Game Library
+name-frontdesk = accueil
+name-gamelib = ludo
+name-boardgames = jeux
+name-members = membres
+name-loans = prets

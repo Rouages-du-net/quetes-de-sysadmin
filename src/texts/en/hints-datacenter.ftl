@@ -23,8 +23,8 @@ hint-first-day-repaired =
     .lead = The overloaded process is still running (ps aux). Stop it: it belongs to www-data, so you need sudo. systemd will restart it, clean.
     .solution = ps aux to find its number, then sudo kill PID (4242 at first, or that of the restarted process at 99%).
 hint-first-day-report =
-    .lead = The report goes in ~/rapport.txt: the number of 503 errors and the robot's address. > creates the file, >> appends a line.
-    .solution = grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt, then echo "Culprit: 198.51.100.77" >> ~/rapport.txt
+    .lead = The report goes in ~/report.txt: the number of 503 errors and the robot's address. > creates the file, >> appends a line.
+    .solution = grep " 503 " /var/log/nginx/access.log | wc -l > ~/report.txt, then echo "Culprit: 198.51.100.77" >> ~/report.txt
 
 ## Chapter 2 — Second day
 

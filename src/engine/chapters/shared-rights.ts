@@ -1,4 +1,4 @@
-// Story "La Coopérative" — chapter "Shared rights": Lina and
+// Story "The Co-op" — chapter "Shared rights": Lina and
 // Karim (group till) keep the till's statements in
 // /srv/till/statements, but neither can modify the other's
 // files (created -rw-r--r--, with their own group). And when the till
@@ -186,6 +186,7 @@ export const rights: Chapter = {
   }),
   createWorld: (t) =>
     cooperativeWorld({
+      t,
       withoutMarc: true,
       home: { 'email_awa.txt': f(t('shared-rights-email-awa')) },
       homes: {

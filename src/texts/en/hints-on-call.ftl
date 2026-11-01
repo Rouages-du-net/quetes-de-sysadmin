@@ -27,7 +27,7 @@ hint-memory-oom =
     .solution = systemctl status radio-playlist (Result: oom-kill), then sudo dmesg -T (Out of memory: Killed process…)
 hint-memory-zombies =
     .lead = Look at the list of all processes and their state: some are marked <defunct>. The PPID column tells you who their parent is.
-    .solution = ps -ef (or ps aux): zombies [convertir] <defunct>, children of PID 2305 (the radio-podcast service)
+    .solution = ps -ef (or ps aux): zombies [convert] <defunct>, children of PID 2305 (the radio-podcast service)
 hint-memory-contained =
     .lead = The playlist leaks: restarted as it is, it grows again. systemd can limit a service's memory and restart it if it dies, with an override (man systemctl: edit; man systemd.resource-control: MemoryMax=). Then watch it grow with top.
     .solution = sudo systemctl edit radio-playlist, write [Service] then MemoryMax=600M and Restart=on-failure; sudo systemctl start radio-playlist, then top (or free -h) several times: systemd kills it and restarts it.
@@ -77,8 +77,8 @@ hint-clock-end =
 ## Chapter 5 — The Probe
 
 hint-probe-end =
-    .lead = Zoé's probe (/usr/local/bin/probe) has three TODOs: watch /srv/radio, space AND inodes (man check_disk: -W, -K), check that the live stream answers (man check_http, port 8000, /direct), and run it every 5 minutes (a systemd timer or cron). Thresholds that are too tight give alerts for nothing.
-    .solution = In sudo nano /usr/local/bin/probe, add: $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE and $P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE; then sudo crontab -e: */5 * * * * /usr/local/bin/probe (or probe.service + probe.timer with OnCalendar=*:0/5, and sudo systemctl enable --now probe.timer).
+    .lead = Zoé's probe (/usr/local/bin/probe) has three TODOs: watch /srv/radio, space AND inodes (man check_disk: -W, -K), check that the live stream answers (man check_http, port 8000, /live), and run it every 5 minutes (a systemd timer or cron). Thresholds that are too tight give alerts for nothing.
+    .solution = In sudo nano /usr/local/bin/probe, add: $P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERT and $P/check_http -H localhost -p 8000 -u /live | grep -v " OK" | $ALERT; then sudo crontab -e: */5 * * * * /usr/local/bin/probe (or probe.service + probe.timer with OnCalendar=*:0/5, and sudo systemctl enable --now probe.timer).
 
 ## Chapter 6 — The Post-Mortem
 

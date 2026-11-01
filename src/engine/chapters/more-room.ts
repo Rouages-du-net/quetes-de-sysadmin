@@ -7,13 +7,13 @@
 // resize2fs). Finally, the new array goes into /etc/mdadm/mdadm.conf, and
 // the initramfs is rebuilt so that boot knows it.
 // Objective checked on the state: at least 1.5 TB free on /srv, no bare
-// disk in the labo group (each PV is an array), each new array once and
+// disk in the lab group (each PV is an array), each new array once and
 // only once in mdadm.conf, and the initramfs rebuilt since.
 // Sources: lvm(8), lvextend(8), resize2fs(8), mdadm(8),
 // https://manpages.debian.org/trixie/mdadm/mdadm.conf.5.en.html,
 // https://wiki.debian.org/SoftwareRAID
 
-import { f, type Chapter } from '../world';
+import { f, name, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
 import { devUpdate } from '../storage';
 import { lvm, pvsFor, lvSize } from '../lvm';
@@ -23,14 +23,16 @@ import { beforeLabCommand, labAccounts, labState, M, PASSWORD, labWorld, labKern
 const CONF = '/etc/mdadm/mdadm.conf';
 const NEED = 1.5e12;
 
-const photos = (j: Game) => lvm(st(j)).vgs.labo.lvs.photos;
+// The volume group: lab (labo in French).
+const vg = (j: Game) => name(j.t, 'lab');
+const photos = (j: Game) => lvm(st(j)).vgs[vg(j)].lvs.photos;
 // The free space on /srv, like df: the file system's size minus what it contains.
 const freeMem = (j: Game) => photos(j).fs - (j as Shell).size(j.find('/srv')!);
 // The arrays created during the chapter.
 const fresh = (j: Game) => Object.entries(st(j).arrays).filter(([n]) => n !== 'md0' && n !== 'md1');
-// A bare disk (not an array) in the labo group: redundancy is lost.
-const only = (j: Game) => pvsFor(st(j), 'labo').filter((pv) => !st(j).arrays[pv]);
-const extended = (j: Game) => pvsFor(st(j), 'labo').some((pv) => fresh(j).some(([n]) => n === pv));
+// A bare disk (not an array) in the lab group: redundancy is lost.
+const only = (j: Game) => pvsFor(st(j), vg(j)).filter((pv) => !st(j).arrays[pv]);
+const extended = (j: Game) => pvsFor(st(j), vg(j)).some((pv) => fresh(j).some(([n]) => n === pv));
 const arrayLines = (j: Game) => (j.read(CONF) ?? '').split('\n').filter((l) => /^\s*ARRAY\b/.test(l));
 const account = (j: Game, uuid: string) => arrayLines(j).filter((l) => l.includes(uuidMdadm(uuid))).length;
 const duplicates = (j: Game) => Object.values(st(j).arrays).some((g) => account(j, g.uuid) > 1);
@@ -82,7 +84,7 @@ export const grow: Chapter = {
   steps: ['full', 'lvm', 'array', 'extended', 'grown', 'conf', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('replaced'),
+  state: (t) => labState(t, 'replaced'),
   initialise: (j) => {
     labKernel(j, 'replaced');
     devUpdate(j);

@@ -20,20 +20,20 @@ memory-message-zoe =
     <defunct>, "zombies" according to a forum. I tried kill -9 on them:
     they're still there."
 memory-server-js =
-    // Radio Quartier: the automatic night playlist.
+    // Neighbourhood Radio: the automatic night playlist.
     const cache = new Map(); // tracks already decoded
 
-    function decoder(morceau) {"{"}
-      if (!cache.has(morceau.id)) cache.set(morceau.id, lire(morceau)); // TODO: empty the cache some day
-      return cache.get(morceau.id);
+    function decode(track) {"{"}
+      if (!cache.has(track.id)) cache.set(track.id, read(track)); // TODO: empty the cache some day
+      return cache.get(track.id);
     {"}"}
 memory-convert-py =
-    # Radio Quartier: converts shows into podcasts.
+    # Neighbourhood Radio: converts shows into podcasts.
     import subprocess
 
-    for emission in nouvelles_emissions():
+    for show in new_shows():
         # Starts the conversion... and never waits for it to finish (no wait()).
-        subprocess.Popen(["convertir", emission])
+        subprocess.Popen(["convert", show])
 
 ## Events
 

@@ -34,10 +34,10 @@ probe-script =
     # Les contrôles viennent de monitoring-plugins (comme Nagios ou Icinga) :
     # ils écrivent une ligne OK, WARNING ou CRITICAL (man check_disk).
     P=/usr/lib/nagios/plugins
-    ALERTE="mail -E -s Alerte-radio root"
+    ALERT="mail -E -s Alerte-radio root"
 
     # Le disque système : alerte sous 20 % de libre, critique sous 10 %.
-    $P/check_disk -w 20% -c 10% -p / | grep -v " OK" | $ALERTE
+    $P/check_disk -w 20% -c 10% -p / | grep -v " OK" | $ALERT
 
     # À FAIRE : le volume des données, /srv/radio (et ses inodes : souviens-toi…)
     # À FAIRE : le direct répond-il ? (le relais écoute sur le port 8000, chemin /direct)

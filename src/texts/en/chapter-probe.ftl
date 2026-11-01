@@ -29,18 +29,18 @@ probe-message-zoe =
     want to be able to sleep."
 probe-script =
     #!/bin/sh
-    # Radio Quartier's probe (Zoé, work in progress).
+    # Neighbourhood Radio's probe (Zoé, work in progress).
     # Each check that is not OK is sent by mail (mail -E: nothing if all is well).
     # The checks come from monitoring-plugins (like Nagios or Icinga):
     # they write one line, OK, WARNING or CRITICAL (man check_disk).
     P=/usr/lib/nagios/plugins
-    ALERTE="mail -E -s Alerte-radio root"
+    ALERT="mail -E -s radio-alert root"
 
     # The system disk: warning below 20% free, critical below 10%.
-    $P/check_disk -w 20% -c 10% -p / | grep -v " OK" | $ALERTE
+    $P/check_disk -w 20% -c 10% -p / | grep -v " OK" | $ALERT
 
     # TODO: the data volume, /srv/radio (and its inodes: remember…)
-    # TODO: is the live stream answering? (the relay listens on port 8000, path /direct)
+    # TODO: is the live stream answering? (the relay listens on port 8000, path /live)
     # TODO: run it every 5 minutes (cron? a systemd timer?)
 probe-podcasts-readme =
     Podcast thumbnails: the automatic import drops them into

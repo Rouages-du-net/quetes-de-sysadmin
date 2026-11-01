@@ -54,7 +54,7 @@ machine-letters-motd = The Neighbourhood Letters — the association's server. P
 machine-workshop-motd = The Workshop — the fablab's server. Here, we repair, we lend, we tinker.
 machine-gazette-motd = The Neighbourhood Gazette — the newspaper's server. We publish with git push, not by hand.
 machine-games-motd = The Neighbourhood Game Library — the volunteers' server. We play, we lend, we put the pieces away.
-machine-radio-motd = Radio Quartier — the station's server. On call: one eye on the stream, the other on the logs.
+machine-radio-motd = Neighbourhood Radio — the station's server. On call: one eye on the stream, the other on the logs.
 machine-community-motd = Community Centre — the gateway. Behind it: the wiki and the archives.
 machine-coop-motd = The neighbourhood food co-op — the till's server. Here, we share everything except passwords.
 machine-hive-motd = The Hive — the community space's router. eth0: the ISP box; eth1: the switch.
@@ -63,7 +63,7 @@ machine-lab-motd = The Lab — the photo club's server: the gallery and the memb
 machine-garden-motd = The Community Gardens — the association's website and mail (gardens.example). Please look after the seedlings and the server alike!
 machine-pilot-motd = The neighbourhood centres — the control machine: from here, Ansible looks after the three centres' servers.
 machine-patch-motd = The Patch — the community bike workshop (cycles.example). A brand-new server, with Caddy. Remember to pump up your tyres!
-machine-petrin-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
+machine-kneader-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.
 # { $file }: the chapter's welcome file (e.g. welcome.txt)

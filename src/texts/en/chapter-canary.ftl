@@ -41,7 +41,7 @@ canary-one-time =
     An hour goes by: { $visits } visits to the Kiosk, through nginx.
     Everything is written in /var/log/nginx/access.log.
 # { $errors }: the number of visits that got an error
-canary-event-all-one-coup =
+canary-event-all-at-once =
     All the traffic moved to 1.6.0 at once… and { $errors } visits
     in that hour got a 500 error: everyone gets to enjoy it. That's
     what the canary would have avoided. Go back to green (proxy_pass,

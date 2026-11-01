@@ -10,6 +10,15 @@ chapter-bulletin = Le bulletin
 
 ## Fichiers
 
+# Le site du Fournil (/var/www/fournil/index.html), tel que curl le montre.
+watch-site-index =
+    <!DOCTYPE html>
+    <html lang="fr">
+    <title>Le Fournil</title>
+    <h1>Le Fournil</h1>
+    <p>Commandez votre pain pour le retrait en boutique.</p>
+    </html>
+
 bulletin-email-salome =
     De :     Salomé
     À :      toi

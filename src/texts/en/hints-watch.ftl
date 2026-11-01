@@ -19,7 +19,7 @@ hint-bulletin-end =
 
 hint-priority-expose =
     .lead = Before ranking, look at what actually listens on this server, and what has no port at all (man ss, man nmap).
-    .solution = ss -tlnp (or nmap -sV petrin.internal): 80 and 443 answer any address, nothing listens for rsync.
+    .solution = ss -tlnp (or nmap -sV kneader.internal): 80 and 443 answer any address, nothing listens for rsync.
 hint-priority-order =
     .lead = rsync's score is higher, but a score measures how bad things get IF the service is reached, not how easy it is to reach. Write your decision in priority.md, nginx first, with why.
     .solution = sudo nano priority.md: nginx first (exposed to the internet, 80/443), rsync next (higher score, but no listening port); and a word on openssh-server (already protected, KbdInteractiveAuthentication set to no).
@@ -34,10 +34,10 @@ hint-fix-fixed =
     .solution = sudo apt update, then sudo apt upgrade (both fixes, nginx and rsync, install together).
 hint-fix-checked =
     .lead = Before moving on: does the site still answer? (man curl)
-    .solution = curl -I http://fournil.example/ (expect code 200).
+    .solution = curl -I http://bakery.example/ (expect code 200).
 hint-fix-end =
     .lead = Both packages must be at the bulletin's fixed version, and the site must still answer.
-    .solution = apt list --installed | grep -E 'nginx|rsync' to check the versions, then curl -I http://fournil.example/.
+    .solution = apt list --installed | grep -E 'nginx|rsync' to check the versions, then curl -I http://bakery.example/.
 
 ## Chapter 4 — No proof, no certainty
 

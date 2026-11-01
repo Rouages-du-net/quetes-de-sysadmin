@@ -162,7 +162,7 @@ function serverLog(): Systemd {
       check: (j) => serviceCertbot(shell(j)),
     },
   });
-  const tentatives = [
+  const attempts = [
     [2026, 11, 22, 4, 2],
     [2026, 11, 22, 16, 37],
     [2027, 0, 19, 15, 48],
@@ -172,7 +172,7 @@ function serverLog(): Systemd {
   ];
   const write = (time: number, ident: string, pid: number, message: string, priority = 6) =>
     sd.log.push({ time, boot: 1, unit: 'certbot.service', ident, pid, message, priority });
-  tentatives.forEach(([a, mo, j, h, mi], i) => {
+  attempts.forEach(([a, mo, j, h, mi], i) => {
     const t = Date.UTC(a, mo, j, h, mi, 0);
     const pid = 41200 + i * 317;
     write(t, 'systemd', 1, 'Starting certbot.service - Certbot...');
@@ -245,7 +245,7 @@ export const certificate: Chapter = {
   final: 'end',
   password: 'welcome-2026',
   // The machine rebuilt after the fire: same host key as in chapter 4.
-  hostKey: '-apres-incendie',
+  hostKey: '-after-fire',
   accounts,
   state: () => ({
     systemd: serverLog(),

@@ -5,40 +5,46 @@
 // trunk to the router); the router hasn't followed. What the chapters have
 // in common.
 
-import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
+import { d, f, name, accountsFiles, type Accounts, type Directory, type Node } from '../world';
 import { machineName } from '../machines';
 import type { Game } from '../shell';
 import { create, startNetwork, type Device, type Lan } from '../lan';
 import { startDnsmasq, readDnsmasq } from '../dnsmasq';
 import { newSystemd, type DefinitionService } from '../systemd';
-import { logTraffic, readConf } from '../nftables';
+import { logTraffic, readConf, type Flux } from '../nftables';
 import { applySysctl } from '../commands/nftables';
 import { internet, type ElementPlan } from '../plan';
 import type { Translate } from '../../texts';
 
 export const M = '/home/you';
 export const PASSWORD = 'bee-2027';
-// Lundi 8 novembre 2027, 8 h 15.
+// Monday 8 November 2027, 8:15 am.
 export const NOW = Date.UTC(2027, 10, 8, 8, 15, 0);
 
 // The VLAN plan (the electrician's): number, name, network, router address.
+// The names (offices, guests…) are names of the world, translated with name().
 export const VLANS = [
-  { id: 10, name: 'bureaux', network: '10.10.10.0/24', routeur: '10.10.10.1/24' },
-  { id: 20, name: 'invites', network: '10.10.20.0/24', routeur: '10.10.20.1/24' },
-  { id: 30, name: 'equipements', network: '10.10.30.0/24', routeur: '10.10.30.1/24' },
+  { id: 10, name: 'offices', network: '10.10.10.0/24', routeur: '10.10.10.1/24' },
+  { id: 20, name: 'guests', network: '10.10.20.0/24', routeur: '10.10.20.1/24' },
+  { id: 30, name: 'equipment', network: '10.10.30.0/24', routeur: '10.10.30.1/24' },
 ];
 
-// The devices plugged into the switch (documentation MAC addresses, RFC 7042).
-export const devices = (printerInDhcp: boolean): Device[] => [
-  { name: 'nas', mac: '00:00:5e:00:53:05', vlan: 10, fixed: '10.10.10.5' },
-  { name: 'poste-malik', mac: '00:00:5e:00:53:10', vlan: 10 },
-  { name: 'poste-accueil', mac: '00:00:5e:00:53:11', vlan: 10 },
-  { name: 'telephone-visiteur', mac: '00:00:5e:00:53:20', vlan: 20 },
-  printerInDhcp
-    ? { name: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30 }
-    : { name: 'imprimante', mac: '00:00:5e:00:53:30', vlan: 30, fixed: '10.10.30.10' },
-  { name: 'camera-entree', mac: '00:00:5e:00:53:31', vlan: 30, fixed: '10.10.30.11' },
-];
+// The devices plugged into the switch (documentation MAC addresses, RFC 7042),
+// with their host names in the language (printer → imprimante…).
+export const devices = (t: Translate, printerInDhcp: boolean): Device[] =>
+  [
+    { name: 'nas', mac: '00:00:5e:00:53:05', vlan: 10, fixed: '10.10.10.5' },
+    { name: 'malik-pc', mac: '00:00:5e:00:53:10', vlan: 10 },
+    { name: 'reception-pc', mac: '00:00:5e:00:53:11', vlan: 10 },
+    { name: 'visitor-phone', mac: '00:00:5e:00:53:20', vlan: 20 },
+    printerInDhcp
+      ? { name: 'printer', mac: '00:00:5e:00:53:30', vlan: 30 }
+      : { name: 'printer', mac: '00:00:5e:00:53:30', vlan: 30, fixed: '10.10.30.10' },
+    { name: 'entrance-camera', mac: '00:00:5e:00:53:31', vlan: 30, fixed: '10.10.30.11' },
+  ].map((a) => ({ ...a, name: name(t, a.name) }));
+
+/** A flow between devices, with their names in the language (addresses stay as they are). */
+export const fluxIn = <F extends Flux>(t: Translate, x: F): F => ({ ...x, forEachOf: name(t, x.forEachOf), to: name(t, x.to) });
 
 export const hiveAccounts = (): Accounts => ({
   users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
@@ -72,16 +78,16 @@ iface eth1 inet static
     address 192.168.1.1/24`;
 
 /** The same file, with the three VLANs (the solution of the chapter "VLANs"). */
-export const INTERFACES_VLAN = `${FLAT_A_INTERFACES.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
-${VLANS.map((v) => `\n# VLAN ${v.id}: ${v.name}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
+export const interfacesVlan = (t: Translate) => `${FLAT_A_INTERFACES.replace('# LAN: one flat network for everyone\nauto eth1\niface eth1 inet static\n    address 192.168.1.1/24', '# LAN: the trunk to the switch (VLANs 10, 20, 30)\nauto eth1\niface eth1 inet manual')}
+${VLANS.map((v) => `\n# VLAN ${v.id}: ${name(t, v.name)}\nauto eth1.${v.id}\niface eth1.${v.id} inet static\n    address ${v.routeur}`).join('\n')}`;
 
 /** dnsmasq once the chapter "DHCP" is finished: one range per VLAN, the printer reserved. */
-export const DNSMASQ_VLAN = `# The DHCP server of the LAN: one range per VLAN
+export const dnsmasqVlan = (t: Translate) => `# The DHCP server of the LAN: one range per VLAN
 interface=eth1.10,eth1.20,eth1.30
 dhcp-range=10.10.10.100,10.10.10.200,12h
 dhcp-range=10.10.20.100,10.10.20.250,2h
 dhcp-range=10.10.30.100,10.10.30.200,24h
-dhcp-host=00:00:5e:00:53:30,imprimante,10.10.30.10`;
+dhcp-host=00:00:5e:00:53:30,${name(t, 'printer')},10.10.30.10`;
 
 // /etc/nftables.conf, as Debian's package installs it: everything is allowed.
 export const NFTABLES_DEBIAN = `#!/usr/sbin/nft -f
@@ -137,7 +143,7 @@ const SYSCTL_CONF = `#
 
 // The kernel settings the game knows (/proc/sys), at their boot value.
 export const DEFAULTS_SYSCTL: Record<string, string> = {
-  'kernel.hostname': 'ruche',
+  'kernel.hostname': 'hive',
   'net.ipv4.conf.all.forwarding': '0',
   'net.ipv4.conf.all.rp_filter': '2',
   'net.ipv4.conf.default.rp_filter': '2',
@@ -147,7 +153,7 @@ export const DEFAULTS_SYSCTL: Record<string, string> = {
   'vm.swappiness': '60',
 };
 
-// /proc/sys en arborescence (net/ipv4/ip_forward…).
+// /proc/sys as a tree (net/ipv4/ip_forward…).
 function procSys(): Directory {
   const sysRoot: Directory = d({}, undefined, root);
   for (const [key, v] of Object.entries(DEFAULTS_SYSCTL)) {
@@ -160,13 +166,13 @@ function procSys(): Directory {
 }
 
 /** The initial state of the local network (rebuilt from /etc/network/interfaces at boot). */
-export function newLan(printerInDhcp: boolean): Lan {
+export function newLan(t: Translate, printerInDhcp: boolean): Lan {
   const l: Lan = {
     interfaces: {},
     gateway: null,
     trunk: 'eth1',
     vlans: VLANS.map((v) => v.id),
-    devices: devices(printerInDhcp),
+    devices: devices(t, printerInDhcp),
     order: [],
   };
   for (const name of ['lo', 'eth0', 'eth1']) create(l, name);
@@ -348,7 +354,7 @@ export const REMOTE_WORK_NFTABLES = NFTABLES_ZONES.replace(
 ).replace('iifname "eth1.20" oifname "eth0" accept', 'iifname "eth1.20" oifname "eth0" accept\n\t\tiifname "wg0" oifname "eth1.10" accept');
 
 /** The network at the end of "The DMZ": eth1.40 in the file, and the firewall that publishes the site. */
-export const INTERFACES_DMZ = `${INTERFACES_VLAN}
+export const interfacesDmz = (t: Translate) => `${interfacesVlan(t)}
 
 # VLAN 40: dmz (the public web server)
 auto eth1.40
@@ -364,8 +370,8 @@ export const NFTABLES_DMZ = REMOTE_WORK_NFTABLES.replace(
 );
 
 /** The local network with the DMZ (VLAN 40, the web server). */
-export function lanWithDmz(): Lan {
-  const l = newLan(true);
+export function lanWithDmz(t: Translate): Lan {
+  const l = newLan(t, true);
   l.vlans.push(40);
   l.devices.push({ name: 'web', mac: '00:00:5e:00:53:40', vlan: 40, fixed: '10.10.40.10' });
   return l;
@@ -383,9 +389,9 @@ export const hivePlan =
     const listing = (words: string[]) => words.join(' · ');
     const vlans = [...VLANS, ...(o.dmz ? [{ id: 40, name: 'dmz', network: '10.10.40.0/24' }] : [])];
     const all = [
-      ...devices(false),
+      ...devices(t, false),
       ...(o.dmz ? [{ name: 'web', vlan: 40, fixed: '10.10.40.10' }] : []),
-      ...(o.wifi ? [{ name: 'borne-wifi', vlan: 30, fixed: '10.10.30.20' }] : []),
+      ...(o.wifi ? [{ name: name(t, 'wifi-ap'), vlan: 30, fixed: '10.10.30.20' }] : []),
     ];
     return internet(t, {
       role: 'router',
@@ -396,7 +402,7 @@ export const hivePlan =
       children: [
         ...vlans.map((v) => ({
           role: 'network' as const,
-          name: t('plan-vlan', { id: String(v.id), name: v.name }),
+          name: t('plan-vlan', { id: String(v.id), name: name(t, v.name) }),
           address: v.network,
           children: all
             .filter((a) => a.vlan === v.id)
@@ -419,8 +425,8 @@ export const hivePlan =
                     name: t('plan-network-annex'),
                     address: '10.20.10.0/24',
                     children: [
-                      { role: 'device' as const, name: 'poste-annexe', address: '10.20.10.15' },
-                      { role: 'device' as const, name: 'imprimante-annexe', address: '10.20.10.20' },
+                      { role: 'device' as const, name: name(t, 'annex-pc'), address: '10.20.10.15' },
+                      { role: 'device' as const, name: name(t, 'annex-printer'), address: '10.20.10.20' },
                     ],
                   },
                 ],

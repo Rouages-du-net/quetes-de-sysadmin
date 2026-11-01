@@ -1,11 +1,11 @@
-// Story "L'Audit": what its chapters share. The server of
-// Le Fournil (machine fournil), Nadia's bakery, which takes its orders
+// Story "The Audit": what its chapters share. The server of
+// The Bakery (machine bakery), Nadia's bakery, which takes its orders
 // online: an nginx, an orders app (a service account), a PostgreSQL
 // database and a Redis. Salomé, an independent auditor, went through the
 // server with a fine-tooth comb and left a report: each chapter handles one
 // part. The examples stay defensive: read the report, check, repair.
 
-import { d, f, accountsFiles, player, type Accounts, type Directory, type Node } from '../world';
+import { d, f, path, accountsFiles, player, account, name, type Accounts, type Directory, type Node } from '../world';
 import { generateKey } from '../access';
 import { publicKey, storyMachine, machineName } from '../machines';
 import { writeLog, systemd, type DefinitionService } from '../systemd';
@@ -24,13 +24,28 @@ export const NOW = Date.UTC(2028, 2, 14, 9, 30, 0);
 // Some address on the internet (RFC 5737).
 export const INTERNET = '198.51.100.23';
 
-// The public keys (fake, with the right form).
-export const KEYS = {
-  nadia: generateKey('audit-nadia', 'nadia@boutique').isPublic,
-  lucas: generateKey('audit-lucas', 'lucas@portable').isPublic,
+// The public keys (fake, with the right form); their comment names a
+// machine, in the language (nadia@shop, nadia@boutique).
+export const bakeryKeys = (t: Translate) => ({
+  nadia: generateKey('audit-nadia', `nadia@${name(t, 'shop')}`).isPublic,
   // A key passing itself off as one of Nadia's: only its fingerprint gives it away.
-  unknown: generateKey('audit-inconnue', 'nadia@portable').isPublic,
-};
+  unknown: generateKey('audit-unknown', `nadia@${name(t, 'laptop')}`).isPublic,
+});
+
+// The orders app: its service account, its systemd service, its PostgreSQL
+// role and database, and its folder (/srv/orders) share one name, in the
+// language (commandes in French).
+export const orders = (t: Translate) => account(t, 'orders');
+/** The app's .env (/srv/orders/.env): the database address, with its password. */
+export const ordersEnv = (t: Translate, secret: string) =>
+  `PORT=3000\nDATABASE_URL=postgres://${orders(t)}:${secret}@localhost:5432/${orders(t)}\nREDIS_URL=redis://localhost:6379`;
+/** The orders app's systemd service (run by its account, with node). */
+export const ordersService = (t: Translate): DefinitionService => ({
+  description: t('audit-orders-description'),
+  active: true,
+  executable: 'node',
+  process: [{ pid: 731, user: orders(t), cpu: 0.8, mem: 3.1, command: `/usr/bin/node ${path(t, '/srv/orders/app/server.js')}` }],
+});
 
 // The accounts: Nadia (the manager), Lucas (the intern, gone at the end of February) and
 // orders, the app's service account.
@@ -38,7 +53,7 @@ export const bakeryAccounts = (withLucas = true): Accounts => {
   const c: Accounts = {
     users: {
       root: { uid: 0, group: 'root', home: '/root' },
-      commandes: { uid: 997, group: 'commandes', home: '/var/lib/commandes', shell: '/usr/sbin/nologin' },
+      orders: { uid: 997, group: 'orders', home: '/var/lib/orders', shell: '/usr/sbin/nologin' },
       you: { uid: 1000, group: 'you' },
       nadia: { uid: 1001, group: 'nadia' },
       lucas: { uid: 1002, group: 'lucas' },
@@ -47,7 +62,7 @@ export const bakeryAccounts = (withLucas = true): Accounts => {
       root: { gid: 0, members: [] },
       adm: { gid: 4, members: ['you'] },
       sudo: { gid: 27, members: ['you', 'lucas'] },
-      commandes: { gid: 997, members: ['nadia'] },
+      orders: { gid: 997, members: ['nadia'] },
       you: { gid: 1000, members: [] },
       nadia: { gid: 1001, members: [] },
       lucas: { gid: 1002, members: [] },
@@ -135,7 +150,7 @@ export function bakeryWorld(
     sudoersD?: Record<string, Node>;
     ssh?: Record<string, Node>;
     more?: Record<string, Node>;
-    // After "Le rapport": Lucas's account no longer exists.
+    // After "The Report": Lucas's account no longer exists.
     withoutLucas?: boolean;
   },
 ): Directory {
@@ -145,7 +160,7 @@ export function bakeryWorld(
       etc: d(
         {
           ...accountsFiles(),
-          hostname: file('bakery'),
+          hostname: file(machineName(t, 'bakery')),
           sudoers: file(SUDOERS, 'root', 'r--r-----'),
           'sudoers.d': d(
             { README: file('# See sudoers(5): files here are read unless their name has a dot or ends in ~.', 'root', 'r--r-----'), ...(o.sudoersD ?? {}) },
@@ -183,7 +198,8 @@ export function bakeryWorld(
 // ——— The network seen by nmap, and the packages ———
 
 export const SCOPE = ['192.0.2.22'];
-export const NEIGHBOUR = { name: 'voisin.internal', address: '192.0.2.24' };
+// The neighbour's server (a pizzeria), out of scope: its name is translated (neighbour.internal).
+export const NEIGHBOUR = { name: 'neighbour.internal', address: '192.0.2.24' };
 // The name of an installed package, as the service tells nmap: "Debian 7" then "Debian 7+deb13u1".
 const revision = (j: Game) => ((j.state.apt as AptState | undefined)?.installed['openssh-server'] ?? '1:10.0p1-7').split('-').slice(1).join('-');
 
@@ -196,12 +212,12 @@ const SERVICES: ServiceScan[] = [
   { port: 6379, service: 'redis', product: 'Redis key-value store 8.0.2' },
 ];
 
-/** What nmap can probe: Le Fournil (its state follows the machine) and the neighbour's server, out of scope. */
-export const bakeryScan = (): ScanState => {
-  const bakery: ScanHost = { address: '192.0.2.22', names: ['bakery.internal', 'bakery.example', 'bakery'], local: true, services: SERVICES, latency: 0.011 };
+/** What nmap can probe: the Bakery (its state follows the machine) and the neighbour's server, out of scope. */
+export const bakeryScan = (t: Translate): ScanState => {
+  const bakery: ScanHost = { address: '192.0.2.22', names: ['bakery.internal', name(t, 'bakery.example'), 'bakery'], local: true, services: SERVICES, latency: 0.011 };
   const neighbour: ScanHost = {
     address: NEIGHBOUR.address,
-    names: [NEIGHBOUR.name],
+    names: [name(t, NEIGHBOUR.name)],
     latency: 0.014,
     services: [
       { port: 22, service: 'ssh', product: 'OpenSSH 9.2p1 Debian 2+deb12u3 (protocol 2.0)' },

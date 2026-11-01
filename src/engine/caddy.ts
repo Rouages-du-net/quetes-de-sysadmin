@@ -493,7 +493,7 @@ const dateHttp = (ms: number) => {
   return `${DAYS[d.getUTCDay()]}, ${String(d.getUTCDate()).padStart(2, '0')} ${MONTH[d.getUTCMonth()]} ${d.getUTCFullYear()} ${d.toISOString().slice(11, 19)} GMT`;
 };
 
-export type CaddyResponse = Response | { tls: 'alerte' };
+export type CaddyResponse = Response | { tls: 'alert' };
 
 function response(game: Game, https: boolean, code: number, body: string, headers: [string, string][], certificate?: string): Response {
   const date = dateHttp(systemd(game)?.clock ?? 0);
@@ -557,7 +557,7 @@ function serve(game: Game, site: Site, host: string, path: string, https: boolea
 
 /**
  * A request to Caddy, on the machine: null if nothing listens on this port;
- * { tls: 'alerte' } if Caddy has no certificate for this name (the TLS
+ * { tls: 'alert' } if Caddy has no certificate for this name (the TLS
  * handshake fails). `outside`: the request comes from the internet (the firewall counts).
  */
 export function caddyRequest(game: Game, host: string, path: string, port: number, outside = false): CaddyResponse | null {
@@ -576,7 +576,7 @@ export function caddyRequest(game: Game, host: string, path: string, port: numbe
     c.sites.find((s) => s.addresses.some((a) => a.port === port && a.host === name)) ?? c.sites.find((s) => s.addresses.some((a) => a.port === port && !a.host));
   if (https) {
     const cert = certificateFor(game, name);
-    if (!site || !cert) return { tls: 'alerte' };
+    if (!site || !cert) return { tls: 'alert' };
     return serve(game, site, name, path, true, cert.content);
   }
   if (site) return serve(game, site, name, path, false);

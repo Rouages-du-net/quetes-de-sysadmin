@@ -52,7 +52,7 @@ rollback-site-index =
     <h1>The Neighbourhood Gazette</h1>
     <p>News from the street, by the people who live there.</p>
     <ul>
-    <li><a href="fete-des-voisins.html">The neighbours' party, behind the scenes</a></li>
+    <li><a href="street-party.html">The neighbours' party, behind the scenes</a></li>
     <li><a href="agenda.html">This month's calendar</a></li>
     </ul>
     </body>
@@ -63,8 +63,8 @@ rollback-site-welcome =
     <head><meta charset="utf-8"><title>The Neighbourhood Gazette</title><link rel="stylesheet" href="style.css"></head>
     <body>
     <header><h1>The Neighbourhood Gazette</h1><p>News from the street, by the people who live there.</p></header>
-    <section class="une">
-    <h2><a href="fete-des-voisins.html">Top story: the neighbours' party, behind the scenes</a></h2>
+    <section class="lead">
+    <h2><a href="street-party.html">Top story: the neighbours' party, behind the scenes</a></h2>
     </section>
     <nav><a href="agenda.html">This month's calendar</a></nav>
     </body>
@@ -101,13 +101,13 @@ rollback-event-restored =
     link. Now, let's make sure it doesn't happen again: the hook must run
     tests.sh on the new version, and not switch current if the
     tests fail." (Look at the hook, and man sh.)
-rollback-event-kept-fou =
+rollback-event-safeguard =
     Théo's push reached the server, but its tests failed and
     the hook stopped before switching current: the site didn't
     change. That's what a safeguard is for. Now publish his layout
     for real: fetch his commits (git pull), give the page the right name,
     commit and push.
-rollback-event-kept-fou-pierced =
+rollback-event-safeguard-pierced =
     Théo's broken push went live anyway: the hook didn't
     stop the publication. Restore the site, then look at the hook:
     are the tests run BEFORE switching current, from the directory

@@ -817,10 +817,10 @@ is out, and there are 37 ongoing loans not to lose.
 | Step | Command learnt |
 |---|---|
 | See what runs | `sudo docker ps -a`, `docker logs`, `curl http://localhost:8080` (and `docker` without `sudo`: the socket refuses) |
-| Know where the data is | `sudo docker inspect -f '{{json .Mounts}}' outiltheque`, `docker exec outiltheque ls -l /var/lib/outiltheque` |
-| Put the database in safety | `sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde` |
-| The new container | `docker stop outiltheque`, `docker run -d --name … -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque --restart unless-stopped registry.example/outiltheque:1.5` |
-| Put the database back | `docker cp sauvegarde/. container:/var/lib/outiltheque`, `docker restart` (the database migrates), `docker logs` |
+| Know where the data is | `sudo docker inspect -f '{{json .Mounts}}' toolshed`, `docker exec toolshed ls -l /var/lib/toolshed` |
+| Put the database in safety | `sudo docker cp toolshed:/var/lib/toolshed ./backup` |
+| The new container | `docker stop toolshed`, `docker run -d --name … -p 8080:8080 -v toolshed-data:/var/lib/toolshed --restart unless-stopped registry.example/toolshed:1.5` |
+| Put the database back | `docker cp backup/. container:/var/lib/toolshed`, `docker restart` (the database migrates), `docker logs` |
 
 Goal checked on the state: a version 1.5 container runs, publishes port
 8080, keeps its database in a volume or a directory of the machine, finds
@@ -832,7 +832,7 @@ container, `docker rm -f` before copying the database (lost for good: the
 chapter restarts from the menu), port 8080 still taken by the old container
 ("port is already allocated"), the new container creating an empty
 database, forgetting `--restart`. Other accepted solutions: a directory of
-the machine (`-v /srv/outiltheque:/var/lib/outiltheque`), copying the
+the machine (`-v /srv/toolshed:/var/lib/toolshed`), copying the
 database into the volume before starting, `docker update --restart`,
 `always`. Debrief: `inspect` before touching, volumes, `docker cp`,
 replacing without deleting too early, `--restart`, the docker group equals
@@ -848,9 +848,9 @@ service is reachable by its name, named volumes).
 
 | Step | Command learnt |
 |---|---|
-| Start, look | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs appli`, `curl http://localhost:8081` |
+| Start, look | `sudo docker compose up -d`, `docker compose ps`, `docker compose logs webapp`, `curl http://localhost:8081` |
 | Reach the database | `DATABASE_URL=postgres://…@db:5432/…` (the service's name, not `localhost`) |
-| Keep the data | `volumes: - donnees:/var/lib/postgresql/data` and `volumes: donnees:` at the bottom of the file |
+| Keep the data | `volumes: - pgdata:/var/lib/postgresql/data` and `volumes: pgdata:` at the bottom of the file |
 | Take the secret out | `${POSTGRES_PASSWORD}` in `compose.yaml`, the value in `.env`, `chmod 600 .env`; `docker compose config` |
 | Make it last | `restart: unless-stopped` on each service, then `docker compose up -d` |
 
@@ -885,7 +885,7 @@ full.
 
 Goal checked on the state: port 5432 no longer answers from outside, both
 apps still answer, the disk is under 75 %, and the useful volumes (including
-`wiki-ancien`, which no container uses) are still there.
+`old-wiki`, which no container uses) are still there.
 
 Expected traps: believing `ufw status`, adding a ufw rule (no effect),
 `docker image prune` without `-a` (too little space gained),
@@ -899,7 +899,7 @@ pruning).
 
 ### Chapter 4 — Les pleins pouvoirs (done)
 
-The fablab's photo gallery (`/srv/galerie`, port 8082) receives photos sent
+The fablab's photo gallery (`/srv/gallery`, port 8082) receives photos sent
 by visitors. Its image declares no user and `compose.yaml` has no `user:`:
 it runs as root. The files it writes in the mounted `photos/` directory
 belong to root on the machine, and Yasmine can no longer manage the photos
@@ -908,18 +908,18 @@ everything mounted.
 
 | Step | Command learnt |
 |---|---|
-| Who am I, inside and outside | `sudo docker exec galerie-galerie-1 id` (uid=0), `ps aux` on the machine (the gallery's process as root) |
+| Who am I, inside and outside | `sudo docker exec gallery-gallery-1 id` (uid=0), `ps aux` on the machine (the gallery's process as root) |
 | Change user | `user: "1001:1001"` in `compose.yaml` (or `docker run --user`), `sudo docker compose up -d` |
 | Understand the failure | `docker compose ps` (Restarting), `docker compose logs` (EACCES), `ls -lan photos` (numeric uid and gid, hidden files) |
-| Give the directory | `sudo chown -R 1001:1001 /srv/galerie/photos`; Docker restarts the gallery by itself |
+| Give the directory | `sudo chown -R 1001:1001 /srv/gallery/photos`; Docker restarts the gallery by itself |
 
 Goal checked on the state: a gallery container runs under a uid other than 0
 and answers, the 14 photos are there, Yasmine (uid 1001) can write in the
-directory, and neither it nor `.miniatures` is world-writable.
+directory, and neither it nor `.thumbnails` is world-writable.
 
-Expected traps: a name unknown to the image (`user: galerie`: "unable to
-find user galerie: no matching entries in passwd file"), `chown` without
-`-R` (the `.miniatures` directory stays root's), `user: node` (uid 1000: on
+Expected traps: a name unknown to the image (`user: gallery`: "unable to
+find user gallery: no matching entries in passwd file"), `chown` without
+`-R` (the `.thumbnails` directory stays root's), `user: node` (uid 1000: on
 the machine, its files belong to the player, and Yasmine still can't write),
 `chmod 777`, a deleted photo (the chapter restarts from the menu). Other
 accepted solutions: `docker run -u`, another uid with Yasmine's group and
@@ -967,7 +967,7 @@ Théo's layout, without `index.html`, gives a 403.
 | Understand | `curl -I`, `ls -l /srv/gazette`, `readlink`, `ls releases/*` |
 | Roll back | `ln -sfn releases/20270514101502 current` |
 | The safeguard | in the hook, `cd` into the new version then `sh tests.sh` BEFORE `ln -sfn` (with `set -e`) |
-| Publish the fix | `git pull prod main`, `mv accueil.html index.html`, `git add .`, `git commit`, `git push` |
+| Publish the fix | `git pull prod main`, `mv home.html index.html`, `git add .`, `git commit`, `git push` |
 
 Goal checked on the state: the new layout is online, published by the hook
 after its tests, and a new broken push from Théo (simulated as soon as the
@@ -978,7 +978,7 @@ refused until you have fetched Théo's commits.
 
 ### Chapter 3 — Bleu et vert (done)
 
-Le Kiosque (newsletter subscriptions, Node.js) runs on the blue slot (port
+The Kiosk (newsletter subscriptions, Node.js) runs on the blue slot (port
 3001) behind nginx; the green slot (3002) is free.
 
 | Step | Command learnt |
@@ -1025,22 +1025,22 @@ other instance also runs a healthy 2.x. Expected trap: going back to blue
 
 ## Story 9: La Ludothèque (three chapters)
 
-The neighbourhood toy library's server (machine `ludotheque`, 192.0.2.17):
+The neighbourhood toy library's server (machine `games`, 192.0.2.17):
 Bérénice (president) and Malo (volunteer). Phase 7 of the roadmap.
 
 ### Chapter 1 — La rançon (done)
 
-Monday morning, the share (`/srv/partage`) is encrypted (`.locked`); a
-ransom note lies in every directory. The `accueil` account's password was
+Monday morning, the share (`/srv/share`) is encrypted (`.locked`); a
+ransom note lies in every directory. The `frontdesk` account's password was
 guessed; a program still runs under that account, and its crontab restarts
 it. The NAS's nightly copy (`rsync --delete`) is encrypted too.
 
 | Step | Command learnt |
 |---|---|
-| Measure | `find /srv/partage -name "*.locked" \| wc -l`, `cat LISEZ-MOI…` (we don't pay) |
-| Stop the attack | `ps aux`, `sudo kill 3141`, `sudo crontab -u accueil -l/-r`, `sudo usermod -L accueil`, `journalctl -u ssh` |
-| Find a backup | `ls /mnt/nas/partage` (encrypted), `lsblk -f` (the `SAUVEGARDE` disk) |
-| Restore | `sudo mount -o ro /dev/sdb1 /mnt/cle`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/cle` |
+| Measure | `find /srv/share -name "*.locked" \| wc -l`, `cat READ-ME-TO-RECOVER.txt` (we don't pay) |
+| Stop the attack | `ps aux`, `sudo kill 3141`, `sudo crontab -u frontdesk -l/-r`, `sudo usermod -L frontdesk`, `journalctl -u ssh` |
+| Find a backup | `ls /mnt/nas/share` (encrypted), `lsblk -f` (the `BACKUP` disk) |
+| Restore | `sudo mount -o ro /dev/sdb1 /mnt/usb`, `restic snapshots`, `restic restore latest --target /`, `find … -delete`, `sudo umount /mnt/usb` |
 
 Goal checked on the state: the encryptor is stopped and doesn't come back,
 the account is locked, the six files are restored, no `.locked` nor ransom
@@ -1051,7 +1051,7 @@ unmounting from inside the mount point ("target is busy").
 
 ### Chapter 2 — Les instantanés (done)
 
-Setting up rsnapshot (Debian's configuration) for `/srv/partage/` to the
+Setting up rsnapshot (Debian's configuration) for `/srv/share/` to the
 second disk, 7 dailies and 4 weeklies, and running it with cron. The game
 lets two weeks pass; on the last evening, Bérénice overwrites the inventory
 with an old copy.
@@ -1060,11 +1060,11 @@ with an old copy.
 |---|---|
 | Configure | `/etc/rsnapshot.conf` (tabs), `rsnapshot configtest`, `rsnapshot -t daily` |
 | Schedule | `sudo crontab -e`: `0 3 * * 1 … weekly`, `30 3 * * * … daily` |
-| Observe | `ls /mnt/instantanes`, `rsnapshot du`, `ls -i` (same inode), `diff` |
-| Restore | `cp …/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/` |
+| Observe | `ls /mnt/snapshots`, `rsnapshot du`, `ls -i` (same inode), `diff` |
+| Restore | `cp …/daily.1/localhost/srv/share/inventory.csv /srv/share/` |
 
 Goal checked on the state: 7 daily snapshots and a weekly one on
-`/mnt/instantanes`, and the inventory back to its version of two days
+`/mnt/snapshots`, and the inventory back to its version of two days
 before. Expected traps: spaces instead of tabs, an ordinary account's
 crontab (cron's mail says so), the latest snapshot (taken after the
 mistake).
@@ -1076,21 +1076,21 @@ rsnapshot while it runs.
 
 | Step | Command learnt |
 |---|---|
-| Connect | `psql -l` (unknown role), `sudo -u postgres psql -d ludo -c "\dt"` |
-| Back up | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/ludo.dump ludo` |
-| Test | `createdb ludo_test`, `pg_restore -d ludo_test …`, `SELECT count(*)` |
-| Repair | the `prets` table emptied: `pg_restore -d ludo --data-only -t prets …` |
+| Connect | `psql -l` (unknown role), `sudo -u postgres psql -d gamelib -c "\dt"` |
+| Back up | `sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/gamelib.dump gamelib` |
+| Test | `createdb gamelib_test`, `pg_restore -d gamelib_test …`, `SELECT count(*)` |
+| Repair | the `loans` table emptied: `pg_restore -d gamelib --data-only -t loans …` |
 | Schedule | `sudo crontab -u postgres -e` |
 
-Goal checked on the state: a cron job runs `ludo`'s `pg_dump` as
+Goal checked on the state: a cron job runs `gamelib`'s `pg_dump` as
 `postgres`, an archive exists, a test database has the same row counts, and
 the loans are back. Expected traps: the `>` redirection with `sudo -u`,
 restoring over the live database, reinjecting into a full table
 (duplicates), `pg_dump` in root's crontab.
 
-## Story 10: L'Astreinte (seven chapters)
+## Story 10: On Call (seven chapters)
 
-On-call nights for Radio Quartier (machine `radio`, 192.0.2.18), with Zoé, a
+On-call nights for Neighbourhood Radio (machine `radio`, 192.0.2.18), with Zoé, a
 technical volunteer. The classic failures, one per night, then monitoring
 that warns before things break. Phase 7 of the roadmap.
 
@@ -1189,8 +1189,8 @@ am).
 
 | Step | Command learnt |
 |---|---|
-| The plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /direct`, `check_procs -C flux -c 1:` (outside the PATH) |
-| The alert | `… \| grep -v " OK" \| mail -E -s Alerte-radio root`, `/etc/aliases`, `/var/mail/zoe` |
+| The plugins | `/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio`, `check_http -H localhost -p 8000 -u /live`, `check_procs -C stream -c 1:` (outside the PATH) |
+| The alert | `… \| grep -v " OK" \| mail -E -s radio-alert root`, `/etc/aliases`, `/var/mail/zoe` |
 | Schedule | `probe.service` (`Type=oneshot`) and `probe.timer` (`OnCalendar=*:0/5`, `WantedBy=timers.target`), `systemd-analyze calendar`, `systemctl daemon-reload`, `enable --now`, `list-timers` (or a crontab line) |
 | Check | the drill night, `journalctl -u sonde` |
 
@@ -1245,9 +1245,9 @@ disk, `systemctl edit`. Debrief: iowait and load, `iostat -x`,
 `pidstat -d`, io.max versus ionice, `set-property` versus `edit`; links to
 `iostat(1)`, `systemd.resource-control(5)` and cgroup v2's io controller.
 
-## Story 11: La Maison des associations (five chapters)
+## Story 11: The Community Centre (five chapters)
 
-The neighbourhood's community centre (machine `maison`, 192.0.2.19): a
+The neighbourhood's community centre (machine `community`, 192.0.2.19): a
 gateway, the only machine visible from the internet, and behind it an
 internal network (`wiki`, 10.20.0.11, and `archives`, 10.20.0.12). Yasmine,
 the coordinator, hands IT over to the player; Gaspard, the former volunteer,
@@ -1262,9 +1262,9 @@ in English).
 | Step | Command learnt |
 |---|---|
 | Create your key pair | `ssh-keygen` (on the workstation), optional passphrase |
-| Install it | `ssh-copy-id maison` (password one last time), or `~/.ssh/authorized_keys` by hand |
+| Install it | `ssh-copy-id community` (password one last time), or `~/.ssh/authorized_keys` by hand |
 | Close | `PasswordAuthentication no` in `sshd_config` (or a file in `sshd_config.d`), `sshd -t`, `systemctl reload ssh` |
-| Check | `exit`, `ssh maison`: in by key |
+| Check | `exit`, `ssh community`: in by key |
 
 Goal checked on the state: sshd applies `PasswordAuthentication no`, a key
 of your own is authorised, and a key connection happened after this load.
@@ -1279,15 +1279,15 @@ private key there.
 
 | Step | Command learnt |
 |---|---|
-| Jump | `ssh -J maison wiki` (the wiki's host key is checked from the workstation) |
-| The shortcut | `Host wiki`, `HostName wiki`, `ProxyJump maison` in the workstation's `~/.ssh/config`; `ssh -G wiki` |
+| Jump | `ssh -J community wiki` (the wiki's host key is checked from the workstation) |
+| The shortcut | `Host wiki`, `HostName wiki`, `ProxyJump community` in the workstation's `~/.ssh/config`; `ssh -G wiki` |
 | Where am I? | `hostname`, the prompt |
 
 Goal checked on the state: a key connection to the wiki, a `Host` block on
-the workstation that leads there through maison (checked as ssh would read
-it), and no private key on maison. Expected traps: `ssh wiki` from the
-workstation (unknown name), from maison ("Permission denied"), a private key
-copied onto maison (`scp`).
+the workstation that leads there through community (checked as ssh would read
+it), and no private key on community. Expected traps: `ssh wiki` from the
+workstation (unknown name), from community ("Permission denied"), a private key
+copied onto community (`scp`).
 
 ### Chapter 3 — Le tunnel (done)
 
@@ -1298,13 +1298,13 @@ wiki has neither a browser nor curl; three sign-ups are waiting.
 |---|---|
 | Understand | `ss -tln`, `systemctl status wiki-admin` (on the wiki) |
 | The tunnel | `ssh -f -N -L 8080:localhost:8080 wiki` |
-| Act | `curl localhost:8080/admin`, `/admin/valider/samir`, `/admin/valider/lea` |
+| Act | `curl localhost:8080/admin`, `/admin/approve/samir`, `/admin/approve/lea` |
 | Close again | `ps`, `kill` |
 
 Goal checked on the state: Samir and Léa approved, the advertising account
 not, no tunnel left open on the workstation. Expected traps:
-`-L 8080:localhost:8080 maison` (localhost as seen from maison),
-`-L 8080:wiki:8080 maison` (the service doesn't listen on the wiki's
+`-L 8080:localhost:8080 community` (localhost as seen from community),
+`-L 8080:wiki:8080 community` (the service doesn't listen on the wiki's
 address), `-N` without `-f`, approving the advert (you can reject it
 afterwards).
 
@@ -1316,18 +1316,18 @@ directory's backup to redo.
 | Step | Command learnt |
 |---|---|
 | Bring back | `scp wiki:/srv/wiki/exports/rapport-2027.pdf .` (from the workstation, through the shortcut) |
-| Back up | from maison, with the dedicated `id_sauvegarde` key: `rsync -avn /srv/partage/ archives:/srv/sauvegardes/partage/`, then without `-n` |
+| Back up | from community, with the dedicated `id_backup` key: `rsync -avn /srv/share/ archives:/srv/backups/share/`, then without `-n` |
 | Repair | `rsync -av --delete …` (after a `-n` try) |
 
 Goal checked on the state: the report intact on the workstation, every file
 of the shared directory identical on archives, with no extra copied
 directory. Expected traps: the forgotten trailing slash (a
-`partage/partage` directory), `--delete` without a dry run. The debrief
+`share/share` directory), `--delete` without a dry run. The debrief
 talks about FTP and telnet, which send passwords in clear text.
 
 ### Chapter 5 — L'hébergeur (done)
 
-The Maison's new website is ready on the wiki (`/srv/wiki/site`); it is
+The Centre's new website is ready on the wiki (`/srv/wiki/site`); it is
 published on shared hosting that only offers FTP, and now refuses clear-text
 FTP. Gaspard used to publish with FileZilla, without encryption, to
 `ftp.community.example` (a name that points to the host, but that its
@@ -1336,7 +1336,7 @@ certificate doesn't cover).
 | Step | Command learnt |
 |---|---|
 | Bring back | from the workstation, `sftp wiki`: `cd /srv/wiki`, `ls`, `get -r site`, `lls`, `bye` |
-| Connect | `lftp -u maisonasso ftp.hosting.example` (the password asked, FTPS by default) |
+| Connect | `lftp -u commcentre ftp.hosting.example` (the password asked, FTPS by default) |
 | Publish | `mirror -R --delete --dry-run site public_html`, then without `--dry-run` |
 
 Goal checked on the state: `public_html` holds exactly the wiki's site, and
@@ -1902,7 +1902,7 @@ Six months after "L'Audit" (story 14, "I'll come back in six months:
 security has to be checked again"), Salomé returns — no longer to audit,
 but to pass on a habit: the weekly security watch, which you keep up on
 your own once she's gone. Le Fournil's business has grown: the machine
-(`petrin`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
+(`kneader`, 192.0.2.24) is a new server (a migration), Salomé and Nadia take
 up their roles again. Each chapter matches a real sysadmin gesture: reading
 a bulletin, sorting, fixing without breaking, proving, then automating what
 can be. Everything stays defensive: no real CVE is cited (fictitious
@@ -1944,7 +1944,7 @@ and "L'exposition".
 
 | Step | Command learnt |
 |---|---|
-| Review exposure | `ss -tlnp` or `nmap -sV petrin.internal` |
+| Review exposure | `ss -tlnp` or `nmap -sV kneader.internal` |
 | Decide | `nano priorite.md`: an order of treatment, justified; and openssh-server (already protected) |
 
 Goal checked on the state: `priorite.md` puts nginx before rsync (even

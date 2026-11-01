@@ -15,7 +15,7 @@ import type { Directory } from './world';
 import { partitionFor, type StorageState } from './storage';
 import { readLv } from './lvm';
 
-/** A file system on a device (/dev/md0, /dev/mapper/labo-photos, /dev/sde1). */
+/** A file system on a device (/dev/md0, /dev/mapper/lab-photos, /dev/sde1). */
 export interface FilesSystem {
   type: string;
   uuid: string;

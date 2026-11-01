@@ -67,7 +67,7 @@ bare-repo-site-index-v2 =
     <h1>The Neighbourhood Gazzette</h1>
     <p>News from the street, by the people who live there.</p>
     <ul>
-    <li><a href="fete-des-voisins.html">The street party, courtyard side</a></li>
+    <li><a href="street-party.html">The street party, courtyard side</a></li>
     <li><a href="agenda.html">This month's calendar</a></li>
     </ul>
     </body>
@@ -131,7 +131,7 @@ bare-repo-event-in-line =
     Saturday June 12, not the 21st. The date is written twice: in the
     text and in datetime="2027-06-21". Can you fix it, and publish it
     the proper way?"
-bare-repo-event-a-main =
+bare-repo-event-by-hand =
     The date is fixed on the server, but not in git: that's exactly
     what we wanted to stop. On the next push, the fix would be
     overwritten. Fix it in ~/gazette, then commit and push.

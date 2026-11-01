@@ -47,7 +47,7 @@ kiosk-welcome =
     <body>
     <h1>The Kiosk</h1>
     <p>Get the Gazette's newsletter every Monday.</p>
-    <form method="post" action="inscription"><input name="courriel"><button>Subscribe</button></form>
+    <form method="post" action="subscribe"><input name="email"><button>Subscribe</button></form>
     <footer>Kiosk { $version }</footer>
     </body>
     </html>
@@ -61,6 +61,7 @@ kiosk-archives =
     <footer>Kiosk { $version }</footer>
     </body>
     </html>
+kiosk-migration-4 = rename_subscribers_mail_to_email
 
 ## Events
 

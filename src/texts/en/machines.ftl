@@ -23,3 +23,6 @@ machine-lab = lab
 machine-garden = garden
 machine-pilot = pilot
 machine-patch = patch
+
+## The Watch
+machine-kneader = kneader

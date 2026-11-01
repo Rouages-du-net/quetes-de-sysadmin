@@ -308,7 +308,7 @@ which works on machines rather than switches).
       `authorized_keys`, a `cron` job left by the intruder, the database
       password changed end to end) and "La contre-visite" (`nmap`, `lynis`,
       updates, closing report).
-- [x] **La Veille** (story 16, machine `petrin`): six months after
+- [x] **La Veille** (story 16, machine `kneader`): six months after
       "L'Audit", the weekly security watch — reading a bulletin of
       fictitious CVEs, sorting by exposure as much as by severity, fixing
       without breaking, proving, then automating what can be

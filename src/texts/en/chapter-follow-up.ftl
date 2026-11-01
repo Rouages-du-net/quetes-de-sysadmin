@@ -36,7 +36,7 @@ follow-up-email-salome =
     (For sudo, your password is still: flour-2028)
 
 follow-up-template =
-    # Closing report — Le Fournil
+    # Closing report — The Bakery
 
     ## Summary
     (to complete: in two sentences, where the server's security stands)
@@ -91,7 +91,7 @@ follow-up-event-outside-scope =
         [yes] the neighbour's server is still not ours.
        *[no] what is not listed in it is not ours.
     }
-# { $outdated }: "oui" if the SSH version shown is not up to date
+# { $outdated }: "yes" if the SSH version shown is not up to date
 follow-up-event-scan =
     That is what the internet sees now. Compare with day one: ports 5432
     (PostgreSQL) and 6379 (Redis) no longer answer, SSH, the website and its
@@ -132,7 +132,7 @@ follow-up-event-nmap-own =
     The last scan sees only SSH, the website and its secure port, with the SSH
     version up to date. That is the proof, from the internet's side, that
     everything holds. The closing report remains.
-# { $mistake }: "oui" if a scan went beyond the scope
+# { $mistake }: "yes" if a scan went beyond the scope
 follow-up-event-end =
     Salomé: "It is complete, and it is honest. I'll pass it on to Nadia and her
     insurer. I'll come back in six months: security gets rechecked."

@@ -58,7 +58,7 @@ function connect(game: Shell, s: Session, command: string): string | null {
     refusal('certificate');
     return `${command}: Fatal error: Certificate verification: certificate common name doesn't match requested host name \u2018${s.host}\u2019`;
   }
-  if (!s.user || def.accounts[s.user] !== s.password) return `${command}: Login failed: 530 Login authentication failed`;
+  if (!s.user || def.accounts(game.t)[s.user] !== s.password) return `${command}: Login failed: 530 Login authentication failed`;
   s.connected = true;
   s.tls = tls;
   s.checked = checked;

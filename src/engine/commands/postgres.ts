@@ -284,6 +284,8 @@ export const POSTGRES: Record<string, Command> = {
       if (!archive) return game.error('pg_restore: error: input file does not appear to be a valid archive');
       const chosen = [...(lists['-t'] ?? []), ...(lists['--table'] ?? [])];
       const tables = Object.fromEntries(Object.entries(archive.tables).filter(([n]) => !chosen.length || chosen.includes(n)));
+      // The archive's owner: the base's, as pg_dump saw it.
+      const owner = postgres(game)?.bases[archive.base]?.owner ?? 'postgres';
       if (options['-l'] || options['--list'])
         return [
           ';',
@@ -293,13 +295,13 @@ export const POSTGRES: Record<string, Command> = {
           ';     Format: CUSTOM',
           ';',
           ...Object.keys(archive.tables).flatMap((n, i) => [
-            `${210 + i}; 1259 ${16400 + i} TABLE public ${n} ludo`,
-            `${3360 + i}; 0 ${16400 + i} TABLE DATA public ${n} ludo`,
+            `${210 + i}; 1259 ${16400 + i} TABLE public ${n} ${owner}`,
+            `${3360 + i}; 0 ${16400 + i} TABLE DATA public ${n} ${owner}`,
           ]),
         ].join('\n');
       const base = options['-d'] ?? options['--dbname'];
       // Without -d, pg_restore writes the SQL (like a text dump).
-      if (!base) return dumpSql(archive.base, tables, 'ludo');
+      if (!base) return dumpSql(archive.base, tables, owner);
       const e = connection(game, 'pg_restore', base);
       if (e) return game.error(e);
       const errors = restore(game, base, tables, !!(options['-a'] || options['--data-only']), !!(options['-c'] || options['--clean']));

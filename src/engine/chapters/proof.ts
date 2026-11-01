@@ -44,13 +44,13 @@ export const proof: Chapter = {
   steps: ['versions', 'found', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: watchListening(),
-    nginx: watchNginx(),
-    scan: watchScan(),
+    nginx: watchNginx(t),
+    scan: watchScan(t),
     apt: { ...watchApt(true), installed: { ...watchApt(true).installed, nginx: CVE.nginx.corrigee, rsync: CVE.rsync.corrigee }, updates: {} },
-    systemd: newSystemd('petrin', STARTED, NOW, {
+    systemd: newSystemd('kneader', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

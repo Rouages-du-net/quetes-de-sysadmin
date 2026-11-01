@@ -46,9 +46,9 @@ export const MACHINES: Machine[] = [
   machine('hive', '192.0.2.21', 'hive'),
   machine('bakery', '192.0.2.22', 'audit'),
   machine('lab', '192.0.2.23', 'lab'),
-  // Le Fournil, six months later (story 16): a new server (migration as the
+  // The Bakery, six months later (story 16): a new server (migration as the
   // business grew), same characters.
-  machine('petrin', '192.0.2.24', 'watch'),
+  machine('kneader', '192.0.2.24', 'watch'),
   // The Shared Gardens: their server, with their public name gardens.example (same address).
   machine('garden', '203.0.113.30', 'junk-mail'),
   // The community centres' control station: Ansible, and behind it three servers.

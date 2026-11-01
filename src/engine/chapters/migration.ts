@@ -1,6 +1,6 @@
 // Story "The Gazette" — chapter "The migration": last night, Théo put
 // version 2.0.0 of the Kiosk on green and switched nginx over. At start,
-// 2.0.0 migrated the database (schema 3 → 4: the courriel column became
+// 2.0.0 migrated the database (schema 3 → 4: the subscribers' mail column became
 // email). It doesn't work (a configuration variable was renamed), and
 // rolling back to blue (1.6.1) doesn't work either: 1.6.1 can't read a
 // migrated database. The fix has to go forward (the configuration
@@ -12,13 +12,13 @@
 // contract), https://www.postgresql.org/docs/current/app-pgdump.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx } from '../nginx';
 import { MIME, NGINX_CONF } from '../commands/apt';
 import { gazetteAccounts } from './bare-repo';
-import { KIOSK, kioskApp, base, versionDirectory, distribution, health, kioskService, kioskUnit } from './kiosk';
+import { KIOSK, kioskApp, migrationName, base, versionDirectory, distribution, health, kioskService, kioskUnit } from './kiosk';
 
 const M = '/home/you';
 const GAZETTE = 'gazette.example';
@@ -124,8 +124,8 @@ export const migration: Chapter = {
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
-      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
-      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/server.js` },
+      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/server.js` },
     ],
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'] },
     apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
@@ -151,7 +151,7 @@ export const migration: Chapter = {
         hostname: file('gazette'),
         kiosk: place({
           'kiosk.env': file(
-            'KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example\nKIOSK_SMTP=smtp.gazette.example',
+            `KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=${name(t, 'newsletter')}@gazette.example\nKIOSK_SMTP=smtp.gazette.example`,
             { owner: 'root', group: 'kiosk', mode: 'rw-r-----' },
           ),
         }),
@@ -192,7 +192,7 @@ export const migration: Chapter = {
             blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.6.1` }),
             green: f('', { ...kiosk, link: `${KIOSK}/versions/2.0.0` }),
           },
-          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'newsroom', mode: 'rwxrwxr-x' },
         ),
       }),
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),
@@ -218,7 +218,7 @@ export const migration: Chapter = {
     { id: 'schema', condition: (j) => output(j).includes('is newer than supported'), message: (j) => j.t('migration-event-schema') },
     {
       id: 'migration-view',
-      condition: (j) => output(j).includes('rename_abonnes_courriel_to_email'),
+      condition: (j) => output(j).includes(migrationName(j.t, 4)),
       message: (j) => j.t('migration-event-migration-view'),
     },
     {

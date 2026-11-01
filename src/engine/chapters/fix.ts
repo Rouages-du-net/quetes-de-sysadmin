@@ -1,10 +1,10 @@
-// Story "La Veille" — chapter "The fix": fix nginx and rsync, in the order
+// Story "The Watch" — chapter "The fix": fix nginx and rsync, in the order
 // decided in the previous chapter, without breaking anything. apt upgrade
 // installs both fixes at once (Debian packages are not updated one by one),
 // but the list must still be refreshed first: without apt update, apt
 // upgrade finds nothing to do.
 // Objective checked on the state: nginx and rsync at the fixed version, and
-// Le Fournil's site still served (curl).
+// the Bakery's site still served (curl).
 // Expected traps: apt upgrade without apt update first ("0 upgraded").
 // Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html
 
@@ -36,13 +36,13 @@ export const fix: Chapter = {
   steps: ['fixed', 'checked', 'end'],
   password: PASSWORD,
   accounts: watchAccounts,
-  state: () => ({
+  state: (t) => ({
     sshd: { load: {}, connectionsToLoad: 1, reloads: 0 },
     listening: watchListening(),
-    nginx: watchNginx(),
-    scan: watchScan(),
+    nginx: watchNginx(t),
+    scan: watchScan(t),
     apt: watchApt(false),
-    systemd: newSystemd('petrin', STARTED, NOW, {
+    systemd: newSystemd('kneader', STARTED, NOW, {
       ssh: serviceSsh(),
       nginx: { description: 'A high performance web server and a reverse proxy server', active: true, executable: 'nginx' },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },

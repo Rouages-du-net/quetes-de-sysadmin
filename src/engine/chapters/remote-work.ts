@@ -24,11 +24,11 @@ import { publicFields, serviceWg } from '../commands/wireguard';
 import { confFor, tunnelState, readConfWg, isPublic, wg, type Remote, type TunnelState } from '../wireguard';
 import { systemd } from '../systemd';
 import type { Shell } from '../shell';
-import { FLUX, openSsh } from './zones';
+import { FLUX, fluxFor, openSsh } from './zones';
 import {
   hiveAccounts,
-  DNSMASQ_VLAN,
-  INTERFACES_VLAN,
+  dnsmasqVlan,
+  interfacesVlan,
   M,
   hiveWorld,
   PASSWORD,
@@ -138,17 +138,17 @@ export const vpn: Chapter = {
   final: 'end',
   password: PASSWORD,
   accounts: hiveAccounts,
-  state: () => {
+  state: (t) => {
     const sd = hiveSystemd({ 'wg-quick@wg0': serviceWg('wg0') });
     sd.services.nftables.active = true;
     sd.services.nftables.state = 'active';
-    return { lan: { ...newLan(true), flux: FLUX.map(({ permitted: _, ...x }) => x), remotes: [MALIK] }, systemd: sd, nft: { tables: [] }, wg: {} };
+    return { lan: { ...newLan(t, true), flux: fluxFor(t, FLUX), remotes: [MALIK] }, systemd: sd, nft: { tables: [] }, wg: {} };
   },
   initialise: initialiseFirewall,
   createWorld: (t) =>
     hiveWorld({
-      interfaces: INTERFACES_VLAN,
-      dnsmasq: DNSMASQ_VLAN,
+      interfaces: interfacesVlan(t),
+      dnsmasq: dnsmasqVlan(t),
       nftables: NFTABLES_ZONES,
       sysctl: ROUTER_SYSCTL,
       etc: { wireguard: d({}, undefined, { owner: 'root', mode: 'rwx------' }) },
@@ -162,12 +162,12 @@ export const vpn: Chapter = {
     { id: 'filter', condition: (j) => now(j).state === 'filtered', message: (j) => j.t('remote-work-event-filter') },
     {
       id: 'handshake',
-      condition: (j) => Object.keys(wg(j)).length > 0 && ['conf', 'address', 'cle-routeur', 'unknown'].includes(now(j).state),
+      condition: (j) => Object.keys(wg(j)).length > 0 && ['conf', 'address', 'router-key', 'unknown'].includes(now(j).state),
       message: (j) => j.t('remote-work-event-handshake'),
     },
     {
       id: 'without-nas',
-      condition: (j) => ['autorisees', 'route', 'forwarding'].includes(now(j).state),
+      condition: (j) => ['allowed-ips', 'route', 'forwarding'].includes(now(j).state),
       message: (j) => j.t('remote-work-event-without-nas'),
     },
     { id: 'ssh', condition: (j) => !openSsh(nft(j)), message: (j) => j.t('zones-event-ssh') },

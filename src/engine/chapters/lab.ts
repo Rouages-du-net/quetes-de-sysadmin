@@ -1,12 +1,13 @@
-// Story "Le Labo": what its chapters share. The server of the
-// Labo, the neighbourhood photo club (machine lab), rented from a host:
+// Story "The Lab": what its chapters share. The server of the
+// Lab, the neighbourhood photo club (machine lab), rented from a host:
 // two 2 TB disks in software RAID 1 (mdadm). md0 holds the system (/),
 // md1 the members' photos (/srv). Odile, the president, is not
 // technical; the host replaces disks on request (a ticket with the
 // serial number), but the RAID is the customer's job.
 // The storage is described by storage.ts (disks, SMART, partitions, arrays).
 
-import { d, f, accountsFiles, type Accounts, type Directory, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Accounts, type Directory, type Rights } from '../world';
+import { machineName } from '../machines';
 import type { Game, Shell } from '../shell';
 import type { Translate } from '../../texts';
 import { newSystemd, type DefinitionService } from '../systemd';
@@ -83,7 +84,10 @@ const afterReplacement = (m: Moment) => m === 'replaced' || m === 'rescue';
  * The photos are in a logical volume (LVM) on top of md1, as Debian's
  * installer suggests ("RAID then LVM").
  */
-export function labStorage(moment: Moment): StorageState {
+export function labStorage(t: Translate, moment: Moment): StorageState {
+  // The volume group (lab, labo in French) and the arrays' names (host:number), in the language.
+  const vg = name(t, 'lab');
+  const host = machineName(t, 'lab');
   const fresh = moment === 'new';
   const sdb = fresh
     ? disk(1, SERIES.neuf, healthySmart(3), null, [])
@@ -119,14 +123,14 @@ export function labStorage(moment: Moment): StorageState {
         : {}),
     },
     arrays: {
-      md0: { level: 'raid1', wanted: 2, blocks: 33_520_640, uuid: '5d1e0a3c-7b2f-4e91-a6c8-3f0d9b1e2c47', name: 'lab:0', members: members(2), events: fresh ? 4182 : 4171, creation: Date.UTC(2024, 2, 6, 10, 12, 31), rank: 0 },
-      md1: { level: 'raid1', wanted: 2, blocks: 1_919_824_896, uuid: 'a8c3e5f1-2d4b-4a6e-9f17-0b3c5d7e9a21', name: 'lab:1', members: members(3), events: fresh ? 91_877 : 91_866, creation: Date.UTC(2024, 2, 6, 10, 12, 58), bitmap: true, rank: 1 },
+      md0: { level: 'raid1', wanted: 2, blocks: 33_520_640, uuid: '5d1e0a3c-7b2f-4e91-a6c8-3f0d9b1e2c47', name: `${host}:0`, members: members(2), events: fresh ? 4182 : 4171, creation: Date.UTC(2024, 2, 6, 10, 12, 31), rank: 0 },
+      md1: { level: 'raid1', wanted: 2, blocks: 1_919_824_896, uuid: 'a8c3e5f1-2d4b-4a6e-9f17-0b3c5d7e9a21', name: `${host}:1`, members: members(3), events: fresh ? 91_877 : 91_866, creation: Date.UTC(2024, 2, 6, 10, 12, 58), bitmap: true, rank: 1 },
     },
     grub: fresh ? ['sda'] : ['sda', 'sdb'],
   };
   // The photos volume takes the whole lab group (a single PV: md1).
   const photos: LogicVolume = { segments: [], fs: 0, point: '/srv', minor: 0 };
-  st.lvm = { pvs: { md1: { vg: 'labo', uuid: 'q3Xk7v-Lb2N-9fRt-Wm4P-cH8s-Jd5Y-a1ZeQo' } }, vgs: { labo: { uuid: 'Hn4w2B-pT6e-Rk9M-sL3v-Qa7X-dF1c-Zg8Y0u', lvs: { photos } } } };
+  st.lvm = { pvs: { md1: { vg, uuid: 'q3Xk7v-Lb2N-9fRt-Wm4P-cH8s-Jd5Y-a1ZeQo' } }, vgs: { [vg]: { uuid: 'Hn4w2B-pT6e-Rk9M-sL3v-Qa7X-dF1c-Zg8Y0u', lvs: { photos } } } };
   allocate(st, photos, pvExtents(st, 'md1'), ['md1']);
   // Chapter 4: the end of chapter 3, md2 made of the new disks and given to the photos volume.
   if (moment === 'rescue') {
@@ -135,7 +139,7 @@ export function labStorage(moment: Moment): StorageState {
       wanted: 2,
       blocks: 3_906_887_488,
       uuid: 'e3b9d1c7-4a2f-4c8e-b5d6-7f1a9c3e2b40',
-      name: 'lab:2',
+      name: `${host}:2`,
       members: [
         { part: 'sdc', number: 0, role: 0, state: 'active' },
         { part: 'sdd', number: 1, role: 1, state: 'active' },
@@ -145,29 +149,30 @@ export function labStorage(moment: Moment): StorageState {
       bitmap: true,
       rank: 2,
     };
-    st.lvm.pvs.md2 = { vg: 'labo', uuid: 'Vd6sQ1-mK3p-Xe7R-tB9w-Lc2N-yH4f-Jz8aPu' };
+    st.lvm.pvs.md2 = { vg, uuid: 'Vd6sQ1-mK3p-Xe7R-tB9w-Lc2N-yH4f-Jz8aPu' };
     allocate(st, photos, pvExtents(st, 'md2'), ['md2']);
   }
   photos.fs = lvSize(photos);
   // The file systems, and their UUIDs (those of /etc/fstab).
   st.fs = {
     '/dev/md0': { type: 'ext4', uuid: '0f9c2a4e-61d3-4b8a-9e57-c3d1a2b4e6f8' },
-    '/dev/mapper/labo-photos': { type: 'ext4', uuid: '7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f' },
-    ...(moment === 'rescue' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans() } } : {}),
+    [`/dev/mapper/${vg}-photos`]: { type: 'ext4', uuid: '7b3e5d1f-2a4c-4e6b-8d9f-1a2b3c4d5e6f' },
+    ...(moment === 'rescue' ? { '/dev/sde1': { type: 'ext4', uuid: UUID_SCANS, label: 'SCANS', bytes: 984_000_000_000, tree: scans(t) } } : {}),
   };
   return st;
 }
 
 export const st = (j: Game) => storageOf(j)!;
 
-// The scans disk: folders of scans from the club's archives.
+// The scans disk: folders of scans from the club's archives (a disk of its
+// own, outside the world: its names are translated here).
 export const UUID_SCANS = 'c27a9e41-5b3d-4f8a-a1e6-9d0b2c4f7e13';
-const scans = (): Directory => {
+const scans = (t: Translate): Directory => {
   const scan = (size: number) => f('', { owner: 'theo', group: 'theo', size });
   return d(
     {
-      'archives-1962': d({ 'negatifs-001.tif': scan(212_000_000), 'negatifs-002.tif': scan(198_000_000) }, undefined, { owner: 'theo' }),
-      'archives-1978': d({ 'tirages-001.tif': scan(176_000_000) }, undefined, { owner: 'theo' }),
+      'archives-1962': d({ [name(t, 'negatives-001.tif')]: scan(212_000_000), [name(t, 'negatives-002.tif')]: scan(198_000_000) }, undefined, { owner: 'theo' }),
+      'archives-1978': d({ [name(t, 'prints-001.tif')]: scan(176_000_000) }, undefined, { owner: 'theo' }),
     },
     undefined,
     { owner: 'theo', group: 'theo' },
@@ -203,11 +208,12 @@ const services = (): Record<string, DefinitionService> => ({
 });
 
 /** The machine's state at the start of a chapter (systemd, storage, mounts). */
-export const labState = (moment: Moment) => {
-  const storage = labStorage(moment);
+export const labState = (t: Translate, moment: Moment) => {
+  const storage = labStorage(t, moment);
+  const vg = name(t, 'lab');
   return {
     systemd: newSystemd(
-      'labo',
+      machineName(t, 'lab'),
       moment === 'replaced' ? PLACE_BOOT : moment === 'rescue' ? RESCUE_BOOT : BOOT,
       moment === 'replaced' ? PLACE_NOW : moment === 'rescue' ? RESCUE_NOW : NOW,
       services(),
@@ -215,7 +221,7 @@ export const labState = (moment: Moment) => {
     storage,
     mounts: [
       { path: '/', capacity: 33_000_000_000, name: '/dev/md0', system: 'ext4' },
-      { path: '/srv', capacity: storage.lvm!.vgs.labo.lvs.photos.fs, name: '/dev/mapper/labo-photos', system: 'ext4' },
+      { path: '/srv', capacity: storage.lvm!.vgs[vg].lvs.photos.fs, name: `/dev/mapper/${vg}-photos`, system: 'ext4' },
     ],
   };
 };
@@ -325,7 +331,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     dev: devDirectory(),
     etc: place({
       ...accountsFiles(),
-      hostname: file('lab'),
+      hostname: file(machineName(t, 'lab')),
       aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: you'),
       fstab: file(
         [
@@ -347,9 +353,9 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
             'HOMEHOST <system>',
             'MAILADDR root',
             '',
-            'ARRAY /dev/md/0  metadata=1.2 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47 name=lab:0',
-            'ARRAY /dev/md/1  metadata=1.2 UUID=a8c3e5f1:2d4b4a6e:9f170b3c:5d7e9a21 name=lab:1',
-            ...(more.rescue ? ['ARRAY /dev/md2 metadata=1.2 name=lab:2 UUID=e3b9d1c7:4a2f4c8e:b5d67f1a:9c3e2b40'] : []),
+            `ARRAY /dev/md/0  metadata=1.2 UUID=5d1e0a3c:7b2f4e91:a6c83f0d:9b1e2c47 name=${machineName(t, 'lab')}:0`,
+            `ARRAY /dev/md/1  metadata=1.2 UUID=a8c3e5f1:2d4b4a6e:9f170b3c:5d7e9a21 name=${machineName(t, 'lab')}:1`,
+            ...(more.rescue ? [`ARRAY /dev/md2 metadata=1.2 name=${machineName(t, 'lab')}:2 UUID=e3b9d1c7:4a2f4c8e:b5d67f1a:9c3e2b40`] : []),
           ].join('\n'),
         ),
       }),
@@ -367,13 +373,13 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     srv: place({
       photos: place(
         {
-          '2025': place({ 'expo-printemps': place({ 'tirages.tar': photo(48_000_000_000) }, { owner: 'www-data' }) }, { owner: 'www-data' }),
-          '2026': place({ 'sortie-port': place({ 'raw.tar': photo(212_000_000_000) }, { owner: 'www-data' }) }, { owner: 'www-data' }),
+          '2025': place({ 'spring-show': place({ 'prints.tar': photo(48_000_000_000) }, { owner: 'www-data' }) }, { owner: 'www-data' }),
+          '2026': place({ 'harbour-trip': place({ 'raw.tar': photo(212_000_000_000) }, { owner: 'www-data' }) }, { owner: 'www-data' }),
           '2027': place(
             {
-              'concours-nuit': place({ 'raw.tar': photo(391_000_000_000) }, { owner: 'www-data' }),
+              'night-contest': place({ 'raw.tar': photo(391_000_000_000) }, { owner: 'www-data' }),
               // Chapter 3: the autumn archives, poured in all at once.
-              ...(more.winter ? { 'archives-automne': place({ 'raw.tar': photo(1_259_000_000_000) }, { owner: 'www-data' }) } : {}),
+              ...(more.winter ? { 'autumn-archives': place({ 'raw.tar': photo(1_259_000_000_000) }, { owner: 'www-data' }) } : {}),
             },
             { owner: 'www-data' },
           ),
@@ -391,7 +397,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
         more.mail === undefined ? {} : { you: f(more.mail, { lines: true, owner: 'you', group: 'mail', mode: 'rw-rw----' }) },
         { owner: 'root', group: 'mail', mode: 'rwxrwsr-x' },
       ),
-      www: place({ galerie: place({ 'index.html': file('<!doctype html><title>Le Labo</title>', { owner: 'www-data' }) }) }),
+      www: place({ gallery: place({ 'index.html': file(t('lab-gallery-index'), { owner: 'www-data' }) }) }),
     }),
   });
 }

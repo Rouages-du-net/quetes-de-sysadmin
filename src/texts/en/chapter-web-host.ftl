@@ -85,7 +85,7 @@ web-host-index =
     <link rel="stylesheet" href="style.css"></head>
     <body><header><img src="images/logo.svg" alt="" width="48"><h1>Community Centre</h1></header>
     <p>Welcome! The activities calendar and membership are online.</p>
-    <p><a href="agenda.html">Calendar</a> · <a href="adhesion.html">Join</a></p></body></html>
+    <p><a href="agenda.html">Calendar</a> · <a href="membership.html">Join</a></p></body></html>
 web-host-agenda =
     <!doctype html>
     <html lang="en"><head><meta charset="utf-8"><title>Calendar</title><link rel="stylesheet" href="style.css"></head>

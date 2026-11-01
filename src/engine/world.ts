@@ -197,8 +197,8 @@ export const path = (t: Translate, english: string) =>
     .join('/');
 
 // Real system directories whose name is also a translated name of the world
-// (/usr/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and Le
-// Labo's /srv/scans, a mount point fstab names: they keep their name.
+// (/usr/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and the
+// Lab's /srv/scans, a mount point fstab names: they keep their name.
 const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans'];
 export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || p.endsWith('/.local/share');
 
@@ -209,7 +209,16 @@ export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || 
 // name; the world (owners, /home/vous) and the accounts are
 // renamed on creation, and the code refers to the player's account as
 // `jeu.joueur` (or `joueur(t)` before the game exists).
-const TRANSLATED_ACCOUNTS = ['you', 'eraser'];
+const TRANSLATED_ACCOUNTS = [
+  'you',
+  'eraser',
+  // The Audit: the orders app's service account (commandes in French).
+  'orders',
+  // The Gazette's newsroom group; The Game Library's front desk account and group.
+  'newsroom',
+  'frontdesk',
+  'gamelib',
+];
 export const account = (t: Translate, french: string) => (TRANSLATED_ACCOUNTS.includes(french) ? name(t, french) : french);
 /** The player's account in the language: vous, you… */
 export const player = (t: Translate) => account(t, 'you');

@@ -31,7 +31,7 @@ compose-help-compose =
     Run everything from the project directory (/srv/reservations):
       sudo docker compose up -d       creates and starts (or recreates) the services
       sudo docker compose ps          the state of the services
-      sudo docker compose logs appli  the log of one service
+      sudo docker compose logs webapp the log of one service
       sudo docker compose config      the file as Compose understands it
       sudo docker compose down        stops and removes the containers
 

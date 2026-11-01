@@ -47,7 +47,7 @@ scope-letter-mission =
 
     Périmètre autorisé :
       - le serveur fournil.internal (192.0.2.22), qui porte aussi le site
-        public bakery.example.
+        public fournil.example.
 
     Hors périmètre (à ne pas sonder, même si c'est techniquement possible) :
       - tout autre équipement, notamment ceux des voisins qui partagent la

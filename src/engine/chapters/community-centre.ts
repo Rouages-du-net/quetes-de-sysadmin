@@ -56,8 +56,9 @@ AcceptEnv LANG LC_*
 Subsystem	sftp	/usr/lib/openssh/sftp-server
 `.trim();
 
-export const HOSTS = `127.0.0.1\tlocalhost
-192.0.2.19\tmaison.internal maison
+// The gateway's name in the language (community in English).
+export const hostsFile = (t: Translate) => `127.0.0.1\tlocalhost
+192.0.2.19\t${machineName(t, 'community')}.internal ${machineName(t, 'community')}
 10.20.0.11\twiki.community.internal wiki
 10.20.0.12\tarchives.community.internal archives`;
 
@@ -121,14 +122,14 @@ const isPrivate = { mode: 'rwx------' };
 export const sshDirectory = (files: Record<string, Node> = {}) => d(files, undefined, isPrivate);
 
 /** The gateway's world: /etc (accounts, hosts, ssh), the home of you, and the rest of the chapter. */
-export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<string, Node>; more?: Record<string, Node> }): Directory {
+export function homeWorld(t: Translate, o: { passwords: 'yes' | 'no' | null; home: Record<string, Node>; more?: Record<string, Node> }): Directory {
   return d(
     {
       etc: d(
         {
           ...accountsFiles(),
           hostname: f('community', { lines: true, owner: 'root' }),
-          hosts: f(HOSTS, { lines: true, owner: 'root' }),
+          hosts: f(hostsFile(t), { lines: true, owner: 'root' }),
           ssh: d(
             { sshd_config: f(sshdConfig(o.passwords), { lines: true, owner: 'root' }), 'sshd_config.d': d({}, undefined, root) },
             undefined,
@@ -176,7 +177,7 @@ export function internalHost(
       d(
         {
           etc: d(
-            { ...accountsFiles(), hostname: f(name, { lines: true, owner: 'root' }), hosts: f(HOSTS, { lines: true, owner: 'root' }) },
+            { ...accountsFiles(), hostname: f(name, { lines: true, owner: 'root' }), hosts: f(hostsFile(t), { lines: true, owner: 'root' }) },
             undefined,
             root,
           ),

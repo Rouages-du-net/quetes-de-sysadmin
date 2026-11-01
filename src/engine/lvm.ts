@@ -8,7 +8,7 @@
 // lvextend(8), pvmove(8) (https://man7.org/linux/man-pages/man8/lvm.8.html)
 // and resize2fs(8) (https://man7.org/linux/man-pages/man8/resize2fs.8.html).
 //
-//   state.storage.lvm = { pvs: { md1: { vg: 'labo', uuid } }, vgs: { labo: { uuid, lvs: { photos: { segments, fs } } } } }
+//   state.storage.lvm = { pvs: { md1: { vg: 'lab', uuid } }, vgs: { lab: { uuid, lvs: { photos: { segments, fs } } } } }
 //
 // Differences: a single extent size (4 MiB), no real metadata, no
 // snapshots or thin volumes; the file system is always ext4, and its size
@@ -74,7 +74,7 @@ export const lvExtents = (lv: LogicVolume) => lv.segments.reduce((t, s) => t + s
 export const totalVg = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + pvExtents(st, p), 0);
 export const vgFree = (st: StorageState, vg: string) => pvsFor(st, vg).reduce((t, p) => t + freeOn(st, p), 0);
 
-/** "/dev/labo/photos", "labo/photos", "/dev/mapper/labo-photos" → [group, volume], or null. */
+/** "/dev/lab/photos", "lab/photos", "/dev/mapper/lab-photos" → [group, volume], or null. */
 export function readLv(st: StorageState, name: string): [string, string] | null {
   const mapper = /^\/dev\/mapper\/([\w.+]+)-([\w.+]+)$/.exec(name);
   const path = /^(?:\/dev\/)?([\w.+-]+)\/([\w.+-]+)$/.exec(name);

@@ -212,7 +212,7 @@ presents them for people.
   each scan); `src/engine/lynis.ts` and `commands/lynis.ts`: Lynis
   (findings read from the machine's state, `/var/log/lynis-report.dat`).
 - `chapters/watch.ts`: what the chapters of "La Veille" share (the
-  `petrin` server, six months after "L'Audit": accounts, `watchWorld`, the
+  `kneader` server (`petrin` in French), six months after "L'Audit": accounts, `watchWorld`, the
   fictitious `CVE-2099-NNNNN` of the bulletin); `bulletin.ts`,
   `priority.ts`, `fix.ts`, `proof.ts` (an earlier attempt in nginx's
   access log) and `routine.ts` (`unattended-upgrades` restricted to

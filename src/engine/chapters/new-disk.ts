@@ -63,7 +63,7 @@ export const newDisk: Chapter = {
   steps: ['new', 'table', 'added', 'rebuilt', 'grub', 'end'],
   password: PASSWORD,
   accounts: labAccounts,
-  state: () => labState('new'),
+  state: (t) => labState(t, 'new'),
   initialise: (j) => {
     labKernel(j, 'new');
     devUpdate(j);

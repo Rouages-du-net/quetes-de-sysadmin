@@ -1,6 +1,6 @@
 ### Story "The Workshop", chapter 1 "The Update": Docker, containers and
-### volumes. Commands, paths, image names and the messages of docker and
-### of the outiltheque (in English) are not translated.
+### volumes. Commands, paths and the messages of docker and of the
+### toolshed app (in English) are not translated.
 
 chapter-update = The Update
     .summary = Update an app in Docker without losing its data: the container layer, docker cp, volumes, --restart.
@@ -11,16 +11,16 @@ update-message-yasmine =
     A message from Yasmine, who runs the fablab:
 
     "Hello! Here, we lend tools to people in the neighbourhood, and we
-    record everything in the outiltheque, a small web app. I installed
+    record everything in the toolshed, a small web app. I installed
     it two weeks ago with Docker, following the instructions:
 
-      docker run -d --name outiltheque -p 8080:8080 registry.example/outiltheque:1.4
+      docker run -d --name toolshed -p 8080:8080 registry.example/toolshed:1.4
 
     Version 1.5 has just come out (it fixes a bug in the return dates).
     Can you update it? Above all, don't lose the 37 current loans: I have
     nothing but the app to know who has what!
 
-    Another thing: after Wednesday's power cut, the outiltheque didn't
+    Another thing: after Wednesday's power cut, the toolshed didn't
     come back by itself, I had to restart it.
 
     For sudo, your password is: fablab-2027
@@ -29,13 +29,13 @@ update-notes-docker =
     YASMINE'S NOTES — DOCKER
 
       sudo docker ps -a              the containers (even stopped ones)
-      sudo docker logs outiltheque   what the app has to say
+      sudo docker logs toolshed      what the app has to say
       curl http://localhost:8080     the app, as in a browser
 
     "Updating a container": you don't update it, you replace it with a
     new one, created from the new image. The rest is in man docker (and
-    the outiltheque's docs say it keeps its database in
-    /var/lib/outiltheque).
+    the toolshed's docs say it keeps its database in
+    /var/lib/toolshed).
 update-tools = drill, jigsaw, sander, stepladder, cordless screwdriver, soldering iron, laser level, staple gun, wallpaper steamer, lawnmower, sewing machine, circular saw
 update-people = Aya, Bilal, Chloé, Dmitri, Esra, Farid, Gaëlle, Hugo, Ines, Jun, Kenza, Lucas
 
@@ -51,8 +51,8 @@ update-app-welcome =
         [0] No current loans.
         [one] One current loan.
        *[other] { $loans } current loans.
-    } <a href="/prets">See the loans</a></p>
-    <footer>outiltheque { $version }</footer>
+    } <a href="/loans">See the loans</a></p>
+    <footer>toolshed { $version }</footer>
     </body>
     </html>
 update-app-loans = Current loans: { $loans } (the first five)
@@ -82,11 +82,11 @@ update-event-new-empty =
     it back in place (and restart the app so it migrates it).
 update-event-without-reboot =
     The 37 loans are there, in version 1.5, and the database is finally
-    in a volume. But Yasmine said it: after a power cut, the outiltheque
+    in a volume. But Yasmine said it: after a power cut, the toolshed
     doesn't come back by itself. Look at the --restart option of
     docker run (or docker update).
 update-event-end =
-    Outiltheque 1.5 is running, with its 37 loans, in a volume that will
+    Toolshed 1.5 is running, with its 37 loans, in a volume that will
     survive the next updates, and it will start again by itself after a
     power cut. Yasmine: "And the next update will just be: new container,
     same volume!"
@@ -95,7 +95,7 @@ update-event-end =
     next awaits you: The Composition.)
 
     WHAT HAPPENED
-    The outiltheque had been started without a volume: its database
+    The toolshed had been started without a volume: its database
     lived in the container layer. Updating an app in Docker means
     deleting the container and creating a new one; without precautions,
     the database left with the old one.

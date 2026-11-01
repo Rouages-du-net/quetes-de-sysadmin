@@ -122,7 +122,7 @@ function pingLan(game: Shell, host: string, n: number): string {
       lines.push(`64 bytes from ${ip}: icmp_seq=${i} ttl=64 time=${t.toFixed(1)} ms`);
       continue;
     }
-    if (r.what === 'injoignable') {
+    if (r.what === 'unreachable') {
       if (i <= 3) lines.push(`From ${r.source} icmp_seq=${i} Destination Host Unreachable`);
       continue;
     }
@@ -135,7 +135,7 @@ function pingLan(game: Shell, host: string, n: number): string {
   lines.push(
     '',
     `--- ${host} ping statistics ---`,
-    `${n} packets transmitted, ${received} received, ${r.what === 'injoignable' && !tunnel ? `+${Math.min(n, 3)} errors, ` : ''}${Math.round((100 * (n - received)) / n)}% packet loss, time ${(n - 1) * 1001 + 3}ms`,
+    `${n} packets transmitted, ${received} received, ${r.what === 'unreachable' && !tunnel ? `+${Math.min(n, 3)} errors, ` : ''}${Math.round((100 * (n - received)) / n)}% packet loss, time ${(n - 1) * 1001 + 3}ms`,
   );
   if (received) {
     const moy = time.reduce((a, b) => a + b, 0) / received;

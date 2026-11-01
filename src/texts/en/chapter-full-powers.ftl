@@ -12,10 +12,10 @@ full-powers-message-yasmine =
 
     "Hi! You know the fablab's photo gallery (port 8082)? Visitors
     upload photos of their projects there. I started it
-    with docker compose, in /srv/galerie.
+    with docker compose, in /srv/gallery.
 
     Two problems. One: I can no longer add or remove photos in
-    /srv/galerie/photos without sudo, "Permission denied". And yet it's
+    /srv/gallery/photos without sudo, "Permission denied". And yet it's
     our directory! Two: Rania says the gallery "runs as root", and
     that it's dangerous (her note is next to this message).
 
@@ -38,15 +38,15 @@ full-powers-word-rania =
     container is at its mercy.
 
     Start by looking at who you are, inside and outside:
-      sudo docker exec galerie-galerie-1 id
+      sudo docker exec gallery-gallery-1 id
       ps aux
     Then the manual: man docker and man docker-compose."
 full-powers-readme =
-    Galerie 3.2 — README (shipped with the image registry.example/galerie)
+    Gallery 3.2 — README (shipped with the image registry.example/gallery)
 
     The photos live in /app/photos: mount a directory or a volume there.
     At startup, the gallery rebuilds its thumbnail index in
-    /app/photos/.miniatures: it must be able to write to /app/photos.
+    /app/photos/.thumbnails: it must be able to write to /app/photos.
 
     The image is built on node:22 and doesn't choose a user.
     It works under any uid, as long as it can write
@@ -66,7 +66,7 @@ full-powers-event-root =
     USER), and neither does compose.yaml: so by default, a container runs
     as root. And without a user namespace (userns-remap,
     disabled by default), the container's uid 0 IS the machine's uid 0.
-    That's also why the files in /srv/galerie/photos
+    That's also why the files in /srv/gallery/photos
     belong to root. Look for --user in man docker, and user: in
     man docker-compose.
 full-powers-event-unknown =
@@ -78,8 +78,8 @@ full-powers-event-eacces =
     The gallery no longer starts: EACCES, permission denied (sudo docker
     logs, or docker compose logs). It no longer runs as root, so the
     machine's Unix permissions apply to it, by number: uid and gid.
-    But /srv/galerie/photos and what it contains still belong to root.
-    Look at ls -lan /srv/galerie/photos (-n: the numbers, -a: hidden
+    But /srv/gallery/photos and what it contains still belong to root.
+    Look at ls -lan /srv/gallery/photos (-n: the numbers, -a: hidden
     files too). Docker restarts it on its own (restart: unless-stopped):
     it will come back as soon as it can write.
 full-powers-event-uid-1000 =
@@ -88,7 +88,7 @@ full-powers-event-uid-1000 =
     only sees numbers, and each /etc/passwd gives them its own name (node
     in the image, you on the machine). Yasmine (uid 1001), however, still
     can't write to the photos directory.
-full-powers-event-open-a-all =
+full-powers-event-open-to-all =
     A directory writable by everyone (chmod 777, o+w): it "works",
     but then any account, any program on the machine can
     drop or delete files there. Instead, give the directory to the
@@ -96,8 +96,8 @@ full-powers-event-open-a-all =
 # { $count }: the number of missing photos
 full-powers-event-photos-lost =
     { $count ->
-        [one] One photo has disappeared from /srv/galerie/photos. On a real server, without a backup, it would be lost.
-       *[other] { $count } photos have disappeared from /srv/galerie/photos. On a real server, without a backup, they would be lost.
+        [one] One photo has disappeared from /srv/gallery/photos. On a real server, without a backup, it would be lost.
+       *[other] { $count } photos have disappeared from /srv/gallery/photos. On a real server, without a backup, they would be lost.
     } Here, you can restart the chapter from the menu.
 full-powers-event-end =
     The gallery runs under an ordinary account, Yasmine manages the photos

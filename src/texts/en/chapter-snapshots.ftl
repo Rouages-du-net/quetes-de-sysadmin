@@ -23,13 +23,16 @@ snapshots-message-berenice =
       - have it run on its own, every night and every week.
 
     Malo left a tip: "rsnapshot configtest before anything else, and
-    watch out for tabs". For sudo: ludo-2027."
+    watch out for tabs". For sudo: dice-2027."
 # { $number }: the number of the added game
 snapshots-line-inventory = donated game no. { $number };1;new
 snapshots-inventory-old =
     game;copies;condition
     snakes and ladders;3;good
     ludo;2;good
+
+# The label of the second disk (lsblk -f, blkid).
+snapshots-disk-label = SNAPSHOTS
 
 ## Events
 

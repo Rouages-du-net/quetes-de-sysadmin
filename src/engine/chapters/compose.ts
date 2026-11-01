@@ -13,12 +13,13 @@
 // https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/,
 // https://hub.docker.com/_/postgres (POSTGRES_PASSWORD, initialisation)
 
-import { password, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { password, name, d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { APPS, startDocker, docker, writeIn, identifier, readIn, imageName, type Container, type DockerState, type Image } from '../docker';
 import { projectContainers, fingerprint, reach, readEnv, readProject, type ComposeContainer } from '../compose';
 import type { Shell } from '../shell';
+import { toolshedImage } from './update';
 
 const M = '/home/you';
 const PROJECT = '/srv/reservations';
@@ -88,7 +89,7 @@ APPS.reservations = {
   accounts: { node: 1000 },
   start: (game, c) => {
     log(game, c, '> reservations@2.1.0 start');
-    log(game, c, '> node serveur.js');
+    log(game, c, '> node server.js');
     const error = connect(game, c);
     if (error) {
       log(game, c, error);
@@ -118,16 +119,16 @@ const accounts = (): Accounts => ({
   },
 });
 
-// The tutorial's file, as Yasmine copied it.
-const COMPOSE = `version: "3.8"
+// The tutorial's file, as Yasmine copied it (webapp: appli in French).
+const COMPOSE = (t: Game['t']) => `version: "3.8"
 
 services:
-  appli:
+  ${name(t, 'webapp')}:
     image: registry.example/reservations:2.1
     ports:
       - "8081:3000"
     environment:
-      - DATABASE_URL=postgres://fablab:workshop2027@localhost:5432/reservations
+      - DATABASE_URL=postgres://fablab:${password(t, 'workshop2027')}@localhost:5432/reservations
     depends_on:
       - db
 
@@ -135,7 +136,7 @@ services:
     image: postgres:17
     environment:
       - POSTGRES_USER=fablab
-      - POSTGRES_PASSWORD=workshop2027
+      - POSTGRES_PASSWORD=${password(t, 'workshop2027')}
       - POSTGRES_DB=reservations`;
 
 const image = (repo: string, tag: string, app: string, port: number, command: string, size: number, created: number): Image => ({
@@ -149,22 +150,14 @@ const image = (repo: string, tag: string, app: string, port: number, command: st
   command,
 });
 
-function dockerState(): DockerState {
-  const tool = image(
-    'registry.example/outiltheque',
-    '1.5',
-    'outiltheque',
-    8080,
-    '/usr/local/bin/outiltheque serve',
-    151_600_000,
-    Date.UTC(2027, 3, 1, 9, 0, 0),
-  );
+function dockerState(t: Game['t']): DockerState {
+  const tool = toolshedImage(t, '1.5', Date.UTC(2027, 3, 1, 9, 0, 0), 151_600_000);
   const reservations = image(
     'registry.example/reservations',
     '2.1',
     'reservations',
     3000,
-    'docker-entrypoint.sh node serveur.js',
+    'docker-entrypoint.sh node server.js',
     212_400_000,
     Date.UTC(2027, 3, 8, 16, 0, 0),
   );
@@ -175,7 +168,7 @@ function dockerState(): DockerState {
 
 const state = (j: Game) => docker(j)!;
 const project = (j: Game) => projectContainers(state(j), 'reservations');
-const service = (j: Game, name: string) => project(j).find((c) => c.service === name);
+const service = (j: Game, id: string) => project(j).find((c) => c.service === name(j.t, id));
 const restart = (c?: Container) => !!c && ['always', 'unless-stopped'].includes(c.reboot);
 // The database password, as .env gives it.
 const envPassword = (j: Game) => readEnv(j.read(`${PROJECT}/.env`)).POSTGRES_PASSWORD ?? '';
@@ -188,7 +181,7 @@ const protectedEnv = (j: Game) => {
   return !!n && !j.can(n, 'r', 'yasmine');
 };
 const connected = (j: Game) => {
-  const a = service(j, 'appli');
+  const a = service(j, 'webapp');
   return a?.state === 'running' && connect(j, a) === null;
 };
 // Do the containers match the current compose.yaml and .env (no forgotten up)?
@@ -238,7 +231,7 @@ export const composition: Chapter = {
   final: 'end',
   password: 'fablab-2027',
   accounts,
-  state: () => ({
+  state: (t) => ({
     systemd: newSystemd('workshop', Date.UTC(2027, 3, 3, 10, 30, 0), Date.UTC(2027, 3, 10, 14, 0, 0), {
       ssh: {
         description: 'OpenBSD Secure Shell server',
@@ -256,7 +249,7 @@ export const composition: Chapter = {
         load: (j) => startDocker(j),
       },
     }),
-    docker: { ...dockerState(), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
+    docker: { ...dockerState(t), names: ['workshop', 'workshop.internal', '192.0.2.15'] },
   }),
   createWorld: (t) => {
     const root = { owner: 'root' };
@@ -266,14 +259,14 @@ export const composition: Chapter = {
       home: place({
         you: d({ 'message_from_yasmine.txt': f(t('compose-message-yasmine')), 'help_compose.txt': f(t('compose-help-compose')) }),
       }),
-      srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE.replaceAll('workshop2027', password(t, 'workshop2027')), { lines: true, owner: 'root' }) }) }),
+      srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE(t), { lines: true, owner: 'root' }) }) }),
     });
   },
   events: [
     {
       id: 'localhost',
       condition: (j) =>
-        (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('ECONNREFUSED 127.0.0.1')) && j.last.line.includes('docker'),
+        (service(j, 'webapp')?.log ?? []).some((l) => l.text.includes('ECONNREFUSED 127.0.0.1')) && j.last.line.includes('docker'),
       message: (j) => j.t('compose-event-localhost'),
     },
     {
@@ -283,7 +276,7 @@ export const composition: Chapter = {
     },
     {
       id: 'authentication',
-      condition: (j) => (service(j, 'appli')?.log ?? []).some((l) => l.text.includes('password authentication failed')),
+      condition: (j) => (service(j, 'webapp')?.log ?? []).some((l) => l.text.includes('password authentication failed')),
       message: (j) => j.t('compose-event-authentication'),
     },
     {
@@ -308,7 +301,7 @@ export const composition: Chapter = {
     },
     {
       id: 'without-reboot',
-      condition: (j) => connected(j) && onVolume(j) && !inClear(j) && protectedEnv(j) && !(restart(service(j, 'appli')) && restart(service(j, 'db'))),
+      condition: (j) => connected(j) && onVolume(j) && !inClear(j) && protectedEnv(j) && !(restart(service(j, 'webapp')) && restart(service(j, 'db'))),
       message: (j) => j.t('compose-event-without-reboot'),
     },
     {
@@ -320,7 +313,7 @@ export const composition: Chapter = {
         !inClear(j) &&
         envPassword(j) !== '' &&
         protectedEnv(j) &&
-        restart(service(j, 'appli')) &&
+        restart(service(j, 'webapp')) &&
         restart(service(j, 'db')),
       message: (j) => j.t('compose-event-end'),
     },

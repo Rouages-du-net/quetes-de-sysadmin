@@ -27,6 +27,9 @@ lab-syslog =
     Nov 13 03:02:44 labo smartd[588]: Device: /dev/sdb [SAT], previous self-test completed with error (read test element)
     Nov 13 03:12:44 labo smartd[588]: Device: /dev/sdb [SAT], 8 Currently unreadable (pending) sectors
 
+# La page d'accueil de la galerie (/var/www/galerie/index.html).
+lab-gallery-index = <!doctype html><title>Le Labo</title>
+
 ## Fichiers
 
 tired-disk-message-odile =

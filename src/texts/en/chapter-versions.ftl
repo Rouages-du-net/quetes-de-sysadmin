@@ -101,7 +101,7 @@ versions-event-lost =
     (unless there's another copy elsewhere). Here, you can restart the
     chapter from the menu. Before deleting, forget --dry-run shows what
     would go.
-versions-event-forgotten-without-plum =
+versions-event-forgotten-without-prune =
     forget removed snapshots from the list… but df -h /mnt/townhall doesn't
     budge: forget only deletes the "labels". The data only goes away
     with prune (or forget --prune).

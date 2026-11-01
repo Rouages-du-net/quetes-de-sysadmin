@@ -28,6 +28,9 @@ ransom-note =
     bc1q-exemple-adresse-fictive avant 72 heures.
     Passé ce délai, vos fichiers seront perdus.
 ransom-crontab-root = Copie du partage sur le NAS, chaque nuit à 2 h 30
+# L'option avec laquelle tourne le chiffreur, et l'étiquette du disque de sauvegarde USB.
+ransom-option-quiet = --silencieux
+ransom-usb-label = SAUVEGARDE
 ransom-inventory =
     jeu;exemplaires;etat
     jeu de l'oie;3;bon

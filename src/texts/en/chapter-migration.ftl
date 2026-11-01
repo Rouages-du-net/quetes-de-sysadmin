@@ -32,7 +32,7 @@ migration-notes-200 =
     Kiosk 2.0.0 — release notes
 
     WARNING: this version MIGRATES THE DATABASE on startup
-    (schema 3 → 4: the column abonnes.courriel becomes abonnes.email).
+    (schema 3 → 4: the column subscribers.mail becomes subscribers.email).
     Versions 1.x cannot read a migrated database: make a
     backup (pg_dump) before starting 2.0.0.
 
@@ -51,7 +51,7 @@ migration-event-schema =
     1.6.1 only knows 3. Who changed it? The log of the green
     service tells you (journalctl -u kiosk-green).
 migration-event-migration-view =
-    There it is: on startup, 2.0.0 migrated the database (the courriel column
+    There it is: on startup, 2.0.0 migrated the database (the mail column
     renamed to email). A migration doesn't undo itself:
     1.6.1 will never find its column again. Rolling back to
     blue is impossible; what's left is to fix forward: get
@@ -84,7 +84,7 @@ migration-event-end =
       to restore it.
     - Migrations compatible with the previous version: expand
       first (add the email column, write to both), switch over,
-      then contract (remove courriel) one version later.
+      then contract (remove mail) one version later.
     - After a migration, put the standby slot on the same
       version: a safety net that can't read the data isn't
       one.

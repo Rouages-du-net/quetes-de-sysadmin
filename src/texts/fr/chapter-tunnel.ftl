@@ -41,7 +41,7 @@ tunnel-note-gaspard =
 
 ## La page d'administration (servie par le wiki)
 
-# { $lines } : une ligne par inscription (tunnel-admin-ligne)
+# { $lines } : une ligne par inscription (tunnel-admin-line)
 tunnel-admin-page =
     Wiki des associations — administration
 
@@ -51,14 +51,14 @@ tunnel-admin-page =
     Valider :   /admin/valider/<compte>
     Refuser :   /admin/refuser/<compte>
 # { $name } : le compte ; { $state } : attente, validee ou refusee
-tunnel-admin-ligne = { $state ->
+tunnel-admin-line = { $state ->
         [approved] - { $name } : validée
         [refused] - { $name } : refusée
        *[pending] - { $name } : en attente
     }
-tunnel-admin-valider = Inscription de { $name } validée.
-tunnel-admin-refuser = Inscription de { $name } refusée.
-tunnel-admin-introuvable = Page introuvable.
+tunnel-admin-approve = Inscription de { $name } validée.
+tunnel-admin-reject = Inscription de { $name } refusée.
+tunnel-admin-not-found = Page introuvable.
 
 ## Événements
 

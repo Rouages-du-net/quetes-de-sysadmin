@@ -159,15 +159,15 @@ name-message_from_samia-txt = message_from_samia.txt
 name-message_from_berenice-txt = message_from_berenice.txt
 name-note_from_malo-txt = note_from_malo.txt
 
-## L'Astreinte
+## On Call
 name-message_from_zoe-txt = message_from_zoe.txt
 name-mail_hosting-txt = mail_hosting.txt
 
-## La Maison des associations
+## The Community Centre
 name-email_yasmine-txt = email_yasmine.txt
 name-email_hosting-txt = email_hosting.txt
 
-## La Ruche
+## The Hive
 name-email_malik-txt = email_malik.txt
 name-switch-plan-txt = switch-plan.txt
 name-notes-from-sacha-txt = notes-from-sacha.txt
@@ -215,7 +215,7 @@ name-poems = poems
 ## Le Datacenter : le dossier de l'équipe
 name-team = team
 
-## La Coopérative : les relevés de caisse, la sauvegarde de Marc (/srv/sauvegardes sert aussi dans La Maison des associations)
+## The Co-op: the till's statements, Marc's backup (/srv/backups is also used in The Community Centre)
 name-statements = statements
 name-backups = backups
 name-till-backup-sh = till-backup.sh
@@ -236,7 +236,7 @@ name-system-update = system-update
 name-repo = repo
 name-snapshots = snapshots
 
-## La Maison des associations : le partage (sauvegardé par rsync sur archives) et le wiki
+## The Community Centre: the share (backed up by rsync onto archives) and the wiki
 name-minutes = minutes
 name-agm-2026-txt = agm-2026.txt
 name-board-2027-09-txt = board-2027-09.txt
@@ -246,7 +246,7 @@ name-room-bookings-txt = room-bookings.txt
 name-home-md = home.md
 name-report-2027-pdf = report-2027.pdf
 
-## L'Astreinte : les données de la radio (enregistrements sert aussi dans Les Archives ; vignette : les images que crée l'import des podcasts)
+## On Call: the radio's data (recordings is also used in The Archives; thumbnail: the images the podcast import creates)
 name-live = live
 name-shows = shows
 name-thumbnails = thumbnails
@@ -265,7 +265,7 @@ name-closing_report-md = closing_report.md
 name-message_from_odile-txt = message_from_odile.txt
 name-host_procedure-txt = host_procedure.txt
 
-## The Watch (the petrin server, six months after the audit)
+## The Watch (the kneader server, six months after the audit)
 name-security_bulletin-txt = security_bulletin.txt
 name-watch-md = watch.md
 name-priority-md = priority.md
@@ -283,3 +283,102 @@ name-message_from_theo-txt = message_from_theo.txt
 
 ## The Patch
 name-message_from_ines-txt = message_from_ines.txt
+
+## The Neighbourhood Letters (the calendar's routes, "Sharing a home" and "Concert night")
+name-week = week
+name-workshops = workshops
+## The Datacenter: Awa's report, the pages of the media library's site (access log, backups)
+name-report-txt = report.txt
+name-events = events
+name-opening-hours = opening-hours
+name-opening-hours-html = opening-hours.html
+name-book = book
+name-exhibitions = exhibitions
+name-search = search
+## On Call: the shows (the recorder's argument, and the start of the recordings' names), the podcast converter, the listening statistics
+name-morning-show = morning-show
+name-night-show = night-show
+name-convert = convert
+name-convert-py = convert.py
+name-listen = listen
+
+## The Community Centre: the wiki admin page's addresses, the backup key, the account at the web host and the site's pages
+name-approve = approve
+name-reject = reject
+name-id_backup = id_backup
+name-id_backup-pub = id_backup.pub
+name-commcentre = commcentre
+name-membership-html = membership.html
+name-prices-2025-html = prices-2025.html
+## The Audit, The Watch and The Lab: the world's names (the orders app's
+## account, service, database and folder; the bakery's domain and site; the
+## Lab's volume group, photo folders and scans)
+name-orders = orders
+name-backup-sh = backup.sh
+name-neighbour-internal = neighbour.internal
+name-shop = shop
+name-laptop = laptop
+name-bakery-example = bakery.example
+name-bakery = bakery
+name-lab = lab
+name-gallery = gallery
+name-spring-show = spring-show
+name-harbour-trip = harbour-trip
+name-night-contest = night-contest
+name-autumn-archives = autumn-archives
+name-prints-tar = prints.tar
+name-negatives-001-tif = negatives-001.tif
+name-negatives-002-tif = negatives-002.tif
+name-prints-001-tif = prints-001.tif
+## The Hive: the devices of the local network (host names), the VLANs and
+## the groups of the directory (team: see The Datacenter), Sacha's template
+name-printer = printer
+name-entrance-camera = entrance-camera
+name-malik-pc = malik-pc
+name-reception-pc = reception-pc
+name-visitor-phone = visitor-phone
+name-wifi-ap = wifi-ap
+name-annex-pc = annex-pc
+name-annex-printer = annex-printer
+name-offices = offices
+name-guests = guests
+name-equipment = equipment
+name-ines-template-ldif = ines-template.ldif
+## The Workshop
+name-toolshed = toolshed
+name-toolshed-db = toolshed.db
+name-toolshed-old = toolshed-old
+name-toolshed-data = toolshed-data
+name-local-ai = local-ai
+name-old-wiki = old-wiki
+name-base-system = base-system
+name-webapp = webapp
+name-pgdata = pgdata
+name-point-thumbnails = .thumbnails
+name-benchy-first-try-jpg = benchy-first-try.jpg
+name-benchy-success-jpg = benchy-success.jpg
+name-laser-cut-lamp-jpg = laser-cut-lamp.jpg
+name-wooden-clock-jpg = wooden-clock.jpg
+name-line-following-robot-jpg = line-following-robot.jpg
+name-kids-soldering-workshop-jpg = kids-soldering-workshop.jpg
+name-repaired-bike-jpg = repaired-bike.jpg
+name-revived-toaster-jpg = revived-toaster.jpg
+name-led-sign-jpg = led-sign.jpg
+name-shared-toolbox-jpg = shared-toolbox.jpg
+name-digital-embroidery-jpg = digital-embroidery.jpg
+name-homemade-drone-jpg = homemade-drone.jpg
+name-custom-keyboard-jpg = custom-keyboard.jpg
+name-fablab-party-jpg = fablab-party.jpg
+
+## The Gazette
+name-street-party-html = street-party.html
+name-home-html = home.html
+name-newsroom = newsroom
+name-newsletter = newsletter
+
+## The Game Library
+name-frontdesk = frontdesk
+name-gamelib = gamelib
+name-boardgames = boardgames
+name-members = members
+name-loans = loans

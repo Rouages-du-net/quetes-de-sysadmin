@@ -9,14 +9,15 @@
 
 import { path, d, f, accountsFiles, type Chapter, type File } from '../world';
 import type { Game } from '../shell';
-import { datacenterAccounts, NGINX_LOG } from './first-day';
+import type { Translate } from '../../texts';
+import { datacenterAccounts, nginxLog, route } from './first-day';
 
 const M = '/home/you';
 const LOGS = '/var/log/nginx';
 const SHARE = '/srv/team';
 
-const ERRORS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
-2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET /agenda HTTP/1.1"
+const errors = (t: Translate) => `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET ${route(t, '/catalogue/search?q=a')} HTTP/1.1"
+2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET ${route(t, '/events')} HTTP/1.1"
 2026/10/13 21:02:44 [notice] 612#612: signal process started`;
 
 // On Debian, nginx's logs belong to www-data, group adm, mode 640.
@@ -59,7 +60,7 @@ export const secondDay: Chapter = {
         var: d(
           {
             log: d(
-              { nginx: d({ 'access.log': log(NGINX_LOG), 'error.log': log(ERRORS) }, undefined, { owner: 'root', group: 'adm' }) },
+              { nginx: d({ 'access.log': log(nginxLog(t)), 'error.log': log(errors(t)) }, undefined, { owner: 'root', group: 'adm' }) },
               undefined,
               root,
             ),

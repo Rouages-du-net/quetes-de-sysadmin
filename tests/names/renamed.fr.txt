@@ -200,9 +200,9 @@ versions
   /home/you/collection/recordings/market_songs.ogg → /home/vous/fonds/enregistrements/chants_du_marche.ogg
   /home/you/collection/recordings/interview_fatou.ogg → /home/vous/fonds/enregistrements/entretien_fatou.ogg
   /home/you/collection/scans → /home/vous/fonds/numerisations
-  /home/you/collection/scans/registre_1.png → /home/vous/fonds/numerisations/registre_1.png
-  /home/you/collection/scans/registre_2.png → /home/vous/fonds/numerisations/registre_2.png
-  /home/you/collection/scans/registre_3.png → /home/vous/fonds/numerisations/registre_3.png
+  /home/you/collection/scans/register_1.png → /home/vous/fonds/numerisations/registre_1.png
+  /home/you/collection/scans/register_2.png → /home/vous/fonds/numerisations/registre_2.png
+  /home/you/collection/scans/register_3.png → /home/vous/fonds/numerisations/registre_3.png
   /mnt/townhall → /mnt/mairie
   /mnt/townhall/restic-library → /mnt/mairie/restic-bibliotheque
 
@@ -264,12 +264,30 @@ firewall-hole
   /home/you → /home/vous
   /home/you/message_from_rania.txt → /home/vous/message_de_rania.txt
   /home/you/note_from_yasmine.txt → /home/vous/mot_de_yasmine.txt
+  /usr/base-system → /usr/systeme
 
 full-powers
   /home/you → /home/vous
   /home/you/message_from_yasmine.txt → /home/vous/message_de_yasmine.txt
   /home/you/note_from_rania.txt → /home/vous/note_de_rania.txt
-  /srv/galerie/README.txt → /srv/galerie/LISEZMOI.txt
+  /srv/gallery → /srv/galerie
+  /srv/gallery/compose.yaml → /srv/galerie/compose.yaml
+  /srv/gallery/README.txt → /srv/galerie/LISEZMOI.txt
+  /srv/gallery/photos → /srv/galerie/photos
+  /srv/gallery/photos/benchy-first-try.jpg → /srv/galerie/photos/benchy-premier-essai.jpg
+  /srv/gallery/photos/benchy-success.jpg → /srv/galerie/photos/benchy-reussi.jpg
+  /srv/gallery/photos/laser-cut-lamp.jpg → /srv/galerie/photos/lampe-decoupe-laser.jpg
+  /srv/gallery/photos/wooden-clock.jpg → /srv/galerie/photos/horloge-en-bois.jpg
+  /srv/gallery/photos/line-following-robot.jpg → /srv/galerie/photos/robot-suiveur-de-ligne.jpg
+  /srv/gallery/photos/kids-soldering-workshop.jpg → /srv/galerie/photos/atelier-soudure-enfants.jpg
+  /srv/gallery/photos/repaired-bike.jpg → /srv/galerie/photos/velo-repare.jpg
+  /srv/gallery/photos/revived-toaster.jpg → /srv/galerie/photos/grille-pain-ressuscite.jpg
+  /srv/gallery/photos/led-sign.jpg → /srv/galerie/photos/enseigne-led.jpg
+  /srv/gallery/photos/shared-toolbox.jpg → /srv/galerie/photos/boite-a-outils-partagee.jpg
+  /srv/gallery/photos/digital-embroidery.jpg → /srv/galerie/photos/brodeuse-numerique.jpg
+  /srv/gallery/photos/homemade-drone.jpg → /srv/galerie/photos/drone-maison.jpg
+  /srv/gallery/photos/custom-keyboard.jpg → /srv/galerie/photos/clavier-sur-mesure.jpg
+  /srv/gallery/photos/fablab-party.jpg → /srv/galerie/photos/fete-du-fablab.jpg
 
 bare-repo
   /home/you → /home/vous
@@ -311,8 +329,10 @@ migration
 ransom
   /home/you → /home/vous
   /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
-  /home/accueil/.cache/.upd → /home/accueil/.cache/.maj
-  /home/accueil/.cache/.upd/system-update → /home/accueil/.cache/.maj/maj-systeme
+  /home/frontdesk → /home/accueil
+  /home/frontdesk/.cache → /home/accueil/.cache
+  /home/frontdesk/.cache/.upd → /home/accueil/.cache/.maj
+  /home/frontdesk/.cache/.upd/system-update → /home/accueil/.cache/.maj/maj-systeme
   /srv/share → /srv/partage
   /srv/share/inventory.csv → /srv/partage/inventaire.csv
   /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt
@@ -327,6 +347,7 @@ ransom
 snapshots
   /home/you → /home/vous
   /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
+  /home/frontdesk → /home/accueil
   /srv/share → /srv/partage
   /srv/share/inventory.csv → /srv/partage/inventaire.csv
   /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt
@@ -353,6 +374,7 @@ full-disk
 memory
   /home/you → /home/vous
   /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /opt/podcast/convert.py → /opt/podcast/convertir.py
 
 inodes
   /home/you → /home/vous
@@ -435,8 +457,8 @@ transfers
   /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/config → /home/vous/.ssh/config
-  /home/you/.ssh/id_sauvegarde → /home/vous/.ssh/id_sauvegarde
-  /home/you/.ssh/id_sauvegarde.pub → /home/vous/.ssh/id_sauvegarde.pub
+  /home/you/.ssh/id_backup → /home/vous/.ssh/id_sauvegarde
+  /home/you/.ssh/id_backup.pub → /home/vous/.ssh/id_sauvegarde.pub
   /srv/share → /srv/partage
   /srv/share/minutes → /srv/partage/comptes-rendus
   /srv/share/minutes/agm-2026.txt → /srv/partage/comptes-rendus/ag-2026.txt
@@ -469,6 +491,7 @@ web-host
 web-host:wiki
   /home/you → /home/vous
   /home/you/.ssh → /home/vous/.ssh
+  /srv/wiki/site/membership.html → /srv/wiki/site/adhesion.html
 
 departure
   /home/you → /home/vous
@@ -537,7 +560,7 @@ annex
 directory
   /home/you → /home/vous
   /home/you/email_malik.txt → /home/vous/courriel_malik.txt
-  /home/you/modele-ines.ldif → /home/vous/modele-ines.ldif
+  /home/you/ines-template.ldif → /home/vous/modele-ines.ldif
   /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
 
 wifi
@@ -560,6 +583,10 @@ report
   /home/you/audit_report.txt → /home/vous/rapport-audit.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/orders → /srv/commandes
+  /srv/orders/.env → /srv/commandes/.env
+  /srv/orders/app → /srv/commandes/app
+  /srv/orders/app/server.js → /srv/commandes/app/server.js
 
 exposure
   /home/you → /home/vous
@@ -573,6 +600,8 @@ traces
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/orders → /srv/commandes
+  /srv/orders/.env → /srv/commandes/.env
 
 follow-up
   /home/you → /home/vous
@@ -585,53 +614,109 @@ tired-disk
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
   /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
   /var/mail/you → /var/mail/vous
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 new-disk
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
   /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 more-room
   /home/you → /home/vous
   /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archives-automne
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archives-automne/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 stuck-boot
   /home/you → /home/vous
   /root/message_from_odile.txt → /root/message_d_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-printemps
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-printemps/tirages.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/sortie-port
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/sortie-port/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concours-nuit
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concours-nuit/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archives-automne
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archives-automne/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
 
 bulletin
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/security_bulletin.txt → /home/vous/bulletin-securite.txt
   /home/you/watch.md → /home/vous/veille.md
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 priority
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/priority.md → /home/vous/priorite.md
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 fix
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 proof
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 routine
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/fournil
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/fournil
   /home/you → /home/vous
   /home/you/email_salome.txt → /home/vous/courriel_salome.txt
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /var/www/bakery → /var/www/fournil
+  /var/www/bakery/index.html → /var/www/fournil/index.html
 
 postman
   /home/you → /home/vous

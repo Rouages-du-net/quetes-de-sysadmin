@@ -9,6 +9,15 @@ chapter-bulletin = The Bulletin
 
 ## Files
 
+# The Bakery's website (/var/www/bakery/index.html), as curl shows it.
+watch-site-index =
+    <!DOCTYPE html>
+    <html lang="en">
+    <title>The Bakery</title>
+    <h1>The Bakery</h1>
+    <p>Order your bread online and pick it up at the shop.</p>
+    </html>
+
 bulletin-email-salome =
     From:     Salomé
     To:       you
@@ -17,7 +26,7 @@ bulletin-email-salome =
     Hello!
 
     It's been six months since the audit. The business has grown: you've
-    migrated to a new server (petrin), and Nadia asked for me again, not to
+    migrated to a new server (kneader), and Nadia asked for me again, not to
     recheck everything this time, but to help you build a habit: the
     security watch. I won't come back every six months to always check
     everything for you.
@@ -37,7 +46,7 @@ bulletin-email-salome =
     what you don't need to worry about on the other (with why).
 
     Salomé
-    (For sudo, your password is: levain-2028)
+    (For sudo, your password is: sourdough-2028)
 
 bulletin-file =
     SECURITY BULLETIN — week of 8 September 2028

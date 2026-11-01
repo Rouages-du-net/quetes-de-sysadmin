@@ -10,7 +10,7 @@ chapter-database = The Database
 database-message-berenice =
     A message from Bérénice:
 
-    "The game loans are in a PostgreSQL database, ludo, on the
+    "The game loans are in a PostgreSQL database, gamelib, on the
     server. Malo says it's backed up, since rsnapshot copies
     /var/lib/postgresql every night (his note is next to this one). But a
     friend who works in IT told me that's not a real backup.
@@ -20,7 +20,7 @@ database-message-berenice =
     put it back? Above all, don't touch the real database while you try
     things out: volunteers record loans all day long.
 
-    For sudo: ludo-2027."
+    For sudo: dice-2027."
 database-word-malo =
     A note from Malo:
 
@@ -28,6 +28,11 @@ database-word-malo =
     rsnapshot copies them every night along with the rest. To talk to the
     database: psql. The account with all the rights on the database is called postgres."
 database-crontab-root = Snapshots (rsnapshot): weekly at 3:00 on Monday, daily at 3:30
+# The tables' columns, and the members' districts.
+database-columns-boardgames = id,name,copies
+database-columns-members = id,card,district
+database-columns-loans = id,game_id,member_id,out_on,returned_on
+database-districts = north,south,east,west,centre
 database-names-games = snakes and ladders,ludo,draughts,mikado,dominoes,animal memory,ladder game,oware,go,connect four,mancala,tangram,solitaire,battleship,happy families
 
 ## Events
@@ -37,8 +42,8 @@ database-event-role =
     the name of your account ("peer" authentication), and neither "you" nor
     root is a role in this database. The postgres account, however, has all
     the rights: sudo -u postgres (man sudo).
-database-event-on-true =
-    Stop! This restore targeted ludo, the live database: its tables
+database-event-on-live =
+    Stop! This restore targeted gamelib, the live database: its tables
     already exist, hence the errors. Restoring over the real database to
     "try it out" risks overwriting today's loans. A test
     restore is done in a separate database (man createdb).
@@ -52,7 +57,7 @@ database-incident =
     history" in the admin page… The list of loans is
     empty! The games and members are still there. Can you put the
     loans back, WITHOUT touching the rest?"
-    (Check with psql: how many rows are left in prets? Your
+    (Check with psql: how many rows are left in loans? Your
     backup from this morning contains the whole table; man pg_restore.)
 database-event-duplicates =
     pg_restore refuses: some loans from the backup are already in the table

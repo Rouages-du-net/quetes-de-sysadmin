@@ -307,21 +307,21 @@ export const addressFor = (a: Device) => a.fixed ?? a.lease;
 
 /**
  * What a ping from the router gives: "local" (one of its addresses),
- * "device" (it answers), "injoignable" (nobody answers on that
+ * "device" (it answers), "unreachable" (nobody answers on that
  * network; the error's source address), "internet" (through the gateway),
  * "lost" (a private address sent to the gateway) or "no-route".
  */
 export function reach(
   l: Lan,
   ip: string,
-): { what: 'local' | 'device' | 'internet' | 'lost' | 'no-route'; source?: string } | { what: 'injoignable'; source: string } {
+): { what: 'local' | 'device' | 'internet' | 'lost' | 'no-route'; source?: string } | { what: 'unreachable'; source: string } {
   if (ip.startsWith('127.') || Object.values(l.interfaces).some((i) => i.addresses.some((a) => a.split('/')[0] === ip))) return { what: 'local' };
   const i = interfaceFor(l, ip);
   if (i) {
     const source = (i.addresses.find((a) => inside(ip, networkFor(a))) ?? i.addresses[0] ?? '').split('/')[0];
     const vlan = vlanFor(l, i);
     const ok = vlan !== null && l.vlans.concat(1).includes(vlan) && l.devices.some((a) => a.vlan === vlan && addressFor(a) === ip);
-    return ok ? { what: 'device', source } : { what: 'injoignable', source };
+    return ok ? { what: 'device', source } : { what: 'unreachable', source };
   }
   const gw = l.gateway;
   if (gw && l.interfaces[gw.dev] && inService(l, l.interfaces[gw.dev]))

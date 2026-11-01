@@ -2,33 +2,36 @@
 // an OpenLDAP directory (slapd, on the router), installed by Sacha. Before
 // the office Wi-Fi (which will rely on it), it needs putting straight:
 //   - Camille left in December: delete her entry (ldapdelete)
-//     AND remove her from the bureaux group (memberUid is not updated on
+//     AND remove her from the offices group (memberUid is not updated on
 //     its own);
 //   - Sami (the Annex) is arriving: an inetOrgPerson + posixAccount entry
-//     (an LDIF, based on modele-ines.ldif), with a free uidNumber, a hashed
+//     (an LDIF, based on ines-template.ldif), with a free uidNumber, a hashed
 //     password (slappasswd, or ldappasswd) rather than plain text, and
-//     memberUid: sami in the bureaux group (ldapmodify).
+//     memberUid: sami in the offices group (ldapmodify).
 // Objective checked on the directory's state: no trace of camille left,
 // sami exists (classes, unique uidNumber, hashed password) and is in
-// bureaux, slapd is running.
+// offices, slapd is running. The groups' names (offices, team) and the
+// passwords are those of the language (name(), password()).
 // Sources: https://www.openldap.org/doc/admin26/dbtools.html,
 // https://manpages.debian.org/trixie/ldap-utils/ldapmodify.1.en.html,
 // https://wiki.debian.org/LDAP/OpenLDAPSetup
 
-import { d, f, type Chapter } from '../world';
+import { d, f, name, password, type Chapter } from '../world';
+import type { Translate } from '../../texts';
 import type { Game } from '../shell';
 import { directory, inClear, hashWithSalt, normalise, find, type Directory, type Input } from '../ldap';
 import { serviceWg } from '../commands/wireguard';
 import { mountWg } from '../wireguard';
 import { systemd } from '../systemd';
 import { FLUX_DMZ } from './dmz';
-import { ANNEX, MALIK_LAPTOP, ANNEX_WG0 } from './annex';
+import { ANNEX, MALIK_LAPTOP, annexWg0 } from './annex';
+import { fluxFor } from './zones';
 import { MALIK } from './remote-work';
 import {
   hiveAccounts,
-  DNSMASQ_VLAN,
+  dnsmasqVlan,
   initialiseFirewall,
-  INTERFACES_DMZ,
+  interfacesDmz,
   lanWithDmz,
   M,
   hiveWorld,
@@ -41,10 +44,13 @@ import {
 
 export const BASE = 'dc=thehive,dc=example';
 export const ADMIN = `cn=admin,${BASE}`;
-export const MDP_ADMIN = 'rayon-de-miel';
-export const OFFICES = `cn=bureaux,ou=groups,${BASE}`;
+// The directory administrator's password (password(): honeycomb → rayon-de-miel).
+export const ADMIN_PASSWORD = 'honeycomb';
+/** A group of the directory, its name in the language (offices → bureaux, team → equipe). */
+export const group = (t: Translate, cn: string) => `cn=${name(t, cn)},ou=groups,${BASE}`;
+const offices = (j: Game) => group(j.t, 'offices');
 
-const person = (uid: string, firstName: string, name: string, number: number, mdp: string, salt: string): Input => ({
+const person = (t: Translate, uid: string, firstName: string, name: string, number: number, mdp: string, salt: string): Input => ({
   dn: `uid=${uid},ou=people,${BASE}`,
   attrs: {
     objectclass: ['inetOrgPerson', 'posixAccount'],
@@ -57,27 +63,30 @@ const person = (uid: string, firstName: string, name: string, number: number, md
     gidnumber: ['10000'],
     homedirectory: [`/home/${uid}`],
     loginshell: ['/bin/bash'],
-    userpassword: [hashWithSalt(mdp, salt)],
+    userpassword: [hashWithSalt(password(t, mdp), salt)],
   },
 });
 
 /** The Hive's directory, as Sacha left it. */
-export function departureDirectory(): Directory {
+export function departureDirectory(t: Translate): Directory {
   return {
     base: BASE,
     admin: ADMIN,
     inputs: [
-      { dn: BASE, attrs: { objectclass: ['top', 'dcObject', 'organization'], o: ['La Ruche'], dc: ['thehive'] } },
+      { dn: BASE, attrs: { objectclass: ['top', 'dcObject', 'organization'], o: [t('directory-organisation')], dc: ['thehive'] } },
       { dn: `ou=people,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['people'] } },
       { dn: `ou=groups,${BASE}`, attrs: { objectclass: ['organizationalUnit'], ou: ['groups'] } },
-      person('malik', 'Malik', 'Ferrand', 10001, 'ruche-malik-2027', 'Ab12Cd34'),
-      person('ines', 'Ines', 'Morel', 10002, 'ruche-ines-2027', 'Ef56Gh78'),
-      person('camille', 'Camille', 'Roux', 10003, 'ruche-camille-2026', 'Ij90Kl12'),
+      person(t, 'malik', 'Malik', 'Ferrand', 10001, 'hive-malik-2027', 'Ab12Cd34'),
+      person(t, 'ines', 'Ines', 'Morel', 10002, 'hive-ines-2027', 'Ef56Gh78'),
+      person(t, 'camille', 'Camille', 'Roux', 10003, 'hive-camille-2026', 'Ij90Kl12'),
       {
-        dn: `cn=equipe,ou=groups,${BASE}`,
-        attrs: { objectclass: ['posixGroup'], cn: ['equipe'], gidnumber: ['10000'], memberuid: ['malik', 'ines', 'camille'] },
+        dn: group(t, 'team'),
+        attrs: { objectclass: ['posixGroup'], cn: [name(t, 'team')], gidnumber: ['10000'], memberuid: ['malik', 'ines', 'camille'] },
       },
-      { dn: OFFICES, attrs: { objectclass: ['posixGroup'], cn: ['bureaux'], gidnumber: ['10010'], memberuid: ['malik', 'ines', 'camille'] } },
+      {
+        dn: group(t, 'offices'),
+        attrs: { objectclass: ['posixGroup'], cn: [name(t, 'offices')], gidnumber: ['10010'], memberuid: ['malik', 'ines', 'camille'] },
+      },
     ],
   };
 }
@@ -94,7 +103,7 @@ URI	ldap://localhost
 
 TLS_CACERT	/etc/ssl/certs/ca-certificates.crt`;
 
-const INES_TEMPLATE = `# The entry for Ines (Sacha, 2026)
+const inesTemplate = (t: Translate) => `# The entry for Ines (Sacha, 2026)
 dn: uid=ines,ou=people,${BASE}
 objectClass: inetOrgPerson
 objectClass: posixAccount
@@ -107,7 +116,7 @@ uidNumber: 10002
 gidNumber: 10000
 homeDirectory: /home/ines
 loginShell: /bin/bash
-userPassword: ruche-ines-2027`;
+userPassword: ${password(t, 'hive-ines-2027')}`;
 
 // ——— The directory's state ———
 
@@ -136,7 +145,7 @@ const finished = (j: Game) => {
     completeSami(a) &&
     !uidDouble(a) &&
     !wordsInClear(a) &&
-    members(a, OFFICES).includes('sami')
+    members(a, offices(j)).includes('sami')
   );
 };
 
@@ -199,17 +208,17 @@ export const chapterDirectory: Chapter = {
     c.groups.openldap = { gid: 118, members: [] };
     return c;
   },
-  state: () => {
+  state: (t) => {
     const sd = hiveSystemd({ 'wg-quick@wg0': serviceWg('wg0'), slapd: serviceSlapd() });
     for (const name of ['nftables', 'wg-quick@wg0']) Object.assign(sd.services[name], { active: true, state: 'active' });
-    const l = lanWithDmz();
+    const l = lanWithDmz(t);
     return {
-      lan: { ...l, flux: FLUX_DMZ.map(({ permitted: _, ...x }) => x), remotes: [MALIK, ANNEX] },
+      lan: { ...l, flux: fluxFor(t, FLUX_DMZ), remotes: [MALIK, ANNEX] },
       systemd: sd,
       nft: { tables: [] },
       wg: {},
-      ldap: departureDirectory(),
-      ldapAdmin: MDP_ADMIN,
+      ldap: departureDirectory(t),
+      ldapAdmin: password(t, ADMIN_PASSWORD),
     };
   },
   initialise: (j) => {
@@ -218,20 +227,20 @@ export const chapterDirectory: Chapter = {
   },
   createWorld: (t) =>
     hiveWorld({
-      interfaces: INTERFACES_DMZ,
-      dnsmasq: DNSMASQ_VLAN,
+      interfaces: interfacesDmz(t),
+      dnsmasq: dnsmasqVlan(t),
       nftables: NFTABLES_DMZ,
       sysctl: ROUTER_SYSCTL,
       etc: {
-        wireguard: d({ 'wg0.conf': f(ANNEX_WG0, { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
+        wireguard: d({ 'wg0.conf': f(annexWg0(t), { lines: true, owner: 'root', mode: 'rw-------' }) }, undefined, {
           owner: 'root',
           mode: 'rwx------',
         }),
         ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
       home: {
-        'email_malik.txt': f(t('directory-email-malik', { admin: ADMIN, password: MDP_ADMIN })),
-        'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
+        'email_malik.txt': f(t('directory-email-malik', { admin: ADMIN, password: password(t, ADMIN_PASSWORD) })),
+        'ines-template.ldif': f(inesTemplate(t), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },
     }),
@@ -248,7 +257,7 @@ export const chapterDirectory: Chapter = {
     },
     {
       id: 'sami-only',
-      condition: (j) => completeSami(directory(j)!) && !members(directory(j)!, OFFICES).includes('sami'),
+      condition: (j) => completeSami(directory(j)!) && !members(directory(j)!, offices(j)).includes('sami'),
       message: (j) => j.t('directory-event-sami-only'),
     },
     { id: 'stopped', condition: (j) => systemd(j)?.services.slapd?.state !== 'active', message: (j) => j.t('directory-event-stopped') },
