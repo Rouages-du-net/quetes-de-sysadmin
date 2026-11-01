@@ -745,7 +745,7 @@ export class Shell implements Game {
     return output;
   }
 
-  /** Le mot de passe du joueur ou de la joueuse, dans la langue (tournesol → sunflower, voir mots-de-passe.ftl). */
+  /** Le mot de passe du joueur ou de la joueuse, dans la langue (tournesol → sunflower, voir passwords.ftl). */
   playerPassword(): string | undefined {
     const m = this.chapter.password;
     return m && password(this.t, m);

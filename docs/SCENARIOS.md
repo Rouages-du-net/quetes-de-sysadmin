@@ -239,7 +239,7 @@ program does what it was told, not what was meant.
 
 The places and files below carry their French names, which are also the
 internal names; the English game translates them (`Phare` → `Lighthouse`,
-`crabe` → `crab`, `noms.ftl`).
+`crabe` → `crab`, `names.ftl`).
 
 ```mermaid
 flowchart LR
@@ -2174,8 +2174,8 @@ The format of a quest (files, events, debrief, tests) is described in
    `world.ts`): known commands, world (`d()` for a place, `f()` for an
    object), state of the simulated tools (`state()`, `initialise()`),
    events (condition → message, once) and the final event.
-2. Write its texts in `src/texts/en/chapitre-<id>.ftl` then
-   `src/texts/fr/`, and its hints in `indices-<story>.ftl`.
+2. Write its texts in `src/texts/en/chapter-<id>.ftl` then
+   `src/texts/fr/`, and its hints in `hints-<story>.ftl`.
 3. Add it to a story of `STORIES` in `chapters/index.ts` (or create a
    new story, with its machine and its `after`), at the end of
    `CODE_ORDER` and `tests/progress/order.txt`, and in a learning

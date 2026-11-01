@@ -258,7 +258,7 @@ achievements-sandwich = Avec les droits
 achievements-sl = Locomotive
     .description = sl au lieu de ls : la faute de frappe la plus célèbre, punie par un train.
 
-## Indices gradués (voir src/engine/hints.ts ; les indices eux-mêmes : indices-<histoire>.ftl)
+## Indices gradués (voir src/engine/hints.ts ; les indices eux-mêmes : hints-<story>.ftl)
 
 hint-title = Besoin d'aide ?
 hint-intro = Trois niveaux, à ouvrir l'un après l'autre : le manuel d'abord, comme au travail. Le débrief dira combien tu en as demandé.

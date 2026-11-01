@@ -66,7 +66,7 @@ export interface Context {
 }
 
 export interface Command {
-  // Le texte de la page man est dans src/texts/<langue>/manuel.ftl
+  // Le texte de la page man est dans src/texts/<langue>/manual.ftl
   // (man-<commande>) ; ici, la partie technique (voir pages.ts).
   // Options courtes acceptées. Si présent, une option inconnue donne le
   // vrai message d'erreur, qui renvoie vers --help.
@@ -75,7 +75,7 @@ export interface Command {
   // ou '' pour une option longue lue telle quelle (--max-depth=1). Les autres :
   // « unrecognized option '--x' », comme les vrais outils.
   long?: Record<string, string>;
-  // Commandes d'exemple (leur explication : .exemple-N dans manuel.ftl).
+  // Commandes d'exemple (leur explication : .example-N dans manual.ftl).
   examples?: string[];
   see?: string[];
   // La commande analyse elle-même ses options (pas de contrôle générique).

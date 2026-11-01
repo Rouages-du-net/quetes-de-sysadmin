@@ -39,7 +39,7 @@ for (const language of LANGUAGES)
       }
     });
 
-    // Le garde-fou des collisions : un nom ajouté à noms.ftl renomme ce
+    // Le garde-fou des collisions : un nom ajouté à names.ftl renomme ce
     // nom dans tous les chapitres à noms: true, y compris là où personne ne
     // l'attendait (un /srv/backup d'une autre histoire). La liste de
     // tous les renommages est gardée dans tests/names/ : un renommage

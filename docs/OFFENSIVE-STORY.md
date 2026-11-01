@@ -48,16 +48,16 @@ chapter:
 | File | Contents |
 |---|---|
 | `src/engine/chapitres/<id>.ts` | known commands, starting world, the tools' state, events |
-| `src/texts/en/chapitre-<id>.ftl` + `fr/...` | every text: arrival, events, debrief |
-| `src/texts/en/indices-<story>.ftl` + `fr/...` | one graduated hint per step |
+| `src/texts/en/chapter-<id>.ftl` + `fr/...` | every text: arrival, events, debrief |
+| `src/texts/en/hints-<story>.ftl` + `fr/...` | one graduated hint per step |
 | `tests/<story>.test.ts` | each chapter replayed (solution, another way if possible, false leads), in every language |
 | `docs/SCENARIOS.md` | the story's sheet |
 
 And the wiring once the chapters are written: `src/engine/chapters/index.ts`
 (register the story), `src/engine/paths.ts` (each chapter in at least one
 learning path, otherwise `tests/paths.test.ts` fails),
-`src/texts/en/histoires.ftl` + `fr/...` (title, summary),
-`src/texts/en/noms.ftl` + `fr/...` (if `names: true`).
+`src/texts/en/stories.ftl` + `fr/...` (title, summary),
+`src/texts/en/names.ftl` + `fr/...` (if `names: true`).
 
 ## 4. The real sticking point: a new simulated tool
 
@@ -73,7 +73,7 @@ Some reference points, taken from `nmap` and `lynis` (the tools added for
 | The engine (the simulated state) | `src/engine/scan.ts` | ~250 lines |
 | The command (reads arguments, writes output) | `src/engine/commands/nmap.ts` | ~70 lines |
 | A simpler tool (state read directly) | `src/engine/lynis.ts` + `commands/lynis.ts` | ~235 + ~30 lines |
-| The manual page (`man`, `--help`), in `manuel.ftl` | `man-nmap`, `man-lynis` | a few dozen lines per tool, ×2 languages |
+| The manual page (`man`, `--help`), in `manual.ftl` | `man-nmap`, `man-lynis` | a few dozen lines per tool, ×2 languages |
 
 On top of that: the entry in `src/engine/commands/index.ts`, the options
 and examples in `src/engine/commands/pages.ts`, a row in the table of

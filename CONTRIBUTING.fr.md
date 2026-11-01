@@ -36,8 +36,8 @@ machine du réseau simulé. Un chapitre, c'est :
 | Fichier | Contenu |
 |---|---|
 | `src/engine/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
-| `src/texts/en/chapitre-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
-| `src/texts/en/indices-<histoire>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
+| `src/texts/en/chapter-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
+| `src/texts/en/hints-<story>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
 
@@ -111,8 +111,8 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 
 - son entrée dans `src/engine/commands/index.ts` ;
 - ses options et exemples dans `src/engine/commands/pages.ts` ;
-- sa page dans `src/texts/en/manuel.ftl` et `fr/manuel.ftl`
-  (`man-<commande>`, `.synopsis`, `.option-X`, `.exemple-N`) ;
+- sa page dans `src/texts/en/manual.ftl` et `fr/manual.ftl`
+  (`man-<commande>`, `.synopsis`, `.option-X`, `.example-N`) ;
 - une ligne dans le tableau des écarts de `SCENARIOS.md` ;
 - une ligne dans la structure de `CLAUDE.md`.
 
@@ -139,8 +139,8 @@ de large : pas d'erreur console, pas de défilement horizontal.
   seulement.
 - **Le code en anglais.** Les fichiers et les identifiants (variables,
   fonctions, types, composants) sont en anglais, et le monde aussi (lieux,
-  machines, comptes, mots de passe) ; certains identifiants (les noms des
-  fichiers `.ftl`, les classes CSS) et des commentaires sont encore en français, et
+  machines, comptes, mots de passe) ; certains identifiants (les clés de
+  l'état des machines, les classes CSS) et des commentaires sont encore en français, et
   passent peu à peu à l'anglais. Le **nouveau** code s'écrit en anglais,
   sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
   nom public reçoit d'abord son alias anglais, l'ancien reste accepté.

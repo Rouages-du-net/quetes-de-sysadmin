@@ -1,5 +1,5 @@
 // Les noms des machines et les mots de passe des histoires se traduisent
-// (machines.ftl, mots-de-passe.ftl) : des noms valides, distincts, et des
+// (machines.ftl, passwords.ftl) : des noms valides, distincts, et des
 // textes qui emploient ceux de leur langue.
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -8,11 +8,11 @@ import { password } from '../src/engine/world';
 import { LANGUAGES, translator } from '../src/texts';
 
 const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name);
-const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/mots-de-passe.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
+const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/passwords.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
 // Les valeurs des messages d'une langue (sans les commentaires ni les identifiants).
 const values = (language: string) =>
   readdirSync(new URL(`../src/texts/${language}/`, import.meta.url))
-    .filter((f) => f.endsWith('.ftl') && !['machines.ftl', 'mots-de-passe.ftl'].includes(f))
+    .filter((f) => f.endsWith('.ftl') && !['machines.ftl', 'passwords.ftl'].includes(f))
     .flatMap((f) =>
       readFileSync(new URL(`../src/texts/${language}/${f}`, import.meta.url), 'utf8')
         .split('\n')

@@ -59,7 +59,7 @@ agents, but its rules apply to everyone.
 - **Code in English.** The project started in French. Files and
   identifiers (variables, functions, types, components) are now in
   English, and so is the world (places, machines, accounts, passwords);
-  some identifiers are still French (`.ftl` file names, CSS classes) and some
+  some identifiers are still French (state keys, CSS classes) and some
   comments, and are being moved to English. Write **new** code in
   English, and don't mix a large rename with a feature in the same pull
   request. Public names get an English alias
@@ -81,8 +81,8 @@ simulated network. A chapter is:
 | File | Contents |
 |---|---|
 | `src/engine/chapitres/<id>.ts` | the chapter: its commands, starting world, state and events |
-| `src/texts/en/chapitre-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
-| `src/texts/en/indices-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
+| `src/texts/en/chapter-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
+| `src/texts/en/hints-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
 | `tests/<story>.test.ts` | the replayed game: the expected solution, another solution, the false leads |
 | `docs/SCENARIOS.md` | its sheet: the story, the commands learnt, the goal, the traps |
 
@@ -160,8 +160,8 @@ A tool (nginx, nftables, slapd…) has its engine in `src/engine/<tool>.ts`
 
 - its entry in `src/engine/commands/index.ts`;
 - its options and examples in `src/engine/commands/pages.ts`;
-- its page in `src/texts/en/manuel.ftl` and `fr/manuel.ftl`
-  (`man-<command>`, `.synopsis`, `.option-X`, `.exemple-N`);
+- its page in `src/texts/en/manual.ftl` and `fr/manual.ftl`
+  (`man-<command>`, `.synopsis`, `.option-X`, `.example-N`);
 - a row in the table of differences in `docs/SCENARIOS.md`;
 - a line in the structure section of `CLAUDE.md`.
 

@@ -357,7 +357,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [ ] German, Spanish, Mandarin, Korean, then other languages
 - [x] Outputs of the simulated commands according to `LANG`, like the real
       tools (in English: the original messages, as with `LANG=C`)
-- [x] Translated, easy-to-type names of places and objects (`noms.ftl`, the
+- [x] Translated, easy-to-type names of places and objects (`names.ftl`, the
       Eraser and the workstation); completion tested in each language
 - [x] Names of the other stories' documents (emails, messages, help notes,
       `LISEZMOI.txt`…: `names: true` everywhere)
@@ -443,7 +443,7 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   browser.
 - [x] **Graduated hints**, in the Mission: the manual first, then a lead,
   then almost the answer, for the first step not yet passed
-  (`indices-<story>.ftl`); the debrief counts the hints asked for; none in
+  (`hints-<story>.ftl`); the debrief counts the hints asked for; none in
   exam mode; a "No safety net" achievement for a chapter without hints.
 - [x] **Achievements and ranks**: 17 achievements checked on what really
   happened (ls -a, a pipe, a redirection, a restore, exam mode…), including

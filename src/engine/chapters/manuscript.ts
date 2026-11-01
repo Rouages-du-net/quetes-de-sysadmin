@@ -11,7 +11,7 @@ const NOVEL = `${M}/novel`;
 const POEMS = `${M}/poems`;
 
 // Les versions du roman, les commits et les poèmes sont des textes de
-// l'histoire, dans la langue du jeu (chapitre-manuscript.ftl).
+// l'histoire, dans la langue du jeu (chapter-manuscript.ftl).
 const INES_POEMS = ['sea.txt', 'lighthouse.txt', 'zohra.txt'];
 
 function versions(t: Translate) {

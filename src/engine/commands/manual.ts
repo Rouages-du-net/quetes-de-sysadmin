@@ -1,7 +1,7 @@
 // Le manuel : pages « man » au format habituel (NOM, SYNOPSIS, DESCRIPTION,
 // OPTIONS, EXEMPLES, VOIR AUSSI), « commande --help », « man -k » (apropos)
 // et « whatis ». Les pages sont fabriquées à partir du texte de chaque
-// commande (man-<commande> dans manuel.ftl) et de sa partie technique
+// commande (man-<commande> dans manual.ftl) et de sa partie technique
 // (pages.ts), pour apprendre le bon réflexe : chercher dans le manuel avant
 // de demander. Les messages reprennent ceux de man-db et des coreutils.
 
@@ -19,13 +19,13 @@ const section = (name: string) => COMMANDS[name]?.section ?? 1;
 function texts(name: string, t: Translate) {
   const synopsis = t.exists(`${page(name)}.synopsis`) ? t(`${page(name)}.synopsis`) : '';
   const options = (name: string, c: Command): [string, string][] => (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]);
-  // Une langue peut adapter la commande d'un exemple qui contient des mots (.commande-N) : grep "my password".
+  // Une langue peut adapter la commande d'un exemple qui contient des mots (.command-N) : grep "my password".
   const examples = (name: string, c: Command): [string, string][] =>
     (c.examples ?? []).map((e, i) => {
-      const own = `${page(name)}.commande-${i + 1}`;
+      const own = `${page(name)}.command-${i + 1}`;
       // Le compte du joueur (vous@wiki, /home/vous) et les machines (ssh royaume) prennent leur nom dans la langue (you@wiki, ssh kingdom).
       const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\byou\b/g, player(t)), t, [translator('en')]);
-      return [command, t(`${page(name)}.exemple-${i + 1}`)];
+      return [command, t(`${page(name)}.example-${i + 1}`)];
     });
   return { synopsis, description: t(page(name)), options, examples };
 }
