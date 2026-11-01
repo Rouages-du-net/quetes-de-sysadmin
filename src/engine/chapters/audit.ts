@@ -17,8 +17,8 @@ import type { Listening } from '../commands/ss';
 import { BASE_INSTALLED, PACKAGES, type AptState } from '../commands/apt';
 import { SUDOERS } from './coop';
 
-export const M = '/home/vous';
-export const PASSWORD = 'farine-2028';
+export const M = '/home/you';
+export const PASSWORD = 'flour-2028';
 // Mardi 14 mars 2028, 9 h 30.
 export const NOW = Date.UTC(2028, 2, 14, 9, 30, 0);
 // Une adresse quelconque d'internet (RFC 5737).
@@ -39,16 +39,16 @@ export const bakeryAccounts = (withLucas = true): Accounts => {
     users: {
       root: { uid: 0, group: 'root', home: '/root' },
       commandes: { uid: 997, group: 'commandes', home: '/var/lib/commandes', shell: '/usr/sbin/nologin' },
-      vous: { uid: 1000, group: 'vous' },
+      you: { uid: 1000, group: 'you' },
       nadia: { uid: 1001, group: 'nadia' },
       lucas: { uid: 1002, group: 'lucas' },
     },
     groups: {
       root: { gid: 0, members: [] },
-      adm: { gid: 4, members: ['vous'] },
-      sudo: { gid: 27, members: ['vous', 'lucas'] },
+      adm: { gid: 4, members: ['you'] },
+      sudo: { gid: 27, members: ['you', 'lucas'] },
       commandes: { gid: 997, members: ['nadia'] },
-      vous: { gid: 1000, members: [] },
+      you: { gid: 1000, members: [] },
       nadia: { gid: 1001, members: [] },
       lucas: { gid: 1002, members: [] },
     },
@@ -160,7 +160,7 @@ export function bakeryWorld(
       ),
       home: d(
         {
-          vous: d({
+          you: d({
             ...o.home,
             '.ssh': d({ authorized_keys: f(publicKey(bakery, player(t), machineName(t, 'desk')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
           }),

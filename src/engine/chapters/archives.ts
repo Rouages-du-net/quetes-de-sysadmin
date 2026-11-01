@@ -5,8 +5,8 @@
 import { path, d, f, name, type Chapter, type File } from '../world';
 import type { Game } from '../shell';
 
-const M = '/home/vous';
-const KEY = '/media/cle';
+const M = '/home/you';
+const KEY = '/media/usb';
 const Mo = 1024 * 1024;
 // Les commandes qui écrivent sur la clé (bash : une redirection >).
 const WRITERS = ['tar', 'cp', 'mv', 'mkdir', 'bash'];
@@ -16,15 +16,15 @@ const text = (t: string, size: number) => f(t, { size: Math.round(size * Mo), li
 
 // Les fichiers qu'il faut absolument sauver (chemins relatifs à ~).
 const PRECIOUS = [
-  'fonds/manuscrits/journal_de_marie.txt',
-  'fonds/manuscrits/lettres_1914.txt',
-  'fonds/manuscrits/recettes_du_quartier.txt',
-  'fonds/cartes/plan_1890.png',
-  'fonds/cartes/plan_1954.png',
-  'fonds/presse/gazette_1936.pdf',
-  'fonds/presse/gazette_1968.pdf',
-  'fonds/enregistrements/chants_du_marche.ogg',
-  'fonds/enregistrements/entretien_fatou.ogg',
+  'collection/manuscripts/marie_diary.txt',
+  'collection/manuscripts/letters_1914.txt',
+  'collection/manuscripts/neighbourhood_recipes.txt',
+  'collection/maps/map_1890.png',
+  'collection/maps/map_1954.png',
+  'collection/press/gazette_1936.pdf',
+  'collection/press/gazette_1968.pdf',
+  'collection/recordings/market_songs.ogg',
+  'collection/recordings/interview_fatou.ogg',
 ];
 
 // Une archive tar sur la clé qui contient tous les fichiers précieux.
@@ -44,7 +44,7 @@ export const archives: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'du', 'df', 'find', 'tar', 'cp', 'mv', 'rm', 'mkdir'],
   home: M,
-  welcome: 'lettre_de_rosa.txt',
+  welcome: 'letter_from_rosa.txt',
   names: true,
   final: 'sauve',
   state: (t) => ({
@@ -56,35 +56,35 @@ export const archives: Chapter = {
   createWorld: (t) =>
     d({
       home: d({
-        vous: d({
-          'lettre_de_rosa.txt': f(t('archives-lettre-de-rosa')),
+        you: d({
+          'letter_from_rosa.txt': f(t('archives-lettre-de-rosa')),
           'notes_rosa.txt': f(t('archives-notes-rosa')),
-          fonds: d({
-            'lisezmoi.txt': f(t('archives-lisezmoi')),
-            manuscrits: d({
-              'journal_de_marie.txt': text(t('archives-journal-de-marie'), 3),
-              'lettres_1914.txt': text(t('archives-lettres-1914'), 2.5),
-              'recettes_du_quartier.txt': text(t('archives-recettes-du-quartier'), 1.5),
+          collection: d({
+            'readme.txt': f(t('archives-lisezmoi')),
+            manuscripts: d({
+              'marie_diary.txt': text(t('archives-journal-de-marie'), 3),
+              'letters_1914.txt': text(t('archives-lettres-1914'), 2.5),
+              'neighbourhood_recipes.txt': text(t('archives-recettes-du-quartier'), 1.5),
             }),
-            cartes: d({
-              'plan_1890.png': binary(t('archives-image-png'), 6),
-              'plan_1954.png': binary(t('archives-image-png'), 5),
-              'rendu.tmp': binary(t('archives-fichier-temporaire'), 30),
+            maps: d({
+              'map_1890.png': binary(t('archives-image-png'), 6),
+              'map_1954.png': binary(t('archives-image-png'), 5),
+              'render.tmp': binary(t('archives-fichier-temporaire'), 30),
             }),
-            presse: d({
+            press: d({
               'gazette_1936.pdf': binary(t('archives-document-pdf'), 4),
               'gazette_1968.pdf': binary(t('archives-document-pdf'), 4.5),
               'export.tmp': binary(t('archives-fichier-temporaire'), 40),
             }),
-            enregistrements: d({
-              'chants_du_marche.ogg': binary(t('archives-son-ogg'), 12),
-              'entretien_fatou.ogg': binary(t('archives-son-ogg'), 15),
-              'brut.tmp': binary(t('archives-fichier-temporaire'), 50),
+            recordings: d({
+              'market_songs.ogg': binary(t('archives-son-ogg'), 12),
+              'interview_fatou.ogg': binary(t('archives-son-ogg'), 15),
+              'raw.tmp': binary(t('archives-fichier-temporaire'), 50),
             }),
           }),
         }),
       }),
-      media: d({ cle: d({}) }),
+      media: d({ usb: d({}) }),
     }),
   events: [
     {
@@ -99,7 +99,7 @@ export const archives: Chapter = {
     },
     {
       id: 'tmp',
-      condition: (j) => j.last.commands[0]?.[0] === 'find' && j.last.output.includes(name(j.t, 'brut.tmp')),
+      condition: (j) => j.last.commands[0]?.[0] === 'find' && j.last.output.includes(name(j.t, 'raw.tmp')),
       message: (j) => j.t('archives-evenement-tmp'),
     },
     {
@@ -109,7 +109,7 @@ export const archives: Chapter = {
     },
     {
       id: 'menage',
-      condition: (j) => j.exists(path(j.t, `${M}/fonds`)) && !['cartes/rendu.tmp', 'presse/export.tmp', 'enregistrements/brut.tmp'].some((t) => j.exists(path(j.t, `${M}/fonds/${t}`))),
+      condition: (j) => j.exists(path(j.t, `${M}/collection`)) && !['maps/render.tmp', 'press/export.tmp', 'recordings/raw.tmp'].some((t) => j.exists(path(j.t, `${M}/collection/${t}`))),
       message: (j) => j.t('archives-evenement-menage'),
     },
     {

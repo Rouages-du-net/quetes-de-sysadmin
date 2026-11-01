@@ -28,7 +28,7 @@ import type { Listening } from '../commands/ss';
 import { JAIL_CONF } from './sentinel';
 import { DEFAULTS_DEBIAN } from './port';
 
-const M = '/home/vous';
+const M = '/home/you';
 const RANIA = '198.51.100.40';
 const REPEAT_OFFENDERS = ['203.0.113.66', '198.51.100.23'];
 const OCCASIONAL = '192.0.2.200';
@@ -205,13 +205,13 @@ export const repeatOffence: Chapter = {
     'nft',
   ],
   home: M,
-  welcome: 'courriel_rania.txt',
+  welcome: 'email_rania.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
-    c.groups.adm = { gid: 4, members: ['vous'] };
+    c.groups.adm = { gid: 4, members: ['you'] };
     return c;
   },
   state: () => ({
@@ -280,7 +280,7 @@ export const repeatOffence: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_rania.txt': f(t('repeat-offenders-courriel-rania')) }) }, undefined, root),
+        home: d({ you: d({ 'email_rania.txt': f(t('repeat-offenders-courriel-rania')) }) }, undefined, root),
         var: d(
           {
             log: d(

@@ -19,7 +19,7 @@ import { newCommit, type Commit, type Repo } from '../commands/git';
 import { content } from '../tools';
 import { MIME, NGINX_CONF } from '../commands/apt';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LOCAL = `${M}/gazette`;
 export const REPO = '/srv/git/gazette.git';
 export const SITE = '/var/www/gazette';
@@ -30,18 +30,18 @@ export const gazetteAccounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     samia: { uid: 1001, group: 'samia' },
     theo: { uid: 1002, group: 'theo' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'samia'] },
+    sudo: { gid: 27, members: ['you', 'samia'] },
     'www-data': { gid: 33, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     samia: { gid: 1001, members: [] },
     theo: { gid: 1002, members: [] },
-    redaction: { gid: 1100, members: ['vous', 'samia', 'theo'] },
+    redaction: { gid: 1100, members: ['you', 'samia', 'theo'] },
   },
 });
 
@@ -132,7 +132,7 @@ export const bareRepo: Chapter = {
     'systemctl',
   ],
   home: M,
-  welcome: 'message_de_samia.txt',
+  welcome: 'message_from_samia.txt',
   names: true,
   final: 'fin',
   password: 'gazette-2027',
@@ -168,7 +168,7 @@ export const bareRepo: Chapter = {
     const root: Rights = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
-    const redaction = (text: string, owner = 'vous') => file(text, { owner, group: 'redaction', mode: 'rw-rw-r--' });
+    const redaction = (text: string, owner = 'you') => file(text, { owner, group: 'redaction', mode: 'rw-rw-r--' });
     const last = history(t).at(-1)!.files;
     return place({
       etc: place({
@@ -184,9 +184,9 @@ export const bareRepo: Chapter = {
         }),
       }),
       home: place({
-        vous: d({
-          'message_de_samia.txt': f(t('bare-repo-message-de-samia')),
-          'mot_de_theo.txt': f(t('bare-repo-mot-de-theo')),
+        you: d({
+          'message_from_samia.txt': f(t('bare-repo-message-de-samia')),
+          'note_from_theo.txt': f(t('bare-repo-mot-de-theo')),
           gazette: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             ...Object.fromEntries(Object.entries(last).map(([name, text]) => [name, f(text, { lines: true })])),
@@ -206,7 +206,7 @@ export const bareRepo: Chapter = {
               'style.css': redaction(STYLE),
               'agenda.html': redaction(agenda(t, 21)),
             },
-            { owner: 'vous', group: 'redaction', mode: 'rwxrwxr-x' },
+            { owner: 'you', group: 'redaction', mode: 'rwxrwxr-x' },
           ),
         }),
         log: place({

@@ -223,19 +223,19 @@ export const accounts = (): Accounts => ({
     bind: { uid: 104, group: 'bind', home: '/var/cache/bind', shell: '/usr/sbin/nologin' },
     postfix: { uid: 105, group: 'postfix', home: '/var/spool/postfix', shell: '/usr/sbin/nologin' },
     opendkim: { uid: 110, group: 'opendkim', home: '/run/opendkim', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     nour: { uid: 1001, group: 'nour' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
+    adm: { gid: 4, members: ['you'] },
     mail: { gid: 8, members: [] },
-    sudo: { gid: 27, members: ['vous', 'nour'] },
+    sudo: { gid: 27, members: ['you', 'nour'] },
     'www-data': { gid: 33, members: [] },
     bind: { gid: 106, members: [] },
     postfix: { gid: 107, members: [] },
     opendkim: { gid: 112, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     nour: { gid: 1001, members: [] },
   },
 });
@@ -450,7 +450,7 @@ export function gardensWorld(t: Translate, departure: Departure, home: Record<st
           }
         : {}),
     }),
-    home: place({ vous: d(home), nour: place({}, { owner: 'nour', mode: 'rwx------' }) }),
+    home: place({ you: d(home), nour: place({}, { owner: 'nour', mode: 'rwx------' }) }),
     usr: place({
       sbin: place({
         postfix: binary(27_528),

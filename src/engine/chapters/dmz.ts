@@ -105,7 +105,7 @@ export const dmz: Chapter = {
     'conntrack',
   ],
   home: M,
-  welcome: 'courriel_ines.txt',
+  welcome: 'email_ines.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -124,7 +124,7 @@ export const dmz: Chapter = {
       dnsmasq: DNSMASQ_VLAN,
       nftables: REMOTE_WORK_NFTABLES,
       sysctl: ROUTER_SYSCTL,
-      home: { 'courriel_ines.txt': f(t('dmz-courriel-ines')), 'plan-commutateur.txt': f(t('dmz-plan-commutateur'), { lines: true }) },
+      home: { 'email_ines.txt': f(t('dmz-courriel-ines')), 'switch-plan.txt': f(t('dmz-plan-commutateur'), { lines: true }) },
     }),
   events: [
     { id: 'adresse-publique', condition: waitsPublic, message: (j) => j.t('dmz-evenement-adresse-publique', { adresse: PUBLIC }) },

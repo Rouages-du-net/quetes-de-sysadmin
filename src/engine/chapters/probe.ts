@@ -19,9 +19,9 @@ import { start, writeLog, newSystemd, systemd } from '../systemd';
 import { passTime } from '../timers';
 import { mails, PLUGINS } from '../commands/monitoring';
 
-const M = '/home/vous';
+const M = '/home/you';
 const DATA = '/srv/radio';
-const THUMBNAILS = '/srv/radio/podcasts/vignettes';
+const THUMBNAILS = '/srv/radio/podcasts/thumbnails';
 const MINUTE = 60_000;
 const INODES = 16_384;
 // Lundi 6 septembre 2027, 18 h 30.
@@ -36,16 +36,16 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
     mail: { gid: 8, members: [] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -132,10 +132,10 @@ function night(j: Game): string {
       const howMany = Math.min(BY_MINUTE, free);
       if (v)
         for (let k = 0; k < howMany; k++)
-          v.children[`${name(j.t, 'vignette')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'fichier', content: '', size: 0, owner: 'radio' };
+          v.children[`${name(j.t, 'thumbnail')}-${String(++number).padStart(5, '0')}.jpg`] = { type: 'fichier', content: '', size: 0, owner: 'radio' };
       if (free <= BY_MINUTE) {
         fullInodes = t;
-        writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/emissions')}/nuit.ogg: No space left on device`, 3, false);
+        writeLog(s, 'radio-stream.service', 'stream', 1730, `record: cannot create ${path(j.t, '/srv/radio/shows')}/nuit.ogg: No space left on device`, 3, false);
       }
     }
     // Zoé arrête l'import et efface les vignettes en trop, 10 minutes après l'alerte.
@@ -213,10 +213,10 @@ export const probe: Chapter = {
     'systemd-analyze',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: () => ({
     systemd: (() => {
@@ -263,7 +263,7 @@ export const probe: Chapter = {
       { pid: 1730, user: 'radio', cpu: 3.2, mem: 1.1, command: '/usr/local/bin/stream --config /etc/radio/stream.conf' },
     ],
     // Le relais sert le direct sur le port 8000.
-    applis: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/direct': 'OggS', '/': 'Radio Quartier relay' } } },
+    applis: { '127.0.0.1:8000': { service: 'radio-stream', pages: { '/live': 'OggS', '/': 'Radio Quartier relay' } } },
     ecoute: [{ proto: 'tcp', address: '0.0.0.0', port: 8000, processus: 'stream', pid: 1730 }],
     montages: [
       { path: '/', capacity: 20_000_000_000, name: '/dev/vda1', system: 'ext4', inodes: 1_310_720, inodesBase: 61_204 },
@@ -290,19 +290,19 @@ export const probe: Chapter = {
         aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: zoe'),
         systemd: place({ system: place({}) }),
       }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('probe-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('probe-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
           {
             'lost+found': place({}, { owner: 'root', mode: 'rwx------' }),
-            emissions: place(
+            shows: place(
               {
                 'matinale-2027-09-06.ogg': f('', { owner: 'radio', size: 92_000_000 }),
                 'nuit-2027-09-06.ogg': f('', { owner: 'radio', size: 48_000_000 }),
               },
               radio,
             ),
-            podcasts: place({ vignettes: place({}, radio), 'LISEZMOI.txt': file(t('probe-podcasts-lisezmoi'), radio) }, radio),
+            podcasts: place({ thumbnails: place({}, radio), 'README.txt': file(t('probe-podcasts-lisezmoi'), radio) }, radio),
           },
           radio,
         ),

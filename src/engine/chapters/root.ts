@@ -5,16 +5,16 @@
 import { path, account, d, f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
 
-const M = '/home/vous';
-const MEMORIES = `${M}/souvenirs`;
-const CONF = '/etc/effaceur.conf';
+const M = '/home/you';
+const MEMORIES = `${M}/memories`;
+const CONF = '/etc/eraser.conf';
 const TOTAL = 8;
 // L'utilisateur système de l'Effaceur, sous son nom dans la langue (effaceur, eraser…).
-const eraser = (j: Game) => account(j.t, 'effaceur');
+const eraser = (j: Game) => account(j.t, 'eraser');
 
 const memory = (text: string) => f(text);
 // La ligne corrigée de la configuration, dans la langue : « cible = /Royaume/Corbeille ».
-const fixedTarget = (j: Game) => `${name(j.t, 'cible')} = ${path(j.t, '/Royaume/Corbeille')}`;
+const fixedTarget = (j: Game) => `${name(j.t, 'target')} = ${path(j.t, '/Kingdom/Bin')}`;
 
 export const root: Chapter = {
   id: 'root',
@@ -22,35 +22,35 @@ export const root: Chapter = {
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir', 'chmod', 'whoami', 'sudo'],
   home: M,
   names: true,
-  welcome: 'arrivee.txt',
+  welcome: 'arrival.txt',
   final: 'corrige',
-  password: 'tournesol',
+  password: 'sunflower',
   createWorld: (t) =>
     d(
       {
         home: d(
           {
-            vous: d({
-              'arrivee.txt': f(
+            you: d({
+              'arrival.txt': f(
                 t('root-arrivee'),
                 { read: (j) => void j.flags.add('arrivee') },
               ),
-              'manuel_admin.txt': f(t('root-manuel-admin')),
+              'admin_manual.txt': f(t('root-manuel-admin')),
               'journal.txt': f(
                 t('root-journal'),
                 { mode: 'rw-------', lines: true },
               ),
-              'effaceur.conf.corrige': f(t('root-effaceur-conf-corrige'), { lines: true }),
-              souvenirs: d(
+              'eraser.conf.fixed': f(t('root-effaceur-conf-corrige'), { lines: true }),
+              memories: d(
                 {
-                  ecole: memory(t('root-souvenir-ecole')),
-                  premier_programme: memory(t('root-souvenir-premier-programme')),
-                  jardin: memory(t('root-souvenir-jardin')),
-                  chanson: memory(t('root-souvenir-chanson')),
-                  voyage: memory(t('root-souvenir-voyage')),
-                  amie: memory(t('root-souvenir-amie')),
-                  bibliotheque: memory(t('root-souvenir-bibliotheque')),
-                  premier_serveur: memory(t('root-souvenir-premier-serveur')),
+                  school: memory(t('root-souvenir-ecole')),
+                  first_program: memory(t('root-souvenir-premier-programme')),
+                  garden: memory(t('root-souvenir-jardin')),
+                  song: memory(t('root-souvenir-chanson')),
+                  journey: memory(t('root-souvenir-voyage')),
+                  friend: memory(t('root-souvenir-amie')),
+                  library: memory(t('root-souvenir-bibliotheque')),
+                  first_server: memory(t('root-souvenir-premier-serveur')),
                 },
                 undefined,
                 { mode: 'rwxrwxrwx' },
@@ -58,7 +58,7 @@ export const root: Chapter = {
             }),
             nour: d(
               {
-                'journal_intime.txt': f(
+                'diary.txt': f(
                   (j) =>
                     j.who === 'root'
                       ? j.t('root-journal-intime-root')
@@ -75,7 +75,7 @@ export const root: Chapter = {
         ),
         etc: d(
           {
-            'effaceur.conf': f(
+            'eraser.conf': f(
               t('root-effaceur-conf'),
               { owner: 'root', lines: true },
             ),
@@ -91,7 +91,7 @@ export const root: Chapter = {
           {
             log: d(
               {
-                'effaceur.log': f(
+                'eraser.log': f(
                   t('root-effaceur-log'),
                   { owner: 'root', lines: true },
                 ),

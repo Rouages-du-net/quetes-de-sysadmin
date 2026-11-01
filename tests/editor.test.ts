@@ -19,7 +19,7 @@ for (const language of LANGUAGES)
     it('nouveau fichier : ouvrir, écrire, quitter, relire', () => {
       const c = new Console({ language });
       c.execute('nano notes.txt');
-      expect(c.edition?.path).toBe(L('/home/vous/notes.txt'));
+      expect(c.edition?.path).toBe(L('/home/you/notes.txt'));
       if (fr) expect(c.edition?.message).toBe('[ Nouveau fichier ]');
       const { message, written } = c.save('ligne 1\nligne 2\n');
       expect(written).toBe(true);
@@ -42,7 +42,7 @@ for (const language of LANGUAGES)
       s.quitEdition();
       expect(s.read(BLOCKED)).not.toContain('198.51.100.77');
       s.execute(`sudo nano ${BLOCKED}`);
-      s.execute(machinesInLanguage(s.t, 'bienvenue-2026'));
+      s.execute(machinesInLanguage(s.t, 'welcome-2026'));
       expect(s.edition?.root).toBe(true);
       s.saveEdition(s.edition!.text + 'deny 198.51.100.77;\n');
       expect(s.flags.has('regle')).toBe(true);
@@ -53,7 +53,7 @@ for (const language of LANGUAGES)
     it('Datacenter, chapitre 1 : bloquer le robot avec nano est une solution correcte', () => {
       const s = new Shell(chapter('first-day'), language);
       s.execute('sudo nano /etc/nginx/blocked.conf');
-      s.execute(machinesInLanguage(s.t, 'bienvenue-2026'));
+      s.execute(machinesInLanguage(s.t, 'welcome-2026'));
       s.saveEdition(s.edition!.text + 'deny 198.51.100.77;\n');
       s.quitEdition();
       for (const l of ['sudo systemctl reload nginx', 'ps aux', 'sudo kill 4242', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt', 'echo "Coupable : 198.51.100.77" >> rapport.txt'])
@@ -77,7 +77,7 @@ for (const language of LANGUAGES)
       const dc = STORIES.find((h) => h.id === 'datacenter')!;
       const c = new Console({ language, finished: ['lighthouse', 'village', 'root'] });
       c.connect('datacenter', dc.chapters[0]);
-      for (const l of ['sudo kill 4242', 'bienvenue-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
+      for (const l of ['sudo kill 4242', 'welcome-2026', 'echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'sudo systemctl reload nginx', 'ps aux', 'sudo kill 4244', 'grep " 503 " /var/log/nginx/access.log | wc -l > ~/rapport.txt'])
         c.execute(machinesInLanguage(c.t, l));
       c.execute('nano rapport.txt');
       c.save(c.edition!.text + 'Coupable : 198.51.100.77\n');

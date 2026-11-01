@@ -27,7 +27,7 @@ export const initialiseWatch = (j: Game) => {
   loadNginx(j);
 };
 
-export const M = '/home/vous';
+export const M = '/home/you';
 export const PASSWORD = 'levain-2028';
 // Mardi 15 septembre 2028, 9 h 30 : six mois après « L'Audit ».
 export const NOW = Date.UTC(2028, 8, 15, 9, 30, 0);
@@ -137,14 +137,14 @@ const INDEX = `<!DOCTYPE html>
 export const watchAccounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     nadia: { uid: 1001, group: 'nadia' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous'] },
-    vous: { gid: 1000, members: [] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you'] },
+    you: { gid: 1000, members: [] },
     nadia: { gid: 1001, members: [] },
   },
 });
@@ -224,7 +224,7 @@ export function watchWorld(
       ),
       home: d(
         {
-          vous: d({
+          you: d({
             ...o.home,
             '.ssh': d({ authorized_keys: f(publicKey(kneader, player(t)), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
           }),

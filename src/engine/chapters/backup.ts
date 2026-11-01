@@ -15,12 +15,12 @@ import { path, d, f, name, type Chapter } from '../world';
 import type { Game, Shell } from '../shell';
 import { parse, pass, aRunning } from '../cron';
 
-const M = '/home/vous';
-const MEMORIES = `${M}/souvenirs`;
-const BACKUP = '/mnt/sauvegarde/souvenirs';
-const FILES = ['premiere-lettre.txt', 'phare.txt', 'bourg.txt', 'nour.txt', 'effaceur.txt'];
-const NEW = 'fete-du-phare.txt';
-const ERASES = 'premiere-lettre.txt';
+const M = '/home/you';
+const MEMORIES = `${M}/memories`;
+const BACKUP = '/mnt/backup/memories';
+const FILES = ['first-letter.txt', 'lighthouse.txt', 'village.txt', 'nour.txt', 'eraser.txt'];
+const NEW = 'lighthouse-festival.txt';
+const ERASES = 'first-letter.txt';
 // La nuit du vendredi au samedi 24 octobre 2026, de minuit à 6 h.
 const NIGHT = [Date.UTC(2026, 9, 24, 0, 0), Date.UTC(2026, 9, 24, 6, 0)];
 
@@ -39,7 +39,7 @@ export const backup: Chapter = {
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mkdir', 'cp', 'mv', 'rm', 'nano', 'rsync', 'crontab'],
   home: M,
   names: true,
-  welcome: 'mot_de_maelle.txt',
+  welcome: 'note_from_maelle.txt',
   final: 'fin',
   state: () => ({ crontabs: {}, versionCrontab: 0, versionNuit: 0, originaux: {} }),
   initialise: (j) => {
@@ -49,15 +49,15 @@ export const backup: Chapter = {
     d({
       home: d(
         {
-          vous: d({
-            'mot_de_maelle.txt': f(t('backup-mot-de-maelle')),
-            souvenirs: d(Object.fromEntries(FILES.map((n) => [n, f(t(`backup-souvenir-${n.replace('.txt', '')}`))]))),
+          you: d({
+            'note_from_maelle.txt': f(t('backup-mot-de-maelle')),
+            memories: d(Object.fromEntries(FILES.map((n) => [n, f(t(`backup-souvenir-${n.replace('.txt', '')}`))]))),
           }),
         },
         undefined,
         { owner: 'root' },
       ),
-      mnt: d({ sauvegarde: d({}) }, undefined, { owner: 'root' }),
+      mnt: d({ backup: d({}) }, undefined, { owner: 'root' }),
       tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwx' }),
     }),
   // Dès que la crontab change, la nuit passe : cron lance ce qui tombe entre minuit et 6 h.
@@ -69,7 +69,7 @@ export const backup: Chapter = {
       // Le souvenir du jour, arrivé avant la nuit : la tâche doit l'emporter.
       j.flags.add('jour');
       const n = j.find(path(j.t, MEMORIES));
-      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-souvenir-fete-du-phare'));
+      if (n?.type === 'dossier') n.children[name(j.t, NEW)] = f(j.t('backup-souvenir-lighthouse-festival'));
       j.state.originaux[NEW] = j.read(path(j.t, `${MEMORIES}/${NEW}`));
       chunks.push(j.t('backup-nuit-debut', { fichier: name(j.t, NEW) }));
     } else chunks.push(j.t('backup-nuit-encore'));
@@ -90,7 +90,7 @@ export const backup: Chapter = {
   events: [
     {
       id: 'imbrique',
-      condition: (j) => j.exists(path(j.t, `${BACKUP}/souvenirs`)),
+      condition: (j) => j.exists(path(j.t, `${BACKUP}/memories`)),
       message: (j) => j.t('backup-evenement-imbrique', { sauvegarde: path(j.t, BACKUP) }),
     },
     {

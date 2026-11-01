@@ -58,7 +58,7 @@ export const newDisk: Chapter = {
     'grub-install',
   ],
   home: M,
-  welcome: 'message_d_odile.txt',
+  welcome: 'message_from_odile.txt',
   names: true,
   final: 'fin',
   steps: ['neuf', 'table', 'ajoutes', 'reconstruit', 'grub', 'fin'],
@@ -71,8 +71,8 @@ export const newDisk: Chapter = {
   },
   createWorld: (t) =>
     labWorld(t, {
-      'message_d_odile.txt': f(t('new-disk-message-d-odile')),
-      'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
+      'message_from_odile.txt': f(t('new-disk-message-d-odile')),
+      'host_procedure.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
     }),
   beforeCommand: beforeLabCommand,
   afterCommand: (j) => devUpdate(j),

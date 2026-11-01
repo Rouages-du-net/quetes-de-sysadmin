@@ -14,7 +14,7 @@ import type { Process } from '../commands/system';
 import type { Translate } from '../../texts';
 import { newSystemd } from '../systemd';
 
-const M = '/home/vous';
+const M = '/home/you';
 const ROBOT = '198.51.100.77';
 const BLOCKED = '/etc/nginx/blocked.conf';
 
@@ -95,20 +95,20 @@ export const datacenterAccounts = (): Accounts => ({
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
     nobody: { uid: 65534, group: 'nogroup', home: '/nonexistent', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     awa: { uid: 1001, group: 'awa' },
     malo: { uid: 1002, group: 'malo' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous', 'awa'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you', 'awa'] },
     'www-data': { gid: 33, members: [] },
     nogroup: { gid: 65534, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     awa: { gid: 1001, members: [] },
     malo: { gid: 1002, members: [] },
-    'web-team': { gid: 1003, members: ['vous', 'awa', 'malo'] },
+    'web-team': { gid: 1003, members: ['you', 'awa', 'malo'] },
   },
 });
 
@@ -123,10 +123,10 @@ export const datacenter: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'wc', 'grep', 'cut', 'sort', 'uniq', 'echo', 'tee', 'cp', 'mv', 'rm', 'ps', 'kill', 'systemctl', 'nano', 'sudo', 'whoami'],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'rapport',
-  password: 'bienvenue-2026',
+  password: 'welcome-2026',
   activity: { not: 5, departure: () => DIRECT_START, advance: visits },
   // t : les textes dans la langue du jeu (français tant que le shell ne le
   // transmet pas).
@@ -173,8 +173,8 @@ export const datacenter: Chapter = {
       {
         home: d(
           {
-            vous: d({
-              'courriel_awa.txt': f(t('first-day-courriel-awa')),
+            you: d({
+              'email_awa.txt': f(t('first-day-courriel-awa')),
               'notes_awa.txt': f(t('first-day-notes-awa')),
             }),
           },

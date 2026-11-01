@@ -39,7 +39,7 @@ import { readProject, mount } from '../compose';
 import { newFirewall } from '../firewall';
 import { writeBase } from './update';
 
-const M = '/home/vous';
+const M = '/home/you';
 const PROJECT = '/srv/galerie';
 const PHOTOS = `${PROJECT}/photos`;
 const THUMBNAILS = '/app/photos/.miniatures';
@@ -61,12 +61,12 @@ const PHOTOS_NAMES = [
 ];
 
 const accounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    sudo: { gid: 27, members: ['you', 'yasmine'] },
     docker: { gid: 999, members: ['yasmine'] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     yasmine: { gid: 1001, members: [] },
   },
 });
@@ -217,7 +217,7 @@ export const powersFull: Chapter = {
     'journalctl',
   ],
   home: M,
-  welcome: 'message_de_yasmine.txt',
+  welcome: 'message_from_yasmine.txt',
   names: true,
   final: 'fin',
   password: 'fablab-2027',
@@ -292,13 +292,13 @@ export const powersFull: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_yasmine.txt': f(t('full-powers-message-de-yasmine')), 'mot_de_rania.txt': f(t('full-powers-mot-de-rania')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('full-powers-message-de-yasmine')), 'note_from_rania.txt': f(t('full-powers-mot-de-rania')) }),
         yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwxr-x---' }),
       }),
       srv: place({
         galerie: place({
           'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
-          'LISEZMOI.txt': f(t('full-powers-lisezmoi'), { owner: 'root' }),
+          'README.txt': f(t('full-powers-lisezmoi'), { owner: 'root' }),
           // Créé par Docker au premier lancement (le dossier n'existait pas) : à root.
           photos: place(Object.fromEntries(PHOTOS_NAMES.map((p, i) => [p, photo(1_800_000 + i * 137_000)]))),
         }),

@@ -15,7 +15,7 @@ import { newFirewall, verdict, type Firewall } from '../firewall';
 import { newSystemd } from '../systemd';
 import type { Listening } from '../commands/ss';
 
-const M = '/home/vous';
+const M = '/home/you';
 // Une adresse quelconque d'internet (un robot de la nuit).
 const INTERNET = '198.51.100.23';
 
@@ -51,13 +51,13 @@ export const firewall: Chapter = {
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
-    c.groups.adm = { gid: 4, members: ['vous'] };
+    c.groups.adm = { gid: 4, members: ['you'] };
     return c;
   },
   state: () => ({
@@ -82,7 +82,7 @@ export const firewall: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('firewall-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lines: true }) }) }, undefined, root),
+        home: d({ you: d({ 'email_kofi.txt': f(t('firewall-courriel-kofi')), 'scan_yasmine.txt': f(SCAN, { lines: true }) }) }, undefined, root),
       },
       undefined,
       root,

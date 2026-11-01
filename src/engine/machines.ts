@@ -134,4 +134,4 @@ export const privateKey = (m: Machine) =>
   ].join('\n');
 
 /** La clé publique correspondante (~/.ssh/id_<machine>.pub), commentée du compte qui l'a créée sur le poste (vous@poste, you@desk…). */
-export const publicKey = (m: Machine, account = 'vous', workstation = 'desk') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;
+export const publicKey = (m: Machine, account = 'you', workstation = 'desk') => `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI${base64('cle-publique-' + m.name, 43)} ${account}@${workstation}`;

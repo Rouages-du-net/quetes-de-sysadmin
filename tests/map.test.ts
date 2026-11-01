@@ -21,29 +21,29 @@ for (const language of LANGUAGES)
       const s = new Shell(chapter('lighthouse'), language);
       const c = places(map(s));
       expect(c['/'].visit).toBe(true);
-      expect(c[L('/Cabane')]).toMatchObject({ here: true, home: true, visit: true });
-      expect(c[L('/Cabane/Colline')]).toMatchObject({ visit: false, here: false });
-      expect(c[L('/Cabane/Jetee')].visit).toBe(false);
+      expect(c[L('/Hut')]).toMatchObject({ here: true, home: true, visit: true });
+      expect(c[L('/Hut/Hill')]).toMatchObject({ visit: false, here: false });
+      expect(c[L('/Hut/Pier')].visit).toBe(false);
       // Plus loin que ce qu'on aperçoit : rien.
-      expect(c[L('/Cabane/Jetee/Phare')]).toBeUndefined();
-      expect(c[L('/Cabane/Colline/EcoleDesSignaux')]).toBeUndefined();
+      expect(c[L('/Hut/Pier/Lighthouse')]).toBeUndefined();
+      expect(c[L('/Hut/Hill/SignalSchool')]).toBeUndefined();
       // Pas de fichiers.
       expect(Object.keys(c).some((k) => k.endsWith('.txt'))).toBe(false);
     });
 
     it('en avançant : le lieu visité, puis ce qu’on y aperçoit ; un lieu fermé', () => {
       const s = new Shell(chapter('lighthouse'), language);
-      s.execute(L('cd Jetee'));
+      s.execute(L('cd Pier'));
       let c = places(map(s));
-      expect(c[L('/Cabane/Jetee')]).toMatchObject({ here: true, visit: true });
-      expect(c[L('/Cabane')]).toMatchObject({ here: false, home: true });
+      expect(c[L('/Hut/Pier')]).toMatchObject({ here: true, visit: true });
+      expect(c[L('/Hut')]).toMatchObject({ here: false, home: true });
       // Le Phare est bloqué par le filet.
-      expect(c[L('/Cabane/Jetee/Phare')]).toMatchObject({ visit: false, closed: true });
-      s.execute(L('cd ~/Colline/EcoleDesSignaux'));
+      expect(c[L('/Hut/Pier/Lighthouse')]).toMatchObject({ visit: false, closed: true });
+      s.execute(L('cd ~/Hill/SignalSchool'));
       c = places(map(s));
-      expect(c[L('/Cabane/Colline')].visit).toBe(true);
-      expect(c[L('/Cabane/Colline/EcoleDesSignaux/SalleDExercice')].visit).toBe(false);
-      expect(c[L('/Cabane/Jetee')]).toMatchObject({ visit: true, here: false });
+      expect(c[L('/Hut/Hill')].visit).toBe(true);
+      expect(c[L('/Hut/Hill/SignalSchool/PracticeRoom')].visit).toBe(false);
+      expect(c[L('/Hut/Pier')]).toMatchObject({ visit: true, here: false });
     });
 
     it('un lieu caché n’y paraît qu’une fois visité', () => {

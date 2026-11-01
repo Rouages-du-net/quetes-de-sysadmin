@@ -122,7 +122,7 @@ export const rescue: Chapter = {
     'reboot',
   ],
   home: R,
-  welcome: 'message_d_odile.txt',
+  welcome: 'message_from_odile.txt',
   names: true,
   final: 'fin',
   steps: ['journal', 'disques', 'corrige', 'monte', 'fin'],
@@ -142,7 +142,7 @@ export const rescue: Chapter = {
     enterInRescue(j);
     j.state.rechutes = 0;
   },
-  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('stuck-boot-message-d-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
+  createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('stuck-boot-message-d-odile', { banniere: BANNER })) }, { winter: true, rescue: true }),
   events: [
     {
       id: 'journal',

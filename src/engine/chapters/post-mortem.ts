@@ -17,7 +17,7 @@ import { path, d, f, accountsFiles, player, type Chapter, type Accounts, type Ri
 import type { Game } from '../shell';
 import { writeLog, newSystemd, systemd } from '../systemd';
 
-const M = '/home/vous';
+const M = '/home/you';
 const FILE = `${M}/postmortem.md`;
 // Lundi 13 septembre 2027, 10 h.
 const NOW = Date.UTC(2027, 8, 13, 10, 0, 0);
@@ -27,17 +27,17 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
     theo: { uid: 1002, group: 'theo' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe', 'theo'] },
+    adm: { gid: 4, members: ['you', 'zoe', 'theo'] },
     mail: { gid: 8, members: [] },
-    sudo: { gid: 27, members: ['vous', 'zoe', 'theo'] },
+    sudo: { gid: 27, members: ['you', 'zoe', 'theo'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
     theo: { gid: 1002, members: [] },
   },
@@ -126,10 +126,10 @@ export const postMortem: Chapter = {
     'diff',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: (t) => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), NOW, {
@@ -263,8 +263,8 @@ export const postMortem: Chapter = {
         apt: place({ 'apt.conf.d': place({ '50unattended-upgrades': file(t('post-mortem-unattended-conf')) }) }),
       }),
       home: place({
-        vous: d({
-          'message_de_zoe.txt': f(t('post-mortem-message-de-zoe')),
+        you: d({
+          'message_from_zoe.txt': f(t('post-mortem-message-de-zoe')),
           'notes_theo.txt': f(t('post-mortem-notes-theo')),
           'postmortem.md': f(t('post-mortem-modele'), { lines: true }),
         }),

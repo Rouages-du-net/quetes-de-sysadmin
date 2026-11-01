@@ -18,7 +18,7 @@ import type { Game } from '../shell';
 import { newSystemd } from '../systemd';
 import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initialiseWatch, watchWorld, watchNginx, watchScan, serviceSsh } from './watch';
 
-const DOC = `${M}/priorite.md`;
+const DOC = `${M}/priority.md`;
 const STARTED = NOW - 11 * 86_400_000;
 
 const readDoc = (j: Game) => j.read(path(j.t, DOC)) ?? '';
@@ -53,7 +53,7 @@ export const priority: Chapter = {
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'ss', 'nmap'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['expose', 'ordre', 'fin'],
@@ -74,7 +74,7 @@ export const priority: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('priority-courriel-salome')), 'priorite.md': f(t('priority-modele'), { lines: true }) },
+      home: { 'email_salome.txt': f(t('priority-courriel-salome')), 'priority.md': f(t('priority-modele'), { lines: true }) },
     }),
   afterCommand: (j) => {
     const text = readDoc(j);

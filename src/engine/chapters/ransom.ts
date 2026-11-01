@@ -22,43 +22,43 @@ import type { Process } from '../commands/system';
 import { addSnapshot, writeRepo, hex, type Repo, type Version } from '../commands/restic';
 import type { Device } from '../commands/disks';
 
-const M = '/home/vous';
-const SHARE = '/srv/partage';
+const M = '/home/you';
+const SHARE = '/srv/share';
 const NAS = '/mnt/nas';
-const KEY = '/mnt/cle';
+const KEY = '/mnt/usb';
 // Le dépôt restic du disque USB.
-const REPO = `${KEY}/depot`;
+const REPO = `${KEY}/repo`;
 const USB = '/dev/sdb1';
-const ENCRYPTOR = '/home/accueil/.cache/.maj/maj-systeme';
-const NOTE = 'LISEZ-MOI-POUR-RECUPERER.txt';
-const PASSWORD = 'pion-cavalier-tour-27';
+const ENCRYPTOR = '/home/accueil/.cache/.upd/system-update';
+const NOTE = 'READ-ME-TO-RECOVER.txt';
+const PASSWORD = 'pawn-knight-rook-27';
 const Go = 1_000_000_000;
 
 const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     accueil: { uid: 1001, group: 'accueil' },
     berenice: { uid: 1002, group: 'berenice' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'berenice'] },
-    vous: { gid: 1000, members: [] },
+    sudo: { gid: 27, members: ['you', 'berenice'] },
+    you: { gid: 1000, members: [] },
     accueil: { gid: 1001, members: [] },
     berenice: { gid: 1002, members: [] },
-    ludo: { gid: 1100, members: ['vous', 'accueil', 'berenice'] },
+    ludo: { gid: 1100, members: ['you', 'accueil', 'berenice'] },
   },
 });
 
 // Les fichiers du partage (chemin relatif → identifiant du texte).
 const FILES: Record<string, string> = {
-  'inventaire.csv': 'ransom-inventaire',
-  'planning-benevoles.txt': 'ransom-planning',
-  'affiche-fete-du-jeu.txt': 'ransom-affiche',
-  'regles/jeu-de-l-oie.txt': 'ransom-regles-oie',
-  'regles/petits-chevaux.txt': 'ransom-regles-chevaux',
-  'regles/dames.txt': 'ransom-regles-dames',
+  'inventory.csv': 'ransom-inventaire',
+  'volunteer-rota.txt': 'ransom-planning',
+  'games-day-poster.txt': 'ransom-affiche',
+  'rules/goose-game.txt': 'ransom-regles-oie',
+  'rules/ludo.txt': 'ransom-regles-chevaux',
+  'rules/draughts.txt': 'ransom-regles-dames',
 };
 
 // Un fichier chiffré : un nom en .locked et des octets illisibles.
@@ -89,7 +89,7 @@ const expected = (j: Game) => Object.fromEntries(Object.entries(FILES).map(([rel
 const sd = (j: Game) => systemd(j)!;
 const process = (j: Game): Process[] => j.state.processus ?? [];
 const activeEncryptor = (j: Game) => process(j).some((p) => p.command.startsWith(path(j.t, ENCRYPTOR)));
-const persistence = (j: Game) => (j.state.crontabs?.accueil ?? '').includes(name(j.t, 'maj-systeme'));
+const persistence = (j: Game) => (j.state.crontabs?.accueil ?? '').includes(name(j.t, 'system-update'));
 const locked = (j: Game) => (j.state.comptesVerrouilles ?? []).includes('accueil');
 const mountedKey = (j: Game) => (j.state.montages ?? []).some((m: { name: string }) => m.name === USB);
 
@@ -170,13 +170,13 @@ export const ransom: Chapter = {
     'nano',
   ],
   home: M,
-  welcome: 'message_de_berenice.txt',
+  welcome: 'message_from_berenice.txt',
   names: true,
   final: 'fin',
   password: 'ludo-2027',
   accounts,
   state: (t) => {
-    const tree = d({ [name(t, 'depot')]: d({}, undefined, { owner: 'root' }) }, undefined, { owner: 'root', mode: 'rwxr-xr-x' });
+    const tree = d({ [name(t, 'repo')]: d({}, undefined, { owner: 'root' }) }, undefined, { owner: 'root', mode: 'rwxr-xr-x' });
     const usb: Device = {
       disk: '/dev/sdb',
       majmin: [8, 17],
@@ -204,7 +204,7 @@ export const ransom: Chapter = {
         { pid: 3141, user: 'accueil', cpu: 97.3, mem: 1.4, command: `${path(t, ENCRYPTOR)} --silencieux` },
       ],
       crontabs: {
-        root: `# ${t('ransom-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/partage`)}/`,
+        root: `# ${t('ransom-crontab-root')}\n30 2 * * * rsync -a --delete ${path(t, SHARE)}/ ${path(t, `${NAS}/share`)}/`,
         accueil: `*/10 * * * * ${path(t, ENCRYPTOR)} --silencieux\n@reboot ${path(t, ENCRYPTOR)} --silencieux`,
       },
       montages: [
@@ -212,7 +212,7 @@ export const ransom: Chapter = {
         {
           path: NAS,
           capacity: 2000 * Go,
-          name: `//nas.${machineName(t, 'games')}.internal${path(t, '/sauvegardes')}`,
+          name: `//nas.${machineName(t, 'games')}.internal${path(t, '/backups')}`,
           system: 'cifs',
           options: 'relatime,vers=3.1.1,uid=0,file_mode=0777,dir_mode=0777',
         },
@@ -243,7 +243,7 @@ export const ransom: Chapter = {
     s.clock = now;
     // Ce que le chiffreur a déjà fait, et ce que rsync a recopié cette nuit sur le NAS.
     encrypt(j, path(j.t, SHARE));
-    const nas = j.find(path(j.t, `${NAS}/partage`));
+    const nas = j.find(path(j.t, `${NAS}/share`));
     const share = j.find(path(j.t, SHARE));
     if (nas?.type === 'dossier' && share?.type === 'dossier') nas.children = structuredClone(share.children);
   },
@@ -282,13 +282,13 @@ export const ransom: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: file('games') }),
       home: place({
-        vous: d({ 'message_de_berenice.txt': f(t('ransom-message-de-berenice')) }),
+        you: d({ 'message_from_berenice.txt': f(t('ransom-message-de-berenice')) }),
         accueil: place(
           {
             '.cache': place(
               {
-                '.maj': place(
-                  { 'maj-systeme': f(unreadable('binaire'), { owner: 'accueil', mode: 'rwxr-xr-x', size: 2_481_336 }) },
+                '.upd': place(
+                  { 'system-update': f(unreadable('binaire'), { owner: 'accueil', mode: 'rwxr-xr-x', size: 2_481_336 }) },
                   { owner: 'accueil' },
                 ),
               },
@@ -300,11 +300,11 @@ export const ransom: Chapter = {
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
-      srv: place({ partage: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
+      srv: place({ share: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
       mnt: place({
         // Le partage du NAS, monté en permanence : tout le monde peut y écrire.
-        nas: place({ partage: place({}, { owner: 'root', mode: 'rwxrwxrwx' }) }, { owner: 'root', mode: 'rwxrwxrwx' }),
-        cle: place({}),
+        nas: place({ share: place({}, { owner: 'root', mode: 'rwxrwxrwx' }) }, { owner: 'root', mode: 'rwxrwxrwx' }),
+        usb: place({}),
       }),
     });
   },
@@ -316,7 +316,7 @@ export const ransom: Chapter = {
     },
     {
       id: 'chiffreur-vu',
-      condition: (j) => j.last.output.includes(name(j.t, 'maj-systeme')) && j.last.commands.some((c) => c[0] === 'ps') && activeEncryptor(j),
+      condition: (j) => j.last.output.includes(name(j.t, 'system-update')) && j.last.commands.some((c) => c[0] === 'ps') && activeEncryptor(j),
       message: (j) => j.t('ransom-evenement-chiffreur-vu'),
     },
     {

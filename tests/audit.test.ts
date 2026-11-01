@@ -11,7 +11,7 @@ import { inLanguage, machinesInLanguage } from './names';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('audit')])];
-const MDP = 'farine-2028';
+const MDP = 'flour-2028';
 
 for (const language of LANGUAGES)
   describe(`L'Audit — ${language}`, () => {
@@ -53,7 +53,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 2 — solution : root fermé, Lucas supprimé, sudo avec mot de passe, secret en 600', () => {
       const { c, jouer: play, editer: edit } = part(['scope']);
-      let all = play(['cat rapport-audit.txt', 'sudo -l', 'ls -l /srv/commandes']);
+      let all = play(['cat audit_report.txt', 'sudo -l', 'ls -l /srv/commandes']);
       contains(all, 'RAPPORT D\'AUDIT');
       expect(all).toContain('NOPASSWD');
       // Au début, aucun constat n'est traité.
@@ -71,7 +71,7 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part(['scope']);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
       play(['sudo systemctl reload ssh', 'sudo usermod -L -e 1 lucas', 'sudo gpasswd -d lucas sudo']);
-      edit('sudo nano /etc/sudoers.d/90-cloud-init-users', () => 'vous ALL=(ALL) ALL');
+      edit('sudo nano /etc/sudoers.d/90-cloud-init-users', () => 'you ALL=(ALL) ALL');
       play(['sudo chmod 640 /srv/commandes/.env']);
       expect(c.finished).toContain('report');
     });
@@ -94,7 +94,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 3 — solution : ss, ufw (SSH et le site d’abord), Redis en local, reconnexion', () => {
       const { c, jouer: play, editer: edit } = part(['scope', 'report']);
-      let all = play(['cat balayage-audit.txt', 'sudo ss -tlnp']);
+      let all = play(['cat audit_scan.txt', 'sudo ss -tlnp']);
       expect(all).toContain('0.0.0.0:6379');
       expect(all).toContain('127.0.0.1:3000');
       play(['sudo ufw allow OpenSSH', 'sudo ufw allow "Nginx Full"', 'sudo ufw enable', 'y']);
@@ -225,44 +225,44 @@ ${outside}`;
 
     it('chapitre 1 — solution : la lettre, nmap -sV -oN, des notes honnêtes', () => {
       const { c, jouer: play, editer: edit } = part();
-      let all = play(['cat lettre-de-mission.txt']);
+      let all = play(['cat engagement_letter.txt']);
       contains(all, 'LETTRE DE MISSION');
-      all = play(['nmap -sV -oN inventaire.txt bakery.internal']);
+      all = play(['nmap -sV -oN inventory.txt bakery.internal']);
       expect(all).toContain(machinesInLanguage(translator(language), 'Nmap scan report for bakery.internal (192.0.2.22)'));
       expect(all).toContain('Not shown: 995 closed tcp ports (reset)');
       expect(all).toContain('5432/tcp open  postgresql PostgreSQL DB 17.0 - 17.2');
       expect(all).toContain('443/tcp  open  ssl/http   nginx 1.26.3');
       expect(all).toContain('Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel');
       expect(all).toContain('Nmap done: 1 IP address (1 host up) scanned in');
-      all = play(['cat inventaire.txt']);
+      all = play(['cat inventory.txt']);
       expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'bakery.internal')}`, 'm'));
       expect(all).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
       expect(c.finished).not.toContain('scope');
-      const review = edit('nano notes-audit.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
+      const review = edit('nano audit_notes.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
       contains(review, 'Salomé relit tes notes');
-      edit('nano notes-audit.md', () => NOTES(OUTSIDE));
+      edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       expect(c.finished).toContain('scope');
       expect(c.shell.flags.has('hors-perimetre')).toBe(false);
     });
 
     it('chapitre 1 — fausse piste : balayer tout le réseau sonde le voisin (la faute, racontée dans le débrief)', () => {
       const { c, jouer: play, editer: edit } = part();
-      const all = play(['nmap -sV -oN inventaire.txt 192.0.2.16/28']);
+      const all = play(['nmap -sV -oN inventory.txt 192.0.2.16/28']);
       expect(all).toContain('Nmap scan report for voisin.internal (192.0.2.24)');
       expect(all).toContain('3306/tcp open  mysql   MariaDB 10.11.6');
       expect(all).toContain('Nmap done: 16 IP addresses (2 hosts up) scanned in');
       expect(c.shell.flags.has('hors-perimetre')).toBe(true);
       expect(c.shell.flags.has('trace')).toBe(true);
-      const end = edit('nano notes-audit.md', () => NOTES(OUTSIDE));
+      const end = edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       contains(end, 'ton balayage a aussi sondé l\'adresse du voisin');
       expect(c.finished).toContain('scope');
     });
 
     it('chapitre 1 — notes incomplètes : les ports, le voisin, « hors périmètre »', () => {
       const { c, editer: edit } = part();
-      const without = edit('nano notes-audit.md', () => NOTES(fr ? 'Rien.' : 'Nothing.'));
+      const without = edit('nano audit_notes.md', () => NOTES(fr ? 'Rien.' : 'Nothing.'));
       contains(without, 'Il manque la machine que tu as repérée');
-      const mi = edit('nano notes-audit.md', () => NOTES(fr ? 'Le serveur du voisin (192.0.2.24).' : 'The neighbour’s server (192.0.2.24).'));
+      const mi = edit('nano audit_notes.md', () => NOTES(fr ? 'Le serveur du voisin (192.0.2.24).' : 'The neighbour’s server (192.0.2.24).'));
       contains(mi, 'dis aussi que c\'est hors périmètre');
       expect(c.finished).not.toContain('scope');
     });
@@ -320,7 +320,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       all = play(['nmap -sV bakery.internal']);
       expect(all).toContain('OpenSSH 10.0p1 Debian 7+deb13u1 (protocol 2.0)');
       expect(c.finished).not.toContain('follow-up');
-      edit('nano rapport-cloture.md', () => REPORT('80'));
+      edit('nano closing_report.md', () => REPORT('80'));
       expect(c.finished).toContain('follow-up');
     });
 
@@ -330,7 +330,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       edit('sudo nano /etc/login.defs', (t) => t.replace('UMASK           022', 'UMASK           027'));
       play(['sudo lynis audit system', 'nmap -sV bakery.internal']);
       expect(c.shell.state.lynis.hint).toBe(72);
-      edit('nano rapport-cloture.md', () => REPORT('72'));
+      edit('nano closing_report.md', () => REPORT('72'));
       expect(c.finished).toContain('follow-up');
     });
 
@@ -347,7 +347,7 @@ ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.'
       // Sans nouvel audit, Lynis n'a rien prouvé : l'ancien indice n'est plus celui de la machine.
       play(['sudo lynis audit system']);
       expect(e('preuve-lynis')).toBe(true);
-      const without = edit('nano rapport-cloture.md', () => REPORT('12'));
+      const without = edit('nano closing_report.md', () => REPORT('12'));
       contains(without, 'cite l\'indice de durcissement de ton dernier audit Lynis');
       play(['nmap -sV 192.0.2.16/28']);
       expect(e('hors-perimetre')).toBe(true);

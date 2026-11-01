@@ -46,7 +46,7 @@ export class SysadminQuests extends HTMLElement {
     const story = attribute('story', 'histoire');
     mount(root, {
       story: story && Object.hasOwn(OLD_STORY_IDS, story) ? OLD_STORY_IDS[story] : story,
-      saveKey: attribute('save-key', 'cle'),
+      saveKey: attribute('save-key', 'usb'),
       // lang on the element, then langue, then the page's language (lang), otherwise English.
       language: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
     });

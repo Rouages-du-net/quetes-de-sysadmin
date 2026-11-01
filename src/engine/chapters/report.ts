@@ -58,7 +58,7 @@ const readableByApp = (j: Game) => {
   const n = env(j);
   if (n?.type !== 'fichier') return false;
   const mode = n.mode ?? 'rw-r--r--';
-  return ((n.owner ?? 'vous') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
+  return ((n.owner ?? 'you') === 'commandes' && mode[0] === 'r') || ((n.group ?? n.owner) === 'commandes' && mode[3] === 'r');
 };
 const secretOk = (j: Game) => closedToOther(j) && readableByApp(j);
 
@@ -94,7 +94,7 @@ export const report: Chapter = {
     'last',
   ],
   home: M,
-  welcome: 'courriel_nadia.txt',
+  welcome: 'email_nadia.txt',
   names: true,
   final: 'fin',
   // Dans l'ordre du rapport de Salomé.
@@ -116,7 +116,7 @@ export const report: Chapter = {
   initialise: (j) => loadSshd(j),
   createWorld: (t) =>
     bakeryWorld(t, {
-      home: { 'courriel_nadia.txt': f(t('report-courriel-nadia')), 'rapport-audit.txt': f(t('report-rapport-audit'), { lines: true }) },
+      home: { 'email_nadia.txt': f(t('report-courriel-nadia')), 'audit_report.txt': f(t('report-rapport-audit'), { lines: true }) },
       sudoersD: { '90-cloud-init-users': file(cloudInitSudo(player(t)), 'root', 'r--r-----') },
       more: {
         srv: d(

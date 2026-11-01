@@ -55,7 +55,7 @@ export const dhcp: Chapter = {
     'dnsmasq',
   ],
   home: M,
-  welcome: 'courriel_malik.txt',
+  welcome: 'email_malik.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -63,7 +63,7 @@ export const dhcp: Chapter = {
   state: () => ({ lan: newLan(true), systemd: hiveSystemd() }),
   initialise: initialiseHive,
   createWorld: (t) =>
-    hiveWorld({ interfaces: INTERFACES_VLAN, dnsmasq: FLAT_A_DNSMASQ, home: { 'courriel_malik.txt': f(t('dhcp-courriel-malik')) } }),
+    hiveWorld({ interfaces: INTERFACES_VLAN, dnsmasq: FLAT_A_DNSMASQ, home: { 'email_malik.txt': f(t('dhcp-courriel-malik')) } }),
   events: [
     { id: 'wan', condition: (j) => answersOn(j, 'eth0'), message: (j) => j.t('dhcp-evenement-wan') },
     {

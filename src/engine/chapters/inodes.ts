@@ -18,7 +18,7 @@ import type { Game, Shell } from '../shell';
 import { writeLog, newSystemd, systemd } from '../systemd';
 import { pass } from '../cron';
 
-const M = '/home/vous';
+const M = '/home/you';
 const DATA = '/srv/radio';
 const STATS = '/srv/radio/stats';
 const DAY = 86_400_000;
@@ -27,7 +27,7 @@ const INODES = 65_536;
 const NOW = Date.UTC(2027, 7, 29, 3, 20, 0);
 // Les statistiques commencent le 1er mars : un fichier par écoute, environ 360 par jour.
 const START = Date.UTC(2027, 2, 1, 0, 0, 0);
-const RECORD = '/srv/radio/emissions/nuit-2027-08-29.ogg';
+const RECORD = '/srv/radio/shows/nuit-2027-08-29.ogg';
 // L'enregistrement de cette nuit, dans la langue (/srv/radio/shows/… en anglais).
 const record = (j: Game) => path(j.t, RECORD);
 
@@ -35,15 +35,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -200,10 +200,10 @@ export const inodes: Chapter = {
     'crontab',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: () => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), NOW, {
@@ -290,12 +290,12 @@ export const inodes: Chapter = {
     const radio: Rights = { owner: 'radio' };
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), radio: place({ 'stream.conf': file(t('inodes-conf-flux')) }) }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('inodes-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place(
           {
             'lost+found': place({}, { owner: 'root', mode: 'rwx------' }),
-            emissions: place(
+            shows: place(
               {
                 'matinale-2027-08-27.ogg': f('', { owner: 'radio', size: 92_000_000 }),
                 'matinale-2027-08-28.ogg': f('', { owner: 'radio', size: 91_000_000 }),
@@ -303,7 +303,7 @@ export const inodes: Chapter = {
               },
               radio,
             ),
-            stats: place({ 'LISEZMOI.txt': file(t('inodes-stats-lisezmoi'), radio) }, radio),
+            stats: place({ 'README.txt': file(t('inodes-stats-lisezmoi'), radio) }, radio),
           },
           radio,
         ),

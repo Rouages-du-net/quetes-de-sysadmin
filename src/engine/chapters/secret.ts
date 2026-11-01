@@ -92,7 +92,7 @@ export const secret: Chapter = {
     'curl',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -103,7 +103,7 @@ export const secret: Chapter = {
     const webTill = tillWorld({ env: tillEnv(OLD_KEY), logAccess: ACCESS, appLog: APP_LOG });
     return cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('secret-courriel-awa', { cle: NEW_KEY })) },
+      home: { 'email_awa.txt': f(t('secret-courriel-awa', { cle: NEW_KEY })) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: webTill,

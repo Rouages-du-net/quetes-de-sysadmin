@@ -16,8 +16,8 @@ import { applySysctl } from '../commands/nftables';
 import { internet, type ElementPlan } from '../plan';
 import type { Translate } from '../../texts';
 
-export const M = '/home/vous';
-export const PASSWORD = 'abeille-2027';
+export const M = '/home/you';
+export const PASSWORD = 'bee-2027';
 // Lundi 8 novembre 2027, 8 h 15.
 export const NOW = Date.UTC(2027, 10, 8, 8, 15, 0);
 
@@ -41,12 +41,12 @@ export const devices = (printerInDhcp: boolean): Device[] => [
 ];
 
 export const hiveAccounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous'] },
-    vous: { gid: 1000, members: [] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you'] },
+    you: { gid: 1000, members: [] },
   },
 });
 
@@ -283,7 +283,7 @@ export function hiveWorld(o: {
         undefined,
         root,
       ),
-      home: d({ vous: d(o.home) }, undefined, root),
+      home: d({ you: d(o.home) }, undefined, root),
       var: d(
         { lib: d({ misc: d({ 'dnsmasq.leases': f('', { lines: true, owner: 'dnsmasq' }) }, undefined, root) }, undefined, root) },
         undefined,

@@ -19,7 +19,7 @@ for (const language of LANGUAGES)
     const part = (finished: string[] = []) => {
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
-      const modify = (file: string, change: (text: string) => string, mdp = 'lilas-2027') => {
+      const modify = (file: string, change: (text: string) => string, mdp = 'lilac-2027') => {
         c.execute(`sudo nano ${file}`);
         if (c.shell.waiting) c.execute(machinesInLanguage(c.t, mdp));
         c.save(change(c.edition!.text));
@@ -31,15 +31,15 @@ for (const language of LANGUAGES)
     it('chapitre 1 — solution : ssh-keygen, ssh-copy-id, puis plus de mots de passe', () => {
       const { c, jouer: play, modifier: modify } = part();
       let all = play(['ssh community', 'yes']);
-      expect(c.prompt()).toBe(L("vous@community.internal's password:"));
-      all += play(['lilas-2027']);
+      expect(c.prompt()).toBe(L("you@community.internal's password:"));
+      all += play(['lilac-2027']);
       contains(all, 'Bienvenue dans l');
-      expect(c.prompt()).toBe(L('vous@community:~$'));
-      all += play(['exit', 'ssh-keygen', '', '', '', 'ssh-copy-id community', 'lilas-2027']);
-      expect(all).toContain(L('Your public key has been saved in /home/vous/.ssh/id_ed25519.pub'));
+      expect(c.prompt()).toBe(L('you@community:~$'));
+      all += play(['exit', 'ssh-keygen', '', '', '', 'ssh-copy-id community', 'lilac-2027']);
+      expect(all).toContain(L('Your public key has been saved in /home/you/.ssh/id_ed25519.pub'));
       expect(all).toContain('Number of key(s) added: 1');
       all += play(['ssh community']);
-      expect(c.prompt()).toBe(L('vous@community:~$'));
+      expect(c.prompt()).toBe(L('you@community:~$'));
       contains(all, 'Entré·e par ta clé, sans mot de passe');
       all += modify(CONFIG, (t) => t.replace('#PasswordAuthentication yes', 'PasswordAuthentication no'));
       all += play(['sudo sshd -t', 'sudo systemctl reload ssh']);
@@ -52,16 +52,16 @@ for (const language of LANGUAGES)
 
     it('chapitre 1 — autre solution : la clé publique recopiée à la main, avec une phrase de passe', () => {
       const { c, jouer: play, modifier: modify } = part();
-      play([L('ssh-keygen -t ed25519 -C vous@desk'), '', 'une longue phrase', 'une longue phrase']);
+      play([L('ssh-keygen -t ed25519 -C you@desk'), '', 'une longue phrase', 'une longue phrase']);
       const isPublic = c.workstation.read('~/.ssh/id_ed25519.pub')!;
-      play(['ssh community', 'yes', 'lilas-2027', 'mkdir .ssh']);
+      play(['ssh community', 'yes', 'lilac-2027', 'mkdir .ssh']);
       c.execute('nano .ssh/authorized_keys');
       c.save(isPublic + '\n');
       c.quitEdition();
       play(['chmod 600 .ssh/authorized_keys', 'exit', 'ssh community']);
-      expect(c.prompt()).toBe(L("Enter passphrase for key '/home/vous/.ssh/id_ed25519':"));
+      expect(c.prompt()).toBe(L("Enter passphrase for key '/home/you/.ssh/id_ed25519':"));
       play(['une longue phrase']);
-      expect(c.prompt()).toBe(L('vous@community:~$'));
+      expect(c.prompt()).toBe(L('you@community:~$'));
       modify('/etc/ssh/sshd_config.d/00-cles.conf', () => 'PasswordAuthentication no\n');
       play(['sudo systemctl restart ssh', 'exit', 'ssh community', 'une longue phrase']);
       expect(c.finished).toContain('keys');
@@ -70,21 +70,21 @@ for (const language of LANGUAGES)
     it('chapitre 1 — fausses pistes : ssh-copy-id sans clé, fermer la porte avant de poser la clé', () => {
       const { c, jouer: play, modifier: modify } = part();
       // Sans clé à soi, ssh-copy-id prend la plus récente de ~/.ssh : celle du royaume.
-      let all = play(['ssh-copy-id community', 'yes', 'lilas-2027', 'ssh community']);
-      expect(all).toContain(L('Source of key(s) to be installed: "/home/vous/.ssh/id_kingdom.pub"'));
-      expect(c.prompt()).toBe(L("vous@community.internal's password:"));
-      all = play(['lilas-2027']);
+      let all = play(['ssh-copy-id community', 'yes', 'lilac-2027', 'ssh community']);
+      expect(all).toContain(L('Source of key(s) to be installed: "/home/you/.ssh/id_kingdom.pub"'));
+      expect(c.prompt()).toBe(L("you@community.internal's password:"));
+      all = play(['lilac-2027']);
       contains(all, "jeu t'a donnée pour une autre machine");
       all = modify(CONFIG, (t) => t.replace('#PasswordAuthentication yes', 'PasswordAuthentication no'));
       all += play(['sudo systemctl reload ssh']);
       contains(all, 'aucune clé n');
       all = play(['exit', 'ssh community']);
-      expect(all).toContain(L('vous@community.internal: Permission denied (publickey).'));
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(all).toContain(L('you@community.internal: Permission denied (publickey).'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
       // Le menu : la console de secours de l'hébergeur.
       c.connect('community');
       modify(CONFIG, (t) => t.replace('PasswordAuthentication no', 'PasswordAuthentication yes'));
-      play(['sudo systemctl reload ssh', 'exit', 'ssh-keygen -N "" -f ~/.ssh/id_ed25519', 'ssh-copy-id community', 'lilas-2027']);
+      play(['sudo systemctl reload ssh', 'exit', 'ssh-keygen -N "" -f ~/.ssh/id_ed25519', 'ssh-copy-id community', 'lilac-2027']);
       expect(c.finished).not.toContain('keys');
     });
 
@@ -94,7 +94,7 @@ for (const language of LANGUAGES)
       p.jouer(['ssh-keygen -N "" -f ~/.ssh/id_ed25519']);
       return p;
     };
-    const CONFIG_WIKI = L('\nHost wiki\n    HostName wiki\n    User vous\n    ProxyJump community\n');
+    const CONFIG_WIKI = L('\nHost wiki\n    HostName wiki\n    User you\n    ProxyJump community\n');
     const writeWorkstation = (c: Console, file: string, add: string) => {
       c.execute(`nano ${file}`);
       c.save(c.edition!.text + add);
@@ -105,10 +105,10 @@ for (const language of LANGUAGES)
       const { c, jouer: play } = withKey(['keys']);
       let all = play(['ssh -J community wiki', 'yes', 'yes']);
       contains(all, 'Le wiki');
-      expect(c.prompt()).toBe(L('vous@wiki:~$'));
+      expect(c.prompt()).toBe(L('you@wiki:~$'));
       contains(all, 'Te voilà sur le wiki');
       all += play(['hostname', 'cat note_gaspard.txt', 'exit']);
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
       // Le chapitre regarde le poste : le raccourci écrit suffit (déjà venu·e au wiki).
       all = writeWorkstation(c, '~/.ssh/config', CONFIG_WIKI);
       contains(all, 'https://man.openbsd.org/ssh_config#ProxyJump');
@@ -116,11 +116,11 @@ for (const language of LANGUAGES)
       all = play(['ssh -G wiki']);
       expect(all).toContain(machinesInLanguage(translator(language), 'proxyjump community'));
       all = play(['ssh wiki']);
-      expect(c.prompt()).toBe(L('vous@wiki:~$'));
+      expect(c.prompt()).toBe(L('you@wiki:~$'));
       // Un rebond n'affiche pas la bannière de la passerelle.
       expect(all).not.toContain('Linux community');
       all = play(['exit']);
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
     });
 
     it('chapitre 2 — fausses pistes : ssh wiki depuis le poste, depuis maison, la clé privée recopiée', () => {
@@ -128,18 +128,18 @@ for (const language of LANGUAGES)
       let all = play(['ssh wiki']);
       expect(all).toContain('ssh: Could not resolve hostname wiki: Name or service not known');
       all = play(['ssh community', 'yes', 'ssh wiki', 'yes']);
-      expect(all).toContain(L('vous@wiki: Permission denied (publickey).'));
-      expect(c.prompt()).toBe(L('vous@community:~$'));
+      expect(all).toContain(L('you@wiki: Permission denied (publickey).'));
+      expect(c.prompt()).toBe(L('you@community:~$'));
       all = play(['exit', 'scp ~/.ssh/id_ed25519 community:.ssh/']);
       contains(all, 'il y a une clé privée dans ~/.ssh sur maison');
       play(['ssh community']);
       // Avec la clé privée recopiée, le second ssh passe… mais le chapitre ne se termine pas.
       play(['chmod 600 .ssh/id_ed25519', 'ssh wiki']);
-      expect(c.prompt()).toBe(L('vous@wiki:~$'));
+      expect(c.prompt()).toBe(L('you@wiki:~$'));
       play(['exit', 'exit']);
       writeWorkstation(c, '~/.ssh/config', CONFIG_WIKI);
       play(['ssh wiki', 'yes']);
-      expect(c.prompt()).toBe(L('vous@wiki:~$'));
+      expect(c.prompt()).toBe(L('you@wiki:~$'));
       expect(c.finished).not.toContain('jump');
       play(['exit', 'ssh community', 'rm .ssh/id_ed25519', 'exit', 'ssh wiki']);
       expect(c.finished).toContain('jump');
@@ -199,33 +199,33 @@ for (const language of LANGUAGES)
       expect(c.finished).not.toContain('tunnel');
     });
 
-    const REPORT = L('scp wiki:/srv/wiki/exports/rapport-2027.pdf .');
-    const SAVE = L('rsync -av /srv/partage/ archives:/srv/sauvegardes/partage/');
+    const REPORT = L('scp wiki:/srv/wiki/exports/report-2027.pdf .');
+    const SAVE = L('rsync -av /srv/share/ archives:/srv/backups/share/');
 
     it('chapitre 4 — solution : scp vers le poste, rsync de maison vers archives', () => {
       const { c, jouer: play } = team(['keys', 'jump', 'tunnel']);
       let all = play([REPORT, 'ls']);
-      expect(all).toContain(L('rapport-2027.pdf'));
+      expect(all).toContain(L('report-2027.pdf'));
       contains(all, 'Le rapport d');
       play(['ssh community']);
       all = play([SAVE.replace('-av', '-avn'), 'yes']);
       expect(all).toContain('(DRY RUN)');
       all = play([SAVE]);
-      expect(all).toContain(L('comptes-rendus/ca-2027-09.txt'));
-      expect(all).not.toContain(L('comptes-rendus/ag-2026.txt'));
+      expect(all).toContain(L('minutes/board-2027-09.txt'));
+      expect(all).not.toContain(L('minutes/agm-2026.txt'));
       contains(all, 'https://download.samba.org/pub/rsync/rsync.1');
       expect(c.finished).toContain('transfers');
     });
 
     it('chapitre 4 — fausse piste : la barre oblique oubliée, réparée avec --delete', () => {
       const { c, jouer: play } = team(['keys', 'jump', 'tunnel']);
-      let all = play(['ssh community', L('rsync -av /srv/partage archives:/srv/sauvegardes/partage'), 'yes']);
-      expect(all).toContain(L('partage/planning-salles.txt'));
+      let all = play(['ssh community', L('rsync -av /srv/share archives:/srv/backups/share'), 'yes']);
+      expect(all).toContain(L('share/room-bookings.txt'));
       contains(all, 'barre oblique finale');
       all = play([SAVE, 'exit', REPORT]);
       expect(c.finished).not.toContain('transfers');
       all = play(['ssh community', SAVE.replace('-av', '-av --delete')]);
-      expect(all).toContain(L('deleting partage/comptes-rendus/'));
+      expect(all).toContain(L('deleting share/minutes/'));
       expect(c.finished).toContain('transfers');
     });
 
@@ -234,11 +234,11 @@ for (const language of LANGUAGES)
 
     it('chapitre 5 — solution : sftp depuis le wiki, puis lftp en FTPS, mirror -R --delete', () => {
       const { c, jouer: play } = team(['keys', 'jump', 'tunnel', 'transfers']);
-      let all = play(['ssh community', L('cat courriel_hebergeur.txt'), 'exit']);
+      let all = play(['ssh community', L('cat email_hosting.txt'), 'exit']);
       if (fr) expect(all).toContain('Serveur : ftp.hosting.example');
       all = play(['sftp wiki', 'pwd', 'cd /srv/wiki', 'ls', 'get -r site', 'lls', 'bye', 'ls site']);
       expect(all).toContain('Connected to wiki.');
-      expect(all).toContain(L('Remote working directory: /home/vous'));
+      expect(all).toContain(L('Remote working directory: /home/you'));
       expect(all).toContain('Fetching /srv/wiki/site/ to site');
       expect(all).toContain('adhesion.html');
       all = play([

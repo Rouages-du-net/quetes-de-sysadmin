@@ -94,7 +94,7 @@ Chaque chapitre a au moins :
   et le chapitre n'est pas fini tant que l'erreur reste.
 
 Les tests rejouent chaque quête dans chaque langue disponible ; les
-scénarios des tests sont écrits avec les noms français (`inLanguage()` les
+scénarios des tests sont écrits avec les noms anglais (`inLanguage()` les
 traduit), et les textes vérifiés en français.
 
 ### La difficulté
@@ -138,9 +138,9 @@ de large : pas d'erreur console, pas de défilement horizontal.
   ont leur version française ; les autres documents sont en anglais
   seulement.
 - **Le code en anglais.** Les fichiers et les identifiants (variables,
-  fonctions, types, composants) sont en anglais ; certains identifiants de
-  données (ceux des lieux, les clés
-  `.ftl`, les classes CSS) et des commentaires sont encore en français, et
+  fonctions, types, composants) sont en anglais, et le monde aussi (lieux,
+  machines, comptes, mots de passe) ; certains identifiants de données (les
+  clés `.ftl`, les classes CSS) et des commentaires sont encore en français, et
   passent peu à peu à l'anglais. Le **nouveau** code s'écrit en anglais,
   sans mêler un grand renommage et une fonctionnalité dans la même PR. Un
   nom public reçoit d'abord son alias anglais, l'ancien reste accepté.

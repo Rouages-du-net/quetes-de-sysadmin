@@ -29,7 +29,7 @@ import { configuration } from '../access';
 import type { Listening } from '../commands/ss';
 import { JAIL_CONF } from './sentinel';
 
-const M = '/home/vous';
+const M = '/home/you';
 const NEW = 2222;
 const RANIA = '198.51.100.40';
 // Une adresse quelconque d'internet.
@@ -147,14 +147,14 @@ export const port: Chapter = {
     'nft',
   ],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   watchesWorkstation: true,
   accounts: () => {
     const c = accountsByDefault();
-    c.groups.adm = { gid: 4, members: ['vous'] };
+    c.groups.adm = { gid: 4, members: ['you'] };
     return c;
   },
   state: () => ({
@@ -269,7 +269,7 @@ export const port: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('port-courriel-kofi', { port: String(NEW) })) }) }, undefined, root),
+        home: d({ you: d({ 'email_kofi.txt': f(t('port-courriel-kofi', { port: String(NEW) })) }) }, undefined, root),
       },
       undefined,
       root,

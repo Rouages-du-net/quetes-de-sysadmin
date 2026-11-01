@@ -118,7 +118,7 @@ export const traces: Chapter = {
     'journalctl',
   ],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['trouve', 'cle-identifiee', 'cle-revoquee', 'cron-decouvert', 'cron-nettoye', 'secret-vu', 'mot-de-passe', 'fin'],
@@ -188,7 +188,7 @@ export const traces: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'courriel_salome.txt': f(t('traces-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('traces-courriel-salome')) },
       more: {
         srv: d(
           {

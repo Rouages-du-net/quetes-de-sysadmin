@@ -19,7 +19,7 @@ import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx, type App } from '../nginx';
 import { WELCOME, MIME, NGINX_CONF, SITE_BY_DEFAULT } from '../commands/apt';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LETTERS = 'letters.example';
 const CAFE = 'cafe.example';
 
@@ -28,16 +28,16 @@ const accounts = (): Accounts => ({
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
     agenda: { uid: 998, group: 'agenda', home: '/opt/agenda', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     rania: { uid: 1001, group: 'rania' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous', 'rania'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you', 'rania'] },
     'www-data': { gid: 33, members: [] },
     agenda: { gid: 998, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     rania: { gid: 1001, members: [] },
   },
 });
@@ -98,10 +98,10 @@ export const colocation: Chapter = {
     'whoami',
   ],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts,
   state: (t) => ({
     systemd: newSystemd('letters', Date.UTC(2027, 2, 1, 6, 12, 0), Date.UTC(2027, 2, 13, 10, 0, 0), {
@@ -167,14 +167,14 @@ export const colocation: Chapter = {
         }),
       }),
       home: place({
-        vous: d({ 'courriel_kofi.txt': f(t('sharing-courriel-kofi')), 'note_de_rania.txt': f(t('sharing-note-de-rania')) }),
+        you: d({ 'email_kofi.txt': f(t('sharing-courriel-kofi')), 'note_from_rania.txt': f(t('sharing-note-de-rania')) }),
         rania: place({}, { owner: 'rania', mode: 'rwx------' }),
       }),
       opt: place({
         agenda: place(
           {
             'serveur.js': file(t('sharing-agenda-code'), { owner: 'agenda' }),
-            'LISEZMOI.txt': file(t('sharing-agenda-lisezmoi'), { owner: 'agenda' }),
+            'README.txt': file(t('sharing-agenda-lisezmoi'), { owner: 'agenda' }),
           },
           { owner: 'agenda' },
         ),

@@ -133,7 +133,7 @@ export const vpn: Chapter = {
     'wg-quick',
   ],
   home: M,
-  welcome: 'courriel_malik.txt',
+  welcome: 'email_malik.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -153,7 +153,7 @@ export const vpn: Chapter = {
       sysctl: ROUTER_SYSCTL,
       etc: { wireguard: d({}, undefined, { owner: 'root', mode: 'rwx------' }) },
       home: {
-        'courriel_malik.txt': f(t('remote-work-courriel-malik', { cle: MALIK_PUBLIC })),
+        'email_malik.txt': f(t('remote-work-courriel-malik', { cle: MALIK_PUBLIC })),
         'malik-laptop.conf': f(t('remote-work-portable-malik'), { lines: true }),
       },
     }),

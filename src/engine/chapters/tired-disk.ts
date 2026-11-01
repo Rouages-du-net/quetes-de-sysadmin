@@ -55,7 +55,7 @@ export const fatigue: Chapter = {
     'mdadm',
   ],
   home: M,
-  welcome: 'message_d_odile.txt',
+  welcome: 'message_from_odile.txt',
   names: true,
   final: 'fin',
   steps: ['alerte', 'grappes', 'smart', 'retire', 'ticket', 'fin'],
@@ -70,8 +70,8 @@ export const fatigue: Chapter = {
     labWorld(
       t,
       {
-        'message_d_odile.txt': f(t('tired-disk-message-d-odile')),
-        'procedure_hebergeur.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
+        'message_from_odile.txt': f(t('tired-disk-message-d-odile')),
+        'host_procedure.txt': f(t('labo-procedure-hebergeur'), { lines: true }),
       },
       { mail: smartdBox(machineName(t, 'lab')) },
     ),

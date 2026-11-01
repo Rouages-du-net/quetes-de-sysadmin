@@ -57,7 +57,7 @@ export const jump: Chapter = {
   plan: homePlan(),
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'chmod', 'rm', 'nano', 'ssh'],
   home: M,
-  welcome: 'courriel_yasmine.txt',
+  welcome: 'email_yasmine.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -70,11 +70,11 @@ export const jump: Chapter = {
     wiki: internalHost('wiki', WIKI, {
       commands: INTERNAL_COMMANDS,
       home: (t) => ({ 'note_gaspard.txt': f(t('jump-note-gaspard')) }),
-      more: (t) => ({ srv: d({ wiki: d({ pages: d({ 'accueil.md': f(t('jump-wiki-accueil')) }) }) }, undefined, { owner: 'root' }) }),
+      more: (t) => ({ srv: d({ wiki: d({ pages: d({ 'home.md': f(t('jump-wiki-accueil')) }) }) }, undefined, { owner: 'root' }) }),
     }),
     archives: internalHost('archives', '10.20.0.12', { commands: INTERNAL_COMMANDS }),
   },
-  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'courriel_yasmine.txt': f(t('jump-courriel-yasmine')), '.ssh': sshDirectory() } }),
+  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('jump-courriel-yasmine')), '.ssh': sshDirectory() } }),
   events: [
     { id: 'cle-privee', condition: privateKeyOnHome, message: (j) => j.t('jump-evenement-cle-privee') },
     { id: 'au-wiki', condition: (j) => connectionsToWiki(j) > 0 && !privateKeyOnHome(j), message: (j) => j.t('jump-evenement-au-wiki') },

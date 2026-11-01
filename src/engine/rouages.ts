@@ -13,7 +13,7 @@ export const ROUAGES_PAGES: Record<string, string> = {
   'entree-box': '/modules/entree-a-la-page/#box',
   'entree-liaison': '/modules/entree-a-la-page/#liaison',
   'entree-cadenas': '/modules/entree-a-la-page/#cadenas',
-  'entree-voyage': '/modules/entree-a-la-page/#voyage',
+  'entree-voyage': '/modules/entree-a-la-page/#journey',
   'entree-serveur': '/modules/entree-a-la-page/#serveur',
   'ordinateur-binaire': '/modules/ordinateur/#binaire',
   'ordinateur-memoire': '/modules/ordinateur/#memoire',

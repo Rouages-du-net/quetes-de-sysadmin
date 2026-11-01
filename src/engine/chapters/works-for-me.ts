@@ -19,7 +19,7 @@ import type { Game } from '../shell';
 import { newSystemd, systemd, toUtc } from '../systemd';
 import { dns, query, reloadZones, type DnsState } from '../dns';
 
-const M = '/home/vous';
+const M = '/home/you';
 const NEW = '203.0.113.10';
 const OLD = '198.51.100.80';
 const ZONES = '/etc/bind/zones';
@@ -28,15 +28,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     bind: { uid: 104, group: 'bind', home: '/var/cache/bind', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     rania: { uid: 1001, group: 'rania' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous', 'rania'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you', 'rania'] },
     bind: { gid: 104, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     rania: { gid: 1001, members: [] },
   },
 });
@@ -151,10 +151,10 @@ export const atMe: Chapter = {
     'journalctl',
   ],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts,
   state: () => {
     const now = Date.UTC(2027, 2, 20, 10, 0, 0);
@@ -237,7 +237,7 @@ export const atMe: Chapter = {
           { owner: 'root', group: 'bind', mode: 'rwxr-sr-x' },
         ),
       }),
-      home: place({ vous: d({ 'courriel_kofi.txt': f(t('works-for-me-courriel-kofi')), 'aide_dns.txt': f(t('works-for-me-aide-dns')) }) }),
+      home: place({ you: d({ 'email_kofi.txt': f(t('works-for-me-courriel-kofi')), 'help_dns.txt': f(t('works-for-me-aide-dns')) }) }),
       usr: place({ sbin: place({ named: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_201_664 }) }) }),
     });
   },

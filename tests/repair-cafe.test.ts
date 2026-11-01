@@ -23,13 +23,13 @@ for (const language of LANGUAGES)
         lines
           .map((l) => {
             let s = c.execute(machinesInLanguage(c.t, l)) ?? '';
-            if (c.shell.waiting) s += c.execute(machinesInLanguage(c.t, 'fourmis-2026')) ?? '';
+            if (c.shell.waiting) s += c.execute(machinesInLanguage(c.t, 'ants-2026')) ?? '';
             return s;
           })
           .join('\n');
       const write = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };

@@ -17,7 +17,7 @@ import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { postgres, type PostgresState, type Table } from '../postgres';
 
-const M = '/home/vous';
+const M = '/home/you';
 const BACKUPS = '/var/backups/postgresql';
 const Go = 1_000_000_000;
 const NUMBERS = { jeux: 412, membres: 230, prets: 1873 };
@@ -26,18 +26,18 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     postgres: { uid: 115, group: 'postgres', home: '/var/lib/postgresql', shell: '/bin/bash' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     accueil: { uid: 1001, group: 'accueil' },
     berenice: { uid: 1002, group: 'berenice' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'berenice'] },
+    sudo: { gid: 27, members: ['you', 'berenice'] },
     postgres: { gid: 122, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     accueil: { gid: 1001, members: [] },
     berenice: { gid: 1002, members: [] },
-    ludo: { gid: 1100, members: ['vous', 'accueil', 'berenice'] },
+    ludo: { gid: 1100, members: ['you', 'accueil', 'berenice'] },
   },
 });
 
@@ -134,7 +134,7 @@ export const base: Chapter = {
     'nano',
   ],
   home: M,
-  welcome: 'message_de_berenice.txt',
+  welcome: 'message_from_berenice.txt',
   names: true,
   final: 'fin',
   password: 'ludo-2027',
@@ -198,7 +198,7 @@ export const base: Chapter = {
         ),
       }),
       home: place({
-        vous: d({ 'message_de_berenice.txt': f(t('database-message-de-berenice')), 'mot_de_malo.txt': f(t('database-mot-de-malo')) }),
+        you: d({ 'message_from_berenice.txt': f(t('database-message-de-berenice')), 'note_from_malo.txt': f(t('database-mot-de-malo')) }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),

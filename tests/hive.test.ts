@@ -10,7 +10,7 @@ import { inLanguage, machinesInLanguage } from './names';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('hive')])];
-const MDP = 'abeille-2027';
+const MDP = 'bee-2027';
 const VLANS = `
 auto eth1.10
 iface eth1.10 inet static
@@ -176,7 +176,7 @@ table ip nat {
 
     it('chapitre 3 — solution : /etc/sysctl.d, /etc/nftables.conf, systemctl enable --now', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp']);
-      let all = play([L('cat notes-de-sacha.txt'), 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
+      let all = play([L('cat notes-from-sacha.txt'), 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L', 'man sysctl.d']);
       expect(all).toContain('SYSCTL.D(5)');
       expect(all).toContain('net.ipv4.ip_forward = 0');
       expect(all).toContain('1 flow entries have been shown.');
@@ -231,7 +231,7 @@ table ip nat {
       contains(all, 'si le routeur');
       expect(c.finished).not.toContain('zones');
       all = play(['sudo reboot', 'ssh hive', 'cat /proc/sys/net/ipv4/ip_forward', 'sudo nft list ruleset']);
-      expect(all).toContain(`cat ${L('courriel_malik.txt')}\n0\n`);
+      expect(all).toContain(`cat ${L('email_malik.txt')}\n0\n`);
       expect(all).not.toContain('masquerade');
       edit('sudo nano /etc/sysctl.conf', (t) => t.replace('#net.ipv4.ip_forward=1', 'net.ipv4.ip_forward=1'));
       edit('sudo nano /etc/nftables.conf', () =>
@@ -274,9 +274,9 @@ table ip nat {
     const PEER_MALIK = (key: string) => `\n[Peer]\nPublicKey = ${key}\nAllowedIPs = 10.10.99.2/32\n`;
     const WG0 = (key: string) => `[Interface]\nAddress = 10.10.99.1/24\nListenPort = 51820\nPrivateKey = ${key}\n`;
     const keysFor = (c: Console) => ({
-      malik: c.shell.read(L('/home/vous/courriel_malik.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0],
-      privee: () => c.shell.read(L('/home/vous/privatekey'))!.trim(),
-      isPublic: () => c.shell.read(L('/home/vous/publickey'))!.trim(),
+      malik: c.shell.read(L('/home/you/email_malik.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0],
+      privee: () => c.shell.read(L('/home/you/privatekey'))!.trim(),
+      isPublic: () => c.shell.read(L('/home/you/publickey'))!.trim(),
     });
     const LAPTOP =
       (pub: string, endpoint = 'hive.example:51820') =>
@@ -294,7 +294,7 @@ table ip nat {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones']);
       const k = keysFor(c);
       let all = play(['cat malik-laptop.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
-      const me = L('vous');
+      const me = L('you');
       expect(all).toContain(`-rw------- ${me.padEnd(8)} ${me.padEnd(8)} ${'44'.padStart(6)} privatekey`);
       edit('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       edit('nano malik-laptop.conf', LAPTOP(k.isPublic()));
@@ -369,7 +369,7 @@ table ip nat {
 
     it('chapitre 5 — solution : eth1.40, dnat au prerouting, forward vers la DMZ seulement', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work']);
-      let all = play([L('cat plan-commutateur.txt'), 'ping -c 1 web']);
+      let all = play([L('cat switch-plan.txt'), 'ping -c 1 web']);
       // Sans interface dans ce réseau, le ping part vers la box et s'y perd.
       expect(all).toContain('1 packets transmitted, 0 received, 100% packet loss');
       edit('sudo nano /etc/network/interfaces', (t) => t + ETH140);
@@ -424,7 +424,7 @@ table ip nat {
       expect(c.finished).toContain('dmz');
     });
 
-    const annexKey = (c: Console) => c.shell.read(L('/home/vous/courriel_sami.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0];
+    const annexKey = (c: Console) => c.shell.read(L('/home/you/email_sami.txt'))!.match(/[A-Za-z0-9+/]{43}=/)![0];
     const ANNEX_PEER =
       (key: string, allowed = '10.10.99.3/32, 10.20.10.0/24') =>
       (t: string) =>
@@ -574,7 +574,7 @@ table ip nat {
 
     it('chapitre 8 — solution : le pare-feu, clients.conf, le module ldap, le fichier users', () => {
       const { c, jouer: play, editer: edit } = part(['vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'directory']);
-      let all = play([L('cat borne-bureaux.txt'), 'radtest sami choisi-par-sami localhost 0 testing123']);
+      let all = play([L('cat ap-offices.txt'), 'radtest sami choisi-par-sami localhost 0 testing123']);
       if (fr) expect(all).toContain('Secret partagé         : Rk7-borne-2028');
       expect(all).toContain('(0) -: Expected Access-Accept got Access-Reject');
       edit('sudo nano /etc/nftables.conf', RADIUS_INPUT);

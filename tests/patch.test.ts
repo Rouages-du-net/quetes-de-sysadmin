@@ -44,13 +44,13 @@ for (const language of LANGUAGES)
         lines
           .map((l) => {
             let s = c.execute(L(l)) ?? '';
-            if (c.shell.waiting) s += c.execute(L('rayons-2027')) ?? '';
+            if (c.shell.waiting) s += c.execute(L('spokes-2027')) ?? '';
             return s;
           })
           .join('\n');
       const write = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(L('rayons-2027'));
+        if (c.shell.waiting) c.execute(L('spokes-2027'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
@@ -61,7 +61,7 @@ for (const language of LANGUAGES)
 
     it('solution : le nom du site, le pare-feu, puis www', () => {
       const { c, jouer: play, ecrire: write } = part();
-      let all = play(['cat message_de_ines.txt', 'systemctl status caddy', 'curl -I http://localhost', 'curl https://cycles.example']);
+      let all = play(['cat message_from_ines.txt', 'systemctl status caddy', 'curl -I http://localhost', 'curl https://cycles.example']);
       expect(all).toContain('"msg":"server is listening only on the HTTP port, so no automatic HTTPS will be applied to this server"');
       expect(all).toContain('HTTP/1.1 200 OK');
       expect(all).toContain("curl: (7) Failed to connect to cycles.example port 443 after 0 ms: Couldn't connect to server");

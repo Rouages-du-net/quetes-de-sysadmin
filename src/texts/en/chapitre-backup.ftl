@@ -24,21 +24,21 @@ backup-mot-de-maelle =
 
     I was told about rsync and cron. You'll find everything in man rsync
     and man crontab."
-backup-souvenir-premiere-lettre =
+backup-souvenir-first-letter =
     The first letter that reached the Harbour after the light came back. It
     begins: "Dear Maëlle, we saw the Lighthouse from out at sea…"
-backup-souvenir-phare =
+backup-souvenir-lighthouse =
     The evening the Lighthouse was lit again: a beam sweeping the sea, and
     Captain Ana hoisting the sail.
-backup-souvenir-bourg =
+backup-souvenir-village =
     The Village celebrating: the sourdough saved, the clock running again,
     the school found again.
 backup-souvenir-nour =
     Nour, found in the Tunnel, laughing as she eats cheese.
-backup-souvenir-effaceur =
+backup-souvenir-eraser =
     The Eraser finally emptying the Bin, as on the first day, and
     nothing else.
-backup-souvenir-fete-du-phare =
+backup-souvenir-lighthouse-festival =
     The Lighthouse festival, today: the whole kingdom on the Pier, and
     paper lanterns all the way up to the Lantern.
 

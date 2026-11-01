@@ -58,7 +58,8 @@ agents, but its rules apply to everyone.
   English only.
 - **Code in English.** The project started in French. Files and
   identifiers (variables, functions, types, components) are now in
-  English; some data identifiers are still French (the ids of places, `.ftl` keys, CSS classes) and some
+  English, and so is the world (places, machines, accounts, passwords);
+  some data identifiers are still French (`.ftl` keys, CSS classes) and some
   comments, and are being moved to English. Write **new** code in
   English, and don't mix a large rename with a feature in the same pull
   request. Public names get an English alias
@@ -148,7 +149,7 @@ Each chapter has at least:
   chapter isn't finished while the mistake remains.
 
 The tests replay every quest in every available language. The scenarios in
-the tests are written with the French names of places and files (the
+the tests are written with the English names of places and files (the
 `inLanguage()` helper translates them), and texts are checked in French.
 
 ## A new simulated tool

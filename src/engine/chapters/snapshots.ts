@@ -19,10 +19,10 @@ import { pass } from '../cron';
 import type { Device } from '../commands/disks';
 import { CONF, CONF_DEBIAN, readConf } from '../commands/rsnapshot';
 
-const M = '/home/vous';
-const SHARE = '/srv/partage';
-const DISK = '/mnt/instantanes';
-const INVENTORY = `${SHARE}/inventaire.csv`;
+const M = '/home/you';
+const SHARE = '/srv/share';
+const DISK = '/mnt/snapshots';
+const INVENTORY = `${SHARE}/inventory.csv`;
 const Go = 1_000_000_000;
 const DAY = 86_400_000;
 const START = Date.UTC(2027, 5, 28, 10, 0, 0);
@@ -30,17 +30,17 @@ const START = Date.UTC(2027, 5, 28, 10, 0, 0);
 const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     accueil: { uid: 1001, group: 'accueil' },
     berenice: { uid: 1002, group: 'berenice' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'berenice'] },
-    vous: { gid: 1000, members: [] },
+    sudo: { gid: 27, members: ['you', 'berenice'] },
+    you: { gid: 1000, members: [] },
     accueil: { gid: 1001, members: [] },
     berenice: { gid: 1002, members: [] },
-    ludo: { gid: 1100, members: ['vous', 'accueil', 'berenice'] },
+    ludo: { gid: 1100, members: ['you', 'accueil', 'berenice'] },
   },
 });
 
@@ -131,7 +131,7 @@ export const chapterSnapshots: Chapter = {
     'nano',
   ],
   home: M,
-  welcome: 'message_de_berenice.txt',
+  welcome: 'message_from_berenice.txt',
   names: true,
   final: 'fin',
   password: 'ludo-2027',
@@ -190,16 +190,16 @@ export const chapterSnapshots: Chapter = {
       ...(size ? { size } : {}),
     });
     const share: Record<string, Node> = {
-      'inventaire.csv': file(t('ransom-inventaire'), ludo('berenice')),
-      'planning-benevoles.txt': file(t('ransom-planning'), ludo('berenice')),
-      'affiche-fete-du-jeu.txt': file(t('ransom-affiche'), ludo('berenice')),
-      regles: place(
+      'inventory.csv': file(t('ransom-inventaire'), ludo('berenice')),
+      'volunteer-rota.txt': file(t('ransom-planning'), ludo('berenice')),
+      'games-day-poster.txt': file(t('ransom-affiche'), ludo('berenice')),
+      rules: place(
         {
-          'jeu-de-l-oie.txt': file(t('ransom-regles-oie'), ludo('berenice')),
-          'petits-chevaux.txt': file(t('ransom-regles-chevaux'), ludo('berenice')),
-          'dames.txt': file(t('ransom-regles-dames'), ludo('berenice')),
+          'goose-game.txt': file(t('ransom-regles-oie'), ludo('berenice')),
+          'ludo.txt': file(t('ransom-regles-chevaux'), ludo('berenice')),
+          'draughts.txt': file(t('ransom-regles-dames'), ludo('berenice')),
           // Les règles numérisées : de gros fichiers qui ne changent jamais.
-          'scans-regles.pdf': f(t('archives-document-pdf'), { lines: true, ...ludo('berenice', 48_000_000) }),
+          'rules-scans.pdf': f(t('archives-document-pdf'), { lines: true, ...ludo('berenice', 48_000_000) }),
         },
         { owner: 'berenice', group: 'ludo', mode: 'rwxrwxr-x' },
       ),
@@ -207,13 +207,13 @@ export const chapterSnapshots: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: file('games'), 'rsnapshot.conf': file(CONF_DEBIAN) }),
       home: place({
-        vous: d({ 'message_de_berenice.txt': f(t('snapshots-message-de-berenice')) }),
+        you: d({ 'message_from_berenice.txt': f(t('snapshots-message-de-berenice')) }),
         accueil: place({}, { owner: 'accueil', mode: 'rwxr-x---' }),
         berenice: place({}, { owner: 'berenice', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),
-      srv: place({ partage: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
-      mnt: place({ instantanes: place({}), cle: place({}) }),
+      srv: place({ share: place(share, { owner: 'root', group: 'ludo', mode: 'rwxrwxr-x' }) }),
+      mnt: place({ snapshots: place({}), usb: place({}) }),
       var: place({ cache: place({}) }),
     });
   },

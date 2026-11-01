@@ -30,7 +30,7 @@ export const fix: Chapter = {
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'sudo', 'id', 'whoami', 'apt', 'curl', 'systemctl'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['corrige', 'verifie', 'fin'],
@@ -51,7 +51,7 @@ export const fix: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('fix-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('fix-courriel-salome')) },
     }),
   events: [
     { id: 'sans-maj', condition: triesWithoutUpdate, message: (j) => j.t('fix-evenement-sans-maj') },

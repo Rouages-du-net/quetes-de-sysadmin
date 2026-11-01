@@ -21,7 +21,7 @@ import { newCommit, type Commit, type Repo } from '../commands/git';
 import { MIME, NGINX_CONF } from '../commands/apt';
 import { AUTHOR, CONF_GAZETTE, SITE, agenda, gazetteAccounts, history } from './bare-repo';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LOCAL = `${M}/gazette`;
 const REPO = '/srv/git/gazette.git';
 const BASE = '/srv/gazette';
@@ -148,7 +148,7 @@ export const rollback: Chapter = {
     'systemctl',
   ],
   home: M,
-  welcome: 'message_de_samia.txt',
+  welcome: 'message_from_samia.txt',
   names: true,
   final: 'fin',
   password: 'gazette-2027',
@@ -200,12 +200,12 @@ export const rollback: Chapter = {
     const root: Rights = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
-    const share: Rights = { owner: 'vous', group: 'redaction', mode: 'rwxrwxr-x' };
+    const share: Rights = { owner: 'you', group: 'redaction', mode: 'rwxrwxr-x' };
     const all = commits(t);
     const version = (c: Commit): Node =>
       place(
         Object.fromEntries(
-          Object.entries(c.files).map(([name, text]) => [name, file(text, { owner: 'vous', group: 'redaction', mode: 'rw-rw-r--' })]),
+          Object.entries(c.files).map(([name, text]) => [name, file(text, { owner: 'you', group: 'redaction', mode: 'rw-rw-r--' })]),
         ),
         share,
       );
@@ -224,8 +224,8 @@ export const rollback: Chapter = {
         }),
       }),
       home: place({
-        vous: d({
-          'message_de_samia.txt': f(t('rollback-message-de-samia')),
+        you: d({
+          'message_from_samia.txt': f(t('rollback-message-de-samia')),
           gazette: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
             ...Object.fromEntries(Object.entries(all[4].files).map(([name, text]) => [name, f(text, { lines: true })])),
@@ -251,7 +251,7 @@ export const rollback: Chapter = {
         gazette: place(
           {
             releases: place({ [BONNE]: version(all[4]), [BROKEN]: version(all[5]) }, share),
-            current: f('', { owner: 'vous', group: 'redaction', link: `${RELEASES}/${BROKEN}` }),
+            current: f('', { owner: 'you', group: 'redaction', link: `${RELEASES}/${BROKEN}` }),
           },
           share,
         ),

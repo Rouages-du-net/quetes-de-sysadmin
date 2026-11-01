@@ -7,8 +7,8 @@
 import { d, f, accountsFiles, type Accounts, type Directory, type Node } from '../world';
 import { generateKey } from '../access';
 
-export const M = '/home/vous';
-export const PASSWORD = 'radis-2027';
+export const M = '/home/you';
+export const PASSWORD = 'radish-2027';
 // Mardi 19 octobre 2027, 9 h 30.
 export const NOW = Date.UTC(2027, 9, 19, 9, 30, 0);
 export const TODAY = '2027-10-19';
@@ -27,18 +27,18 @@ export const cooperativeAccounts = (withMarc = true): Accounts => {
       root: { uid: 0, group: 'root', home: '/root' },
       deploy: { uid: 998, group: 'deploy', home: '/home/deploy' },
       till: { uid: 997, group: 'till', home: '/var/lib/till', shell: '/usr/sbin/nologin' },
-      vous: { uid: 1000, group: 'vous' },
+      you: { uid: 1000, group: 'you' },
       marc: { uid: 1001, group: 'marc' },
       lina: { uid: 1002, group: 'lina' },
       karim: { uid: 1003, group: 'karim' },
     },
     groups: {
       root: { gid: 0, members: [] },
-      adm: { gid: 4, members: ['vous', 'marc'] },
-      sudo: { gid: 27, members: ['vous', 'marc'] },
+      adm: { gid: 4, members: ['you', 'marc'] },
+      sudo: { gid: 27, members: ['you', 'marc'] },
       till: { gid: 997, members: ['marc', 'lina', 'karim'] },
       deploy: { gid: 998, members: [] },
-      vous: { gid: 1000, members: [] },
+      you: { gid: 1000, members: [] },
       marc: { gid: 1001, members: [] },
       lina: { gid: 1002, members: [] },
       karim: { gid: 1003, members: [] },
@@ -135,7 +135,7 @@ export function cooperativeWorld(o: {
       ),
       home: d(
         {
-          vous: d(o.home),
+          you: d(o.home),
           deploy: d(
             {
               '.ssh': d(

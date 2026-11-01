@@ -15,7 +15,7 @@ import { publicKey, storyMachine, machineName } from '../machines';
 import { writeLog, newSystemd, systemd } from '../systemd';
 import { allowed, CONFIG, readConfig } from '../sshd';
 
-const M = '/home/vous';
+const M = '/home/you';
 const SSH = 'OpenBSD Secure Shell server';
 
 // sshd_config de Debian, modifié par l'hébergeur (PermitRootLogin yes).
@@ -83,13 +83,13 @@ export const door: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'chmod', 'nano', 'sudo', 'systemctl', 'journalctl', 'sshd'],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
-    c.groups.adm = { gid: 4, members: ['vous'] };
+    c.groups.adm = { gid: 4, members: ['you'] };
     return c;
   },
   state: () => ({
@@ -155,8 +155,8 @@ export const door: Chapter = {
         ),
         home: d(
           {
-            vous: d({
-              'courriel_kofi.txt': f(t('porte-courriel-kofi')),
+            you: d({
+              'email_kofi.txt': f(t('porte-courriel-kofi')),
               '.ssh': d({ authorized_keys: f(publicKey(letters, player(t), machineName(t, 'desk')), { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }),
             }),
           },

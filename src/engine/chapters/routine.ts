@@ -107,7 +107,7 @@ export const routine: Chapter = {
     'mail',
   ],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['active', 'securite', 'periodique', 'fin'],
@@ -129,7 +129,7 @@ export const routine: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('routine-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('routine-courriel-salome')) },
       etc: {
         apt: d(
           { 'apt.conf.d': d({ '20auto-upgrades': f(TWENTY_CONTENT, { lines: true, owner: 'root' }), '50unattended-upgrades': f(FIFTY_CONTENT, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }) },

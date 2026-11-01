@@ -29,7 +29,7 @@ for (const language of LANGUAGES)
       const { notebook, jouer: play } = part();
       play('ls -a | cat');
       play('ls');
-      play('head -n 2 bienvenue.txt');
+      play('head -n 2 welcome.txt');
       play('ssh kingdom');
       play('yes');
       play('pwd');
@@ -94,7 +94,7 @@ describe('Le mode examen', () => {
     // La Porte, avec la configuration de sshd : la faute de frappe ne donne plus d'indice.
     let all = play(['ssh letters', 'yes']);
     c.execute('sudo nano /etc/ssh/sshd_config');
-    c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+    c.execute(machinesInLanguage(c.t, 'ants-2026'));
     c.save(c.edition!.text.replace('PermitRootLogin yes', 'PermitRootLogin non'));
     all += c.quitEdition();
     all += play(['sudo sshd -t']);

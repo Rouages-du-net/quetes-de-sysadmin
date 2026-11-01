@@ -24,7 +24,7 @@ for (const language of LANGUAGES)
       // nano : remplacer du texte dans un fichier, puis ^O et ^X.
       const modify = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
@@ -59,7 +59,7 @@ for (const language of LANGUAGES)
       const { c, jouer: play, modifier: modify } = part();
       play(['ssh letters', 'yes']);
       c.execute('sudo nano /etc/ssh/sshd_config.d/00-hardening.conf');
-      c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+      c.execute(machinesInLanguage(c.t, 'ants-2026'));
       c.save('PermitRootLogin no\nPasswordAuthentication no\n');
       c.quitEdition();
       play(['sudo systemctl restart ssh', 'exit', 'ssh letters']);
@@ -73,12 +73,12 @@ for (const language of LANGUAGES)
       const reload = play(['sudo systemctl reload ssh']);
       contains(alert + reload, 'une nouvelle connexion de ton compte serait refusée');
       const outside = play(['exit', 'ssh letters']);
-      expect(outside).toContain(L('vous@letters.internal: Permission denied (publickey).'));
+      expect(outside).toContain(L('you@letters.internal: Permission denied (publickey).'));
       contains(outside, 'tu t’es enfermé·e dehors'.replace('’', "'"));
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
       // Le menu : comme la console de secours de l'hébergeur.
       c.connect('letters');
-      modify('/etc/ssh/sshd_config.d/00-hardening.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers vous')));
+      modify('/etc/ssh/sshd_config.d/00-hardening.conf', (t) => t.replace('AllowUsers kofi', L('AllowUsers you')));
       play(['sudo systemctl reload ssh', 'exit', 'ssh letters']);
       expect(c.finished).toContain('shut-the-door');
     });
@@ -108,7 +108,7 @@ for (const language of LANGUAGES)
 
     it('solution : ss, ufw, le piège de l’activation, la reconnexion', () => {
       const { c, jouer: play } = part();
-      let all = play(['cat scan_yasmine.txt', 'ss -tln', 'ufw status', 'sudo ufw allow "Nginx Full"', 'fourmis-2026', 'sudo ufw enable', 'o']);
+      let all = play(['cat scan_yasmine.txt', 'ss -tln', 'ufw status', 'sudo ufw allow "Nginx Full"', 'ants-2026', 'sudo ufw enable', 'o']);
       expect(all).toContain('0.0.0.0:3306');
       if (fr) expect(all).toContain('ERREUR : Vous devez être root pour exécuter ce script');
       if (fr) expect(all).toContain('bloque SSH');
@@ -121,7 +121,7 @@ for (const language of LANGUAGES)
     it('une autre solution : reject par défaut, SSH depuis le poste seulement', () => {
       const { c, jouer: play } = part();
       play([
-        'sudo ufw default reject incoming', 'fourmis-2026', 'sudo ufw allow from 192.0.2.2 to any port 22 proto tcp',
+        'sudo ufw default reject incoming', 'ants-2026', 'sudo ufw allow from 192.0.2.2 to any port 22 proto tcp',
         'sudo ufw allow 80/tcp', 'sudo ufw allow https', 'sudo ufw enable', 'y', 'exit', 'ssh letters',
       ]);
       expect(c.finished).toContain('firewall');
@@ -129,10 +129,10 @@ for (const language of LANGUAGES)
 
     it('s’enfermer dehors : timeout, puis la console de secours', () => {
       const { c, jouer: play } = part();
-      play(['sudo ufw allow http', 'fourmis-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
+      play(['sudo ufw allow http', 'ants-2026', 'sudo ufw allow https', 'sudo ufw enable', 'o']);
       const outside = play(['exit', 'ssh letters']);
       expect(outside).toContain(machinesInLanguage(translator(language), 'ssh: connect to host letters.internal port 22: Connection timed out'));
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
       c.connect('letters');
       play(['sudo ufw allow OpenSSH', 'exit', 'ssh letters']);
       expect(c.finished).toContain('firewall');
@@ -140,7 +140,7 @@ for (const language of LANGUAGES)
 
     it('fausses pistes : laisser la base ouverte, couper le site, ne pas activer', () => {
       const { c, jouer: play } = part();
-      const all = play(['sudo ufw allow OpenSSH', 'fourmis-2026', 'sudo ufw default allow', 'sudo ufw enable', 'o', 'sudo ufw default deny', 'exit', 'ssh letters']);
+      const all = play(['sudo ufw allow OpenSSH', 'ants-2026', 'sudo ufw default allow', 'sudo ufw enable', 'o', 'sudo ufw default deny', 'exit', 'ssh letters']);
       if (fr) expect(all).toContain('la base de données (3306) est toujours');
       if (fr) expect(all).toContain('le site des Lettres ne répond plus');
       expect(c.finished).not.toContain('firewall');
@@ -158,7 +158,7 @@ for (const language of LANGUAGES)
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       const write = (file: string, text: string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
         c.save(text);
         return c.quitEdition();
       };
@@ -170,7 +170,7 @@ for (const language of LANGUAGES)
 
     it('solution : lire le journal, débannir Rania, jail.local, recharger, vérifier', () => {
       const { c, jouer: play, ecrire: write } = part();
-      let all = play(['cat /var/log/fail2ban.log', 'sudo fail2ban-client status sshd', 'fourmis-2026', 'sudo fail2ban-client set sshd unbanip 198.51.100.40']);
+      let all = play(['cat /var/log/fail2ban.log', 'sudo fail2ban-client status sshd', 'ants-2026', 'sudo fail2ban-client set sshd unbanip 198.51.100.40']);
       expect(all).toContain('Ban 198.51.100.40');
       // Le second robot, relâché à 09:35, attaque encore : il n'est pas (encore) banni.
       expect(all).toContain('`- Banned IP list:\t203.0.113.66 198.51.100.40\n');
@@ -232,7 +232,7 @@ for (const language of LANGUAGES)
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       const write = (file: string, change: (text: string) => string, sudo = true) => {
         c.execute(`${sudo ? 'sudo ' : ''}nano ${file}`);
-        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
@@ -246,7 +246,7 @@ for (const language of LANGUAGES)
 
     it('solution : les deux ports, tester, fermer le 22, la prison sshd', () => {
       const { c, jouer: play, ecrire: write } = part();
-      let all = play(['journalctl -u ssh -n 4', 'sudo ufw status', 'fourmis-2026', 'sudo nft list ruleset']);
+      let all = play(['journalctl -u ssh -n 4', 'sudo ufw status', 'ants-2026', 'sudo nft list ruleset']);
       expect(all).toContain('Invalid user');
       expect(all).toContain('meta l4proto tcp tcp dport 22 counter packets 0 bytes 0 accept');
       expect(all).toContain('tcp dport { 22 } ip saddr @addr-set-sshd reject');
@@ -278,7 +278,7 @@ for (const language of LANGUAGES)
     it('fausses pistes : fermer le 22 trop tôt, port = 2222 dans [DEFAULT]', () => {
       const { c, jouer: play, ecrire: write } = part();
       let all = write('/etc/ssh/sshd_config', (t) => t.replace('#Port 22', 'Port 2222'));
-      all += play(['sudo systemctl reload ssh', 'fourmis-2026']);
+      all += play(['sudo systemctl reload ssh', 'ants-2026']);
       if (fr) expect(all).toContain('ATTENTION');
       all = play(['exit', 'ssh letters', 'ssh -p 2222 letters']);
       expect(all).toContain(machinesInLanguage(translator(language), 'ssh: connect to host letters.internal port 22: Connection refused'));
@@ -286,7 +286,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('port 2222: Connection timed out');
       // La console de secours : ouvrir 2222 dans ufw.
       c.connect('letters');
-      play(['sudo ufw allow 2222/tcp', 'fourmis-2026', 'sudo ufw delete allow OpenSSH']);
+      play(['sudo ufw allow 2222/tcp', 'ants-2026', 'sudo ufw delete allow OpenSSH']);
       all = write('/etc/fail2ban/jail.local', (t) => t.replace('[DEFAULT]', '[DEFAULT]\nport = 2222'));
       all += play(['sudo systemctl reload fail2ban']);
       if (fr) expect(all).toContain('quel que soit le fichier');
@@ -295,13 +295,13 @@ for (const language of LANGUAGES)
       play(['ssh letters', 'yes']);
       expect(c.finished).not.toContain('port');
       write('/etc/fail2ban/jail.local', (t) => t.replace('port = 2222', '') + '\n[sshd]\nport = ssh,2222\n');
-      play(['sudo fail2ban-client reload', 'fourmis-2026']);
+      play(['sudo fail2ban-client reload', 'ants-2026']);
       expect(c.finished).toContain('port');
     });
 
     it('nft ne fait que regarder sous ufw', () => {
       const { jouer: play } = part();
-      const all = play(['nft list ruleset', 'sudo nft list tables', 'fourmis-2026', 'sudo nft add rule ip filter INPUT tcp dport 2222 accept']);
+      const all = play(['nft list ruleset', 'sudo nft list tables', 'ants-2026', 'sudo nft add rule ip filter INPUT tcp dport 2222 accept']);
       expect(all).toContain('Operation not permitted');
       expect(all).toContain('table ip filter\ntable inet f2b-table');
       if (fr) expect(all).toContain('ufw et fail2ban qui écrivent');
@@ -317,7 +317,7 @@ for (const language of LANGUAGES)
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       const write = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+        if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };

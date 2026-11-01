@@ -18,7 +18,7 @@ import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { erases, openSet, open, ghostPlace, held } from '../open-files';
 
-const M = '/home/vous';
+const M = '/home/you';
 const CONF = '/etc/radio/stream.conf';
 const LOG = '/var/log/radio/stream.log';
 const ROTATION = '/etc/logrotate.d/radio';
@@ -29,15 +29,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -106,10 +106,10 @@ export const fullDisk: Chapter = {
     'logrotate',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: () => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), Date.UTC(2027, 7, 15, 2, 47, 0), {
@@ -163,10 +163,10 @@ export const fullDisk: Chapter = {
         'logrotate.conf': file(t('full-disk-logrotate-conf')),
         'logrotate.d': place({ rsyslog: file(t('full-disk-logrotate-rsyslog')), apt: file(t('full-disk-logrotate-apt')) }),
       }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('full-disk-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('full-disk-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       srv: place({
         radio: place({
-          emissions: place(
+          shows: place(
             { 'matinale-2027-08-14.ogg': f(t('archives-son-ogg'), { lines: true, owner: 'radio', size: 92_000_000 }) },
             { owner: 'radio' },
           ),

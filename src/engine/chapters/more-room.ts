@@ -78,7 +78,7 @@ export const grow: Chapter = {
     'update-initramfs',
   ],
   home: M,
-  welcome: 'message_d_odile.txt',
+  welcome: 'message_from_odile.txt',
   names: true,
   final: 'fin',
   steps: ['plein', 'lvm', 'grappe', 'etendu', 'agrandi', 'conf', 'fin'],
@@ -89,7 +89,7 @@ export const grow: Chapter = {
     labKernel(j, 'place');
     devUpdate(j);
   },
-  createWorld: (t) => labWorld(t, { 'message_d_odile.txt': f(t('more-room-message-d-odile')) }, { winter: true }),
+  createWorld: (t) => labWorld(t, { 'message_from_odile.txt': f(t('more-room-message-d-odile')) }, { winter: true }),
   beforeCommand: beforeLabCommand,
   afterCommand: (j) => devUpdate(j),
   events: [

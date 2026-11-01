@@ -285,3 +285,4 @@ const caddy: Command = {
 };
 
 export const CADDY: Record<string, Command> = { caddy };
+`}`

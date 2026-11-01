@@ -50,8 +50,8 @@ export interface Accounts {
 // Les comptes de toutes les machines qui n'en déclarent pas : root, et
 // « vous », membre du groupe sudo (comme le premier compte d'une Debian).
 export const accountsByDefault = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' } },
-  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['vous'] }, vous: { gid: 1000, members: [] } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
+  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['you'] }, you: { gid: 1000, members: [] } },
 });
 export type Directory = {
   type: 'dossier';
@@ -190,11 +190,17 @@ const nameKey = (french: string) => `nom-${french.replace(/^\./, 'point-').repla
 export const password = (t: Translate, french: string) => (t.exists(`mdp-${french}`) ? t(`mdp-${french}`) : french);
 export const name = (t: Translate, french: string) => (t.exists(nameKey(french)) ? t(nameKey(french)) : french);
 /** Un chemin du monde, traduit nom par nom : /Cabane/Jetee/filet → /Hut/Pier/net. */
-export const path = (t: Translate, french: string) =>
-  french
+export const path = (t: Translate, english: string) =>
+  english
     .split('/')
-    .map((m) => (m ? name(t, m) : m))
+    .map((m, i, all) => (m && !systemDirectory(all.slice(0, i + 1).join('/')) ? name(t, m) : m))
     .join('/');
+
+// Real system directories whose name is also a translated name of the world
+// (/usr/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and Le
+// Labo's /srv/scans, a mount point fstab names: they keep their name.
+const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans'];
+export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || p.endsWith('/.local/share');
 
 // Les comptes qui se traduisent : celui du joueur ou de la joueuse
 // (« vous », you en anglais) et l'utilisateur système de l'Effaceur. Les
@@ -203,13 +209,13 @@ export const path = (t: Translate, french: string) =>
 // français ; le monde (propriétaires, /home/vous) et les comptes sont
 // renommés à la création, et le code désigne le compte du joueur par
 // `jeu.joueur` (ou `joueur(t)` avant que le jeu existe).
-const TRANSLATED_ACCOUNTS = ['vous', 'effaceur'];
+const TRANSLATED_ACCOUNTS = ['you', 'eraser'];
 export const account = (t: Translate, french: string) => (TRANSLATED_ACCOUNTS.includes(french) ? name(t, french) : french);
 /** Le compte du joueur ou de la joueuse dans la langue : vous, you… */
-export const player = (t: Translate) => account(t, 'vous');
+export const player = (t: Translate) => account(t, 'you');
 
 /** Le monde dans la langue : chaque dossier et chaque fichier prend son nom traduit, ses propriétaires aussi. */
-export function translateNames(t: Translate, directory: Directory): Directory {
+export function translateNames(t: Translate, directory: Directory, at = ''): Directory {
   const rights = (n: Node) => {
     if (n.owner) n.owner = account(t, n.owner);
     if (n.group) n.group = account(t, n.group);
@@ -217,7 +223,7 @@ export function translateNames(t: Translate, directory: Directory): Directory {
   };
   rights(directory);
   directory.children = Object.fromEntries(
-    Object.entries(directory.children).map(([n, e]) => [name(t, n), e.type === 'dossier' ? translateNames(t, e) : rights(e)]),
+    Object.entries(directory.children).map(([n, e]) => [systemDirectory(`${at}/${n}`) ? n : name(t, n), e.type === 'dossier' ? translateNames(t, e, `${at}/${n}`) : rights(e)]),
   );
   return directory;
 }

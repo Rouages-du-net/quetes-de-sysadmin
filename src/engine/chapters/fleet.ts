@@ -14,14 +14,14 @@ import { newSystemd, systemd } from '../systemd';
 import { history } from '../commands/ansible';
 import { hostKey } from '../machines';
 
-export const M = '/home/vous';
+export const M = '/home/you';
 export const DIRECTORY = `${M}/ansible`;
 export const CENTRES: Record<string, string> = { north: '10.30.0.11', south: '10.30.0.12', east: '10.30.0.13' };
 export const NAMES = Object.keys(CENTRES);
 const NOW = Date.UTC(2027, 8, 14, 9, 0, 0);
 
 // La clé du compte vous sur pilote ; sa partie publique est dans ~deploy/.ssh/authorized_keys sur chaque centre.
-export const KEY = generateKey('pilote-ansible', 'vous@pilot');
+export const KEY = generateKey('pilote-ansible', 'you@pilot');
 
 export const HOSTS = `127.0.0.1\tlocalhost
 192.0.2.25\tpilote.internal pilote
@@ -142,11 +142,11 @@ export function centre(name: string, e: CentreState = {}): InternalHost {
 }
 
 export const pilotAccounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, theo: { uid: 1001, group: 'theo' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, theo: { uid: 1001, group: 'theo' } },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'theo'] },
-    vous: { gid: 1000, members: [] },
+    sudo: { gid: 27, members: ['you', 'theo'] },
+    you: { gid: 1000, members: [] },
     theo: { gid: 1001, members: [] },
   },
 });
@@ -177,11 +177,11 @@ export function pilotWorld(t: Parameters<typeof player>[0], o: { known: string[]
       ),
       home: d(
         {
-          vous: d({
+          you: d({
             '.ssh': d(
               {
                 id_ed25519: f(KEY.isPrivate, { lines: true, mode: 'rw-------' }),
-                'id_ed25519.pub': f(KEY.isPublic.replace('vous@', `${player(t)}@`), { lines: true }),
+                'id_ed25519.pub': f(KEY.isPublic.replace('you@', `${player(t)}@`), { lines: true }),
                 ...(known ? { known_hosts: f(known, { lines: true, mode: 'rw-------' }) } : {}),
               },
               undefined,

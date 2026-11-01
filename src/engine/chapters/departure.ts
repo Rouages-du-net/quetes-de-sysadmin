@@ -28,7 +28,7 @@ import { TODAY, KEYS, cooperativeAccounts, M, cooperativeWorld, PASSWORD } from 
 
 // Le script de Marc, avec le dossier des sauvegardes dans la langue (/srv/backups…).
 const script = (t: Translate) => {
-  const backups = path(t, '/srv/sauvegardes');
+  const backups = path(t, '/srv/backups');
   return `#!/bin/sh
 # Nightly backup of the till and homes (Marc, 2024)
 set -e
@@ -37,7 +37,7 @@ mkdir -p ${backups}/$JOUR
 tar -czf ${backups}/$JOUR/till.tar.gz /srv/till
 tar -czf ${backups}/$JOUR/home.tar.gz /home`;
 };
-const SCRIPT = 'sauvegarde-caisse.sh';
+const SCRIPT = 'till-backup.sh';
 const crontabMarc = (t: Translate) => `# m h  dom mon dow   command
 30 2 * * * /home/marc/bin/${name(t, SCRIPT)}`;
 const DEPLOY = '/home/deploy/.ssh/authorized_keys';
@@ -130,7 +130,7 @@ export const departure: Chapter = {
     'crontab',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -152,7 +152,7 @@ export const departure: Chapter = {
   }),
   createWorld: (t) =>
     cooperativeWorld({
-      home: { 'courriel_awa.txt': f(t('departure-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('departure-courriel-awa')) },
       homes: {
         marc: d(
           {
@@ -169,7 +169,7 @@ export const departure: Chapter = {
           {
             till: d({}, undefined, { owner: 'till', group: 'till' }),
             // La sauvegarde de la nuit dernière (elle contient /home : le script de Marc y est).
-            sauvegardes: d(
+            backups: d(
               {
                 '2027-10-18': d({ home: d({ marc: d({ bin: d({ [SCRIPT]: file(script(t), 'root', 'rwxr-xr-x') }) }) }) }, undefined, {
                   owner: 'root',
