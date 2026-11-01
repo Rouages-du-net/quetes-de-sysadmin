@@ -223,7 +223,7 @@ export class Shell implements Game {
 
   /** Le compte du joueur ou de la joueuse, sous son nom dans la langue (vous, you…). */
   get player(): string {
-    return this.chapter.names ? player(this.t) : 'vous';
+    return this.chapter.names ? player(this.t) : 'you';
   }
 
   /** Le fichier d'accueil du chapitre, sous son nom dans la langue. */
@@ -505,7 +505,7 @@ export class Shell implements Game {
       id: `${p.chapter.id}:${name}`,
       number: p.chapter.number,
       commands: def.commands ?? p.chapter.commands,
-      home: '/home/vous',
+      home: '/home/you',
       // Renommée comme la machine principale (le compte vous, /home/vous…).
       names: p.chapter.names,
       welcome: '',

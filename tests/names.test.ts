@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { workstation } from '../src/engine/workstation';
-import { name, translateNames, type Directory } from '../src/engine/world';
+import { name, path, translateNames, type Directory } from '../src/engine/world';
 import { LANGUAGES, translator } from '../src/texts';
 
 const other = LANGUAGES.map((l) => translator(l));
@@ -41,11 +41,11 @@ for (const language of LANGUAGES)
 
     // Le garde-fou des collisions : un nom ajouté à noms.ftl renomme ce
     // nom dans tous les chapitres à noms: true, y compris là où personne ne
-    // l'attendait (un /srv/sauvegarde d'une autre histoire). La liste de
+    // l'attendait (un /srv/backup d'une autre histoire). La liste de
     // tous les renommages est gardée dans tests/names/ : un renommage
     // nouveau fait échouer ce test ; s'il est voulu, relire le fichier
     // produit et le mettre à jour avec « npx vitest run -u tests/names.test.ts ».
-    it.runIf(language !== 'fr')('les renommages sont ceux attendus (tests/names/)', async () => {
+    it.runIf(language !== 'en')('les renommages sont ceux attendus (tests/names/)', async () => {
       // Les machines internes d'une histoire sont renommées comme sa machine principale.
       const mondes = translated.flatMap((c) => [
         { id: c.id, createWorld: c.createWorld },
@@ -53,8 +53,8 @@ for (const language of LANGUAGES)
       ]);
       const lines = mondes.flatMap((c) => {
         const renamed = walk(c.createWorld(t))
-          .filter((ch) => ch.split('/').some((m) => m && name(t, m) !== m))
-          .map((ch) => `  ${ch} → ${ch.split('/').map((m) => (m ? name(t, m) : m)).join('/')}`);
+          .filter((ch) => path(t, ch) !== ch)
+          .map((ch) => `  ${ch} → ${path(t, ch)}`);
         return renamed.length ? [`${c.id}`, ...renamed, ''] : [];
       });
       await expect(lines.join('\n')).toMatchFileSnapshot(`./names/renamed.${language}.txt`);
@@ -62,9 +62,9 @@ for (const language of LANGUAGES)
 
     it('Tab complète les noms traduits', () => {
       const s = new Shell(STORIES[0].chapters[0], language);
-      const hill = name(t, 'Colline');
+      const hill = name(t, 'Hill');
       expect(s.complete(`cd ${hill.slice(0, 2)}`)).toBe(`cd ${hill}/`);
-      const school = name(t, 'EcoleDesSignaux');
+      const school = name(t, 'SignalSchool');
       expect(s.complete(`cd ${hill}/${school.slice(0, 3)}`)).toBe(`cd ${hill}/${school}/`);
       expect(s.complete(`cat ${name(t, 'message.txt').slice(0, 3)}`)).toBe(`cat ${name(t, 'message.txt')} `);
     });

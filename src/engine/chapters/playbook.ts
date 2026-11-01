@@ -35,11 +35,11 @@ export const playbook: Chapter = {
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'],
   home: M,
-  welcome: 'message_de_theo.txt',
+  welcome: 'message_from_theo.txt',
   names: true,
   final: 'fin',
   steps: ['echec', 'modules', 'deuxieme', 'fin'],
-  password: 'quartiers-2027',
+  password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: {
     // north a reçu le playbook deux fois : la ligne en double, htop et le dossier.
@@ -52,7 +52,7 @@ export const playbook: Chapter = {
     pilotWorld(t, {
       known: NAMES,
       ansible: { 'ansible.cfg': f(CFG, { lines: true }), 'inventory.ini': f(INVENTORY, { lines: true }), 'site.yml': f(t('playbook-site-yml'), { lines: true }) },
-      home: { 'message_de_theo.txt': f(t('playbook-message-theo')) },
+      home: { 'message_from_theo.txt': f(t('playbook-message-theo')) },
     }),
   events: [
     { id: 'echec', condition: (j) => executions(j).some((e) => Object.values(e.hosts).some((b) => b.failed > 0)), message: (j) => j.t('playbook-evenement-echec') },

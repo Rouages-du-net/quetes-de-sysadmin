@@ -100,7 +100,7 @@ export const updates: Chapter = {
     'who',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -123,7 +123,7 @@ export const updates: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('updates-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('updates-courriel-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: tillWorld({ env: tillEnv(NEW_KEY, 'loopback'), envMode: 'rw-------', logAccess: '', appLog: '' }),

@@ -16,28 +16,28 @@ import type { Game, Shell } from '../shell';
 import { generateKey } from '../access';
 import { loadSshd, homeAccounts, sshDirectory, homeState, internalHost, M, homeWorld, PASSWORD, homePlan } from './community-centre';
 
-const REPORT = 'rapport-2027.pdf';
-const SHARE = '/srv/partage';
-const BACKUP = '/srv/sauvegardes/partage';
+const REPORT = 'report-2027.pdf';
+const SHARE = '/srv/share';
+const BACKUP = '/srv/backups/share';
 // Un PDF (son début) : le contenu exact sert à vérifier que la copie est intacte.
 const PDF = '%PDF-1.7\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 12 >>\nendobj';
 // La clé de sauvegarde de maison vers archives (une clé par usage, pas celle d'une personne).
-const BACKUP_KEY = generateKey('maison-sauvegarde', 'sauvegarde@community');
+const BACKUP_KEY = generateKey('maison-sauvegarde', 'backup@community');
 
-const you = { owner: 'vous' };
-const file = (content: string) => f(content, { lines: true, owner: 'vous' });
+const you = { owner: 'you' };
+const file = (content: string) => f(content, { lines: true, owner: 'you' });
 
 // Le dossier partagé de maison : comptes rendus, affiches, planning.
 const share = (t: (id: string) => string): Directory =>
   d(
     {
-      'comptes-rendus': d(
-        { 'ag-2026.txt': file(t('transfers-cr-ag-2026')), 'ca-2027-09.txt': file(t('transfers-cr-ca-2027-09')) },
+      'minutes': d(
+        { 'agm-2026.txt': file(t('transfers-cr-ag-2026')), 'board-2027-09.txt': file(t('transfers-cr-ca-2027-09')) },
         undefined,
         you,
       ),
-      affiches: d({ 'fete-des-voisins.pdf': file('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, you),
-      'planning-salles.txt': file(t('transfers-planning')),
+      posters: d({ 'street-party.pdf': file('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj') }, undefined, you),
+      'room-bookings.txt': file(t('transfers-planning')),
     },
     undefined,
     you,
@@ -71,7 +71,7 @@ const dayABackup = (j: Game) => {
   return Object.entries(files(j, path(j.t, SHARE))).every(([c, content]) => copyOf[c] === content);
 };
 // La copie en trop : /srv/sauvegardes/partage/partage (dans la langue).
-const nested = (j: Game) => path(j.t, `${BACKUP}/partage`);
+const nested = (j: Game) => path(j.t, `${BACKUP}/share`);
 
 export const transfers: Chapter = {
   id: 'transfers',
@@ -99,7 +99,7 @@ export const transfers: Chapter = {
     'rsync',
   ],
   home: M,
-  welcome: 'courriel_yasmine.txt',
+  welcome: 'email_yasmine.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -119,13 +119,13 @@ export const transfers: Chapter = {
     }),
     archives: internalHost('archives', '10.20.0.12', {
       commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'du', 'diff', 'id', 'whoami', 'hostname', 'rm', 'mv'],
-      home: () => ({ '.ssh': sshDirectory({ authorized_keys: f(BACKUP_KEY.isPublic, { lines: true, owner: 'vous', mode: 'rw-------' }) }) }),
+      home: () => ({ '.ssh': sshDirectory({ authorized_keys: f(BACKUP_KEY.isPublic, { lines: true, owner: 'you', mode: 'rw-------' }) }) }),
       // La sauvegarde de l'an dernier : un seul compte rendu.
       more: (t) => ({
         srv: d(
           {
-            sauvegardes: d(
-              { partage: d({ 'comptes-rendus': d({ 'ag-2026.txt': file(t('transfers-cr-ag-2026')) }, undefined, you) }, undefined, you) },
+            backups: d(
+              { share: d({ 'minutes': d({ 'agm-2026.txt': file(t('transfers-cr-ag-2026')) }, undefined, you) }, undefined, you) },
               undefined,
               you,
             ),
@@ -140,14 +140,14 @@ export const transfers: Chapter = {
     homeWorld({
       passwords: 'no',
       home: {
-        'courriel_yasmine.txt': f(t('transfers-courriel-yasmine')),
+        'email_yasmine.txt': f(t('transfers-courriel-yasmine')),
         '.ssh': sshDirectory({
-          config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'vous', mode: 'rw-r--r--' }),
-          id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'vous', mode: 'rw-------' }),
-          'id_sauvegarde.pub': f(BACKUP_KEY.isPublic, { lines: true, owner: 'vous', mode: 'rw-r--r--' }),
+          config: f('Host archives\n    IdentityFile ~/.ssh/id_sauvegarde', { lines: true, owner: 'you', mode: 'rw-r--r--' }),
+          id_sauvegarde: f(BACKUP_KEY.isPrivate, { lines: true, owner: 'you', mode: 'rw-------' }),
+          'id_sauvegarde.pub': f(BACKUP_KEY.isPublic, { lines: true, owner: 'you', mode: 'rw-r--r--' }),
         }),
       },
-      more: { srv: d({ partage: share(t) }, undefined, { owner: 'root' }) },
+      more: { srv: d({ share: share(t) }, undefined, { owner: 'root' }) },
     }),
   events: [
     { id: 'rapport', condition: reportOnWorkstation, message: (j) => j.t('transfers-evenement-rapport') },

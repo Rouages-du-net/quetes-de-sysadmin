@@ -16,7 +16,7 @@ import { writeLog, newSystemd, systemd } from '../systemd';
 import { apply, covers, DIRECTORY, readConfig, note, type Fail2banState } from '../fail2ban';
 import { instants } from '../activity';
 
-const M = '/home/vous';
+const M = '/home/you';
 const RANIA = '198.51.100.40';
 const ROBOTS = ['203.0.113.66', '198.51.100.23'];
 
@@ -161,13 +161,13 @@ export const sentinel: Chapter = {
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'fail2ban-client'],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts: () => {
     const c = accountsByDefault();
-    c.groups.adm = { gid: 4, members: ['vous'] };
+    c.groups.adm = { gid: 4, members: ['you'] };
     return c;
   },
   activity: { not: 15, advance: robotsInDirect },
@@ -222,7 +222,7 @@ export const sentinel: Chapter = {
           undefined,
           root,
         ),
-        home: d({ vous: d({ 'courriel_kofi.txt': f(t('sentinel-courriel-kofi')) }) }, undefined, root),
+        home: d({ you: d({ 'email_kofi.txt': f(t('sentinel-courriel-kofi')) }) }, undefined, root),
         var: d(
           {
             log: d(

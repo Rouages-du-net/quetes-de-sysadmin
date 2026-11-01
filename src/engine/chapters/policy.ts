@@ -35,7 +35,7 @@ import {
   type Departure,
 } from './gardens';
 
-const M = '/home/vous';
+const M = '/home/you';
 const NOW = Date.UTC(2027, 4, 24, 9, 0, 0);
 const SPOOFER = '192.0.2.66';
 
@@ -143,11 +143,11 @@ export const chapterPolicy: Chapter = {
     'opendkim-testkey',
   ],
   home: M,
-  welcome: 'courriel_nour.txt',
+  welcome: 'email_nour.txt',
   names: true,
   final: 'fin',
   steps: ['rapport', 'aligne', 'fin'],
-  password: 'semis-2027',
+  password: 'seeds-2027',
   accounts,
   state: (t) => gardensState(t, departure),
   initialise: initialiseGardens,
@@ -156,9 +156,9 @@ export const chapterPolicy: Chapter = {
       t,
       departure,
       {
-        'courriel_nour.txt': f(t('policy-courriel-nour')),
-        'lettre_newsmail.txt': f(t('policy-lettre-newsmail')),
-        rapports_dmarc: d({
+        'email_nour.txt': f(t('policy-courriel-nour')),
+        'newsmail_letter.txt': f(t('policy-lettre-newsmail')),
+        dmarc_reports: d({
           'mailbox.example-2027-05-16.xml': f(
             report('mailbox.example', '1810425600712204', DAY, [
               { ...US, n: 38 },

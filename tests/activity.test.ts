@@ -24,7 +24,7 @@ describe('instants', () => {
 });
 
 for (const language of LANGUAGES)
-  describe(`La sentinelle en direct — ${language}`, () => {
+  describe(`La sentinelle en live — ${language}`, () => {
     const part = () => {
       const c = new Console({ language, finished: BEFORE });
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
@@ -65,7 +65,7 @@ for (const language of LANGUAGES)
     it('avec un bantime d’une heure, plus de va-et-vient', () => {
       const { c, jouer: play } = part();
       c.execute('sudo nano /etc/fail2ban/jail.local');
-      if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'fourmis-2026'));
+      if (c.shell.waiting) c.execute(machinesInLanguage(c.t, 'ants-2026'));
       c.save('[DEFAULT]\nbantime = 1h\nignoreip = 127.0.0.1/8 192.0.2.2 198.51.100.40\n');
       c.quitEdition();
       play(['sudo systemctl reload fail2ban', 'tail -f /var/log/fail2ban.log']);
@@ -81,14 +81,14 @@ for (const language of LANGUAGES)
       c.follow(15);
       c.follow(15);
       c.interrupt();
-      const wanted = play(['sudo fail2ban-client status sshd', 'fourmis-2026']);
+      const wanted = play(['sudo fail2ban-client status sshd', 'ants-2026']);
       expect(c.restore(c.not! - 2)).toBe(true);
-      expect(play(['sudo fail2ban-client status sshd', 'fourmis-2026'])).toBe(wanted);
+      expect(play(['sudo fail2ban-client status sshd', 'ants-2026'])).toBe(wanted);
     });
   });
 
 for (const language of LANGUAGES)
-  describe(`Premier jour en direct — ${language}`, () => {
+  describe(`Premier jour en live — ${language}`, () => {
     const eraser = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
     it('tail -f : le robot reçoit des 503 tant que le service sature, des 403 une fois bloqué', () => {
       const c = new Console({ language, finished: eraser });
@@ -97,7 +97,7 @@ for (const language of LANGUAGES)
       expect(c.follows).toBe(true);
       expect(c.follow(6)).toMatch(/^198\.51\.100\.77 .*"GET \/catalogue\/recherche\?q=\w+ HTTP\/1\.1" 503 197$/m);
       c.interrupt();
-      play(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'bienvenue-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
+      play(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'welcome-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
       const after = c.follow(10);
       expect(after).toMatch(/^198\.51\.100\.77 .* 403 153$/m);
       expect(after).not.toMatch(/^198\.51\.100\.77 .* 503 /m);

@@ -6,13 +6,13 @@ import { path, d, f, name, type Chapter } from '../world';
 import type { Translate } from '../../texts';
 import { newCommit, type Commit, type Repo } from '../commands/git';
 
-const M = '/home/vous';
-const NOVEL = `${M}/roman`;
-const POEMS = `${M}/poemes`;
+const M = '/home/you';
+const NOVEL = `${M}/novel`;
+const POEMS = `${M}/poems`;
 
 // Les versions du roman, les commits et les poèmes sont des textes de
 // l'histoire, dans la langue du jeu (chapitre-manuscript.ftl).
-const INES_POEMS = ['mer.txt', 'phare.txt', 'zohra.txt'];
+const INES_POEMS = ['sea.txt', 'lighthouse.txt', 'zohra.txt'];
 
 function versions(t: Translate) {
   const [ch1, ch2, ch3, damage] = ['1', '2', '3', '3-abime'].map((n) => t(`manuscript-roman-chapitre-${n}`));
@@ -28,7 +28,7 @@ function history(t: Translate): Repo {
   const v = versions(t);
   const commits: Commit[] = [];
   // Le fichier suivi, sous son nom dans la langue (novel.txt…).
-  const novel = name(t, 'roman.txt');
+  const novel = name(t, 'novel.txt');
   const add = (message: string, date: string, text: string) =>
     commits.push(newCommit(commits.at(-1) ?? null, message, t('manuscript-autrice'), date, { [novel]: text }));
   add(t('manuscript-commit-1'), 'Mon Oct 5 22:14:09 2026 +0200', v.v1);
@@ -43,7 +43,7 @@ export const time: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'git'],
   home: M,
-  welcome: 'message_d_ines.txt',
+  welcome: 'message_from_ines.txt',
   names: true,
   final: 'fin',
   state: (t) => ({
@@ -54,14 +54,14 @@ export const time: Chapter = {
   createWorld: (t) => {
     return d({
       home: d({
-        vous: d({
-          'message_d_ines.txt': f(t('manuscript-message-d-ines')),
-          roman: d({
+        you: d({
+          'message_from_ines.txt': f(t('manuscript-message-d-ines')),
+          novel: d({
             '.git': d({ HEAD: f('ref: refs/heads/main', { lines: true }) }),
-            'roman.txt': f(versions(t).v4, { lines: true }),
+            'novel.txt': f(versions(t).v4, { lines: true }),
           }),
-          poemes: d(Object.fromEntries(INES_POEMS.map((poem) => [poem, f(t(`manuscript-poeme-${poem.replace('.txt', '')}`), { lines: true })]))),
-          'aide_git.txt': f(t('manuscript-aide-git')),
+          poems: d(Object.fromEntries(INES_POEMS.map((poem) => [poem, f(t(`manuscript-poeme-${poem.replace('.txt', '')}`), { lines: true })]))),
+          'help_git.txt': f(t('manuscript-aide-git')),
         }),
       }),
     });
@@ -74,14 +74,14 @@ export const time: Chapter = {
     },
     {
       id: 'restaure',
-      condition: (j) => j.read(path(j.t, `${NOVEL}/roman.txt`)) === versions(j.t).v3,
+      condition: (j) => j.read(path(j.t, `${NOVEL}/novel.txt`)) === versions(j.t).v3,
       message: (j) => j.t('manuscript-evenement-restaure'),
     },
     {
       id: 'sauve',
       condition: (j) => {
         const repo: Repo = j.state.git[path(j.t, NOVEL)];
-        return repo.commits.length > 4 && repo.commits.at(-1)!.files[name(j.t, 'roman.txt')] === versions(j.t).v3;
+        return repo.commits.length > 4 && repo.commits.at(-1)!.files[name(j.t, 'novel.txt')] === versions(j.t).v3;
       },
       message: (j) => j.t('manuscript-evenement-sauve'),
     },

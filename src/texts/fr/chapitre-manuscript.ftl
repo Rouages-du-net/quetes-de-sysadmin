@@ -47,11 +47,11 @@ manuscript-commit-4 = Sauvegarde du matin
 
 ## Les poèmes (dossier poemes)
 
-manuscript-poeme-mer =
+manuscript-poeme-sea =
     La mer recoud
     les bords du monde
     avec du fil d’écume.
-manuscript-poeme-phare =
+manuscript-poeme-lighthouse =
     Un œil qui tourne
     dans la nuit des marins :
     il ne dort jamais.

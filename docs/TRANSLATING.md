@@ -25,7 +25,7 @@ language, like bash's builtin; each language adds its own name for it
 | `commandes-*.ftl` | the commands' messages (`ls`, `tar`, `git`…) |
 | `noms.ftl` | the names of places, objects and accounts that you type |
 | `machines.ftl` | the names of the network's machines (`kingdom` → `royaume` in French) |
-| `mots-de-passe.ftl` | the passwords the stories give (`farine-2028` → `flour-2028`) |
+| `mots-de-passe.ftl` | the passwords the stories give (`flour-2028` → `farine-2028` in French) |
 | `indices-<story>.ftl` | the graduated hints of a story's chapters |
 
 ## The format in short
@@ -78,15 +78,16 @@ Pitfalls of the format:
 
 ### Names of places and objects
 
-The directories and files you type (`Phare`, `crabe`, `.ampoule_de_secours`,
-`souvenirs`) are translated in `noms.ftl`. The French name is the
+The directories and files you type (`Lighthouse`, `crab`, `.spare_bulb`,
+`memories`) are translated in `noms.ftl`. The English name is the
 identifier: `nom-<name>`, where a leading dot becomes `point-` and the other
-dots become dashes.
+dots become dashes. English gives each name as it is; French (and every
+other language) gives its own:
 
 ```ftl
-nom-Phare = Lighthouse
-nom-point-ampoule_de_secours = .spare_bulb
-nom-effaceur-conf-corrige = eraser.conf.fixed
+nom-Lighthouse = Phare
+nom-point-spare_bulb = .ampoule_de_secours
+nom-eraser-conf-fixed = effaceur.conf.corrige
 ```
 
 A good name is typed effortlessly on a keyboard of your language: letters
@@ -102,10 +103,11 @@ names as they are, without explanation: "mv crab Bucket".
 Only the stories whose chapter declares `names: true` translate their names:
 all of them do. The Eraser and the workstation translate all their places
 and objects; the other stories translate the documents you read in your
-home directory (emails, messages, notes, help notes, `LISEZMOI.txt`,
-recovery plan…) and their servers' data: the Archives' collection (`fonds` →
-`collection`) and the town hall's disk, Inès's novel, the share of the
-Ludothèque and of the Maison des associations (`partage` → `share`), the
+home directory (emails, messages, notes, help notes, `README.txt`,
+recovery plan…) and their servers' data: the Archives' collection
+(`collection` → `fonds` in French) and the town hall's disk, Inès's novel,
+the share of the Ludothèque and of the Maison des associations (`share` →
+`partage`), the
 backups, the Coopérative's statements, the radio's folders… These names also
 live in whatever keeps a copy or a trace of the files: restic and rsnapshot
 snapshots, rsync copies, files tracked by git, scripts, crontabs, logs,
@@ -120,9 +122,9 @@ names its containers), systemd units, programs and scripts in the `PATH`
 archives of the Maison des associations) are renamed like its main machine.
 
 Two accounts are translated too, in `noms.ftl`: the player's
-(`nom-vous = you`: prompt `you@kingdom:~$`, `/home/you`, owner of files,
-`whoami`, `User you` in the workstation's `~/.ssh/config`, author of
-commits…) and the Eraser's system user (`nom-effaceur = eraser`). A Unix
+(`nom-you = vous` in French: prompt `vous@royaume:~$`, `/home/vous`, owner
+of files, `whoami`, `User vous` in the workstation's `~/.ssh/config`, author
+of commits…) and the Eraser's system user (`nom-eraser = effaceur`). A Unix
 account name: lower case, no accent, no space. The other accounts (`root`,
 `www-data`, the characters: `malo`, `yasmine`…) stay as they are. In the
 files the texts describe (sudoers, configurations, logs), write the
@@ -141,11 +143,11 @@ language. In texts, write the language's name (`ssh kingdom`,
 files (`/etc/nginx/sites-available/letters`) keep theirs.
 
 The **passwords** the stories give (sudo, ssh, restic repositories,
-databases) are translated too, in `mots-de-passe.ftl` (`mdp-farine-2028 =
-flour-2028`): words of the language, no accent, no space. The code keeps the
-French password (`password()` in `src/engine/world.ts`); the texts quote
-the language's one. `tests/machines.test.ts` checks that no translated text
-quotes a French machine name or password.
+databases) are translated too, in `mots-de-passe.ftl` (`mdp-flour-2028 =
+farine-2028` in French): words of the language, no accent, no space. The
+code uses the English password (`password()` in `src/engine/world.ts`); the
+texts quote the language's one. `tests/machines.test.ts` checks that no text
+quotes a machine name or a password of another language.
 
 The commands in the manual's examples are in the code (`pages.ts`). When one
 of them contains words (`grep "mot de passe" journal.txt`), a language can
@@ -171,7 +173,7 @@ write in their language: read the comment above the message.
 | Code | Language | Status |
 |---|---|---|
 | `en` | English | reference, default and fallback language; complete (texts, manual, tool messages as with `LANG=C`, names of the Eraser's and the workstation's places and objects, documents and data on the other stories' servers, `you` and `eraser` accounts) |
-| `fr` | French | complete; the project's original language: internal names (identifiers of places and machines) are French |
+| `fr` | French | complete; the project's original language: translation of the English names of places, machines, accounts and passwords |
 
 ## Adding a language
 
@@ -198,18 +200,21 @@ which let you translate without touching Git.
 - One whole sentence per message, never a sentence assembled from pieces.
 - `tests/texts.test.ts` fails if accented French text remains in
   `src/engine/` or `src/interface/`, or if a key is missing in a language.
-- A chapter with translated names (`names: true`) is written with the French
+- A chapter with translated names (`names: true`) is written with the English
   names; the world is renamed when it is created. Every path in the code
-  then goes through `path(j.t, '/Cabane/Jetee/filet')`, and a single name
-  through `name(j.t, 'levain')` (see `src/engine/world.ts`). In tests, the
-  commands are written in French too and go through `inLanguage()`
-  (`tests/names.ts`). Whatever the game builds from a path (snapshots,
+  then goes through `path(j.t, '/Hut/Pier/net')`, and a single name
+  through `name(j.t, 'sourdough')` (see `src/engine/world.ts`). A few real
+  system directories that share a name with the world keep theirs
+  (`/usr/share`, `/var/backups`…: `systemDirectory()`). In tests, the
+  commands are written in English too and go through `inLanguage()`
+  (`tests/names.ts`): in a command every word can be a name; in an expected
+  output, only what looks like one (a path, next to `@`…). Whatever the game builds from a path (snapshots,
   crontab, script, log line, a process's command, a unit's contents) also
-  takes the path in the language: `path(t, '/srv/partage')` in `state(t)`
+  takes the path in the language: `path(t, '/srv/share')` in `state(t)`
   or `createWorld(t)`, `path(j.t, …)` in events. A web address that looks
   like a translated name (`-u /direct`) is typed in tests without `L()`.
-- The player's account is `game.player` (`vous`, `you`…), or `player(t)`
-  before the game exists (a chapter's state); never a hard-coded `'vous'`.
+- The player's account is `game.player` (`you`, `vous`…), or `player(t)`
+  before the game exists (a chapter's state); never a hard-coded `'you'`.
   Chapters declare their accounts (`accounts()`) and owners
-  (`owner: 'vous'`) in French: they are renamed on creation, like places
+  (`owner: 'you'`) in English: they are renamed on creation, like places
   (`translateAccounts`, `translateNames`).

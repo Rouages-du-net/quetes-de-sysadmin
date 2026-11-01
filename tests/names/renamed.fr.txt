@@ -1,0 +1,695 @@
+lighthouse
+  /Hut → /Cabane
+  /Hut/welcome.txt → /Cabane/bienvenue.txt
+  /Hut/message.txt → /Cabane/message.txt
+  /Hut/Beach → /Cabane/Plage
+  /Hut/Beach/sign.txt → /Cabane/Plage/panneau.txt
+  /Hut/Beach/mender.txt → /Cabane/Plage/ravaudeuse.txt
+  /Hut/Beach/seashell → /Cabane/Plage/coquillage
+  /Hut/Hill → /Cabane/Colline
+  /Hut/Hill/wind.txt → /Cabane/Colline/vent.txt
+  /Hut/Hill/SignalSchool → /Cabane/Colline/EcoleDesSignaux
+  /Hut/Hill/SignalSchool/headteacher.txt → /Cabane/Colline/EcoleDesSignaux/directrice.txt
+  /Hut/Hill/SignalSchool/PracticeRoom → /Cabane/Colline/EcoleDesSignaux/SalleDExercice
+  /Hut/Hill/SignalSchool/PracticeRoom/exercise.txt → /Cabane/Colline/EcoleDesSignaux/SalleDExercice/consigne.txt
+  /Hut/Hill/SignalSchool/PracticeRoom/crab → /Cabane/Colline/EcoleDesSignaux/SalleDExercice/crabe
+  /Hut/Hill/SignalSchool/PracticeRoom/Bucket → /Cabane/Colline/EcoleDesSignaux/SalleDExercice/Seau
+  /Hut/Hill/SignalSchool/Lessons → /Cabane/Colline/EcoleDesSignaux/Cours
+  /Hut/Hill/SignalSchool/Lessons/lesson_1_manual.txt → /Cabane/Colline/EcoleDesSignaux/Cours/cours_1_manuel.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_2_paths.txt → /Cabane/Colline/EcoleDesSignaux/Cours/cours_2_chemins.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_3_hidden.txt → /Cabane/Colline/EcoleDesSignaux/Cours/cours_3_caches.txt
+  /Hut/Hill/SignalSchool/Lessons/.secret_note → /Cabane/Colline/EcoleDesSignaux/Cours/.note_secrete
+  /Hut/Hill/SignalSchool/Lessons/lesson_4_rename.txt → /Cabane/Colline/EcoleDesSignaux/Cours/cours_4_renommer.txt
+  /Hut/Hill/SignalSchool/Library → /Cabane/Colline/EcoleDesSignaux/Bibliotheque
+  /Hut/Hill/SignalSchool/Library/book_of_commands.txt → /Cabane/Colline/EcoleDesSignaux/Bibliotheque/livre_des_commandes.txt
+  /Hut/Harbour → /Cabane/Port
+  /Hut/Harbour/captain.txt → /Cabane/Port/capitaine.txt
+  /Hut/Harbour/Boathouse → /Cabane/Port/Hangar
+  /Hut/Harbour/Boathouse/inventory.txt → /Cabane/Port/Hangar/inventaire.txt
+  /Hut/Harbour/Storeroom → /Cabane/Port/Remise
+  /Hut/Harbour/Storeroom/label.txt → /Cabane/Port/Remise/etiquette.txt
+  /Hut/Harbour/Storeroom/.spare_bulb → /Cabane/Port/Remise/.ampoule_de_secours
+  /Hut/Pier → /Cabane/Jetee
+  /Hut/Pier/net → /Cabane/Jetee/filet
+  /Hut/Pier/clue.txt → /Cabane/Jetee/indice.txt
+  /Hut/Pier/Lighthouse → /Cabane/Jetee/Phare
+  /Hut/Pier/Lighthouse/keeper.txt → /Cabane/Jetee/Phare/gardienne.txt
+  /Hut/Pier/Lighthouse/Stairs → /Cabane/Jetee/Phare/Escalier
+  /Hut/Pier/Lighthouse/Stairs/steps.txt → /Cabane/Jetee/Phare/Escalier/marches.txt
+  /Hut/Pier/Lighthouse/Stairs/Lantern → /Cabane/Jetee/Phare/Escalier/Lanterne
+  /Hut/Pier/Lighthouse/Stairs/Lantern/lantern.txt → /Cabane/Jetee/Phare/Escalier/Lanterne/lanterne.txt
+
+village
+  /Quay → /Quai
+  /Quay/crier.txt → /Quai/crieur.txt
+  /Quay/scroll_of_spells.txt → /Quai/parchemin_des_sorts.txt
+  /Quay/Market → /Quai/Marche
+  /Quay/Market/stallholder.txt → /Quai/Marche/marchande.txt
+  /Quay/Market/apple → /Quai/Marche/pomme
+  /Quay/Market/apple_2 → /Quai/Marche/pomme_2
+  /Quay/Market/cheese → /Quai/Marche/fromage
+  /Quay/Bakery → /Quai/Boulangerie
+  /Quay/Bakery/baker.txt → /Quai/Boulangerie/boulanger.txt
+  /Quay/Bakery/sourdough → /Quai/Boulangerie/levain
+  /Quay/Workshop → /Quai/Atelier
+  /Quay/Workshop/maker.txt → /Quai/Atelier/artisane.txt
+  /Quay/School → /Quai/Ecole
+  /Quay/School/teacher.txt → /Quai/Ecole/institutrice.txt
+  /Quay/TownHall → /Quai/Mairie
+  /Quay/TownHall/clerk.txt → /Quai/Mairie/greffiere.txt
+  /Quay/TownHall/notice_dance.txt → /Quai/Mairie/avis_bal.txt
+  /Quay/TownHall/notice_cat.txt → /Quai/Mairie/avis_chat.txt
+  /Quay/TownHall/notice_sewers.txt → /Quai/Mairie/avis_egouts.txt
+  /Quay/TownHall/notice_market.txt → /Quai/Mairie/avis_marche.txt
+  /Quay/TownHall/notice_clock.txt → /Quai/Mairie/avis_horloge.txt
+  /Quay/TownHall/.doormat → /Quai/Mairie/.paillasson
+  /Quay/TownHall/Archives → /Quai/Mairie/Archives
+  /Quay/TownHall/Archives/archivist.txt → /Quai/Mairie/Archives/archiviste.txt
+  /Quay/TownHall/Archives/chronicle.txt → /Quai/Mairie/Archives/chronique.txt
+  /Quay/Alley → /Quai/Ruelle
+  /Quay/Alley/barricade → /Quai/Ruelle/barricade
+  /Quay/Alley/Yard → /Quai/Ruelle/Cour
+  /Quay/Alley/Yard/wall.txt → /Quai/Ruelle/Cour/mur.txt
+  /Quay/Alley/Yard/Sewer → /Quai/Ruelle/Cour/Egout
+  /Quay/Alley/Yard/Sewer/rats.txt → /Quai/Ruelle/Cour/Egout/rats.txt
+  /Quay/Alley/Yard/Sewer/Tunnel → /Quai/Ruelle/Cour/Egout/Galerie
+  /Quay/Alley/Yard/Sewer/Tunnel/nour.txt → /Quai/Ruelle/Cour/Egout/Galerie/nour.txt
+
+root
+  /home/you → /home/vous
+  /home/you/arrival.txt → /home/vous/arrivee.txt
+  /home/you/admin_manual.txt → /home/vous/manuel_admin.txt
+  /home/you/journal.txt → /home/vous/journal.txt
+  /home/you/eraser.conf.fixed → /home/vous/effaceur.conf.corrige
+  /home/you/memories → /home/vous/souvenirs
+  /home/you/memories/school → /home/vous/souvenirs/ecole
+  /home/you/memories/first_program → /home/vous/souvenirs/premier_programme
+  /home/you/memories/garden → /home/vous/souvenirs/jardin
+  /home/you/memories/song → /home/vous/souvenirs/chanson
+  /home/you/memories/journey → /home/vous/souvenirs/voyage
+  /home/you/memories/friend → /home/vous/souvenirs/amie
+  /home/you/memories/library → /home/vous/souvenirs/bibliotheque
+  /home/you/memories/first_server → /home/vous/souvenirs/premier_serveur
+  /home/nour/diary.txt → /home/nour/journal_intime.txt
+  /etc/eraser.conf → /etc/effaceur.conf
+  /var/log/eraser.log → /var/log/effaceur.log
+
+backup
+  /home/you → /home/vous
+  /home/you/note_from_maelle.txt → /home/vous/mot_de_maelle.txt
+  /home/you/memories → /home/vous/souvenirs
+  /home/you/memories/first-letter.txt → /home/vous/souvenirs/premiere-lettre.txt
+  /home/you/memories/lighthouse.txt → /home/vous/souvenirs/phare.txt
+  /home/you/memories/village.txt → /home/vous/souvenirs/bourg.txt
+  /home/you/memories/nour.txt → /home/vous/souvenirs/nour.txt
+  /home/you/memories/eraser.txt → /home/vous/souvenirs/effaceur.txt
+  /mnt/backup → /mnt/sauvegarde
+
+first-day
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /home/you/notes_awa.txt → /home/vous/notes_awa.txt
+
+second-day
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /home/you/notes_awa.txt → /home/vous/notes_awa.txt
+  /srv/team → /srv/equipe
+
+reboot-night
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /home/you/notes_awa.txt → /home/vous/notes_awa.txt
+
+fire
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /mnt/backup → /mnt/sauvegarde
+  /mnt/backup/DRP.txt → /mnt/sauvegarde/PRA.txt
+  /mnt/backup/medialibrary-2026-10-21.tar.gz → /mnt/sauvegarde/medialibrary-2026-10-21.tar.gz
+  /mnt/backup/medialibrary-2026-10-22.tar.gz → /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz
+  /mnt/backup/medialibrary-2026-10-23.tar.gz → /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz
+
+certificate
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /home/you/message_from_lea.txt → /home/vous/message_de_lea.txt
+
+lost-packet
+  /home/you → /home/vous
+  /home/you/note_from_kofi.txt → /home/vous/note_de_kofi.txt
+  /home/you/notebook.txt → /home/vous/carnet.txt
+
+manuscript
+  /home/you → /home/vous
+  /home/you/message_from_ines.txt → /home/vous/message_de_ines.txt
+  /home/you/novel → /home/vous/roman
+  /home/you/novel/.git → /home/vous/roman/.git
+  /home/you/novel/.git/HEAD → /home/vous/roman/.git/HEAD
+  /home/you/novel/novel.txt → /home/vous/roman/roman.txt
+  /home/you/poems → /home/vous/poemes
+  /home/you/poems/sea.txt → /home/vous/poemes/mer.txt
+  /home/you/poems/lighthouse.txt → /home/vous/poemes/phare.txt
+  /home/you/poems/zohra.txt → /home/vous/poemes/zohra.txt
+  /home/you/help_git.txt → /home/vous/aide_git.txt
+
+archives
+  /home/you → /home/vous
+  /home/you/letter_from_rosa.txt → /home/vous/lettre_de_rosa.txt
+  /home/you/notes_rosa.txt → /home/vous/notes_rosa.txt
+  /home/you/collection → /home/vous/fonds
+  /home/you/collection/readme.txt → /home/vous/fonds/lisezmoi.txt
+  /home/you/collection/manuscripts → /home/vous/fonds/manuscrits
+  /home/you/collection/manuscripts/marie_diary.txt → /home/vous/fonds/manuscrits/journal_de_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/vous/fonds/manuscrits/lettres_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/vous/fonds/manuscrits/recettes_du_quartier.txt
+  /home/you/collection/maps → /home/vous/fonds/cartes
+  /home/you/collection/maps/map_1890.png → /home/vous/fonds/cartes/plan_1890.png
+  /home/you/collection/maps/map_1954.png → /home/vous/fonds/cartes/plan_1954.png
+  /home/you/collection/maps/render.tmp → /home/vous/fonds/cartes/rendu.tmp
+  /home/you/collection/press → /home/vous/fonds/presse
+  /home/you/collection/press/gazette_1936.pdf → /home/vous/fonds/presse/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/vous/fonds/presse/gazette_1968.pdf
+  /home/you/collection/press/export.tmp → /home/vous/fonds/presse/export.tmp
+  /home/you/collection/recordings → /home/vous/fonds/enregistrements
+  /home/you/collection/recordings/market_songs.ogg → /home/vous/fonds/enregistrements/chants_du_marche.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/vous/fonds/enregistrements/entretien_fatou.ogg
+  /home/you/collection/recordings/raw.tmp → /home/vous/fonds/enregistrements/brut.tmp
+  /media/usb → /media/cle
+
+versions
+  /home/you → /home/vous
+  /home/you/note_from_rosa.txt → /home/vous/mot_de_rosa.txt
+  /home/you/notes_restic.txt → /home/vous/notes_restic.txt
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/restic → /home/vous/.config/restic
+  /home/you/.config/restic/password → /home/vous/.config/restic/mot-de-passe
+  /home/you/collection → /home/vous/fonds
+  /home/you/collection/readme.txt → /home/vous/fonds/lisezmoi.txt
+  /home/you/collection/manuscripts → /home/vous/fonds/manuscrits
+  /home/you/collection/manuscripts/marie_diary.txt → /home/vous/fonds/manuscrits/journal_de_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/vous/fonds/manuscrits/lettres_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/vous/fonds/manuscrits/recettes_du_quartier.txt
+  /home/you/collection/maps → /home/vous/fonds/cartes
+  /home/you/collection/maps/map_1890.png → /home/vous/fonds/cartes/plan_1890.png
+  /home/you/collection/maps/map_1954.png → /home/vous/fonds/cartes/plan_1954.png
+  /home/you/collection/press → /home/vous/fonds/presse
+  /home/you/collection/press/gazette_1936.pdf → /home/vous/fonds/presse/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/vous/fonds/presse/gazette_1968.pdf
+  /home/you/collection/recordings → /home/vous/fonds/enregistrements
+  /home/you/collection/recordings/market_songs.ogg → /home/vous/fonds/enregistrements/chants_du_marche.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/vous/fonds/enregistrements/entretien_fatou.ogg
+  /home/you/collection/scans → /home/vous/fonds/numerisations
+  /home/you/collection/scans/registre_1.png → /home/vous/fonds/numerisations/registre_1.png
+  /home/you/collection/scans/registre_2.png → /home/vous/fonds/numerisations/registre_2.png
+  /home/you/collection/scans/registre_3.png → /home/vous/fonds/numerisations/registre_3.png
+  /mnt/townhall → /mnt/mairie
+  /mnt/townhall/restic-library → /mnt/mairie/restic-bibliotheque
+
+shut-the-door
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+firewall
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+  /home/you/scan_yasmine.txt → /home/vous/scan_yasmine.txt
+
+sentinel
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+
+sharing
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+  /home/you/note_from_rania.txt → /home/vous/note_de_rania.txt
+  /opt/agenda/README.txt → /opt/agenda/LISEZMOI.txt
+
+works-for-me
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+  /home/you/help_dns.txt → /home/vous/aide_dns.txt
+
+concert
+  /home/you → /home/vous
+  /home/you/message_from_kofi.txt → /home/vous/message_de_kofi.txt
+  /home/you/help_logs.txt → /home/vous/aide_journaux.txt
+
+port
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+
+repeat-offenders
+  /home/you → /home/vous
+  /home/you/email_rania.txt → /home/vous/courriel_rania.txt
+
+repair-cafe
+  /home/you → /home/vous
+  /home/you/email_kofi.txt → /home/vous/courriel_kofi.txt
+  /home/you/note_from_rania.txt → /home/vous/note_de_rania.txt
+
+update
+  /home/you → /home/vous
+  /home/you/message_from_yasmine.txt → /home/vous/message_de_yasmine.txt
+  /home/you/notes_docker.txt → /home/vous/notes_docker.txt
+
+compose
+  /home/you → /home/vous
+  /home/you/message_from_yasmine.txt → /home/vous/message_de_yasmine.txt
+  /home/you/help_compose.txt → /home/vous/aide_compose.txt
+
+firewall-hole
+  /home/you → /home/vous
+  /home/you/message_from_rania.txt → /home/vous/message_de_rania.txt
+  /home/you/note_from_yasmine.txt → /home/vous/mot_de_yasmine.txt
+
+full-powers
+  /home/you → /home/vous
+  /home/you/message_from_yasmine.txt → /home/vous/message_de_yasmine.txt
+  /home/you/note_from_rania.txt → /home/vous/note_de_rania.txt
+  /srv/galerie/README.txt → /srv/galerie/LISEZMOI.txt
+
+bare-repo
+  /home/you → /home/vous
+  /home/you/message_from_samia.txt → /home/vous/message_de_samia.txt
+  /home/you/note_from_theo.txt → /home/vous/note_de_theo.txt
+  /home/you/gazette → /home/vous/gazette
+  /home/you/gazette/.git → /home/vous/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/vous/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/vous/gazette/index.html
+  /home/you/gazette/style.css → /home/vous/gazette/style.css
+  /home/you/gazette/agenda.html → /home/vous/gazette/agenda.html
+  /home/you/gazette/fete-des-voisins.html → /home/vous/gazette/fete-des-voisins.html
+
+rollback
+  /home/you → /home/vous
+  /home/you/message_from_samia.txt → /home/vous/message_de_samia.txt
+  /home/you/gazette → /home/vous/gazette
+  /home/you/gazette/.git → /home/vous/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/vous/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/vous/gazette/index.html
+  /home/you/gazette/style.css → /home/vous/gazette/style.css
+  /home/you/gazette/agenda.html → /home/vous/gazette/agenda.html
+  /home/you/gazette/fete-des-voisins.html → /home/vous/gazette/fete-des-voisins.html
+  /home/you/gazette/tests.sh → /home/vous/gazette/tests.sh
+
+blue-green
+  /home/you → /home/vous
+  /home/you/message_from_samia.txt → /home/vous/message_de_samia.txt
+
+canary
+  /home/you → /home/vous
+  /home/you/message_from_samia.txt → /home/vous/message_de_samia.txt
+
+migration
+  /home/you → /home/vous
+  /home/you/message_from_samia.txt → /home/vous/message_de_samia.txt
+  /home/you/note_from_theo.txt → /home/vous/note_de_theo.txt
+
+ransom
+  /home/you → /home/vous
+  /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
+  /home/accueil/.cache/.upd → /home/accueil/.cache/.maj
+  /home/accueil/.cache/.upd/system-update → /home/accueil/.cache/.maj/maj-systeme
+  /srv/share → /srv/partage
+  /srv/share/inventory.csv → /srv/partage/inventaire.csv
+  /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt
+  /srv/share/games-day-poster.txt → /srv/partage/affiche-fete-du-jeu.txt
+  /srv/share/rules → /srv/partage/regles
+  /srv/share/rules/goose-game.txt → /srv/partage/regles/jeu-de-l-oie.txt
+  /srv/share/rules/ludo.txt → /srv/partage/regles/petits-chevaux.txt
+  /srv/share/rules/draughts.txt → /srv/partage/regles/dames.txt
+  /mnt/nas/share → /mnt/nas/partage
+  /mnt/usb → /mnt/cle
+
+snapshots
+  /home/you → /home/vous
+  /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
+  /srv/share → /srv/partage
+  /srv/share/inventory.csv → /srv/partage/inventaire.csv
+  /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt
+  /srv/share/games-day-poster.txt → /srv/partage/affiche-fete-du-jeu.txt
+  /srv/share/rules → /srv/partage/regles
+  /srv/share/rules/goose-game.txt → /srv/partage/regles/jeu-de-l-oie.txt
+  /srv/share/rules/ludo.txt → /srv/partage/regles/petits-chevaux.txt
+  /srv/share/rules/draughts.txt → /srv/partage/regles/dames.txt
+  /srv/share/rules/rules-scans.pdf → /srv/partage/regles/scans-regles.pdf
+  /mnt/snapshots → /mnt/instantanes
+  /mnt/usb → /mnt/cle
+
+database
+  /home/you → /home/vous
+  /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
+  /home/you/note_from_malo.txt → /home/vous/mot_de_malo.txt
+
+full-disk
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /srv/radio/shows → /srv/radio/emissions
+  /srv/radio/shows/matinale-2027-08-14.ogg → /srv/radio/emissions/matinale-2027-08-14.ogg
+
+memory
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+
+inodes
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /srv/radio/shows → /srv/radio/emissions
+  /srv/radio/shows/matinale-2027-08-27.ogg → /srv/radio/emissions/matinale-2027-08-27.ogg
+  /srv/radio/shows/matinale-2027-08-28.ogg → /srv/radio/emissions/matinale-2027-08-28.ogg
+  /srv/radio/shows/nuit-2027-08-28.ogg → /srv/radio/emissions/nuit-2027-08-28.ogg
+  /srv/radio/stats/README.txt → /srv/radio/stats/LISEZMOI.txt
+
+clock
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /home/you/mail_hosting.txt → /home/vous/mail_hebergeur.txt
+
+probe
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /srv/radio/shows → /srv/radio/emissions
+  /srv/radio/shows/matinale-2027-09-06.ogg → /srv/radio/emissions/matinale-2027-09-06.ogg
+  /srv/radio/shows/nuit-2027-09-06.ogg → /srv/radio/emissions/nuit-2027-09-06.ogg
+  /srv/radio/podcasts/thumbnails → /srv/radio/podcasts/vignettes
+  /srv/radio/podcasts/README.txt → /srv/radio/podcasts/LISEZMOI.txt
+
+post-mortem
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /home/you/notes_theo.txt → /home/vous/notes_theo.txt
+  /home/you/postmortem.md → /home/vous/postmortem.md
+
+bottleneck
+  /home/you → /home/vous
+  /home/you/message_from_zoe.txt → /home/vous/message_de_zoe.txt
+  /srv/radio/recordings → /srv/radio/enregistrements
+  /srv/radio/live → /srv/radio/direct
+
+keys
+  /home/you → /home/vous
+  /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
+
+keys:wiki
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+
+keys:archives
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+
+jump
+  /home/you → /home/vous
+  /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
+  /home/you/.ssh → /home/vous/.ssh
+
+jump:wiki
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/note_gaspard.txt → /home/vous/note_gaspard.txt
+  /srv/wiki/pages/home.md → /srv/wiki/pages/accueil.md
+
+jump:archives
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+
+tunnel
+  /home/you → /home/vous
+  /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
+  /home/you/.ssh → /home/vous/.ssh
+
+tunnel:wiki
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/note_gaspard.txt → /home/vous/note_gaspard.txt
+
+tunnel:archives
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+
+transfers
+  /home/you → /home/vous
+  /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/config → /home/vous/.ssh/config
+  /home/you/.ssh/id_sauvegarde → /home/vous/.ssh/id_sauvegarde
+  /home/you/.ssh/id_sauvegarde.pub → /home/vous/.ssh/id_sauvegarde.pub
+  /srv/share → /srv/partage
+  /srv/share/minutes → /srv/partage/comptes-rendus
+  /srv/share/minutes/agm-2026.txt → /srv/partage/comptes-rendus/ag-2026.txt
+  /srv/share/minutes/board-2027-09.txt → /srv/partage/comptes-rendus/ca-2027-09.txt
+  /srv/share/posters → /srv/partage/affiches
+  /srv/share/posters/street-party.pdf → /srv/partage/affiches/fete-des-voisins.pdf
+  /srv/share/room-bookings.txt → /srv/partage/planning-salles.txt
+
+transfers:wiki
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /srv/wiki/exports/report-2027.pdf → /srv/wiki/exports/rapport-2027.pdf
+
+transfers:archives
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/backups → /srv/sauvegardes
+  /srv/backups/share → /srv/sauvegardes/partage
+  /srv/backups/share/minutes → /srv/sauvegardes/partage/comptes-rendus
+  /srv/backups/share/minutes/agm-2026.txt → /srv/sauvegardes/partage/comptes-rendus/ag-2026.txt
+
+web-host
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/email_yasmine.txt → /home/vous/courriel_yasmine.txt
+  /home/you/email_hosting.txt → /home/vous/courriel_hebergeur.txt
+  /home/you/notes-gaspard.txt → /home/vous/notes-gaspard.txt
+
+web-host:wiki
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+
+departure
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /home/marc/bin/till-backup.sh → /home/marc/bin/sauvegarde-caisse.sh
+  /srv/backups → /srv/sauvegardes
+  /srv/backups/2027-10-18 → /srv/sauvegardes/2027-10-18
+  /srv/backups/2027-10-18/home → /srv/sauvegardes/2027-10-18/home
+  /srv/backups/2027-10-18/home/marc → /srv/sauvegardes/2027-10-18/home/marc
+  /srv/backups/2027-10-18/home/marc/bin → /srv/sauvegardes/2027-10-18/home/marc/bin
+  /srv/backups/2027-10-18/home/marc/bin/till-backup.sh → /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh
+
+shared-rights
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+  /srv/till/statements → /srv/till/releves
+  /srv/till/statements/2027-10-17.txt → /srv/till/releves/2027-10-17.txt
+  /srv/till/statements/2027-10-18.txt → /srv/till/releves/2027-10-18.txt
+
+secret
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+
+proxy
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+
+updates
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+
+auto-updates
+  /home/you → /home/vous
+  /home/you/email_awa.txt → /home/vous/courriel_awa.txt
+
+vlan
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+  /home/you/switch-plan.txt → /home/vous/plan-commutateur.txt
+
+dhcp
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+
+zones
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+  /home/you/notes-from-sacha.txt → /home/vous/notes-de-sacha.txt
+
+remote-work
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+  /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
+
+dmz
+  /home/you → /home/vous
+  /home/you/email_ines.txt → /home/vous/courriel_ines.txt
+  /home/you/switch-plan.txt → /home/vous/plan-commutateur.txt
+
+annex
+  /home/you → /home/vous
+  /home/you/email_sami.txt → /home/vous/courriel_sami.txt
+  /home/you/annex-wg0.conf → /home/vous/annex-wg0.conf
+  /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
+
+directory
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+  /home/you/modele-ines.ldif → /home/vous/modele-ines.ldif
+  /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
+
+wifi
+  /home/you → /home/vous
+  /home/you/email_malik.txt → /home/vous/courriel_malik.txt
+  /home/you/ap-offices.txt → /home/vous/borne-bureaux.txt
+  /home/you/malik-laptop.conf → /home/vous/malik-laptop.conf
+
+scope
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/engagement_letter.txt → /home/vous/lettre-de-mission.txt
+  /home/you/audit_notes.md → /home/vous/notes-audit.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+report
+  /home/you → /home/vous
+  /home/you/email_nadia.txt → /home/vous/courriel_nadia.txt
+  /home/you/audit_report.txt → /home/vous/rapport-audit.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+exposure
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/audit_scan.txt → /home/vous/balayage-audit.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+traces
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+follow-up
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/closing_report.md → /home/vous/rapport-cloture.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+tired-disk
+  /home/you → /home/vous
+  /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
+  /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+  /var/mail/you → /var/mail/vous
+
+new-disk
+  /home/you → /home/vous
+  /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
+  /home/you/host_procedure.txt → /home/vous/procedure_hebergeur.txt
+
+more-room
+  /home/you → /home/vous
+  /home/you/message_from_odile.txt → /home/vous/message_d_odile.txt
+
+stuck-boot
+  /home/you → /home/vous
+  /root/message_from_odile.txt → /root/message_d_odile.txt
+
+bulletin
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/security_bulletin.txt → /home/vous/bulletin-securite.txt
+  /home/you/watch.md → /home/vous/veille.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+priority
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/priority.md → /home/vous/priorite.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+fix
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+proof
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+routine
+  /home/you → /home/vous
+  /home/you/email_salome.txt → /home/vous/courriel_salome.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+postman
+  /home/you → /home/vous
+  /home/you/email_nour.txt → /home/vous/courriel_nour.txt
+
+signature
+  /home/you → /home/vous
+  /home/you/message_from_nour.txt → /home/vous/message_de_nour.txt
+
+policy
+  /home/you → /home/vous
+  /home/you/email_nour.txt → /home/vous/courriel_nour.txt
+  /home/you/newsmail_letter.txt → /home/vous/lettre_newsmail.txt
+  /home/you/dmarc_reports → /home/vous/rapports_dmarc
+  /home/you/dmarc_reports/mailbox.example-2027-05-16.xml → /home/vous/rapports_dmarc/mailbox.example-2027-05-16.xml
+  /home/you/dmarc_reports/post.example-2027-05-16.xml → /home/vous/rapports_dmarc/post.example-2027-05-16.xml
+
+inventory
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/ansible → /home/vous/ansible
+  /home/you/ansible/ansible.cfg → /home/vous/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/vous/ansible/inventory.ini
+  /home/you/email_theo.txt → /home/vous/courriel_theo.txt
+
+playbook
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/vous/.ssh/known_hosts
+  /home/you/ansible → /home/vous/ansible
+  /home/you/ansible/ansible.cfg → /home/vous/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/vous/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/vous/ansible/site.yml
+  /home/you/message_from_theo.txt → /home/vous/message_de_theo.txt
+
+rehearsal
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/vous/.ssh/known_hosts
+  /home/you/ansible → /home/vous/ansible
+  /home/you/ansible/ansible.cfg → /home/vous/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/vous/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/vous/ansible/site.yml
+  /home/you/ansible/ssh.yml → /home/vous/ansible/ssh.yml
+  /home/you/note_from_theo.txt → /home/vous/note_de_theo.txt
+
+padlock
+  /home/you → /home/vous
+  /home/you/message_from_ines.txt → /home/vous/message_de_ines.txt
+
+desk
+  /home/you → /home/vous
+  /home/you/welcome.txt → /home/vous/bienvenue.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/config → /home/vous/.ssh/config

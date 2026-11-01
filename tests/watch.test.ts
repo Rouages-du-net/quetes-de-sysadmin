@@ -46,14 +46,14 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
 
     it('chapitre 1 — solution : trier le bulletin, le reste sans objet', () => {
       const { c, jouer: play, editer: edit } = part();
-      let all = play(['cat bulletin-securite.txt']);
+      let all = play(['cat security_bulletin.txt']);
       contains(all, 'BULLETIN DE SÉCURITÉ');
       all = play(['apt list --installed']);
       expect(all).not.toContain('certbot');
-      const review = edit('nano veille.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/g, 'x'));
+      const review = edit('nano watch.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/g, 'x'));
       contains(review, 'Salomé relit ton tri');
       expect(c.finished).not.toContain('bulletin');
-      edit('nano veille.md', DOC_WATCH);
+      edit('nano watch.md', DOC_WATCH);
       expect(c.finished).toContain('bulletin');
     });
 
@@ -64,7 +64,7 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
 ${CVE.nginx.id}, ${CVE.rsync.id}, ${CVE.ssh.id}, ${CVE.certbot.id}, ${CVE.curl.id}
 ## ${fr ? 'Sans objet' : 'Not applicable'}
 ${fr ? 'rien' : 'nothing'}`;
-      edit('nano veille.md', bad);
+      edit('nano watch.md', bad);
       expect(c.finished).not.toContain('bulletin');
     });
 
@@ -82,7 +82,7 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       const all = play(['ss -tlnp']);
       expect(all).toContain(':80');
       expect(all.split('\n').filter((l) => l.startsWith('LISTEN')).join('\n')).not.toContain('rsync');
-      edit('nano priorite.md', () => DOC_PRIORITY(false));
+      edit('nano priority.md', () => DOC_PRIORITY(false));
       expect(c.finished).toContain('priority');
     });
 
@@ -90,10 +90,10 @@ ${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthent
       const { c, jouer: play, editer: edit } = part(['bulletin']);
       const e = (id: string) => c.shell.flags.has(id);
       play(['nmap -sV petrin.internal']);
-      edit('nano priorite.md', () => DOC_PRIORITY(true));
+      edit('nano priority.md', () => DOC_PRIORITY(true));
       expect(e('score-seul') || !c.finished.includes('priority')).toBe(true);
       expect(c.finished).not.toContain('priority');
-      edit('nano priorite.md', () => DOC_PRIORITY(false));
+      edit('nano priority.md', () => DOC_PRIORITY(false));
       expect(c.finished).toContain('priority');
     });
 

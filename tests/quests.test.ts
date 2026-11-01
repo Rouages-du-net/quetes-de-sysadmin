@@ -45,20 +45,20 @@ for (const language of LANGUAGES)
       it('chapitre 1 — L’Île du Phare', () => {
         const { s, tout: all } = play('lighthouse', [
           'cat message.txt',
-          'cd Colline/EcoleDesSignaux/SalleDExercice',
-          'mv crabe Seau',
-          'cd ../Cours',
+          'cd Hill/SignalSchool/PracticeRoom',
+          'mv crab Bucket',
+          'cd ../Lessons',
           'ls -a',
-          'cat .note_secrete',
-          'cd ~/Jetee/Phare',
-          'cd ~/Jetee',
-          'mv filet ~/Port/Hangar',
-          'cd Phare',
-          'cd ~/Port/Remise',
+          'cat .secret_note',
+          'cd ~/Pier/Lighthouse',
+          'cd ~/Pier',
+          'mv net ~/Harbour/Boathouse',
+          'cd Lighthouse',
+          'cd ~/Harbour/Storeroom',
           'ls -a',
-          'mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne',
-          'cd ~/Jetee/Phare/Escalier/Lanterne',
-          'mv .ampoule_de_secours ampoule',
+          'mv .spare_bulb ~/Pier/Lighthouse/Stairs/Lantern',
+          'cd ~/Pier/Lighthouse/Stairs/Lantern',
+          'mv .spare_bulb bulb',
         ]);
         contains(all, 'Un énorme filet emmêlé bloque la porte du Phare');
         contains(all, 'ne s’appelle pas exactement ampoule');
@@ -67,44 +67,44 @@ for (const language of LANGUAGES)
 
       it('chapitre 1 — l’ampoule portée et renommée d’un coup', () => {
         const { s } = play('lighthouse', [
-          'mv Jetee/filet Port/Hangar',
-          'cd Port/Remise',
-          'mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule',
+          'mv Pier/net Harbour/Boathouse',
+          'cd Harbour/Storeroom',
+          'mv .spare_bulb ~/Pier/Lighthouse/Stairs/Lantern/bulb',
         ]);
         expect(s.finished).toBe(true);
       });
 
       it('chapitre 2 — Le Bourg', () => {
         const { s, tout: all } = play('village', [
-          'cd Mairie',
+          'cd TownHall',
           'cd Archives',
           'grep Effaceur *',
           'ls -a',
-          'cat .paillasson',
+          'cat .doormat',
           'cd Archives',
-          'grep -i effaceur chronique.txt',
-          'cd ~/Ruelle',
-          'cd ~/Boulangerie',
-          'rm levain',
-          'cp levain levain_2',
-          'cp levain levain_3',
-          'cd ~/Atelier',
-          'touch engrenage',
-          'cp engrenage engrenage_2',
-          'cp engrenage engrenage_3',
-          'cp engrenage engrenage_4',
-          'cp engrenage engrenage_5',
-          'cd ~/Ruelle',
-          'cd Cour',
+          'grep -i eraser chronicle.txt',
+          'cd ~/Alley',
+          'cd ~/Bakery',
+          'rm sourdough',
+          'cp sourdough sourdough_2',
+          'cp sourdough sourdough_3',
+          'cd ~/Workshop',
+          'touch gear',
+          'cp gear gear_2',
+          'cp gear gear_3',
+          'cp gear gear_4',
+          'cp gear gear_5',
+          'cd ~/Alley',
+          'cd Yard',
           'mv barricade ..',
           'rm barricade',
-          'cd Cour/Egout',
-          'cd Galerie',
-          'cp ~/Marche/fromage .',
-          'cd Galerie',
+          'cd Yard/Sewer',
+          'cd Tunnel',
+          'cp ~/Market/cheese .',
+          'cd Tunnel',
           'cat nour.txt',
-          'cd ~/Ecole',
-          'mkdir Classe',
+          'cd ~/School',
+          'mkdir Classroom',
         ]);
         contains(all, 'La porte des Archives est fermée à clé');
         contains(all, '« Pas mon dernier levain ! »');
@@ -115,18 +115,18 @@ for (const language of LANGUAGES)
 
       it('chapitre 3 — La Racine', () => {
         const { s, tout: all } = play('root', [
-          'cat arrivee.txt',
+          'cat arrival.txt',
           'ls -l',
-          'chmod o-w souvenirs',
-          'cat /var/log/effaceur.log',
-          'grep cible /var/log/effaceur.log',
-          'cp ~/effaceur.conf.corrige /etc/effaceur.conf',
+          'chmod o-w memories',
+          'cat /var/log/eraser.log',
+          'grep target /var/log/eraser.log',
+          'cp ~/eraser.conf.fixed /etc/eraser.conf',
           'grep "mot de passe" journal.txt',
           'sudo ls /root',
           'mauvais',
-          'tournesol',
+          'sunflower',
           'sudo cd /root',
-          'sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf',
+          'sudo cp ~/eraser.conf.fixed /etc/eraser.conf',
         ]);
         contains(all, 'Permission non accordée');
         contains(all, 'Désolé, essayez de nouveau.');
@@ -145,44 +145,44 @@ for (const language of LANGUAGES)
 
       it('solution : rsync, crontab, la nuit, la restauration', () => {
         const { s, tout: all } = play('backup', [
-          'cat mot_de_maelle.txt',
-          'rsync souvenirs /mnt/sauvegarde',
-          'rsync -av ~/souvenirs/ /mnt/sauvegarde/souvenirs/',
+          'cat note_from_maelle.txt',
+          'rsync memories /mnt/backup',
+          'rsync -av ~/memories/ /mnt/backup/memories/',
           'crontab -l',
         ]);
-        expect(all).toContain(L('skipping directory souvenirs'));
+        expect(all).toContain(L('skipping directory memories'));
         expect(all).toContain('sending incremental file list');
-        expect(all).toContain(L('no crontab for vous'));
+        expect(all).toContain(L('no crontab for you'));
         contains(all, 'Demande à cron de la refaire chaque nuit');
-        const error = crontab(s, (t) => t + L('15 25 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
+        const error = crontab(s, (t) => t + L('15 25 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         expect(error).toContain('"/tmp/crontab.Zx81Ab/crontab":24: bad hour');
         expect(error).toContain("errors in crontab file, can't install.");
-        const night = crontab(s, (t) => t + L('15 3 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
+        const night = crontab(s, (t) => t + L('15 3 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         expect(night).toContain('crontab: installing new crontab');
         contains(night, 'fete-du-phare.txt y est, sans que tu aies rien tapé');
-        expect(s.exists(L('/mnt/sauvegarde/souvenirs/fete-du-phare.txt'))).toBe(true);
-        expect(s.exists(L('/home/vous/souvenirs/premiere-lettre.txt'))).toBe(false);
-        s.execute(L('rsync -av /mnt/sauvegarde/souvenirs/premiere-lettre.txt ~/souvenirs/'));
+        expect(s.exists(L('/mnt/backup/memories/lighthouse-festival.txt'))).toBe(true);
+        expect(s.exists(L('/home/you/memories/first-letter.txt'))).toBe(false);
+        s.execute(L('rsync -av /mnt/backup/memories/first-letter.txt ~/memories/'));
         expect(s.finished).toBe(true);
       });
 
       it('une autre solution : @daily, copie dans un dossier, restauration avec cp', () => {
         const s = new Shell(chapter('backup'), language);
-        crontab(s, (t) => t + L('@daily rsync -a souvenirs /mnt/sauvegarde/\n'));
+        crontab(s, (t) => t + L('@daily rsync -a memories /mnt/backup/\n'));
         expect(s.flags.has('nuit-ok')).toBe(true);
-        s.execute(L('cp /mnt/sauvegarde/souvenirs/premiere-lettre.txt souvenirs/'));
+        s.execute(L('cp /mnt/backup/memories/first-letter.txt memories/'));
         expect(s.finished).toBe(true);
       });
 
       it('fausses pistes : une tâche qui ne tourne pas la nuit, une tâche fausse, --delete après l’effacement', () => {
         const s = new Shell(chapter('backup'), language);
-        const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/souvenirs/ /mnt/sauvegarde/souvenirs/\n'));
+        const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         contains(nothing, 'aucune tâche de ta crontab ne tombait cette nuit');
-        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/souvenirs/'), L('~/souvenirs/').replace(/s\/$/, '/')));
-        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/vous/souvenirs').replace(/s$/, '')}" failed: No such file or directory (2)`));
-        crontab(s, (t) => t.replace(L('~/souvenirs/').replace(/s\/$/, '/'), L('~/souvenirs/')));
+        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/s\/$/, '/')));
+        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').replace(/s$/, '')}" failed: No such file or directory (2)`));
+        crontab(s, (t) => t.replace(L('~/memories/').replace(/s\/$/, '/'), L('~/memories/')));
         expect(s.flags.has('nuit-ok')).toBe(true);
-        const perdu = s.execute(L('rsync -a --delete ~/souvenirs/ /mnt/sauvegarde/souvenirs/'))!;
+        const perdu = s.execute(L('rsync -a --delete ~/memories/ /mnt/backup/memories/'))!;
         contains(perdu, 'de la sauvegarde aussi');
         expect(s.finished).toBe(false);
       });
@@ -198,7 +198,7 @@ for (const language of LANGUAGES)
           'ps aux',
           'kill 4242',
           'sudo kill 4242',
-          'bienvenue-2026',
+          'welcome-2026',
           `echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf`,
           'sudo systemctl reload nginx',
           'ps aux',
@@ -239,15 +239,15 @@ for (const language of LANGUAGES)
           'cat /home/malo/x',
           'usermod -aG adm malo',
           'sudo usermod -G adm malo',
-          'bienvenue-2026',
+          'welcome-2026',
           'groups malo',
           'sudo usermod -aG web-team malo',
           'sudo chmod o+r /var/log/nginx/access.log',
           'sudo chmod 640 /var/log/nginx/access.log',
-          'chgrp web-team /srv/equipe',
-          'sudo chmod 777 /srv/equipe',
-          'sudo chgrp web-team /srv/equipe',
-          'sudo chmod 770 /srv/equipe',
+          'chgrp web-team /srv/team',
+          'sudo chmod 777 /srv/team',
+          'sudo chgrp web-team /srv/team',
+          'sudo chmod 770 /srv/team',
         ]);
         contains(all, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(web-team)');
         contains(all, '-rw-r----- www-data adm');
@@ -264,9 +264,9 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 2 — une autre solution correcte', () => {
         const { s } = play('second-day', [
           'sudo usermod -aG adm malo',
-          'bienvenue-2026',
-          'sudo chown root:web-team /srv/equipe',
-          'sudo chmod g+w,o-rx /srv/equipe',
+          'welcome-2026',
+          'sudo chown root:web-team /srv/team',
+          'sudo chmod g+w,o-rx /srv/team',
         ]);
         expect(s.finished).toBe(true);
       });
@@ -279,7 +279,7 @@ for (const language of LANGUAGES)
           'journalctl -xeu catalogue',
           'systemctl start nginx',
           'sudo systemctl start nginx',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo systemctl restart catalogue',
           'sudo chmod 777 /var/log/catalogue',
           'sudo chmod 755 /var/log/catalogue',
@@ -307,7 +307,7 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 3 — une autre solution correcte', () => {
         const { s } = play('reboot-night', [
           'sudo chown -R www-data:www-data /var/log/catalogue',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo systemctl enable nginx',
           'sudo reboot',
           'systemctl status nginx catalogue',
@@ -318,7 +318,7 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 3 — réparer sans redémarrer ne suffit pas', () => {
         const { s } = play('reboot-night', [
           'sudo chown www-data: /var/log/catalogue',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo systemctl enable --now nginx',
           'sudo systemctl restart catalogue',
           'systemctl --failed',
@@ -328,18 +328,18 @@ for (const language of LANGUAGES)
 
       it('Le Datacenter, chapitre 4 — Le grand incendie', () => {
         const { s, tout: all } = play('fire', [
-          'cat /mnt/sauvegarde/PRA.txt',
+          'cat /mnt/backup/DRP.txt',
           // Fausse piste : une machine neuve ne connaît encore aucun paquet.
           'sudo apt install nginx',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo apt update',
           'sudo apt install nginx',
           'y',
           'curl http://localhost',
           // Fausse piste : l'archive de cette nuit a été coupée par le feu.
-          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz',
-          'tar -tzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /',
+          'tar -tzf /mnt/backup/medialibrary-2026-10-23.tar.gz',
+          'tar -tzf /mnt/backup/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz -C /',
           // Fausse piste : deux sites « default_server » sur le port 80.
           'sudo nginx -t',
           'sudo systemctl reload nginx',
@@ -364,8 +364,8 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 4 — restaurer d’abord, installer ensuite, garder le site Debian', () => {
         const { s, tout: all } = play('fire', [
           'cd /',
-          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
-          'bienvenue-2026',
+          'sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz',
+          'welcome-2026',
           'sudo apt update',
           // nginx ne démarre pas : deux serveurs par défaut.
           'sudo apt install -y nginx',
@@ -388,14 +388,14 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 4 — fausses pistes : extraire dans ~, l’archive coupée, celle de mercredi', () => {
         const { s, tout: all } = play('fire', [
           'sudo apt update',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo apt install -y nginx',
           'sudo rm /etc/nginx/sites-enabled/default',
-          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz',
-          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-23.tar.gz -C /',
+          'sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz',
+          'sudo tar -xzf /mnt/backup/medialibrary-2026-10-23.tar.gz -C /',
           'sudo systemctl reload nginx',
           'curl -I medialibrary.example',
-          'sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-21.tar.gz -C /',
+          'sudo tar -xzf /mnt/backup/medialibrary-2026-10-21.tar.gz -C /',
           'sudo systemctl reload nginx',
         ]);
         contains(all, 'extraite là où tu étais');
@@ -403,7 +403,7 @@ for (const language of LANGUAGES)
         expect(all).toContain('HTTP/1.1 404 Not Found');
         contains(all, 'avec la page de mercredi');
         expect(s.finished).toBe(false);
-        s.execute(L('sudo tar -xzf /mnt/sauvegarde/medialibrary-2026-10-22.tar.gz -C /'));
+        s.execute(L('sudo tar -xzf /mnt/backup/medialibrary-2026-10-22.tar.gz -C /'));
         expect(s.finished).toBe(true);
       });
 
@@ -412,7 +412,7 @@ for (const language of LANGUAGES)
           'curl https://medialibrary.example',
           'journalctl -u certbot -n 8',
           'sudo certbot certificates',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo certbot renew --dry-run',
           'sudo cat /etc/letsencrypt/renewal/medialibrary.example.conf',
           // Fausse piste : --dry-run n'enregistre rien.
@@ -440,7 +440,7 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 5 — corriger le fichier de renouvellement, script de deploy hook', () => {
         const { s, tout: all } = play('certificate', [
           'sudo certbot renew',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo nano /etc/letsencrypt/renewal/medialibrary.example.conf',
         ]);
         expect(all).toContain('Some challenges have failed');
@@ -462,7 +462,7 @@ for (const language of LANGUAGES)
       it('Le Datacenter, chapitre 5 — le module nginx de certbot', () => {
         const { s, tout: all } = play('certificate', [
           'sudo certbot renew --nginx',
-          'bienvenue-2026',
+          'welcome-2026',
           'sudo apt install -y python3-certbot-nginx',
           'sudo certbot renew --nginx',
           'openssl s_client -connect medialibrary.example:443 | openssl x509 -noout -enddate',
@@ -474,7 +474,7 @@ for (const language of LANGUAGES)
 
       it('Le Paquet perdu', () => {
         const { s } = play('lost-packet', [
-          'cat carnet.txt',
+          'cat notebook.txt',
           'ping 192.168.1.1',
           'ping 9.9.9.9',
           'ping letters.example',
@@ -492,14 +492,14 @@ for (const language of LANGUAGES)
 
       it('La Machine à remonter le temps', () => {
         const { s } = play('manuscript', [
-          'cd roman',
+          'cd novel',
           'git log --oneline',
-          'git diff HEAD~1 roman.txt',
-          'git restore --source=HEAD~1 roman.txt',
+          'git diff HEAD~1 novel.txt',
+          'git restore --source=HEAD~1 novel.txt',
           'git commit -m "x"',
-          'git add roman.txt',
+          'git add novel.txt',
           'git commit -m "Restaure le chapitre 3"',
-          'cd ../poemes',
+          'cd ../poems',
           'git init',
           'git add .',
           'git commit -m "Premiers poèmes"',
@@ -510,42 +510,42 @@ for (const language of LANGUAGES)
       it('Les Archives', () => {
         const { s } = play('archives', [
           'cat notes_rosa.txt',
-          'du -sh fonds',
-          'df -h /media/cle',
-          'tar -czf /media/cle/fonds.tar.gz fonds',
-          'find fonds -name "*.tmp" -delete',
-          'tar -czf /media/cle/fonds.tar.gz fonds',
-          'tar -tzf /media/cle/fonds.tar.gz',
+          'du -sh collection',
+          'df -h /media/usb',
+          'tar -czf /media/usb/fonds.tar.gz collection',
+          'find collection -name "*.tmp" -delete',
+          'tar -czf /media/usb/fonds.tar.gz collection',
+          'tar -tzf /media/usb/fonds.tar.gz',
         ]);
         expect(s.finished).toBe(true);
       });
     });
 
     describe('Les Archives, chapitre 2 — Les versions (restic)', () => {
-      const R = 'restic -r /mnt/mairie/restic-bibliotheque --password-file ~/.config/restic/mot-de-passe';
+      const R = 'restic -r /mnt/townhall/restic-library --password-file ~/.config/restic/password';
       // Les identifiants des instantanés, du plus ancien au plus récent.
       const snapshotList = (s: Shell) => [...(s.execute(L(`${R} snapshots`)) ?? '').matchAll(/^([0-9a-f]{8}) {2}/gm)].map((m) => m[1]);
 
       it('solution : find, restore, forget, prune, check, chmod', () => {
-        const { s, tout: all } = play('versions', ['df -h /mnt/mairie', `${R} find --long journal_de_marie.txt`]);
-        expect(all).toContain(L('2027-02-02 02:00:13 /home/vous/fonds/manuscrits/journal_de_marie.txt'));
+        const { s, tout: all } = play('versions', ['df -h /mnt/townhall', `${R} find --long marie_diary.txt`]);
+        expect(all).toContain(L('2027-02-02 02:00:13 /home/you/collection/manuscripts/marie_diary.txt'));
         const ids = snapshotList(s);
         expect(ids).toHaveLength(30);
         const good = ids[25];
         const next = [
           `${R} diff ${good} ${ids[26]}`,
-          `${R} restore ${good} --target /tmp/restauration --include /home/vous/fonds/manuscrits/journal_de_marie.txt`,
-          'cp /tmp/restauration/home/vous/fonds/manuscrits/journal_de_marie.txt ~/fonds/manuscrits/',
+          `${R} restore ${good} --target /tmp/restauration --include /home/you/collection/manuscripts/marie_diary.txt`,
+          'cp /tmp/restauration/home/you/collection/manuscripts/marie_diary.txt ~/collection/manuscripts/',
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --dry-run`,
           // Fausse piste : forget seul ne rend pas la place.
           `${R} forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12`,
           `${R} prune`,
-          'chmod 600 ~/.config/restic/mot-de-passe',
+          'chmod 600 ~/.config/restic/password',
           `${R} check`,
         ]
           .map((l) => s.execute(L(l)) ?? '')
           .join('\n');
-        expect(next).toContain(L('M    /home/vous/fonds/manuscrits/journal_de_marie.txt'));
+        expect(next).toContain(L('M    /home/you/collection/manuscripts/marie_diary.txt'));
         expect(next).toContain('Would have removed the snapshots above (dry run).');
         expect(next).toContain('remove 21 snapshots:');
         expect(next).toContain('no errors were found');
@@ -556,13 +556,13 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : le mot de passe tapé, dump, forget --prune, puis une sauvegarde', () => {
-        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/mot-de-passe', 'restic -r /mnt/mairie/restic-bibliotheque snapshots', 'mauvais']);
+        const { s, tout: all } = play('versions', ['chmod go-rwx ~/.config/restic/password', 'restic -r /mnt/townhall/restic-library snapshots', 'mauvais']);
         expect(all).toContain('Fatal: wrong password or no key found');
         contains(all, 'Mauvais mot de passe');
         const ids = snapshotList(s);
         for (const l of [
-          `${R} dump ${ids[20]} /home/vous/fonds/manuscrits/journal_de_marie.txt > ~/fonds/manuscrits/journal_de_marie.txt`,
-          `${R} backup ~/fonds`,
+          `${R} dump ${ids[20]} /home/you/collection/manuscripts/marie_diary.txt > ~/collection/manuscripts/marie_diary.txt`,
+          `${R} backup ~/collection`,
           `${R} forget --keep-last 2 --prune`,
           `${R} check`,
         ])
@@ -571,7 +571,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausse piste : forget trop sévère avant de restaurer', () => {
-        const { s, tout: all } = play('versions', [`${R} forget --keep-last 3 --prune`, `${R} check`, 'chmod 600 ~/.config/restic/mot-de-passe']);
+        const { s, tout: all } = play('versions', [`${R} forget --keep-last 3 --prune`, `${R} check`, 'chmod 600 ~/.config/restic/password']);
         contains(all, 'Plus aucun instantané ne contient la bonne version');
         expect(s.finished).toBe(false);
       });
@@ -590,7 +590,7 @@ for (const language of LANGUAGES)
           'curl http://cafe.example',
           'cd /etc/nginx',
           'sudo cp sites-available/letters sites-available/cafe',
-          'fourmis-2026',
+          'ants-2026',
           'sudo ln -s sites-available/cafe sites-enabled/',
           'sudo nginx -t',
           'sudo rm sites-enabled/cafe',
@@ -624,7 +624,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : un nouveau fichier écrit à la main, location exacte du préfixe, agenda démarré puis activé', () => {
-        const { s } = play('sharing', ['sudo systemctl start agenda', 'fourmis-2026']);
+        const { s } = play('sharing', ['sudo systemctl start agenda', 'ants-2026']);
         s.execute('sudo nano /etc/nginx/sites-available/cafe');
         s.saveEdition('server {\n    listen 80;\n    server_name cafe.example;\n    root /var/www/cafe;\n}');
         s.quitEdition();
@@ -646,7 +646,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution, avec les fausses pistes : serial oublié, point final oublié, zone fausse', () => {
-        const { s, tout: all } = play('works-for-me', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'fourmis-2026']);
+        const { s, tout: all } = play('works-for-me', ['dig cafe.example', 'dig @localhost cafe.example +short', 'dig www.cafe.example', 'sudo rndc status', 'ants-2026']);
         expect(all).toContain('198.51.100.80');
         expect(all).toContain('status: NXDOMAIN');
         expect(all).toContain('server is up and running');
@@ -675,7 +675,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : un enregistrement A pour www, et systemctl reload named', () => {
-        const { s } = play('works-for-me', ['sudo id', 'fourmis-2026']);
+        const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
         modify(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
         s.execute('sudo systemctl reload named');
         expect(s.finished).toBe(true);
@@ -693,7 +693,7 @@ for (const language of LANGUAGES)
       it('solution, avec les fausses pistes : zone inconnue, limite sans rafale', () => {
         const { s, tout: all } = play('concert', [
           "sudo awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c",
-          'fourmis-2026',
+          'ants-2026',
           "sudo awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -n",
         ]);
         expect(all).toMatch(/\d+ 504/);
@@ -712,7 +712,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausse piste : bloquer les adresses du robot ne suffit pas à Kofi', () => {
-        const { s } = play('concert', ['sudo id', 'fourmis-2026']);
+        const { s } = play('concert', ['sudo id', 'ants-2026']);
         modify(s, SITE, (t) => t.replace('    location /agenda/ {', '    deny 198.51.100.0/24;\n\n    location /agenda/ {'));
         const output = s.execute('sudo systemctl reload nginx') ?? '';
         contains(output, 'ces robots changent');
@@ -720,7 +720,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : la zone dans conf.d, la limite sur tout le site, 1 requête par seconde', () => {
-        const { s } = play('concert', ['sudo id', 'fourmis-2026']);
+        const { s } = play('concert', ['sudo id', 'ants-2026']);
         s.execute('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
         s.execute('sudo systemctl reload nginx');
@@ -741,12 +741,12 @@ for (const language of LANGUAGES)
           'sudo docker ps -a',
           'fablab-2027',
           "sudo docker inspect -f '{{json .Mounts}}' outiltheque",
-          'sudo docker cp outiltheque:/var/lib/outiltheque ./sauvegarde',
+          'sudo docker cp outiltheque:/var/lib/outiltheque ./backup',
           // Fausse piste : l'ancien conteneur occupe encore le port 8080.
           'sudo docker run -d --name outiltheque-15 -p 8080:8080 -v outiltheque-donnees:/var/lib/outiltheque registry.example/outiltheque:1.5',
           'sudo docker stop outiltheque',
           'sudo docker start outiltheque-15',
-          'sudo docker cp sauvegarde/. outiltheque-15:/var/lib/outiltheque',
+          'sudo docker cp backup/. outiltheque-15:/var/lib/outiltheque',
           'sudo docker restart outiltheque-15',
           'sudo docker logs -n 3 outiltheque-15',
           'curl http://localhost:8080',
@@ -795,7 +795,7 @@ for (const language of LANGUAGES)
         t
           .replace('version: "3.8"\n\n', '')
           .replace('@localhost:', '@db:')
-          .replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}')
+          .replaceAll(L('workshop2027'), '${POSTGRES_PASSWORD}')
           .replace('    depends_on:', '    restart: unless-stopped\n    depends_on:')
           .replace('      - POSTGRES_DB=reservations', '      - POSTGRES_DB=reservations\n    volumes:\n      - donnees:/var/lib/postgresql/data\n    restart: unless-stopped\n\nvolumes:\n  donnees:');
 
@@ -808,7 +808,7 @@ for (const language of LANGUAGES)
         modify(s, '/srv/reservations/compose.yaml', fix);
         const config = s.execute('sudo docker compose config') ?? '';
         expect(config).toContain('The "POSTGRES_PASSWORD" variable is not set.');
-        s.execute(L('echo POSTGRES_PASSWORD=atelier2027 | sudo tee .env'));
+        s.execute(L('echo POSTGRES_PASSWORD=workshop2027 | sudo tee .env'));
         s.execute('sudo docker compose up -d');
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('base de données connectée');
         expect(s.finished).toBe(false);
@@ -820,11 +820,11 @@ for (const language of LANGUAGES)
 
       it('fausse piste : changer POSTGRES_PASSWORD après la création de la base, puis down -v', () => {
         const { s } = play('compose', ['cd /srv/reservations', 'sudo id', 'fablab-2027']);
-        modify(s, '/srv/reservations/compose.yaml', (t) => fix(t).replaceAll('${POSTGRES_PASSWORD}', L('atelier2027')));
+        modify(s, '/srv/reservations/compose.yaml', (t) => fix(t).replaceAll('${POSTGRES_PASSWORD}', L('workshop2027')));
         s.execute('sudo docker compose up -d');
         if (reference) expect(s.execute('curl http://localhost:8081')).toContain('base de données connectée');
         // Le mot de passe passe dans .env… mais un autre que celui de la base existante.
-        modify(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('atelier2027'), '${POSTGRES_PASSWORD}'));
+        modify(s, '/srv/reservations/compose.yaml', (t) => t.replaceAll(L('workshop2027'), '${POSTGRES_PASSWORD}'));
         s.execute('echo POSTGRES_PASSWORD=nouveau-secret | sudo tee .env');
         s.execute('sudo chmod 600 .env');
         const failure = s.execute('sudo docker compose up -d') ?? '';
@@ -932,7 +932,7 @@ for (const language of LANGUAGES)
           'ls -l /srv/galerie',
         ]);
         expect(all).toContain('node');
-        expect(all).toMatch(new RegExp(`drwxr-xr-x ${L('vous')} +${L('vous')} +4096 photos`));
+        expect(all).toMatch(new RegExp(`drwxr-xr-x ${L('you')} +${L('you')} +4096 photos`));
         contains(all, "l'uid 1000, c'est toi");
         expect(s.finished).toBe(false);
         s.execute('sudo chgrp -R yasmine /srv/galerie/photos');
@@ -974,7 +974,7 @@ for (const language of LANGUAGES)
         if (reference) expect(all).toContain('> <h1>La Gazette du quartier</h1>');
         contains(all, 'Voilà la correction de Théo');
         if (reference) expect(all).toContain('Dépôt Git vide initialisé dans /srv/git/gazette.git/');
-        s.execute(L('sudo chown -R vous:vous /srv/git/gazette.git'));
+        s.execute(L('sudo chown -R you:you /srv/git/gazette.git'));
         edit(s, '/srv/git/gazette.git/hooks/post-receive', () => HOOK);
         s.execute('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.execute('cd ~/gazette');
@@ -1006,7 +1006,7 @@ for (const language of LANGUAGES)
         if (reference) expect(root).toContain('error: droits insuffisants pour ajouter un objet');
         expect(root).toContain(' ! [remote rejected] main -> main (unpacker error)');
         contains(root, 'il appartient à root');
-        s.execute(L('sudo chown -R vous: /srv/git/gazette.git'));
+        s.execute(L('sudo chown -R you: /srv/git/gazette.git'));
         contains(s.execute('git push prod main') ?? '', 'rien ne les extrait');
         edit(s, '/srv/git/gazette.git/hooks/post-receive', () => '#!/bin/sh\ngit --work-tree=/var/www/gazette checkout main');
         s.execute('git rm style.css');
@@ -1241,12 +1241,12 @@ for (const language of LANGUAGES)
     });
 
     describe('La Ludothèque, chapitre 1 — La rançon (rançongiciel, sauvegarde hors ligne)', () => {
-      const RESTIC = 'sudo restic -r /mnt/cle/depot';
-      const MDP = 'pion-cavalier-tour-27';
+      const RESTIC = 'sudo restic -r /mnt/usb/repo';
+      const MDP = 'pawn-knight-rook-27';
 
       it('solution : arrêter le chiffreur et sa crontab, verrouiller le compte, restaurer depuis la clé en lecture seule, la démonter', () => {
         const { s, tout: all } = play('ransom', [
-          'find /srv/partage -name "*.locked" | wc -l',
+          'find /srv/share -name "*.locked" | wc -l',
           'ps aux',
           'sudo kill 3141',
           'ludo-2027',
@@ -1254,18 +1254,18 @@ for (const language of LANGUAGES)
           'sudo crontab -u accueil -r',
           'sudo usermod -L accueil',
           'sudo journalctl -u ssh',
-          'ls /mnt/nas/partage',
+          'ls /mnt/nas/share',
           'lsblk -f',
-          'sudo mount -o ro /dev/sdb1 /mnt/cle',
-          'touch /mnt/cle/essai',
+          'sudo mount -o ro /dev/sdb1 /mnt/usb',
+          'touch /mnt/usb/essai',
           `${RESTIC} snapshots`,
           MDP,
           `${RESTIC} restore latest --target /`,
           MDP,
         ]);
         expect(all).toMatch(/^6$/m);
-        expect(all).toContain(L('accueil      3141  97.3   1.4 /home/accueil/.cache/.maj/maj-systeme --silencieux'));
-        expect(all).toContain(L('*/10 * * * * /home/accueil/.cache/.maj/maj-systeme --silencieux'));
+        expect(all).toContain(L('accueil      3141  97.3   1.4 /home/accueil/.cache/.upd/system-update --silencieux'));
+        expect(all).toContain(L('*/10 * * * * /home/accueil/.cache/.upd/system-update --silencieux'));
         expect(all).toContain('Accepted password for accueil from 203.0.113.66');
         expect(all).toContain('SAUVEGARDE');
         if (reference) expect(all).toContain('touch: /mnt/cle/essai: Système de fichiers accessible en lecture seulement');
@@ -1275,34 +1275,34 @@ for (const language of LANGUAGES)
         contains(all, 'Les six fichiers sont revenus');
         expect(s.finished).toBe(false);
         const end = [
-          'sudo find /srv/partage -name "*.locked" -delete',
-          'sudo find /srv/partage -name LISEZ-MOI-POUR-RECUPERER.txt -delete',
-          'sudo umount /mnt/cle',
+          'sudo find /srv/share -name "*.locked" -delete',
+          'sudo find /srv/share -name READ-ME-TO-RECOVER.txt -delete',
+          'sudo umount /mnt/usb',
         ]
           .map((l) => s.execute(L(l)))
           .join('\n');
         contains(end, 'Tu as terminé le chapitre 1 de La Ludothèque');
-        if (reference) expect(s.execute(L('cat /srv/partage/regles/dames.txt'))).toContain('devient une dame');
+        if (reference) expect(s.execute(L('cat /srv/share/rules/draughts.txt'))).toContain('devient une dame');
         expect(s.finished).toBe(true);
       });
 
       it("fausses pistes : restaurer avant d'arrêter le chiffreur, l'oublier dans la crontab, démonter depuis dedans", () => {
         const { s, tout: all } = play('ransom', [
-          'sudo mount /dev/sdb1 /mnt/cle',
+          'sudo mount /dev/sdb1 /mnt/usb',
           'ludo-2027',
           `${RESTIC} restore latest --target /`,
           MDP,
-          'ls /srv/partage',
+          'ls /srv/share',
         ]);
         contains(all, 'le disque de sauvegarde est branché alors que le chiffreur tourne encore');
         contains(all, "Des fichiers restaurés viennent d'être chiffrés à leur tour");
-        expect(all).not.toMatch(new RegExp(`${L('inventaire.csv').replace('.', '\\.')}(?!\\.locked)`));
+        expect(all).not.toMatch(new RegExp(`${L('inventory.csv').replace('.', '\\.')}(?!\\.locked)`));
         // Arrêté, mais sa crontab le relance.
         const back = ['sudo kill 3141', 'ls', 'ls', 'ls'].map((l) => s.execute(L(l))).join('\n');
         contains(back, 'Le chiffreur est revenu');
-        expect(s.execute('ps aux')).toContain(L('maj-systeme'));
-        s.execute(L('cd /mnt/cle'));
-        expect(s.execute(L('sudo umount /mnt/cle'))).toBe(L('umount: /mnt/cle: target is busy.'));
+        expect(s.execute('ps aux')).toContain(L('system-update'));
+        s.execute(L('cd /mnt/usb'));
+        expect(s.execute(L('sudo umount /mnt/usb'))).toBe(L('umount: /mnt/usb: target is busy.'));
         expect(s.finished).toBe(false);
       });
     });
@@ -1315,13 +1315,13 @@ for (const language of LANGUAGES)
       };
       const SETTINGS = (t: string) =>
         t
-          .replace('snapshot_root\t/var/cache/rsnapshot/', L('snapshot_root\t/mnt/instantanes/'))
+          .replace('snapshot_root\t/var/cache/rsnapshot/', L('snapshot_root\t/mnt/snapshots/'))
           .replace('retain\talpha\t6\nretain\tbeta\t7\nretain\tgamma\t4', 'retain\tdaily\t7\nretain\tweekly\t4')
-          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', L('backup\t/srv/partage/\tlocalhost/'));
+          .replace('backup\t/home/\t\tlocalhost/\nbackup\t/etc/\t\tlocalhost/\nbackup\t/usr/local/\tlocalhost/', L('backup\t/srv/share/\tlocalhost/'));
       const CRON = (t: string) => `${t}0 3 * * 1 /usr/bin/rsnapshot weekly\n30 3 * * * /usr/bin/rsnapshot daily\n`;
-      const D = L('/mnt/instantanes');
+      const D = L('/mnt/snapshots');
       // Le partage, dans la langue (/srv/share en anglais).
-      const P = L('/srv/partage');
+      const P = L('/srv/share');
 
       it("solution : la configuration (tabulations), configtest, cron de root, puis l'inventaire de la veille", () => {
         const { s } = play('snapshots', ['sudo rsnapshot configtest', 'ludo-2027']);
@@ -1338,16 +1338,16 @@ for (const language of LANGUAGES)
         expect(forEachOf).toMatch(new RegExp(`^46M\t${D}/daily\\.0/$`, 'm'));
         expect(forEachOf).toMatch(new RegExp(`^\\d+K?\t${D}/daily\\.1/$`, 'm'));
         const inodes =
-          s.execute(L(`ls -i ${D}/daily.0/localhost/srv/partage/regles/scans-regles.pdf ${D}/daily.6/localhost/srv/partage/regles/scans-regles.pdf`)) ??
+          s.execute(L(`ls -i ${D}/daily.0/localhost/srv/share/rules/rules-scans.pdf ${D}/daily.6/localhost/srv/share/rules/rules-scans.pdf`)) ??
           '';
         const [a, b] = inodes.split('\n\n').map((l) => l.trim().split(' ')[0]);
         expect(a).toBe(b);
-        if (reference) expect(s.execute(L(`diff ${D}/daily.0/localhost/srv/partage/inventaire.csv ${D}/daily.1/localhost/srv/partage/inventaire.csv`))).toContain(
+        if (reference) expect(s.execute(L(`diff ${D}/daily.0/localhost/srv/share/inventory.csv ${D}/daily.1/localhost/srv/share/inventory.csv`))).toContain(
           '> jeu offert n°13;1;neuf',
         );
         expect(s.finished).toBe(false);
         contains(
-          s.execute(L(`sudo cp ${D}/daily.1/localhost/srv/partage/inventaire.csv /srv/partage/`)) ?? '',
+          s.execute(L(`sudo cp ${D}/daily.1/localhost/srv/share/inventory.csv /srv/share/`)) ?? '',
           'Tu as terminé le chapitre 2 de La Ludothèque',
         );
         expect(s.finished).toBe(true);
@@ -1355,12 +1355,12 @@ for (const language of LANGUAGES)
 
       it("fausses pistes : des espaces au lieu de tabulations, la crontab d'un compte ordinaire, la version de cette nuit", () => {
         const { s } = play('snapshots', ['sudo id', 'ludo-2027']);
-        edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => SETTINGS(t).replace(L('snapshot_root\t/mnt/instantanes/'), L('snapshot_root /mnt/instantanes/')));
+        edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => SETTINGS(t).replace(L('snapshot_root\t/mnt/snapshots/'), L('snapshot_root /mnt/snapshots/')));
         const error = s.execute('sudo rsnapshot configtest') ?? '';
-        expect(error).toContain(L('ERROR: snapshot_root /mnt/instantanes/ - Unknown config directive'));
+        expect(error).toContain(L('ERROR: snapshot_root /mnt/snapshots/ - Unknown config directive'));
         expect(error).toContain("ERROR: sure you don't have spaces where only tabs should be.");
         contains(error, 'jamais par des espaces');
-        edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace(L('snapshot_root /mnt/instantanes/'), L('snapshot_root\t/mnt/instantanes/')));
+        edit(s, 'sudo nano /etc/rsnapshot.conf', (t) => t.replace(L('snapshot_root /mnt/snapshots/'), L('snapshot_root\t/mnt/snapshots/')));
         const mails = edit(s, 'crontab -e', CRON);
         contains(mails, "n'a pas les droits de root");
         expect(s.execute(`ls ${D}`)).toBe('');
@@ -1383,7 +1383,7 @@ for (const language of LANGUAGES)
           `${PG} createdb ludo_test`,
           `${PG} pg_restore -d ludo_test ${DUMP}`,
         ]);
-        expect(all).toContain(L('FATAL:  role "vous" does not exist'));
+        expect(all).toContain(L('FATAL:  role "you" does not exist'));
         expect(all).toContain(' public | prets   | table | ludo');
         contains(all, 'sudo -u postgres (man sudo)');
         contains(all, 'la sauvegarde se restaure');
@@ -1432,7 +1432,7 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('full-disk', [
           'df -h',
           'sudo du -sh /var/log/*',
-          'antenne-2027',
+          'antenna-2027',
           'sudo tail -n 2 /var/log/radio/stream.log',
           'sudo truncate -s 0 /var/log/radio/stream.log',
           'df -h',
@@ -1450,7 +1450,7 @@ for (const language of LANGUAGES)
       });
 
       it("fausses pistes : rm d'un fichier ouvert, logrotate qui renomme sans faire rouvrir, une directive inconnue", () => {
-        const { s, tout: all } = play('full-disk', ['sudo rm /var/log/radio/stream.log', 'antenne-2027', 'df -h', 'sudo lsof +L1']);
+        const { s, tout: all } = play('full-disk', ['sudo rm /var/log/radio/stream.log', 'antenna-2027', 'df -h', 'sudo lsof +L1']);
         expect(all).toContain('100% /');
         expect(all).toContain('/var/log/radio/stream.log (deleted)');
         contains(all, 'df dit toujours plein, mais du ne trouve plus le fichier');
@@ -1474,7 +1474,7 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('memory', [
           'systemctl status radio-playlist',
           'sudo dmesg -T',
-          'antenne-2027',
+          'antenna-2027',
           'free -h',
           'ps -ef',
           'sudo systemctl edit radio-playlist',
@@ -1502,7 +1502,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : systemctl set-property, puis Restart= écrit à la main et daemon-reload', () => {
-        const { s } = play('memory', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenne-2027']);
+        const { s } = play('memory', ['sudo systemctl set-property radio-playlist MemoryMax=512M', 'antenna-2027']);
         expect(s.read('/etc/systemd/system.control/radio-playlist.service.d/50-MemoryMax.conf')).toContain('MemoryMax=536870912');
         expect(s.execute('sudo systemctl set-property radio-playlist Restart=on-failure')).toContain('Cannot set property Restart');
         s.execute('sudo mkdir -p /etc/systemd/system/radio-playlist.service.d');
@@ -1517,7 +1517,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : kill -9 sur un zombie, relancer sans limite, une limite sans relance', () => {
-        const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenne-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
+        const { s, tout: all } = play('memory', ['sudo kill -9 2411', 'antenna-2027', 'ps aux', 'sudo systemctl start radio-playlist']);
         expect(all).toContain('[convertir] <defunct>');
         contains(all, 'kill ne fait rien à un zombie');
         let outputs = '';
@@ -1546,7 +1546,7 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('inodes', [
           'df -h',
           'sudo df -i',
-          'antenne-2027',
+          'antenna-2027',
           'sudo du --inodes -d 1 /srv/radio',
           'sudo find /srv/radio/stats -type f -mtime +30 | wc -l',
           'sudo find /srv/radio/stats -type f -mtime +30 -delete',
@@ -1556,7 +1556,7 @@ for (const language of LANGUAGES)
         expect(all).toMatch(/\/dev\/vdb1 +65536 +65536 +0 +100% \/srv\/radio/);
         expect(all).toMatch(/^65519\t\/srv\/radio\/stats$/m);
         contains(all, "l'enregistrement de nuit a repris");
-        expect(s.find(L('/srv/radio/emissions/nuit-2027-08-29.ogg'))).toBeTruthy();
+        expect(s.find(L('/srv/radio/shows/nuit-2027-08-29.ogg'))).toBeTruthy();
         expect(s.finished).toBe(false);
         const night = crontab(s, 'sudo crontab -e', '15 4 * * * find /srv/radio/stats -type f -mtime +30 -delete');
         contains(night, 'Une journée et une nuit passent');
@@ -1566,14 +1566,14 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : la tâche cron du compte radio fait aussi le grand ménage', { timeout: 30_000 }, () => {
-        const { s } = play('inodes', ['sudo df -i /srv/radio', 'antenne-2027']);
+        const { s } = play('inodes', ['sudo df -i /srv/radio', 'antenna-2027']);
         const night = crontab(s, 'sudo crontab -u radio -e', '0 3 * * * find /srv/radio/stats -name "ecoute-*" -mtime +45 -delete');
         contains(night, 'Une journée et une nuit passent');
         expect(s.finished).toBe(true);
       });
 
       it('fausses pistes : rm *, une crontab sans les droits, une tâche qui efface tout', { timeout: 30_000 }, () => {
-        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/essai', 'antenne-2027', 'cd /srv/radio/stats', 'sudo rm *']);
+        const { s, tout: all } = play('inodes', ['sudo touch /srv/radio/essai', 'antenna-2027', 'cd /srv/radio/stats', 'sudo rm *']);
         if (reference) expect(all).toContain('Aucun espace disponible sur le périphérique');
         if (reference) expect(all).toContain("sudo: impossible d'exécuter /usr/bin/rm: Liste d'arguments trop longue");
         contains(all, 'le shell remplace * par tous les noms du lieu');
@@ -1603,9 +1603,9 @@ for (const language of LANGUAGES)
         const { s, tout: all } = play('clock', [
           'date',
           'timedatectl',
-          'cat mail_hebergeur.txt',
+          'cat mail_hosting.txt',
           'sudo timedatectl set-timezone Europe/Paris',
-          'antenne-2027',
+          'antenna-2027',
           'sudo timedatectl set-ntp true',
         ]);
         if (reference) expect(all).toMatch(/lun\. 30 août 2027 07:02:\d\d UTC/);
@@ -1629,7 +1629,7 @@ for (const language of LANGUAGES)
       });
 
       it("autre solution : le serveur NTP d'abord, puis systemctl enable --now, le fuseau et cron", () => {
-        const { s } = play('clock', ['sudo timedatectl', 'antenne-2027']);
+        const { s } = play('clock', ['sudo timedatectl', 'antenna-2027']);
         fixNtp(s);
         s.execute('sudo systemctl enable --now systemd-timesyncd');
         s.execute('sudo timedatectl set-timezone Europe/Paris');
@@ -1638,7 +1638,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : date -s à la main, un fuseau mal écrit, set-time avec NTP actif, démarrer sans activer', () => {
-        const { s, tout: all } = play('clock', ['sudo date -s "2027-08-30 09:12:00"', 'antenne-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
+        const { s, tout: all } = play('clock', ['sudo date -s "2027-08-30 09:12:00"', 'antenna-2027', 'sudo timedatectl set-timezone Europe/Pariss']);
         contains(all, 'pour l');
         expect(all).toContain("Failed to set time zone: Invalid or not installed time zone 'Europe/Pariss'");
         if (reference) expect(s.execute('date -s 09:00')).toContain('impossible de régler la date');
@@ -1662,7 +1662,7 @@ for (const language of LANGUAGES)
         return s.quitEdition();
       };
       const CONTROLS =
-        '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /direct | grep -v " OK" | $ALERTE\n';
+        '\n$P/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio | grep -v " OK" | $ALERTE\n$P/check_http -H localhost -p 8000 -u /live | grep -v " OK" | $ALERTE\n';
       const SERVICE = '[Unit]\nDescription=Sonde de Radio Quartier\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/probe\n';
       const TIMER = (trigger: string) =>
         `[Unit]\nDescription=Sonde toutes les 5 minutes\n\n[Timer]\n${trigger}\n\n[Install]\nWantedBy=timers.target\n`;
@@ -1674,13 +1674,13 @@ for (const language of LANGUAGES)
           "systemd-analyze calendar '*:0/5'",
         ]);
         // Une adresse web (/direct), pas un chemin du monde : tapée telle quelle dans chaque langue.
-        expect(s.execute('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /direct')).toContain('HTTP OK: HTTP/1.1 200 OK');
+        expect(s.execute('/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live')).toContain('HTTP OK: HTTP/1.1 200 OK');
         if (reference) expect(all).toContain('check_disk : commande introuvable');
         contains(all, 'ne sont pas dans le PATH');
         expect(all).toContain('DISK OK - free space: /srv/radio 122 MB (47% inode=99%);');
         expect(all).toContain('Normalized form: *-*-* *:00/5:00');
         s.execute('sudo true');
-        s.execute(machinesInLanguage(s.t, 'antenne-2027'));
+        s.execute(machinesInLanguage(s.t, 'antenna-2027'));
         write(s, '/usr/local/bin/probe', (t) => t + CONTROLS);
         write(s, '/etc/systemd/system/probe.service', () => SERVICE);
         write(s, '/etc/systemd/system/probe.timer', () => TIMER('OnCalendar=*:0/5'));
@@ -1697,7 +1697,7 @@ for (const language of LANGUAGES)
       });
 
       it('autre solution : une ligne de crontab, check_procs pour le relais', { timeout: 30_000 }, () => {
-        const { s } = play('probe', ['sudo true', 'antenne-2027']);
+        const { s } = play('probe', ['sudo true', 'antenna-2027']);
         write(
           s,
           '/usr/local/bin/probe',
@@ -1712,7 +1712,7 @@ for (const language of LANGUAGES)
       });
 
       it('fausses pistes : la sonde de départ, OnUnitActiveSec seul, des seuils trop serrés', { timeout: 60_000 }, () => {
-        const { s } = play('probe', ['sudo true', 'antenne-2027']);
+        const { s } = play('probe', ['sudo true', 'antenna-2027']);
         write(s, '/etc/systemd/system/probe.service', () => SERVICE);
         write(s, '/etc/systemd/system/probe.timer', () => TIMER('OnUnitActiveSec=5min'));
         let night = s.execute('sudo systemctl enable --now probe.timer')!;
@@ -1734,7 +1734,7 @@ for (const language of LANGUAGES)
           'top',
           'iostat -x',
           'sudo pidstat -d',
-          'antenne-2027',
+          'antenna-2027',
           'journalctl -u radio-stream -n 3',
           'sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M"',
           'iostat -x',
@@ -1752,7 +1752,7 @@ for (const language of LANGUAGES)
       });
 
       it('une autre solution : systemctl edit, IOReadBandwidthMax= sur un chemin, daemon-reload', () => {
-        const { s } = play('bottleneck', ['sudo systemctl edit radio-archives', 'antenne-2027']);
+        const { s } = play('bottleneck', ['sudo systemctl edit radio-archives', 'antenna-2027']);
         s.saveEdition(`[Service]\nIOReadBandwidthMax=/srv 30M\n${s.edition!.text}`);
         s.quitEdition();
         s.execute('sudo systemctl daemon-reload');
@@ -1765,7 +1765,7 @@ for (const language of LANGUAGES)
           'pidstat -d',
           'ionice -p 2190',
           'sudo ionice -c 3 -p 2190',
-          'antenne-2027',
+          'antenna-2027',
           'ionice -p 2190',
           'iostat -x',
           'cat /sys/block/vda/queue/scheduler',
@@ -1845,7 +1845,7 @@ for (const language of LANGUAGES)
           'cat notes_theo.txt',
           'last',
           'sudo journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"',
-          'antenne-2027',
+          'antenna-2027',
           'sudo cat /var/log/unattended-upgrades/unattended-upgrades-dpkg.log',
           'sudo journalctl | grep stream.conf',
         ]);

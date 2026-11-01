@@ -11,9 +11,9 @@ import { path, d, f, accountsFiles, type Chapter, type File } from '../world';
 import type { Game } from '../shell';
 import { datacenterAccounts, NGINX_LOG } from './first-day';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LOGS = '/var/log/nginx';
-const SHARE = '/srv/equipe';
+const SHARE = '/srv/team';
 
 const ERRORS = `2026/10/13 20:31:02 [error] 613#613: *1842 connect() to unix:/run/php/php-fpm.sock failed (11: Resource temporarily unavailable) while connecting to upstream, client: 198.51.100.77, server: medialibrary.example, request: "GET /catalogue/recherche?q=a HTTP/1.1"
 2026/10/13 20:31:09 [error] 613#613: *1857 upstream timed out (110: Connection timed out) while reading response header from upstream, client: 192.0.2.31, server: medialibrary.example, request: "GET /agenda HTTP/1.1"
@@ -35,10 +35,10 @@ export const secondDay: Chapter = {
   number: 2,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'groups', 'whoami', 'usermod', 'chgrp', 'chown', 'chmod', 'touch', 'nano', 'sudo'],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
-  password: 'bienvenue-2026',
+  password: 'welcome-2026',
   accounts: datacenterAccounts,
   createWorld: (t) => {
     const root = { owner: 'root' };
@@ -48,14 +48,14 @@ export const secondDay: Chapter = {
         etc: d(accountsFiles(), undefined, root),
         home: d(
           {
-            vous: d({ 'courriel_awa.txt': f(t('second-day-courriel-awa')), 'notes_awa.txt': f(t('second-day-notes-awa')) }),
+            you: d({ 'email_awa.txt': f(t('second-day-courriel-awa')), 'notes_awa.txt': f(t('second-day-notes-awa')) }),
             awa: home('awa'),
             malo: home('malo'),
           },
           undefined,
           root,
         ),
-        srv: d({ equipe: d({}, undefined, root) }, undefined, root),
+        srv: d({ team: d({}, undefined, root) }, undefined, root),
         var: d(
           {
             log: d(

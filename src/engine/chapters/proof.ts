@@ -39,7 +39,7 @@ export const proof: Chapter = {
   number: 4,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'wc', 'sudo', 'id', 'whoami', 'apt', 'curl', 'nano'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['versions', 'trouve', 'fin'],
@@ -60,7 +60,7 @@ export const proof: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('proof-courriel-salome')) },
+      home: { 'email_salome.txt': f(t('proof-courriel-salome')) },
       logAccess: ACCESS,
     }),
   events: [

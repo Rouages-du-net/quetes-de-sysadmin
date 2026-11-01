@@ -17,7 +17,7 @@ import type { Game } from '../shell';
 import { newSystemd } from '../systemd';
 import { CVE, M, NOW, PASSWORD, watchApt, watchAccounts, watchListening, initialiseWatch, watchWorld, watchNginx, watchScan, sectionsMd, serviceSsh } from './watch';
 
-const DOC = `${M}/veille.md`;
+const DOC = `${M}/watch.md`;
 const SECTIONS = ['concerne', 'sansobjet'];
 // Dix jours avant le début du chapitre : la machine tourne déjà depuis un moment.
 const STARTED = NOW - 10 * 86_400_000;
@@ -61,7 +61,7 @@ export const bulletin: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'apt'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['lu', 'tri', 'fin'],
@@ -82,7 +82,7 @@ export const bulletin: Chapter = {
   initialise: initialiseWatch,
   createWorld: (t) =>
     watchWorld(t, {
-      home: { 'courriel_salome.txt': f(t('bulletin-courriel-salome')), 'bulletin-securite.txt': f(t('bulletin-fichier'), { lines: true }), 'veille.md': f(t('bulletin-modele'), { lines: true }) },
+      home: { 'email_salome.txt': f(t('bulletin-courriel-salome')), 'security_bulletin.txt': f(t('bulletin-fichier'), { lines: true }), 'watch.md': f(t('bulletin-modele'), { lines: true }) },
     }),
   afterCommand: (j) => {
     const text = readDoc(j);
@@ -98,7 +98,7 @@ export const bulletin: Chapter = {
   events: [
     {
       id: 'lu',
-      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'bulletin-securite.txt')))),
+      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'security_bulletin.txt')))),
       message: (j) => j.t('bulletin-evenement-lu'),
     },
     { id: 'tri', condition: okSort, message: (j) => j.t('bulletin-evenement-tri') },

@@ -5,8 +5,8 @@
 
 import { path, d, f, type Chapter } from '../world';
 
-const M = '/Cabane';
-const LANTERN = `${M}/Jetee/Phare/Escalier/Lanterne`;
+const M = '/Hut';
+const LANTERN = `${M}/Pier/Lighthouse/Stairs/Lantern`;
 
 export const awakening: Chapter = {
   id: 'lighthouse',
@@ -14,64 +14,64 @@ export const awakening: Chapter = {
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv'],
   home: M,
   names: true,
-  welcome: 'bienvenue.txt',
+  welcome: 'welcome.txt',
   final: 'lumiere',
   createWorld: (t) =>
     d({
-      Cabane: d({
-        'bienvenue.txt': f(t('lighthouse-bienvenue')),
+      Hut: d({
+        'welcome.txt': f(t('lighthouse-bienvenue')),
         'message.txt': f(t('lighthouse-message')),
-        Plage: d({
-          'panneau.txt': f(t('lighthouse-panneau')),
-          'ravaudeuse.txt': f(t('lighthouse-ravaudeuse')),
-          'coquillage': f(t('lighthouse-coquillage')),
+        Beach: d({
+          'sign.txt': f(t('lighthouse-panneau')),
+          'mender.txt': f(t('lighthouse-ravaudeuse')),
+          'seashell': f(t('lighthouse-coquillage')),
         }),
-        Colline: d({
-          'vent.txt': f(t('lighthouse-vent')),
-          EcoleDesSignaux: d({
-            'directrice.txt': f(t('lighthouse-directrice')),
-            SalleDExercice: d({
-              'consigne.txt': f(t('lighthouse-consigne')),
-              crabe: f(t('lighthouse-crabe')),
-              Seau: d({}),
+        Hill: d({
+          'wind.txt': f(t('lighthouse-vent')),
+          SignalSchool: d({
+            'headteacher.txt': f(t('lighthouse-directrice')),
+            PracticeRoom: d({
+              'exercise.txt': f(t('lighthouse-consigne')),
+              crab: f(t('lighthouse-crabe')),
+              Bucket: d({}),
             }),
-            Cours: d({
-              'cours_1_manuel.txt': f(t('lighthouse-cours-1-manuel')),
-              'cours_2_chemins.txt': f(t('lighthouse-cours-2-chemins')),
-              'cours_3_caches.txt': f(t('lighthouse-cours-3-caches')),
-              '.note_secrete': f(t('lighthouse-note-secrete')),
-              'cours_4_renommer.txt': f(t('lighthouse-cours-4-renommer')),
+            Lessons: d({
+              'lesson_1_manual.txt': f(t('lighthouse-cours-1-manuel')),
+              'lesson_2_paths.txt': f(t('lighthouse-cours-2-chemins')),
+              'lesson_3_hidden.txt': f(t('lighthouse-cours-3-caches')),
+              '.secret_note': f(t('lighthouse-note-secrete')),
+              'lesson_4_rename.txt': f(t('lighthouse-cours-4-renommer')),
             }),
-            Bibliotheque: d({
-              'livre_des_commandes.txt': f(t('lighthouse-livre-des-commandes')),
+            Library: d({
+              'book_of_commands.txt': f(t('lighthouse-livre-des-commandes')),
             }),
           }),
         }),
-        Port: d({
-          'capitaine.txt': f(t('lighthouse-capitaine')),
-          Hangar: d({
-            'inventaire.txt': f(t('lighthouse-inventaire')),
+        Harbour: d({
+          'captain.txt': f(t('lighthouse-capitaine')),
+          Boathouse: d({
+            'inventory.txt': f(t('lighthouse-inventaire')),
           }),
-          Remise: d({
-            'etiquette.txt': f(t('lighthouse-etiquette')),
-            '.ampoule_de_secours': f(t('lighthouse-ampoule-de-secours')),
+          Storeroom: d({
+            'label.txt': f(t('lighthouse-etiquette')),
+            '.spare_bulb': f(t('lighthouse-ampoule-de-secours')),
           }),
         }),
-        Jetee: d({
-          'filet': f(t('lighthouse-filet')),
-          'indice.txt': f(t('lighthouse-indice')),
-          Phare: d(
+        Pier: d({
+          'net': f(t('lighthouse-filet')),
+          'clue.txt': f(t('lighthouse-indice')),
+          Lighthouse: d(
             {
-              'gardienne.txt': f(t('lighthouse-gardienne')),
-              Escalier: d({
-                'marches.txt': f(t('lighthouse-marches')),
-                Lanterne: d({
-                  'lanterne.txt': f(t('lighthouse-lanterne')),
+              'keeper.txt': f(t('lighthouse-gardienne')),
+              Stairs: d({
+                'steps.txt': f(t('lighthouse-marches')),
+                Lantern: d({
+                  'lantern.txt': f(t('lighthouse-lanterne')),
                 }),
               }),
             },
             (game) =>
-              game.exists(path(game.t, `${M}/Jetee/filet`)) ? game.t('lighthouse-phare-bloque') : null,
+              game.exists(path(game.t, `${M}/Pier/net`)) ? game.t('lighthouse-phare-bloque') : null,
           ),
         }),
       }),
@@ -79,22 +79,22 @@ export const awakening: Chapter = {
   events: [
     {
       id: 'crabe',
-      condition: (j) => j.exists(path(j.t, `${M}/Colline/EcoleDesSignaux/SalleDExercice/Seau/crabe`)),
+      condition: (j) => j.exists(path(j.t, `${M}/Hill/SignalSchool/PracticeRoom/Bucket/crab`)),
       message: (j) => j.t('lighthouse-evenement-crabe'),
     },
     {
       id: 'filet',
-      condition: (j) => !j.exists(path(j.t, `${M}/Jetee/filet`)),
+      condition: (j) => !j.exists(path(j.t, `${M}/Pier/net`)),
       message: (j) => j.t('lighthouse-evenement-filet'),
     },
     {
       id: 'mauvais-nom',
-      condition: (j) => j.exists(path(j.t, `${LANTERN}/.ampoule_de_secours`)),
+      condition: (j) => j.exists(path(j.t, `${LANTERN}/.spare_bulb`)),
       message: (j) => j.t('lighthouse-evenement-mauvais-nom'),
     },
     {
       id: 'lumiere',
-      condition: (j) => j.exists(path(j.t, `${LANTERN}/ampoule`)),
+      condition: (j) => j.exists(path(j.t, `${LANTERN}/bulb`)),
       message: (j) => j.t('lighthouse-evenement-lumiere'),
     },
   ],

@@ -17,7 +17,7 @@ import type { Translate } from '../../texts';
 import { mail, logTime, checkSpf, txt, type Message } from '../mail';
 import { accounts, DOMAIN, gardensState, initialiseGardens, IP, MAILBOX, gardensWorld, OLD_SPF, passSpf, type Departure } from './gardens';
 
-const M = '/home/vous';
+const M = '/home/you';
 const NOW = Date.UTC(2027, 4, 3, 9, 30, 0);
 const YESTERDAY = Date.UTC(2027, 4, 2, 18, 4, 0);
 const MEMBERS = ['amina', 'jules', 'leo', 'sami', 'ines'];
@@ -56,7 +56,7 @@ const LOG = (() => {
   return lines
     .filter(([t]) => t < NOW)
     .sort((a, b) => a[0] - b[0])
-    .map(([t, l]) => `${logTime(t)} jardin ${l}`)
+    .map(([t, l]) => `${logTime(t)} garden ${l}`)
     .join('\n');
 })();
 
@@ -99,15 +99,15 @@ export const postman: Chapter = {
     'postsuper',
   ],
   home: M,
-  welcome: 'courriel_nour.txt',
+  welcome: 'email_nour.txt',
   names: true,
   final: 'fin',
   steps: ['differe', 'ancien', 'spf', 'fin'],
-  password: 'semis-2027',
+  password: 'seeds-2027',
   accounts,
   state: (t) => gardensState(t, departure),
   initialise: initialiseGardens,
-  createWorld: (t) => gardensWorld(t, departure, { 'courriel_nour.txt': f(t('postman-courriel-nour')) }, LOG),
+  createWorld: (t) => gardensWorld(t, departure, { 'email_nour.txt': f(t('postman-courriel-nour')) }, LOG),
   events: [
     { id: 'differe', condition: (j) => seen(j, 'status=deferred') || seen(j, '451 4.7.26'), message: (j) => j.t('postman-evenement-differe') },
     { id: 'ancien', condition: (j) => seen(j, `include:_spf.old-hosting.example`), message: (j) => j.t('postman-evenement-ancien') },

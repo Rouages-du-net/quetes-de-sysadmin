@@ -177,7 +177,7 @@ export const annex: Chapter = {
     'wg-quick',
   ],
   home: M,
-  welcome: 'courriel_sami.txt',
+  welcome: 'email_sami.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -207,7 +207,7 @@ export const annex: Chapter = {
         },
       },
       home: {
-        'courriel_sami.txt': f(t('annex-courriel-sami', { cle: ANNEX_PUBLIC })),
+        'email_sami.txt': f(t('annex-courriel-sami', { cle: ANNEX_PUBLIC })),
         'annex-wg0.conf': f(t('annex-conf'), { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },

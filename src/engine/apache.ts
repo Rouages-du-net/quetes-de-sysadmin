@@ -652,7 +652,7 @@ interface Context {
 const errorPage = (c: Context, code: number, link = ''): ApacheResponse => ({
   code,
   type: 'text/html; charset=iso-8859-1',
-  body: `<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>${code} ${REASONS[code]}</title>\n</head><body>\n<h1>${REASONS[code]}</h1>\n${TEXTS[code](link, c.host.admin ?? c.config.principal.admin!)}\n<hr>\n<address>${SIGNATURE} Server at ${c.name} Port ${c.port}</address>\n</body></html>`,
+  body: `<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>${code} ${REASONS[code]}</title>\n</head><body>\n<h1>${REASONS[code]}</h1>\n${TEXTS[code](link, c.host.admin ?? c.config.principal.admin!)}\n<hr>\n<address>${SIGNATURE} Server at ${c.name} Harbour ${c.port}</address>\n</body></html>`,
   headers: [`Server: ${SIGNATURE}`, ...(link ? [`Location: ${link}`] : [])],
 });
 

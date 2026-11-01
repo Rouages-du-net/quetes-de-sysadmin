@@ -16,7 +16,7 @@ import { SERIES } from '../src/engine/chapters/lab';
 import { stockage } from '../src/engine/storage';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
-const MDP = 'argentique-2027';
+const MDP = 'film-2027';
 
 for (const language of LANGUAGES)
   describe(`Le Labo — ${language}`, () => {
@@ -39,7 +39,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 1 — solution : courriers, mdstat, SMART des deux disques, sdb sorti de md0 et md1, ticket', () => {
       const { s, jouer: play, st } = part('tired-disk');
-      let all = play(['cat message_d_odile.txt', 'mail', 'cat /var/mail/vous', 'cat /proc/mdstat']);
+      let all = play(['cat message_from_odile.txt', 'mail', 'cat /var/mail/you', 'cat /proc/mdstat']);
       expect(all).toContain(`SMART error (CurrentPendingSector) detected on host: ${machineName(translator(language), 'lab')}`);
       expect(all).toContain('md0 : active raid1 sdb2[1] sda2[0]');
       expect(all).toContain('[2/2] [UU]');
@@ -94,7 +94,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 2 — solution : la table de sda recopiée, les deux partitions ajoutées, la reconstruction, GRUB', () => {
       const { s, jouer: play, st } = part('new-disk');
-      let all = play(['cat message_d_odile.txt', 'lsblk', 'cat /proc/mdstat']);
+      let all = play(['cat message_from_odile.txt', 'lsblk', 'cat /proc/mdstat']);
       expect(all).toMatch(/^sdb\s+8:16\s+0 1\.8T\s+0 disk$/m);
       expect(all).toContain('[2/1] [U_]');
       contains(all, 'Le nouveau sdb');
@@ -197,7 +197,7 @@ for (const language of LANGUAGES)
 
     it('chapitre 3 — solution : une grappe des disques neufs, pvcreate, vgextend, lvextend puis resize2fs, mdadm.conf, initramfs', () => {
       const { s, jouer: play, st } = part('more-room');
-      let all = play(['cat message_d_odile.txt', 'df -h /srv', 'sudo vgs', 'lsblk']);
+      let all = play(['cat message_from_odile.txt', 'df -h /srv', 'sudo vgs', 'lsblk']);
       expect(all).toMatch(/\/dev\/mapper\/labo-photos.* 97% \/srv/);
       expect(all).toMatch(/labo +1 +1 +0 wz--n- <1\.79t +0\n/);
       expect(all).toMatch(/^sdc +8:32 +0 3\.6T +0 disk$/m);
@@ -314,7 +314,7 @@ for (const language of LANGUAGES)
     it('chapitre 4 — solution : le journal, lsblk -f, fstab par UUID avec nofail, findmnt --verify, daemon-reload, mount -a, systemctl default', () => {
       const { s, jouer: play } = part('stuck-boot');
       expect(s.who).toBe('root');
-      let all = play(['cat message_d_odile.txt', 'journalctl -xb -p err', 'lsblk -f', 'findmnt --verify', 'mount -a']);
+      let all = play(['cat message_from_odile.txt', 'journalctl -xb -p err', 'lsblk -f', 'findmnt --verify', 'mount -a']);
       expect(all).toContain('You are in emergency mode.');
       expect(all).toContain('Timed out waiting for device dev-sdc1.device - /dev/sdc1.');
       expect(all).toContain('Dependency failed for local-fs.target - Local File Systems.');

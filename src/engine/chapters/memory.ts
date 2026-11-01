@@ -20,7 +20,7 @@ import { writeLog, newSystemd, systemd, type Service } from '../systemd';
 import { memory, kernel, process, checkMemory } from '../memory';
 import type { Process } from '../commands/system';
 
-const M = '/home/vous';
+const M = '/home/you';
 const Mo = 1024 * 1024;
 // La playlist démarre avec 200 Mio et en prend 60 de plus à chaque instant.
 const DEPARTURE = 200 * Mo;
@@ -32,15 +32,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -117,10 +117,10 @@ export const chapterMemory: Chapter = {
     'dmesg',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: () => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 1, 6, 0, 0), Date.UTC(2027, 7, 22, 4, 12, 0), {
@@ -205,7 +205,7 @@ export const chapterMemory: Chapter = {
       );
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), systemd: place({ system: place({}) }) }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('memory-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('memory-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       opt: place({
         playlist: place({ 'server.js': file(t('memory-server-js')) }),
         podcast: place({ 'convertir.py': file(t('memory-convertir-py')) }),

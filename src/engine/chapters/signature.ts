@@ -23,7 +23,7 @@ import { mail, MAIL_LOG, checkDkim } from '../mail';
 import { systemd } from '../systemd';
 import { accounts, gardensState, initialiseGardens, gardensWorld, expectedSignature, GOOD_SPF, passSpf, type Departure } from './gardens';
 
-const M = '/home/vous';
+const M = '/home/you';
 const NOW = Date.UTC(2027, 4, 10, 18, 15, 0);
 
 const departure: Departure = { zone: [GOOD_SPF], serial: 2027050301, mainCf: [], opendkim: 'debian', now: NOW };
@@ -72,15 +72,15 @@ export const signature: Chapter = {
     'opendkim-testkey',
   ],
   home: M,
-  welcome: 'message_de_nour.txt',
+  welcome: 'message_from_nour.txt',
   names: true,
   final: 'fin',
   steps: ['verifier', 'cle', 'opendkim', 'milter', 'fin'],
-  password: 'semis-2027',
+  password: 'seeds-2027',
   accounts,
   state: (t) => gardensState(t, departure),
   initialise: initialiseGardens,
-  createWorld: (t) => gardensWorld(t, departure, { 'message_de_nour.txt': f(t('signature-message-nour')) }, ''),
+  createWorld: (t) => gardensWorld(t, departure, { 'message_from_nour.txt': f(t('signature-message-nour')) }, ''),
   events: [
     { id: 'verifier', condition: (j) => /DKIM check: +none/.test(box(j)), message: (j) => j.t('signature-evenement-verifier') },
     {

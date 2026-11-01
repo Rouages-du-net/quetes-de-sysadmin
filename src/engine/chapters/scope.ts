@@ -24,7 +24,7 @@ import { PACKAGES, BASE_INSTALLED } from '../commands/apt';
 import { machineName } from '../machines';
 import { loadSshd, bakeryAccounts, sectionsMd, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, NEIGHBOUR } from './audit';
 
-const NOTES = `${M}/notes-audit.md`;
+const NOTES = `${M}/audit_notes.md`;
 const NOTES_TEMPLATE = 'scope-notes-modele';
 
 const scans = (j: Game): Scan[] => j.state.scans ?? [];
@@ -64,7 +64,7 @@ export const scope: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'id', 'whoami', 'sudo', 'ss', 'nmap'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['lettre', 'balayage', 'trace', 'fin'],
@@ -89,9 +89,9 @@ export const scope: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       home: {
-        'courriel_salome.txt': f(t('scope-courriel-salome')),
-        'lettre-de-mission.txt': f(t('scope-lettre-de-mission'), { lines: true }),
-        'notes-audit.md': f(t(NOTES_TEMPLATE), { lines: true }),
+        'email_salome.txt': f(t('scope-courriel-salome')),
+        'engagement_letter.txt': f(t('scope-lettre-de-mission'), { lines: true }),
+        'audit_notes.md': f(t(NOTES_TEMPLATE), { lines: true }),
       },
       sudoersD: { '90-cloud-init-users': file('# Created by cloud-init\n\nvous ALL=(ALL) NOPASSWD:ALL', 'root', 'r--r-----') },
     }),
@@ -110,7 +110,7 @@ export const scope: Chapter = {
   events: [
     {
       id: 'lettre',
-      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'lettre-de-mission.txt')))),
+      condition: (j) => j.last.commands.some((c) => c.some((a) => a.endsWith(name(j.t, 'engagement_letter.txt')))),
       message: (j) => j.t('scope-evenement-lettre'),
     },
     {

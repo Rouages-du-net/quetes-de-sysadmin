@@ -7,7 +7,7 @@ import { d, f, player, type Chapter } from './world';
 import type { Translate } from '../texts';
 import { privateKey, publicKey, machineDomain, MACHINES, machineName, WORKSTATION, type Machine } from './machines';
 
-const HOME = '/home/vous';
+const HOME = '/home/you';
 
 // Le /etc/hosts du poste ; en tête, pourquoi ces noms en .internal et
 // .example (ils ne mènent jamais chez quelqu'un de réel).
@@ -77,15 +77,15 @@ export function workstation(keys: Machine[]): Chapter {
     ],
     home: HOME,
     names: true,
-    welcome: 'bienvenue.txt',
+    welcome: 'welcome.txt',
     final: '',
     events: [],
     createWorld: (t) =>
       d({
         etc: d({ hosts: f(hosts(t), { lines: true, owner: 'root' }) }),
         home: d({
-          vous: d({
-            'bienvenue.txt': f(t('poste-bienvenue')),
+          you: d({
+            'welcome.txt': f(t('poste-bienvenue')),
             '.ssh': d(
               { config: f(config(t), { lines: true }), ...Object.assign({}, ...keys.map((m) => keyFiles(t, m))) },
               undefined,

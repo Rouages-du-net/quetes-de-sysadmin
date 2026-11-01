@@ -20,7 +20,7 @@ import { APPS, startDocker, docker, writeIn, identifier, readIn, imageName, type
 import { projectContainers, fingerprint, reach, readEnv, readProject, type ComposeContainer } from '../compose';
 import type { Shell } from '../shell';
 
-const M = '/home/vous';
+const M = '/home/you';
 const PROJECT = '/srv/reservations';
 const DATA = '/var/lib/postgresql/data';
 const AUTH = `${DATA}/pg_hba_qds.json`;
@@ -108,12 +108,12 @@ APPS.reservations = {
 };
 
 const accounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    sudo: { gid: 27, members: ['you', 'yasmine'] },
     docker: { gid: 999, members: ['yasmine'] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     yasmine: { gid: 1001, members: [] },
   },
 });
@@ -127,7 +127,7 @@ services:
     ports:
       - "8081:3000"
     environment:
-      - DATABASE_URL=postgres://fablab:atelier2027@localhost:5432/reservations
+      - DATABASE_URL=postgres://fablab:workshop2027@localhost:5432/reservations
     depends_on:
       - db
 
@@ -135,7 +135,7 @@ services:
     image: postgres:17
     environment:
       - POSTGRES_USER=fablab
-      - POSTGRES_PASSWORD=atelier2027
+      - POSTGRES_PASSWORD=workshop2027
       - POSTGRES_DB=reservations`;
 
 const image = (repo: string, tag: string, app: string, port: number, command: string, size: number, created: number): Image => ({
@@ -233,7 +233,7 @@ export const composition: Chapter = {
     'reboot',
   ],
   home: M,
-  welcome: 'message_de_yasmine.txt',
+  welcome: 'message_from_yasmine.txt',
   names: true,
   final: 'fin',
   password: 'fablab-2027',
@@ -264,9 +264,9 @@ export const composition: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_yasmine.txt': f(t('compose-message-de-yasmine')), 'aide_compose.txt': f(t('compose-aide-compose')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('compose-message-de-yasmine')), 'help_compose.txt': f(t('compose-aide-compose')) }),
       }),
-      srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE.replaceAll('atelier2027', password(t, 'atelier2027')), { lines: true, owner: 'root' }) }) }),
+      srv: place({ reservations: place({ 'compose.yaml': f(COMPOSE.replaceAll('workshop2027', password(t, 'workshop2027')), { lines: true, owner: 'root' }) }) }),
     });
   },
   events: [

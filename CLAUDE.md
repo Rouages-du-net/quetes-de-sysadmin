@@ -26,8 +26,8 @@ presents them for people.
   `CONTRIBUTING.fr.md` and `docs/INTEGRER.md` (keep them in step with the
   English ones); every other document is in English only.
 - **Code in English.** Files and identifiers (functions, variables,
-  types, props) are in English. Some data identifiers are still French:
-  the ids of places, the keys of a
+  types, props), and the world (places, machines, accounts, passwords) are
+  in English. Some data identifiers are still French: the keys of a
   machine's state (`state.montages`, `state.applis`…), `.ftl` keys, CSS
   classes and some comments; they are being moved to English. Write new
   code (files, functions, variables, props, CSS classes, new `.ftl` keys)
@@ -259,8 +259,8 @@ presents them for people.
   `machines.ftl`: the machines' names (kingdom → royaume in French; `machineName()`,
   `hostInLanguage()` of `machines.ts`, `Shell.hostName`; in tests,
   `machinesInLanguage()`); `mots-de-passe.ftl`: the stories' passwords
-  (`password()` of `world.ts`). Chapter, story and machine identifiers are
-  English; place identifiers are still the French ones.
+  (`password()` of `world.ts`). Every identifier is English (chapters,
+  stories, machines, places, accounts, passwords); French is a translation.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
   language choice, the 404 page, embedding in another page.
@@ -296,7 +296,7 @@ page) goes in `src/texts/en/*.ftl` first, then its translations
   including at 375 px wide, with no console error.
 - Every quest has a **test that replays it** to the end (the expected
   solution), plus at least one false lead. The tests' scenarios use the
-  French names (translated by `inLanguage()`) and check texts in French.
+  English names (translated by `inLanguage()`) and check texts in French.
 - Never run `pkill -f` with a pattern that appears in its own command line;
   stop a server by its PID.
 

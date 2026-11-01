@@ -19,12 +19,12 @@ import type { Game, Shell } from '../shell';
 import type { Translate } from '../../texts';
 import { addSnapshot, writeRepo, hex, repoSize, type Repo, type Version } from '../commands/restic';
 
-const M = '/home/vous';
-const COLLECTION = `${M}/fonds`;
-const REPO = '/mnt/mairie/restic-bibliotheque';
-const MDP = `${M}/.config/restic/mot-de-passe`;
-const PASSWORD = 'lanterne-papier-cerisier-41';
-const LOG = `${COLLECTION}/manuscrits/journal_de_marie.txt`;
+const M = '/home/you';
+const COLLECTION = `${M}/collection`;
+const REPO = '/mnt/townhall/restic-library';
+const MDP = `${M}/.config/restic/password`;
+const PASSWORD = 'lantern-paper-cherry-41';
+const LOG = `${COLLECTION}/manuscripts/marie_diary.txt`;
 const Mo = 1024 * 1024;
 const CAPACITY = 1800 * Mo;
 // L'heure d'une sauvegarde : chaque nuit à 23 h 30 (heure de la machine).
@@ -42,26 +42,26 @@ function collection(t: Translate, day: number): Record<string, Version> {
   const base = COLLECTION;
   const before = Date.UTC(2026, 11, 14, 16, 2, 0);
   const v: Record<string, Version> = {
-    [`${base}/lisezmoi.txt`]: text(t('archives-lisezmoi'), before),
-    [`${base}/manuscrits/journal_de_marie.txt`]: day >= 33 ? text(t('versions-journal-abime'), CORRECTION) : text(t('versions-journal'), before),
-    [`${base}/manuscrits/lettres_1914.txt`]: text(t('archives-lettres-1914'), before),
-    [`${base}/manuscrits/recettes_du_quartier.txt`]:
+    [`${base}/readme.txt`]: text(t('archives-lisezmoi'), before),
+    [`${base}/manuscripts/marie_diary.txt`]: day >= 33 ? text(t('versions-journal-abime'), CORRECTION) : text(t('versions-journal'), before),
+    [`${base}/manuscripts/letters_1914.txt`]: text(t('archives-lettres-1914'), before),
+    [`${base}/manuscripts/neighbourhood_recipes.txt`]:
       day >= 20
         ? text(`${t('archives-recettes-du-quartier')}\n${t('versions-recette-ajoutee')}`, Date.UTC(2027, 0, 20, 11, 15, 0))
         : text(t('archives-recettes-du-quartier'), before),
-    [`${base}/cartes/plan_1890.png`]: media(t('archives-image-png'), 6, before),
-    [`${base}/cartes/plan_1954.png`]: media(t('archives-image-png'), 5, before),
-    [`${base}/presse/gazette_1936.pdf`]: media(t('archives-document-pdf'), 4, before),
-    [`${base}/presse/gazette_1968.pdf`]: media(t('archives-document-pdf'), 4.5, before),
-    [`${base}/enregistrements/chants_du_marche.ogg`]: media(t('archives-son-ogg'), 12, before),
-    [`${base}/enregistrements/entretien_fatou.ogg`]: media(t('archives-son-ogg'), 15, before),
+    [`${base}/maps/map_1890.png`]: media(t('archives-image-png'), 6, before),
+    [`${base}/maps/map_1954.png`]: media(t('archives-image-png'), 5, before),
+    [`${base}/press/gazette_1936.pdf`]: media(t('archives-document-pdf'), 4, before),
+    [`${base}/press/gazette_1968.pdf`]: media(t('archives-document-pdf'), 4.5, before),
+    [`${base}/recordings/market_songs.ogg`]: media(t('archives-son-ogg'), 12, before),
+    [`${base}/recordings/interview_fatou.ogg`]: media(t('archives-son-ogg'), 15, before),
   };
   // Du 8 au 14 janvier, les numérisations brutes (énormes) attendaient d'être traitées.
   if (day >= 8 && day <= 14)
     for (const n of [1, 2, 3])
-      v[`${base}/numerisations/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
+      v[`${base}/scans/brut_registre_${n}.tiff`] = media(t('versions-image-tiff'), 540, Date.UTC(2027, 0, 8, 10, n, 0));
   if (day >= 15)
-    for (const n of [1, 2, 3]) v[`${base}/numerisations/registre_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
+    for (const n of [1, 2, 3]) v[`${base}/scans/registre_${n}.png`] = media(t('archives-image-png'), 3, Date.UTC(2027, 0, 15, 9, n, 0));
   return v;
 }
 
@@ -113,19 +113,19 @@ export const versions: Chapter = {
     'restic',
   ],
   home: M,
-  welcome: 'mot_de_rosa.txt',
+  welcome: 'note_from_rosa.txt',
   names: true,
   final: 'fin',
   accounts: () => ({
-    users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, rosa: { uid: 1001, group: 'rosa' } },
-    groups: { root: { gid: 0, members: [] }, vous: { gid: 1000, members: [] }, rosa: { gid: 1001, members: [] } },
+    users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, rosa: { uid: 1001, group: 'rosa' } },
+    groups: { root: { gid: 0, members: [] }, you: { gid: 1000, members: [] }, rosa: { gid: 1001, members: [] } },
   }),
   state: (t) => ({
     restic: { [path(t, REPO)]: initialRepo(t) },
     // L'heure des prochaines sauvegardes à la main : samedi 6 février, 9 h 40.
     resticHorloge: Date.UTC(2027, 1, 6, 9, 40, 0),
     montages: [
-      { path: path(t, '/mnt/mairie'), capacity: CAPACITY, name: `townhall.example:${path(t, '/partage/sauvegardes')}` },
+      { path: path(t, '/mnt/townhall'), capacity: CAPACITY, name: `townhall.example:${path(t, '/share/backups')}` },
       { path: '/', capacity: 20 * 1024 * Mo, name: '/dev/sda1' },
     ],
   }),
@@ -143,15 +143,15 @@ export const versions: Chapter = {
     const { '': collectionRoot, ...underPlaces } = places;
     return d({
       home: d({
-        vous: d({
-          'mot_de_rosa.txt': f(t('versions-mot-de-rosa')),
+        you: d({
+          'note_from_rosa.txt': f(t('versions-mot-de-rosa')),
           'notes_restic.txt': f(t('versions-notes-restic')),
-          '.config': d({ restic: d({ 'mot-de-passe': f(password(t, PASSWORD), { lines: true }) }) }),
-          fonds: d({ ...collectionRoot, ...Object.fromEntries(Object.entries(underPlaces).map(([name, children]) => [name, d(children)])) }),
+          '.config': d({ restic: d({ 'password': f(password(t, PASSWORD), { lines: true }) }) }),
+          collection: d({ ...collectionRoot, ...Object.fromEntries(Object.entries(underPlaces).map(([name, children]) => [name, d(children)])) }),
         }),
         rosa: d({}, undefined, { owner: 'rosa', mode: 'rwx------' }),
       }),
-      mnt: d({ mairie: d({ 'restic-bibliotheque': d({}, undefined, { mode: 'rwx------' }) }) }, undefined, { owner: 'root' }),
+      mnt: d({ townhall: d({ 'restic-library': d({}, undefined, { mode: 'rwx------' }) }) }, undefined, { owner: 'root' }),
       tmp: d({}, undefined, { owner: 'root', mode: 'rwxrwxrwx' }),
     });
   },

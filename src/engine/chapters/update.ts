@@ -18,7 +18,7 @@ import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { APPS, startDocker, docker, writeIn, identifier, readIn, imageName, type Container, type DockerState, type Image } from '../docker';
 
-const M = '/home/vous';
+const M = '/home/you';
 const REPO = 'registry.example/outiltheque';
 const BASE = '/var/lib/outiltheque/outiltheque.db';
 const SCHEMAS: Record<string, number> = { '1.4': 3, '1.5': 4 };
@@ -92,12 +92,12 @@ APPS.outiltheque = {
 };
 
 const accounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    sudo: { gid: 27, members: ['you', 'yasmine'] },
     docker: { gid: 999, members: ['yasmine'] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     yasmine: { gid: 1001, members: [] },
   },
 });
@@ -200,7 +200,7 @@ export const update: Chapter = {
     'reboot',
   ],
   home: M,
-  welcome: 'message_de_yasmine.txt',
+  welcome: 'message_from_yasmine.txt',
   names: true,
   final: 'fin',
   password: 'fablab-2027',
@@ -243,7 +243,7 @@ export const update: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_yasmine.txt': f(t('update-message-de-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
+        you: d({ 'message_from_yasmine.txt': f(t('update-message-de-yasmine')), 'notes_docker.txt': f(t('update-notes-docker')) }),
       }),
       srv: place({}),
       var: place({ lib: place({ docker: place({}, { owner: 'root', mode: 'rwx--x---' }) }) }),

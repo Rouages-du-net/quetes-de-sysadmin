@@ -14,8 +14,8 @@ import { devDirectory, devUpdate, mdstat, stockage, type Disk, type Partition, t
 import { allocate, pvExtents, lvSize, type LogicVolume } from '../lvm';
 import { timeWhoPass } from '../commands/storage';
 
-export const M = '/home/vous';
-export const PASSWORD = 'argentique-2027';
+export const M = '/home/you';
+export const PASSWORD = 'film-2027';
 // Samedi 13 novembre 2027, 7 h 42.
 export const NOW = Date.UTC(2027, 10, 13, 7, 42, 0);
 const BOOT = Date.UTC(2027, 9, 2, 4, 11, 0);
@@ -37,17 +37,17 @@ export const labAccounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     odile: { uid: 1001, group: 'odile' },
     theo: { uid: 1002, group: 'theo' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
+    adm: { gid: 4, members: ['you'] },
     disk: { gid: 6, members: [] },
-    sudo: { gid: 27, members: ['vous'] },
+    sudo: { gid: 27, members: ['you'] },
     'www-data': { gid: 33, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     odile: { gid: 1001, members: [] },
     theo: { gid: 1002, members: [] },
   },
@@ -326,7 +326,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     etc: place({
       ...accountsFiles(),
       hostname: file('lab'),
-      aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: vous'),
+      aliases: file('# See man 5 aliases for format\npostmaster:    root\nroot: you'),
       fstab: file(
         [
           '# /etc/fstab: static file system information.',
@@ -360,7 +360,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
         ].join('\n'),
       ),
     }),
-    home: place({ vous: d(more.rescue ? {} : home), odile: place({}, { owner: 'odile', mode: 'rwx------' }) }),
+    home: place({ you: d(more.rescue ? {} : home), odile: place({}, { owner: 'odile', mode: 'rwx------' }) }),
     // Chapitre 4 : on travaille en root, sur la console de l'hébergeur.
     ...(more.rescue ? { root: place(home, { owner: 'root', mode: 'rwx------' }) } : {}),
     proc: place({ mdstat: f((j) => mdstat(stockage(j)!), { lines: true, owner: 'root', mode: 'r--r--r--' }) }),
@@ -388,7 +388,7 @@ export function labWorld(t: Translate, home: Record<string, ReturnType<typeof f>
     var: place({
       log: place({ syslog: f(t('labo-syslog'), { lines: true, owner: 'root', group: 'adm', mode: 'rw-r-----' }) }),
       mail: place(
-        more.mail === undefined ? {} : { vous: f(more.mail, { lines: true, owner: 'vous', group: 'mail', mode: 'rw-rw----' }) },
+        more.mail === undefined ? {} : { you: f(more.mail, { lines: true, owner: 'you', group: 'mail', mode: 'rw-rw----' }) },
         { owner: 'root', group: 'mail', mode: 'rwxrwsr-x' },
       ),
       www: place({ galerie: place({ 'index.html': file('<!doctype html><title>Le Labo</title>', { owner: 'www-data' }) }) }),

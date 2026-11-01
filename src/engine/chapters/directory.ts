@@ -190,7 +190,7 @@ export const chapterDirectory: Chapter = {
     'slapcat',
   ],
   home: M,
-  welcome: 'courriel_malik.txt',
+  welcome: 'email_malik.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -231,7 +231,7 @@ export const chapterDirectory: Chapter = {
         ldap: d({ 'ldap.conf': f(LDAP_CONF, { lines: true, owner: 'root' }) }, undefined, { owner: 'root' }),
       },
       home: {
-        'courriel_malik.txt': f(t('directory-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
+        'email_malik.txt': f(t('directory-courriel-malik', { admin: ADMIN, motdepasse: MDP_ADMIN })),
         'modele-ines.ldif': f(INES_TEMPLATE, { lines: true }),
         'malik-laptop.conf': f(MALIK_LAPTOP, { lines: true }),
       },

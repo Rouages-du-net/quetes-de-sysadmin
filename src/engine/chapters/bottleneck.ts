@@ -25,13 +25,13 @@ import { writeLog, newSystemd, systemd, type Service } from '../systemd';
 import { diskState, io, activesPriorities, timeAServed, targetsPartition, type IoState } from '../disk-io';
 import type { Process } from '../commands/system';
 
-const M = '/home/vous';
+const M = '/home/you';
 const Mo = 1024 * 1024;
 const ARCHIVES = 2190;
 // La copie du jour (rsync), dans la langue : /srv/radio/recordings/… en anglais.
-const copyOf = (t: Translate) => `rsync -a ${path(t, '/srv/radio/enregistrements')}/ /srv/archives/2027-09-20/`;
+const copyOf = (t: Translate) => `rsync -a ${path(t, '/srv/radio/recordings')}/ /srv/archives/2027-09-20/`;
 // Le relais lit le direct ici.
-const buffer = (t: Translate) => path(t, '/srv/radio/direct/buffer.ts');
+const buffer = (t: Translate) => path(t, '/srv/radio/live/buffer.ts');
 const FLUX = 1730;
 // Lundi 20 septembre 2027, 16 h 14 : l'émission de l'après-midi est en direct.
 const NOW = Date.UTC(2027, 8, 20, 16, 14, 0);
@@ -41,15 +41,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -90,10 +90,10 @@ export const bottleneck: Chapter = {
     'ionice',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: (t) => ({
     systemd: (() => {
@@ -193,9 +193,9 @@ export const bottleneck: Chapter = {
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
     return place({
       etc: place({ ...accountsFiles(), hostname: file('radio'), systemd: place({ system: place({}) }) }),
-      home: place({ vous: d({ 'message_de_zoe.txt': f(t('bottleneck-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
+      home: place({ you: d({ 'message_from_zoe.txt': f(t('bottleneck-message-de-zoe')) }), zoe: place({}, { owner: 'zoe', mode: 'rwx------' }) }),
       sys: place({ block: place({ vda: place({ queue: place({ scheduler: file('[none] mq-deadline'), rotational: file('0') }) }) }) }),
-      srv: place({ radio: place({ enregistrements: place({}), direct: place({}) }, { owner: 'radio' }), archives: place({}) }),
+      srv: place({ radio: place({ recordings: place({}), live: place({}) }, { owner: 'radio' }), archives: place({}) }),
       usr: place({
         lib: place({
           systemd: place({
@@ -204,7 +204,7 @@ export const bottleneck: Chapter = {
                 '[Unit]\nDescription=Radio Quartier stream relay\nAfter=network.target\n\n[Service]\nUser=radio\nExecStart=/usr/local/bin/stream --config /etc/radio/stream.conf\n\n[Install]\nWantedBy=multi-user.target',
               ),
               'radio-archives.service': file(
-                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${path(t, '/srv/radio/enregistrements')}/ /srv/archives/$(date +%%F)/'`,
+                `[Unit]\nDescription=Radio Quartier: archive the day's recordings\n\n[Service]\nType=oneshot\nExecStart=/bin/sh -c 'rsync -a ${path(t, '/srv/radio/recordings')}/ /srv/archives/$(date +%%F)/'`,
               ),
               'radio-archives.timer': file(
                 "[Unit]\nDescription=Archive the day's recordings\n\n[Timer]\nOnCalendar=*-*-* 16:00\n\n[Install]\nWantedBy=timers.target",

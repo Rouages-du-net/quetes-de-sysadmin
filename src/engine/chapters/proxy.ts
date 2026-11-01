@@ -108,7 +108,7 @@ export const proxy: Chapter = {
     'curl',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -122,7 +122,7 @@ export const proxy: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('proxy-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('proxy-courriel-awa')) },
       etc: nginxCooperative(SITE),
       sbin: BINARY_NGINX,
       more: tillWorld({ env: tillEnv(NEW_KEY), envMode: 'rw-------', logAccess: ACCESS, appLog: APP_LOG }),

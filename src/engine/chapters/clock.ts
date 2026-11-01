@@ -16,7 +16,7 @@ import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { desync, timeOfDay, displayUpdate, synchronise } from '../time';
 
-const M = '/home/vous';
+const M = '/home/you';
 // La vraie heure : lundi 30 août 2027, 9 h 12 à Paris (heure locale lue comme UTC).
 const NOW = Date.UTC(2027, 7, 30, 9, 12, 0);
 
@@ -25,16 +25,16 @@ const accounts = (): Accounts => ({
     root: { uid: 0, group: 'root', home: '/root' },
     radio: { uid: 996, group: 'radio', home: '/var/lib/radio', shell: '/usr/sbin/nologin' },
     'systemd-timesync': { uid: 997, group: 'systemd-timesync', home: '/', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     zoe: { uid: 1001, group: 'zoe' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'zoe'] },
-    sudo: { gid: 27, members: ['vous', 'zoe'] },
+    adm: { gid: 4, members: ['you', 'zoe'] },
+    sudo: { gid: 27, members: ['you', 'zoe'] },
     radio: { gid: 996, members: [] },
     'systemd-timesync': { gid: 997, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     zoe: { gid: 1001, members: [] },
   },
 });
@@ -75,10 +75,10 @@ export const clock: Chapter = {
     'timedatectl',
   ],
   home: M,
-  welcome: 'message_de_zoe.txt',
+  welcome: 'message_from_zoe.txt',
   names: true,
   final: 'fin',
-  password: 'antenne-2027',
+  password: 'antenna-2027',
   accounts,
   state: () => ({
     systemd: newSystemd('radio', Date.UTC(2027, 7, 28, 22, 40, 0), NOW, {
@@ -155,7 +155,7 @@ export const clock: Chapter = {
         systemd: place({ 'timesyncd.conf': file(t('clock-timesyncd-conf')), system: place({}) }),
       }),
       home: place({
-        vous: d({ 'message_de_zoe.txt': f(t('clock-message-de-zoe')), 'mail_hebergeur.txt': f(t('clock-mail-hebergeur')) }),
+        you: d({ 'message_from_zoe.txt': f(t('clock-message-de-zoe')), 'mail_hosting.txt': f(t('clock-mail-hebergeur')) }),
         zoe: place({}, { owner: 'zoe', mode: 'rwx------' }),
       }),
       tmp: place({}, { owner: 'root', mode: 'rwxrwxrwt' }),

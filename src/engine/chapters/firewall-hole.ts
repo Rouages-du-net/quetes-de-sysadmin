@@ -36,19 +36,19 @@ import { WORKSTATION } from '../machines';
 import { connect } from './compose';
 import { writeBase } from './update';
 
-const M = '/home/vous';
+const M = '/home/you';
 const PROJECT = '/srv/reservations';
 const Go = 1_000_000_000;
 const DISK = 20 * Go;
 const USEFUL_VOLUMES = ['outiltheque-donnees', 'reservations_donnees', 'wiki-ancien'];
 
 const accounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
   groups: {
     root: { gid: 0, members: [] },
-    sudo: { gid: 27, members: ['vous', 'yasmine'] },
+    sudo: { gid: 27, members: ['you', 'yasmine'] },
     docker: { gid: 999, members: ['yasmine'] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     yasmine: { gid: 1001, members: [] },
   },
 });
@@ -193,7 +193,7 @@ export const bypass: Chapter = {
     'nc',
   ],
   home: M,
-  welcome: 'message_de_rania.txt',
+  welcome: 'message_from_rania.txt',
   names: true,
   final: 'fin',
   password: 'fablab-2027',
@@ -260,7 +260,7 @@ export const bypass: Chapter = {
     // La base de réservations existe déjà dans son volume (mot de passe de .env).
     e.volumes.reservations_donnees.data = {
       PG_VERSION: '17',
-      'pg_hba_qds.json': JSON.stringify({ user: 'fablab', password: password(j.t, 'atelier2027'), base: 'reservations' }),
+      'pg_hba_qds.json': JSON.stringify({ user: 'fablab', password: password(j.t, 'workshop2027'), base: 'reservations' }),
     };
     mount(shell(j), readProject(j, PROJECT), () => true);
     diskUpdate(j);
@@ -272,12 +272,12 @@ export const bypass: Chapter = {
     return place({
       etc: place({ ...accountsFiles(), hostname: f('workshop', { lines: true, owner: 'root' }) }),
       home: place({
-        vous: d({ 'message_de_rania.txt': f(t('firewall-hole-message-de-rania')), 'mot_de_yasmine.txt': f(t('firewall-hole-mot-de-yasmine')) }),
+        you: d({ 'message_from_rania.txt': f(t('firewall-hole-message-de-rania')), 'note_from_yasmine.txt': f(t('firewall-hole-mot-de-yasmine')) }),
       }),
       srv: place({
         reservations: place({
           'compose.yaml': f(COMPOSE, { lines: true, owner: 'root' }),
-          '.env': f(`POSTGRES_PASSWORD=${password(t, 'atelier2027')}`, { lines: true, owner: 'root', mode: 'rw-------' }),
+          '.env': f(`POSTGRES_PASSWORD=${password(t, 'workshop2027')}`, { lines: true, owner: 'root', mode: 'rw-------' }),
         }),
       }),
       // Le système et ses journaux : la place qui n'est pas à Docker.

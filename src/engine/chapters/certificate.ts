@@ -30,7 +30,7 @@ import {
   serviceCertbot,
 } from '../commands/certbot';
 
-const M = '/home/vous';
+const M = '/home/you';
 const SITE = 'medialibrary.example';
 const NAMES = [SITE, `www.${SITE}`];
 const ROBOT = '198.51.100.77';
@@ -49,14 +49,14 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you'] },
     'www-data': { gid: 33, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
   },
 });
 
@@ -240,10 +240,10 @@ export const certificate: Chapter = {
     'whoami',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
-  password: 'bienvenue-2026',
+  password: 'welcome-2026',
   // La machine reconstruite après l'incendie : même clé d'hôte qu'au chapitre 4.
   hostKey: '-apres-incendie',
   accounts,
@@ -296,7 +296,7 @@ export const certificate: Chapter = {
           'renewal-hooks': place({ deploy: place({}), pre: place({}), post: place({}) }),
         }),
       }),
-      home: place({ vous: d({ 'courriel_awa.txt': f(t('certificate-courriel-awa')), 'message_de_lea.txt': f(t('certificate-message-de-lea')) }) }),
+      home: place({ you: d({ 'email_awa.txt': f(t('certificate-courriel-awa')), 'message_from_lea.txt': f(t('certificate-message-de-lea')) }) }),
       usr: place({
         bin: place({
           certbot: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 966 }),

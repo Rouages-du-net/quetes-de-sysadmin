@@ -107,7 +107,7 @@ const after = (ids: string[]) =>
                   ? fr ? `« ${t(`chapitre-${f.before.id}`)} »` : `"${t(`chapitre-${f.before.id}`)}"`
                   : h.id === 'eraser'
                     ? fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'
-                    : fr ? `${after(h.after ?? [])} (ou une ouverture directe).` : `${after(h.after ?? [])} (or a direct opening).`}
+                    : fr ? `${after(h.after ?? [])} (ou une ouverture directe).` : `${after(h.after ?? [])} (or a live opening).`}
               </dd>
               <dt>{fr ? 'Commandes découvertes' : 'New commands'}</dt>
               <dd>
@@ -126,3 +126,4 @@ const after = (ids: string[]) =>
     </section>
   );
 })}
+"

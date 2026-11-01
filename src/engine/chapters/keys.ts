@@ -53,7 +53,7 @@ export const keys: Chapter = {
     'sshd',
   ],
   home: M,
-  welcome: 'courriel_yasmine.txt',
+  welcome: 'email_yasmine.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -62,7 +62,7 @@ export const keys: Chapter = {
   initialise: loadSshd,
   hosts: { wiki: internalHost('wiki', '10.20.0.11'), archives: internalHost('archives', '10.20.0.12') },
   createWorld: (t) =>
-    homeWorld({ passwords: null, home: { 'courriel_yasmine.txt': f(t('keys-courriel-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
+    homeWorld({ passwords: null, home: { 'email_yasmine.txt': f(t('keys-courriel-yasmine', { motdepasse: password(t, PASSWORD) })) } }),
   events: [
     { id: 'erreur', condition: (j) => readConfig(j).errors.length > 0, message: (j) => j.t('keys-evenement-erreur', { config: CONFIG }) },
     { id: 'enferme', condition: (j) => withoutPassword(j) && !youKeys(j).length, message: (j) => j.t('keys-evenement-enferme') },

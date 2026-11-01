@@ -21,7 +21,7 @@ import { MIME, NGINX_CONF } from '../commands/apt';
 import { gazetteAccounts } from './bare-repo';
 import { KIOSK, PORTS, kioskApp, versionDirectory, instances, health, kioskService, kioskUnit, linkVersion } from './kiosk';
 
-const M = '/home/vous';
+const M = '/home/you';
 const GAZETTE = 'gazette.example';
 const SITE = '/etc/nginx/sites-available/gazette';
 
@@ -95,7 +95,7 @@ export const greenBlue: Chapter = {
     'ps',
   ],
   home: M,
-  welcome: 'message_de_samia.txt',
+  welcome: 'message_from_samia.txt',
   names: true,
   final: 'fin',
   password: 'gazette-2027',
@@ -167,14 +167,14 @@ export const greenBlue: Chapter = {
         }),
       }),
       home: place({
-        vous: d({ 'message_de_samia.txt': f(t('blue-green-message-de-samia')) }),
+        you: d({ 'message_from_samia.txt': f(t('blue-green-message-de-samia')) }),
         samia: place({}, { owner: 'samia', mode: 'rwx------' }),
         theo: place({}, { owner: 'theo', mode: 'rwx------' }),
       }),
       srv: place({
         gazette: place({
-          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'vous' }) }) }),
-          current: f('', { owner: 'vous', link: '/srv/gazette/releases/20270524090000' }),
+          releases: place({ '20270524090000': place({ 'index.html': file(t('rollback-site-accueil'), { owner: 'you' }) }) }),
+          current: f('', { owner: 'you', link: '/srv/gazette/releases/20270524090000' }),
         }),
         kiosk: place(
           {

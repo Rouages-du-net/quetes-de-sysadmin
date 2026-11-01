@@ -26,7 +26,7 @@ import { stopCaddy, certificateFor, loadCaddy, caddyState, managedNames, PID, re
 import type { Firewall } from '../firewall';
 import type { Listening } from '../commands/ss';
 
-const M = '/home/vous';
+const M = '/home/you';
 export const SITE = 'cycles.example';
 export const WWW = `www.${SITE}`;
 export const IP = '203.0.113.40';
@@ -35,15 +35,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     caddy: { uid: 999, group: 'caddy', home: '/var/lib/caddy', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     ines: { uid: 1001, group: 'ines' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous', 'ines'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you', 'ines'] },
     caddy: { gid: 999, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     ines: { gid: 1001, members: [] },
   },
 });
@@ -144,11 +144,11 @@ export const padlock: Chapter = {
     'whoami',
   ],
   home: M,
-  welcome: 'message_de_ines.txt',
+  welcome: 'message_from_ines.txt',
   names: true,
   final: 'fin',
   steps: ['adresse', 'pare-feu', 'certificat', 'fin'],
-  password: 'rayons-2027',
+  password: 'spokes-2027',
   accounts,
   state: () => ({
     ecoute: LISTENING.map((e) => ({ ...e })),
@@ -205,7 +205,7 @@ export const padlock: Chapter = {
         caddy: directory({ Caddyfile: file(CADDYFILE_INES) }),
       }),
       home: directory({
-        vous: d({ 'message_de_ines.txt': f(t('padlock-message-ines')) }),
+        you: d({ 'message_from_ines.txt': f(t('padlock-message-ines')) }),
         ines: directory({}, { owner: 'ines', mode: 'rwx------' }),
       }),
       usr: directory({

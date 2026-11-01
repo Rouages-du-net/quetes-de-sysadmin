@@ -14,11 +14,11 @@ const chapter: Chapter = {
   id: 'essai-awk',
   number: 1,
   commands: ['awk', 'sort', 'uniq', 'cat', 'head'],
-  home: '/home/vous',
+  home: '/home/you',
   welcome: 'access.log',
   final: '',
   events: [],
-  createWorld: () => d({ home: d({ vous: d({ 'access.log': f(LOG, { lines: true }) }) }) }),
+  createWorld: () => d({ home: d({ you: d({ 'access.log': f(LOG, { lines: true }) }) }) }),
 };
 
 describe('awk', () => {

@@ -14,8 +14,8 @@ import { newSystemd, systemd, type DefinitionService } from '../systemd';
 import { readConfig } from '../sshd';
 import { internet, type ElementPlan } from '../plan';
 
-export const M = '/home/vous';
-export const PASSWORD = 'lilas-2027';
+export const M = '/home/you';
+export const PASSWORD = 'lilac-2027';
 // Lundi 4 octobre 2027, 18 h 40.
 export const NOW = Date.UTC(2027, 9, 4, 18, 40, 0);
 
@@ -58,8 +58,8 @@ Subsystem	sftp	/usr/lib/openssh/sftp-server
 
 export const HOSTS = `127.0.0.1\tlocalhost
 192.0.2.19\tmaison.internal maison
-10.20.0.11\twiki.maison.internal wiki
-10.20.0.12\tarchives.maison.internal archives`;
+10.20.0.11\twiki.community.internal wiki
+10.20.0.12\tarchives.community.internal archives`;
 
 export interface SshdState {
   load: Record<string, string>;
@@ -104,12 +104,12 @@ export const loadSshd = (j: Game) => {
 };
 
 export const homeAccounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' }, yasmine: { uid: 1001, group: 'yasmine' } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' }, yasmine: { uid: 1001, group: 'yasmine' } },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous', 'yasmine'] },
-    sudo: { gid: 27, members: ['vous', 'yasmine'] },
-    vous: { gid: 1000, members: [] },
+    adm: { gid: 4, members: ['you', 'yasmine'] },
+    sudo: { gid: 27, members: ['you', 'yasmine'] },
+    you: { gid: 1000, members: [] },
     yasmine: { gid: 1001, members: [] },
   },
 });
@@ -138,7 +138,7 @@ export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<stri
         undefined,
         root,
       ),
-      home: d({ vous: d(o.home), yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwx------' }) }, undefined, root),
+      home: d({ you: d(o.home), yasmine: d({}, undefined, { owner: 'yasmine', mode: 'rwx------' }) }, undefined, root),
       ...(o.more ?? {}),
     },
     undefined,
@@ -149,8 +149,8 @@ export function homeWorld(o: { passwords: 'yes' | 'no' | null; home: Record<stri
 // ——— Le réseau interne ———
 
 const internalAccounts = (): Accounts => ({
-  users: { root: { uid: 0, group: 'root', home: '/root' }, vous: { uid: 1000, group: 'vous' } },
-  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['vous'] }, vous: { gid: 1000, members: [] } },
+  users: { root: { uid: 0, group: 'root', home: '/root' }, you: { uid: 1000, group: 'you' } },
+  groups: { root: { gid: 0, members: [] }, sudo: { gid: 27, members: ['you'] }, you: { gid: 1000, members: [] } },
 });
 
 /** Une machine interne : son nom, son adresse, ce qu'il y a dans sa maison et ailleurs. */
@@ -167,7 +167,7 @@ export function internalHost(
 ): InternalHost {
   return {
     address,
-    domain: `${name}.maison.internal`,
+    domain: `${name}.community.internal`,
     accounts: internalAccounts,
     commands: o.commands,
     state: o.state,
@@ -180,7 +180,7 @@ export function internalHost(
             undefined,
             root,
           ),
-          home: d({ vous: d({ '.ssh': sshDirectory(), ...(o.home?.(t) ?? {}) }) }, undefined, root),
+          home: d({ you: d({ '.ssh': sshDirectory(), ...(o.home?.(t) ?? {}) }) }, undefined, root),
           ...(o.more?.(t) ?? {}),
         },
         undefined,

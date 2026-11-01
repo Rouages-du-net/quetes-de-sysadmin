@@ -34,7 +34,7 @@ import { findings, hint as hintFor } from '../lynis';
 import type { Scan } from '../scan';
 import { bakeryApt, loadSshd, sectionsMd, bakeryAccounts, bakeryListening, file, M, NOW, PASSWORD, bakeryWorld, bakeryScan, serviceSsh, sshd, NEIGHBOUR } from './audit';
 
-const REPORT = `${M}/rapport-cloture.md`;
+const REPORT = `${M}/closing_report.md`;
 const TARGET = 70;
 const SSH_KEYS = ['permitrootlogin', 'x11forwarding', 'maxauthtries', 'allowtcpforwarding', 'allowagentforwarding'];
 const SECTIONS = ['resume', 'constats', 'preuves', 'reste'];
@@ -116,7 +116,7 @@ export const againstVisit: Chapter = {
   number: 5,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'find', 'nano', 'id', 'whoami', 'sudo', 'systemctl', 'journalctl', 'sshd', 'ss', 'ufw', 'apt', 'nmap', 'lynis'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['balayage', 'lynis', 'mise-a-jour', 'durci', 'preuve-lynis', 'nmap-propre', 'fin'],
@@ -142,7 +142,7 @@ export const againstVisit: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'courriel_salome.txt': f(t('follow-up-courriel-salome')), 'rapport-cloture.md': f(t('follow-up-modele'), { lines: true }) },
+      home: { 'email_salome.txt': f(t('follow-up-courriel-salome')), 'closing_report.md': f(t('follow-up-modele'), { lines: true }) },
       etc: {
         'login.defs': file(LOGIN_DEFS),
         issue: file('Debian GNU/Linux 13 \\n \\l\n'),

@@ -4,16 +4,16 @@
 import { path, d, f, name, type Chapter } from '../world';
 import type { Game } from '../shell';
 
-const M = '/Quai';
-const BAKERY = `${M}/Boulangerie`;
-const WORKSHOP = `${M}/Atelier`;
-const ALLEY = `${M}/Ruelle`;
-const YARD = `${ALLEY}/Cour`;
-const SEWER = `${YARD}/Egout`;
-const CLASS = `${M}/Ecole/Classe`;
+const M = '/Quay';
+const BAKERY = `${M}/Bakery`;
+const WORKSHOP = `${M}/Workshop`;
+const ALLEY = `${M}/Alley`;
+const YARD = `${ALLEY}/Yard`;
+const SEWER = `${YARD}/Sewer`;
+const CLASS = `${M}/School/Classroom`;
 
 // Les engrenages de l'Atelier (engrenage, engrenage_2…), sous leur nom dans la langue.
-const engrenages = (j: Game) => j.count(path(j.t, WORKSHOP), name(j.t, 'engrenage'));
+const engrenages = (j: Game) => j.count(path(j.t, WORKSHOP), name(j.t, 'gear'));
 
 // Un avis : une phrase par ligne (grep les lit ligne par ligne).
 const shows = (text: string) => f(text, { lines: true });
@@ -24,43 +24,43 @@ export const village: Chapter = {
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'mv', 'grep', 'rm', 'touch', 'cp', 'mkdir'],
   home: M,
   names: true,
-  welcome: 'crieur.txt',
+  welcome: 'crier.txt',
   final: 'nour',
   // Dans le jeu : le levain, les engrenages, la barricade, les rats, puis Nour et sa Classe.
   steps: ['levain', 'engrenage', 'engrenages', 'barricade', 'rats', 'nour-sans-classe', 'classe', 'nour'],
   createWorld: (t) =>
     d({
-      Quai: d({
-        'crieur.txt': f(t('village-crieur')),
-        'parchemin_des_sorts.txt': f(t('village-parchemin-des-sorts')),
-        Marche: d({
-          'marchande.txt': f(t('village-marchande')),
-          'pomme': f(t('village-pomme')),
-          'pomme_2': f(t('village-pomme-2')),
-          'fromage': f(t('village-fromage'), {
+      Quay: d({
+        'crier.txt': f(t('village-crieur')),
+        'scroll_of_spells.txt': f(t('village-parchemin-des-sorts')),
+        Market: d({
+          'stallholder.txt': f(t('village-marchande')),
+          'apple': f(t('village-pomme')),
+          'apple_2': f(t('village-pomme-2')),
+          'cheese': f(t('village-fromage'), {
             isProtected: { rm: t('village-fromage-protege-rm') },
           }),
         }),
-        Boulangerie: d({
-          'boulanger.txt': f(t('village-boulanger')),
-          'levain': f(t('village-levain'), {
+        Bakery: d({
+          'baker.txt': f(t('village-boulanger')),
+          'sourdough': f(t('village-levain'), {
             isProtected: { rm: t('village-levain-protege-rm') },
           }),
         }),
-        Atelier: d({
-          'artisane.txt': f(t('village-artisane')),
+        Workshop: d({
+          'maker.txt': f(t('village-artisane')),
         }),
-        Ecole: d({
-          'institutrice.txt': f(t('village-institutrice')),
+        School: d({
+          'teacher.txt': f(t('village-institutrice')),
         }),
-        Mairie: d({
-          'greffiere.txt': f(t('village-greffiere')),
-          'avis_bal.txt': shows(t('village-avis-bal')),
-          'avis_chat.txt': shows(t('village-avis-chat')),
-          'avis_egouts.txt': shows(t('village-avis-egouts')),
-          'avis_marche.txt': shows(t('village-avis-marche')),
-          'avis_horloge.txt': shows(t('village-avis-horloge')),
-          '.paillasson': f(t('village-paillasson'), {
+        TownHall: d({
+          'clerk.txt': f(t('village-greffiere')),
+          'notice_dance.txt': shows(t('village-avis-bal')),
+          'notice_cat.txt': shows(t('village-avis-chat')),
+          'notice_sewers.txt': shows(t('village-avis-egouts')),
+          'notice_market.txt': shows(t('village-avis-marche')),
+          'notice_clock.txt': shows(t('village-avis-horloge')),
+          '.doormat': f(t('village-paillasson'), {
             read: (j) => {
               j.flags.add('cle-archives');
               return j.t('village-paillasson-lu');
@@ -68,24 +68,24 @@ export const village: Chapter = {
           }),
           Archives: d(
             {
-              'archiviste.txt': f(t('village-archiviste')),
-              'chronique.txt': f(t('village-chronique'), { lines: true }),
+              'archivist.txt': f(t('village-archiviste')),
+              'chronicle.txt': f(t('village-chronique'), { lines: true }),
             },
             (game) => (game.flags.has('cle-archives') ? null : game.t('village-archives-bloque')),
           ),
         }),
-        Ruelle: d(
+        Alley: d(
           {
             'barricade': f(t('village-barricade'), {
               isProtected: { mv: t('village-barricade-protege-mv') },
             }),
-            Cour: d(
+            Yard: d(
               {
-                'mur.txt': f(t('village-mur')),
-                Egout: d(
+                'wall.txt': f(t('village-mur')),
+                Sewer: d(
                   {
                     'rats.txt': f(t('village-rats')),
-                    Galerie: d(
+                    Tunnel: d(
                       {
                         'nour.txt': f(t('village-nour'), {
                           read: (j) => {
@@ -109,7 +109,7 @@ export const village: Chapter = {
   events: [
     {
       id: 'levain',
-      condition: (j) => j.count(path(j.t, BAKERY), name(j.t, 'levain')) >= 3,
+      condition: (j) => j.count(path(j.t, BAKERY), name(j.t, 'sourdough')) >= 3,
       message: (j) => j.t('village-evenement-levain'),
     },
     {
@@ -137,10 +137,10 @@ export const village: Chapter = {
     },
     {
       id: 'rats',
-      condition: (j) => j.exists(path(j.t, `${SEWER}/fromage`)),
+      condition: (j) => j.exists(path(j.t, `${SEWER}/cheese`)),
       action: (j) => {
         j.erase(path(j.t, `${SEWER}/rats.txt`));
-        j.erase(path(j.t, `${SEWER}/fromage`));
+        j.erase(path(j.t, `${SEWER}/cheese`));
       },
       message: (j) => j.t('village-evenement-rats'),
     },

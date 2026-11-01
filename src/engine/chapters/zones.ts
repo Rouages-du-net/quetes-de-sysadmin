@@ -97,7 +97,7 @@ export const zones: Chapter = {
     'conntrack',
   ],
   home: M,
-  welcome: 'courriel_malik.txt',
+  welcome: 'email_malik.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -108,7 +108,7 @@ export const zones: Chapter = {
     hiveWorld({
       interfaces: INTERFACES_VLAN,
       dnsmasq: DNSMASQ_VLAN,
-      home: { 'courriel_malik.txt': f(t('zones-courriel-malik')), 'notes-de-sacha.txt': f(t('zones-notes-sacha'), { lines: true }) },
+      home: { 'email_malik.txt': f(t('zones-courriel-malik')), 'notes-from-sacha.txt': f(t('zones-notes-sacha'), { lines: true }) },
     }),
   events: [
     {

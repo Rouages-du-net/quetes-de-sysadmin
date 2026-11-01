@@ -22,13 +22,13 @@ for (const language of LANGUAGES)
         lines
           .map((l) => {
             let s = c.execute(L(l)) ?? '';
-            if (c.shell.waiting) s += c.execute(L('semis-2027')) ?? '';
+            if (c.shell.waiting) s += c.execute(L('seeds-2027')) ?? '';
             return s;
           })
           .join('\n');
       const write = (file: string, change: (text: string) => string) => {
         c.execute(`sudo nano ${file}`);
-        if (c.shell.waiting) c.execute(L('semis-2027'));
+        if (c.shell.waiting) c.execute(L('seeds-2027'));
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
@@ -174,7 +174,7 @@ for (const language of LANGUAGES)
       const CNAME = 'nm1._domainkey IN CNAME nm1.dkim.newsmail.example.';
       it('solution : lire les rapports, déléguer nm1, passer à quarantine', () => {
         const { c, jouer: play, ecrire: write } = part(['postman', 'signature'], 'policy');
-        let all = play(['ls rapports_dmarc', 'grep source_ip rapports_dmarc/mailbox.example-2027-05-16.xml', 'dig TXT _dmarc.gardens.example +short']);
+        let all = play(['ls dmarc_reports', 'grep source_ip dmarc_reports/mailbox.example-2027-05-16.xml', 'dig TXT _dmarc.gardens.example +short']);
         expect(all).toContain('<source_ip>198.51.100.77</source_ip>');
         expect(all).toContain('"v=DMARC1; p=none; rua=mailto:dmarc@gardens.example"');
         if (fr) expect(all).toContain('alignement');

@@ -14,7 +14,7 @@ import type { Game } from '../shell';
 import { newSystemd, systemd, type Systemd } from '../systemd';
 import { datacenterAccounts, NGINX_LOG } from './first-day';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LOGS = '/var/log/catalogue';
 
 const NGINX = 'A high performance web server and a reverse proxy server';
@@ -84,10 +84,10 @@ export const reboot: Chapter = {
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'ps', 'systemctl', 'journalctl', 'chown', 'chmod', 'nano', 'sudo', 'reboot', 'whoami'],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
-  password: 'bienvenue-2026',
+  password: 'welcome-2026',
   accounts: () => {
     const c = datacenterAccounts();
     c.groups.adm.members.push('malo');
@@ -99,7 +99,7 @@ export const reboot: Chapter = {
     return d(
       {
         etc: d(accountsFiles(), undefined, root),
-        home: d({ vous: d({ 'courriel_awa.txt': f(t('reboot-night-courriel-awa')), 'notes_awa.txt': f(t('reboot-night-notes-awa')) }) }, undefined, root),
+        home: d({ you: d({ 'email_awa.txt': f(t('reboot-night-courriel-awa')), 'notes_awa.txt': f(t('reboot-night-notes-awa')) }) }, undefined, root),
         var: d(
           {
             log: d(

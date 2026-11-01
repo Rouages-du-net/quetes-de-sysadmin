@@ -26,7 +26,7 @@ import { newSystemd } from '../systemd';
 import { includedFiles, read, permitted } from '../sudoers';
 import { cooperativeAccounts, M, NOW, cooperativeWorld, PASSWORD } from './coop';
 
-const STATEMENTS = '/srv/till/releves';
+const STATEMENTS = '/srv/till/statements';
 const RESTART = '/usr/bin/systemctl restart till';
 const TEAM = ['lina', 'karim'];
 const sh = (j: Game) => j as Shell;
@@ -167,7 +167,7 @@ export const rights: Chapter = {
     'journalctl',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   // Dans l'ordre du courriel d'Awa : le dossier, le masque, puis sudo.
@@ -187,7 +187,7 @@ export const rights: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('shared-rights-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('shared-rights-courriel-awa')) },
       homes: {
         lina: d({ '.profile': file(PROFILE, 'lina') }, undefined, { owner: 'lina', mode: 'rwxr-x---' }),
         karim: d({ '.profile': file(PROFILE, 'karim') }, undefined, { owner: 'karim', mode: 'rwxr-x---' }),
@@ -202,7 +202,7 @@ export const rights: Chapter = {
           {
             till: d(
               {
-                releves: d(
+                statements: d(
                   {
                     '2027-10-17.txt': file(t('shared-rights-releve-17'), 'lina', 'lina'),
                     '2027-10-18.txt': file(t('shared-rights-releve-18'), 'karim', 'karim'),

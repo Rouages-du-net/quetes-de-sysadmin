@@ -9,7 +9,7 @@
 
 import { d, f, type Chapter } from '../world';
 
-const M = '/home/vous';
+const M = '/home/you';
 const SITE = 'letters.example';
 const IP_SITE = '203.0.113.10';
 
@@ -27,7 +27,7 @@ export const pkg: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
   home: M,
-  welcome: 'note_de_kofi.txt',
+  welcome: 'note_from_kofi.txt',
   names: true,
   final: 'curl',
   password: 'anthill',
@@ -61,9 +61,9 @@ export const pkg: Chapter = {
       {
         home: d(
           {
-            vous: d({
-              'note_de_kofi.txt': f(t('lost-packet-note-de-kofi')),
-              'carnet.txt': f(t('lost-packet-carnet')),
+            you: d({
+              'note_from_kofi.txt': f(t('lost-packet-note-de-kofi')),
+              'notebook.txt': f(t('lost-packet-carnet')),
             }),
           },
           undefined,

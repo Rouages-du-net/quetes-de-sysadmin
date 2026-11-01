@@ -92,7 +92,7 @@ export const exposure: Chapter = {
   number: 3,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'ps', 'id', 'whoami', 'nano', 'sudo', 'systemctl', 'journalctl', 'ss', 'ufw'],
   home: M,
-  welcome: 'courriel_salome.txt',
+  welcome: 'email_salome.txt',
   names: true,
   final: 'fin',
   steps: ['ecoute', 'pare-feu', 'redis-local', 'fin'],
@@ -124,7 +124,7 @@ export const exposure: Chapter = {
   createWorld: (t) =>
     bakeryWorld(t, {
       withoutLucas: true,
-      home: { 'courriel_salome.txt': f(t('exposure-courriel-salome')), 'balayage-audit.txt': f(SCAN, { lines: true }) },
+      home: { 'email_salome.txt': f(t('exposure-courriel-salome')), 'audit_scan.txt': f(SCAN, { lines: true }) },
       etc: { redis: d({ 'redis.conf': f(REDIS_CONFIG, { lines: true, owner: 'redis', group: 'redis', mode: 'rw-r-----' }) }, undefined, { owner: 'root' }) },
       ssh: { 'sshd_config.d': d({ '00-hardening.conf': file('PermitRootLogin no', 'root') }, undefined, { owner: 'root' }) },
     }),

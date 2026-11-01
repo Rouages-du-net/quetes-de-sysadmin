@@ -23,21 +23,21 @@ backup-mot-de-maelle =
 
     On m'a parlé de rsync et de cron. Tu trouveras tout dans man rsync et
     man crontab. »
-backup-souvenir-premiere-lettre =
+backup-souvenir-first-letter =
     La première lettre arrivée au Port après le retour de la lumière. Elle
     commence par : « Chère Maëlle, nous avons vu le Phare depuis le large… »
-backup-souvenir-phare =
+backup-souvenir-lighthouse =
     Le soir où le Phare s'est rallumé : un faisceau qui balaie la mer, et la
     capitaine Ana qui hisse la voile.
-backup-souvenir-bourg =
+backup-souvenir-village =
     Le Bourg en fête : le levain sauvé, l'horloge qui repart, l'école
     retrouvée.
 backup-souvenir-nour =
     Nour, retrouvée dans la Galerie, qui rit en mangeant du fromage.
-backup-souvenir-effaceur =
+backup-souvenir-eraser =
     L'Effaceur qui vide enfin la Corbeille, comme au premier jour, et rien
     d'autre.
-backup-souvenir-fete-du-phare =
+backup-souvenir-lighthouse-festival =
     La fête du Phare, aujourd'hui : tout le royaume sur la Jetée, et des
     lampions jusqu'à la Lanterne.
 

@@ -47,11 +47,11 @@ manuscript-commit-4 = Morning backup
 
 ## The poems (poems directory)
 
-manuscript-poeme-mer =
+manuscript-poeme-sea =
     The sea stitches up
     the edges of the world
     with a thread of foam.
-manuscript-poeme-phare =
+manuscript-poeme-lighthouse =
     An eye that turns
     in the sailors' night:
     it never sleeps.

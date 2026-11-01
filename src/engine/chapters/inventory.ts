@@ -43,11 +43,11 @@ export const inventory: Chapter = {
   number: 1,
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'cp', 'nano', 'sudo', 'id', 'whoami', 'ssh', 'exit', 'ansible', 'ansible-inventory', 'ansible-doc'],
   home: M,
-  welcome: 'courriel_theo.txt',
+  welcome: 'email_theo.txt',
   names: true,
   final: 'fin',
   steps: ['cle-hote', 'compte', 'manque', 'fin'],
-  password: 'quartiers-2027',
+  password: 'districts-2027',
   accounts: pilotAccounts,
   hosts: Object.fromEntries(NAMES.map((n) => [n, centre(n)])),
   state: pilotState,
@@ -55,7 +55,7 @@ export const inventory: Chapter = {
     pilotWorld(t, {
       known: [],
       ansible: { 'ansible.cfg': f(CFG, { lines: true }), 'inventory.ini': f(INVENTORY, { lines: true }) },
-      home: { 'courriel_theo.txt': f(t('inventory-courriel-theo')) },
+      home: { 'email_theo.txt': f(t('inventory-courriel-theo')) },
     }),
   events: [
     { id: 'sans-config', condition: (j) => seen(j, 'No inventory was parsed'), message: (j) => j.t('inventory-evenement-sans-config') },

@@ -166,7 +166,7 @@ export const automatic: Chapter = {
     'ps',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -235,7 +235,7 @@ export const automatic: Chapter = {
   createWorld: (t) =>
     cooperativeWorld({
       withoutMarc: true,
-      home: { 'courriel_awa.txt': f(t('auto-updates-courriel-awa')) },
+      home: { 'email_awa.txt': f(t('auto-updates-courriel-awa')) },
       etc: {
         ...nginxCooperative(SITE),
         apt: d(

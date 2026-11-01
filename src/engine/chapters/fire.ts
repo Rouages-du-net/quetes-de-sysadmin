@@ -19,8 +19,8 @@ import type { Translate } from '../../texts';
 import { newSystemd, systemd } from '../systemd';
 import { httpRequest } from '../nginx';
 
-const M = '/home/vous';
-const BACKUPS = '/mnt/sauvegarde';
+const M = '/home/you';
+const BACKUPS = '/mnt/backup';
 const SITE = 'medialibrary.example';
 const ROBOT = '198.51.100.77';
 // Les sauvegardes de chaque nuit (0 h 30) ; celle de cette nuit a été coupée
@@ -32,14 +32,14 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you'] },
     'www-data': { gid: 33, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
   },
 });
 
@@ -121,10 +121,10 @@ export const fire: Chapter = {
     'whoami',
   ],
   home: M,
-  welcome: 'courriel_awa.txt',
+  welcome: 'email_awa.txt',
   names: true,
   final: 'fin',
-  password: 'bienvenue-2026',
+  password: 'welcome-2026',
   // Une machine neuve : la clé d'hôte n'est plus celle que le poste connaît.
   hostKey: '-apres-incendie',
   accounts,
@@ -171,10 +171,10 @@ export const fire: Chapter = {
           }),
         }),
       }),
-      home: place({ vous: d({ 'courriel_awa.txt': f(t('fire-courriel-awa')) }) }),
+      home: place({ you: d({ 'email_awa.txt': f(t('fire-courriel-awa')) }) }),
       mnt: place({
-        sauvegarde: place({
-          'PRA.txt': f(t('fire-pra'), { owner: 'root' }),
+        backup: place({
+          'DRP.txt': f(t('fire-pra'), { owner: 'root' }),
           [`medialibrary-${ARCHIVES[0]}.tar.gz`]: backup(t, 1, 48_213),
           [`medialibrary-${ARCHIVES[1]}.tar.gz`]: backup(t, 2, 48_390),
           // Coupée après les trois fichiers de configuration.

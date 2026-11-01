@@ -29,7 +29,7 @@ import { WELCOME, MIME, NGINX_CONF, SITE_BY_DEFAULT } from '../commands/apt';
 import type { Firewall } from '../firewall';
 import type { Listening } from '../commands/ss';
 
-const M = '/home/vous';
+const M = '/home/you';
 const LETTERS = 'letters.example';
 const CAFE = 'cafe.example';
 const WORKSHOP = 'repair.example';
@@ -38,15 +38,15 @@ const accounts = (): Accounts => ({
   users: {
     root: { uid: 0, group: 'root', home: '/root' },
     'www-data': { uid: 33, group: 'www-data', home: '/var/www', shell: '/usr/sbin/nologin' },
-    vous: { uid: 1000, group: 'vous' },
+    you: { uid: 1000, group: 'you' },
     rania: { uid: 1001, group: 'rania' },
   },
   groups: {
     root: { gid: 0, members: [] },
-    adm: { gid: 4, members: ['vous'] },
-    sudo: { gid: 27, members: ['vous', 'rania'] },
+    adm: { gid: 4, members: ['you'] },
+    sudo: { gid: 27, members: ['you', 'rania'] },
     'www-data': { gid: 33, members: [] },
-    vous: { gid: 1000, members: [] },
+    you: { gid: 1000, members: [] },
     rania: { gid: 1001, members: [] },
   },
 });
@@ -165,11 +165,11 @@ export const workshop: Chapter = {
     'a2disconf',
   ],
   home: M,
-  welcome: 'courriel_kofi.txt',
+  welcome: 'email_kofi.txt',
   names: true,
   final: 'fin',
   steps: ['occupe', 'ecoute', 'site', 'proxy', 'reecriture', 'fin'],
-  password: 'fourmis-2026',
+  password: 'ants-2026',
   accounts,
   state: () => ({
     // SSH écoute sur 2222 depuis « Le port ».
@@ -263,7 +263,7 @@ export const workshop: Chapter = {
         ),
       }),
       home: place({
-        vous: d({ 'courriel_kofi.txt': f(t('repair-cafe-courriel-kofi')), 'note_de_rania.txt': f(t('repair-cafe-note-de-rania')) }),
+        you: d({ 'email_kofi.txt': f(t('repair-cafe-courriel-kofi')), 'note_from_rania.txt': f(t('repair-cafe-note-de-rania')) }),
         rania: place({}, { owner: 'rania', mode: 'rwx------' }),
       }),
       usr: place({

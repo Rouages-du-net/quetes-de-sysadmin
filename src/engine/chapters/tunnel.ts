@@ -61,7 +61,7 @@ export const tunnel: Chapter = {
   plan: homePlan(),
   commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'id', 'whoami', 'hostname', 'ssh'],
   home: M,
-  welcome: 'courriel_yasmine.txt',
+  welcome: 'email_yasmine.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -95,7 +95,7 @@ export const tunnel: Chapter = {
     }),
     archives: internalHost('archives', '10.20.0.12'),
   },
-  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'courriel_yasmine.txt': f(t('tunnel-courriel-yasmine')), '.ssh': sshDirectory() } }),
+  createWorld: (t) => homeWorld({ passwords: 'no', home: { 'email_yasmine.txt': f(t('tunnel-courriel-yasmine')), '.ssh': sshDirectory() } }),
   events: [
     { id: 'publicite', condition: approvedAdvert, message: (j) => j.t('tunnel-evenement-publicite', { compte: ADVERT }) },
     { id: 'validees', condition: (j) => approved(j) && !approvedAdvert(j), message: (j) => j.t('tunnel-evenement-validees') },

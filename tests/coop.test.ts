@@ -10,7 +10,7 @@ import { inLanguage, machinesInLanguage } from './names';
 
 // L'Effaceur, puis les chapitres à finir pour recevoir la clé de l'histoire.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('coop')])];
-const MDP = 'radis-2027';
+const MDP = 'radish-2027';
 
 for (const language of LANGUAGES)
   describe(`La Coopérative — ${language}`, () => {
@@ -40,7 +40,7 @@ for (const language of LANGUAGES)
       const { c, jouer: play, editer: edit } = part();
       let all = play(['who', 'ps -u marc', 'sudo crontab -l -u marc', 'sudo cat /home/deploy/.ssh/authorized_keys']);
       expect(all).toContain('marc     pts/1');
-      expect(all).toContain(L('30 2 * * * /home/marc/bin/sauvegarde-caisse.sh'));
+      expect(all).toContain(L('30 2 * * * /home/marc/bin/till-backup.sh'));
       expect(all).toContain('marc@portable');
       all = play(['sudo usermod -L marc']);
       contains(all, 'usermod -L n');
@@ -57,16 +57,16 @@ for (const language of LANGUAGES)
       expect(all).not.toContain('marc     pts/1');
       contains(all, 'Marc ne peut plus entrer');
       expect(c.finished).not.toContain('departure');
-      play(['sudo cp /home/marc/bin/sauvegarde-caisse.sh /usr/local/bin/']);
-      all = edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
+      play(['sudo cp /home/marc/bin/till-backup.sh /usr/local/bin/']);
+      all = edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/till-backup.sh\n'));
       contains(all, 'https://man7.org/linux/man-pages/man8/usermod.8.html');
       expect(c.finished).toContain('departure');
     });
 
     it('chapitre 1 — autre solution : /etc/cron.d, puis userdel -r', () => {
       const { c, jouer: play, editer: edit } = part();
-      play(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/sauvegarde-caisse.sh /opt/coop/']);
-      edit('sudo nano /etc/cron.d/sauvegarde-till', () => L('30 2 * * * root /opt/coop/sauvegarde-caisse.sh\n'));
+      play(['sudo mkdir -p /opt/coop', 'sudo cp /home/marc/bin/till-backup.sh /opt/coop/']);
+      edit('sudo nano /etc/cron.d/sauvegarde-till', () => L('30 2 * * * root /opt/coop/till-backup.sh\n'));
       edit('sudo nano /home/deploy/.ssh/authorized_keys', (t) =>
         t
           .split('\n')
@@ -86,12 +86,12 @@ for (const language of LANGUAGES)
       play(['sudo pkill -u marc']);
       all = play(['sudo userdel -r marc']);
       contains(all, 'Le dossier de Marc a disparu');
-      play(['sudo cp /srv/sauvegardes/2027-10-18/home/marc/bin/sauvegarde-caisse.sh /home/vous/']);
-      all = edit('crontab -e', (t) => t + L('30 2 * * * /home/vous/sauvegarde-caisse.sh\n'));
+      play(['sudo cp /srv/backups/2027-10-18/home/marc/bin/till-backup.sh /home/you/']);
+      all = edit('crontab -e', (t) => t + L('30 2 * * * /home/you/till-backup.sh\n'));
       contains(all, 'TA crontab');
       expect(c.finished).not.toContain('departure');
-      play(['sudo cp /home/vous/sauvegarde-caisse.sh /usr/local/bin/']);
-      edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/sauvegarde-caisse.sh\n'));
+      play(['sudo cp /home/you/till-backup.sh /usr/local/bin/']);
+      edit('sudo crontab -e', (t) => t + L('30 2 * * * /usr/local/bin/till-backup.sh\n'));
       // deploy est toujours vide : la CI et Lina sont bloquées.
       expect(c.finished).not.toContain('departure');
     });
@@ -99,13 +99,13 @@ for (const language of LANGUAGES)
     const DEPARTURE = ['departure'];
     const RULE = '%till ALL=(root) /usr/bin/systemctl restart till\n';
     const shareDirectory = (play: (l: string[]) => string) =>
-      play(['sudo chgrp -R till /srv/till/releves', 'sudo chmod -R g+w /srv/till/releves', 'sudo chmod g+s /srv/till/releves']);
+      play(['sudo chgrp -R till /srv/till/statements', 'sudo chmod -R g+w /srv/till/statements', 'sudo chmod g+s /srv/till/statements']);
 
     it('chapitre 2 — solution : setgid, umask dans ~/.profile, visudo (avec une erreur corrigée)', () => {
       const { c, jouer: play, editer: edit } = part(DEPARTURE);
-      let all = play(['ls -l /srv/till/releves', 'groups lina karim']);
+      let all = play(['ls -l /srv/till/statements', 'groups lina karim']);
       expect(all).toContain('-rw-r--r-- lina     lina');
-      all = shareDirectory(play) + play(['ls -ld /srv/till/releves']);
+      all = shareDirectory(play) + play(['ls -ld /srv/till/statements']);
       expect(all).toContain('drwxrwsr-x root     till');
       for (const who of ['lina', 'karim']) edit(`sudo nano /home/${who}/.profile`, (t) => t.replace('#umask 022', 'umask 002'));
       all = play(['which systemctl', 'sudo visudo -f /etc/sudoers.d/till']);
@@ -124,8 +124,8 @@ for (const language of LANGUAGES)
 
     it('chapitre 2 — autre solution : chmod 2775, /etc/profile.d, un alias de commande', () => {
       const { c, jouer: play, editer: edit } = part(DEPARTURE);
-      play(['sudo chgrp -R till /srv/till/releves', 'sudo chmod 2775 /srv/till/releves']);
-      play(['sudo chmod g+w /srv/till/releves/2027-10-17.txt /srv/till/releves/2027-10-18.txt']);
+      play(['sudo chgrp -R till /srv/till/statements', 'sudo chmod 2775 /srv/till/statements']);
+      play(['sudo chmod g+w /srv/till/statements/2027-10-17.txt /srv/till/statements/2027-10-18.txt']);
       edit('sudo nano /etc/profile.d/umask-equipe.sh', () => 'umask 002\n');
       edit(
         'sudo visudo -f /etc/sudoers.d/till',
@@ -254,10 +254,10 @@ for (const language of LANGUAGES)
       expect(all).toContain("5 packages can be upgraded. Run 'apt list --upgradable' to see them.");
       expect(all).toContain('linux-image-amd64/trixie-security 6.12.48-1 amd64 [upgradable from: 6.12.38-1]');
       play(['tmux new -s maj']);
-      expect(c.prompt()).toBe(L('[maj] vous@coop:~$'));
+      expect(c.prompt()).toBe(L('[maj] you@coop:~$'));
       all = play(['sudo apt upgrade', 'y']);
       expect(all).toContain('client_loop: send disconnect: Broken pipe');
-      expect(c.prompt()).toBe(L('vous@desk:~$'));
+      expect(c.prompt()).toBe(L('you@desk:~$'));
       all = play(['ssh coop', 'tmux ls', 'tmux attach -t maj']);
       contains(all, 'la mise à jour tournait dans tmux');
       expect(all).toContain('maj: 1 windows');
@@ -293,7 +293,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('sessions should be nested with care, unset $TMUX to force');
       all = play(['exit']);
       expect(all).toContain('[exited]');
-      expect(c.prompt()).toBe(L('vous@coop:~$'));
+      expect(c.prompt()).toBe(L('you@coop:~$'));
       play(['tmux new -s maj', 'sudo apt update', 'sudo apt upgrade -y', 'ssh coop', 'sudo systemctl enable till']);
       all = play(['uname -r']);
       expect(all).toContain('6.12.38+deb13-amd64');

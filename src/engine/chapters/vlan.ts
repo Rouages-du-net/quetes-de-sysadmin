@@ -66,7 +66,7 @@ export const vlan: Chapter = {
     'journalctl',
   ],
   home: M,
-  welcome: 'courriel_malik.txt',
+  welcome: 'email_malik.txt',
   names: true,
   final: 'fin',
   password: PASSWORD,
@@ -77,7 +77,7 @@ export const vlan: Chapter = {
     hiveWorld({
       interfaces: FLAT_A_INTERFACES,
       dnsmasq: FLAT_A_DNSMASQ,
-      home: { 'courriel_malik.txt': f(t('vlan-courriel-malik')), 'plan-commutateur.txt': f(t('vlan-plan-commutateur'), { lines: true }) },
+      home: { 'email_malik.txt': f(t('vlan-courriel-malik')), 'switch-plan.txt': f(t('vlan-plan-commutateur'), { lines: true }) },
     }),
   events: [
     { id: 'mauvais-numero', condition: badNumber, message: (j) => j.t('vlan-evenement-mauvais-numero') },

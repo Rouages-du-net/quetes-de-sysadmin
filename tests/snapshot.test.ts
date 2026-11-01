@@ -14,20 +14,20 @@ describe('Instantané de secours', () => {
     c.execute('ssh royaume');
     c.execute('yes');
     expect(c.not).toBe(0);
-    c.execute(L('mv Jetee/filet Port/Hangar'));
+    c.execute(L('mv Pier/net Harbour/Boathouse'));
     const point = c.not!;
-    const before = c.execute(L('ls -a Port/Remise'));
+    const before = c.execute(L('ls -a Harbour/Storeroom'));
     // Une erreur après l'instantané : l'ampoule part au mauvais endroit.
-    c.execute(L('mv Port/Remise/.ampoule_de_secours Port/Hangar'));
-    expect(c.execute(L('ls -a Port/Remise'))).not.toBe(before);
+    c.execute(L('mv Harbour/Storeroom/.spare_bulb Harbour/Boathouse'));
+    expect(c.execute(L('ls -a Harbour/Storeroom'))).not.toBe(before);
     const serial = c.serial;
     expect(c.restore(point)).toBe(true);
     expect(c.serial).toBe(serial);
     expect(c.not).toBe(point);
-    expect(c.execute(L('ls -a Port/Remise'))).toBe(before);
+    expect(c.execute(L('ls -a Harbour/Storeroom'))).toBe(before);
     // Le filet déplacé avant l'instantané est toujours au Hangar.
-    expect(c.execute(L('ls Port/Hangar'))).toContain(L('filet'));
-    c.execute(L('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule'));
+    expect(c.execute(L('ls Harbour/Boathouse'))).toContain(L('net'));
+    c.execute(L('mv Harbour/Storeroom/.spare_bulb Pier/Lighthouse/Stairs/Lantern/bulb'));
     expect(c.remote!.shell.finished).toBe(true);
   });
 
