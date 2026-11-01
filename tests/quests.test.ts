@@ -605,7 +605,7 @@ for (const language of LANGUAGES)
         const conflict = s.execute('sudo nginx -t') ?? '';
         expect(conflict).toContain('nginx: [warn] conflicting server name "letters.example" on 0.0.0.0:80, ignored');
         contains(conflict, 'deux sites répondent au même nom');
-        modify(s, '/etc/nginx/sites-available/cafe', /lettres|letters/g, 'cafe');
+        modify(s, '/etc/nginx/sites-available/cafe', /letters/g, 'cafe');
         s.execute('sudo systemctl reload nginx');
         if (reference) expect(s.execute('curl -H "Host: cafe.example" http://127.0.0.1')).toContain('Le café associatif');
         modify(s, '/etc/nginx/sites-available/letters', '    location / {', '    location /agenda/ {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location / {');
@@ -619,7 +619,9 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
         modify(s, '/etc/nginx/sites-available/letters', 'proxy_pass http://127.0.0.1:3000;', 'proxy_pass http://127.0.0.1:3000/;');
         s.execute('sudo systemctl reload nginx');
-        if (reference) expect(s.execute('curl http://letters.example/agenda/ateliers')).toContain('Les ateliers');
+        const workshops = s.execute(L('curl http://letters.example/agenda/workshops')) ?? '';
+        expect(workshops).toContain('<h1>');
+        contains(workshops, 'Les ateliers');
         expect(s.finished).toBe(true);
       });
 
@@ -721,8 +723,8 @@ for (const language of LANGUAGES)
 
       it('another solution: the zone in conf.d, the limit on the whole site, 1 request per second', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
-        s.execute('echo "limit_req_zone $binary_remote_addr zone=lettres:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limites.conf');
-        modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=lettres burst=20 nodelay;\n    root /var/www/letters;'));
+        s.execute('echo "limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limits.conf');
+        modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);
       });

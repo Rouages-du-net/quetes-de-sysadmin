@@ -283,3 +283,7 @@ name-message_from_theo-txt = message_from_theo.txt
 
 ## The Patch
 name-message_from_ines-txt = message_from_ines.txt
+
+## The Neighbourhood Letters (the calendar's routes, "Sharing a home" and "Concert night")
+name-week = week
+name-workshops = workshops

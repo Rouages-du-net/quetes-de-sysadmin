@@ -106,7 +106,7 @@ const IN_DIRECT = [
 // The internet's background noise: scanners that try one or two names then
 // move on to another target (too few for fail2ban). Documentation addresses.
 const SCANNERS = ['203.0.113.', '192.0.2.', '198.51.100.'];
-const COURANTS_ACCOUNTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
+const COMMON_ACCOUNTS = ['root', 'admin', 'pi', 'oracle', 'test', 'ubuntu', 'support', 'user'];
 const scanner = (n: number) => `${SCANNERS[n % 3]}${150 + ((n * 37) % 50)}`;
 // Since when each bot has been banned (to release it at the end of the bantime).
 const since = (j: Game): Record<string, number> => (j.state.bannedSince ??= {}) as Record<string, number>;
@@ -134,7 +134,7 @@ function robotsInDirect(j: Game, forEachOf: number, a: number) {
   const scanners = instants(forEachOf, a, 9).map((t) => {
     const k = Math.floor(t / 9000);
     const n = Math.floor(k / 2);
-    return { t, r: { ip: scanner(n), period: 9, accounts: [COURANTS_ACCOUNTS[(n + (k % 2)) % COURANTS_ACCOUNTS.length]] } };
+    return { t, r: { ip: scanner(n), period: 9, accounts: [COMMON_ACCOUNTS[(n + (k % 2)) % COMMON_ACCOUNTS.length]] } };
   });
   const attempts = [...IN_DIRECT.flatMap((r) => instants(forEachOf, a, r.period).map((t) => ({ t, r }))), ...scanners].sort((x, y) => x.t - y.t);
   for (const { t, r } of attempts) {

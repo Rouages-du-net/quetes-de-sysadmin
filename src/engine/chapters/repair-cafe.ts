@@ -1,8 +1,8 @@
-// Story "Les Lettres du quartier" — chapter "The repair workshop":
+// Story "The Neighbourhood Letters" — chapter "The Repair Café":
 // Apache, to compare with nginx. The repair workshop's site leaves
 // its old host; it ran under Apache, with a .htaccess that
 // rewrites the short addresses of the guides (/guide/42, printed on the
-// posters). Rania installed apache2 on the Lettres server, but it doesn't
+// posters). Rania installed apache2 on the Letters server, but it doesn't
 // start: nginx already holds port 80. We put it behind nginx, on
 // 127.0.0.1:8080, like the calendar.
 // Commands: systemctl status, journalctl -u apache2, ss -tlnp, ports.conf
@@ -91,7 +91,7 @@ const HTACCESS = `RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^guide/([0-9]+)/?$ guides/$1.html [L]`;
 
-// The chapter's machines: SSH on 2222 ("Le port"), nginx on 80 and 443.
+// The chapter's machines: SSH on 2222 ("The port"), nginx on 80 and 443.
 const LISTENING: Listening[] = [
   { proto: 'tcp', address: '0.0.0.0', port: 2222, process: 'sshd', pid: 612 },
   { proto: 'tcp', address: '[::]', port: 2222, process: 'sshd', pid: 612 },
@@ -172,7 +172,7 @@ export const workshop: Chapter = {
   password: 'ants-2026',
   accounts,
   state: () => ({
-    // SSH has listened on 2222 since "Le port".
+    // SSH has listened on 2222 since "The port".
     sshd: { load: { port: '2222' }, reloads: 0 },
     listening: LISTENING.map((e) => ({ ...e })),
     ufw: {

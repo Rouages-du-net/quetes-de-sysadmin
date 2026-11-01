@@ -285,3 +285,7 @@ name-message_from_theo-txt = message_de_theo.txt
 
 ## La Rustine
 name-message_from_ines-txt = message_de_ines.txt
+
+## Les Lettres du quartier (les pages de l'agenda, « La colocation » et « Le soir du concert »)
+name-week = semaine
+name-workshops = ateliers

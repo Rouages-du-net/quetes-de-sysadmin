@@ -1,4 +1,4 @@
-// Les Lettres du quartier, "The repair workshop": Apache behind
+// The Neighbourhood Letters, "The Repair Café": Apache behind
 // nginx. Replayed in each language: the solution, another one (the rules in
 // the VirtualHost, nginx passing the name), and the false leads.
 
@@ -36,11 +36,11 @@ for (const language of LANGUAGES)
       // SSH has listened on 2222 since "Le port".
       play(['ssh -p 2222 letters', 'yes']);
       expect(c.remote?.shell.chapter.id).toBe('repair-cafe');
-      return { c, jouer: play, ecrire: write };
+      return { c, play, write };
     };
 
     it('solution: the port, the site, nginx in front, AllowOverride and mod_rewrite', () => {
-      const { c, jouer: play, ecrire: write } = part();
+      const { c, play, write } = part();
       let all = play(['systemctl status apache2', 'journalctl -u apache2', 'sudo ss -tlnp']);
       expect(all).toContain('(98)Address already in use: AH00072: make_sock: could not bind to address [::]:80');
       expect(all).toContain('users:(("nginx",pid=701,fd=3))');
@@ -62,7 +62,7 @@ for (const language of LANGUAGES)
       all = play(['sudo systemctl reload apache2', 'sudo apache2ctl -S', 'curl -H "Host: repair.example" http://127.0.0.1:8080/']);
       expect(all).toContain('127.0.0.1:8080         repair.example (/etc/apache2/sites-enabled/repair.conf:1)');
       expect(all).toContain(c.t('repair-cafe-site-welcome'));
-      // nginx doesn't have the site yet: the visit lands on the Lettres (default site).
+      // nginx doesn't have the site yet: the visit lands on the Letters (default site).
       all = play(['sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/', 'sudo nginx -t', 'sudo systemctl reload nginx', 'curl http://repair.example/']);
       expect(all).toContain(c.t('repair-cafe-site-welcome'));
       all = play(['curl http://repair.example/guide/42']);
@@ -84,7 +84,7 @@ for (const language of LANGUAGES)
     });
 
     it('another solution: the default site on 8080 too, nginx passes the name, the rules in the VirtualHost', () => {
-      const { c, jouer: play, ecrire: write } = part();
+      const { c, play, write } = part();
       write('/etc/apache2/ports.conf', (t) => t.replace('Listen 80', 'Listen 127.0.0.1:8080'));
       // As the comment in ports.conf says: 000-default's VirtualHost too.
       write('/etc/apache2/sites-available/000-default.conf', (t) => t.replace('*:80', '*:8080'));
@@ -110,15 +110,15 @@ for (const language of LANGUAGES)
     });
 
     it('false leads: Apache on all addresses, insufficient AllowOverride, a looping .htaccess', () => {
-      const { c, jouer: play, ecrire: write } = part();
+      const { c, play, write } = part();
       write('/etc/apache2/ports.conf', (t) => t.replace('Listen 80', 'Listen 8080'));
       write(REPAIR, (t) => t.replace('*:80', '*:8080').replace('</VirtualHost>', DIRECTORY.replace('AllowOverride All', 'AllowOverride AuthConfig')));
       let all = play(['sudo a2ensite repair', 'sudo a2enmod rewrite', 'sudo systemctl restart apache2', 'sudo ss -tlnp']);
       expect(all).toContain('*:8080');
       if (fr) expect(all).toContain('toutes les adresses');
-      all = play(['sudo a2enmod rewrite', 'sudo a2ensite nulle-part']);
+      all = play(['sudo a2enmod rewrite', 'sudo a2ensite nowhere']);
       expect(all).toContain('Module rewrite already enabled');
-      expect(all).toContain('ERROR: Site nulle-part does not exist!');
+      expect(all).toContain('ERROR: Site nowhere does not exist!');
       play(['sudo ln -s /etc/nginx/sites-available/repair /etc/nginx/sites-enabled/', 'sudo systemctl reload nginx']);
       all = play(['curl http://repair.example/guide/42', 'sudo tail -1 /var/log/apache2/repair-error.log']);
       expect(all).toContain('/var/www/repair/.htaccess: RewriteEngine not allowed here');
@@ -138,7 +138,7 @@ for (const language of LANGUAGES)
     });
 
     it('the commands: manual, --help, failing configtest, graceful refused', () => {
-      const { jouer: play, ecrire: write } = part();
+      const { play, write } = part();
       let all = play(['man a2ensite', 'apache2ctl --help', 'man -k apache', 'apache2ctl -x']);
       expect(all).toContain('a2ensite');
       expect(all).toContain('apache2ctl');

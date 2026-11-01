@@ -1,4 +1,4 @@
-// Story "Les Lettres du quartier" — chapter "The flatshare": virtual hosts
+// Story "The Neighbourhood Letters" — chapter "Sharing a home": virtual hosts
 // and reverse proxy with nginx. The community café wants its site,
 // cafe.example, on the Letters' server; and Rania's workshop calendar (a
 // small Node.js program listening on 127.0.0.1:3000) must be published
@@ -14,7 +14,8 @@
 // https://nginx.org/en/docs/http/server_names.html,
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, accountsFiles, name, type Chapter, type Accounts, type Rights } from '../world';
+import type { Translate } from '../../texts';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx, type App } from '../nginx';
@@ -57,6 +58,16 @@ const LETTERS_CONF = `server {
     }
 }`;
 
+// Rania's workshop calendar (also in "Concert night"): its program, its
+// service and its pages, named in the game's language.
+export const agendaProgram = (t: Translate) => `node /opt/agenda/${name(t, 'server.js')}`;
+export const agendaDescription = (t: Translate) => t('sharing-agenda-description');
+export const agendaPages = (t: Translate) => ({
+  '/': t('sharing-agenda-welcome'),
+  [`/${name(t, 'week')}`]: t('sharing-agenda-week'),
+  [`/${name(t, 'workshops')}`]: t('sharing-agenda-workshops'),
+});
+
 const sd = (j: Game) => systemd(j)!;
 const page = (j: Game, host: string, path = '/') => httpRequest(j, host, path, 80, false);
 const serves = (j: Game, host: string, path: string, text: string) => {
@@ -66,7 +77,7 @@ const serves = (j: Game, host: string, path: string, text: string) => {
 const servedCafe = (j: Game) => serves(j, CAFE, '/', j.t('sharing-site-cafe'));
 const servedLetters = (j: Game) => serves(j, LETTERS, '/', j.t('sharing-site-letters'));
 const servedAgenda = (j: Game) =>
-  serves(j, LETTERS, '/agenda/', j.t('sharing-agenda-welcome')) && serves(j, LETTERS, '/agenda/semaine', j.t('sharing-agenda-week'));
+  serves(j, LETTERS, '/agenda/', j.t('sharing-agenda-welcome')) && serves(j, LETTERS, `/agenda/${name(j.t, 'week')}`, j.t('sharing-agenda-week'));
 const lastCurl = (j: Game) => j.last.commands.some((c) => c[0] === 'curl');
 
 export const colocation: Chapter = {
@@ -126,11 +137,11 @@ export const colocation: Chapter = {
       },
       // Rania installed it, but never started it.
       agenda: {
-        description: 'Agenda des ateliers (Node.js)',
+        description: agendaDescription(t),
         state: 'inactive',
         active: false,
         executable: 'node',
-        process: [{ pid: 1450, user: 'agenda', cpu: 0.4, mem: 2.3, command: 'node /opt/agenda/serveur.js' }],
+        process: [{ pid: 1450, user: 'agenda', cpu: 0.4, mem: 2.3, command: agendaProgram(t) }],
       },
     }),
     process: [
@@ -144,7 +155,7 @@ export const colocation: Chapter = {
     apps: {
       '127.0.0.1:3000': {
         service: 'agenda',
-        pages: { '/': t('sharing-agenda-welcome'), '/semaine': t('sharing-agenda-week'), '/ateliers': t('sharing-agenda-workshops') },
+        pages: agendaPages(t),
       } satisfies App,
     },
   }),
@@ -174,8 +185,8 @@ export const colocation: Chapter = {
       opt: place({
         agenda: place(
           {
-            'serveur.js': file(t('sharing-agenda-code'), { owner: 'agenda' }),
-            'README.txt': file(t('sharing-agenda-readme'), { owner: 'agenda' }),
+            'server.js': file(t('sharing-agenda-code'), { owner: 'agenda' }),
+            'README.txt': file(t('sharing-agenda-readme', { file: name(t, 'server.js') }), { owner: 'agenda' }),
           },
           { owner: 'agenda' },
         ),
