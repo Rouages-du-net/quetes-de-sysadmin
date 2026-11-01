@@ -347,3 +347,42 @@ name-offices = bureaux
 name-guests = invites
 name-equipment = equipements
 name-ines-template-ldif = modele-ines.ldif
+## The Workshop
+name-toolshed = outiltheque
+name-toolshed-db = outiltheque.db
+name-toolshed-old = outiltheque-ancien
+name-toolshed-data = outiltheque-donnees
+name-local-ai = ia-locale
+name-old-wiki = wiki-ancien
+name-base-system = systeme
+name-webapp = appli
+name-pgdata = donnees
+name-gallery = galerie
+name-point-thumbnails = .miniatures
+name-benchy-first-try-jpg = benchy-premier-essai.jpg
+name-benchy-success-jpg = benchy-reussi.jpg
+name-laser-cut-lamp-jpg = lampe-decoupe-laser.jpg
+name-wooden-clock-jpg = horloge-en-bois.jpg
+name-line-following-robot-jpg = robot-suiveur-de-ligne.jpg
+name-kids-soldering-workshop-jpg = atelier-soudure-enfants.jpg
+name-repaired-bike-jpg = velo-repare.jpg
+name-revived-toaster-jpg = grille-pain-ressuscite.jpg
+name-led-sign-jpg = enseigne-led.jpg
+name-shared-toolbox-jpg = boite-a-outils-partagee.jpg
+name-digital-embroidery-jpg = brodeuse-numerique.jpg
+name-homemade-drone-jpg = drone-maison.jpg
+name-custom-keyboard-jpg = clavier-sur-mesure.jpg
+name-fablab-party-jpg = fete-du-fablab.jpg
+
+## The Gazette
+name-street-party-html = fete-des-voisins.html
+name-home-html = accueil.html
+name-newsroom = redaction
+name-newsletter = lettre
+
+## The Game Library
+name-frontdesk = accueil
+name-gamelib = ludo
+name-boardgames = jeux
+name-members = membres
+name-loans = prets

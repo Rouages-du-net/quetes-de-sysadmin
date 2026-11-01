@@ -1,4 +1,4 @@
-// Story "La Gazette" — chapter "The canary": version 1.6.0 of the Kiosque
+// Story "The Gazette" — chapter "The canary": version 1.6.0 of the Kiosk
 // changes a lot of things; this time, no switch all at once. We
 // install it on blue (green serves 1.5.0), then an nginx upstream sends
 // one visit in ten to blue (weight). After an hour of readers
@@ -13,7 +13,7 @@
 // https://martinfowler.com/bliki/CanaryRelease.html,
 // https://sre.google/workbook/canarying-releases/
 
-import { d, f, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
+import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx } from '../nginx';
@@ -125,8 +125,8 @@ export const canary: Chapter = {
       { pid: 604, user: 'root', cpu: 0, mem: 0.2, command: 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups' },
       { pid: 801, user: 'root', cpu: 0, mem: 0.3, command: 'nginx: master process /usr/sbin/nginx -g daemon on; master_process on;' },
       { pid: 802, user: 'www-data', cpu: 0.1, mem: 0.6, command: 'nginx: worker process' },
-      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/serveur.js` },
-      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/serveur.js` },
+      { pid: 1501, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/blue/server.js` },
+      { pid: 1502, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/green/server.js` },
     ],
     nginx: { load: null, names: ['gazette', GAZETTE, `www.${GAZETTE}`, '192.0.2.16'], journalAcces: true },
     apps: { '127.0.0.1:3001': kioskApp('blue'), '127.0.0.1:3002': kioskApp('green') },
@@ -159,7 +159,7 @@ export const canary: Chapter = {
         hostname: file('gazette'),
         kiosk: place({
           'kiosk.env': file(
-            'KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=lettre@gazette.example\nKIOSK_SMTP=smtp.gazette.example',
+            `KIOSK_BASE=postgres://kiosk@localhost/kiosk\nKIOSK_LIST=${name(t, 'newsletter')}@gazette.example\nKIOSK_SMTP=smtp.gazette.example`,
             { owner: 'root', group: 'kiosk', mode: 'rw-r-----' },
           ),
         }),
@@ -198,7 +198,7 @@ export const canary: Chapter = {
             blue: f('', { ...kiosk, link: `${KIOSK}/versions/1.4.2` }),
             green: f('', { ...kiosk, link: `${KIOSK}/versions/1.5.0` }),
           },
-          { ...kiosk, group: 'redaction', mode: 'rwxrwxr-x' },
+          { ...kiosk, group: 'newsroom', mode: 'rwxrwxr-x' },
         ),
       }),
       usr: place({ sbin: place({ nginx: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 1_342_520 }) }) }),

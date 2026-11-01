@@ -1,4 +1,4 @@
-// La Gazette's Kiosk: the Node.js app for newsletter
+// The Gazette's Kiosk: the Node.js app for newsletter
 // subscriptions, behind nginx (location /kiosk/). Two slots
 // run side by side, blue (port 3001) and green (port 3002), each with
 // its systemd service; /srv/kiosk/blue and /srv/kiosk/green are
@@ -35,7 +35,7 @@ export const VERSIONS: Record<string, KioskVersion> = {
   // Searching the archives crashes: /health knows nothing about it.
   '1.6.0': { requires: ['KIOSK_SMTP'], failure: ['/archives'], schema: 3 },
   '1.6.1': { requires: ['KIOSK_SMTP'], schema: 3 },
-  // Migrates the database on start (schema 4: the courriel column becomes email).
+  // Migrates the database on start (schema 4: the subscribers' mail column becomes email).
   '2.0.0': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
   '2.0.1': { requires: ['KIOSK_SMTP_URL'], schema: 4 },
 };
@@ -54,7 +54,7 @@ export const instances = (j: Game): Record<string, Instance> => (j.state.kiosk ?
 export function linkVersion(j: Game, colour: string): string | null {
   const link = (j.find(`${KIOSK}/${colour}`, false) as { link?: string } | null)?.link;
   const name = link?.replace(/\/$/, '').split('/').at(-1);
-  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/serveur.js`)?.type === 'file' ? name : null;
+  return name && VERSIONS[name] && j.find(`${KIOSK}/${colour}/server.js`)?.type === 'file' ? name : null;
 }
 
 /** A slot's systemd service. */
@@ -64,13 +64,13 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
     state,
     active: state === 'active',
     executable: 'node',
-    process: [{ pid, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/${colour}/serveur.js` }],
+    process: [{ pid, user: 'kiosk', cpu: 0.6, mem: 3.1, command: `node ${KIOSK}/${colour}/server.js` }],
     check: (j) =>
       linkVersion(j, colour)
         ? null
         : [
             `node:internal/modules/cjs/loader:1228`,
-            `Error: Cannot find module '${KIOSK}/${colour}/serveur.js'`,
+            `Error: Cannot find module '${KIOSK}/${colour}/server.js'`,
             `  code: 'MODULE_NOT_FOUND'`,
             `Node.js v22.12.0`,
           ],
@@ -81,12 +81,12 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
       const sd = systemd(j);
       if (!sd) return;
       const write = (message: string) => writeLog(sd, `kiosk-${colour}.service`, 'node', pid, message, 6, false);
-      write(`Kiosque ${version} starting (NODE_ENV=production)`);
+      write(`Kiosk ${version} starting (NODE_ENV=production)`);
       // A newer version migrates the database, like frameworks' migration
       // tools: the database doesn't go back by itself.
       const b = base(j);
       if (VERSIONS[version].schema > b.schema) {
-        for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) write(`Running migration 00${n}_${MIGRATIONS[n] ?? 'update'}... done`);
+        for (let n = b.schema + 1; n <= VERSIONS[version].schema; n++) write(`Running migration 00${n}_${migrationName(j.t, n)}... done`);
         write(`Database schema is now at version ${VERSIONS[version].schema}`);
         b.schema = VERSIONS[version].schema;
       }
@@ -95,8 +95,9 @@ export function kioskService(colour: string, pid: number, state: 'active' | 'ina
   };
 }
 
-// The Kiosk's migrations, by schema number.
-const MIGRATIONS: Record<number, string> = { 4: 'rename_abonnes_courriel_to_email' };
+// The Kiosk's migrations, by schema number: their names speak of the
+// database's columns, in the language (kiosk-migration-4).
+export const migrationName = (t: Game['t'], n: number) => (t.exists(`kiosk-migration-${n}`) ? t(`kiosk-migration-${n}`) : 'update');
 
 const json = (code: number, object: unknown) => ({ code, body: JSON.stringify(object), type: 'application/json; charset=utf-8' });
 
@@ -140,8 +141,8 @@ export function versionDirectory(t: Game['t'], version: string, notes?: string):
   const rights: Rights = { owner: 'kiosk', group: 'kiosk' };
   return d(
     {
-      'serveur.js': f(`// Kiosque ${version}\nrequire('./app').listen(process.env.PORT);`, { lines: true, ...rights }),
-      'package.json': f(JSON.stringify({ name: 'kiosk', version, main: 'serveur.js' }, null, 2), { lines: true, ...rights }),
+      'server.js': f(`// Kiosk ${version}\nrequire('./app').listen(process.env.PORT);`, { lines: true, ...rights }),
+      'package.json': f(JSON.stringify({ name: 'kiosk', version, main: 'server.js' }, null, 2), { lines: true, ...rights }),
       ...(notes ? { 'NOTES.txt': f(t(notes), rights) } : {}),
     },
     undefined,
@@ -158,7 +159,7 @@ After=network.target
 User=kiosk
 Environment=PORT=${PORTS[colour]}
 EnvironmentFile=${ENV}
-ExecStart=/usr/bin/node ${KIOSK}/${colour}/serveur.js
+ExecStart=/usr/bin/node ${KIOSK}/${colour}/server.js
 Restart=on-failure
 
 [Install]

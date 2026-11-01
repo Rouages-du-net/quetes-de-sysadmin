@@ -61,6 +61,7 @@ kiosk-archives =
     <footer>Kiosque { $version }</footer>
     </body>
     </html>
+kiosk-migration-4 = rename_abonnes_courriel_to_email
 
 ## Événements
 

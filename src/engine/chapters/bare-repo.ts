@@ -8,10 +8,10 @@
 // Objective checked on the state: the site is exactly the last commit of the
 // server's repository, checked out by its hook; it contains Samia's article,
 // Théo's fix, then the corrected date in the events page.
-// Sources: https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
+// Sources: https://git-scm.com/book/en/v2/Git-on-the-Server-Setting-Up-the-Server,
 // https://git-scm.com/docs/githooks#post-receive, https://git-scm.com/docs/git#Documentation/git.txt---work-treeltpathgt
 
-import { path, d, f, accountsFiles, player, type Chapter, type Accounts, type Rights } from '../world';
+import { path, name, d, f, accountsFiles, player, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game } from '../shell';
 import { newSystemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx } from '../nginx';
@@ -41,7 +41,7 @@ export const gazetteAccounts = (): Accounts => ({
     you: { gid: 1000, members: [] },
     samia: { gid: 1001, members: [] },
     theo: { gid: 1002, members: [] },
-    redaction: { gid: 1100, members: ['you', 'samia', 'theo'] },
+    newsroom: { gid: 1100, members: ['you', 'samia', 'theo'] },
   },
 });
 
@@ -74,7 +74,7 @@ export function history(t: Game['t']): Commit[] {
   const c2 = newCommit(c1, t('bare-repo-commit-2'), AUTHOR, 'Fri May 7 18:30:12 2027 +0200', {
     ...v1,
     'index.html': t('bare-repo-site-index-v2'),
-    'fete-des-voisins.html': t('bare-repo-site-article'),
+    [name(t, 'street-party.html')]: t('bare-repo-site-article'),
   });
   return [c1, c2];
 }
@@ -91,8 +91,10 @@ const deployed = (j: Game) => {
   return !!c && j.state.gitDeployments?.[SITE] === c.id && Object.entries(c.files).every(([name, text]) => readSite(j, name) === text);
 };
 const withMistake = (j: Game) => (readSite(j, 'index.html') ?? '').includes(j.t('bare-repo-title-mistake'));
-const withArticle = (j: Game) =>
-  (readSite(j, 'index.html') ?? '').includes('href="fete-des-voisins.html"') && readSite(j, 'fete-des-voisins.html') !== null;
+const withArticle = (j: Game) => {
+  const article = name(j.t, 'street-party.html');
+  return (readSite(j, 'index.html') ?? '').includes(`href="${article}"`) && readSite(j, article) !== null;
+};
 const fixedAgenda = (j: Game) => {
   const a = readSite(j, 'agenda.html') ?? '';
   return a.includes('2027-06-12') && !a.includes('2027-06-21');
@@ -168,7 +170,7 @@ export const bareRepo: Chapter = {
     const root: Rights = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
-    const redaction = (text: string, owner = 'you') => file(text, { owner, group: 'redaction', mode: 'rw-rw-r--' });
+    const newsroom = (text: string, owner = 'you') => file(text, { owner, group: 'newsroom', mode: 'rw-rw-r--' });
     const last = history(t).at(-1)!.files;
     return place({
       etc: place({
@@ -202,11 +204,11 @@ export const bareRepo: Chapter = {
           // The first version, put there by hand… and the typo in the title fixed in place by Théo.
           gazette: place(
             {
-              'index.html': redaction(t('bare-repo-site-index-theo'), 'theo'),
-              'style.css': redaction(STYLE),
-              'agenda.html': redaction(agenda(t, 21)),
+              'index.html': newsroom(t('bare-repo-site-index-theo'), 'theo'),
+              'style.css': newsroom(STYLE),
+              'agenda.html': newsroom(agenda(t, 21)),
             },
-            { owner: 'you', group: 'redaction', mode: 'rwxrwxr-x' },
+            { owner: 'you', group: 'newsroom', mode: 'rwxrwxr-x' },
           ),
         }),
         log: place({

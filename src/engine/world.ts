@@ -214,6 +214,10 @@ const TRANSLATED_ACCOUNTS = [
   'eraser',
   // The Audit: the orders app's service account (commandes in French).
   'orders',
+  // The Gazette's newsroom group; The Game Library's front desk account and group.
+  'newsroom',
+  'frontdesk',
+  'gamelib',
 ];
 export const account = (t: Translate, french: string) => (TRANSLATED_ACCOUNTS.includes(french) ? name(t, french) : french);
 /** The player's account in the language: vous, you… */

@@ -22,7 +22,7 @@ hint-rollback-kept-fou =
     .solution = In the hook, just before the ln -sfn line, add: cd /srv/gazette/releases/$VERSION then sh tests.sh
 hint-rollback-end =
     .lead = Théo's layout is on the server, but it lacks index.html: fetch his commits into ~/gazette, give his page the right name, then publish through git.
-    .solution = cd ~/gazette, git pull prod main, mv accueil.html index.html, git add ., git commit -m "Home: index.html", git push prod main.
+    .solution = cd ~/gazette, git pull prod main, mv home.html index.html, git add ., git commit -m "Home: index.html", git push prod main.
 
 ## Chapter 3 — Blue and green
 

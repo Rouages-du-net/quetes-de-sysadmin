@@ -67,7 +67,7 @@ bare-repo-site-index-v2 =
     <h1>The Neighbourhood Gazzette</h1>
     <p>News from the street, by the people who live there.</p>
     <ul>
-    <li><a href="fete-des-voisins.html">The street party, courtyard side</a></li>
+    <li><a href="street-party.html">The street party, courtyard side</a></li>
     <li><a href="agenda.html">This month's calendar</a></li>
     </ul>
     </body>

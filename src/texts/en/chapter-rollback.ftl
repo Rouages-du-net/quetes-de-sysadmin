@@ -52,7 +52,7 @@ rollback-site-index =
     <h1>The Neighbourhood Gazette</h1>
     <p>News from the street, by the people who live there.</p>
     <ul>
-    <li><a href="fete-des-voisins.html">The neighbours' party, behind the scenes</a></li>
+    <li><a href="street-party.html">The neighbours' party, behind the scenes</a></li>
     <li><a href="agenda.html">This month's calendar</a></li>
     </ul>
     </body>
@@ -63,8 +63,8 @@ rollback-site-welcome =
     <head><meta charset="utf-8"><title>The Neighbourhood Gazette</title><link rel="stylesheet" href="style.css"></head>
     <body>
     <header><h1>The Neighbourhood Gazette</h1><p>News from the street, by the people who live there.</p></header>
-    <section class="une">
-    <h2><a href="fete-des-voisins.html">Top story: the neighbours' party, behind the scenes</a></h2>
+    <section class="lead">
+    <h2><a href="street-party.html">Top story: the neighbours' party, behind the scenes</a></h2>
     </section>
     <nav><a href="agenda.html">This month's calendar</a></nav>
     </body>

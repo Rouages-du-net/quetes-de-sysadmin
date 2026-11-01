@@ -13,7 +13,7 @@
 // https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html,
 // https://nginx.org/en/docs/http/ngx_http_core_module.html#root
 
-import { path, d, f, accountsFiles, player, type Chapter, type Rights, type Node } from '../world';
+import { path, name, d, f, accountsFiles, player, type Chapter, type Rights, type Node } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd } from '../systemd';
 import { loadNginx, httpRequest, checkNginx } from '../nginx';
@@ -34,7 +34,7 @@ const THEO_AUTHOR = 'Theo Martin <theo@gazette.example>';
 const GAZETTE = 'gazette.example';
 
 // The history: chapter 1's (corrected title, agenda), Samia's
-// tests, then Théo's new layout (accueil.html instead of index.html).
+// tests, then Théo's new layout (home.html instead of index.html).
 function commits(t: Game['t']): Commit[] {
   const [c1, c2] = history(t);
   const c3 = newCommit(c2, t('rollback-commit-3'), `${player(t)} <${player(t)}@gazette.example>`, 'Mon May 10 09:31:00 2027 +0200', {
@@ -52,7 +52,7 @@ function commits(t: Game['t']): Commit[] {
   const { 'index.html': _index, ...withoutIndex } = c5.files;
   const c6 = newCommit(c5, t('rollback-commit-6'), THEO_AUTHOR, 'Mon May 17 20:29:40 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': t('rollback-site-welcome'),
+    [name(t, 'home.html')]: t('rollback-site-welcome'),
   });
   return [c1, c2, c3, c4, c5, c6];
 }
@@ -76,7 +76,7 @@ const inLine = (j: Game) => {
 };
 const page = (j: Game) => httpRequest(j, GAZETTE, '/', 80, false);
 const works = (j: Game) => page(j)?.code === 200;
-const newUpdateInPage = (j: Game) => works(j) && (page(j)?.body ?? '').includes('class="une"');
+const newUpdateInPage = (j: Game) => works(j) && (page(j)?.body ?? '').includes('class="lead"');
 const hook = (j: Game) => j.read(`${REPO}/hooks/post-receive`) ?? '';
 // A link created INSIDE the broken version (ln -sf without -n: ln entered the target place).
 const insideLink = (j: Game) => {
@@ -99,7 +99,7 @@ function theoRepousse(j: Game): string {
   const { 'index.html': _index, ...withoutIndex } = head.files;
   const c = newCommit(head, j.t('rollback-commit-theo', { number: number }), THEO_AUTHOR, 'Mon May 17 21:05:00 2027 +0200', {
     ...withoutIndex,
-    'accueil.html': `${j.t('rollback-site-welcome')}\n<!-- ${number} -->`,
+    [name(j.t, 'home.html')]: `${j.t('rollback-site-welcome')}\n<!-- ${number} -->`,
   });
   j.state.git[THEO] = { commits: [...server.commits, c], index: { ...c.files }, remotes: { prod: REPO } };
   const before = game.who;
@@ -200,12 +200,12 @@ export const rollback: Chapter = {
     const root: Rights = { owner: 'root' };
     const place = (children: Parameters<typeof d>[0], rights: Rights = root) => d(children, undefined, rights);
     const file = (text: string, rights: Rights = root) => f(text, { lines: true, ...rights });
-    const share: Rights = { owner: 'you', group: 'redaction', mode: 'rwxrwxr-x' };
+    const share: Rights = { owner: 'you', group: 'newsroom', mode: 'rwxrwxr-x' };
     const all = commits(t);
     const version = (c: Commit): Node =>
       place(
         Object.fromEntries(
-          Object.entries(c.files).map(([name, text]) => [name, file(text, { owner: 'you', group: 'redaction', mode: 'rw-rw-r--' })]),
+          Object.entries(c.files).map(([name, text]) => [name, file(text, { owner: 'you', group: 'newsroom', mode: 'rw-rw-r--' })]),
         ),
         share,
       );
@@ -251,7 +251,7 @@ export const rollback: Chapter = {
         gazette: place(
           {
             releases: place({ [BONNE]: version(all[4]), [BROKEN]: version(all[5]) }, share),
-            current: f('', { owner: 'you', group: 'redaction', link: `${RELEASES}/${BROKEN}` }),
+            current: f('', { owner: 'you', group: 'newsroom', link: `${RELEASES}/${BROKEN}` }),
           },
           share,
         ),

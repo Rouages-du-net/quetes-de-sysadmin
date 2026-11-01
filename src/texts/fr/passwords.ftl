@@ -36,3 +36,5 @@ password-hive-malik-2027 = ruche-malik-2027
 password-hive-ines-2027 = ruche-ines-2027
 password-hive-camille-2026 = ruche-camille-2026
 password-Rk7-ap-2028 = Rk7-borne-2028
+## The Game Library
+password-dice-2027 = ludo-2027

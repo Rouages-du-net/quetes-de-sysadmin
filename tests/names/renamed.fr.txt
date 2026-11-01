@@ -264,12 +264,30 @@ firewall-hole
   /home/you → /home/vous
   /home/you/message_from_rania.txt → /home/vous/message_de_rania.txt
   /home/you/note_from_yasmine.txt → /home/vous/mot_de_yasmine.txt
+  /usr/base-system → /usr/systeme
 
 full-powers
   /home/you → /home/vous
   /home/you/message_from_yasmine.txt → /home/vous/message_de_yasmine.txt
   /home/you/note_from_rania.txt → /home/vous/note_de_rania.txt
-  /srv/galerie/README.txt → /srv/galerie/LISEZMOI.txt
+  /srv/gallery → /srv/galerie
+  /srv/gallery/compose.yaml → /srv/galerie/compose.yaml
+  /srv/gallery/README.txt → /srv/galerie/LISEZMOI.txt
+  /srv/gallery/photos → /srv/galerie/photos
+  /srv/gallery/photos/benchy-first-try.jpg → /srv/galerie/photos/benchy-premier-essai.jpg
+  /srv/gallery/photos/benchy-success.jpg → /srv/galerie/photos/benchy-reussi.jpg
+  /srv/gallery/photos/laser-cut-lamp.jpg → /srv/galerie/photos/lampe-decoupe-laser.jpg
+  /srv/gallery/photos/wooden-clock.jpg → /srv/galerie/photos/horloge-en-bois.jpg
+  /srv/gallery/photos/line-following-robot.jpg → /srv/galerie/photos/robot-suiveur-de-ligne.jpg
+  /srv/gallery/photos/kids-soldering-workshop.jpg → /srv/galerie/photos/atelier-soudure-enfants.jpg
+  /srv/gallery/photos/repaired-bike.jpg → /srv/galerie/photos/velo-repare.jpg
+  /srv/gallery/photos/revived-toaster.jpg → /srv/galerie/photos/grille-pain-ressuscite.jpg
+  /srv/gallery/photos/led-sign.jpg → /srv/galerie/photos/enseigne-led.jpg
+  /srv/gallery/photos/shared-toolbox.jpg → /srv/galerie/photos/boite-a-outils-partagee.jpg
+  /srv/gallery/photos/digital-embroidery.jpg → /srv/galerie/photos/brodeuse-numerique.jpg
+  /srv/gallery/photos/homemade-drone.jpg → /srv/galerie/photos/drone-maison.jpg
+  /srv/gallery/photos/custom-keyboard.jpg → /srv/galerie/photos/clavier-sur-mesure.jpg
+  /srv/gallery/photos/fablab-party.jpg → /srv/galerie/photos/fete-du-fablab.jpg
 
 bare-repo
   /home/you → /home/vous
@@ -311,8 +329,10 @@ migration
 ransom
   /home/you → /home/vous
   /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
-  /home/accueil/.cache/.upd → /home/accueil/.cache/.maj
-  /home/accueil/.cache/.upd/system-update → /home/accueil/.cache/.maj/maj-systeme
+  /home/frontdesk → /home/accueil
+  /home/frontdesk/.cache → /home/accueil/.cache
+  /home/frontdesk/.cache/.upd → /home/accueil/.cache/.maj
+  /home/frontdesk/.cache/.upd/system-update → /home/accueil/.cache/.maj/maj-systeme
   /srv/share → /srv/partage
   /srv/share/inventory.csv → /srv/partage/inventaire.csv
   /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt
@@ -327,6 +347,7 @@ ransom
 snapshots
   /home/you → /home/vous
   /home/you/message_from_berenice.txt → /home/vous/message_de_berenice.txt
+  /home/frontdesk → /home/accueil
   /srv/share → /srv/partage
   /srv/share/inventory.csv → /srv/partage/inventaire.csv
   /srv/share/volunteer-rota.txt → /srv/partage/planning-benevoles.txt

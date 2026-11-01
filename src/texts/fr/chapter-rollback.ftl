@@ -63,7 +63,7 @@ rollback-site-welcome =
     <head><meta charset="utf-8"><title>La Gazette du quartier</title><link rel="stylesheet" href="style.css"></head>
     <body>
     <header><h1>La Gazette du quartier</h1><p>Les nouvelles de la rue, par celles et ceux qui y vivent.</p></header>
-    <section class="une">
+    <section class="lead">
     <h2><a href="fete-des-voisins.html">À la une : la fête des voisins, côté cour</a></h2>
     </section>
     <nav><a href="agenda.html">L'agenda du mois</a></nav>
