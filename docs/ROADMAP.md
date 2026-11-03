@@ -466,8 +466,11 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   machine per story (name and address), plugged into one cable; its branch
   is dashed while locked, amber while you play on it, green when the story
   is finished, and a packet runs along it (stopped if the system asks for
-  less motion). The "Racks" view (the same buttons, with their summary)
-  stays available; the choice is kept in the browser.
+  less motion). Only the open stories are on the map; the locked ones wait
+  in a folded list under it (after playtesting, the "Racks" view was
+  removed: three views of the same list were too much). The other view is
+  the learning paths, one row per chapter; the choice is kept in the
+  browser.
 - [x] **Terminal display**: four themes (phosphor, amber, high contrast,
   paper), text size, full screen (Escape leaves it), kept in the browser;
   staging of a connection and of a reboot (turned off if the system asks

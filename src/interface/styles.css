@@ -105,12 +105,28 @@
 .qds .stories button[data-locked] .title { font-weight: 600; color: var(--_muted); }
 .qds .stories button[data-locked] .state { color: var(--_muted); font-weight: 400; }
 .qds .stories button[data-locked] .abstract { display: none; }
-/* The choice of the menu's view: the network map or the racks. */
+/* The choice of the menu's view: the network map or the learning paths. */
 .qds .view-choice { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 0.75rem; }
 .qds .stories .view-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 999px; background: var(--_background); color: var(--_muted); cursor: pointer; }
 .qds .stories .view-button[aria-pressed='true'] { border-color: var(--_accent); color: var(--_text); box-shadow: inset 0 0 0 1px var(--_accent); }
 .qds .host { display: none; font-family: var(--_font-mono); font-size: 0.75rem; color: var(--_muted); overflow-wrap: anywhere; }
 .qds .node-internet { display: none; }
+/* The incident of the day: a small button, not a card. */
+.qds .stories .incident-button { display: inline-block; width: auto; height: auto; padding: 0.3rem 0.8rem; }
+
+/* The locked stories, folded under the map: one short row each, the name
+   and the chapters that open it; no address, stars nor LEDs. */
+.qds .locked-stories { margin: 0.75rem 0 1rem; }
+.qds .locked-stories summary { cursor: pointer; font-size: 0.9rem; color: var(--_muted); padding: 0.3rem 0; }
+.qds .locked-stories summary:hover, .qds .locked-stories summary:focus-visible { color: var(--_text); }
+.qds .locked-stories .key-help { margin: 0.25rem 0 0.5rem; }
+.qds .locked-stories ol { grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.35rem; }
+.qds .locked-stories button { grid-template-columns: 1fr; padding: 0.4rem 0.75rem; gap: 0.05rem; }
+.qds .locked-stories .state { grid-row: auto; grid-column: 1; font-size: 0.8rem; }
+.qds .stories[data-view] .locked-stories :is(.host, .difficulty, .diodes, .abstract) { display: none; }
+/* Not on the map: no cable, no branches. */
+.qds .stories[data-view] .locked-stories ol { padding-left: 0; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); column-gap: 0.35rem; }
+.qds .stories[data-view] .locked-stories :is(ol, li)::before, .qds .stories[data-view] .locked-stories li::after { display: none; }
 
 /* The network map: the workstation at the top, the internet below, and a
    cable (a bus) from which a branch goes to each machine. A machine's cable
@@ -137,6 +153,8 @@
   border-top: var(--_cable) solid var(--_border);
 }
 .qds .stories[data-view='network'] .abstract { display: none; }
+/* The story being played shows its summary. */
+.qds .stories[data-view='network'] button[aria-current='true'] .abstract { display: block; grid-column: 1 / -1; }
 .qds .stories[data-view='network'] .host { display: block; grid-column: 1 / -1; }
 .qds .stories[data-view='network'] .node-internet { display: block; }
 .qds .node-internet span {
@@ -402,6 +420,9 @@
   .qds .stories button { grid-template-columns: 1fr; }
   .qds .stories .state { grid-row: auto; grid-column: auto; align-self: start; }
   .qds .abstract { display: none; }
+  .qds .stories[data-view] .locked-stories ol, .qds .stories .paths-list { grid-template-columns: 1fr; }
+  .qds .paths-list button { grid-template-columns: 1fr; }
+  .qds .paths .abstract { display: block; }
   /* Tabs (nft list ruleset, nftables.conf) take less room on a narrow screen. */
   .qds .output pre, .qds .nano-text { tab-size: 2; }
 }
@@ -543,12 +564,16 @@
 /* The rescue snapshot: buttons greyed out when it isn't possible. */
 .qds .rescue-button:disabled { cursor: default; color: var(--_muted); border-style: dashed; }
 
-/* The "Paths" view: a theme, its chapters (the same cards as the racks). */
+/* The "Paths" view: a theme, then its chapters in order, one row each. */
 .qds .paths-choice { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0 0 0.5rem; }
 .qds .paths-choice select { font: inherit; padding: 0.25rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); max-width: 100%; }
 .qds .paths-description { margin: 0 0 0.25rem; color: var(--_muted); }
 .qds .paths-progress { margin: 0 0 0.75rem; font-weight: 700; color: var(--_accent); }
 .qds .paths .abstract { display: block; }
+.qds .stories .paths-list { grid-template-columns: 1fr; gap: 0.35rem; counter-reset: step; }
+.qds .paths-list button { grid-template-columns: 1fr auto; padding: 0.45rem 0.8rem; }
+.qds .paths-list .title::before { counter-increment: step; content: counter(step) '. '; color: var(--_muted); }
+.qds .paths-list .abstract { font-size: 0.85rem; }
 .qds .paths button[data-state='done'] { border-left-color: var(--_accent); }
 .qds .paths button[data-next] { border-left-color: var(--_amber); box-shadow: inset 0 0 0 1px var(--_amber); }
 .qds .paths button[data-next] .state { color: var(--_amber); }

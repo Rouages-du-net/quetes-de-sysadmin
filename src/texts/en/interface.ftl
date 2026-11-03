@@ -19,7 +19,11 @@ state-key-missing = 🔒 Locked
 state-key-after = 🔒 After { $chapters }
 # { $title }: a chapter title, in the list above
 state-key-chapter = “{ $title }”
-key-help = 🔑 The greyed-out stories open little by little: each one shows under its name the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
+key-help = 🔑 These stories open little by little: under each name, the chapters to finish before you receive its key. The first ones open after The Root (The Eraser, chapter 3).
+stories-locked = { $count ->
+    [one] 🔒 One story still locked
+   *[other] 🔒 { $count } stories still locked
+}
 button-next = Next chapter →
 button-restart = Restart this chapter
 tips = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
@@ -33,7 +37,6 @@ workstation-title = Your workstation
 ## The story menu: two views
 view-title = How to show the stories
 view-network = Network map
-view-racks = Racks
 view-internet = Internet
 input-label = Command
 credit = Quêtes de Sysadmin, a free game (GPL v3, texts CC BY-SA 4.0), inspired by Terminus, created at MIT by Shawn Conrad and Michele Pratusevich.

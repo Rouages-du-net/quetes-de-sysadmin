@@ -527,10 +527,18 @@ for (const width of [1000, 375]) {
   // The menu: the network map first, one branch per machine.
   const menu = game.locator('nav.stories');
   check((await menu.getAttribute('data-view')) === 'network' && (await game.locator('.host', { hasText: 'royaume.internal 192.0.2.10' }).isVisible()), `display ${width} px: the network map serves as the menu`);
-  await game.locator('.view-choice button', { hasText: 'Baies' }).click();
-  check((await menu.getAttribute('data-view')) === 'racks' && !(await game.locator('.host').first().isVisible()), `display ${width} px: the rack view`);
-  await game.locator('.view-choice button', { hasText: 'Carte du réseau' }).click();
-  await game.locator('.view-choice button', { hasText: 'Baies' }).click();
+  // The locked stories wait, folded, under the map.
+  const locked = game.locator('details.locked-stories');
+  check(
+    (await game.locator('.view-choice button').count()) === 2 &&
+      !(await locked.evaluate((e) => e.open)) &&
+      (await locked.locator('summary').textContent()).includes('histoires encore verrouillées') &&
+      !(await game.locator('button[data-story="1"]').isVisible()),
+    `display ${width} px: two views, the locked stories folded`,
+  );
+  await locked.locator('summary').click();
+  check((await game.locator('button[data-story="1"]').isVisible()) && !(await game.locator('button[data-story="1"] .host').isVisible()), `display ${width} px: unfolded, a locked story in one short row`);
+  await game.locator('.view-choice button', { hasText: 'Parcours' }).click();
   await game.locator('.settings select').selectOption('amber');
   const size = () => terminal.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
   const before = await size();
@@ -586,7 +594,7 @@ for (const width of [1000, 375]) {
   await game.locator('form input').press('Escape');
   check(!(await game.locator('.screen').evaluate((e) => e.classList.contains('focus'))), `display ${width} px: Escape leaves full screen`);
   await page.reload();
-  check((await game.locator('.terminal').getAttribute('data-theme')) === 'amber' && (await menu.getAttribute('data-view')) === 'racks', `display ${width} px: the settings are kept`);
+  check((await game.locator('.terminal').getAttribute('data-theme')) === 'amber' && (await menu.getAttribute('data-view')) === 'paths', `display ${width} px: the settings are kept`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `display ${width} px: no horizontal scrolling`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/affichage-${width}.png` });
   check(errors.length === 0, `display ${width} px: no console error ${errors.join(' ')}`);
