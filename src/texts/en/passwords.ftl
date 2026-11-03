@@ -41,3 +41,6 @@ password-dice-2027 = dice-2027
 
 ## The Canteen
 password-lentils-2028 = lentils-2028
+
+## The Observatory
+password-nebula-2028 = nebula-2028

@@ -353,11 +353,12 @@ which works on machines rather than switches).
 
 ### Next stories (proposals)
 
-- [ ] **Resources**: a server that crawls. The load average and what it
-      counts, `top`, a process that hogs the CPU (`nice`, `renice`,
-      `CPUQuota=`), "Too many open files" (`ulimit`, `LimitNOFILE=`), a stuck
-      process (`kill` and its signals). The engine already has processes,
-      memory (OOM killer) and systemd's limits.
+- [ ] **Resources** ("The Observatory", story 21 in `docs/SCENARIOS.md`):
+      a server that crawls. Done: the load average and what it counts,
+      `top`, `ps -o`, `pgrep`, a process that hogs the CPU (`nice`,
+      `renice`), `CPUQuota=` and `systemd-cgtop` (`src/engine/cpu.ts`). To
+      do: "Too many open files" (`ulimit`, `LimitNOFILE=`), a stuck process
+      (`kill` and its signals).
 - [ ] **File sharing**: an association's NAS. NFS (`/etc/exports`, mounting
       it, `root_squash`) and Samba for the Windows desktops, permissions and
       quotas. Needs network mounts, not simulated yet.

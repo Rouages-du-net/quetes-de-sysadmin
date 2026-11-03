@@ -41,3 +41,5 @@ story-patch = La Rustine
     .summary = L'atelier vélo a un serveur neuf, avec Caddy, qui « fait le HTTPS tout seul »… à condition de lui donner le bon nom et de laisser passer l'autorité de certification. Un court chapitre pour comparer avec nginx et certbot.
 story-canteen = La Cantine
     .summary = L'appli de réservations de la cantine solidaire ne revient pas après un redémarrage, abandonne après un redémarrage de la base, attend deux minutes un câble absent, écrit avant que son disque soit là : les dépendances de systemd, Restart=, un démarrage lent et RequiresMountsFor=.
+story-observatory = L'Observatoire
+    .summary = Le serveur du club d'astronomie rame sous l'empilement des photos de la nuit : la charge moyenne, top et renice, puis un CPUQuota= pour que l'hébergeur ne bride pas la machine.

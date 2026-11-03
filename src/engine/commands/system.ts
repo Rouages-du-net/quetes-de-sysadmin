@@ -7,6 +7,7 @@
 
 import type { Command } from './index';
 import { dockerProcess } from '../docker';
+import { refreshCpu } from '../cpu';
 
 export interface Process {
   pid: number;
@@ -17,11 +18,52 @@ export interface Process {
   // The parent, and a zombie process (finished, not reaped by its parent).
   ppid?: number;
   zombie?: boolean;
+  // The nice value (-20 to 19, 0 by default; see cpu.ts), and a process
+  // stopped by SIGSTOP (state T, until SIGCONT).
+  nice?: number;
+  stopped?: boolean;
 }
+
+// The columns of ps -o (procps-ng's names; %cpu and pcpu are the same column).
+interface PsField {
+  header: string;
+  width: number;
+  left?: boolean;
+  value: (p: Process) => string | number;
+  sort?: (p: Process) => string | number;
+}
+const command = (p: Process) => (p.zombie ? `${p.command} <defunct>` : p.command);
+const comm = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '').slice(0, 15);
+const cpuCol: PsField = { header: '%CPU', width: 4, value: (p) => p.cpu.toFixed(1), sort: (p) => p.cpu };
+const memCol: PsField = { header: '%MEM', width: 4, value: (p) => p.mem.toFixed(1), sort: (p) => p.mem };
+const niCol: PsField = { header: ' NI', width: 3, value: (p) => p.nice ?? 0, sort: (p) => p.nice ?? 0 };
+const PS_FIELDS: Record<string, PsField> = {
+  pid: { header: '    PID', width: 7, value: (p) => p.pid, sort: (p) => p.pid },
+  ppid: { header: '   PPID', width: 7, value: (p) => p.ppid ?? (p.pid === 1 ? 0 : 1), sort: (p) => p.ppid ?? 1 },
+  user: { header: 'USER    ', width: 8, left: true, value: (p) => p.user.slice(0, 8) },
+  ni: niCol,
+  nice: niCol,
+  pri: { header: 'PRI', width: 3, value: (p) => 19 - (p.nice ?? 0), sort: (p) => 19 - (p.nice ?? 0) },
+  '%cpu': cpuCol,
+  pcpu: cpuCol,
+  '%mem': memCol,
+  pmem: memCol,
+  stat: { header: 'STAT', width: 4, left: true, value: (p) => (p.zombie ? 'Z' : p.stopped ? 'T' : p.cpu > 0 ? 'R' : 'S') + ((p.nice ?? 0) > 0 ? 'N' : (p.nice ?? 0) < 0 ? '<' : '') },
+  comm: { header: 'COMMAND', width: 15, left: true, value: comm },
+  cmd: { header: 'CMD', width: 0, left: true, value: command },
+  args: { header: 'COMMAND', width: 0, left: true, value: command },
+  command: { header: 'COMMAND', width: 0, left: true, value: command },
+};
 
 export const SYSTEM: Record<string, Command> = {
   ps: {
     launch: ({ args, game }) => {
+      refreshCpu(game);
+      // -o FORMAT (and -eo FORMAT): the columns chosen; --sort=[-]KEY.
+      const io = args.findIndex((a) => /^-\w*o$/.test(a) || a === '--format');
+      const format = io >= 0 ? (args[io + 1] ?? '') : args.find((a) => a.startsWith('--format='))?.slice(9) ?? null;
+      const sortArg = args.find((a) => a.startsWith('--sort='))?.slice(7) ?? (args.includes('--sort') ? args[args.indexOf('--sort') + 1] : null);
+      args = args.filter((a, k) => !(io >= 0 && k === io + 1) && !a.startsWith('--sort') && !(args[k - 1] === '--sort') && !a.startsWith('--format'));
       const all = args.some((a) => /^-?\w*[ae]/.test(a) && !/^-\w*u$/.test(a));
       // -u account[,account]: only the processes of these accounts.
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
@@ -29,6 +71,30 @@ export const SYSTEM: Record<string, Command> = {
       const listing: Process[] = [...(game.state.process ?? []), ...dockerProcess(game)]
         .filter((p: Process) => (accounts ? accounts.includes(p.user) : all || p.user === game.who || p.user === game.player))
         .sort((a: Process, b: Process) => a.pid - b.pid);
+      if (sortArg) {
+        const desc = sortArg.startsWith('-');
+        const k = sortArg.replace(/^[-+]/, '');
+        const field = PS_FIELDS[k];
+        if (!field) return game.error(`error: unknown sort specifier\n\nUsage:\n ps [options]\n\n Try 'ps --help <simple|list|output|threads|misc|all>'\n  or 'ps --help <s|l|o|t|m|a>'\n for additional help text.\n\nFor more details see ps(1).`);
+        const key = field.sort ?? ((p: Process) => field.value(p));
+        listing.sort((a, b) => {
+          const [x, y] = [key(a), key(b)];
+          const r = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y));
+          return desc ? -r : r;
+        });
+      }
+      if (format !== null) {
+        const keys = format.split(/[,\s]+/).filter(Boolean).map((k) => k.split('=')[0]);
+        const unknown = keys.find((k) => !PS_FIELDS[k]);
+        if (unknown || !keys.length)
+          return game.error(`error: unknown user-defined format specifier "${unknown ?? ''}"\n\nUsage:\n ps [options]\n\n Try 'ps --help <simple|list|output|threads|misc|all>'\n  or 'ps --help <s|l|o|t|m|a>'\n for additional help text.\n\nFor more details see ps(1).`);
+        const cols = keys.map((k) => PS_FIELDS[k]);
+        const cell = (f: PsField, v: string, lastCol: boolean) => (lastCol ? v : f.left ? v.padEnd(f.width) : v.padStart(f.width));
+        return [
+          cols.map((f, k) => cell(f, f.header, k === cols.length - 1)).join(' '),
+          ...listing.map((p) => cols.map((f, k) => cell(f, String(f.value(p)), k === cols.length - 1)).join(' ')),
+        ].join('\n');
+      }
       // -f (ps -ef): the full format, with the parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {
         const fLine = (p: Process) =>

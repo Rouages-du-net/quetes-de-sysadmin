@@ -34,6 +34,8 @@ export const CODE_ORDER = [
   'padlock',
   'boot-order', 'restart-loop', 'slow-boot',
   'late-disk',
+  'heavy-load',
+  'quota',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

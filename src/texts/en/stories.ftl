@@ -41,3 +41,5 @@ story-patch = The Patch
     .summary = The bike workshop has a new server, with Caddy, which "does HTTPS by itself"… provided you give it the right name and let the certificate authority through. A short chapter to compare with nginx and certbot.
 story-canteen = The Canteen
     .summary = The solidarity canteen's bookings app won't come back after a reboot, gives up after a database restart, waits two minutes for a missing cable, writes before its disk is there: systemd's dependencies, Restart=, a slow boot and RequiresMountsFor=.
+story-observatory = The Observatory
+    .summary = The astronomy club's server crawls under the night's photo stacking: the load average, top and renice, then a CPUQuota= so the host doesn't throttle the machine.

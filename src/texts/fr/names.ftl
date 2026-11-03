@@ -389,3 +389,7 @@ name-loans = prets
 ## La Cantine
 name-message_from_ibrahim-txt = message_de_ibrahim.txt
 name-canteen = cantine
+
+## L'Observatoire
+name-message_from_amara-txt = message_de_amara.txt
+name-mail_from_the_host-txt = courrier_hebergeur.txt

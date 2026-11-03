@@ -386,3 +386,7 @@ name-loans = loans
 ## The Canteen
 name-message_from_ibrahim-txt = message_from_ibrahim.txt
 name-canteen = canteen
+
+## The Observatory
+name-message_from_amara-txt = message_from_amara.txt
+name-mail_from_the_host-txt = mail_from_the_host.txt

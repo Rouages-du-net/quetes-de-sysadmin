@@ -45,6 +45,7 @@ import { RSNAPSHOT } from './rsnapshot';
 import { POSTGRES } from './postgres';
 import { LOGS } from './logs';
 import { MEMORY } from './memory';
+import { CPU } from './cpu';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
@@ -133,6 +134,7 @@ export const COMMANDS: Record<string, Command> = {
   ...POSTGRES,
   ...LOGS,
   ...MEMORY,
+  ...CPU,
   ...TIME,
   ...SUPERVISION,
   ...TRANSFERS,

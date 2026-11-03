@@ -183,7 +183,8 @@ export function loadUnits(game: Shell, sd: Systemd): void {
     if (fileName.endsWith('.service')) {
       const name = fileName.slice(0, -8);
       const old = sd.services[name];
-      if (old && !old.file) continue;
+      // A service the chapter models keeps its behaviour (its processes), even with its file in /etc.
+      if (old && (!old.file || old.modelled)) continue;
       const exec = u.Service?.ExecStart?.at(-1) ?? '';
       const account = u.Service?.User?.at(-1) ?? 'root';
       sd.services[name] = {

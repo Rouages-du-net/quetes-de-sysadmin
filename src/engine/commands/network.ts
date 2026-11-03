@@ -271,6 +271,17 @@ export const NETWORK: Record<string, Command> = {
           }
         } else if (!args[i].startsWith('-')) positional.push(args[i]);
       }
+      // -w FORMAT: what curl writes after the transfer (%{http_code}, %{time_total}…).
+      const iw = args.findIndex((a) => a === '-w' || a === '--write-out');
+      const writeOut = iw >= 0 ? (args[iw + 1] ?? '') : null;
+      const after = (code: number, time: number, size: number) =>
+        writeOut === null
+          ? ''
+          : writeOut
+              .replace(/%\{http_code\}|%\{response_code\}/g, String(code).padStart(3, '0'))
+              .replace(/%\{time_total\}/g, time.toFixed(6))
+              .replace(/%\{size_download\}/g, String(size))
+              .replace(/\\n/g, '\n');
       const headers = args.includes('-I') || args.includes('--head');
       // -i: the headers, then the body (include).
       const withHeaders = args.includes('-i') || args.includes('--include');
@@ -332,7 +343,14 @@ export const NETWORK: Record<string, Command> = {
           const elsewhere = r.headers.find((e) => e.startsWith('Location: '))?.slice(10);
           if (!follow || !elsewhere || r.code < 300 || r.code >= 400) {
             blocks.push(headers ? r.headers.join('\n') : withHeaders ? `${r.headers.join('\n')}\n\n${r.body}` : r.body);
-            return blocks.join('\n\n');
+            const appOf = appVia ? game.state.apps?.[`127.0.0.1:${port}`] : null;
+            const time = appOf?.time?.(game) ?? 0.004;
+            // curl -o /dev/null: the body goes nowhere, only what -w writes stays.
+            const io = args.findIndex((a) => a === '-o' || a === '--output');
+            const discarded = io >= 0 && args[io + 1] === '/dev/null';
+            const shown = discarded ? '' : blocks.join('\n\n');
+            const extra = after(r.code, time, r.body.length);
+            return extra ? (shown ? `${shown}\n${extra}` : extra).replace(/\n$/, '') : shown;
           }
           if (headers) blocks.push(r.headers.join('\n'));
           const next = /^(https?):\/\/([^/:]+)(?::(\d+))?(.*)$/.exec(elsewhere);

@@ -83,3 +83,5 @@ boot-order
 restart-loop
 slow-boot
 late-disk
+heavy-load
+quota

@@ -513,6 +513,8 @@ export interface App {
   answer?: (game: Game, path: string, request: Request) => { code: number; body: string; type?: string; headers?: string[] };
   // Requests per second it can serve (no limit if absent).
   capacity?: number;
+  // How long it takes to answer, in seconds (curl -w '%{time_total}'); 0.004 if absent.
+  time?: (game: Game) => number;
 }
 
 // What the app sees of a request: the headers received (lower-case names) and the connection's address.

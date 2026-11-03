@@ -84,6 +84,8 @@ import { playbook } from './playbook';
 import { rehearsal } from './rehearsal';
 import { padlock } from './padlock';
 import { bootOrder } from './boot-order';
+import { heavyLoad } from './heavy-load';
+import { quota } from './quota';
 import { restartLoop } from './restart-loop';
 import { slowBoot } from './slow-boot';
 import { lateDisk } from './late-disk';
@@ -189,6 +191,11 @@ export const STORIES: Story[] = [
     id: 'canteen',
     after: ['reboot-night', 'probe'],
     chapters: [bootOrder, restartLoop, slowBoot, lateDisk],
+  },
+  {
+    id: 'observatory',
+    after: ['memory', 'boot-order'],
+    chapters: [heavyLoad, quota],
   },
 ];
 
