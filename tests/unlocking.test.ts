@@ -60,11 +60,15 @@ describe('Gradual unlocking', () => {
     expect(keys(prerequisites('fablab'))).toContain(name('fablab'));
   });
 
-  it("the incident of the day: among the open stories", () => {
+  it("the incident of the day: among the chapters already open", () => {
     expect(dayIncident('2027-01-19', () => false)).toBeNull();
-    const only = (h: string) => (id: string) => id === h;
+    const only = (h: string) => (id: string) => STORIES[placeFor(id).h].id === h;
     const id = dayIncident('2027-01-19', only('datacenter'));
     expect(id && STORIES[placeFor(id).h].id).toBe('datacenter');
+    // Only one chapter open: it is the incident, whatever the date.
+    const first = INCIDENTS[0];
+    expect(dayIncident('2027-01-19', (c) => c === first)).toBe(first);
+    expect(dayIncident('2027-03-02', (c) => c === first)).toBe(first);
     // All open: the usual draw.
     expect(INCIDENTS).toContain(dayIncident('2027-01-19'));
   });

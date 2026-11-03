@@ -430,8 +430,9 @@ The architecture has prepared for it since phase 0 (see "Translations" in
   teachers' sheets.
 - [x] **On-call duty and the incident of the day** (`src/engine/on-call.ts`):
   every day, a chapter drawn from the date (the same for everyone, with no
-  server) among those of the learning paths about failures, open after La
-  Racine; an error budget of 30 minutes that melts with time (−3 min per
+  server) among the chapters of the learning paths about failures that
+  the player can already open (the button stays hidden until there is
+  one); an error budget of 30 minutes that melts with time (−3 min per
   hint, −20 s per failed command); at the end, a score card as text to copy
   (a five-box gauge); the day's best result is kept in the browser.
 - [x] **End-of-chapter summary** (`src/engine/summary.ts`): time spent,

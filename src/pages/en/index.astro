@@ -27,7 +27,7 @@ import { STORIES } from '../../engine/chapters';
   </p>
   <noscript><p class="warning">This game needs JavaScript to simulate a terminal in your browser.</p></noscript>
 
-  <quetes-de-sysadmin lang="en"></quetes-de-sysadmin>
+  <quetes-de-sysadmin lang="en" exam-control="page"></quetes-de-sysadmin>
 
   <section aria-labelledby="embed">
     <h2 id="embed">Put the game on your site</h2>
@@ -51,10 +51,14 @@ import { STORIES } from '../../engine/chapters';
   <section aria-labelledby="teach">
     <h2 id="teach">For teachers</h2>
     <p>Goal, prerequisites, new commands and time for each chapter: <a href="/en/teachers/">the quest sheets</a>.</p>
+    <p>For a test in class: the game shows no hints and times each chapter; the best time stays in this browser.</p>
+    <p class="exam-control"><label><input type="checkbox" id="exam-mode" /> Exam mode: no hints, with a timer (the current chapter restarts)</label></p>
   </section>
 </Base>
 
 <script>
   import '../../element';
+  import { wireExam } from '../../exam-control';
+  wireExam();
 </script>
 '

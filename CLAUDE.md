@@ -252,7 +252,10 @@ presents them for people.
   `tests/hints.test.ts` checks it) and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
-  attributes `lang`, `story`, `save-key`, `theme="light|dark"` (the French
+  attributes `lang`, `story`, `save-key`, `theme="light|dark"`,
+  `exam-control="page"` (with the `exam` property and the `exam-change`
+  event; the home page's checkbox under "For teachers" in
+  `src/exam-control.ts`) (the French
   names `langue`, `histoire`, `cle`, `theme="clair|sombre"` still work).
 - `src/pages/en/teachers.astro` and `src/pages/fr/enseignants.astro`: the
   quest sheets (component `src/components/Sheets.astro`), computed by

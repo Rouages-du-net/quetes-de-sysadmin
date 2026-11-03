@@ -34,12 +34,12 @@ function condensed(text: string): number {
 }
 
 /**
- * The chapter of the incident of the day, for a date YYYY-MM-DD, among those
- * of the stories already open (stories open little by little); null
- * if there is none yet.
+ * The chapter of the incident of the day, for a date YYYY-MM-DD, among the
+ * chapters the player can already open (stories open little by little, and
+ * chapters one after the other); null if there is none yet.
  */
-export function dayIncident(date: string, isOpen: (story: string) => boolean = () => true): string | null {
-  const possible = INCIDENTS.filter((id) => isOpen(STORIES[placeFor(id).h].id));
+export function dayIncident(date: string, isOpen: (chapter: string) => boolean = () => true): string | null {
+  const possible = INCIDENTS.filter(isOpen);
   return possible.length ? possible[condensed(`incident-${date}`) % possible.length] : null;
 }
 

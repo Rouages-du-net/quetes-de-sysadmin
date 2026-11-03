@@ -350,7 +350,6 @@ path-without-key = 🔒 Story locked
 on-call-button = 🚨 Incident of the day
 # { $chapter }: chapter title; { $story }: story title
 on-call-today = Today: "{ $chapter }" ({ $story })
-on-call-locked = 🔒 On-call opens once you finish The Root (The Eraser, chapter 3).
 # { $percent }: budget left
 on-call-already = Done today: { $percent }% of the budget kept.
 # { $date }: today's date, spelled out
