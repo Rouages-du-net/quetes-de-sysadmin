@@ -49,6 +49,7 @@ for (const width of [1000, 375]) {
   };
   check((await game.locator('.output').textContent()).includes('Bienvenue sur ton poste'), `${width} px: starting from the workstation`);
   check(await game.locator('button[data-story="1"]').isDisabled(), `${width} px: without its key, the Datacenter is locked`);
+  check(await game.locator('.incident').isHidden(), `${width} px: no chapter open for an incident yet, the button is hidden`);
   await input.fill('ssh roy');
   await input.press('Tab');
   check((await input.inputValue()) === 'ssh royaume ', `${width} px: Tab completes the machine name`);
@@ -133,25 +134,27 @@ for (const width of [1000, 375]) {
       }),
   );
   check(reprise, `${width} px: input resumes after the map`);
-  // Exam mode: the checkbox restarts the current chapter, the timer starts.
+  // Exam mode: the checkbox under "For teachers" (the game's own is hidden
+  // on the site) restarts the current chapter, the timer starts.
+  check(!(await game.locator('.exam-choice').isVisible()), `${width} px: the game's exam checkbox is hidden on the site`);
   await tape('ssh royaume');
-  await game.locator('.exam input').check();
+  await page.locator('#exam-mode').check();
   check((await game.locator('.output').textContent()).includes('Mode examen'), `${width} px: exam mode is announced`);
   await page.waitForTimeout(1100);
   check(/⏱ 00:0\d/.test(await game.locator('.timer').textContent()), `${width} px: the timer is running`);
-  await game.locator('.exam input').uncheck();
+  await page.locator('#exam-mode').uncheck();
   check((await game.locator('.timer').textContent()) === '', `${width} px: without exam, no more timer`);
   // A chapter in progress: exam mode would restart it, so we ask first.
   await tape('ls');
-  await game.locator('.exam input').click();
+  await page.locator('#exam-mode').click();
   const confirmation = game.locator('dialog.exam-window');
-  check((await confirmation.evaluate((d) => d.open)) && !(await game.locator('.exam input').isChecked()), `${width} px: exam mode asks for confirmation`);
+  check((await confirmation.evaluate((d) => d.open)) && !(await page.locator('#exam-mode').isChecked()), `${width} px: exam mode asks for confirmation`);
   await confirmation.locator('button', { hasText: 'Annuler' }).click();
-  check(!(await confirmation.evaluate((d) => d.open)) && !(await game.locator('.exam input').isChecked()) && (await game.locator('.timer').textContent()) === '', `${width} px: cancel changes nothing`);
-  await game.locator('.exam input').click();
+  check(!(await confirmation.evaluate((d) => d.open)) && !(await page.locator('#exam-mode').isChecked()) && (await game.locator('.timer').textContent()) === '', `${width} px: cancel changes nothing`);
+  await page.locator('#exam-mode').click();
   await confirmation.locator('button', { hasText: 'mode examen' }).click();
-  check((await game.locator('.exam input').isChecked()) && /⏱/.test(await game.locator('.timer').textContent()), `${width} px: confirmed, exam mode starts`);
-  await game.locator('.exam input').uncheck();
+  check((await page.locator('#exam-mode').isChecked()) && /⏱/.test(await game.locator('.timer').textContent()), `${width} px: confirmed, exam mode starts`);
+  await page.locator('#exam-mode').uncheck();
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px: no horizontal scrolling`);
   check(errors.length === 0, `${width} px: no console error ${errors.join(' ')}`);
   check(externes.length === 0, `${width} px: no third-party resource ${externes.join(' ')}`);
@@ -470,7 +473,7 @@ for (const width of [1000, 375]) {
   await taper('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
   check((await game.locator('.output .summary').textContent()).includes('3 indices'), 'hints: the summary counts them (even after a snapshot)');
   // In exam mode: no help.
-  await game.locator('.exam input').check();
+  await page.locator('#exam-mode').check();
   await game.locator('.mission-button').click();
   check(!(await mission.locator('.help').isVisible()), 'hints: nothing in exam mode');
   await page.keyboard.press('Escape');
@@ -663,15 +666,15 @@ for (const width of [1000, 375]) {
   await context.close();
 }
 
-// On-call duty: the incident of the day, drawn among the stories open after
-// L'Effaceur (fixed date: 14 January 2027, "First day"),
+// On-call duty: the incident of the day, drawn among the chapters open after
+// L'Effaceur (fixed date: 10 January 2027, "First day"),
 // the budget that melts, the score card at the end, the result kept.
 for (const width of [1000, 375]) {
   const page = await browser.newPage({ viewport: { width: width, height: 900 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-  await page.clock.install({ time: new Date('2027-01-14T10:00:00') });
+  await page.clock.install({ time: new Date('2027-01-10T10:00:00') });
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] })));
@@ -679,10 +682,10 @@ for (const width of [1000, 375]) {
   const game = page.locator('quetes-de-sysadmin');
   check((await game.locator('.incident-text').textContent()).includes('Premier jour'), `on-call ${width} px: the incident of the day is announced`);
   // The clock is stopped: time only moves with runFor (otherwise a second may pass before the gauge is read).
-  await page.clock.pauseAt(new Date('2027-01-14T10:00:10'));
+  await page.clock.pauseAt(new Date('2027-01-10T10:00:10'));
   await game.locator('.incident-button').click();
   const window = game.locator('dialog.on-call-window').first();
-  check((await window.evaluate((d) => d.open)) && (await window.textContent()).includes('14 janvier 2027'), `on-call ${width} px: the on-call dialog`);
+  check((await window.evaluate((d) => d.open)) && (await window.textContent()).includes('10 janvier 2027'), `on-call ${width} px: the on-call dialog`);
   await window.locator('button', { hasText: 'Prendre l' }).click();
   check((await game.locator('.prompt').textContent()).startsWith('vous@datacenter'), `on-call ${width} px: the incident opens`);
   check((await game.locator('.on-call-gauge').textContent()).includes('30:00 (100 %)') && (await game.locator('.incident-button').isDisabled()), `on-call ${width} px: the budget is full, no second on-call`);
@@ -696,7 +699,7 @@ for (const width of [1000, 375]) {
   const end = game.locator('dialog.on-call-window').last();
   check(await end.evaluate((d) => d.open), `on-call ${width} px: the score card opens at the end`);
   const map = await end.locator('.score-card').textContent();
-  check(map.includes('astreinte du 2027-01-14') && map.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(map) && map.includes('une erreur'), `on-call ${width} px: the score card`);
+  check(map.includes('astreinte du 2027-01-10') && map.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(map) && map.includes('une erreur'), `on-call ${width} px: the score card`);
   const box = await end.boundingBox();
   check(box.x >= 0 && box.x + box.width <= width, `on-call ${width} px: the dialog fits on the screen`);
   await page.keyboard.press('Escape');
@@ -736,6 +739,7 @@ await page.goto(`${BASE}/autre-site.html`);
 await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
 // With no language attribute, the game takes the page's language (here lang="en").
 check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('The Lost Packet'), 'embedding: the requested story opens, in the page language');
+check(await page.locator('quetes-de-sysadmin .exam-choice').isVisible(), 'embedding: the exam checkbox is in the game');
 check((await page.evaluate(() => getComputedStyle(document.querySelector('h1')).fontFamily)).includes('serif'), 'embedding: the page styles are not touched');
 await page.addStyleTag({ content: 'quetes-de-sysadmin { --qds-accent: rgb(1, 2, 3); }' });
 check(

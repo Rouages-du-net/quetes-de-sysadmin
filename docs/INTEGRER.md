@@ -31,6 +31,7 @@ configure le même en-tête.
 | `story` | l'identifiant d'une histoire : `eraser`, `datacenter`, `packet`, `time-machine`, `archives`… (les anciens identifiants français, `effaceur`, `paquet`…, marchent toujours) | histoire ouverte au départ, directement sur sa machine, même sans sa clé SSH (sans l'attribut, on part du poste, ou de l'histoire en cours) |
 | `save-key` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
 | `theme` | `light`, `dark` | force un thème (par défaut, celui du système) |
+| `exam-control` | `page` | ta page affiche sa propre case du mode examen (voir plus bas) : celle du jeu, en bas, est cachée |
 
 Les anciens noms français marchent toujours : `langue`, `histoire`, `cle`,
 et `theme="clair"` / `"sombre"`.
@@ -40,6 +41,17 @@ Exemple : un cours sur le réseau qui ouvre directement « Le Paquet perdu » :
 ```html
 <quetes-de-sysadmin story="packet" save-key="cours-reseau" lang="fr"></quetes-de-sysadmin>
 ```
+
+## Mode examen
+
+Le mode examen (sans indice, un chrono par chapitre) est une case en bas
+du jeu. Une page peut l'afficher ailleurs, par exemple dans une section
+pour les enseignant·es : ajoute `exam-control="page"`, puis utilise la
+propriété `exam` de l'élément (la changer fait recommencer le chapitre en
+cours, après confirmation s'il est commencé) et son évènement
+`exam-change` (`event.detail.exam`), comme la page d'accueil du site dans
+`src/exam-control.ts`. Ton script doit être un fichier, pas du code en
+ligne, si ta page a une CSP.
 
 ## Couleurs
 

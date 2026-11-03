@@ -31,6 +31,10 @@ export interface Options {
   story?: string;
   /** Save key in localStorage (change it if several games share a site). */
   saveKey?: string;
+  /** The host page shows its own exam-mode checkbox: the game's is hidden. */
+  examOutside?: boolean;
+  /** Called when exam mode is turned on or off (to keep the page's checkbox in step). */
+  onExam?: (exam: boolean) => void;
 }
 
 
@@ -162,10 +166,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // The mission: the chapter's objective, its instructions, and what has already happened.
   const missionButton = el('button', { type: 'button', class: 'mission-button', 'aria-haspopup': 'dialog' }, t('mission-button'));
   const onCallGauge = el('span', { class: 'on-call-gauge', role: 'timer', hidden: '' });
+  // The exam-mode checkbox, at the bottom of the game (a choice for a class
+  // test, not an everyday tool); the host page may show its own instead.
+  const examChoice = el('p', { class: 'exam-choice' }, el('label', {}, examCase, el('span', {}, t('exam-case'))));
+  if (options.examOutside) examChoice.hidden = true;
   const examBar = el(
     'p',
     { class: 'exam' },
-    el('label', {}, examCase, el('span', {}, t('exam-case'))),
     stopwatch,
     onCallGauge,
     el('span', { class: 'tools' }, missionButton, mapButton, settings),
@@ -432,7 +439,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, examChoice, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -1060,14 +1067,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   const longDate = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
   let onCall: { date: string; chapter: string; start: number; sh: Shell | null; epuise: boolean } | null = null;
-  // The incident of the day is drawn among the stories already open (null: none yet).
-  const incident = (date = today()) => dayIncident(date, (h) => gameTerminal.isOpen(h));
+  // The incident of the day is drawn among the chapters the player can
+  // already open: an open story, and the chapter before it finished (null:
+  // none yet, and the button stays hidden).
+  const incident = (date = today()) =>
+    dayIncident(date, (id) => {
+      const { h, c } = placeFor(id);
+      return gameTerminal.isOpen(STORIES[h].id) && open(h, c);
+    });
   const incidentUpdate = () => {
     const id = incident();
+    incidentBlock.hidden = !id && onCall === null;
     incidentButton.disabled = !id || onCall !== null;
     const done = results[today()];
     incidentText.textContent = !id
-      ? t('on-call-locked')
+      ? ''
       : done
         ? t('on-call-already', { percent: percent(done.remaining) })
         : t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
@@ -1089,6 +1103,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // On call, hints are allowed (they cost points): no exam mode.
     examCase.checked = false;
     gameTerminal.exam = false;
+    options.onExam?.(false);
     const { h, c } = placeFor(chapter);
     launch(h, c);
     onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
@@ -1159,6 +1174,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const applyExam = (yes: boolean) => {
     examCase.checked = yes;
     gameTerminal.exam = yes;
+    options.onExam?.(yes);
     // The current chapter restarts: in exam mode, on a fresh machine with the timer at zero.
     if (story() >= 0) launch(story(), active());
     else after();
@@ -1603,5 +1619,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const departure = STORIES.findIndex((h) => h.id === (options.story ?? saved.story));
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();
-  return { root: game };
+  return {
+    root: game,
+    /** Exam mode, on or off. */
+    exam: () => gameTerminal.exam,
+    /** Asks for exam mode, as the checkbox does (a chapter in progress asks for confirmation first). */
+    askExam: (yes: boolean) => {
+      if (yes === gameTerminal.exam) return;
+      examCase.checked = yes;
+      examCase.dispatchEvent(new Event('change'));
+    },
+  };
 }

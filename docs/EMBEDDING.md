@@ -30,9 +30,9 @@ than your page, set the same header.
 | `story` | a story's identifier: `eraser`, `datacenter`, `packet`, `time-machine`, `archives`… (the older French ids, `effaceur`, `paquet`…, still work) | the story opened at start, directly on its machine, even without its SSH key (without the attribute, you start from the workstation, or from the story in progress) |
 | `save-key` | text | the save's key in `localStorage` (default `quetes-de-sysadmin`); change it to keep several games apart on one site |
 | `theme` | `light`, `dark` | forces a theme (default: the system's) |
+| `exam-control` | `page` | your page shows its own exam-mode checkbox (see below): the game's, at its bottom, is hidden |
 
-The story identifiers are still the French ones (they are internal names,
-see CONTRIBUTING.md). The French attribute names used before still work:
+The French attribute names used before still work:
 `langue`, `histoire`, `cle`, and `theme="clair"` / `"sombre"`.
 
 Example: a networking course that opens "The Lost Packet" directly:
@@ -40,6 +40,17 @@ Example: a networking course that opens "The Lost Packet" directly:
 ```html
 <quetes-de-sysadmin story="packet" save-key="networking-course" lang="en"></quetes-de-sysadmin>
 ```
+
+## Exam mode
+
+Exam mode (no hints, a timer per chapter) is a checkbox at the bottom of
+the game. A page can show it elsewhere, for instance in a section for
+teachers: add `exam-control="page"`, then use the element's `exam`
+property (setting it restarts the current chapter, after a confirmation if
+the chapter is in progress) and its `exam-change` event
+(`event.detail.exam`), as the site's home page does in
+`src/exam-control.ts`. Your script must be a file, not inline, if your
+page has a CSP.
 
 ## Colours
 

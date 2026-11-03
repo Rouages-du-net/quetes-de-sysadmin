@@ -96,6 +96,9 @@ a:hover { color: var(--amber); }
 a:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
 footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+/* The exam-mode checkbox, under "For teachers" (wired to the game, see src/exam-control.ts). */
+.exam-control label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
+.exam-control input { accent-color: var(--phosphor); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }
 .warning { padding: 1rem; border: 1px solid var(--amber); border-radius: 0.4rem; color: var(--amber); }
 
 /* The teachers' sheets: rack labels. */

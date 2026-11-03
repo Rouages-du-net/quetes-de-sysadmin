@@ -5,7 +5,9 @@
 //
 // Optional attributes: story="datacenter" (the story opened at start),
 // save-key="…" (the localStorage key of the save), theme="light" | "dark",
-// lang="fr" (without it: the page's language, otherwise English). The older
+// lang="fr" (without it: the page's language, otherwise English),
+// exam-control="page" (the page shows its own exam-mode checkbox, wired to
+// the element's `exam` property and its `exam-change` event). The older
 // French names still work: histoire, cle, theme="clair" | "sombre", langue.
 // The game lives in a shadow root (Shadow DOM): its styles do not spill
 // onto the page, and the page's styles do not break it. Colours are set
@@ -35,6 +37,14 @@ const OLD_STORY_IDS: Record<string, string> = {
 import styles from './interface/styles.css?inline';
 
 export class SysadminQuests extends HTMLElement {
+  private game?: ReturnType<typeof mount>;
+  /** Exam mode: no hints, a timer. Setting it restarts the current chapter (after confirmation if it is in progress). */
+  get exam(): boolean {
+    return this.game?.exam() ?? false;
+  }
+  set exam(yes: boolean) {
+    this.game?.askExam(!!yes);
+  }
   connectedCallback() {
     if (this.shadowRoot) return;
     const root = this.attachShadow({ mode: 'open' });
@@ -44,11 +54,13 @@ export class SysadminQuests extends HTMLElement {
     // The English attribute first, then its older French name.
     const attribute = (name: string, old: string) => this.getAttribute(name) ?? this.getAttribute(old) ?? undefined;
     const story = attribute('story', 'histoire');
-    mount(root, {
+    this.game = mount(root, {
       story: story && Object.hasOwn(OLD_STORY_IDS, story) ? OLD_STORY_IDS[story] : story,
       saveKey: attribute('save-key', 'usb'),
       // lang on the element, then langue, then the page's language (lang), otherwise English.
       language: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
+      examOutside: this.getAttribute('exam-control') === 'page',
+      onExam: (exam) => this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam }, bubbles: true })),
     });
   }
 }

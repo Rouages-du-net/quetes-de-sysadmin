@@ -350,7 +350,6 @@ path-without-key = 🔒 Histoire verrouillée
 on-call-button = 🚨 Incident du jour
 # { $chapter } : titre du chapitre ; { $story } : titre de l'histoire
 on-call-today = Aujourd'hui : « { $chapter } » ({ $story })
-on-call-locked = 🔒 L'astreinte s'ouvre quand tu termines La Racine (L'Effaceur, chapitre 3).
 # { $percent } : budget restant
 on-call-already = Fait aujourd'hui : { $percent } % du budget gardé.
 # { $date } : la date du jour, écrite en toutes lettres
