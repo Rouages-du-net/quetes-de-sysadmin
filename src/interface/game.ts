@@ -84,23 +84,28 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const workstationButton = el('button', { type: 'button', 'data-workstation': '' }, el('span', { class: 'title' }, t('workstation-title')), host(WORKSTATION));
   const keyHelp = el('p', { class: 'key-help' }, typo(t('key-help')));
   // Two views of the menu: the network map (the workstation, the internet, then
-  // one machine per story, plugged into the same cable, lighting up as the
-  // player progresses) and the racks (the same buttons, in a grid, with their
-  // summary). They are the same buttons in the same list: only the layout
-  // changes, and screen readers read the same thing.
-  const VIEWS = ['network', 'racks', 'paths'] as const;
+  // one machine per open story, plugged into the same cable, lighting up as the
+  // player progresses) and the learning paths. The stories still locked wait
+  // in a folded list under the map, so that the map shows only what can be
+  // played.
+  const VIEWS = ['network', 'paths'] as const;
   const viewBoutons = Object.fromEntries(
     VIEWS.map((v) => [v, el('button', { type: 'button', class: 'view-button', 'aria-pressed': 'false', 'data-view': v }, t(`view-${v}`))]),
   ) as Record<(typeof VIEWS)[number], HTMLButtonElement>;
   const viewChoice = el('p', { class: 'view-choice', role: 'group', 'aria-label': t('view-title') }, ...VIEWS.map((v) => viewBoutons[v]));
+  const storyItems = storiesBoutons.map((b) => el('li', { class: 'node' }, b));
   const storiesList = el(
     'ol',
     {},
     el('li', { class: 'node-workstation' }, workstationButton),
     // The internet, between the workstation and the machines: a landmark, not a button.
     el('li', { class: 'node-internet', 'aria-hidden': 'true' }, el('span', {}, t('view-internet'))),
-    ...storiesBoutons.map((b, i) => el('li', { class: 'node', 'data-side': i % 2 ? 'right' : 'left' }, b)),
+    ...storyItems,
   );
+  // The locked stories, folded: their name and the chapters that open them.
+  const lockedSummary = el('summary', {});
+  const lockedList = el('ol', {});
+  const lockedBlock = el('details', { class: 'locked-stories' }, lockedSummary, keyHelp, lockedList);
   // The "Paths" view: a theme, and its chapters taken from several stories (see paths.ts).
   const pathId = `qds-paths-${Math.random().toString(36).slice(2, 8)}`;
   const pathChoice = el(
@@ -123,7 +128,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
   const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, pathBlock, keyHelp);
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, lockedBlock, pathBlock);
 
   const chaptersNavs = STORIES.map((h, i) =>
     el('nav', { class: 'chapters', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapters': String(i) },
@@ -612,7 +617,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
             ? t('state-chapters-done', { finished: done, total })
             : '';
     });
-    keyHelp.hidden = storiesBoutons.every((b) => !b.disabled) || display.view === 'paths';
+    // Open stories on the map (alternating sides of the cable), locked ones in the folded list.
+    const locked = storyItems.filter((li) => li.dataset.state === 'locked');
+    storyItems.filter((li) => li.dataset.state !== 'locked').forEach((li, i) => {
+      li.dataset.side = i % 2 ? 'right' : 'left';
+      storiesList.append(li);
+    });
+    lockedList.replaceChildren(...locked);
+    lockedSummary.textContent = t('stories-locked', { count: locked.length });
+    lockedBlock.hidden = locked.length === 0 || display.view === 'paths';
     pathUpdate();
     chaptersNavs.forEach((nav, h) => {
       nav.hidden = h !== story() || chapters(h).length < 2;

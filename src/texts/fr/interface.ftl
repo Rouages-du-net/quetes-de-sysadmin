@@ -19,7 +19,11 @@ state-key-missing = 🔒 Verrouillée
 state-key-after = 🔒 Après { $chapters }
 # { $title } : le titre d'un chapitre, dans la liste ci-dessus
 state-key-chapter = « { $title } »
-key-help = 🔑 Les histoires grisées s'ouvrent peu à peu : chacune dit sous son nom les chapitres à finir avant d'en recevoir la clé. Les premières s'ouvrent après La Racine (L'Effaceur, chapitre 3).
+key-help = 🔑 Ces histoires s'ouvrent peu à peu : sous chaque nom, les chapitres à finir avant d'en recevoir la clé. Les premières s'ouvrent après La Racine (L'Effaceur, chapitre 3).
+stories-locked = { $count ->
+    [one] 🔒 Une histoire encore verrouillée
+   *[other] 🔒 { $count } histoires encore verrouillées
+}
 button-next = Chapitre suivant →
 button-restart = Recommencer ce chapitre
 tips = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
@@ -33,7 +37,6 @@ workstation-title = Ton poste
 ## Le menu des histoires : deux vues
 view-title = Présentation des histoires
 view-network = Carte du réseau
-view-racks = Baies
 view-internet = Internet
 input-label = Commande
 credit = Quêtes de Sysadmin, jeu libre (GPL v3, textes CC BY-SA 4.0), inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich.
