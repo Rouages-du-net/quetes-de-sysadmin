@@ -41,3 +41,6 @@ password-dice-2027 = ludo-2027
 
 ## La Cantine
 password-lentils-2028 = lentilles-2028
+
+## L'Observatoire
+password-nebula-2028 = nebuleuse-2028

@@ -217,6 +217,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("The Traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
 | `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs | every option, every open file of the system |
 | memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap, the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
+| processor (`uptime`, `top`, `ps -o`, `renice`, `nice`, `pgrep`, `systemd-cgtop`, `CPUQuota=`) | each process's demand (in CPUs) is described by the chapter; the CPU is shared between all processes at once by their nice weight (the kernel's table: 1024 at 0, 15 at 19), never more than a process wants, a service's processes together never more than its `CPUQuota=`; `CPUWeight=` multiplies the weight of the service's processes; the load average decays towards the number of threads that want to run (1, 5, 15 min); `nice` runs its command at once (the game's commands are instant); `renice -g` is refused; `systemd-cgtop` shows one snapshot, services only; `ps -o` knows `pid`, `ppid`, `user`, `ni`, `pri`, `%cpu`, `%mem`, `stat`, `comm`, `args` | autogroups and the cgroup hierarchy share first between sessions and services (so `renice` between two services acts less than here on a default Debian), per-thread nice values, `sy`/`wa`/`st` time, interactive `top` and `systemd-cgtop`, every `ps` column |
+| limits (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`) | only the open-files limit is modelled (the other lines of `/proc/PID/limits` and `ulimit -a` are a Debian machine's); `/proc/PID` exists only for the processes a chapter describes; `ulimit` acts on the game's shell; `limits.conf` is never read (as for systemd services) | every resource (`-u`, `-s`, `-c`…), pam_limits for new sessions |
+| signals (`kill`, `pkill`) | `-l`, `-SIGNAL`, `-s`, `-0`; KILL always ends a process, STOP/CONT pause and resume it, the others end it unless it ignores them (a script's `trap`, described by the chapter); the children of a process that ends are adopted by init | handlers that do something else, `killall`, `pstree`, process groups and sessions |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
 | systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
@@ -2240,6 +2243,80 @@ mounted, and this was checked. Expected trap: the order fixed but the list
 left hidden under the mount point. Other accepted solution: `nofail` removed
 from fstab (the whole boot waits for the disk; the game warns about
 emergency mode if it is ever missing).
+
+## Story 21: The Observatory (four chapters)
+
+An amateur astronomy club has a small server at a hosting provider
+(`observatory`, `observatoire` in French, 192.0.2.27, two vCPUs): the club's
+photo gallery (`gallery`, Node.js, port 8080) and, at night, the stacking of
+the members' photos (`stack-night`, which starts eight `stack-worker`
+processes). Amara, the club's volunteer sysadmin, is away observing; Jules
+takes the photos. The story is about the processor: the load average, who
+takes the CPU, nice, and systemd's limits. It opens after "The Memory"
+(The On-Call) and "The Boot Order" (The Canteen). Then a process's limits
+(open files) and signals.
+
+### Chapter 1 — Heavy Load (done)
+
+| Step | Command learnt |
+|---|---|
+| How busy is the machine | `uptime` (a load of about 9), `nproc` (2) |
+| Who takes the CPU | `top`, `ps -eo pid,ni,%cpu,comm --sort=-%cpu`, `pgrep -l stack` |
+| Lower the workers' priority | `renice -n 19 -u jules` (or the workers' PIDs) |
+| Check | `curl -s -o /dev/null -w '%{time_total}\n' http://localhost:8080/` (0.25 s again), `top` (NI 19; the load doesn't go down) |
+
+Goal checked on the state: the gallery answers in less than half a second,
+with the eight workers still running. Expected traps: renice of the parent
+only (its children keep their nice value), only some of the workers,
+renice without sudo on another account's processes, killing a worker (three
+hours of computing lost: the chapter must be restarted). Other accepted
+solution: a negative nice value for the gallery (root only; the debrief
+says the usual way is the other).
+
+### Chapter 2 — The Quota (done)
+
+| Step | Command learnt |
+|---|---|
+| What the stacking takes | `systemctl cat stacking` (`Nice=19`), `top`, `systemd-cgtop` (stacking.service near 200 %) |
+| Cap it | `systemctl set-property stacking CPUQuota=80%` (or a drop-in, `systemctl edit`, and `daemon-reload` when written by hand) |
+| Check | `systemd-cgtop`, `top` (the workers together at 80 %) |
+
+Goal checked on the state: the stacking still runs, capped at 80 % of a CPU
+or less (40 % of the machine, the host's baseline), by a setting written on
+disk. Expected traps: `set-property Nice=` (not a resource-control
+property), a quota in percent of the whole machine (`CPUQuota=150%`: still
+too much; the game explains that 100 % is one CPU), a drop-in written
+without `daemon-reload`, stopping the stacking (Jules's night lost; it can
+be started again). A restart is accepted but costs the night's progress.
+
+### Chapter 3 — Too Many Open Files (done)
+
+| Step | Command learnt |
+|---|---|
+| What fails | `curl -i http://localhost:8080/archive` (500), `journalctl -u gallery` ("EMFILE: too many open files") |
+| The process's limit | `cat /proc/840/limits` (Max open files 1024 / 524288), `sudo ls /proc/840/fd \| wc -l`, `lsof -p 840`, `prlimit --pid 840 --nofile` |
+| Give the service its limit | `systemctl edit gallery`: `LimitNOFILE=4096`, `systemctl restart gallery` |
+
+Goal checked on the state: the gallery runs with an open-files limit above
+what the archive needs (2412), written in its unit. Expected traps: `ulimit
+-n` in the shell (only the shell), `/etc/security/limits.conf` (pam_limits,
+login sessions only), `LimitNOFILE=` without a restart (a limit is set when
+the process starts), a limit too low, `prlimit` alone (works until the next
+restart).
+
+### Chapter 4 — The Stuck Process (done)
+
+| Step | Command learnt |
+|---|---|
+| Who is stuck | `ps -ef` (the script and its rsync, the PPID column), `cat /usr/local/bin/sync-photos` (`trap '' INT TERM HUP`) |
+| TERM is ignored | `kill 3301` (nothing), `kill 3302` (a new rsync), `kill -l` |
+| Force it | `kill -KILL 3301` (or `pkill -9 -f sync-photos`), then `kill` on the orphaned rsync (PPID 1) |
+| Clean up | `cat /run/sync-photos.pid`, `ps -p 3301`, `rm /run/sync-photos.pid` |
+
+Goal checked on the state: no sync-photos nor rsync process left, the stale
+PID file removed, cron still running. Expected traps: `kill` without sudo,
+TERM on the script (ignored), killing rsync while the script lives (it
+starts another one), removing the PID file while the script still runs.
 
 ## Ideas for later
 

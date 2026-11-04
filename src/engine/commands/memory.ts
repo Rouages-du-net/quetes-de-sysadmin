@@ -14,6 +14,7 @@ import type { Process } from './system';
 import { memory, process, freeSize, used } from '../memory';
 import { systemd } from '../systemd';
 import { dockerProcess } from '../docker';
+import { cpu, loadText, refreshCpu, shares, usage } from '../cpu';
 import type { Command } from './index';
 
 // The kernel itself, without cache (the rest of "kernel" is disk cache).
@@ -63,6 +64,10 @@ const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 19);
 function top(game: Shell, args: string[]): string {
   const sd = systemd(game)!;
   const m = memory(game)!;
+  // The processor, if the machine tracks it (cpu.ts): shares, load, nice.
+  const model = cpu(game);
+  if (model) refreshCpu(game);
+  const given = model ? shares(game) : {};
   const c = memoryDigits(game);
   const i = args.indexOf('-o');
   const sort = i >= 0 ? args[i + 1] : '%CPU';
@@ -83,11 +88,19 @@ function top(game: Shell, args: string[]): string {
   // The disk (if it is tracked): I/O wait (wa) and load.
   const disk = io(game) ? diskState(game) : null;
   const wa = disk ? Math.min(95.7, disk.iowait) : 0.2;
-  const load = disk ? [disk.load, disk.load * 0.85, disk.load * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
+  const load = model ? loadText(game) : disk ? [disk.load, disk.load * 0.85, disk.load * 0.6].map((x) => x.toFixed(2)).join(', ') : '0.42, 0.38, 0.35';
+  // %Cpu(s): us (user), ni (user, niced processes), id (idle), as a share of all the CPUs.
+  const used = model ? usage(game) : null;
+  const cpuLine = used
+    ? `%Cpu(s): ${((used.all - used.nice) * 100).toFixed(1).padStart(4)} us,  ${Math.max(0, Math.min(2, (1 - used.all) * 100)).toFixed(1)} sy, ${(used.nice * 100).toFixed(1).padStart(4)} ni, ${Math.max(0, (1 - used.all) * 100 - Math.min(2, (1 - used.all) * 100)).toFixed(1).padStart(4)} id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st`
+    : `%Cpu(s):  3.1 us,  1.0 sy,  0.0 ni, ${(100 - 4.2 - wa).toFixed(1).padStart(4)} id, ${wa.toFixed(1).padStart(4)} wa,  0.0 hi,  0.1 si,  0.0 st`;
+  const running = (p: Process) => !p.zombie && !p.stopped && (given[p.pid] ?? 0) > 0;
+  const nRunning = model ? Math.max(1, listing.filter(running).length) : 1;
+  const nStopped = listing.filter((p) => p.stopped).length;
   return [
     `top - ${timeOfDay(sd.clock)} up ${days ? `${days} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${load}`,
-    `Tasks: ${String(listing.length).padStart(3)} total,   1 running, ${String(listing.length - 1 - zombies).padStart(3)} sleeping,   0 stopped, ${String(zombies).padStart(3)} zombie`,
-    `%Cpu(s):  3.1 us,  1.0 sy,  0.0 ni, ${(100 - 4.2 - wa).toFixed(1).padStart(4)} id, ${wa.toFixed(1).padStart(4)} wa,  0.0 hi,  0.1 si,  0.0 st`,
+    `Tasks: ${String(listing.length).padStart(3)} total, ${String(nRunning).padStart(3)} running, ${String(Math.max(0, listing.length - nRunning - zombies - nStopped)).padStart(3)} sleeping, ${String(nStopped).padStart(3)} stopped, ${String(zombies).padStart(3)} zombie`,
+    cpuLine,
     `MiB Mem : ${inMio(c.total)} total, ${inMio(c.free)} free, ${inMio(c.used)} used, ${inMio(c.cache)} buff/cache`,
     `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(available.toFixed(1)).padStart(8)} avail Mem`,
     '',
@@ -95,10 +108,11 @@ function top(game: Shell, args: string[]): string {
     ...trie.map((p) => {
       const r = rss(p);
       const virt = p.zombie ? 0 : r + 180_000;
-      const state = p.zombie ? 'Z' : 'S';
+      const state = p.zombie ? 'Z' : p.stopped ? 'T' : running(p) ? 'R' : 'S';
+      const ni = p.nice ?? 0;
       const command = complete ? p.command : shortName(p);
       const time = `${Math.floor(p.pid / 97)}:${String((p.pid * 7) % 60).padStart(2, '0')}.${String(p.pid % 100).padStart(2, '0')}`;
-      return `${String(p.pid).padStart(7)} ${p.user.slice(0, 8).padEnd(8)}  20   0 ${kio(virt).padStart(7)} ${kio(r).padStart(6)} ${String(p.zombie ? 0 : Math.min(r, 9800)).padStart(6)} ${state} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${time.padStart(9)} ${command}`;
+      return `${String(p.pid).padStart(7)} ${p.user.slice(0, 8).padEnd(8)}  ${String(20 + ni).padStart(2)} ${String(ni).padStart(3)} ${kio(virt).padStart(7)} ${kio(r).padStart(6)} ${String(p.zombie ? 0 : Math.min(r, 9800)).padStart(6)} ${state} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${time.padStart(9)} ${command}`;
     }),
   ].join('\n');
 }

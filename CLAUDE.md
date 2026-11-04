@@ -125,6 +125,15 @@ presents them for people.
   overrides (`systemctl edit`, `set-property`, `daemon-reload`) in
   `commands/systemd.ts`. Disk I/O (`state.io`: requests, scheduler,
   `IO*BandwidthMax=`, ionice classes) in `src/engine/disk-io.ts`,
+  the processor (`state.cpu`: each process's demand, shares by nice
+  weight, `Nice=`, `CPUQuota=`, `CPUWeight=`, the load average) in
+  `src/engine/cpu.ts`, `uptime`, `nproc`, `nice`, `renice`, `pgrep`,
+  `systemd-cgtop` in `commands/cpu.ts` (`chapters/observatory.ts`: what
+  The Observatory's chapters share), a process's open-files limit
+  (`Process.nofile`, `LimitNOFILE=`, `/proc/PID/limits`) in
+  `src/engine/limits.ts`, `ulimit` and `prlimit` in `commands/limits.ts`,
+  signals (`kill -SIGNAL`, `Process.ignores`, `state.onSignal`,
+  `sendSignal`) in `commands/system.ts`,
   `iostat`, `pidstat`, `ionice` in `commands/iostat.ts`. Inodes: a medium
   of `state.mounts` may declare `inodes` (and `inodesBase`); `df -i`,
   `du --inodes`, `find -mtime` (the files' `mtime`); the ARG_MAX limit in

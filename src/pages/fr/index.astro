@@ -23,16 +23,16 @@ import { STORIES } from '../../engine/chapters';
 
   <quetes-de-sysadmin lang="fr" exam-control="page"></quetes-de-sysadmin>
 
-  <section aria-labelledby="integrer">
-    <h2 id="integrer">Mettre le jeu sur ton site</h2>
+  <details class="faq">
+    <summary><h2 id="integrer">Mettre le jeu sur ton site</h2></summary>
     <p>Le jeu est libre et s'intègre dans n'importe quelle page avec deux lignes :</p>
     <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
 <quetes-de-sysadmin lang="fr"></quetes-de-sysadmin>`}</code></pre>
     <p>Mode d'emploi complet : <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/INTEGRER.md">docs/INTEGRER.md</a>.</p>
-  </section>
+  </details>
 
-  <section aria-labelledby="noms">
-    <h2 id="noms">Pourquoi des noms en .internal et en .example ?</h2>
+  <details class="faq">
+    <summary><h2 id="noms">Pourquoi des noms en .internal et en .example ?</h2></summary>
     <p>
       Les machines du jeu sont fictives, mais leurs noms suivent les règles réelles : <code>.internal</code>
       est réservé aux réseaux privés (ICANN, 2024), <code>.example</code> aux exemples
@@ -40,14 +40,14 @@ import { STORIES } from '../../engine/chapters';
       et 203.0.113.x à la documentation (<a href="https://www.rfc-editor.org/rfc/rfc5737">RFC 5737</a>). Un nom
       inventé pourrait appartenir à quelqu'un : ce que tu essaies ici ne vise jamais une vraie machine.
     </p>
-  </section>
+  </details>
 
-  <section aria-labelledby="enseigner">
-    <h2 id="enseigner">Pour les enseignant·es</h2>
+  <details class="faq">
+    <summary><h2 id="enseigner">Pour les enseignant·es</h2></summary>
     <p>Objectifs, prérequis, commandes découvertes et durée de chaque chapitre : <a href="/fr/enseignants/">les fiches des quêtes</a>.</p>
     <p>Pour une évaluation en classe : le jeu n'affiche aucun indice et chronomètre chaque chapitre ; le meilleur temps reste dans ce navigateur.</p>
     <p class="exam-control"><label><input type="checkbox" id="exam-mode" /> Mode examen : sans indice, avec un chrono (le chapitre en cours recommence)</label></p>
-  </section>
+  </details>
 </Base>
 
 <script>

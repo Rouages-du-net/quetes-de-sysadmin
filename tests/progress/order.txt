@@ -83,3 +83,7 @@ boot-order
 restart-loop
 slow-boot
 late-disk
+heavy-load
+quota
+too-many-files
+stuck-process

@@ -57,6 +57,8 @@ export const MACHINES: Machine[] = [
   machine('patch', '203.0.113.40', 'patch'),
   // The Canteen: the neighbourhood's solidarity canteen, its menu and bookings server.
   machine('canteen', '192.0.2.26', 'canteen'),
+  // The Observatory: an amateur astronomy club, its photo gallery and the stacking of its night photos.
+  machine('observatory', '192.0.2.27', 'observatory'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

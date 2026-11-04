@@ -7,6 +7,8 @@ import { stop, dateComplete, start, duration, writeLog, logLine, reload, restart
 import type { Command } from './index';
 import { colourise, sgr } from '../colours';
 import { readSize } from '../memory';
+import { readNice, readQuota } from '../cpu';
+import { readLimit } from '../limits';
 import { loadUnits, readCalendar, nextCalendar, nextTrigger, timerFor } from '../timers';
 import { toUtc } from '../systemd';
 import {
@@ -105,14 +107,27 @@ export function loadOverrides(game: Shell, sd: Systemd) {
     s.reboot = undefined;
     s.readIo = undefined;
     s.writeIo = undefined;
+    s.nice = undefined;
+    s.cpuQuota = undefined;
+    s.cpuWeight = undefined;
+    s.limitNofile = undefined;
+    // Nice=, CPUQuota=, CPUWeight= and LimitNOFILE= are also read in the unit file itself
+    // (the other keys of the unit file are read by units.ts or the chapter).
+    const main = mainFile(game, name, s);
     // The last file read wins (like systemd: names are sorted, /etc/systemd/system after system.control here).
-    for (const path of paths) {
+    for (const path of [...(main ? [main] : []), ...paths]) {
+      const dropIn = path !== main;
       let section = '';
       for (const line of (game.read(path) ?? '').split('\n')) {
         const l = line.trim();
         if (/^\[.*\]$/.test(l)) section = l;
         const m = /^(\w+)\s*=\s*(.*)$/.exec(l);
         if (!m || section !== '[Service]') continue;
+        if (m[1] === 'Nice') s.nice = readNice(m[2]) ?? undefined;
+        if (m[1] === 'CPUQuota') s.cpuQuota = m[2] === '' ? undefined : (readQuota(m[2]) ?? undefined);
+        if (m[1] === 'CPUWeight') s.cpuWeight = /^\d+$/.test(m[2]) && Number(m[2]) >= 1 && Number(m[2]) <= 10000 ? Number(m[2]) : undefined;
+        if (m[1] === 'LimitNOFILE') s.limitNofile = m[2] === '' ? undefined : (readLimit(m[2]) ?? undefined);
+        if (!dropIn) continue;
         if (m[1] === 'MemoryMax') s.maxMemory = readSize(m[2]) ?? undefined;
         if (m[1] === 'Restart') s.reboot = m[2];
         const io = /^IO(Read|Write)BandwidthMax$/.exec(m[1]);
@@ -532,14 +547,21 @@ export const SYSTEMD: Record<string, Command> = {
           const m = /^(\w+)=(.*)$/.exec(p);
           if (!m) return game.error(`Failed to set unit properties on ${name}.service: Not assignment: ${p}`);
           const io = /^IO(Read|Write)BandwidthMax$/.test(m[1]);
-          if (m[1] !== 'MemoryMax' && !io) return game.error(`Failed to set unit properties on ${name}.service: Cannot set property ${m[1]}, or unknown property.`);
+          const cpuProperty = m[1] === 'CPUQuota' || m[1] === 'CPUWeight';
+          // Only resource-control properties can be set at run time (Nice= is not one: it applies when a process starts).
+          if (m[1] !== 'MemoryMax' && !io && !cpuProperty) return game.error(`Failed to set unit properties on ${name}.service: Cannot set property ${m[1]}, or unknown property.`);
           if (io && !readIoLimit(m[2])) return game.error(`Failed to parse ${m[1]}= value: ${m[2]}`);
-          if (!io && m[2] !== 'infinity' && readSize(m[2]) === null) return game.error(`Failed to parse MemoryMax= value: ${m[2]}`);
+          if (m[1] === 'CPUQuota' && m[2] !== '' && readQuota(m[2]) === null) return game.error(`CPU quota '${m[2]}' invalid.`);
+          if (m[1] === 'CPUWeight' && !(/^\d+$/.test(m[2]) && Number(m[2]) >= 1 && Number(m[2]) <= 10000)) return game.error(`Failed to parse CPUWeight= value: ${m[2]}`);
+          if (m[1] === 'MemoryMax' && m[2] !== 'infinity' && readSize(m[2]) === null) return game.error(`Failed to parse MemoryMax= value: ${m[2]}`);
           const place = `/etc/systemd/system.control/${name}.service.d`;
           for (const path of ['/etc/systemd', '/etc/systemd/system.control', place])
             if (!game.exists(path)) game.place('systemctl', path, { type: 'directory', children: {}, owner: 'root' });
           const file = `${place}/50-${m[1]}.conf`;
-          const value = io ? `${readIoLimit(m[2])!.device} ${readIoLimit(m[2])!.bytes}` : m[2] === 'infinity' ? 'infinity' : readSize(m[2]);
+          // systemd writes the quota back in its own form (CPUQuotaPerSecUSec, shown as a percentage).
+          const value = cpuProperty
+            ? m[1] === 'CPUQuota' && m[2] !== '' ? `${Math.round(readQuota(m[2])! * 10000) / 100}%` : m[2]
+            : io ? `${readIoLimit(m[2])!.device} ${readIoLimit(m[2])!.bytes}` : m[2] === 'infinity' ? 'infinity' : readSize(m[2]);
           const content = `# This is a drop-in unit file extension, created via "systemctl set-property"\n# or an equivalent operation. Do not edit.\n[Service]\n${m[1]}=${value}`;
           const n = game.find(file);
           if (n?.type === 'file') n.content = content;
