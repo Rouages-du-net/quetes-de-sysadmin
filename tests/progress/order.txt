@@ -87,3 +87,5 @@ heavy-load
 quota
 too-many-files
 stuck-process
+too-many-clients
+slow-query

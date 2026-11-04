@@ -13,6 +13,7 @@
 
 import type { Game } from './shell';
 import { systemd } from './systemd';
+import { refused } from './pg-server';
 
 export interface Table {
   columns: string[];
@@ -32,6 +33,8 @@ export interface PostgresState {
   passwords?: Record<string, string>;
   // The custom-format archives, by identifier (written in the file).
   archives: Record<string, { base: string; tables: Record<string, Table>; time: number }>;
+  // The running server (sessions, settings, indexes), when the chapter models it: see pg-server.ts.
+  server?: import('./pg-server').PgServer;
 }
 
 export const SOCKET = '/var/run/postgresql/.s.PGSQL.5432';
@@ -45,6 +48,9 @@ export function connection(j: Game, tool: string, base: string): string | null {
     return `${tool}: error: connection to server on socket "${SOCKET}" failed: No such file or directory\n\tIs the server running locally and accepting connections on that socket?`;
   if (!pg.roles.includes(j.who)) return `${tool}: error: connection to server on socket "${SOCKET}" failed: FATAL:  role "${j.who}" does not exist`;
   if (!pg.bases[base]) return `${tool}: error: connection to server on socket "${SOCKET}" failed: FATAL:  database "${base}" does not exist`;
+  // A modelled server: no slot left, no connection (the superuser keeps the reserved ones).
+  const full = pg.server ? refused(j, j.who === 'postgres') : null;
+  if (full) return `${tool}: error: connection to server on socket "${SOCKET}" failed: FATAL:  ${full}`;
   return null;
 }
 

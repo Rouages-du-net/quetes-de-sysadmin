@@ -607,11 +607,13 @@ man-ps = lists processes, that is, the programs currently running (process statu
     .example-3 = marc's processes
     .example-4 = PID, nice value, CPU and name, the busiest first
     .example-5 = only process 3301 (nothing but the header, exit code 1, if it doesn't exist)
-man-psql = the PostgreSQL client: sends an SQL query to a database and displays the result. You connect under your account's name: for the database administrator, sudo -u postgres psql. -d picks the database, -c gives the query (in quotes), -f reads a file of SQL (a text-format dump, for example), -l lists the databases. A few commands: \l (the databases), \dt (the tables), \d table (its columns), SELECT count(*) FROM table; (how many rows). Beware, DELETE FROM table; with no WHERE deletes ALL the rows.
+man-psql = the PostgreSQL client: sends an SQL query to a database and displays the result. You connect under your account's name: for the database administrator, sudo -u postgres psql. -d picks the database, -c gives the query (in quotes), -f reads a file of SQL (a text-format dump, for example), -l lists the databases. A few commands: \l (the databases), \dt (the tables), \d table (its columns), SELECT count(*) FROM table; (how many rows). Beware, DELETE FROM table; with no WHERE deletes ALL the rows. For the server: pg_stat_activity (one row per connection: who, from where, its state: active, idle, idle in transaction, and its last query), pg_terminate_backend(pid) (ends a connection), SHOW setting, ALTER SYSTEM SET setting = 'value' (written to postgresql.auto.conf) then SELECT pg_reload_conf(); (or systemctl reload postgresql; some settings, like max_connections, need a restart). EXPLAIN SELECT … shows the plan PostgreSQL chooses (Seq Scan: it reads the whole table; Index Scan: it goes through an index); EXPLAIN ANALYZE runs the query and adds the real times. CREATE INDEX ON table (column) creates an index, \di lists them, \d table shows them under the columns. The superuser (sudo -u postgres) can still connect when the other roles are refused: a few connections are kept for it (superuser_reserved_connections).
     .synopsis = psql [-d database] [-c query | -f file] ; psql -l
     .example-1 = the list of databases
     .example-2 = the tables of the gamelib database
     .example-3 = how many rows in the loans table
+    .example-4 = who is connected, in what state, doing what
+    .example-5 = the plan of a query
 man-pwd = displays the full path of the place where you are (print working directory).
     .synopsis = pwd
 man-readlink = displays what a symbolic link points to. -f gives the full path, following every link: useful to know which version is live behind a "current" link.

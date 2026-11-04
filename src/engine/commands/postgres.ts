@@ -12,6 +12,8 @@
 import type { Shell } from '../shell';
 import { connection, copyOf, dumpSql, readDumpSql, postgres, grid, type Table } from '../postgres';
 import { hex } from './restic';
+import { adminSql } from './pg-admin';
+import { server } from '../pg-server';
 import { systemd } from '../systemd';
 import type { Command } from './index';
 
@@ -45,6 +47,9 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   const pg = postgres(game)!;
   const b = pg.bases[base];
   const r = httpRequest.trim().replace(/;\s*$/, '');
+  // A modelled server: sessions, settings, plans and indexes (pg-admin.ts).
+  const admin = adminSql(game, base, r);
+  if (admin !== null) return admin;
   const table = (name: string): Table | string => b.tables[name.toLowerCase()] ?? `ERROR:  relation "${name}" does not exist`;
   if (/^\\l(ist)?\+?$/.test(r))
     return grid(
@@ -67,11 +72,13 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   if (d) {
     const t = table(d[1]);
     if (typeof t === 'string') return game.error(`Did not find any relation named "${d[1]}".`);
-    return grid(
+    const name = d[1].toLowerCase();
+    const indexes = [`    "${name}_pkey" PRIMARY KEY, btree (${t.columns[0]})`, ...(server(game)?.indexes ?? []).filter((i) => i.table === name).map((i) => `    "${i.name}" btree (${i.column})`)];
+    return `${grid(
       ['Column', 'Type'],
-      t.columns.map((c, i) => [c, i === 0 ? 'integer' : 'text']),
+      t.columns.map((c, i) => [c, i === 0 || /_id$|^id$/.test(c) ? 'integer' : 'text']),
       `Table "public.${d[1]}"`,
-    );
+    ).replace(/\n\(\d+ rows?\)\n$/, '')}\nIndexes:\n${indexes.join('\n')}`;
   }
   // Roles: \du, and ALTER ROLE … PASSWORD (the password of a database account).
   if (/^\\du\+?$/.test(r))
@@ -102,7 +109,9 @@ function sql(game: Shell, base: string, httpRequest: string): string {
     if (typeof t === 'string') return game.error(t);
     const lines = filter(t, account[2]);
     if (typeof lines === 'string') return game.error(lines);
-    return grid(['count'], [[String(lines.length)]]);
+    // A big table holds only a sample: its declared size counts.
+    const size = account[2] ? undefined : server(game)?.sizes?.[account[1].toLowerCase()];
+    return grid(['count'], [[String(size ?? lines.length)]]);
   }
   const selection = /^select\s+(.+?)\s+from\s+(\w+)(?:\s+where\s+(.+?))?(?:\s+order\s+by\s+(\w+)(\s+desc)?)?(?:\s+limit\s+(\d+))?$/i.exec(r);
   if (selection) {

@@ -393,3 +393,6 @@ name-canteen = cantine
 ## L'Observatoire
 name-message_from_amara-txt = message_de_amara.txt
 name-mail_from_the_host-txt = courrier_hebergeur.txt
+
+## Le Théâtre
+name-message_from_camille-txt = message_de_camille.txt

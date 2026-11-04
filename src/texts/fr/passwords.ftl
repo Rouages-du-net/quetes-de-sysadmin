@@ -44,3 +44,6 @@ password-lentils-2028 = lentilles-2028
 
 ## L'Observatoire
 password-nebula-2028 = nebuleuse-2028
+
+## Le Théâtre
+password-curtain-2028 = rideau-2028

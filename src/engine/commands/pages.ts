@@ -386,7 +386,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['openssl x509 -in /etc/letsencrypt/live/site.example/cert.pem -noout -dates', 'openssl s_client -connect site.example:443 | openssl x509 -noout -dates', 'openssl x509 -in cert.pem -noout -checkend 1296000'],
     see: ['certbot', 'curl'],
   },
-  psql: { examples: ['sudo -u postgres psql -l', 'sudo -u postgres psql -d gamelib -c "\\dt"', 'sudo -u postgres psql -d gamelib -c "SELECT count(*) FROM loans;"'], see: ['pg_dump', 'pg_restore', 'createdb'] },
+  psql: { examples: ['sudo -u postgres psql -l', 'sudo -u postgres psql -d gamelib -c "\\dt"', 'sudo -u postgres psql -d gamelib -c "SELECT count(*) FROM loans;"', 'sudo -u postgres psql -c "SELECT pid, usename, state, query FROM pg_stat_activity"', 'sudo -u postgres psql -d boxoffice -c "EXPLAIN SELECT * FROM bookings WHERE show_id = 42"'], see: ['pg_dump', 'pg_restore', 'createdb', 'systemctl'] },
   pg_dump: { examples: ['sudo -u postgres pg_dump -Fc -f /var/backups/postgresql/gamelib.dump gamelib', 'sudo -u postgres pg_dump gamelib'], see: ['pg_restore', 'psql', 'crontab'] },
   pg_restore: { examples: ['sudo -u postgres pg_restore -l gamelib.dump', 'sudo -u postgres pg_restore -d gamelib_test gamelib.dump', 'sudo -u postgres pg_restore -d gamelib --data-only -t loans gamelib.dump'], see: ['pg_dump', 'psql', 'createdb'] },
   createdb: { examples: ['sudo -u postgres createdb gamelib_test'], see: ['dropdb', 'psql'] },

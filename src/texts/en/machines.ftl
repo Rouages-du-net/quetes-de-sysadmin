@@ -30,3 +30,4 @@ machine-kneader = kneader
 ## The Canteen
 machine-canteen = canteen
 machine-observatory = observatory
+machine-theatre = theatre

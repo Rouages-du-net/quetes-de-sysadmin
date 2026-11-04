@@ -43,3 +43,5 @@ story-canteen = La Cantine
     .summary = L'appli de réservations de la cantine solidaire ne revient pas après un redémarrage, abandonne après un redémarrage de la base, attend deux minutes un câble absent, écrit avant que son disque soit là : les dépendances de systemd, Restart=, un démarrage lent et RequiresMountsFor=.
 story-observatory = L'Observatoire
     .summary = Le serveur du club d'astronomie rame sous l'empilement des photos de la nuit : la charge moyenne, top et renice, puis un CPUQuota= pour que l'hébergeur ne bride pas la machine.
+story-theatre = Le Théâtre
+    .summary = La billetterie du théâtre de quartier et sa base PostgreSQL : des connexions épuisées le soir de la première (pg_stat_activity, idle in transaction, un délai), puis une requête lente (EXPLAIN, un index).

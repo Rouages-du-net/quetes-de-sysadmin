@@ -117,7 +117,12 @@ presents them for people.
 - `commands/disks.ts` (`lsblk`, `mount`, `umount`, `state.devices`),
   `commands/rsnapshot.ts`, `src/engine/postgres.ts` and
   `commands/postgres.ts` (`psql`, `pg_dump`, `pg_restore`, `createdb`,
-  `dropdb`).
+  `dropdb`); a running PostgreSQL server (`state.postgres.server`:
+  settings read from `postgresql.conf`/`postgresql.auto.conf` on reload or
+  restart, sessions, the connection limit, indexes) in
+  `src/engine/pg-server.ts`, its SQL (`pg_stat_activity`, `SHOW`,
+  `ALTER SYSTEM`, `EXPLAIN`, `CREATE INDEX`…) in `commands/pg-admin.ts`;
+  `chapters/theatre.ts`: what The Theatre's chapters share.
 - `src/engine/open-files.ts` (files held open by a service: `lsof`, space of
   deleted files), `commands/logs.ts` (`lsof`, `truncate`,
   `logrotate`); `src/engine/memory.ts` (process memory, OOM killer,

@@ -59,6 +59,8 @@ export const MACHINES: Machine[] = [
   machine('canteen', '192.0.2.26', 'canteen'),
   // The Observatory: an amateur astronomy club, its photo gallery and the stacking of its night photos.
   machine('observatory', '192.0.2.27', 'observatory'),
+  // The Theatre: a neighbourhood theatre, its ticket office and its PostgreSQL database.
+  machine('theatre', '192.0.2.28', 'theatre'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */
