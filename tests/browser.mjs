@@ -138,22 +138,38 @@ for (const width of [1000, 375]) {
   // on the site) restarts the current chapter, the timer starts.
   check(!(await game.locator('.exam-choice').isVisible()), `${width} px: the game's exam checkbox is hidden on the site`);
   await tape('ssh royaume');
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').check();
   check((await game.locator('.output').textContent()).includes('Mode examen'), `${width} px: exam mode is announced`);
   await page.waitForTimeout(1100);
   check(/⏱ 00:0\d/.test(await game.locator('.timer').textContent()), `${width} px: the timer is running`);
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').uncheck();
   check((await game.locator('.timer').textContent()) === '', `${width} px: without exam, no more timer`);
   // A chapter in progress: exam mode would restart it, so we ask first.
   await tape('ls');
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').click();
   const confirmation = game.locator('dialog.exam-window');
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   check((await confirmation.evaluate((d) => d.open)) && !(await page.locator('#exam-mode').isChecked()), `${width} px: exam mode asks for confirmation`);
   await confirmation.locator('button', { hasText: 'Annuler' }).click();
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   check(!(await confirmation.evaluate((d) => d.open)) && !(await page.locator('#exam-mode').isChecked()) && (await game.locator('.timer').textContent()) === '', `${width} px: cancel changes nothing`);
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').click();
   await confirmation.locator('button', { hasText: 'mode examen' }).click();
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   check((await page.locator('#exam-mode').isChecked()) && /⏱/.test(await game.locator('.timer').textContent()), `${width} px: confirmed, exam mode starts`);
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').uncheck();
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px: no horizontal scrolling`);
   check(errors.length === 0, `${width} px: no console error ${errors.join(' ')}`);
@@ -221,6 +237,7 @@ for (const width of [1000, 375]) {
   check(errors.length === 0, `en ${width} px: no console error ${errors.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/en-${width}.png` });
   // The teachers' page in English.
+  await page.locator('details:has(a[href="/en/teachers/"]) > summary').click();
   await page.locator('a[href="/en/teachers/"]').click();
   await page.waitForURL(/\/en\/teachers\//);
   check((await page.locator('h1').textContent()).includes('For teachers'), `en ${width} px: the teachers' page in English`);
@@ -473,6 +490,8 @@ for (const width of [1000, 375]) {
   await taper('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
   check((await game.locator('.output .summary').textContent()).includes('3 indices'), 'hints: the summary counts them (even after a snapshot)');
   // In exam mode: no help.
+  // The questions under the game are folded: "For teachers" opened first.
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
   await page.locator('#exam-mode').check();
   await game.locator('.mission-button').click();
   check(!(await mission.locator('.help').isVisible()), 'hints: nothing in exam mode');

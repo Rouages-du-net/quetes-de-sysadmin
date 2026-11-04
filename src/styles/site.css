@@ -85,6 +85,15 @@ h1 { font-size: clamp(1.7rem, 5vw, 2.5rem); line-height: 1.15; margin: 1.75rem 0
 h1::before { content: '$ '; color: var(--phosphor); }
 h2 { font-size: 1.3rem; margin-top: 2.5rem; }
 h2::before { content: '## '; color: var(--muted); font-weight: 400; }
+/* The questions under the game: folded, one line each (details/summary). */
+.faq { margin-top: 1rem; border-top: 1px solid var(--border, currentColor); }
+.faq:first-of-type { margin-top: 2.5rem; }
+.faq > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 0.5rem; padding: 0.5rem 0; }
+.faq > summary::-webkit-details-marker { display: none; }
+.faq > summary::after { content: '+'; margin-left: auto; font-family: var(--mono); color: var(--muted); }
+.faq[open] > summary::after { content: '−'; }
+.faq > summary h2 { margin: 0; font-size: 1.1rem; }
+.faq > summary:focus-visible { outline: 2px solid var(--phosphor); outline-offset: 2px; }
 .intro { max-width: 42rem; }
 strong { color: color-mix(in oklab, var(--text) 80%, var(--phosphor)); }
 code, pre { font-family: var(--mono); }

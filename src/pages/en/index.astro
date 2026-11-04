@@ -29,16 +29,16 @@ import { STORIES } from '../../engine/chapters';
 
   <quetes-de-sysadmin lang="en" exam-control="page"></quetes-de-sysadmin>
 
-  <section aria-labelledby="embed">
-    <h2 id="embed">Put the game on your site</h2>
+  <details class="faq">
+    <summary><h2 id="embed">Put the game on your site</h2></summary>
     <p>The game is free software and fits in any page with two lines:</p>
     <pre><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
 <quetes-de-sysadmin lang="en"></quetes-de-sysadmin>`}</code></pre>
     <p>Full instructions: <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/EMBEDDING.md">docs/EMBEDDING.md</a>.</p>
-  </section>
+  </details>
 
-  <section aria-labelledby="names">
-    <h2 id="names">Why names ending in .internal and .example?</h2>
+  <details class="faq">
+    <summary><h2 id="names">Why names ending in .internal and .example?</h2></summary>
     <p>
       The machines in the game are fictional, but their names follow the real rules: <code>.internal</code>
       is reserved for private networks (ICANN, 2024), <code>.example</code> for examples
@@ -46,14 +46,14 @@ import { STORIES } from '../../engine/chapters';
       and 203.0.113.x for documentation (<a href="https://www.rfc-editor.org/rfc/rfc5737">RFC 5737</a>). A
       made-up name could belong to someone: what you try here never targets a real machine.
     </p>
-  </section>
+  </details>
 
-  <section aria-labelledby="teach">
-    <h2 id="teach">For teachers</h2>
+  <details class="faq">
+    <summary><h2 id="teach">For teachers</h2></summary>
     <p>Goal, prerequisites, new commands and time for each chapter: <a href="/en/teachers/">the quest sheets</a>.</p>
     <p>For a test in class: the game shows no hints and times each chapter; the best time stays in this browser.</p>
     <p class="exam-control"><label><input type="checkbox" id="exam-mode" /> Exam mode: no hints, with a timer (the current chapter restarts)</label></p>
-  </section>
+  </details>
 </Base>
 
 <script>
