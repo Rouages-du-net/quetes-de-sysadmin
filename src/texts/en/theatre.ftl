@@ -46,3 +46,10 @@ theatre-server-js =
     {"}"});
 
     app.listen(Number(process.env.PORT), '127.0.0.1');
+
+read-only-stats-description = Ticket statistics, weekly report (Python)
+
+failover-page =
+    <!DOCTYPE html>
+    <html lang="en"><head><meta charset="utf-8"><title>Ticket office</title></head>
+    <body><h1>Twelve Angry Jurors</h1><p>Pick your seat: 64 left.</p></body></html>

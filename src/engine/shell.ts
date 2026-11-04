@@ -462,6 +462,11 @@ export class Shell implements Game {
     return '';
   }
 
+  /** How many errors were written so far in this command (to stop at the first failure, like psql -c). */
+  errorCount(): number {
+    return this.errors.length;
+  }
+
   /** The errors written so far (and clears them): for an answer to a question. */
   recoverErrors(): string[] {
     const e = this.errors;

@@ -13,6 +13,8 @@ import type { Shell } from '../shell';
 import { connection, copyOf, dumpSql, readDumpSql, postgres, grid, type Table } from '../postgres';
 import { hex } from './restic';
 import { adminSql } from './pg-admin';
+import { roleSql } from './pg-roles';
+import { allowed, type Privilege } from '../pg-roles';
 import { server } from '../pg-server';
 import { systemd } from '../systemd';
 import type { Command } from './index';
@@ -50,7 +52,17 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   // A modelled server: sessions, settings, plans and indexes (pg-admin.ts).
   const admin = adminSql(game, base, r);
   if (admin !== null) return admin;
-  const table = (name: string): Table | string => b.tables[name.toLowerCase()] ?? `ERROR:  relation "${name}" does not exist`;
+  // A standby in recovery refuses every write.
+  const write = /^(insert|update|delete|truncate|drop|create|alter\s+(table|role|user|default)|grant|revoke)\b/i.exec(r);
+  if (write && server(game)?.recovery) return game.error(`ERROR:  cannot execute ${write[1].toUpperCase()} in a read-only transaction`);
+  const roles = roleSql(game, base, r);
+  if (roles !== null) return roles;
+  // Privileges (when the chapter models them): the role must be allowed on the table.
+  const table = (name: string, privilege: Privilege = 'SELECT'): Table | string => {
+    const t = b.tables[name.toLowerCase()];
+    if (!t) return `ERROR:  relation "${name}" does not exist`;
+    return allowed(game, base, name.toLowerCase(), privilege) ? t : `ERROR:  permission denied for table ${name.toLowerCase()}`;
+  };
   if (/^\\l(ist)?\+?$/.test(r))
     return grid(
       ['Name', 'Owner', 'Encoding'],
@@ -135,7 +147,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   }
   const deletion = /^delete\s+from\s+(\w+)(?:\s+where\s+(.+))?$/i.exec(r);
   if (deletion) {
-    const t = table(deletion[1]);
+    const t = table(deletion[1], 'DELETE');
     if (typeof t === 'string') return game.error(t);
     const targeted = filter(t, deletion[2]);
     if (typeof targeted === 'string') return game.error(targeted);
@@ -144,7 +156,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   }
   const empty = /^truncate\s+(?:table\s+)?(\w+)$/i.exec(r);
   if (empty) {
-    const t = table(empty[1]);
+    const t = table(empty[1], 'TRUNCATE');
     if (typeof t === 'string') return game.error(t);
     t.lines = [];
     return 'TRUNCATE TABLE';
@@ -153,6 +165,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   if (erase) {
     const t = table(erase[1]);
     if (typeof t === 'string') return game.error(t);
+    if (!allowed(game, base, erase[1].toLowerCase(), 'TRIGGER' as Privilege) || !allowed(game, base, erase[1].toLowerCase(), 'TRUNCATE')) return game.error(`ERROR:  must be owner of table ${erase[1].toLowerCase()}`);
     delete b.tables[erase[1].toLowerCase()];
     return 'DROP TABLE';
   }
@@ -207,7 +220,22 @@ export const POSTGRES: Record<string, Command> = {
       const e = connection(game, 'psql', base);
       if (e) return game.error(e);
       const httpRequest = options['-c'] ?? options['--command'];
-      if (httpRequest) return sql(game, base, httpRequest);
+      if (httpRequest) {
+        // Several statements separated by ";" (outside quotes) run one after the other, in the same session.
+        const statements = httpRequest.split(/;(?=(?:[^']*'[^']*')*[^']*$)/).map((x) => x.trim()).filter(Boolean);
+        try {
+          const outputs: string[] = [];
+          for (const statement of statements) {
+            const before = game.errorCount();
+            outputs.push(sql(game, base, statement));
+            // psql -c stops at the first error.
+            if (game.errorCount() > before) break;
+          }
+          return outputs.filter((o) => o !== '').join('\n');
+        } finally {
+          game.state.pgRole = undefined;
+        }
+      }
       const file = options['-f'] ?? options['--file'];
       if (file) {
         const text = game.readFor('psql', file);

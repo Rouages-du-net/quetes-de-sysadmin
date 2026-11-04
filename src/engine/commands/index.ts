@@ -47,6 +47,7 @@ import { LOGS } from './logs';
 import { MEMORY } from './memory';
 import { CPU } from './cpu';
 import { LIMITS } from './limits';
+import { PG_CLUSTER } from './pg-cluster';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
@@ -137,6 +138,7 @@ export const COMMANDS: Record<string, Command> = {
   ...MEMORY,
   ...CPU,
   ...LIMITS,
+  ...PG_CLUSTER,
   ...TIME,
   ...SUPERVISION,
   ...TRANSFERS,

@@ -90,6 +90,8 @@ import { tooManyFiles } from './too-many-files';
 import { stuckProcess } from './stuck-process';
 import { tooManyClients } from './too-many-clients';
 import { slowQuery } from './slow-query';
+import { readOnlyChapter } from './read-only';
+import { failover } from './failover';
 import { restartLoop } from './restart-loop';
 import { slowBoot } from './slow-boot';
 import { lateDisk } from './late-disk';
@@ -204,7 +206,7 @@ export const STORIES: Story[] = [
   {
     id: 'theatre',
     after: ['database', 'restart-loop'],
-    chapters: [tooManyClients, slowQuery],
+    chapters: [tooManyClients, slowQuery, readOnlyChapter, failover],
   },
 ];
 

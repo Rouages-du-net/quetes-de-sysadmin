@@ -46,3 +46,10 @@ theatre-server-js =
     {"}"});
 
     app.listen(Number(process.env.PORT), '127.0.0.1');
+
+read-only-stats-description = Statistiques de billetterie, rapport hebdomadaire (Python)
+
+failover-page =
+    <!DOCTYPE html>
+    <html lang="fr"><head><meta charset="utf-8"><title>Billetterie</title></head>
+    <body><h1>Douze jurés en colère</h1><p>Choisissez votre place : plus que 64.</p></body></html>

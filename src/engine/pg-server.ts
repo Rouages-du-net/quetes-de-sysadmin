@@ -44,6 +44,30 @@ export interface PgServer {
   indexes: Index[];
   // The rows of each table, when the table is bigger than its sample (EXPLAIN, count(*)).
   sizes?: Record<string, number>;
+  // Roles and privileges, when the chapter models them (pg-roles.ts).
+  acl?: import('./pg-roles').Acl;
+  // A standby in recovery: read-only, it replays what its primary sends (see the failover chapter).
+  recovery?: boolean;
+  // A standby's replication: its primary (unreachable or not), the last transaction replayed (ms).
+  standby?: { primary: string; address: string; reachable: boolean; replayed: number; timeline: number };
+}
+
+export const STANDBY_SIGNAL = '/var/lib/postgresql/16/main/standby.signal';
+
+/** Promotes a standby: it leaves recovery, takes a new timeline, accepts writes. False if it wasn't one. */
+export function promote(j: Game): boolean {
+  const srv = server(j);
+  if (!srv?.recovery) return false;
+  srv.recovery = false;
+  if (srv.standby) srv.standby.timeline += 1;
+  const parent = j.find('/var/lib/postgresql/16/main');
+  if (parent?.type === 'directory') delete parent.children['standby.signal'];
+  pgLog(j, 702, 'LOG', 'received promote request');
+  pgLog(j, 702, 'LOG', 'redo done at 0/3A0001B8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s');
+  pgLog(j, 702, 'LOG', `selected new timeline ID: ${srv.standby?.timeline ?? 2}`);
+  pgLog(j, 702, 'LOG', 'archive recovery complete');
+  pgLog(j, 702, 'LOG', 'database system is ready to accept connections');
+  return true;
 }
 
 export const CONF = '/etc/postgresql/16/main/postgresql.conf';
@@ -83,6 +107,16 @@ export function applySettings(j: Game, restart: boolean) {
   for (const [k, v] of Object.entries(read)) if (restart || !RESTART_ONLY.includes(k)) srv.settings[k] = v;
   // A restart closes every connection.
   if (restart) srv.backends = [];
+  // A standby starts in recovery as long as its standby.signal file is there.
+  if (restart && srv.standby) {
+    const was = srv.recovery;
+    srv.recovery = !!j.find(STANDBY_SIGNAL);
+    if (was && !srv.recovery) {
+      srv.standby.timeline += 1;
+      pgLog(j, 702, 'LOG', `selected new timeline ID: ${srv.standby.timeline}`);
+      pgLog(j, 702, 'LOG', 'database system is ready to accept connections');
+    }
+  }
 }
 
 /** "1min", "30s", "5000" (ms), "0" → milliseconds (0: disabled); null if unreadable. */

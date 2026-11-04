@@ -158,4 +158,91 @@ for (const language of LANGUAGES)
       expect(all).toContain('seats_by_show');
       expect(s.finished).toBe(true);
     });
+
+    it('chapter 3 — solution: a read-only role, the migration, default privileges, the tool', () => {
+      const { s, play, edit } = part('read-only');
+      let all = play(['cat message_from_camille.txt', 'sudo cat /etc/ticket-stats/config.env', PG('\\du', 'boxoffice'), PG('\\dp', 'boxoffice')]);
+      expect(all).toContain('DATABASE_URL=postgres://boxoffice:Kh7-pR2v-boxoffice@localhost/boxoffice');
+      expect(all).toContain(' public | bookings | table |');
+      contains(all, 'propriétaire de\ntoutes les tables'.replace('\n', ' ').slice(0, 14));
+      all = play([PG("CREATE ROLE stats LOGIN PASSWORD 'r3ad-only'; GRANT SELECT ON ALL TABLES IN SCHEMA public TO stats", 'boxoffice')]);
+      expect(all).toContain('CREATE ROLE\nGRANT');
+      contains(all, 'table donations');
+      all = play([PG('SET ROLE stats; SELECT count(*) FROM bookings', 'boxoffice'), PG("SET ROLE stats; UPDATE seats SET status = 'sold'", 'boxoffice'), PG('SET ROLE stats; SELECT count(*) FROM donations', 'boxoffice')]);
+      expect(all).toMatch(/count \n-+\n +12 /);
+      expect(all).toContain('ERROR:  permission denied for table seats');
+      expect(all).toContain('ERROR:  permission denied for table donations');
+      all = play([PG('ALTER DEFAULT PRIVILEGES FOR ROLE boxoffice IN SCHEMA public GRANT SELECT ON TABLES TO stats; GRANT SELECT ON donations TO stats', 'boxoffice'), PG('\\ddp', 'boxoffice'), PG('\\dp donations', 'boxoffice')]);
+      expect(all).toContain('stats=r/boxoffice');
+      expect(all).toContain('boxoffice=arwdDxt/boxoffice+');
+      contains(all, 'DATABASE_URL');
+      expect(s.finished).toBe(false);
+      all = edit('sudo nano /etc/ticket-stats/config.env', (t) => t.replace('boxoffice:Kh7-pR2v-boxoffice', 'stats:r3ad-only'));
+      all += play(['sudo systemctl restart ticket-stats', 'systemctl status ticket-stats']);
+      expect(all).toContain('Active: active (running)');
+      contains(all, 'RÔLES ET PRIVILÈGES');
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 3 — false leads: GRANT ALL, superuser, a member of boxoffice, defaults without FOR ROLE, a wrong password', () => {
+      const { s, play, edit } = part('read-only');
+      let all = play([PG("CREATE USER stats PASSWORD 'x'; GRANT ALL ON ALL TABLES IN SCHEMA public TO stats", 'boxoffice')]);
+      contains(all, 'peut aussi modifier');
+      all = play([PG('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM stats; ALTER ROLE stats SUPERUSER', 'boxoffice')]);
+      contains(all, 'passe outre');
+      all = play([PG('ALTER ROLE stats NOSUPERUSER; GRANT boxoffice TO stats', 'boxoffice')]);
+      contains(all, 'hérite de tous les droits');
+      all = play([PG('REVOKE boxoffice FROM stats; GRANT SELECT ON ALL TABLES IN SCHEMA public TO stats; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO stats', 'boxoffice')]);
+      contains(all, 'sans FOR ROLE');
+      all = edit('sudo nano /etc/ticket-stats/config.env', (t) => t.replace('boxoffice:Kh7-pR2v-boxoffice', 'stats:wrong'));
+      all += play(['sudo systemctl restart ticket-stats', 'journalctl -u ticket-stats.service']);
+      expect(all).toContain('FATAL:  password authentication failed for user "stats"');
+      contains(all, 'ticket-stats n');
+      expect(s.finished).toBe(false);
+      play([PG("ALTER ROLE stats PASSWORD 'wrong'; ALTER DEFAULT PRIVILEGES FOR ROLE boxoffice IN SCHEMA public GRANT SELECT ON TABLES TO stats", 'boxoffice'), 'sudo systemctl restart ticket-stats']);
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 4 — solution: the dead primary, the standby, pg_ctlcluster promote, the app moved', () => {
+      const { s, play, edit } = part('failover');
+      let all = play(['cat message_from_camille.txt', 'curl -i http://localhost:3000/', 'journalctl -u boxoffice.service', 'pg_isready -h stage.internal', 'pg_lsclusters']);
+      expect(all).toContain('Error: connect EHOSTUNREACH 192.0.2.29:5432');
+      expect(all).toContain('stage.internal:5432 - no response');
+      expect(all).toContain('16  main    5432 online,recovery postgres');
+      contains(all, 'réplica (standby)');
+      all = play([PG('SELECT pg_is_in_recovery()'), PG('SELECT pg_last_xact_replay_timestamp()'), 'sudo tail -n 2 /var/log/postgresql/postgresql-16-main.log']);
+      expect(all).toMatch(/pg_is_in_recovery \n-+\n t /);
+      expect(all).toContain('2028-04-02 06:47:14.382412+00');
+      expect(all).toContain('could not connect to the primary server');
+      contains(all, 'presque rien n');
+      all = play(['sudo pg_ctlcluster 16 main promote', 'pg_lsclusters']);
+      expect(all).toContain('server promoted');
+      expect(all).toContain('16  main    5432 online          postgres');
+      contains(all, 'Reste à y amener');
+      expect(s.finished).toBe(false);
+      all = edit('sudo nano /srv/boxoffice/.env', (t) => t.replace('@stage.internal/', '@localhost/'));
+      all += play(['ls']);
+      contains(all, 'le lit à');
+      all = play(['sudo systemctl restart boxoffice', 'curl -i http://localhost:3000/']);
+      expect(all).toContain('HTTP/1.1 200 OK');
+      contains(all, 'LES ÉTAPES D');
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 4 — false leads: a restart, the app on the standby; another way: pg_promote() and 127.0.0.1', () => {
+      const { s, play, edit } = part('failover');
+      let all = play(['sudo systemctl restart postgresql', 'pg_lsclusters']);
+      expect(all).toContain('online,recovery');
+      contains(all, 'toujours réplica');
+      edit('sudo nano /srv/boxoffice/.env', (t) => t.replace('@stage.internal/', '@127.0.0.1/'));
+      all = play(['sudo systemctl restart boxoffice', 'curl -s http://localhost:3000/ > /dev/null', 'journalctl -u boxoffice.service']);
+      expect(all).toContain('error: cannot execute INSERT in a read-only transaction');
+      contains(all, 'Promeus-le');
+      all = play([PG("CREATE INDEX ON seats (seat)", 'boxoffice')]);
+      expect(all).toContain('ERROR:  cannot execute CREATE INDEX in a read-only transaction');
+      expect(s.finished).toBe(false);
+      all = play([PG('SELECT pg_promote()')]);
+      expect(all).toMatch(/pg_promote \n-+\n t /);
+      expect(s.finished).toBe(true);
+    });
   });

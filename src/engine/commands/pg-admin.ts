@@ -11,7 +11,7 @@
 
 import type { Shell } from '../shell';
 import { grid, postgres, type Table } from '../postgres';
-import { AUTO_CONF, applySettings, DEFAULTS, indexFor, server, setting, terminate, type Backend } from '../pg-server';
+import { AUTO_CONF, applySettings, DEFAULTS, indexFor, promote, server, setting, terminate, type Backend } from '../pg-server';
 import { systemd } from '../systemd';
 
 const COLUMNS = ['datid', 'datname', 'pid', 'usename', 'application_name', 'client_addr', 'backend_start', 'state_change', 'state', 'query'] as const;
@@ -99,6 +99,20 @@ export function adminSql(game: Shell, base: string, r: string): string | null {
   if (!srv) return null;
   const pg = postgres(game)!;
 
+  // Replication: in recovery? the last transaction replayed, the WAL receiver, promotion.
+  if (/^select\s+pg_is_in_recovery\(\)$/i.test(r)) return grid(['pg_is_in_recovery'], [[srv.recovery ? 't' : 'f']]);
+  if (/^select\s+pg_last_xact_replay_timestamp\(\)$/i.test(r)) return grid(['pg_last_xact_replay_timestamp'], [[srv.standby ? time(srv.standby.replayed) : '']]);
+  if (/^select\s+.+\s+from\s+pg_stat_wal_receiver$/i.test(r)) {
+    const columns = ['pid', 'status', 'sender_host', 'sender_port', 'last_msg_receipt_time'];
+    const live = srv.recovery && srv.standby?.reachable;
+    return grid(columns, live ? [['30011', 'streaming', srv.standby!.primary, '5432', time(systemd(game)?.clock ?? 0)]] : []);
+  }
+  if (/^select\s+pg_promote\(\s*(true|false)?\s*(,\s*\d+)?\s*\)$/i.test(r)) {
+    if (!superuser(game)) return game.error('ERROR:  permission denied for function pg_promote');
+    if (!srv.recovery) return game.error('ERROR:  recovery is not in progress\nHINT:  Recovery control functions can only be executed during recovery.');
+    promote(game);
+    return grid(['pg_promote'], [['t']]);
+  }
   // SHOW name
   const show = /^show\s+(\w+)$/i.exec(r);
   if (show) {
@@ -167,6 +181,7 @@ export function adminSql(game: Shell, base: string, r: string): string | null {
   // CREATE INDEX [CONCURRENTLY] [name] ON table [USING btree] (column)
   const create = /^create\s+index\s+(?:concurrently\s+)?(?:(\w+)\s+)?on\s+(\w+)\s*(?:using\s+btree\s*)?\(\s*(\w+)\s*\)$/i.exec(r);
   if (create) {
+    if (srv.recovery) return game.error('ERROR:  cannot execute CREATE INDEX in a read-only transaction');
     const table = create[2].toLowerCase();
     const t = pg.bases[base].tables[table];
     if (!t) return game.error(`ERROR:  relation "${create[2]}" does not exist`);
