@@ -516,8 +516,12 @@ man-grep = prints the lines that contain the pattern. The pattern is a regular e
 man-head = prints the beginning of a file (the first 10 lines, or N).
     .synopsis = head [-n N] [file]
     .option-n = number of lines to print (10 by default): head -n 3 file.
-man-kill = asks a process to stop (it receives a signal). PID is its number, given by ps. kill -9 PID forces it to stop. You can only stop your own processes (or all of them, as root). A zombie (<defunct>) reacts to no signal: it is already dead, only its parent can reap it.
-    .synopsis = kill PID
+man-kill = sends a signal to a process (by default TERM: "please stop"). PID is its number, given by ps or pgrep. -SIGNAL or -s SIGNAL chooses another one, by name or number: -KILL (9) ends it at once, without letting it clean up; -HUP (1) often asks a daemon to reread its configuration; -STOP and -CONT pause and resume it; -0 only checks that the process exists. A process can catch or ignore TERM, HUP and INT (a script's trap), never KILL nor STOP. kill -l lists the signals. You can only signal your own processes (or all of them, as root). A zombie (<defunct>) reacts to no signal: it is already dead, only its parent can reap it.
+    .synopsis = kill [-SIGNAL | -s SIGNAL] PID… ; kill -l
+    .example-1 = ask process 3302 to stop (TERM)
+    .example-2 = end process 3301 at once (KILL, as root)
+    .example-3 = the signals' names and numbers
+    .example-4 = does process 3301 still exist? (exit code 0 if yes)
 man-last = lists the latest logins to the machine (from /var/log/wtmp): who, from which address, when, and for how long (still logged in: still connected). With an account name, only its logins; -n N, only the last N. Useful for piecing together a night of incident: who stepped in, and at what time.
     .synopsis = last [-n N] [account…]
     .option-n = only the N most recent logins.
@@ -596,12 +600,13 @@ man-pg_restore = restores an archive written by pg_dump -Fc into a database (-d)
     .example-3 = put back only the rows of the loans table
 man-ping = sends small messages (ICMP "echo") to a machine and measures the round-trip time. Here, 4 sends by default (on Linux, ping keeps going until Ctrl+C). Beware: many servers don't answer ping, without being down for all that.
     .synopsis = ping [-c N] machine
-man-ps = lists processes, that is, the programs currently running (process status). With no option: yours; "ps aux": everyone's, with their share of processor (%CPU) and memory (%MEM). "ps -ef": everyone's too, with each process's parent (PPID), the one that started it. "ps -u account": those of one account. -o picks the columns (pid, ppid, user, ni: the nice value, %cpu, %mem, stat, comm: the program's name, args: the whole command line), --sort orders by one of them (a minus sign first: descending). A process marked <defunct> is a zombie: finished, but its parent hasn't read its result yet.
+man-ps = lists processes, that is, the programs currently running (process status). With no option: yours; "ps -p PID": that one only; "ps aux": everyone's, with their share of processor (%CPU) and memory (%MEM). "ps -ef": everyone's too, with each process's parent (PPID), the one that started it. "ps -u account": those of one account. -o picks the columns (pid, ppid, user, ni: the nice value, %cpu, %mem, stat, comm: the program's name, args: the whole command line), --sort orders by one of them (a minus sign first: descending). A process marked <defunct> is a zombie: finished, but its parent hasn't read its result yet.
     .synopsis = ps [aux] ; ps -ef ; ps -u account ; ps -eo COLUMNS [--sort=[-]COLUMN]
     .example-1 = everyone's processes
     .example-2 = with each one's parent
     .example-3 = marc's processes
     .example-4 = PID, nice value, CPU and name, the busiest first
+    .example-5 = only process 3301 (nothing but the header, exit code 1, if it doesn't exist)
 man-psql = the PostgreSQL client: sends an SQL query to a database and displays the result. You connect under your account's name: for the database administrator, sudo -u postgres psql. -d picks the database, -c gives the query (in quotes), -f reads a file of SQL (a text-format dump, for example), -l lists the databases. A few commands: \l (the databases), \dt (the tables), \d table (its columns), SELECT count(*) FROM table; (how many rows). Beware, DELETE FROM table; with no WHERE deletes ALL the rows.
     .synopsis = psql [-d database] [-c query | -f file] ; psql -l
     .example-1 = the list of databases
@@ -1077,10 +1082,12 @@ man-gpasswd = manages the members of a group: -a adds an account to the group, -
     .example-1 = remove marc from the sudo group
     .example-2 = add lina to the till group
 man-pkill = stops processes chosen by their name or their account, without looking up their numbers: pkill pattern (the pattern is searched for in the program name), pkill -u account (all of the account's processes). Prints nothing if it found some (exit code 0), and exit code 1 if it found none. You can only stop your own processes, or any of them as root.
-    .synopsis = pkill [-u account] [pattern]
+    .synopsis = pkill [-SIGNAL] [-f] [-u account] [pattern]
     .option-u = only the processes of this account (user).
+    .option-f = search the pattern in the whole command line (not only the program's name).
     .example-1 = stop all of marc's processes (and close their sessions)
     .example-2 = stop the processes named tail
+    .example-3 = send KILL to the processes whose command line contains sync-photos
 man-which = gives the full path of a command: the first file with that name in the PATH directories (/usr/local/bin, /usr/bin…). Useful where the full path is required, as in sudoers or a crontab. Prints nothing (exit code 1) for a shell builtin (cd, umask…).
     .synopsis = which command…
     .example-1 = where is systemctl?
@@ -1287,3 +1294,26 @@ man-systemd_resource-control = the resource-control settings of a unit ({"["}Ser
     .example-1 = cap a running service, at once and for good
     .example-2 = or write it in a drop-in
     .example-3 = check
+man-ulimit = the limits of your shell, and of what you start from it (a bash builtin): -n the number of open files, -a all of them. A process has a soft limit (what it may use, shown by default; -S) and a hard one (the ceiling, -H): it may raise its soft limit up to its hard one by itself; only root may raise the hard one. With a value, ulimit changes the limit (both, without -S or -H). ulimit changes nothing for processes already running, nor for services: systemd sets a service's limits when it starts it (LimitNOFILE= in its unit), and login sessions get theirs from /etc/security/limits.conf.
+    .synopsis = ulimit [-H|-S] [-n | -a] [LIMIT]
+    .option-n = the number of open files.
+    .option-H = the hard limit.
+    .option-S = the soft limit.
+    .option-a = all the limits.
+    .example-1 = your shell's open-files limit (soft)
+    .example-2 = its hard limit
+    .example-3 = all the limits
+man-prlimit = shows or changes the limits of a process that is running (--pid; without it, prlimit's own). --nofile alone shows the open-files limit; --nofile=SOFT:HARD changes it at once (SOFT: keeps the hard one). Another account's process, or a higher hard limit, needs root. The change only lasts until the process restarts: for a service, write it in its unit (LimitNOFILE=).
+    .synopsis = prlimit [--pid PID] [--nofile[=SOFT:HARD]]
+    .example-1 = all the limits of process 840
+    .example-2 = only its open-files limit
+    .example-3 = change it at once (until it restarts)
+man-systemd_exec = the {"["}Service] settings of a unit about the execution environment of its processes: User=, Group=, WorkingDirectory=, Environment=, Nice= (the nice value), and the limits: LimitNOFILE= (open files: 4096, or SOFT:HARD; systemd's default is 1024:524288), LimitNPROC=, LimitCORE=… They are set when the processes start: after changing them, restart the service. Neither /etc/security/limits.conf nor ulimit apply to services.
+    .synopsis = {"["}Service] User= Nice= LimitNOFILE=SOFT[:HARD]
+    .example-1 = add LimitNOFILE= in a drop-in, then restart the service
+    .example-2 = check the running process's limits
+man-signal = the signals: a short message the kernel delivers to a process, with kill. Each has a number and a default action. HUP (1): end, often handled by daemons as "reread your configuration". INT (2): end, sent by Ctrl-C. QUIT (3): end with a core dump. KILL (9): end at once, can't be caught nor ignored. TERM (15): end, the polite request (kill's default), can be caught to clean up. STOP (19) and CONT (18): pause and resume (STOP can't be caught). CHLD (17): a child ended. A program (or a shell script with trap) can ignore or handle every signal except KILL and STOP. The children of a process that ends are not signalled: they are adopted by init.
+    .synopsis = kill -SIGNAL PID ; trap 'commands' SIGNAL…
+    .example-1 = the names and numbers
+    .example-2 = the polite request
+    .example-3 = the one that can't be refused

@@ -219,6 +219,8 @@ export const CPU: Record<string, Command> = {
   pgrep: { ownOptions: true, launch: ({ args, game }) => pgrep(game, args) },
   // Manual page only (the systemd settings), see pages.ts.
   'systemd.resource-control': { section: 5, launch: () => '' },
+  'systemd.exec': { section: 5, launch: () => '' },
+  signal: { section: 7, launch: () => '' },
   'systemd-cgtop': {
     ownOptions: true,
     launch: ({ game }) => (systemd(game) && cpu(game) ? cgtop(game) : game.error('Failed to access control groups: No such file or directory')),

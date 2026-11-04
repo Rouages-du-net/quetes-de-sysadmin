@@ -85,3 +85,5 @@ slow-boot
 late-disk
 heavy-load
 quota
+too-many-files
+stuck-process

@@ -42,7 +42,7 @@ function lsof(game: Shell, args: string[]): string {
     header,
     ...lines.map((o) => {
       const end = `${String(inode(o.node)).padStart(7)} ${o.path}${erases(game, o) ? ' (deleted)' : ''}`;
-      const start = `${o.command.slice(0, 8).padEnd(8)} ${String(o.pid).padEnd(7)} ${o.user.padEnd(6)} ${`${o.fd}w`.padStart(4)}   REG  254,1 ${String(size(o.node)).padStart(11)}`;
+      const start = `${o.command.slice(0, 8).padEnd(8)} ${String(o.pid).padEnd(7)} ${o.user.padEnd(6)} ${`${o.fd}${o.mode ?? 'w'}`.padStart(4)}   REG  254,1 ${String(size(o.node)).padStart(11)}`;
       return links ? `${start} ${(erases(game, o) ? '0' : '1').padStart(5)} ${end}` : `${start} ${end}`;
     }),
   ].join('\n');

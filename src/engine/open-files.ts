@@ -20,6 +20,8 @@ export interface Open {
   // The path under which the process opened it (updated if logrotate renames it).
   path: string;
   node: File;
+  // Opened for reading (r) or writing (w, by default).
+  mode?: 'r' | 'w';
 }
 
 export const openSet = (j: Game): Open[] => (j.state.openFiles ??= []);

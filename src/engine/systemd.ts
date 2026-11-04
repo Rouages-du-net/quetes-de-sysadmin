@@ -52,6 +52,8 @@ export interface Service {
   nice?: number;
   cpuQuota?: number;
   cpuWeight?: number;
+  // LimitNOFILE= (applied to the processes when the service starts), see limits.ts.
+  limitNofile?: import('./limits').Limit;
   writeIo?: { device: string; bytes: number };
   overrides?: string[];
   overridesFingerprint?: string;
@@ -191,7 +193,7 @@ export function start(game: Game, sd: Systemd, name: string, toBoot = false): bo
   s.since = sd.clock;
   const listing: Process[] = (game.state.process ??= []);
   // Nice= is applied when the processes start (a running process keeps its value).
-  for (const p of s.process) if (!listing.some((q) => q.pid === p.pid)) listing.push({ ...p, ...(s.nice !== undefined ? { nice: s.nice } : {}) });
+  for (const p of s.process) if (!listing.some((q) => q.pid === p.pid)) listing.push({ ...p, ...(s.nice !== undefined ? { nice: s.nice } : {}), ...(s.limitNofile ? { nofile: s.limitNofile } : {}) });
   return true;
 }
 

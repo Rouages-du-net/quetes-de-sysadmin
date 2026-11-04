@@ -798,6 +798,14 @@ quota
   /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
   /home/you/mail_from_the_host.txt → /home/vous/courrier_hebergeur.txt
 
+too-many-files
+  /home/you → /home/vous
+  /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
+
+stuck-process
+  /home/you → /home/vous
+  /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

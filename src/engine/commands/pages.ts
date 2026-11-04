@@ -301,7 +301,11 @@ export const PAGES: Record<string, Page> = {
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e', 'f'],
     examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh'], see: ['systemctl', 'dmesg'] },
-  kill: { see: ['ps', 'top', 'pkill'] },
+  kill: { examples: ['kill 3302', 'sudo kill -KILL 3301', 'kill -l', 'kill -0 3301'], see: ['ps', 'pgrep', 'pkill', 'signal'] },
+  signal: { section: 7, examples: ['kill -l', 'sudo kill -TERM 3302', 'sudo kill -KILL 3301'], see: ['kill', 'pkill', 'ps'] },
+  ulimit: { examples: ['ulimit -n', 'ulimit -Hn', 'ulimit -a'], see: ['prlimit', 'systemd.exec'] },
+  prlimit: { examples: ['sudo prlimit --pid 840', 'sudo prlimit --pid 840 --nofile', 'sudo prlimit --pid 840 --nofile=4096:524288'], see: ['ulimit', 'systemd.exec', 'lsof'] },
+  'systemd.exec': { section: 5, examples: ['sudo systemctl edit gallery', 'cat /proc/840/limits'], see: ['systemd.service', 'systemd.resource-control', 'prlimit', 'ulimit'] },
   gpasswd: { long: { 'add': 'a', 'delete': 'd' }, options: ['a', 'd'], examples: ['sudo gpasswd -d marc sudo', 'sudo gpasswd -a lina till'], see: ['usermod', 'groups', 'id'] },
   less: { see: ['cat', 'head', 'tail'] },
   last: { long: {  }, options: ['n'], examples: ['last', 'last theo'], see: ['journalctl', 'ssh'] },
@@ -388,8 +392,8 @@ export const PAGES: Record<string, Page> = {
   createdb: { examples: ['sudo -u postgres createdb gamelib_test'], see: ['dropdb', 'psql'] },
   dropdb: { examples: ['sudo -u postgres dropdb gamelib_test'], see: ['createdb', 'psql'] },
   ping: { see: ['traceroute', 'dig'] },
-  ps: { examples: ['ps aux', 'ps -ef', 'ps -u marc', 'ps -eo pid,ni,%cpu,comm --sort=-%cpu'], see: ['kill', 'pkill', 'pgrep', 'top', 'systemctl'] },
-  pkill: { long: {  }, options: ['u'], examples: ['sudo pkill -u marc', 'pkill tail'], see: ['kill', 'ps', 'who'] },
+  ps: { examples: ['ps aux', 'ps -ef', 'ps -u marc', 'ps -eo pid,ni,%cpu,comm --sort=-%cpu', 'ps -p 3301'], see: ['kill', 'pkill', 'pgrep', 'top', 'systemctl'] },
+  pkill: { long: { full: 'f' }, options: ['u', 'f'], examples: ['sudo pkill -u marc', 'pkill tail', 'sudo pkill -KILL -f sync-photos'], see: ['kill', 'pgrep', 'ps', 'who'] },
   pwd: { see: ['cd'] },
   reboot: { section: 8, examples: ['sudo reboot'], see: ['systemctl'] },
   rsnapshot: {

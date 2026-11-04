@@ -8,6 +8,7 @@ import type { Command } from './index';
 import { colourise, sgr } from '../colours';
 import { readSize } from '../memory';
 import { readNice, readQuota } from '../cpu';
+import { readLimit } from '../limits';
 import { loadUnits, readCalendar, nextCalendar, nextTrigger, timerFor } from '../timers';
 import { toUtc } from '../systemd';
 import {
@@ -109,7 +110,8 @@ export function loadOverrides(game: Shell, sd: Systemd) {
     s.nice = undefined;
     s.cpuQuota = undefined;
     s.cpuWeight = undefined;
-    // Nice=, CPUQuota= and CPUWeight= are also read in the unit file itself
+    s.limitNofile = undefined;
+    // Nice=, CPUQuota=, CPUWeight= and LimitNOFILE= are also read in the unit file itself
     // (the other keys of the unit file are read by units.ts or the chapter).
     const main = mainFile(game, name, s);
     // The last file read wins (like systemd: names are sorted, /etc/systemd/system after system.control here).
@@ -124,6 +126,7 @@ export function loadOverrides(game: Shell, sd: Systemd) {
         if (m[1] === 'Nice') s.nice = readNice(m[2]) ?? undefined;
         if (m[1] === 'CPUQuota') s.cpuQuota = m[2] === '' ? undefined : (readQuota(m[2]) ?? undefined);
         if (m[1] === 'CPUWeight') s.cpuWeight = /^\d+$/.test(m[2]) && Number(m[2]) >= 1 && Number(m[2]) <= 10000 ? Number(m[2]) : undefined;
+        if (m[1] === 'LimitNOFILE') s.limitNofile = m[2] === '' ? undefined : (readLimit(m[2]) ?? undefined);
         if (!dropIn) continue;
         if (m[1] === 'MemoryMax') s.maxMemory = readSize(m[2]) ?? undefined;
         if (m[1] === 'Restart') s.reboot = m[2];

@@ -36,6 +36,8 @@ export const CODE_ORDER = [
   'late-disk',
   'heavy-load',
   'quota',
+  'too-many-files',
+  'stuck-process',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

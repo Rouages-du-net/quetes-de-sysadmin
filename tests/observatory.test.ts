@@ -182,6 +182,83 @@ for (const language of LANGUAGES)
       expect(s.finished).toBe(true);
     });
 
+    it('chapter 3 — solution: EMFILE, /proc/PID/limits, LimitNOFILE= in a drop-in, a restart', () => {
+      const { s, play, edit } = part('too-many-files');
+      let all = play(['cat message_from_amara.txt', 'curl -i http://localhost:8080/archive', 'journalctl -u gallery.service']);
+      expect(all).toContain('HTTP/1.1 500 Internal Server Error');
+      expect(all).toContain("Error: EMFILE: too many open files, open '/srv/skygallery/photos/archive/IMG_1013.jpg'");
+      contains(all, 'le noyau a refusé');
+      all = play(['cat /proc/840/limits', 'sudo ls /proc/840/fd | wc -l', 'ulimit -n', 'sudo lsof -p 840 | tail -n 1']);
+      expect(all).toMatch(/Max open files\s+1024\s+524288\s+files/);
+      expect(all).toContain('\n1024\n');
+      expect(all).toContain('1023r');
+      contains(all, 'limite souple');
+      all = edit('sudo systemctl edit gallery.service', dropIn('[Service]\nLimitNOFILE=4096'));
+      contains(all, 'Redémarre la galerie');
+      expect(s.finished).toBe(false);
+      all = play(['sudo systemctl restart gallery.service', 'curl -i http://localhost:8080/archive', 'cat /proc/840/limits']);
+      expect(all).toContain('HTTP/1.1 200 OK');
+      expect(all).toMatch(/Max open files\s+4096\s+4096\s+files/);
+      contains(all, 'VIENNENT LES LIMITES');
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 3 — false leads: ulimit, limits.conf, prlimit alone, a limit too low', () => {
+      const { s, play, edit } = part('too-many-files');
+      let all = play(['ulimit -n 4096', 'ulimit -n']);
+      expect(all).toContain('4096');
+      contains(all, 'TON shell');
+      all = edit('sudo nano /etc/security/limits.conf', (t) => t.replace('# End of file', '* soft nofile 8192\n# End of file'));
+      all += play(['sudo systemctl restart gallery.service']);
+      contains(all, 'pam_limits');
+      all = play(['sudo prlimit --pid 840 --nofile=4096:524288', 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/archive']);
+      expect(all).toContain('200');
+      contains(all, 'prochain redémarrage');
+      expect(s.finished).toBe(false);
+      all = edit('sudo systemctl edit gallery.service', dropIn('[Service]\nLimitNOFILE=2048'));
+      contains(all, 'trop basse');
+      edit('sudo systemctl edit gallery.service', (t) => t.replace('LimitNOFILE=2048', 'LimitNOFILE=8192:524288'));
+      play(['sudo systemctl restart gallery.service']);
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 4 — solution: TERM ignored, KILL, the orphan, the stale PID file', () => {
+      const { s, play } = part('stuck-process');
+      let all = play(['cat message_from_amara.txt', 'ps -ef', 'cat /usr/local/bin/sync-photos']);
+      expect(all).toMatch(/root\s+3302\s+3301 .* rsync -a --partial/);
+      expect(all).toContain("trap '' INT TERM HUP");
+      contains(all, 'la colonne PPID');
+      all = play(['sudo kill 3301', 'ps -p 3301']);
+      expect(all).toContain('/bin/bash /usr/local/bin/sync-photos');
+      contains(all, 'SIGTERM envoyé');
+      all = play(['sudo kill 3302', 'pgrep -l rsync']);
+      expect(all).toContain('3303 rsync');
+      contains(all, 'relance en boucle');
+      all = play(['kill -l', 'sudo kill -KILL 3301', 'ps -ef']);
+      expect(all).toContain(' 9) SIGKILL');
+      expect(all).toMatch(/root\s+3303\s+1 .* rsync/);
+      contains(all, 'adoptés par init');
+      all = play(['sudo kill -s TERM 3303', 'cat /run/sync-photos.pid', 'ps -p 3301']);
+      expect(all).toContain('3301');
+      contains(all, 'fichier PID périmé');
+      expect(s.finished).toBe(false);
+      all = play(['sudo rm /run/sync-photos.pid']);
+      contains(all, 'LES SIGNAUX');
+      expect(s.finished).toBe(true);
+    });
+
+    it('chapter 4 — another way: pkill -9 on the command line; false leads: the lock first, without sudo', () => {
+      const { s, play } = part('stuck-process');
+      let all = play(['kill 3301']);
+      expect(all).toContain('(3301)');
+      expect(s.finished).toBe(false);
+      all = play(['sudo rm /run/sync-photos.pid']);
+      contains(all, 'une deuxième copie');
+      all = play(['sudo pkill -9 -f sync-photos', 'sudo pkill rsync', 'ps -ef']);
+      expect(all).not.toContain('rsync -a');
+      expect(s.finished).toBe(true);
+    });
+
     it('chapter 2 — false leads: stopping it, renice', () => {
       const { s, play } = part('quota');
       let all = play(['sudo renice -n 19 -u jules', 'sudo systemctl stop stacking']);

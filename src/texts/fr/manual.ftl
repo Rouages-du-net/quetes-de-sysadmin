@@ -530,8 +530,12 @@ man-grep = affiche les lignes qui contiennent le motif. Le motif est une express
 man-head = affiche le début d’un fichier (les 10 premières lignes, ou N).
     .synopsis = head [-n N] [fichier]
     .option-n = nombre de lignes à afficher (10 par défaut) : head -n 3 fichier.
-man-kill = demande à un processus de s’arrêter (il reçoit un signal). PID est son numéro, donné par ps. kill -9 PID force l’arrêt. On ne peut arrêter que ses propres processus (ou tous, en root). Un zombie (<defunct>) ne réagit à aucun signal : il est déjà mort, seul son parent peut le récupérer.
-    .synopsis = kill PID
+man-kill = envoie un signal à un processus (par défaut TERM : « arrête-toi, s'il te plaît »). PID est son numéro, donné par ps ou pgrep. -SIGNAL ou -s SIGNAL en choisit un autre, par son nom ou son numéro : -KILL (9) le termine tout de suite, sans le laisser ranger ; -HUP (1) demande souvent à un démon de relire sa configuration ; -STOP et -CONT le mettent en pause et le relancent ; -0 vérifie seulement que le processus existe. Un processus peut intercepter ou ignorer TERM, HUP et INT (le trap d'un script), jamais KILL ni STOP. kill -l liste les signaux. On ne peut envoyer un signal qu'à ses propres processus (ou à tous, en root). Un zombie (<defunct>) ne réagit à aucun signal : il est déjà mort, seul son parent peut le récupérer.
+    .synopsis = kill [-SIGNAL | -s SIGNAL] PID… ; kill -l
+    .example-1 = demander au processus 3302 de s'arrêter (TERM)
+    .example-2 = terminer le processus 3301 tout de suite (KILL, en root)
+    .example-3 = les noms et numéros des signaux
+    .example-4 = le processus 3301 existe-t-il encore ? (code 0 si oui)
 man-last = liste les dernières connexions à la machine (d'après /var/log/wtmp) : qui, depuis quelle adresse, quand, et combien de temps (still logged in : encore connecté·e). Avec un nom de compte, seulement ses connexions ; -n N, seulement les N dernières. Utile pour reconstituer une nuit d'incident : qui est intervenu, et à quelle heure.
     .synopsis = last [-n N] [compte…]
     .option-n = seulement les N connexions les plus récentes.
@@ -609,12 +613,13 @@ man-pg_restore = restaure une archive écrite par pg_dump -Fc dans une base (-d)
     .command-3 = sudo -u postgres pg_restore -d ludo --data-only -t prets ludo.dump
 man-ping = envoie de petits messages (ICMP « echo ») à une machine et mesure le temps de l’aller-retour. Ici, 4 envois par défaut (sous Linux, ping continue jusqu’à Ctrl+C). Attention : beaucoup de serveurs ne répondent pas au ping, sans être en panne pour autant.
     .synopsis = ping [-c N] machine
-man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM). « ps -ef » : tout le monde aussi, avec le parent de chaque processus (PPID), celui qui l’a lancé. « ps -u compte » : ceux d'un compte. -o choisit les colonnes (pid, ppid, user, ni : la valeur nice, %cpu, %mem, stat, comm : le nom du programme, args : la ligne de commande entière), --sort trie selon l'une d'elles (un signe moins devant : décroissant). Un processus marqué <defunct> est un zombie : terminé, mais son parent n’a pas encore lu son résultat.
+man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps -p PID » : celui-là seulement ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM). « ps -ef » : tout le monde aussi, avec le parent de chaque processus (PPID), celui qui l’a lancé. « ps -u compte » : ceux d'un compte. -o choisit les colonnes (pid, ppid, user, ni : la valeur nice, %cpu, %mem, stat, comm : le nom du programme, args : la ligne de commande entière), --sort trie selon l'une d'elles (un signe moins devant : décroissant). Un processus marqué <defunct> est un zombie : terminé, mais son parent n’a pas encore lu son résultat.
     .synopsis = ps [aux] ; ps -ef ; ps -u compte ; ps -eo COLONNES [--sort=[-]COLONNE]
     .example-1 = les processus de tout le monde
     .example-2 = avec le parent de chacun
     .example-3 = ceux de marc
     .example-4 = PID, valeur nice, processeur et nom, les plus gourmands d'abord
+    .example-5 = seulement le processus 3301 (rien que l'en-tête, code 1, s'il n'existe pas)
 man-psql = le client de PostgreSQL : envoie une requête SQL à une base et affiche le résultat. On se connecte sous le nom de son compte : pour l'administrateur de la base, sudo -u postgres psql. -d choisit la base, -c donne la requête (entre guillemets), -f lit un fichier de SQL (un dump au format texte, par exemple), -l liste les bases. Quelques commandes : \l (les bases), \dt (les tables), \d table (ses colonnes), SELECT count(*) FROM table; (combien de lignes). Attention, DELETE FROM table; sans WHERE efface TOUTES les lignes.
     .synopsis = psql [-d base] [-c requête | -f fichier] ; psql -l
     .example-1 = la liste des bases
@@ -1097,10 +1102,12 @@ man-gpasswd = gère les membres d'un groupe : -a ajoute un compte au groupe, -d 
     .example-1 = retirer marc du groupe sudo
     .example-2 = ajouter lina au groupe till
 man-pkill = arrête des processus choisis par leur nom ou leur compte, sans chercher leurs numéros : pkill motif (le motif est cherché dans le nom du programme), pkill -u compte (tous les processus du compte). Ne rend rien s'il en a trouvé (code 0), et le code 1 s'il n'en a trouvé aucun. On ne peut arrêter que ses propres processus, ou tous en root.
-    .synopsis = pkill [-u compte] [motif]
+    .synopsis = pkill [-SIGNAL] [-f] [-u compte] [motif]
     .option-u = seulement les processus de ce compte (user).
+    .option-f = chercher le motif dans toute la ligne de commande (pas seulement le nom du programme).
     .example-1 = arrêter tous les processus de marc (et fermer ses sessions)
     .example-2 = arrêter les processus nommés tail
+    .example-3 = envoyer KILL aux processus dont la ligne de commande contient sync-photos
 man-which = donne le chemin complet d'une commande : le premier fichier de ce nom dans les dossiers du PATH (/usr/local/bin, /usr/bin…). Utile là où il faut le chemin complet, comme dans sudoers ou une crontab. N'affiche rien (code 1) pour une commande intégrée au shell (cd, umask…).
     .synopsis = which commande…
     .example-1 = où est systemctl ?
@@ -1303,3 +1310,26 @@ man-systemd_resource-control = les réglages de contrôle des ressources d'une u
     .example-1 = plafonner un service qui tourne, tout de suite et pour de bon
     .example-2 = ou l'écrire dans une surcharge
     .example-3 = vérifier
+man-ulimit = les limites de ton shell, et de ce que tu lances depuis lui (une commande interne de bash) : -n le nombre de fichiers ouverts, -a toutes. Un processus a une limite souple (ce qu'il peut utiliser, affichée par défaut ; -S) et une limite dure (le plafond, -H) : il peut lui-même monter sa limite souple jusqu'à sa limite dure ; seul root peut monter la limite dure. Avec une valeur, ulimit change la limite (les deux, sans -S ni -H). ulimit ne change rien aux processus déjà lancés, ni aux services : systemd fixe les limites d'un service quand il le démarre (LimitNOFILE= dans son unité), et les sessions reçoivent les leurs de /etc/security/limits.conf.
+    .synopsis = ulimit [-H|-S] [-n | -a] [LIMITE]
+    .option-n = le nombre de fichiers ouverts.
+    .option-H = la limite dure.
+    .option-S = la limite souple.
+    .option-a = toutes les limites.
+    .example-1 = la limite de fichiers ouverts de ton shell (souple)
+    .example-2 = sa limite dure
+    .example-3 = toutes les limites
+man-prlimit = affiche ou change les limites d'un processus en marche (--pid ; sans, celles de prlimit lui-même). --nofile seul montre la limite de fichiers ouverts ; --nofile=SOUPLE:DURE la change tout de suite (SOUPLE: garde la limite dure). Le processus d'un autre compte, ou une limite dure plus haute, demande root. Le changement ne dure que jusqu'au redémarrage du processus : pour un service, écris-le dans son unité (LimitNOFILE=).
+    .synopsis = prlimit [--pid PID] [--nofile[=SOUPLE:DURE]]
+    .example-1 = toutes les limites du processus 840
+    .example-2 = seulement sa limite de fichiers ouverts
+    .example-3 = la changer tout de suite (jusqu'à son redémarrage)
+man-systemd_exec = les réglages {"["}Service] d'une unité sur l'environnement d'exécution de ses processus : User=, Group=, WorkingDirectory=, Environment=, Nice= (la valeur nice), et les limites : LimitNOFILE= (fichiers ouverts : 4096, ou SOUPLE:DURE ; par défaut 1024:524288 avec systemd), LimitNPROC=, LimitCORE=… Elles sont fixées au démarrage des processus : après les avoir changées, redémarre le service. Ni /etc/security/limits.conf ni ulimit ne s'appliquent aux services.
+    .synopsis = {"["}Service] User= Nice= LimitNOFILE=SOUPLE[:DURE]
+    .example-1 = ajouter LimitNOFILE= dans une surcharge, puis redémarrer le service
+    .example-2 = vérifier les limites du processus en marche
+man-signal = les signaux : un court message que le noyau remet à un processus, avec kill. Chacun a un numéro et une action par défaut. HUP (1) : terminer, souvent traité par les démons comme « relis ta configuration ». INT (2) : terminer, envoyé par Ctrl-C. QUIT (3) : terminer avec un core dump. KILL (9) : terminer tout de suite, ni interceptable ni ignorable. TERM (15) : terminer, la demande polie (le défaut de kill), interceptable pour ranger. STOP (19) et CONT (18) : pause et reprise (STOP n'est pas interceptable). CHLD (17) : un enfant s'est terminé. Un programme (ou un script shell avec trap) peut ignorer ou traiter tous les signaux sauf KILL et STOP. Les enfants d'un processus qui se termine ne reçoivent rien : ils sont adoptés par init.
+    .synopsis = kill -SIGNAL PID ; trap 'commandes' SIGNAL…
+    .example-1 = les noms et numéros
+    .example-2 = la demande polie
+    .example-3 = celui qu'on ne peut pas refuser

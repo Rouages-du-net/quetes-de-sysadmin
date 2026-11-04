@@ -27,9 +27,9 @@ describe('The short code', () => {
       expect(code).toMatch(/^QDS(-[0-9A-HJKMNP-TV-Z]{1,4})+$/);
       expect(readCode(code)).toEqual({ finished: CODE_ORDER.filter((id) => finished.includes(id)) });
     }
-    // Short at the start, just under thirty characters at the end.
+    // Short at the start, about thirty-five characters at the end (it grows by a group of four every ~20 chapters).
     expect(progressCode(['lighthouse']).length).toBeLessThanOrEqual(12);
-    expect(progressCode(ALL).length).toBeLessThanOrEqual(31);
+    expect(progressCode(ALL).length).toBeLessThanOrEqual(36);
   });
 
   it('copies without trouble: lower case, spaces, O for 0, I or L for 1', () => {
