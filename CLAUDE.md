@@ -121,7 +121,12 @@ presents them for people.
   settings read from `postgresql.conf`/`postgresql.auto.conf` on reload or
   restart, sessions, the connection limit, indexes) in
   `src/engine/pg-server.ts`, its SQL (`pg_stat_activity`, `SHOW`,
-  `ALTER SYSTEM`, `EXPLAIN`, `CREATE INDEX`…) in `commands/pg-admin.ts`;
+  `ALTER SYSTEM`, `EXPLAIN`, `CREATE INDEX`, `pg_promote()`…) in
+  `commands/pg-admin.ts`; roles and privileges (`server.acl`, `SET ROLE`,
+  `GRANT`, default privileges) in `src/engine/pg-roles.ts` and
+  `commands/pg-roles.ts`; a standby (`server.recovery`, `server.standby`,
+  `standby.signal`), `pg_lsclusters`, `pg_ctlcluster`, `pg_isready` in
+  `commands/pg-cluster.ts`;
   `chapters/theatre.ts`: what The Theatre's chapters share.
 - `src/engine/open-files.ts` (files held open by a service: `lsof`, space of
   deleted files), `commands/logs.ts` (`lsof`, `truncate`,

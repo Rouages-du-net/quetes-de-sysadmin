@@ -24,3 +24,27 @@ hint-slow-query-seqscan =
 hint-slow-query-end =
     .lead = Donne à PostgreSQL un moyen de trouver les lignes d'un spectacle sans lire toute la table (man psql : CREATE INDEX).
     .solution = sudo -u postgres psql -d boxoffice -c "CREATE INDEX ON bookings (show_id)", puis EXPLAIN de nouveau : Index Scan.
+
+## Chapitre 3 — Lecture seule
+
+hint-read-only-account =
+    .lead = Quel compte utilise l'outil, et que peut faire ce compte ? (la configuration de l'outil ; man psql : \du, \dp)
+    .solution = sudo cat /etc/ticket-stats/config.env : DATABASE_URL=postgres://boxoffice:…, le propriétaire de toutes les tables.
+hint-read-only-role =
+    .lead = Crée un compte qui peut se connecter, et donne-lui le droit de lire, rien d'autre (man psql : CREATE ROLE, GRANT).
+    .solution = sudo -u postgres psql -d boxoffice -c "CREATE ROLE stats LOGIN PASSWORD 'a-choisir'; GRANT SELECT ON ALL TABLES IN SCHEMA public TO stats"
+hint-read-only-end =
+    .lead = Les tables à venir ont besoin de privilèges par défaut, pour le rôle qui les créera (man psql : ALTER DEFAULT PRIVILEGES). Puis la configuration de l'outil, et son redémarrage.
+    .solution = sudo -u postgres psql -d boxoffice -c "ALTER DEFAULT PRIVILEGES FOR ROLE boxoffice IN SCHEMA public GRANT SELECT ON TABLES TO stats; GRANT SELECT ON donations TO stats", puis stats et son mot de passe dans /etc/ticket-stats/config.env, et sudo systemctl restart ticket-stats.
+
+## Chapitre 4 — La Bascule
+
+hint-failover-down =
+    .lead = Que dit la billetterie, et stage répond-elle encore ? (man journalctl ; man pg_isready : -h)
+    .solution = journalctl -u boxoffice : « connect EHOSTUNREACH 192.0.2.29:5432 » ; pg_isready -h stage.internal : no response.
+hint-failover-standby =
+    .lead = Et le PostgreSQL de cette machine, qu'est-ce que c'est ? (man pg_lsclusters ; man psql : pg_is_in_recovery, pg_last_xact_replay_timestamp)
+    .solution = pg_lsclusters : 16 main, online,recovery : un réplica, qui a rejoué tout jusqu'à 06:47:14.
+hint-failover-end =
+    .lead = Fais du réplica le principal (man pg_ctlcluster : promote), puis envoie l'appli vers lui (son .env) et redémarre-la.
+    .solution = sudo pg_ctlcluster 16 main promote, puis DATABASE_URL=postgres://boxoffice:…@localhost/boxoffice dans /srv/boxoffice/.env, et sudo systemctl restart boxoffice.

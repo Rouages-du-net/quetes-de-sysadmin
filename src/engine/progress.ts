@@ -40,6 +40,8 @@ export const CODE_ORDER = [
   'stuck-process',
   'too-many-clients',
   'slow-query',
+  'read-only',
+  'failover',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

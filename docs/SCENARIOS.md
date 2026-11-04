@@ -221,6 +221,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | limits (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`) | only the open-files limit is modelled (the other lines of `/proc/PID/limits` and `ulimit -a` are a Debian machine's); `/proc/PID` exists only for the processes a chapter describes; `ulimit` acts on the game's shell; `limits.conf` is never read (as for systemd services) | every resource (`-u`, `-s`, `-c`…), pam_limits for new sessions |
 | signals (`kill`, `pkill`) | `-l`, `-SIGNAL`, `-s`, `-0`; KILL always ends a process, STOP/CONT pause and resume it, the others end it unless it ignores them (a script's `trap`, described by the chapter); the children of a process that ends are adopted by init | handlers that do something else, `killall`, `pstree`, process groups and sessions |
 | PostgreSQL server (`pg_stat_activity`, `SHOW`, `ALTER SYSTEM`, `pg_reload_conf()`, `pg_terminate_backend`, `EXPLAIN`, `CREATE INDEX`) | a few settings, read from `postgresql.conf` then `postgresql.auto.conf`, those marked "requires restart" applied on restart only; sessions described by the chapter; `pg_stat_activity` with `WHERE col = 'v' [AND …]`, `ORDER BY`, `LIMIT`; `EXPLAIN` of a `SELECT` on one table with one equality: Index Scan if an index covers the column, else a (parallel, beyond 100,000 rows) Seq Scan, with costs computed from the table's declared size; B-tree indexes on one column | statistics, the planner's real costs, joins, multi-column and other index types, `pg_stat_statements`, `pg_ctl`, interactive `psql` |
+| PostgreSQL roles and replication (`CREATE ROLE`, `GRANT`, `ALTER DEFAULT PRIVILEGES`, `SET ROLE`, `\dp`, `pg_lsclusters`, `pg_ctlcluster`, `pg_isready`, `pg_promote()`) | table privileges only, one schema whose `USAGE` and the database's `CONNECT` stay PUBLIC's; memberships always inherited; `psql -c` runs several statements separated by `;` and stops at the first error; a standby's state is described by the chapter (no WAL, no second server): promotion, `standby.signal` and restart, the read-only errors | column and function privileges, `WITH GRANT OPTION`, row-level security, real streaming replication, `pg_basebackup`, `pg_rewind` |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
 | systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
@@ -2319,13 +2320,13 @@ PID file removed, cron still running. Expected traps: `kill` without sudo,
 TERM on the script (ignored), killing rsync while the script lives (it
 starts another one), removing the PID file while the script still runs.
 
-## Story 22: The Theatre (two chapters, more planned)
+## Story 22: The Theatre (four chapters)
 
 A neighbourhood theatre has a server (`theatre`, 192.0.2.28) for its
 ticket office (`boxoffice`, Node.js, port 3000) and its PostgreSQL 16
 database (`boxoffice`). Camille runs the theatre and the website. The story
-is about PostgreSQL in production: connections, slow queries, then (planned)
-permissions and failover. It opens after "The Database" (The Game Library)
+is about PostgreSQL in production: connections, slow queries, permissions
+and failover. It opens after "The Database" (The Game Library)
 and "The Restart Loop" (The Canteen).
 
 ### Chapter 1 — Opening Night (done)
@@ -2354,6 +2355,38 @@ file changed without a reload, a timeout too long.
 Goal checked on the state: an index on `bookings (show_id)`, PostgreSQL and
 the app running. Expected traps: `VACUUM`/`ANALYZE` alone, an index on
 another column. Other accepted solutions: a named index, `CONCURRENTLY`.
+
+### Chapter 3 — Read Only (done)
+
+| Step | Command learnt |
+|---|---|
+| Who the tool is | `/etc/ticket-stats/config.env` (the app's role, owner of every table), `\du`, `\dp` |
+| A reading role | `CREATE ROLE stats LOGIN PASSWORD '…'`, `GRANT SELECT ON ALL TABLES IN SCHEMA public TO stats`, tried with `SET ROLE stats; …` |
+| The tables to come | Camille's migration creates `donations` as boxoffice: `ALTER DEFAULT PRIVILEGES FOR ROLE boxoffice IN SCHEMA public GRANT SELECT ON TABLES TO stats`, `GRANT SELECT ON donations`, `\ddp` |
+| The tool | its `DATABASE_URL`, `systemctl restart ticket-stats` |
+
+Goal checked on the state: a role that logs in, is neither a superuser nor a
+member of boxoffice, reads every table (donations included) and writes
+none, with default privileges for boxoffice's tables, and the tool restarted
+with it. Expected traps: `GRANT ALL`, `SUPERUSER`, `GRANT boxoffice TO …`,
+default privileges without `FOR ROLE boxoffice`, a wrong password in the
+tool (`password authentication failed`).
+
+### Chapter 4 — The Failover (done)
+
+| Step | Command learnt |
+|---|---|
+| The primary is gone | `journalctl -u boxoffice` (EHOSTUNREACH), `pg_isready -h stage.internal` |
+| This machine is a standby | `pg_lsclusters` (online,recovery), `pg_is_in_recovery()`, `pg_last_xact_replay_timestamp()`, the server's log, `standby.signal`, `primary_conninfo` |
+| Promote | `pg_ctlcluster 16 main promote` (or `SELECT pg_promote()`) |
+| Move the app | `DATABASE_URL` in `/srv/boxoffice/.env`, `systemctl restart boxoffice` |
+
+Goal checked on the state: the local server out of recovery, the app
+restarted on a `DATABASE_URL` of this machine, the ticket office answering.
+Expected traps: a restart of PostgreSQL (still a standby), the app moved to
+the standby before the promotion (read-only), the `.env` changed without
+restarting the app. Other accepted solution: removing `standby.signal` and
+restarting PostgreSQL.
 
 ## Ideas for later
 

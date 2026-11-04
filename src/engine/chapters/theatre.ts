@@ -16,6 +16,8 @@ import type { Process } from '../commands/system';
 import { newSystemd, systemd, type DefinitionService } from '../systemd';
 import { applySettings, AUTO_CONF, CONF, enforceTimeouts, LOG, readSettings, type Backend, type PgServer } from '../pg-server';
 import type { PostgresState, Table } from '../postgres';
+import { loadOverrides } from '../commands/systemd';
+import type { Shell } from '../shell';
 
 export const HOME = '/home/you';
 export const PASSWORD = 'curtain-2028';
@@ -27,6 +29,7 @@ export const accounts = (): Accounts => ({
     root: { uid: 0, group: 'root', home: '/root' },
     postgres: { uid: 105, group: 'postgres', home: '/var/lib/postgresql', shell: '/bin/bash' },
     boxoffice: { uid: 998, group: 'boxoffice', home: '/srv/boxoffice', shell: '/usr/sbin/nologin' },
+    'ticket-stats': { uid: 997, group: 'ticket-stats', home: '/var/lib/ticket-stats', shell: '/usr/sbin/nologin' },
     you: { uid: 1000, group: 'you' },
     camille: { uid: 1001, group: 'camille' },
   },
@@ -36,6 +39,7 @@ export const accounts = (): Accounts => ({
     sudo: { gid: 27, members: ['you', 'camille'] },
     postgres: { gid: 105, members: [] },
     boxoffice: { gid: 998, members: [] },
+    'ticket-stats': { gid: 997, members: [] },
     you: { gid: 1000, members: [] },
     camille: { gid: 1001, members: [] },
   },
@@ -134,13 +138,15 @@ export function theatreState(t: Translate, o: Options) {
       bases: { boxoffice: { owner: 'boxoffice', tables: o.tables }, postgres: { owner: 'postgres', tables: {} } },
       roles: ['postgres', 'boxoffice'],
       archives: {},
-      server: { settings: {}, backends: o.backends, nextPid: 30_211, indexes: o.indexes ?? [], sizes: o.sizes } satisfies PgServer,
+      server: { settings: {}, backends: o.backends, nextPid: 30_211, indexes: o.indexes ?? [], sizes: o.sizes } as PgServer,
     },
   };
 }
 
 /** At the start: the settings in force are those of the files; PostgreSQL rereads them on reload, all of them on restart. */
 export function preparePostgres(j: Game) {
+  // The unit files and their drop-ins, as systemd read them at boot.
+  loadOverrides(j as Shell, sd(j));
   const s = srv(j);
   s.settings = readSettings(j);
   const pg = sd(j).services.postgresql;

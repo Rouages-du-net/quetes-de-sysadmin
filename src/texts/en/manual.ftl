@@ -607,7 +607,7 @@ man-ps = lists processes, that is, the programs currently running (process statu
     .example-3 = marc's processes
     .example-4 = PID, nice value, CPU and name, the busiest first
     .example-5 = only process 3301 (nothing but the header, exit code 1, if it doesn't exist)
-man-psql = the PostgreSQL client: sends an SQL query to a database and displays the result. You connect under your account's name: for the database administrator, sudo -u postgres psql. -d picks the database, -c gives the query (in quotes), -f reads a file of SQL (a text-format dump, for example), -l lists the databases. A few commands: \l (the databases), \dt (the tables), \d table (its columns), SELECT count(*) FROM table; (how many rows). Beware, DELETE FROM table; with no WHERE deletes ALL the rows. For the server: pg_stat_activity (one row per connection: who, from where, its state: active, idle, idle in transaction, and its last query), pg_terminate_backend(pid) (ends a connection), SHOW setting, ALTER SYSTEM SET setting = 'value' (written to postgresql.auto.conf) then SELECT pg_reload_conf(); (or systemctl reload postgresql; some settings, like max_connections, need a restart). EXPLAIN SELECT … shows the plan PostgreSQL chooses (Seq Scan: it reads the whole table; Index Scan: it goes through an index); EXPLAIN ANALYZE runs the query and adds the real times. CREATE INDEX ON table (column) creates an index, \di lists them, \d table shows them under the columns. The superuser (sudo -u postgres) can still connect when the other roles are refused: a few connections are kept for it (superuser_reserved_connections).
+man-psql = the PostgreSQL client: sends an SQL query to a database and displays the result. You connect under your account's name: for the database administrator, sudo -u postgres psql. -d picks the database, -c gives the query (in quotes), -f reads a file of SQL (a text-format dump, for example), -l lists the databases. A few commands: \l (the databases), \dt (the tables), \d table (its columns), SELECT count(*) FROM table; (how many rows). Beware, DELETE FROM table; with no WHERE deletes ALL the rows. For the server: pg_stat_activity (one row per connection: who, from where, its state: active, idle, idle in transaction, and its last query), pg_terminate_backend(pid) (ends a connection), SHOW setting, ALTER SYSTEM SET setting = 'value' (written to postgresql.auto.conf) then SELECT pg_reload_conf(); (or systemctl reload postgresql; some settings, like max_connections, need a restart). EXPLAIN SELECT … shows the plan PostgreSQL chooses (Seq Scan: it reads the whole table; Index Scan: it goes through an index); EXPLAIN ANALYZE runs the query and adds the real times. CREATE INDEX ON table (column) creates an index, \di lists them, \d table shows them under the columns. The superuser (sudo -u postgres) can still connect when the other roles are refused: a few connections are kept for it (superuser_reserved_connections). Roles: CREATE ROLE name LOGIN PASSWORD '…', GRANT SELECT ON table (or ALL TABLES IN SCHEMA public) TO role, REVOKE, ALTER DEFAULT PRIVILEGES FOR ROLE owner IN SCHEMA public GRANT SELECT ON TABLES TO role (for the tables still to come); \du lists the roles, \dp each table's privileges (r read, a insert, w update, d delete), \ddp the default ones; SET ROLE name; runs what follows (in the same -c, separated by ;) with that role's privileges. On a standby: pg_is_in_recovery(), pg_last_xact_replay_timestamp(), pg_stat_wal_receiver, pg_promote().
     .synopsis = psql [-d database] [-c query | -f file] ; psql -l
     .example-1 = the list of databases
     .example-2 = the tables of the gamelib database
@@ -1319,3 +1319,16 @@ man-signal = the signals: a short message the kernel delivers to a process, with
     .example-1 = the names and numbers
     .example-2 = the polite request
     .example-3 = the one that can't be refused
+man-pg_lsclusters = lists the PostgreSQL clusters of a Debian machine (postgresql-common): version, name, port, status (online, down; online,recovery for a standby replaying a primary), owner, data directory and log file.
+    .synopsis = pg_lsclusters
+    .example-1 = the clusters and their state
+man-pg_ctlcluster = controls a PostgreSQL cluster on Debian: start, stop, restart, reload (through systemd), status, and promote: a standby in recovery becomes a primary (it leaves recovery, takes a new timeline and accepts writes). Reserved for root and the postgres account.
+    .synopsis = pg_ctlcluster VERSION CLUSTER start|stop|restart|reload|status|promote
+    .example-1 = is the server running?
+    .example-2 = turn the standby into the primary
+man-pg_isready = checks whether a PostgreSQL server accepts connections: "accepting connections" (exit code 0), "rejecting connections" (1), "no response" (2). -h the host (the local socket by default), -p the port.
+    .synopsis = pg_isready [-h host] [-p port]
+    .option-h = the server's host.
+    .option-p = its port (5432 by default).
+    .example-1 = the local server
+    .example-2 = another server
