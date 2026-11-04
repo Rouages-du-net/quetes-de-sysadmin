@@ -38,6 +38,8 @@ export const CODE_ORDER = [
   'quota',
   'too-many-files',
   'stuck-process',
+  'too-many-clients',
+  'slow-query',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

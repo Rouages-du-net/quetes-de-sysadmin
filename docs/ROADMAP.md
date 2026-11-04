@@ -366,9 +366,11 @@ which works on machines rather than switches).
 - [ ] **Monitoring and logs**: several machines' logs gathered in one place
       (rsyslog, remote journald), alerts on thresholds, a few metrics; a story
       across several machines.
-- [ ] **A database in production**: PostgreSQL day to day. Connections
-      exhausted (`max_connections`), a slow query (`EXPLAIN`), replication
-      and failover, permissions (`GRANT`).
+- [ ] **A database in production** ("The Theatre", story 22 in
+      `docs/SCENARIOS.md`). Done: connections exhausted (`max_connections`,
+      `pg_stat_activity`, idle in transaction, a timeout), a slow query
+      (`EXPLAIN`, `CREATE INDEX`), in `src/engine/pg-server.ts`. To do:
+      permissions (`GRANT`, a read-only role), replication and failover.
 
 ---
 

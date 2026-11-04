@@ -620,13 +620,15 @@ man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécu
     .example-3 = ceux de marc
     .example-4 = PID, valeur nice, processeur et nom, les plus gourmands d'abord
     .example-5 = seulement le processus 3301 (rien que l'en-tête, code 1, s'il n'existe pas)
-man-psql = le client de PostgreSQL : envoie une requête SQL à une base et affiche le résultat. On se connecte sous le nom de son compte : pour l'administrateur de la base, sudo -u postgres psql. -d choisit la base, -c donne la requête (entre guillemets), -f lit un fichier de SQL (un dump au format texte, par exemple), -l liste les bases. Quelques commandes : \l (les bases), \dt (les tables), \d table (ses colonnes), SELECT count(*) FROM table; (combien de lignes). Attention, DELETE FROM table; sans WHERE efface TOUTES les lignes.
+man-psql = le client de PostgreSQL : envoie une requête SQL à une base et affiche le résultat. On se connecte sous le nom de son compte : pour l'administrateur de la base, sudo -u postgres psql. -d choisit la base, -c donne la requête (entre guillemets), -f lit un fichier de SQL (un dump au format texte, par exemple), -l liste les bases. Quelques commandes : \l (les bases), \dt (les tables), \d table (ses colonnes), SELECT count(*) FROM table; (combien de lignes). Attention, DELETE FROM table; sans WHERE efface TOUTES les lignes. Pour le serveur : pg_stat_activity (une ligne par connexion : qui, d'où, son état : active, idle, idle in transaction, et sa dernière requête), pg_terminate_backend(pid) (termine une connexion), SHOW réglage, ALTER SYSTEM SET réglage = 'valeur' (écrit dans postgresql.auto.conf) puis SELECT pg_reload_conf(); (ou systemctl reload postgresql ; certains réglages, comme max_connections, demandent un redémarrage). EXPLAIN SELECT … montre le plan que choisit PostgreSQL (Seq Scan : il lit toute la table ; Index Scan : il passe par un index) ; EXPLAIN ANALYZE exécute la requête et ajoute les vrais temps. CREATE INDEX ON table (colonne) crée un index, \di les liste, \d table les montre sous les colonnes. Le superutilisateur (sudo -u postgres) peut encore se connecter quand les autres rôles sont refusés : quelques connexions lui sont gardées (superuser_reserved_connections).
     .synopsis = psql [-d base] [-c requête | -f fichier] ; psql -l
     .example-1 = la liste des bases
     .example-2 = les tables de la base ludo
     .command-2 = sudo -u postgres psql -d ludo -c "\dt"
     .example-3 = combien de lignes dans la table prets
     .command-3 = sudo -u postgres psql -d ludo -c "SELECT count(*) FROM prets;"
+    .example-4 = qui est connecté, dans quel état, à faire quoi
+    .example-5 = le plan d'une requête
 man-pwd = affiche le chemin complet du lieu où tu es (print working directory).
     .synopsis = pwd
 man-readlink = affiche ce que vise un lien symbolique. -f donne le chemin complet, en suivant tous les liens : utile pour savoir quelle version est en ligne derrière un lien « current ».

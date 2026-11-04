@@ -43,3 +43,5 @@ story-canteen = The Canteen
     .summary = The solidarity canteen's bookings app won't come back after a reboot, gives up after a database restart, waits two minutes for a missing cable, writes before its disk is there: systemd's dependencies, Restart=, a slow boot and RequiresMountsFor=.
 story-observatory = The Observatory
     .summary = The astronomy club's server crawls under the night's photo stacking: the load average, top and renice, then a CPUQuota= so the host doesn't throttle the machine.
+story-theatre = The Theatre
+    .summary = The neighbourhood theatre's ticket office and its PostgreSQL database: connections exhausted on opening night (pg_stat_activity, idle in transaction, a timeout), then a slow query (EXPLAIN, an index).

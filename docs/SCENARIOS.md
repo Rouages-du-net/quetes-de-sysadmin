@@ -220,6 +220,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | processor (`uptime`, `top`, `ps -o`, `renice`, `nice`, `pgrep`, `systemd-cgtop`, `CPUQuota=`) | each process's demand (in CPUs) is described by the chapter; the CPU is shared between all processes at once by their nice weight (the kernel's table: 1024 at 0, 15 at 19), never more than a process wants, a service's processes together never more than its `CPUQuota=`; `CPUWeight=` multiplies the weight of the service's processes; the load average decays towards the number of threads that want to run (1, 5, 15 min); `nice` runs its command at once (the game's commands are instant); `renice -g` is refused; `systemd-cgtop` shows one snapshot, services only; `ps -o` knows `pid`, `ppid`, `user`, `ni`, `pri`, `%cpu`, `%mem`, `stat`, `comm`, `args` | autogroups and the cgroup hierarchy share first between sessions and services (so `renice` between two services acts less than here on a default Debian), per-thread nice values, `sy`/`wa`/`st` time, interactive `top` and `systemd-cgtop`, every `ps` column |
 | limits (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`) | only the open-files limit is modelled (the other lines of `/proc/PID/limits` and `ulimit -a` are a Debian machine's); `/proc/PID` exists only for the processes a chapter describes; `ulimit` acts on the game's shell; `limits.conf` is never read (as for systemd services) | every resource (`-u`, `-s`, `-c`…), pam_limits for new sessions |
 | signals (`kill`, `pkill`) | `-l`, `-SIGNAL`, `-s`, `-0`; KILL always ends a process, STOP/CONT pause and resume it, the others end it unless it ignores them (a script's `trap`, described by the chapter); the children of a process that ends are adopted by init | handlers that do something else, `killall`, `pstree`, process groups and sessions |
+| PostgreSQL server (`pg_stat_activity`, `SHOW`, `ALTER SYSTEM`, `pg_reload_conf()`, `pg_terminate_backend`, `EXPLAIN`, `CREATE INDEX`) | a few settings, read from `postgresql.conf` then `postgresql.auto.conf`, those marked "requires restart" applied on restart only; sessions described by the chapter; `pg_stat_activity` with `WHERE col = 'v' [AND …]`, `ORDER BY`, `LIMIT`; `EXPLAIN` of a `SELECT` on one table with one equality: Index Scan if an index covers the column, else a (parallel, beyond 100,000 rows) Seq Scan, with costs computed from the table's declared size; B-tree indexes on one column | statistics, the planner's real costs, joins, multi-column and other index types, `pg_stat_statements`, `pg_ctl`, interactive `psql` |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
 | systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
@@ -2317,6 +2318,42 @@ Goal checked on the state: no sync-photos nor rsync process left, the stale
 PID file removed, cron still running. Expected traps: `kill` without sudo,
 TERM on the script (ignored), killing rsync while the script lives (it
 starts another one), removing the PID file while the script still runs.
+
+## Story 22: The Theatre (two chapters, more planned)
+
+A neighbourhood theatre has a server (`theatre`, 192.0.2.28) for its
+ticket office (`boxoffice`, Node.js, port 3000) and its PostgreSQL 16
+database (`boxoffice`). Camille runs the theatre and the website. The story
+is about PostgreSQL in production: connections, slow queries, then (planned)
+permissions and failover. It opens after "The Database" (The Game Library)
+and "The Restart Loop" (The Canteen).
+
+### Chapter 1 — Opening Night (done)
+
+| Step | Command learnt |
+|---|---|
+| What fails | `curl -i http://localhost:3000/` (500), `journalctl -u boxoffice` ("remaining connection slots are reserved for roles with the SUPERUSER attribute") |
+| Who holds the connections | `sudo -u postgres psql` (reserved slots), `pg_stat_activity` (`state`, `state_change`, `query`), `SHOW max_connections` |
+| End the leak | `ALTER SYSTEM SET idle_in_transaction_session_timeout = '1min'` and `SELECT pg_reload_conf()` (or `postgresql.conf` and `systemctl reload postgresql`) |
+
+Goal checked on the state: `idle_in_transaction_session_timeout` in force
+(between 1 s and 5 min), PostgreSQL running, the app gets a connection
+again. Expected traps: `psql` as yourself (no role), `pg_terminate_backend`
+alone (they come back: each visitor leaks a connection), `max_connections`
+raised (reload isn't enough, a restart is; the leak fills it again), the
+file changed without a reload, a timeout too long.
+
+### Chapter 2 — The Slow Query (done)
+
+| Step | Command learnt |
+|---|---|
+| Which query | `curl -w '%{time_total}'` (4.8 s), `journalctl -u boxoffice`, the server's log (`log_min_duration_statement`) |
+| How it runs | `EXPLAIN ANALYZE SELECT … WHERE show_id = 42` (Parallel Seq Scan, Rows Removed by Filter), `\d bookings`, `count(*)` |
+| A shortcut | `CREATE INDEX ON bookings (show_id)`, `EXPLAIN` again (Index Scan), `\di` |
+
+Goal checked on the state: an index on `bookings (show_id)`, PostgreSQL and
+the app running. Expected traps: `VACUUM`/`ANALYZE` alone, an index on
+another column. Other accepted solutions: a named index, `CONCURRENTLY`.
 
 ## Ideas for later
 

@@ -30,3 +30,4 @@ machine-kneader = petrin
 ## La Cantine
 machine-canteen = cantine
 machine-observatory = observatoire
+machine-theatre = theatre

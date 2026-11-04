@@ -806,6 +806,14 @@ stuck-process
   /home/you → /home/vous
   /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
 
+too-many-clients
+  /home/you → /home/vous
+  /home/you/message_from_camille.txt → /home/vous/message_de_camille.txt
+
+slow-query
+  /home/you → /home/vous
+  /home/you/message_from_camille.txt → /home/vous/message_de_camille.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

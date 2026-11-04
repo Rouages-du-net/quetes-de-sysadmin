@@ -88,6 +88,8 @@ import { heavyLoad } from './heavy-load';
 import { quota } from './quota';
 import { tooManyFiles } from './too-many-files';
 import { stuckProcess } from './stuck-process';
+import { tooManyClients } from './too-many-clients';
+import { slowQuery } from './slow-query';
 import { restartLoop } from './restart-loop';
 import { slowBoot } from './slow-boot';
 import { lateDisk } from './late-disk';
@@ -198,6 +200,11 @@ export const STORIES: Story[] = [
     id: 'observatory',
     after: ['memory', 'boot-order'],
     chapters: [heavyLoad, quota, tooManyFiles, stuckProcess],
+  },
+  {
+    id: 'theatre',
+    after: ['database', 'restart-loop'],
+    chapters: [tooManyClients, slowQuery],
   },
 ];
 
