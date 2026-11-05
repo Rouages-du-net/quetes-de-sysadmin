@@ -363,9 +363,13 @@ which works on machines rather than switches).
 - [ ] **File sharing**: an association's NAS. NFS (`/etc/exports`, mounting
       it, `root_squash`) and Samba for the Windows desktops, permissions and
       quotas. Needs network mounts, not simulated yet.
-- [ ] **Monitoring and logs**: several machines' logs gathered in one place
-      (rsyslog, remote journald), alerts on thresholds, a few metrics; a story
-      across several machines.
+- [x] **Monitoring and logs** ("The Huts", story 23 in
+      `docs/SCENARIOS.md`): the logs of three machines gathered in one place
+      (rsyslog as a central server: `imudp`, the firewall, a template per
+      host, `stop`; `src/engine/rsyslog.ts`), the journal filling the disk
+      (`journalctl --disk-usage`, `--vacuum-size`, `SystemMaxUse=`;
+      `src/engine/journal-files.ts`), a filter for an alert on failed SSH
+      logins (conditions, the order of the rules, `logger`).
 - [x] **A database in production** ("The Theatre", story 22 in
       `docs/SCENARIOS.md`): connections exhausted (`max_connections`,
       `pg_stat_activity`, idle in transaction, a timeout), a slow query

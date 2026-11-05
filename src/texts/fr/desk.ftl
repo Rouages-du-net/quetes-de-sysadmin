@@ -66,6 +66,7 @@ machine-patch-motd = La Rustine — l'atelier vélo associatif (cycles.example).
 machine-canteen-motd = La Cantine — le serveur de la cantine solidaire : le menu du jour et les réservations. Prix libre, repas partagé.
 machine-observatory-motd = L'Observatoire — le serveur du club d'astronomie : la galerie photo, et l'empilement des images de la nuit. Bon ciel !
 machine-theatre-motd = Le Théâtre — le serveur du théâtre de quartier : la billetterie et sa base de données. Merde pour ce soir !
+machine-valley-motd = Les Refuges — le serveur de la vallée : les journaux des refuges de montagne, rassemblés au même endroit.
 machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.

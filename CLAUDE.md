@@ -236,6 +236,14 @@ presents them for people.
   service), `traces.ts` (ssh's log and `last` written by `initialiser`, key
   fingerprints, Nadia's crontab, the database password: `ALTER ROLE` and
   `.env` read when the app starts) and `follow-up.ts`.
+- `src/engine/rsyslog.ts`: a machine's rsyslog (`state.rsyslog`:
+  `/etc/rsyslog.conf` and `rsyslog.d` read when it starts, inputs, templates,
+  selectors, filters, `if … then`, `stop`; `route()` tells where a message
+  goes; remote senders `deliver()`ed one message per command through ufw);
+  `logger` and `rsyslogd -N1` in `commands/syslog.ts`. The journal on disk
+  (`/var/log/journal`, `SystemMaxUse=`, vacuuming, `journalctl
+  --disk-usage`/`--vacuum-*`) in `src/engine/journal-files.ts`;
+  `chapters/huts.ts`: what The Huts' chapters share.
 - `src/engine/scan.ts` and `commands/nmap.ts`: nmap on the network declared
   by the story (`state.scan`: machines, services, scope; `state.scans` keeps
   each scan); `src/engine/lynis.ts` and `commands/lynis.ts`: Lynis

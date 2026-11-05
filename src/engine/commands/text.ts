@@ -94,8 +94,10 @@ export const TEXT: Record<string, Command> = {
       const outputs: string[] = [];
       for (const { name, text } of ts) {
         const kept = linesFor(text).filter((l) => correspond(l) !== letters.has('v'));
-        if (letters.has('c')) outputs.push(ts.length > 1 ? `${prefix(name)}${kept.length}` : String(kept.length));
-        else outputs.push(...kept.map((l) => (ts.length > 1 ? `${prefix(name)}${highlight(l)}` : highlight(l))));
+        // -h: never the file name; -H: always (by default, only with several files).
+        const named = letters.has('h') ? false : letters.has('H') || ts.length > 1;
+        if (letters.has('c')) outputs.push(named ? `${prefix(name)}${kept.length}` : String(kept.length));
+        else outputs.push(...kept.map((l) => (named ? `${prefix(name)}${highlight(l)}` : highlight(l))));
       }
       // Deliberate difference: the real grep says nothing when it finds nothing;
       // here, the game says so (only on screen, never in a pipe).

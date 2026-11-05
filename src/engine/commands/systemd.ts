@@ -8,6 +8,7 @@ import type { Command } from './index';
 import { colourise, sgr } from '../colours';
 import { readSize } from '../memory';
 import { readNice, readQuota } from '../cpu';
+import { human, JOURNAL, journalFiles, machineId, usage, vacuum } from '../journal-files';
 import { readLimit } from '../limits';
 import { loadUnits, readCalendar, nextCalendar, nextTrigger, timerFor } from '../timers';
 import { toUtc } from '../systemd';
@@ -360,6 +361,15 @@ const linkState = (game: Shell, name: string, l: Link) =>
         ? { operational: 'routable', setup: 'configured' }
         : { operational: 'no-carrier', setup: 'configuring' };
 
+/** "2weeks", "10d", "1months", "12h" (journalctl --vacuum-time) → milliseconds; null if unreadable. */
+function readSpan(text: string): number | null {
+  const m = /^(\d+)\s*(s|sec|m|min|h|hour|hours|d|day|days|w|week|weeks|month|months|y|year|years)?$/.exec(text.trim());
+  if (!m) return null;
+  const unit = m[2] ?? 's';
+  const ms: Record<string, number> = { s: 1000, sec: 1000, m: 60_000, min: 60_000, h: 3_600_000, hour: 3_600_000, hours: 3_600_000, d: 86_400_000, day: 86_400_000, days: 86_400_000, w: 604_800_000, week: 604_800_000, weeks: 604_800_000, month: 2_629_800_000, months: 2_629_800_000, y: 31_557_600_000, year: 31_557_600_000, years: 31_557_600_000 };
+  return ms[unit] === undefined ? null : Number(m[1]) * ms[unit];
+}
+
 export const SYSTEMD: Record<string, Command> = {
   // Manual pages only (configuration files and a service), see pages.ts.
   'systemd.unit': { section: 5, launch: () => '' },
@@ -666,6 +676,28 @@ export const SYSTEMD: Record<string, Command> = {
       // On a terminal, serious messages are highlighted (not in a pipe).
       const colour = colourise(c, 'auto');
       const sd = systemd(game);
+      // The journal's files on disk: their size, and trimming them (journal-files.ts).
+      const vacuumArg = args.find((a) => /^--vacuum-(size|time|files)(=|$)/.test(a));
+      if (args.includes('--disk-usage') || vacuumArg) {
+        if (!journalFiles(game).length) return game.error('No journal files were found.');
+        if (args.includes('--disk-usage')) return `Archived and active journals take up ${human(usage(game))} in the file system.`;
+        if (game.who !== 'root') return game.error(`Failed to vacuum ${JOURNAL}/${machineId(game)}: Permission denied`);
+        const [, kind, , raw] = /^--vacuum-(size|time|files)(=)?(.*)$/.exec(vacuumArg!)!;
+        const value = raw || args[args.indexOf(vacuumArg!) + 1] || '';
+        if (kind === 'size') {
+          const max = readSize(value.replace(/B$/i, ''));
+          if (max === null) return game.error(`Failed to parse size value: ${value}`);
+          return vacuum(game, (remaining) => remaining.reduce((t, f) => t + f.size, 0) <= max).join('\n');
+        }
+        if (kind === 'files') {
+          if (!/^\d+$/.test(value)) return game.error(`Failed to parse n_files: ${value}`);
+          return vacuum(game, (remaining) => remaining.filter((f) => f.archived).length < Number(value) || remaining.filter((f) => f.archived).length <= Number(value)).join('\n');
+        }
+        const span = readSpan(value);
+        if (span === null) return game.error(`Failed to parse timestamp: ${value}`);
+        const now = sd?.clock ?? 0;
+        return vacuum(game, (_, f) => f.time >= now - span).join('\n');
+      }
       if (!sd) return '-- No entries --';
       let unit: string | null = null;
       let count: number | null = null;

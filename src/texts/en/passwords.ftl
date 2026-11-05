@@ -47,3 +47,6 @@ password-nebula-2028 = nebula-2028
 
 ## The Theatre
 password-curtain-2028 = curtain-2028
+
+## The Huts
+password-summit-2028 = summit-2028

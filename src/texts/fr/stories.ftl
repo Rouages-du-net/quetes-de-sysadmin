@@ -45,3 +45,5 @@ story-observatory = L'Observatoire
     .summary = Le serveur du club d'astronomie rame sous l'empilement des photos de la nuit : la charge moyenne, top et renice, puis un CPUQuota= pour que l'hébergeur ne bride pas la machine.
 story-theatre = Le Théâtre
     .summary = La billetterie du théâtre de quartier et sa base PostgreSQL : des connexions épuisées le soir de la première (pg_stat_activity, idle in transaction, un délai), puis une requête lente (EXPLAIN, un index).
+story-huts = Les Refuges
+    .summary = Une fédération de refuges de montagne et le serveur de la vallée : les journaux des refuges rassemblés avec rsyslog, un journal qui remplit le disque, et une alerte pour les échecs de connexion SSH.
