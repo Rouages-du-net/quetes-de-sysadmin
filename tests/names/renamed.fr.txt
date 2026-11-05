@@ -834,6 +834,54 @@ ssh-alerts
   /home/you → /home/vous
   /home/you/message_from_lou.txt → /home/vous/message_de_lou.txt
 
+nfs-export
+  /srv/photos/README.txt → /srv/photos/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_margot.txt → /home/vous/message_de_margot.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+nfs-export:darkroom
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/numerisations
+  /home/sam/scans/roll-04.tif → /home/sam/numerisations/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/numerisations/roll-05.tif
+
+nfs-owners
+  /srv/photos/README.txt → /srv/photos/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_margot.txt → /home/vous/message_de_margot.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+nfs-owners:darkroom
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/numerisations
+  /home/sam/scans/roll-04.tif → /home/sam/numerisations/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/numerisations/roll-05.tif
+
+samba-share
+  /srv/photos/README.txt → /srv/photos/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_margot.txt → /home/vous/message_de_margot.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+samba-share:darkroom
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/numerisations
+  /home/sam/scans/roll-04.tif → /home/sam/numerisations/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/numerisations/roll-05.tif
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

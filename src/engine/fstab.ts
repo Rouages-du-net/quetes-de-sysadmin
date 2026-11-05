@@ -7,7 +7,7 @@
 // (emergency). After fstab(5) (https://man7.org/linux/man-pages/man5/fstab.5.html),
 // systemd.mount(5) (https://www.freedesktop.org/software/systemd/man/latest/systemd.mount.html)
 // and findmnt(8).
-// Differences: no swap, no network mounts, no x-systemd.* other than nofail
+// Differences: no swap, network mounts (nfs) in nfs.ts, no x-systemd.* other than nofail
 // and noauto; a single file system type per device.
 
 import type { Game } from './shell';

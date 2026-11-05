@@ -16,7 +16,7 @@ import { path, d, f, account, accountsFiles, type Chapter, type Accounts, type R
 import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
 import { pass } from '../cron';
-import type { Device } from '../commands/disks';
+import type { Device } from '../devices';
 import { CONF, CONF_DEBIAN, readConf } from '../commands/rsnapshot';
 
 const M = '/home/you';

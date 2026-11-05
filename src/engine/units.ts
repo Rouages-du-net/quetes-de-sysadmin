@@ -21,7 +21,7 @@ import type { Game } from './shell';
 import { readyAt, scheduleRestart, start, startLimitHit, limitHit, stop, writeLog, type Service, type Systemd } from './systemd';
 import { readDuration } from './timers';
 import { readFstab, mountUnit } from './fstab';
-import { brancher, detachDevices, deviceFor } from './commands/disks';
+import { brancher, detachDevices, deviceFor } from './devices';
 import type { Shell } from './shell';
 
 export interface Dependencies {

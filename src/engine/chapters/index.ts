@@ -93,6 +93,9 @@ import { slowQuery } from './slow-query';
 import { readOnlyChapter } from './read-only';
 import { failover } from './failover';
 import { centralLogs } from './central-logs';
+import { nfsExport } from './nfs-export';
+import { nfsOwners } from './nfs-owners';
+import { sambaShare } from './samba-share';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -215,6 +218,11 @@ export const STORIES: Story[] = [
     id: 'huts',
     after: ['full-disk', 'firewall'],
     chapters: [centralLogs, journalFull, sshAlerts],
+  },
+  {
+    id: 'photo-club',
+    after: ['late-disk', 'shared-rights'],
+    chapters: [nfsExport, nfsOwners, sambaShare],
   },
 ];
 

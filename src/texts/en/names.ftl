@@ -399,3 +399,6 @@ name-message_from_lou-txt = message_from_lou.txt
 name-hut-lake = hut-lake
 name-hut-pass = hut-pass
 name-hut-ridge = hut-ridge
+
+## The Photo Club
+name-message_from_margot-txt = message_from_margot.txt

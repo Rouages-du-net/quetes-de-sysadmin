@@ -32,6 +32,9 @@ usermod-user-missing = usermod: user '{ $user }' does not exist
 usermod-group-missing = usermod: group '{ $group }' does not exist
 # { $date }: the date given to usermod -e
 usermod-date-invalid = usermod: invalid date '{ $date }'
+usermod-uid-invalid = usermod: invalid user ID '{ $uid }'
+usermod-uid-exists = usermod: UID '{ $uid }' already exists
+usermod-used = usermod: user { $user } is currently used by process { $pid }
 
 ## userdel, gpasswd, chage (shadow-utils)
 

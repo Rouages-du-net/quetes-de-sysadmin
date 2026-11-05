@@ -22,7 +22,7 @@ import { d, f } from '../world';
 import type { Translate } from '../../texts';
 import type { Game, Shell } from '../shell';
 import { systemd } from '../systemd';
-import type { Device } from '../commands/disks';
+import type { Device } from '../devices';
 import { HOME, PASSWORD, ETH0_NETWORK, accounts, canteenState, canteenWorld, firstBoot, running, seen } from './canteen';
 
 // After chapters 1 to 3: ordered after PostgreSQL, part of it, and the network

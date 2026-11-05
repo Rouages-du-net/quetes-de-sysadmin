@@ -402,3 +402,6 @@ name-message_from_lou-txt = message_de_lou.txt
 name-hut-lake = refuge-lac
 name-hut-pass = refuge-col
 name-hut-ridge = refuge-crete
+
+## Le Club photo
+name-message_from_margot-txt = message_de_margot.txt

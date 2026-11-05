@@ -43,3 +43,8 @@ freeradius-x-end = (The server would wait for more requests until Ctrl+C; the ga
 
 # nft on a machine managed by ufw and fail2ban: the game only shows an overview.
 nft-preview-ufw = (On this machine, ufw and fail2ban write the firewall rules: here, nft is for looking at them (sudo nft list ruleset, list tables, list table ip filter). To change them, go through ufw and fail2ban: a rule added by hand would be overwritten at the next reload.)
+
+## smbclient, pdbedit (Samba)
+
+smbclient-interactive = smbclient: the game runs the commands given with -c (e.g. -c "ls"; several: -c "put photo.jpg; ls"), not an interactive session.
+pdbedit-usage = pdbedit: the game only lists Samba's users: pdbedit -L

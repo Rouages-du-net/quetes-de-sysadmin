@@ -13,48 +13,17 @@
 // Differences: no options other than ro/rw; a single file system type
 // per device.
 
-import type { Directory, Node } from '../world';
+import type { Directory } from '../world';
 import type { Shell } from '../shell';
 import type { Command } from './index';
 import { storageOf } from '../storage';
-import { readFstab, resolveSource, systemFor } from '../fstab';
+import { readFstab, systemFor } from '../fstab';
 import { lsblkStockage } from './storage';
+import { mountLine, mountNfs, unmountNfs, type NfsMount } from '../nfs';
+import { brancher, deviceFor, devices, mountAll, mounts, type Mount } from '../devices';
 
-export interface Device {
-  // The whole disk (/dev/sdb) and its numbers (MAJ:MIN), removable or not.
-  disk: string;
-  majmin: [number, number];
-  removable: boolean;
-  size: number;
-  system: string;
-  label?: string;
-  uuid: string;
-  tree: Directory;
-  // How long the device takes to appear at boot (ms): an old USB disk spinning up.
-  delay?: number;
-}
-
-export interface Mount {
-  path: string;
-  capacity: number;
-  name: string;
-  system?: string;
-  onlyRead?: boolean;
-  options?: string;
-  // What the mount point hid, given back on unmount.
-  cache?: { children: Record<string, Node>; owner?: string; group?: string; mode?: string };
-}
-
-const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};
-
-/** A source of /etc/fstab or mount (/dev/vdb1, UUID=…, LABEL=…) among the simple devices (state.devices). */
-export function deviceFor(game: Shell, source: string): string | null {
-  const m = /^(UUID|LABEL)=(.*)$/.exec(source);
-  const value = m?.[2].replace(/^"|"$/g, '');
-  const found = Object.entries(devices(game)).find(([path, d]) => (m ? (m[1] === 'UUID' ? d.uuid === value : d.label === value) : path === source));
-  return found?.[0] ?? null;
-}
-const mounts = (game: Shell): Mount[] => (game.state.mounts ??= []);
+// Re-exported for the chapters (see devices.ts).
+export { brancher, detachDevices, deviceFor, mountToBoot, type Device, type Mount } from '../devices';
 
 /** "29.3G", "20G", like lsblk (powers of 1024). */
 function lsblkSize(bytes: number): string {
@@ -153,96 +122,17 @@ function lsblk(game: Shell, args: string[]): string {
   return lines.join('\n');
 }
 
-const DMESG = '\n       dmesg(1) may have more information after failed mount system call.';
-
-// On a machine with described storage (storage.ts), a file system that can be mounted.
-function periphStockage(game: Shell, source: string): (Device & { name: string }) | null {
-  const st = storageOf(game);
-  if (!st) return null;
-  const dev = resolveSource(st, source);
-  const fs = dev ? systemFor(st, dev) : null;
-  if (!dev || !fs?.tree) return null;
-  return { name: dev, disk: dev, majmin: [8, 0], removable: false, size: fs.bytes ?? 0, system: fs.type, label: fs.label, uuid: fs.uuid, tree: fs.tree };
-}
-
-// mount -a: everything /etc/fstab describes (except noauto) that isn't already mounted.
-function mountAll(game: Shell): string {
-  if (game.who !== 'root') return game.error('mount: only root can use "--all" option');
-  const text = game.read('/etc/fstab') ?? '';
-  const { inputs, errors } = readFstab(text);
-  for (const n of errors) game.error(`mount: /etc/fstab: parse error at line ${n} -- ignored`);
-  const st = storageOf(game);
-  for (const e of inputs) {
-    if (e.type === 'swap' || e.options.includes('noauto') || mounts(game).some((m) => m.path === e.target)) continue;
-    // A machine without described storage: its simple devices (state.devices).
-    if (!st) {
-      const d = deviceFor(game, e.source);
-      if (!d) {
-        if (!e.options.includes('nofail')) game.error(`mount: ${e.target}: special device ${e.source} does not exist.${DMESG}`, 32);
-        continue;
-      }
-      if (mounts(game).some((m) => m.name === d)) continue;
-      const r = brancher(game, d, e.target, e.options.join(','));
-      if (r) game.error(r, 32);
-      continue;
-    }
-    const dev = resolveSource(st, e.source);
-    if (!dev || !systemFor(st, dev)) {
-      // nofail: a missing medium is not an error.
-      if (!e.options.includes('nofail')) game.error(`mount: ${e.target}: special device ${e.source} does not exist.${DMESG}`, 32);
-      continue;
-    }
-    if (mounts(game).some((m) => m.name === dev)) continue;
-    const r = brancher(game, e.source, e.target, e.options.join(','));
-    if (r) game.error(r, 32);
-  }
-  // util-linux warns when fstab changed since systemd read it.
-  if (game.state.fstabRead !== undefined && game.state.fstabRead !== text)
-    game.error("mount: (hint) your fstab has been modified, but systemd still uses\n       the old version; use 'systemctl daemon-reload' to reload.");
-  return '';
-}
-
-/** Mounts a source on a point (returns mount's error message, or ''). */
-export function brancher(game: Shell, source: string, point: string, options: string): string {
-  const absolute = game.resolve(point);
-  const p = devices(game)[source] ? { ...devices(game)[source], name: source } : periphStockage(game, source);
-  if (!p) return `mount: ${absolute}: special device ${source} does not exist.${DMESG}`;
-  const place = game.find(absolute);
-  if (place?.type !== 'directory') return `mount: ${absolute}: mount point does not exist.${DMESG}`;
-  const already = mounts(game).find((m) => m.name === p.name);
-  if (already) return `mount: ${absolute}: ${p.name} already mounted on ${already.path}.${DMESG}`;
-  const onlyRead = options.split(',').includes('ro');
-  const cache = { children: place.children, owner: place.owner, group: place.group, mode: place.mode };
-  place.children = p.tree.children;
-  place.owner = p.tree.owner;
-  place.group = p.tree.group;
-  place.mode = p.tree.mode;
-  mounts(game).push({ path: absolute, capacity: p.size, name: p.name, system: p.system, onlyRead, cache });
-  return '';
-}
-
-/** At boot: mounts what fstab describes and can be mounted (the rest was checked before). */
-export function mountToBoot(game: Shell): void {
-  const before = game.who;
-  game.who = 'root';
-  try {
-    mountAll(game);
-    game.recoverErrors();
-  } finally {
-    game.who = before;
-  }
-}
-
 function mount(game: Shell, args: string[]): string {
   if (!args.length)
     return mounts(game)
-      .map((m) => `${m.name} on ${m.path} type ${m.system ?? 'ext4'} (${m.onlyRead ? 'ro' : 'rw'},${m.options ?? 'relatime'})`)
+      .map((m) => (m.nfs ? mountLine(game, m as Mount & { nfs: NfsMount }) : `${m.name} on ${m.path} type ${m.system ?? 'ext4'} (${m.onlyRead ? 'ro' : 'rw'},${m.options ?? 'relatime'})`))
       .join('\n');
   let options = '';
+  let type = '';
   const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '-o') options = args[++i] ?? '';
-    else if (args[i] === '-t') i++;
+    else if (args[i] === '-t') type = args[++i] ?? '';
     else if (args[i].startsWith('-o')) options = args[i].slice(2);
     else if (args[i] === '-a' || args[i] === '--all') return mountAll(game);
     else if (!args[i].startsWith('-')) positional.push(args[i]);
@@ -261,6 +151,13 @@ function mount(game: Shell, args: string[]): string {
   const absolute = game.resolve(point);
   if (game.who !== 'root')
     return game.error(`mount: ${absolute}: must be superuser to use mount.\n       dmesg(1) may have more information after failed mount system call.`);
+  // A network file system: host:/path (or -t nfs, nfs4), see nfs.ts.
+  if (type.startsWith('nfs') || /^[^/:]+:\//.test(source)) {
+    if (positional.length === 2 && readFstab(game.read('/etc/fstab') ?? '').inputs.some((e) => e.source === source && e.target === absolute))
+      options ||= readFstab(game.read('/etc/fstab') ?? '').inputs.find((e) => e.source === source && e.target === absolute)!.options.join(',');
+    const r = mountNfs(game, source, point, options);
+    return r ? game.error(r, 32) : '';
+  }
   // UUID= or LABEL= (from fstab) on a machine with simple devices.
   if (!devices(game)[source] && !storageOf(game) && deviceFor(game, source)) {
     const r = brancher(game, deviceFor(game, source)!, point, options);
@@ -300,6 +197,11 @@ function unmount(game: Shell, args: string[]): string {
   const m = mounts(game).find((x) => x.name === target || x.path === game.resolve(target));
   const shows = m?.path ?? game.resolve(target);
   if (game.who !== 'root') return game.error(`umount: ${shows}: must be superuser to unmount.`);
+  if (m?.nfs) {
+    if (game.cwd === m.path || game.cwd.startsWith(m.path + '/')) return game.error(`umount.nfs4: ${m.path}: device is busy`);
+    unmountNfs(game, m.path);
+    return '';
+  }
   if (!m || !m.cache) return game.error(`umount: ${shows}: not mounted.`);
   // You can't unmount a place you are in (like a process working there).
   if (game.cwd === m.path || game.cwd.startsWith(m.path + '/')) return game.error(`umount: ${m.path}: target is busy.`);
@@ -311,18 +213,6 @@ function unmount(game: Shell, args: string[]): string {
   Object.assign(place, { children: m.cache.children, owner: m.cache.owner, group: m.cache.group, mode: m.cache.mode });
   game.state.mounts = mounts(game).filter((x) => x !== m);
   return '';
-}
-
-/** Before a reboot: every simple device is detached (what the mount points hid comes back). */
-export function detachDevices(game: Shell) {
-  for (const m of [...mounts(game)]) {
-    const p = devices(game)[m.name];
-    if (!p || !m.cache) continue;
-    const place = game.find(m.path) as Directory;
-    p.tree.children = place.children;
-    Object.assign(place, { children: m.cache.children, owner: m.cache.owner, group: m.cache.group, mode: m.cache.mode });
-    game.state.mounts = mounts(game).filter((x) => x !== m);
-  }
 }
 
 export const DISKS: Record<string, Command> = {

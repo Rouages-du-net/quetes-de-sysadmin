@@ -63,6 +63,8 @@ export const MACHINES: Machine[] = [
   machine('theatre', '192.0.2.28', 'theatre'),
   // The Huts: a federation of mountain huts, and the valley's server that gathers their logs.
   machine('valley', '192.0.2.30', 'huts'),
+  // The Photo Club: the club's NAS, and its darkroom computer behind it (NFS, Samba).
+  machine('nas', '192.0.2.31', 'photo-club'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

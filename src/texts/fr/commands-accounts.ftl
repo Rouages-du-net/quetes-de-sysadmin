@@ -32,6 +32,9 @@ usermod-user-missing = usermod : l'utilisateur « { $user } » n'existe pas
 usermod-group-missing = usermod : le groupe « { $group } » n'existe pas
 # { $date } : la date donnée à usermod -e
 usermod-date-invalid = usermod : date « { $date } » non valable
+usermod-uid-invalid = usermod : identifiant d'utilisateur « { $uid } » non valable
+usermod-uid-exists = usermod : l'UID « { $uid } » existe déjà
+usermod-used = usermod : l'utilisateur { $user } est actuellement utilisé par le processus { $pid }
 
 ## userdel, gpasswd, chage (shadow-utils en français)
 

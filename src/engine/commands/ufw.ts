@@ -22,21 +22,27 @@ function readRule(game: Shell, action: Action, words: string[]): Rule | null {
   let forEachOf: string | null = null;
   let port: string | null = null;
   let proto: string | null = null;
+  let app: string | null = null;
   for (let i = 0; i < words.length; i++) {
     const [word, value] = [words[i], words[i + 1]];
     if (word === 'from' && value) (forEachOf = value === 'any' ? null : value), i++;
     else if (word === 'to' && value === 'any') i++;
     else if (word === 'port' && value && /^\d+$/.test(value)) (port = value), i++;
     else if (word === 'proto' && (value === 'tcp' || value === 'udp')) (proto = value), i++;
+    // "to any app Samba": an application profile's ports.
+    else if (word === 'app' && value && APPLICATIONS[value]) (app = value), i++;
     else return null;
   }
+  if (app && (port || proto)) return null;
   if (forEachOf !== null && !/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(forEachOf)) return null;
+  if (app) return { action, to: app, ports: APPLICATIONS[app], forEachOf };
   const to = port ? (proto ? `${port}/${proto}` : port) : game.t('ufw-everywhere');
   return { action, to, ports: port ? [Number(port)] : [], forEachOf };
 }
 
 const sameRule = (a: Rule, b: Rule) => a.action === b.action && a.to === b.to && a.forEachOf === b.forEachOf;
-const ruleText = (r: Rule) => (r.forEachOf ? `${r.action} from ${r.forEachOf}${r.ports.length ? ` to any port ${r.to}` : ''}` : `${r.action} ${r.to}`);
+const ruleText = (r: Rule) =>
+  r.forEachOf ? `${r.action} from ${r.forEachOf}${r.ports.length ? (APPLICATIONS[r.to] ? ` to any app ${r.to}` : ` to any port ${r.to}`) : ''}` : `${r.action} ${r.to}`;
 
 // The ufw status table: one line per rule, plus its twin (v6).
 function grid(game: Shell, pf: Firewall, sens: string, numbers: boolean): string[] {

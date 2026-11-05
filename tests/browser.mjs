@@ -60,6 +60,11 @@ for (const width of [1000, 375]) {
   check((await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `${width} px: chapter 1 opens`);
   await tape('man ls');
   check((await game.locator('.output').textContent()).includes('VOIR AUSSI'), `${width} px: man ls is displayed`);
+  // Every group of commands is in the bundle (a module loaded too early used to leave some out).
+  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient']) {
+    await tape(`man ${c}`);
+    check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
+  }
   for (const c of ['mv Jetee/filet Port/Hangar', 'cd Port/Remise']) await tape(c);
   await input.fill('mv .a');
   await input.press('Tab');

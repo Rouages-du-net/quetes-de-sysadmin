@@ -1,6 +1,7 @@
 // File commands: moving around, reading, creating, copying, deleting,
 // permissions, archives, disk space.
 
+import { shownOwner } from '../nfs';
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
 import { applyMode, compareNames, content, wildcard, readable, modeWithMask, options, sizeFor } from '../tools';
@@ -31,8 +32,10 @@ const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColo
 
 function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting): string {
   // -n: the numbers (uid, gid) instead of the names.
-  const ownerName = n.owner ?? game.player;
-  const groupName = n.group ?? ownerName;
+  // Through an NFS mount: the server's numbers, with this machine's names.
+  const remote = shownOwner(game, n);
+  const ownerName = remote?.owner ?? n.owner ?? game.player;
+  const groupName = remote?.group ?? n.group ?? ownerName;
   const owner = numeric ? String(game.accounts.users[ownerName]?.uid ?? ownerName) : ownerName;
   const group = numeric ? String(game.accounts.groups[groupName]?.gid ?? groupName) : groupName;
   const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);

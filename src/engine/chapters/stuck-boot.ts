@@ -19,7 +19,7 @@ import type { Game, Shell } from '../shell';
 import { devUpdate } from '../storage';
 import { blocking, readFstab, resolveSource, deviceUnit, mountUnit } from '../fstab';
 import { writeLog, start, systemd } from '../systemd';
-import { mountToBoot } from '../commands/disks';
+import { mountToBoot } from '../devices';
 import { labAccounts, labState, labWorld, labKernel, st, UUID_SCANS } from './lab';
 
 const R = '/root';
