@@ -94,3 +94,6 @@ failover
 central-logs
 journal-full
 ssh-alerts
+nfs-export
+nfs-owners
+samba-share

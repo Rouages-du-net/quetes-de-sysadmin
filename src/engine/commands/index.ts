@@ -49,6 +49,8 @@ import { CPU } from './cpu';
 import { LIMITS } from './limits';
 import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
+import { NFS } from './nfs';
+import { SAMBA } from './samba';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
@@ -92,71 +94,92 @@ export interface Command {
   launch: (c: Context) => string;
 }
 
-export const COMMANDS: Record<string, Command> = {
-  ...FILES,
-  ...TEXT,
-  ...SYSTEM,
-  ...NETWORK,
-  ...GIT,
-  ...SSH,
-  ...ACCOUNTS,
-  ...COMMANDS_SUDOERS,
-  ...TMUX,
-  ...LAN,
-  ...NFTABLES,
-  ...WIREGUARD,
-  ...LDAP,
-  ...RADIUS,
-  ...NMAP,
-  ...LYNIS,
-  ...SFTP,
-  ...LFTP,
-  ...SYSTEMD,
-  ...EDITOR,
-  ...SSHD,
-  ...UFW,
-  ...SS,
-  ...FAIL2BAN,
-  ...BACKUP,
-  ...APT,
-  ...IOSTAT,
-  ...UNATTENDED,
-  ...CERTBOT,
-  ...RESTIC,
-  ...BIND,
-  ...AWK,
-  ...DOCKER,
-  ...NC,
-  ...DIFF,
-  ...SCRIPTS,
-  ...DISKS,
-  ...STOCKAGE,
-  ...LVM,
-  ...FSTAB,
-  ...RSNAPSHOT,
-  ...POSTGRES,
-  ...LOGS,
-  ...MEMORY,
-  ...CPU,
-  ...LIMITS,
-  ...PG_CLUSTER,
-  ...SYSLOG,
-  ...TIME,
-  ...SUPERVISION,
-  ...TRANSFERS,
-  ...APACHE,
-  ...MAIL,
-  ...ANSIBLE,
-  ...CADDY,
-  // Handled by the shell itself (see shell.ts): an entry here for the
-  // manual and completion.
-  sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },
-  clear: { launch: () => '' },
-  man: { launch: () => '' },
-  apropos: { launch: () => '' },
-  whatis: { launch: () => '' },
-  aide: { launch: () => '' },
-};
+// The game's commands. The table is assembled on first use, not when this
+// module is loaded: several modules import each other (the engine and the
+// commands), and a bundler may load this one before a group it spreads, which
+// would then be missing (mount, lsblk, unattended-upgrade… in the browser).
+function build(): Record<string, Command> {
+  const all: Record<string, Command> = {
+    ...FILES,
+    ...TEXT,
+    ...SYSTEM,
+    ...NETWORK,
+    ...GIT,
+    ...SSH,
+    ...ACCOUNTS,
+    ...COMMANDS_SUDOERS,
+    ...TMUX,
+    ...LAN,
+    ...NFTABLES,
+    ...WIREGUARD,
+    ...LDAP,
+    ...RADIUS,
+    ...NMAP,
+    ...LYNIS,
+    ...SFTP,
+    ...LFTP,
+    ...SYSTEMD,
+    ...EDITOR,
+    ...SSHD,
+    ...UFW,
+    ...SS,
+    ...FAIL2BAN,
+    ...BACKUP,
+    ...APT,
+    ...IOSTAT,
+    ...UNATTENDED,
+    ...CERTBOT,
+    ...RESTIC,
+    ...BIND,
+    ...AWK,
+    ...DOCKER,
+    ...NC,
+    ...DIFF,
+    ...SCRIPTS,
+    ...DISKS,
+    ...STOCKAGE,
+    ...LVM,
+    ...FSTAB,
+    ...RSNAPSHOT,
+    ...POSTGRES,
+    ...LOGS,
+    ...MEMORY,
+    ...CPU,
+    ...LIMITS,
+    ...PG_CLUSTER,
+    ...SYSLOG,
+    ...NFS,
+    ...SAMBA,
+    ...TIME,
+    ...SUPERVISION,
+    ...TRANSFERS,
+    ...APACHE,
+    ...MAIL,
+    ...ANSIBLE,
+    ...CADDY,
+    // Handled by the shell itself (see shell.ts): an entry here for the
+    // manual and completion.
+    sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },
+    clear: { launch: () => '' },
+    man: { launch: () => '' },
+    apropos: { launch: () => '' },
+    whatis: { launch: () => '' },
+    aide: { launch: () => '' },
+  };
+  // The manual's options, examples and cross-references (pages.ts).
+  for (const [name, complement] of Object.entries(PAGES)) if (all[name]) Object.assign(all[name], complement);
+  return all;
+}
 
-// The manual's options, examples and cross-references (pages.ts).
-for (const [name, complement] of Object.entries(PAGES)) if (COMMANDS[name]) Object.assign(COMMANDS[name], complement);
+let table: Record<string, Command> | null = null;
+const commands = () => (table ??= build());
+export const COMMANDS: Record<string, Command> = new Proxy({} as Record<string, Command>, {
+  get: (_, k) => commands()[k as string],
+  has: (_, k) => k in commands(),
+  ownKeys: () => Reflect.ownKeys(commands()),
+  getOwnPropertyDescriptor: (_, k) => {
+    const d = Object.getOwnPropertyDescriptor(commands(), k);
+    return d && { ...d, configurable: true };
+  },
+  set: (_, k, v) => ((commands()[k as string] = v), true),
+});

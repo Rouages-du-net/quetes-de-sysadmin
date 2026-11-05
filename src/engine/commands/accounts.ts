@@ -8,6 +8,7 @@
 // group to a group they are a member of; usermod -G replaces the
 // supplementary groups, usermod -aG adds to them.
 
+import { squashed } from '../nfs';
 import type { Node } from '../world';
 import type { Shell } from '../shell';
 import { options } from '../tools';
@@ -87,7 +88,8 @@ export const ACCOUNTS: Record<string, Command> = {
       if (group && !/^\d+$/.test(group) && !game.accounts.groups[group]) return game.error(game.t('chown-group-incorrect', { owner: owner }));
       // "chown malo: f": malo's primary group.
       const newGroup = group || (owner.endsWith(':') && name ? (game.accounts.users[name]?.group ?? name) : undefined);
-      return change(game, 'chown', targets, letters.has('R'), () => game.who === 'root', (n) => {
+      // Through an NFS mount with root_squash, root is nobody on the server.
+      return change(game, 'chown', targets, letters.has('R'), (n) => game.who === 'root' && !squashed(game, n), (n) => {
         if (name) n.owner = name;
         if (newGroup) n.group = newGroup;
       });
@@ -101,6 +103,7 @@ export const ACCOUNTS: Record<string, Command> = {
       let lock: boolean | null = null;
       let expires: string | null = null;
       let shell: string | null = null;
+      let uid: string | null = null;
       const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
@@ -113,15 +116,25 @@ export const ACCOUNTS: Record<string, Command> = {
           // -e: the account's expiry date (YYYY-MM-DD, or 1: 2 January 1970); -s: the login shell.
           if (a.includes('e')) expires = args[++i] ?? '';
           if (a.includes('s')) shell = args[++i] ?? '';
+          // -u: a new uid (the files of the home directory follow: here, files belong to a name).
+          if (a.includes('u')) uid = args[++i] ?? '';
         } else rest.push(a);
       }
       const name = rest[0];
-      if (!name || (listing === null && lock === null && expires === null && shell === null))
+      if (!name || (listing === null && lock === null && expires === null && shell === null && uid === null))
         return game.error(game.t(addition && listing === null ? 'usermod-a-without-G' : 'usermod-usage'));
       if (addition && listing === null) return game.error(game.t('usermod-a-without-G'));
       if (game.who !== 'root') return game.error(game.t('usermod-permission'));
       const u = game.accounts.users[name];
       if (!u) return game.error(game.t('usermod-user-missing', { user: name }));
+      if (uid !== null) {
+        if (!/^\d+$/.test(uid)) return game.error(game.t('usermod-uid-invalid', { uid }));
+        const taken = Object.entries(game.accounts.users).find(([n, x]) => n !== name && String(x.uid) === uid);
+        if (taken) return game.error(game.t('usermod-uid-exists', { uid }), 4);
+        // An account with running processes keeps its uid.
+        const p = ((game.state.process ?? []) as { pid: number; user: string }[]).find((x) => x.user === name);
+        if (p) return game.error(game.t('usermod-used', { user: name, pid: String(p.pid) }), 8);
+      }
       let date: string | undefined;
       if (expires !== null && expires !== '') {
         date = dateExpiration(expires) ?? undefined;
@@ -144,6 +157,7 @@ export const ACCOUNTS: Record<string, Command> = {
         else delete u.expires;
       }
       if (shell !== null) u.shell = shell;
+      if (uid !== null) u.uid = Number(uid);
       return '';
     },
   },

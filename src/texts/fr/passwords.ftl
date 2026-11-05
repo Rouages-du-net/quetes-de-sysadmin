@@ -50,3 +50,8 @@ password-curtain-2028 = rideau-2028
 
 ## Les Refuges
 password-summit-2028 = sommet-2028
+
+## Le Club photo
+password-shutter-2028 = obturateur-2028
+password-negative-2028 = negatif-2028
+password-slide-2028 = diapo-2028

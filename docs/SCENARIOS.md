@@ -127,7 +127,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `chown`, `chgrp` | `-R` only | also `--reference`, `-h`… |
 | `chmod -w` (without u/g/o) | acts on everyone | takes the `umask` into account |
 | `umask` | a command with its `man` page; applies to the session; other accounts' mask is read from `/etc/profile`, `/etc/profile.d/*.sh`, `~/.bashrc`, `~/.profile` (the last `umask` line wins) | a bash builtin (`help umask`); `pam_umask`, `login.defs` |
-| accounts (`usermod`, `userdel`, `gpasswd`, `chage`) | `usermod -L/-U/-e/-s/-G`; `userdel [-r] [-f]` (refused if a process of the account is running); `gpasswd -a/-d`; `chage -l/-E` (dates as YYYY-MM-DD); no readable `/etc/shadow`; shadow-utils' messages in the game's language | every option, `passwd`, `deluser`, `/etc/shadow` |
+| accounts (`usermod`, `userdel`, `gpasswd`, `chage`) | `usermod -L/-U/-e/-s/-G/-u` (`-u` refused while the account runs a process; files belong to names, so they follow); `userdel [-r] [-f]` (refused if a process of the account is running); `gpasswd -a/-d`; `chage -l/-E` (dates as YYYY-MM-DD); no readable `/etc/shadow`; shadow-utils' messages in the game's language | every option, `passwd`, `deluser`, `/etc/shadow` |
 | `sudo`, `sudoers`, `visudo` | `/etc/sudoers` and `@includedir` (files with no dot or `~`), rules `who hosts=(account) [NOPASSWD:] commands`, `Cmnd_Alias`, wildcards; `sudo -l [-U account]`; `visudo [-c] [-f file]` checks when the editor closes and asks "What now?"; an error in the policy blocks sudo; only the player runs commands with sudo (other accounts: `sudo -l -U`); no user or host aliases, no `!` | sudoers' whole grammar, plugins, `sudoedit` |
 | `who`, `pkill`, `which` | sessions described by the chapter (a session lives as long as its `sshd` runs); `pkill [-u account] [pattern]`; `which` deduces the path (`/usr/bin`, or `/usr/sbin` for section 8) | `w`, `loginctl`, all procps options; `which` reads the PATH |
 | `rm` of a write-protected file | deletes without asking | asks for confirmation |
@@ -224,6 +224,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | PostgreSQL roles and replication (`CREATE ROLE`, `GRANT`, `ALTER DEFAULT PRIVILEGES`, `SET ROLE`, `\dp`, `pg_lsclusters`, `pg_ctlcluster`, `pg_isready`, `pg_promote()`) | table privileges only, one schema whose `USAGE` and the database's `CONNECT` stay PUBLIC's; memberships always inherited; `psql -c` runs several statements separated by `;` and stops at the first error; a standby's state is described by the chapter (no WAL, no second server): promotion, `standby.signal` and restart, the read-only errors | column and function privileges, `WITH GRANT OPTION`, row-level security, real streaming replication, `pg_basebackup`, `pg_rewind` |
 | rsyslog (`/etc/rsyslog.conf`, `rsyslog.d`, `rsyslogd -N1`, `logger`) | the configuration read when the service starts: `module`/`$ModLoad`, `imudp`/`imtcp` inputs (also `$UDPServerRun`), `template` and `$template` with a few properties (`%HOSTNAME%`, `%FROMHOST-IP%`, `%PROGRAMNAME%`, dates), selectors, property filters, `if … then` with `==`, `!=`, `contains`, `startswith`, `and`, `or`, `not`, blocks, `&`, `stop`/`~`; files written in the traditional format; the remote machines send one message each per command, received if rsyslog listens and the firewall lets them in | `omfwd` and forwarding, queues, TLS, `imfile`, `imjournal`, `mmjsonparse`, most properties and functions of RainerScript, rate limiting |
 | The journal on disk (`journalctl --disk-usage`, `--vacuum-size`/`--vacuum-time`/`--vacuum-files`, `journald.conf`) | the files of `/var/log/journal` and their sizes (they count in `df` and `du`); `SystemMaxUse=` (from `journald.conf` and its drop-ins) read when journald starts, then the oldest archived files deleted; the active file rotated at 128M | `SystemKeepFree=`, `RuntimeMaxUse=`, `MaxRetentionSec=`, compression, the files' content (`journalctl` reads the simulated journal, not these files) |
+| NFS (`/etc/exports`, `exportfs`, `showmount`, `mount -t nfs`, fstab's `nfs` lines) | exports read like `exportfs` (clients by address, network, name or `*`, a space before the parentheses giving the options to everyone, the default options shown by `-v`), loaded by `exportfs -r` or when nfs-server starts; a client's mount grafts the server's directory (one tree: what one writes, the other sees); every access decided with the client's numbers (uid, gids), `root_squash`/`all_squash`, `ro`; names shown by each machine for those numbers; the firewall checked on 2049 (mount) and 111 (showmount) | NFSv3 and its other ports (mountd, statd), Kerberos (`sec=krb5`), idmapd, `subtree_check`, locks, `showmount -a`/`-d`, the server's cache of credentials |
+| Samba (`smb.conf`, `testparm`, `smbpasswd`, `pdbedit -L`, `smbclient`) | a standalone server: shares with `path`, `read only`/`writable`, `valid users`/`invalid users` (names, `@group`), `guest ok`, `create mask`, `directory mask`, `force create mode`, `force directory mode`, `force user`, `force group`; synonyms and case ignored; smb.conf read for each connection; Samba's own passwords; Linux permissions applied to the connected user; `smbclient -L`, `-U user[%password]`, `-N`, `-c` with `ls`, `cd`, `put`, `get`, `mkdir`, `rm` | printers, domains and Active Directory, ACLs and `vfs objects`, `hosts allow`, `smbclient`'s interactive session (only `-c`), `testparm` doesn't wait for Enter |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
 | systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
@@ -2446,6 +2448,69 @@ failures of at least two huts. Expected traps: the rule after the per-hut
 publickey` lines too), a `stop` in the new rule (the per-hut files no longer
 receive). Other accepted solution: the rule inside the per-hut block,
 before its `stop`.
+
+## Story 24: The Photo Club (three chapters)
+
+A photo club keeps its members' photos on a NAS (`nas`, 192.0.2.31,
+`/srv/photos`, group `club` with the setgid); the club's darkroom computer
+(`darkroom.internal`, 192.0.2.32) is reached over ssh from the NAS. Margot
+chairs the club. The story is about file sharing: NFS for the darkroom
+computer, the numbers NFS carries, and Samba for the members' Windows
+laptops. It opens after "The Late Disk" (fstab) and "Shared Rights"
+(groups, setgid).
+
+### Chapter 1 — The Shared Folder (done)
+
+| Step | Command learnt |
+|---|---|
+| What is shared | `/etc/exports` (Debian's, all comments), `showmount -e` |
+| An export | `/srv/photos 192.0.2.32(rw,sync,no_subtree_check)`, `exportfs -ra`, `exportfs -v` |
+| The firewall | `mount.nfs: Connection timed out`, `ufw allow from 192.0.2.32 to any port 2049 proto tcp` |
+| The mount | `ssh darkroom`, `mkdir /mnt/photos`, `mount -t nfs nas.internal:/srv/photos /mnt/photos`, `df -h`, `mount` |
+| At every boot | `nas.internal:/srv/photos /mnt/photos nfs defaults,_netdev 0 0` in `/etc/fstab`, `mount -a` |
+
+Goal checked on the state: the darkroom computer has the export mounted at
+`/mnt/photos`, read-write, root squashed, not exported to everyone, and its
+fstab describes the same mount. Expected traps: the file changed without
+`exportfs -ra`, a missing mount point, the firewall, `*` or `no_root_squash`,
+a space before the parentheses (the options go to everyone, the darkroom
+computer gets `ro`), an export without `rw`. Other accepted solutions: a
+network or a name as the client, a restart of nfs-server, `ufw allow
+2049/tcp`, the fstab line first then `mount /mnt/photos`.
+
+### Chapter 2 — Whose Files? (done)
+
+| Step | Command learnt |
+|---|---|
+| The numbers | `ls -l` on both machines (nora on the NAS, `1002` on the darkroom computer), `ls -n`, `id sam` |
+| root_squash | `sudo cp … /mnt/photos/…` refused, `chown` refused (Operation not permitted) |
+| The same uid | `ps -u sam`, `pkill -u sam`, `usermod -u 1002 sam` on the darkroom computer |
+| The files written before | `chown -R sam:club /srv/photos/2028-film-scans` on the NAS |
+
+Goal checked on the state: Sam has the same uid on both machines, the scans
+belong to Sam (and no longer to Nora's group) on the NAS, Sam can change his
+albums through the mount, `root_squash` kept. Expected traps: `usermod -u
+1001 sam` on the NAS (taken by Nora), `usermod` while Sam is logged in,
+`no_root_squash`, `chown` as root on the client.
+
+### Chapter 3 — The Laptops (done)
+
+| Step | Command learnt |
+|---|---|
+| A share | `[photos]`, `path`, `read only = no`, `valid users = @club` in `/etc/samba/smb.conf`, `testparm -s` |
+| Samba's passwords | `NT_STATUS_LOGON_FAILURE`, `smbpasswd -a sam`, `pdbedit -L` |
+| The masks | `smbclient //localhost/photos -U sam -c "put …"`, `ls -l` (rw-r--r--), `create mask = 0664`, `directory mask = 2775`, `force group = club` |
+| The laptops | `ufw allow from 192.0.2.0/24 to any app Samba` |
+
+Goal checked on the state: a share serves `/srv/photos`, writable, to Sam and
+Nora (with a Samba password), not to Tom (still on the NAS, no longer in the
+club), not to guests; what they add is group-writable and belongs to the
+club; port 445 reachable from the club's network. Expected traps: a
+misspelt parameter (ignored), no Samba password, a read-only share (the
+default), `guest ok = yes`, no `valid users` (Tom), the default masks.
+Other accepted solutions: `writable = yes`, a list of names, `force create
+mode`, the setgid of `/srv/photos` instead of `force group`, `ufw allow
+445/tcp`.
 
 ## Ideas for later
 

@@ -244,6 +244,15 @@ presents them for people.
   (`/var/log/journal`, `SystemMaxUse=`, vacuuming, `journalctl
   --disk-usage`/`--vacuum-*`) in `src/engine/journal-files.ts`;
   `chapters/huts.ts`: what The Huts' chapters share.
+- `src/engine/nfs.ts`: NFS (a server's exports, `state.nfs.table` loaded by
+  `exportfs -r` or nfs-server; a client's mount grafts the server's
+  directory; `access()` decides with the client's uid and gids, squashing
+  root; `Shell.can`, `place` and `ls` go through it); `exportfs`,
+  `showmount` in `commands/nfs.ts`, `mount -t nfs` in `commands/disks.ts`.
+  `src/engine/samba.ts`: Samba (`smb.conf` read for each connection,
+  shares, `valid users`, masks, `state.samba.passdb`); `testparm`,
+  `smbpasswd`, `pdbedit`, `smbclient` in `commands/samba.ts`;
+  `chapters/photo-club.ts`: what The Photo Club's chapters share.
 - `src/engine/scan.ts` and `commands/nmap.ts`: nmap on the network declared
   by the story (`state.scan`: machines, services, scope; `state.scans` keeps
   each scan); `src/engine/lynis.ts` and `commands/lynis.ts`: Lynis

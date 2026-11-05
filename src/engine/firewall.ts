@@ -37,12 +37,16 @@ export const SERVICES: Record<string, { ports: number[]; proto?: string }> = {
   https: { ports: [443], proto: 'tcp' },
   mysql: { ports: [3306], proto: 'tcp' },
   syslog: { ports: [514], proto: 'udp' },
+  nfs: { ports: [2049], proto: 'tcp' },
+  sunrpc: { ports: [111] },
+  'microsoft-ds': { ports: [445], proto: 'tcp' },
 };
 export const APPLICATIONS: Record<string, number[]> = {
   'Nginx Full': [80, 443],
   'Nginx HTTP': [80],
   'Nginx HTTPS': [443],
   OpenSSH: [22],
+  Samba: [137, 138, 139, 445],
 };
 
 export type Verdict = 'accepted' | 'refused' | 'blocked';

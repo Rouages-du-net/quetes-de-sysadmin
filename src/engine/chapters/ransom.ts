@@ -20,7 +20,7 @@ import type { Game, Shell } from '../shell';
 import { writeLog, newSystemd, systemd } from '../systemd';
 import type { Process } from '../commands/system';
 import { addSnapshot, writeRepo, hex, type Repo, type Version } from '../commands/restic';
-import type { Device } from '../commands/disks';
+import type { Device } from '../devices';
 
 const M = '/home/you';
 const SHARE = '/srv/share';

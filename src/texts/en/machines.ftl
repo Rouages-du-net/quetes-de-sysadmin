@@ -32,3 +32,4 @@ machine-canteen = canteen
 machine-observatory = observatory
 machine-theatre = theatre
 machine-valley = valley
+machine-nas = nas

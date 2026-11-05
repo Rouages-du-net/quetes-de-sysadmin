@@ -50,3 +50,8 @@ password-curtain-2028 = curtain-2028
 
 ## The Huts
 password-summit-2028 = summit-2028
+
+## The Photo Club
+password-shutter-2028 = shutter-2028
+password-negative-2028 = negative-2028
+password-slide-2028 = slide-2028

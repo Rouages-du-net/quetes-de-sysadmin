@@ -47,3 +47,5 @@ story-theatre = Le Théâtre
     .summary = La billetterie du théâtre de quartier et sa base PostgreSQL : des connexions épuisées le soir de la première (pg_stat_activity, idle in transaction, un délai), puis une requête lente (EXPLAIN, un index).
 story-huts = Les Refuges
     .summary = Une fédération de refuges de montagne et le serveur de la vallée : les journaux des refuges rassemblés avec rsyslog, un journal qui remplit le disque, et une alerte pour les échecs de connexion SSH.
+story-photo-club = Le Club photo
+    .summary = Le NAS d'un club photo et l'ordinateur de son labo : un partage NFS et son montage, les uid que NFS transporte, et un partage Samba pour les portables des membres.

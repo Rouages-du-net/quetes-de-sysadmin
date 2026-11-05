@@ -9,6 +9,7 @@
 // be redirected to a file (> overwrites, >> appends). Error messages do
 // not go through pipes (separate error output).
 
+import { access as nfsAccess, ownForServer } from './nfs';
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
 import { withoutColours } from './colours';
@@ -316,6 +317,9 @@ export class Shell implements Game {
   // only the group's, others only the others' (even if the group or others
   // have more). root has every right.
   can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
+    // Through an NFS mount, the server decides, with this machine's numbers (see nfs.ts).
+    const remote = nfsAccess(this, n, right, user);
+    if (remote !== null) return remote;
     if (user === 'root') return true;
     const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
     const owner = n.owner ?? this.player;
@@ -398,6 +402,7 @@ export class Shell implements Game {
         n.group = parent.group ?? parent.owner ?? this.player;
         if (n.type === 'directory') n.mode = applyMode(n.mode ?? modeWithMask(true, this.mask), 'g+s')!;
       }
+      ownForServer(this, parent, n);
     }
     parent.children[name] = n;
     return null;

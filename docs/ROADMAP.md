@@ -360,9 +360,12 @@ which works on machines rather than switches).
       files" (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`,
       `src/engine/limits.ts`); a stuck process (`kill` and its signals, a
       script's trap, a stale PID file).
-- [ ] **File sharing**: an association's NAS. NFS (`/etc/exports`, mounting
-      it, `root_squash`) and Samba for the Windows desktops, permissions and
-      quotas. Needs network mounts, not simulated yet.
+- [x] **File sharing** ("The Photo Club", story 24 in `docs/SCENARIOS.md`):
+      an association's NAS. NFS (`/etc/exports`, `exportfs`, `showmount`,
+      `mount -t nfs`, fstab, `root_squash`, the uids NFS carries;
+      `src/engine/nfs.ts`) for the darkroom computer, and Samba for the
+      Windows laptops (`smb.conf`, `testparm`, `smbpasswd`, masks,
+      `smbclient`; `src/engine/samba.ts`).
 - [x] **Monitoring and logs** ("The Huts", story 23 in
       `docs/SCENARIOS.md`): the logs of three machines gathered in one place
       (rsyslog as a central server: `imudp`, the firewall, a template per
