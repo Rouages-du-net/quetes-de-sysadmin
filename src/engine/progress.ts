@@ -42,6 +42,9 @@ export const CODE_ORDER = [
   'slow-query',
   'read-only',
   'failover',
+  'central-logs',
+  'journal-full',
+  'ssh-alerts',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

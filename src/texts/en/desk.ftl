@@ -66,6 +66,7 @@ machine-patch-motd = The Patch — the community bike workshop (cycles.example).
 machine-canteen-motd = The Canteen — the solidarity canteen's server: today's menu and the bookings. Pay what you can, eat together.
 machine-observatory-motd = The Observatory — the astronomy club's server: the photo gallery, and the stacking of the night's images. Clear skies!
 machine-theatre-motd = The Theatre — the neighbourhood theatre's server: the ticket office and its database. Break a leg!
+machine-valley-motd = The Huts — the valley's server: the logs of the mountain huts, gathered in one place.
 machine-kneader-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

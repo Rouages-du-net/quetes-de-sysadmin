@@ -822,6 +822,18 @@ failover
   /home/you → /home/vous
   /home/you/message_from_camille.txt → /home/vous/message_de_camille.txt
 
+central-logs
+  /home/you → /home/vous
+  /home/you/message_from_lou.txt → /home/vous/message_de_lou.txt
+
+journal-full
+  /home/you → /home/vous
+  /home/you/message_from_lou.txt → /home/vous/message_de_lou.txt
+
+ssh-alerts
+  /home/you → /home/vous
+  /home/you/message_from_lou.txt → /home/vous/message_de_lou.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

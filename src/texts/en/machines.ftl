@@ -31,3 +31,4 @@ machine-kneader = kneader
 machine-canteen = canteen
 machine-observatory = observatory
 machine-theatre = theatre
+machine-valley = valley

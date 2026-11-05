@@ -515,13 +515,15 @@ man-git =
 man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [--color[=QUAND]] motif [fichier...]
+    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=QUAND]] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
     .option-q = silencieux (quiet) : n'affiche rien, réussit si le motif est trouvé, échoue sinon.
     .option-E = expressions régulières étendues : + ? | ( ) ont leur sens spécial.
     .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
+    .option-h = n’affiche jamais le nom du fichier devant les lignes (par défaut, il l’affiche s’il y a plusieurs fichiers).
+    .option-H = affiche toujours le nom du fichier devant les lignes, même avec un seul fichier.
     .example-1 = les lignes qui parlent de l’Effaceur
     .example-2 = dans tous les fichiers d’ici, majuscule ou pas
     .example-3 = un motif avec des espaces, entre guillemets
@@ -1133,8 +1135,8 @@ man-umask = affiche ou change le masque (umask) de la session : les droits RETIR
     .example-2 = les droits qu'il laisse, en lettres
     .example-3 = le groupe pourra écrire dans ce que je crée (pour cette session)
 
-man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). --since et --until gardent une période (« 2027-09-12 02:00 », today, yesterday, -1h). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. -f suit le journal en direct, jusqu'à Ctrl-C. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [--since DATE] [--until DATE] [-x] [-e] [-f]
+man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). --since et --until gardent une période (« 2027-09-12 02:00 », today, yesterday, -1h). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. -f suit le journal en direct, jusqu'à Ctrl-C. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire. --disk-usage et --vacuum-size=500M (ou --vacuum-time=2weeks, --vacuum-files=5) mesurent et réduisent le journal persistant (/var/log/journal) ; sa limite durable est SystemMaxUse= dans journald.conf.
+    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [--since DATE] [--until DATE] [-x] [-e] [-f] [--disk-usage] [--vacuum-size=TAILLE]
     .option-k = seulement les messages du noyau, depuis le démarrage (kernel).
     .option-u = seulement les messages de ce service (unit).
     .option-n = seulement les N dernières lignes.
@@ -1149,6 +1151,8 @@ man-journalctl = lit le journal de systemd, où les services écrivent leurs mes
     .example-4 = les 20 derniers messages
     .example-5 = tout ce qui s'est passé entre 2 h et 3 h 30, une nuit précise
     .example-6 = regarder en direct les connexions ssh (Ctrl-C pour arrêter)
+    .example-7 = la place que prend le journal sur le disque
+    .example-8 = réduire les fichiers archivés à 500M
 man-reboot = redémarre la machine. Les services activés (systemctl enable) repartent tout seuls ; les autres restent arrêtés. Sur une connexion ssh, la session est coupée : il faut se reconnecter. Réservé à root.
     .synopsis = reboot
     .example-1 = redémarrer la machine
@@ -1348,3 +1352,33 @@ man-pg_isready = vérifie qu'un serveur PostgreSQL accepte les connexions : « a
     .option-p = son port (5432 par défaut).
     .example-1 = le serveur local
     .example-2 = un autre serveur
+
+man-logger = écrit un message dans le journal du système, comme le ferait un programme : rsyslog le reçoit et applique ses règles (quel fichier, quel serveur), le journal de systemd aussi. Le moyen le plus rapide de tester une règle : envoyer un message qui devrait correspondre, puis le chercher là où il devrait arriver. -t fixe l’étiquette (le nom du programme, $programname pour rsyslog), -p la catégorie et la gravité (local0.warning, auth.info… ; user.notice par défaut).
+    .synopsis = logger [-t étiquette] [-p catégorie.gravité] message…
+    .option-t = l’étiquette du message (le nom du programme) ; le nom de votre compte par défaut.
+    .option-p = catégorie et gravité : auth.info, cron.err, local0.warning… (user.notice par défaut).
+    .example-1 = un message de test
+    .example-2 = vérifier une règle qui attrape les échecs de connexion de sshd
+    .example-3 = un message avec une catégorie et une gravité
+    .command-1 = logger "test depuis la vallée"
+    .command-3 = logger -p local0.warning "réservoir d’eau bas"
+man-rsyslogd = le démon syslog : il reçoit les messages (des programmes locaux par /dev/log, du noyau, et d’autres machines en UDP ou TCP si une entrée le prévoit), puis applique les règles de /etc/rsyslog.conf, dans l’ordre, pour les écrire dans des fichiers, les envoyer ailleurs ou les écarter. Il lit sa configuration au démarrage : après une modification, rsyslogd -N1 la vérifie sans toucher au service en marche (les erreurs, avec le fichier et la ligne), puis systemctl restart rsyslog. Ses propres erreurs vont dans son journal (journalctl -u rsyslog).
+    .synopsis = rsyslogd [-N niveau] [-f fichier] [-n]
+    .option-N = vérifie seulement la configuration (niveau 1), puis s’arrête ; code 1 s’il y a des erreurs.
+    .option-f = un autre fichier de configuration que /etc/rsyslog.conf.
+    .option-n = reste au premier plan (c’est ainsi que systemd le lance).
+    .example-1 = vérifier la configuration avant de redémarrer
+    .example-2 = appliquer la configuration
+    .example-3 = les erreurs de rsyslog lui-même
+man-rsyslog_conf = la configuration de rsyslog : /etc/rsyslog.conf, qui inclut /etc/rsyslog.d/*.conf (par ordre alphabétique, à l’endroit de $IncludeConfig : sous Debian, avant les règles par défaut). Modules : module(load="imudp") puis input(type="imudp" port="514") pour recevoir syslog en UDP (imtcp pour TCP). Règles : un sélecteur « catégorie.gravité  fichier » (auth.* /var/log/auth.log ; *.* tout ; auth.none exclut ; un - devant le fichier : pas de synchronisation après chaque ligne), ou une condition : if $programname == 'sshd' and $msg contains 'Failed password' then FICHIER. Propriétés : $msg, $programname, $hostname, $fromhost-ip, $syslogfacility-text, $syslogseverity-text ; opérateurs ==, !=, contains, startswith, and, or, not. Les modèles (template) construisent un nom de fichier à partir du message : template(name="PerHost" type="string" string="/var/log/remote/%HOSTNAME%.log") puis action(type="omfile" dynaFile="PerHost"). Plusieurs actions pour une même règle se mettent entre {"{"} et {"}"}. Toute règle qui correspond est appliquée, dans l’ordre : stop arrête le message (aucun fichier après ne le reçoit).
+    .synopsis = /etc/rsyslog.conf, /etc/rsyslog.d/*.conf
+    .example-1 = recevoir les journaux d’autres machines en UDP
+    .example-2 = un nom de fichier construit avec le nom de l’expéditeur
+    .example-3 = un fichier par machine d’un réseau, et rien d’autre pour elles
+    .example-4 = seulement les échecs de connexion de sshd
+    .example-5 = un sélecteur classique : les messages d’authentification
+man-journald_conf = la configuration de systemd-journald : /etc/systemd/journald.conf, et des compléments dans /etc/systemd/journald.conf.d/*.conf (le dernier l’emporte). Dans la section {"["}Journal], SystemMaxUse= limite la place du journal persistant (/var/log/journal) : 500M, 1G… Par défaut, 10 % du système de fichiers, jusqu’à 4G. Quand la limite est atteinte, journald supprime les plus vieux fichiers archivés. SystemKeepFree= garde de la place libre, MaxRetentionSec= supprime ce qui est plus ancien. journald lit ce fichier à son démarrage : systemctl restart systemd-journald.
+    .synopsis = /etc/systemd/journald.conf, /etc/systemd/journald.conf.d/*.conf
+    .example-1 = fixer SystemMaxUse=
+    .example-2 = l’appliquer
+    .example-3 = vérifier la place prise

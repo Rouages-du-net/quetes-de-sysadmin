@@ -222,6 +222,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | signals (`kill`, `pkill`) | `-l`, `-SIGNAL`, `-s`, `-0`; KILL always ends a process, STOP/CONT pause and resume it, the others end it unless it ignores them (a script's `trap`, described by the chapter); the children of a process that ends are adopted by init | handlers that do something else, `killall`, `pstree`, process groups and sessions |
 | PostgreSQL server (`pg_stat_activity`, `SHOW`, `ALTER SYSTEM`, `pg_reload_conf()`, `pg_terminate_backend`, `EXPLAIN`, `CREATE INDEX`) | a few settings, read from `postgresql.conf` then `postgresql.auto.conf`, those marked "requires restart" applied on restart only; sessions described by the chapter; `pg_stat_activity` with `WHERE col = 'v' [AND …]`, `ORDER BY`, `LIMIT`; `EXPLAIN` of a `SELECT` on one table with one equality: Index Scan if an index covers the column, else a (parallel, beyond 100,000 rows) Seq Scan, with costs computed from the table's declared size; B-tree indexes on one column | statistics, the planner's real costs, joins, multi-column and other index types, `pg_stat_statements`, `pg_ctl`, interactive `psql` |
 | PostgreSQL roles and replication (`CREATE ROLE`, `GRANT`, `ALTER DEFAULT PRIVILEGES`, `SET ROLE`, `\dp`, `pg_lsclusters`, `pg_ctlcluster`, `pg_isready`, `pg_promote()`) | table privileges only, one schema whose `USAGE` and the database's `CONNECT` stay PUBLIC's; memberships always inherited; `psql -c` runs several statements separated by `;` and stops at the first error; a standby's state is described by the chapter (no WAL, no second server): promotion, `standby.signal` and restart, the read-only errors | column and function privileges, `WITH GRANT OPTION`, row-level security, real streaming replication, `pg_basebackup`, `pg_rewind` |
+| rsyslog (`/etc/rsyslog.conf`, `rsyslog.d`, `rsyslogd -N1`, `logger`) | the configuration read when the service starts: `module`/`$ModLoad`, `imudp`/`imtcp` inputs (also `$UDPServerRun`), `template` and `$template` with a few properties (`%HOSTNAME%`, `%FROMHOST-IP%`, `%PROGRAMNAME%`, dates), selectors, property filters, `if … then` with `==`, `!=`, `contains`, `startswith`, `and`, `or`, `not`, blocks, `&`, `stop`/`~`; files written in the traditional format; the remote machines send one message each per command, received if rsyslog listens and the firewall lets them in | `omfwd` and forwarding, queues, TLS, `imfile`, `imjournal`, `mmjsonparse`, most properties and functions of RainerScript, rate limiting |
+| The journal on disk (`journalctl --disk-usage`, `--vacuum-size`/`--vacuum-time`/`--vacuum-files`, `journald.conf`) | the files of `/var/log/journal` and their sizes (they count in `df` and `du`); `SystemMaxUse=` (from `journald.conf` and its drop-ins) read when journald starts, then the oldest archived files deleted; the active file rotated at 128M | `SystemKeepFree=`, `RuntimeMaxUse=`, `MaxRetentionSec=`, compression, the files' content (`journalctl` reads the simulated journal, not these files) |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
 | systemd overrides | `systemctl edit`, `set-property` (`MemoryMax=`, `IOReadBandwidthMax=`, `IOWriteBandwidthMax=`), `daemon-reload`; in overrides, only `MemoryMax=`, `IO*BandwidthMax=` and `Restart=` of `[Service]` count; a service restarted by `Restart=` starts again at once | every directive, `RestartSec=`, `StartLimitBurst=`, `systemctl cat`, `revert` |
 | inodes | `df -i`, `du --inodes`: one inode per file or place; a medium can declare its number of inodes (and those used by the system); no free inode, no creation | reserved blocks, `tune2fs`, inodes of symbolic links and special files |
@@ -2387,6 +2389,63 @@ Expected traps: a restart of PostgreSQL (still a standby), the app moved to
 the standby before the promotion (read-only), the `.env` changed without
 restarting the app. Other accepted solution: removing `standby.signal` and
 restarting PostgreSQL.
+
+## Story 23: The Huts (three chapters)
+
+A federation of mountain huts: each hut (`hut-lake`, `hut-pass`,
+`hut-ridge`, 198.51.100.11 to .13) has a small machine that sends its logs
+over UDP to the valley's server (`valley`, 192.0.2.30), where Lou, the
+federation's volunteer, wants to read them all. The story is about logs:
+gathering them with rsyslog, the journal's size on disk, a filter for an
+alert. It opens after "The Full Disk" and "The Firewall".
+
+### Chapter 1 — Gathering the Logs (done)
+
+| Step | Command learnt |
+|---|---|
+| Nothing listens | `ss -ulnp`, `/etc/rsyslog.conf` (`imudp` commented out, as Debian installs it) |
+| Listen | `module(load="imudp")`, `input(type="imudp" port="514")`, `rsyslogd -N1`, `systemctl restart rsyslog` |
+| Let the huts in | `ufw allow from 198.51.100.0/24 to any port 514 proto udp` |
+| One file per hut | `template(… string="/var/log/remote/%HOSTNAME%.log")`, `if $fromhost-ip startswith '198.51.100.' then { action(type="omfile" dynaFile=…) stop }` in `/etc/rsyslog.d/` |
+
+Goal checked on the state: rsyslog running with a UDP input on 514, each
+hut's messages in a file holding only its lines, and no hut message routed
+(under the running configuration) to a file the valley's own messages
+reach. Expected traps: the file changed without a restart, the firewall,
+a rule without `stop` (messages in `/var/log/syslog` too), a template that
+doesn't exist (action disabled). Other accepted solutions: the legacy
+syntax (`$ModLoad`, `$UDPServerRun`, `$template`, a property filter and
+`& stop`), a file per address (`%FROMHOST-IP%`), `ufw allow 514/udp`.
+
+### Chapter 2 — The Full Journal (done)
+
+| Step | Command learnt |
+|---|---|
+| Where the space goes | `df -h`, `du -sh /var/log/*` |
+| The journal | `journalctl --disk-usage`, `journalctl --vacuum-size=500M` |
+| A lasting limit | `SystemMaxUse=` in `/etc/systemd/journald.conf` (or `journald.conf.d/`), `systemctl restart systemd-journald` |
+
+Goal checked on the state: journald running with a limit of at most 1G,
+the journal under 1G, the disk under 80 %. Expected traps: `rm` in
+`/var/log/journal`, vacuuming without a limit (it grows again), the limit
+written without restarting journald, a limit too high.
+
+### Chapter 3 — Failed Logins (done)
+
+| Step | Command learnt |
+|---|---|
+| What a failure looks like | `grep Failed /var/log/remote/hut-lake.log` |
+| A rule with a condition | `if $programname == 'sshd' and $msg contains 'Failed password' then /var/log/remote/ssh-failures.log` |
+| The order of the rules | a file read before `10-remote.conf` (`05-…`), `rsyslogd -N1`, `systemctl restart rsyslog`, `logger -t sshd -p auth.info` |
+
+Goal checked on the state, under the running configuration: every failed
+login of the huts reaches `ssh-failures.log` and nothing else does, each
+hut's messages still reach a file of their own, and the file holds the
+failures of at least two huts. Expected traps: the rule after the per-hut
+`stop` (it never sees them), a filter on the program only (the `Accepted
+publickey` lines too), a `stop` in the new rule (the per-hut files no longer
+receive). Other accepted solution: the rule inside the per-hut block,
+before its `stop`.
 
 ## Ideas for later
 

@@ -393,3 +393,9 @@ name-mail_from_the_host-txt = mail_from_the_host.txt
 
 ## The Theatre
 name-message_from_camille-txt = message_from_camille.txt
+
+## The Huts
+name-message_from_lou-txt = message_from_lou.txt
+name-hut-lake = hut-lake
+name-hut-pass = hut-pass
+name-hut-ridge = hut-ridge

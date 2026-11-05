@@ -396,3 +396,9 @@ name-mail_from_the_host-txt = courrier_hebergeur.txt
 
 ## Le Théâtre
 name-message_from_camille-txt = message_de_camille.txt
+
+## Les Refuges
+name-message_from_lou-txt = message_de_lou.txt
+name-hut-lake = refuge-lac
+name-hut-pass = refuge-col
+name-hut-ridge = refuge-crete

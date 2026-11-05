@@ -91,3 +91,6 @@ too-many-clients
 slow-query
 read-only
 failover
+central-logs
+journal-full
+ssh-alerts

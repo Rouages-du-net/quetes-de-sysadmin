@@ -498,13 +498,15 @@ man-git =
     A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
     .synopsis = git [--git-dir=repository] [--work-tree=place] command
 man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off.
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [--color[=WHEN]] pattern [file...]
+    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=WHEN]] pattern [file...]
     .option-i = ignores the difference between uppercase and lowercase.
     .option-v = inverts the search: keeps the lines that do NOT contain the pattern.
     .option-c = counts the matching lines instead of printing them.
     .option-q = silent (quiet): prints nothing, succeeds if the pattern is found, fails otherwise.
     .option-E = extended regular expressions: + ? | ( ) have their special meaning.
     .option-F = searches for the pattern as is, without regular expressions (fixed strings).
+    .option-h = never prints the file name before the lines (by default, it does with several files).
+    .option-H = always prints the file name before the lines, even with a single file.
     .example-1 = the lines that mention the Eraser
     .example-2 = in all the files here, uppercase or not
     .example-3 = a pattern with spaces, in quotes
@@ -1113,8 +1115,8 @@ man-umask = shows or changes the session's mask (umask): the permissions REMOVED
     .example-2 = the permissions it leaves, in letters
     .example-3 = the group will be able to write to what I create (for this session)
 
-man-journalctl = reads the systemd journal, where services write their messages (and their errors). -u keeps only one service, -n the last N lines, -b the current boot, -p err the errors, -k the kernel messages (like dmesg). --since and --until keep a time period ("2027-09-12 02:00", today, yesterday, -1h). -x adds explanations and -e jumps to the end: journalctl -xeu nginx is the classic formula when a service refuses to start. -f follows the journal live, until Ctrl-C. You must be root, or in the adm or systemd-journal group, to read everything.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priority] [--since DATE] [--until DATE] [-x] [-e] [-f]
+man-journalctl = reads the systemd journal, where services write their messages (and their errors). -u keeps only one service, -n the last N lines, -b the current boot, -p err the errors, -k the kernel messages (like dmesg). --since and --until keep a time period ("2027-09-12 02:00", today, yesterday, -1h). -x adds explanations and -e jumps to the end: journalctl -xeu nginx is the classic formula when a service refuses to start. -f follows the journal live, until Ctrl-C. You must be root, or in the adm or systemd-journal group, to read everything. --disk-usage and --vacuum-size=500M (or --vacuum-time=2weeks, --vacuum-files=5) measure and trim the persistent journal (/var/log/journal); its lasting limit is SystemMaxUse= in journald.conf.
+    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priority] [--since DATE] [--until DATE] [-x] [-e] [-f] [--disk-usage] [--vacuum-size=SIZE]
     .option-k = only kernel messages, since boot (kernel).
     .option-u = only the messages of this service (unit).
     .option-n = only the last N lines.
@@ -1129,6 +1131,8 @@ man-journalctl = reads the systemd journal, where services write their messages 
     .example-4 = the last 20 messages
     .example-5 = everything that happened between 2:00 and 3:30 on a given night
     .example-6 = watch the ssh connections live (Ctrl-C to stop)
+    .example-7 = how much space the journal takes on disk
+    .example-8 = trim the archived files down to 500M
 man-reboot = restarts the machine. Enabled services (systemctl enable) start again on their own; the others stay stopped. Over an ssh connection, the session is cut: you have to reconnect. Root only.
     .synopsis = reboot
     .example-1 = restart the machine
@@ -1332,3 +1336,31 @@ man-pg_isready = checks whether a PostgreSQL server accepts connections: "accept
     .option-p = its port (5432 by default).
     .example-1 = the local server
     .example-2 = another server
+
+man-logger = writes a message to the system log, like a program would: rsyslog receives it and applies its rules (which file, which server), and so does the journal. The quickest way to test a logging rule: send a message that should match, then look for it where it should land. -t sets the tag (the program's name, $programname for rsyslog), -p the facility and severity (local0.warning, auth.info…; user.notice by default).
+    .synopsis = logger [-t tag] [-p facility.severity] message…
+    .option-t = the tag of the message (the program's name); your account's name by default.
+    .option-p = facility and severity: auth.info, cron.err, local0.warning… (user.notice by default).
+    .example-1 = a test message
+    .example-2 = check a rule that catches sshd's failed logins
+    .example-3 = a message with a facility and a severity
+man-rsyslogd = the syslog daemon: it receives messages (from local programs through /dev/log, from the kernel, and from other machines over UDP or TCP if an input says so), then applies the rules of /etc/rsyslog.conf, in order, to write them in files, send them elsewhere or drop them. It reads its configuration when it starts: after a change, rsyslogd -N1 checks it without touching the running service (errors with the file and line), then systemctl restart rsyslog. Its own errors go to its journal (journalctl -u rsyslog).
+    .synopsis = rsyslogd [-N level] [-f file] [-n]
+    .option-N = only checks the configuration (level 1), then exits; status 1 if there are errors.
+    .option-f = another configuration file than /etc/rsyslog.conf.
+    .option-n = stays in the foreground (how systemd starts it).
+    .example-1 = check the configuration before restarting
+    .example-2 = apply the configuration
+    .example-3 = rsyslog's own errors
+man-rsyslog_conf = rsyslog's configuration: /etc/rsyslog.conf, which includes /etc/rsyslog.d/*.conf (in alphabetical order, where $IncludeConfig stands: on Debian, before the default rules). Modules: module(load="imudp") then input(type="imudp" port="514") to receive syslog over UDP (imtcp for TCP). Rules: a selector "facility.severity  file" (auth.* /var/log/auth.log; *.* everything; auth.none excludes; a - before the file: no sync after each line), or a condition: if $programname == 'sshd' and $msg contains 'Failed password' then FILE. Properties: $msg, $programname, $hostname, $fromhost-ip, $syslogfacility-text, $syslogseverity-text; operators ==, !=, contains, startswith, and, or, not. Templates build a file name from the message: template(name="PerHost" type="string" string="/var/log/remote/%HOSTNAME%.log") then action(type="omfile" dynaFile="PerHost"). Several actions for one rule go between {"{"} and {"}"}. Every rule that matches is applied, in order: stop ends the message's journey (no file after it receives it).
+    .synopsis = /etc/rsyslog.conf, /etc/rsyslog.d/*.conf
+    .example-1 = receive the logs of other machines over UDP
+    .example-2 = a file name built from the sender's name
+    .example-3 = one file per machine of a network, and nothing else for them
+    .example-4 = only sshd's failed logins
+    .example-5 = a classic selector: authentication messages
+man-journald_conf = systemd-journald's configuration: /etc/systemd/journald.conf, and drop-ins in /etc/systemd/journald.conf.d/*.conf (the last one wins). In the {"["}Journal] section, SystemMaxUse= limits the space of the persistent journal (/var/log/journal): 500M, 1G… By default, 10 % of the file system, up to 4G. When the limit is reached, journald deletes the oldest archived files. SystemKeepFree= keeps some space free, MaxRetentionSec= deletes what is older. journald reads this file when it starts: systemctl restart systemd-journald.
+    .synopsis = /etc/systemd/journald.conf, /etc/systemd/journald.conf.d/*.conf
+    .example-1 = set SystemMaxUse=
+    .example-2 = apply it
+    .example-3 = check the space taken

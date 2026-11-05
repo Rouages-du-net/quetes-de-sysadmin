@@ -47,3 +47,6 @@ password-nebula-2028 = nebuleuse-2028
 
 ## Le Théâtre
 password-curtain-2028 = rideau-2028
+
+## Les Refuges
+password-summit-2028 = sommet-2028
