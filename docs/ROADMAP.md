@@ -433,6 +433,32 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 
 ## More ideas
 
+### New stories (defensive, within the charter)
+
+- [ ] **Encrypted backups**: a backup you can actually trust. LUKS on a
+  backup disk (`cryptsetup luksFormat`/`luksOpen`, a keyfile vs a
+  passphrase, `/etc/crypttab`), restic or borg to an encrypted repository
+  already partly modelled (`commands/restic.ts`), a restore drill, and the
+  key-management trap (a backup whose key is only on the machine it backs
+  up). Extends the backups path.
+- [ ] **IPv6**: the same services, two address families. SLAAC vs a static
+  address, `ip -6`, a firewall that only covered IPv4 (ufw and nftables
+  rules duplicated for v6, the classic "closed on v4, open on v6" hole),
+  AAAA records in BIND, `ping6`/`curl -6`. Builds on the network engine
+  (`src/engine/lan.ts`, `nftables.ts`, `dns.ts`).
+- [ ] **Metrics and alerting** (Prometheus/Alertmanager): reading a
+  service the way "The Huts" reads logs. A node exporter and an app's
+  `/metrics`, a scrape config, a PromQL threshold, an alert rule that
+  fires and resolves, and silencing during maintenance. All simulated and
+  deterministic, like the rest.
+- [ ] **Containers in production, step 2** (a light Kubernetes, k3s):
+  after Docker and Compose, one node. A Pod that won't start
+  (`kubectl get`/`describe`/`logs`, an image or a probe failing), a
+  Service and an Ingress, a ConfigMap and a Secret, resource limits and an
+  OOMKilled pod. A big engine piece — scope it as several PRs.
+
+### Other ideas
+
 - [ ] **An offensive story**: understanding an attack by replaying it, not
   just reading its outcome. Outside the game's usual scope ("Game rules" in
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to
