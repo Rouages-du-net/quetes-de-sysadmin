@@ -60,6 +60,18 @@ for (const width of [1000, 375]) {
   check((await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `${width} px: chapter 1 opens`);
   await tape('man ls');
   check((await game.locator('.output').textContent()).includes('VOIR AUSSI'), `${width} px: man ls is displayed`);
+  // Regression: the up arrow browses THIS machine's history (like the
+  // `history` command), not every line typed in the game. 'ssh royaume' was
+  // typed on the workstation, so pressing Up here must never bring it back.
+  await input.focus();
+  const recalled = [];
+  for (let i = 0; i < 6; i++) {
+    await input.press('ArrowUp');
+    recalled.push(await input.inputValue());
+  }
+  check(recalled[0] === 'man ls', `${width} px: the up arrow recalls this machine's last command`);
+  check(!recalled.includes('ssh royaume'), `${width} px: the up arrow ignores the workstation's history`);
+  await input.fill('');
   // Every group of commands is in the bundle (a module loaded too early used to leave some out).
   for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient']) {
     await tape(`man ${c}`);
@@ -443,8 +455,9 @@ for (const width of [1000, 375]) {
   }
   const output = await game.locator('.output').textContent();
   check(output.includes('Succès : Ce qui est caché') && output.includes('Succès : Mot magique'), 'achievements: announced in the terminal');
-  const link = game.locator('.tips button', { hasText: 'Succès' });
-  check(/Succès \(\d+\/\d+\)/.test(await link.textContent()), `achievements: the count on the link (${await link.textContent()})`);
+  const link = game.locator('.chapter-actions button', { hasText: 'Succès' });
+  check(/Succès \(\d+\/\d+\)/.test(await link.textContent()), `achievements: the count on the button (${await link.textContent()})`);
+  check((await link.locator('.icon').count()) === 1, 'achievements: the button has its icon');
   await link.click();
   const window = game.locator('dialog.achievements-window');
   check((await window.locator('.achievement-rank').textContent()).includes('Stagiaire'), 'achievements: the rank');

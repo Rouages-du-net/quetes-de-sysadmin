@@ -289,6 +289,13 @@
 .qds .hint-button:hover, .qds .hint-button:focus-visible,
 .qds .rescue-button:hover:not(:disabled), .qds .rescue-button:focus-visible,
 .qds .setting-button:hover, .qds .setting-button:focus-visible { border-color: var(--_accent); }
+/* A small inline line-icon: it follows the text colour and size. */
+.qds .icon { width: 1.1em; height: 1.1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* The chapter's actions, under the tip: buttons with an icon, not links. */
+.qds .chapter-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0 0; }
+.qds .pill { display: inline-flex; align-items: center; gap: 0.4rem; font: inherit; font-size: 0.9rem; padding: 0.3rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
+.qds .pill:hover, .qds .pill:focus-visible { border-color: var(--_accent); }
+.qds .pill .icon { color: var(--_accent); }
 .qds .map-window,
 .qds .progress-window,
 .qds .mission-window,
@@ -333,13 +340,16 @@
 .qds .plan-diagram .marker-here { fill: var(--_accent); font-size: 12px; font-weight: 700; }
 .qds .plan-text summary { cursor: pointer; font-size: 0.9rem; }
 .qds .plan-text .map-tree { margin-top: 0.5rem; }
-/* My progress: the name, the code to copy, the file. */
+/* My progress: the name, the code to copy, the file — each in its own card. */
 .qds .progress-window h3,
 .qds .mission-window h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
-.qds .progress-window input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.3rem; background: var(--_card); color: var(--_text); max-width: 100%; }
+.qds .progress-section { margin: 0.75rem 0 0; padding: 0.75rem 1rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); }
+.qds .progress-section h3 { margin: 0 0 0.25rem; }
+.qds .progress-section > :last-child { margin-bottom: 0; }
+.qds .progress-window input[type='text'] { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.3rem; background: var(--_background); color: var(--_text); max-width: 100%; }
 .qds .progress-window input[type='file'] { font: inherit; font-size: 0.9rem; max-width: 100%; }
 .qds .progress-code { font-family: var(--_font-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.05em; overflow-wrap: anywhere; }
-.qds .progress-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.qds .progress-input { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.4rem 0 0; }
 .qds .progress-state { min-height: 1.5em; color: var(--_accent); font-weight: 600; }
 /* The mission: the story's instructions and messages, to reread. */
 .qds .mission-text { margin: 0 0 0.5rem; white-space: pre-wrap; word-break: break-word; font: 0.85rem/1.5 var(--_font-mono); background: var(--_card); border: 1px solid var(--_border); border-radius: 0.3rem; padding: 0.5rem 0.75rem; max-height: 20rem; overflow-y: auto; }
