@@ -59,9 +59,10 @@ function icon(...paths: string[]): SVGElement {
   }
   return svg;
 }
-// Restart (a counter-clockwise arrow), progress (a bookmark), achievements (a trophy).
+// Restart (a counter-clockwise arrow), progress (a floppy disk, for "save"),
+// achievements (a trophy).
 const ICON_RESTART = ['M3 12a9 9 0 1 0 2.6-6.3L3 8', 'M3 3v5h5'];
-const ICON_PROGRESS = ['M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'];
+const ICON_PROGRESS = ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z', 'M17 21v-8H7v8', 'M7 3v5h8'];
 const ICON_TROPHY = ['M7 4h10v5a5 5 0 0 1-10 0z', 'M7 6H4v1a4 4 0 0 0 4 4', 'M17 6h3v1a4 4 0 0 0-4 4', 'M9 21h6', 'M12 17v4'];
 
 // The lines kept on screen for a single output.
