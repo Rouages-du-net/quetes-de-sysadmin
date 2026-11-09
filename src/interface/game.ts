@@ -45,6 +45,25 @@ function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string
   return e;
 }
 
+// A small inline line-icon (stroke follows the text colour, so it works in
+// every theme and needs no third-party resource). Decorative: aria-hidden,
+// the button keeps its text label for screen readers.
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function icon(...paths: string[]): SVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 24 24', class: 'icon', 'aria-hidden': 'true', focusable: 'false' })) svg.setAttribute(k, v);
+  for (const d of paths) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    svg.appendChild(path);
+  }
+  return svg;
+}
+// Restart (a counter-clockwise arrow), progress (a bookmark), achievements (a trophy).
+const ICON_RESTART = ['M3 12a9 9 0 1 0 2.6-6.3L3 8', 'M3 3v5h5'];
+const ICON_PROGRESS = ['M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'];
+const ICON_TROPHY = ['M7 4h10v5a5 5 0 0 1-10 0z', 'M7 6H4v1a4 4 0 0 0 4 4', 'M17 6h3v1a4 4 0 0 0-4 4', 'M9 21h6', 'M12 17v4'];
+
 // The lines kept on screen for a single output.
 const LINES_MAX = 2000;
 // During a follow (tail -f), the seconds that pass on the machine for each real second.
@@ -326,13 +345,17 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     listNotebook,
     actionsNotebook,
   );
-  const restart = el('button', { type: 'button', class: 'link' }, t('button-restart'));
+  const restart = el('button', { type: 'button', class: 'pill' }, icon(...ICON_RESTART), el('span', {}, t('button-restart')));
   // My progress: a name for the notebook, and a way to continue on another
   // device (the short code, or the file; see progress.ts).
-  const progressButton = el('button', { type: 'button', class: 'link', 'aria-haspopup': 'dialog' }, t('progress-button'));
-  // Achievements and rank: a dialog (see achievements.ts).
-  const achievementsButton = el('button', { type: 'button', class: 'link', 'aria-haspopup': 'dialog' });
-  const tips = el('p', { class: 'tips' }, typo(t('tips')), ' ', restart, ' · ', progressButton, ' · ', achievementsButton);
+  const progressButton = el('button', { type: 'button', class: 'pill', 'aria-haspopup': 'dialog' }, icon(...ICON_PROGRESS), el('span', {}, t('progress-button')));
+  // Achievements and rank: a dialog (see achievements.ts). The count is set
+  // on a label span so the icon survives each update (see checkAchievements).
+  const achievementsLabel = el('span', {});
+  const achievementsButton = el('button', { type: 'button', class: 'pill', 'aria-haspopup': 'dialog' }, icon(...ICON_TROPHY), achievementsLabel);
+  const tips = el('p', { class: 'tips' }, typo(t('tips')));
+  // The chapter's actions, as a row of buttons under the tip.
+  const chapterActions = el('p', { class: 'chapter-actions' }, restart, progressButton, achievementsButton);
   const achievementsId = `qds-achievements-${Math.random().toString(36).slice(2, 8)}`;
   const gradeAchievements = el('p', { class: 'achievement-rank' });
   const listAchievements = el('ul', { class: 'achievement-list' });
@@ -406,17 +429,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     { class: 'progress-window', 'aria-labelledby': progressId },
     el('h2', { id: progressId }, t('progress-title')),
     el('p', { class: 'map-legend' }, typo(t('progress-intro'))),
-    el('h3', {}, el('label', { for: nameField.id }, t('progress-name'))),
-    el('p', {}, nameField),
-    el('p', { class: 'map-legend' }, typo(t('progress-name-help'))),
-    el('h3', {}, t('progress-code-title')),
-    el('p', { class: 'map-legend' }, typo(t('progress-code-help'))),
-    el('p', {}, currentCode, ' ', copyCode),
-    el('p', { class: 'progress-input' }, el('label', { for: codeField.id }, t('progress-code-input')), ' ', codeField, ' ', resumeCode),
-    el('h3', {}, t('progress-file-title')),
-    el('p', { class: 'map-legend' }, typo(t('progress-file-help'))),
-    el('p', {}, download),
-    el('p', { class: 'progress-input' }, el('label', { for: fileField.id }, t('progress-file-input')), ' ', fileField),
+    el(
+      'section',
+      { class: 'progress-section' },
+      el('h3', {}, el('label', { for: nameField.id }, t('progress-name'))),
+      el('p', { class: 'map-legend' }, typo(t('progress-name-help'))),
+      el('p', {}, nameField),
+    ),
+    // The short code: copy it, or type one to continue on another device.
+    el(
+      'section',
+      { class: 'progress-section' },
+      el('h3', {}, t('progress-code-title')),
+      el('p', { class: 'map-legend' }, typo(t('progress-code-help'))),
+      el('p', { class: 'progress-input' }, currentCode, ' ', copyCode),
+      el('p', { class: 'progress-input' }, el('label', { for: codeField.id }, t('progress-code-input')), ' ', codeField, ' ', resumeCode),
+    ),
+    // The save file: download a backup, or load one back.
+    el(
+      'section',
+      { class: 'progress-section' },
+      el('h3', {}, t('progress-file-title')),
+      el('p', { class: 'map-legend' }, typo(t('progress-file-help'))),
+      el('p', { class: 'progress-input' }, download),
+      el('p', { class: 'progress-input' }, el('label', { for: fileField.id }, t('progress-file-input')), ' ', fileField),
+    ),
     progressState,
     el('p', { class: 'map-actions' }, closeProgress),
   ) as HTMLDialogElement;
@@ -439,7 +476,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, examChoice, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, chapterActions, examChoice, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -710,7 +747,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     achievementsUpdate();
   };
   const achievementsUpdate = () => {
-    achievementsButton.textContent = t('achievements-button', { earned: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
+    achievementsLabel.textContent = t('achievements-button', { earned: Object.keys(achievements).length, total: ACHIEVEMENTS.length });
   };
   // The summary: time spent counts from the first time the current chapter is seen.
   const debuts = new WeakMap<Shell, number>();

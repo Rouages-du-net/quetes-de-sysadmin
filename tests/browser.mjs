@@ -455,8 +455,9 @@ for (const width of [1000, 375]) {
   }
   const output = await game.locator('.output').textContent();
   check(output.includes('Succès : Ce qui est caché') && output.includes('Succès : Mot magique'), 'achievements: announced in the terminal');
-  const link = game.locator('.tips button', { hasText: 'Succès' });
-  check(/Succès \(\d+\/\d+\)/.test(await link.textContent()), `achievements: the count on the link (${await link.textContent()})`);
+  const link = game.locator('.chapter-actions button', { hasText: 'Succès' });
+  check(/Succès \(\d+\/\d+\)/.test(await link.textContent()), `achievements: the count on the button (${await link.textContent()})`);
+  check((await link.locator('.icon').count()) === 1, 'achievements: the button has its icon');
   await link.click();
   const window = game.locator('dialog.achievements-window');
   check((await window.locator('.achievement-rank').textContent()).includes('Stagiaire'), 'achievements: the rank');
