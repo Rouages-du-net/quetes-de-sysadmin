@@ -491,7 +491,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // The story attribute opens its story even without the key (embedding in a course).
   const accessible = (h: number) => gameTerminal.isOpen(STORIES[h].id) || STORIES[h].id === options.story;
 
-  const history: string[] = [];
+  // The up/down arrows and Ctrl-R browse the CURRENT machine's history
+  // (Shell.history — the same list the `history` command and `!!` read), not
+  // every line typed in the game: each machine keeps its own, as in a real
+  // shell session. The engine records it on execute (passwords and answers
+  // never reach it); `position` indexes that list and `after()` resets it.
+  const machineHistory = () => gameTerminal.shell.history;
   // The line after the last Tab (for bash's double Tab).
   let previousTab: string | null = null;
   let position = 0;
@@ -767,6 +772,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     promptUpdate();
     navUpdate();
     save();
+    // Back to the bottom of the current machine's history (it may have
+    // changed: a new command, or a switch of machine through ssh/exit/menu).
+    position = machineHistory().length;
     terminal.scrollTop = terminal.scrollHeight;
   };
 
@@ -802,8 +810,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const response = secret || gameTerminal.shell.question !== null;
     if (secret) show(prompt.textContent ?? '', 'cmd');
     else showCommand(line, response ? null : tokens(line));
-    if (line.trim() && !response) history.push(line);
-    position = history.length;
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
     // The text size may have changed (A+, A−): so has the width in characters.
@@ -887,11 +893,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   const search = (moreOld = false) => {
     if (!query) return;
-    const since = moreOld ? history.lastIndexOf(query.match) - 1 : history.length - 1;
+    const h = machineHistory();
+    const since = moreOld ? h.lastIndexOf(query.match) - 1 : h.length - 1;
     let found = '';
     for (let i = since; i >= 0; i--)
-      if (history[i].includes(input.value)) {
-        found = history[i];
+      if (h[i].includes(input.value)) {
+        found = h[i];
         break;
       }
     if (found || !moreOld) query.match = found;
@@ -936,7 +943,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       e.preventDefault();
       show(`${prompt.textContent} ${input.value}^C`, 'cmd');
       input.value = '';
-      position = history.length;
+      position = machineHistory().length;
       return;
     }
     if (e.key === 'Tab') {
@@ -956,13 +963,18 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       return;
     }
     previousTab = null;
-    if (e.key === 'ArrowUp' && position > 0) {
-      e.preventDefault();
-      input.value = history[--position];
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      position = Math.min(position + 1, history.length);
-      input.value = history[position] ?? '';
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const h = machineHistory();
+      // A switch of machine may have left `position` past the new list.
+      if (position > h.length) position = h.length;
+      if (e.key === 'ArrowUp' && position > 0) {
+        e.preventDefault();
+        input.value = h[--position];
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        position = Math.min(position + 1, h.length);
+        input.value = h[position] ?? '';
+      }
     }
   });
 
