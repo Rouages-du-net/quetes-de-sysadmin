@@ -436,19 +436,58 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 ## Phase 13 — Beyond Linux: the other machines a sysadmin meets
 
 The game started with Linux, but its aim is system administration, and a
-sysadmin meets Windows machines (and the odd other Unix) every week. The
-basics belong in the game. Three steps, from the cheapest to the largest;
-the first two reuse the current engine, the third needs a second one.
+sysadmin meets Windows machines every week, other Unixes regularly, and
+sometimes systems older than themselves. The basics belong in the game.
+The Unix and mixed-fleet steps reuse the current engine; Windows and IBM i
+each need an engine of their own.
 
-- [ ] **Another Unix: portability** (a FreeBSD box, more alive and useful
-      today than Solaris). A backup script written for Debian breaks: GNU
+- [ ] **Another Unix: portability** (a FreeBSD box). A backup script written for Debian breaks: GNU
       vs BSD options (`sed -i ''`, `ps aux` vs `ps -ax`, `date -d`), `pw
       useradd`, `/etc/rc.conf` and `service`, `pkg`, `sockstat`, a `pf`
       rule. The lesson: "Linux" is not "Unix", read the manual of the
       machine you are on, write POSIX `sh`. Same engine model (files, `rwx`,
       text pipelines); new commands, and their entries in the differences
-      table. Solaris (SMF: `svcs -x`, `svcadm`) could be a single chapter,
-      not a story.
+      table.
+- [ ] **Solaris: migrating off an old server** (a real job, still done
+      today). A Solaris 10 box nobody dares touch holds a database that
+      must move to a recent Linux server. Reading an unfamiliar system
+      before touching it: SMF (`svcs -a`, `svcs -x`, `svcadm`), `prstat`,
+      `zfs list` and snapshots, zones (`zoneadm list`), `pkginfo`, `/usr/xpg4/bin`
+      vs `/usr/bin` tools; then the move itself: a consistent dump taken
+      with the service stopped, endianness and character sets (SPARC is
+      big-endian: binary data files don't travel, dumps do), `scp`/`rsync`
+      to the new server, a restore, checks, and the old box kept read-only
+      until the new one is trusted. Same engine model as the other Unix.
+
+### Legacy systems: old but valuable
+
+Systems that run banks, insurers, retailers and public services, often for
+decades, and that a sysadmin may inherit. The game can show them with
+respect: why they are still there, how to read them, how to move data off
+them safely.
+
+- [ ] **COBOL batch on Linux** (fits the current engine). A nightly COBOL
+      batch moved from a mainframe to Linux with GnuCOBOL: fixed-width
+      record files described by a copybook, EBCDIC data to convert
+      (`iconv -f EBCDIC-US`, `dd conv=ascii`, and why packed decimals,
+      COMP-3, must not go through a text conversion), `cobc` to compile,
+      the job chained by cron or a systemd timer, its return code checked,
+      a file that arrives late. The lesson: the program is fine, the
+      plumbing around it is what breaks.
+- [ ] **IBM i (AS/400)** (needs its own small engine). An IBM i that has
+      run a company's orders since the 1990s. A different world: everything
+      is an object in a library (`WRKLIB`, `DSPLIB`, `WRKOBJ`), commands are
+      CL with a fixed grammar and prompting (F4), jobs and subsystems
+      (`WRKACTJOB`, `WRKSBS`, `WRKJOBQ`), spooled files (`WRKSPLF`), user
+      profiles and authorities (`WRKUSRPRF`, `EDTOBJAUT`), DB2 for i, save
+      files (`SAVLIB`, `RSTLIB`). The bridge from the familiar: `ssh` lands
+      in PASE/QShell, a Unix-like shell on the same machine, with the IFS
+      (`/QSYS.LIB/…`) linking both worlds. Possible stories: a job stuck in
+      MSGW waiting for an answer, a full output queue, a nightly save that
+      must be checked, an export of a DB2 table to the Linux side (CSV over
+      `ssh`, CCSID conversions). Interface: a CL command line first; the
+      5250 green screen (fixed 80×24 menus, function keys) is a later,
+      optional step.
 - [ ] **A mixed fleet, seen from Linux**: the Windows machines a Linux
       admin deals with, without simulating Windows itself. A script copied
       from Windows that fails with `/bin/bash^M: bad interpreter` (CRLF,
