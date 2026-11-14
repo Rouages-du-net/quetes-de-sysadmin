@@ -431,6 +431,97 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [x] Quests replayed automatically in each language
       (`tests/quests.test.ts`)
 
+---
+
+## Phase 13 — Beyond Linux: the other machines a sysadmin meets
+
+The game started with Linux, but its aim is system administration, and a
+sysadmin meets Windows machines every week, other Unixes regularly, and
+sometimes systems older than themselves. The basics belong in the game.
+The Unix and mixed-fleet steps reuse the current engine; Windows and IBM i
+each need an engine of their own.
+
+- [ ] **Another Unix: portability** (a FreeBSD box). A backup script
+      written for Debian breaks: GNU vs BSD options (`sed -i ''`, `ps aux`
+      vs `ps -ax`, `date -d`), `pw useradd`, `/etc/rc.conf` and `service`,
+      `pkg`, `sockstat`, a `pf` rule. The lesson: "Linux" is not "Unix",
+      read the manual of the machine you are on, write POSIX `sh`. Same
+      engine model (files, `rwx`, text pipelines); new commands, and their
+      entries in the differences table.
+- [ ] **Solaris: migrating off an old server** (a real job, still done
+      today). A Solaris 10 box nobody dares touch holds a database that
+      must move to a recent Linux server. Reading an unfamiliar system
+      before touching it: SMF (`svcs -a`, `svcs -x`, `svcadm`), `prstat`,
+      `zfs list` and snapshots, zones (`zoneadm list`), `pkginfo`, `/usr/xpg4/bin`
+      vs `/usr/bin` tools; then the move itself: a consistent dump taken
+      with the service stopped, endianness and character sets (SPARC is
+      big-endian: binary data files don't travel, dumps do), `scp`/`rsync`
+      to the new server, a restore, checks, and the old box kept read-only
+      until the new one is trusted. Same engine model as the other Unix.
+
+### Legacy systems: old but valuable
+
+Systems that run banks, insurers, retailers and public services, often for
+decades, and that a sysadmin may inherit. The game can show them with
+respect: why they are still there, how to read them, how to move data off
+them safely.
+
+- [ ] **COBOL batch on Linux** (fits the current engine). A nightly COBOL
+      batch moved from a mainframe to Linux with GnuCOBOL: fixed-width
+      record files described by a copybook, EBCDIC data to convert
+      (`iconv -f EBCDIC-US`, `dd conv=ascii`, and why packed decimals,
+      COMP-3, must not go through a text conversion), `cobc` to compile,
+      the job chained by cron or a systemd timer, its return code checked,
+      a file that arrives late. The lesson: the program is fine, the
+      plumbing around it is what breaks.
+- [ ] **IBM i (AS/400)** (needs its own small engine). An IBM i that has
+      run a company's orders since the 1990s. A different world: everything
+      is an object in a library (`WRKLIB`, `DSPLIB`, `WRKOBJ`), commands are
+      CL with a fixed grammar and prompting (F4), jobs and subsystems
+      (`WRKACTJOB`, `WRKSBS`, `WRKJOBQ`), spooled files (`WRKSPLF`), user
+      profiles and authorities (`WRKUSRPRF`, `EDTOBJAUT`), DB2 for i, save
+      files (`SAVLIB`, `RSTLIB`). The bridge from the familiar: `ssh` lands
+      in PASE/QShell, a Unix-like shell on the same machine, with the IFS
+      (`/QSYS.LIB/…`) linking both worlds. Possible stories: a job stuck in
+      MSGW waiting for an answer, a full output queue, a nightly save that
+      must be checked, an export of a DB2 table to the Linux side (CSV over
+      `ssh`, CCSID conversions). Interface: a CL command line first; the
+      5250 green screen (fixed 80×24 menus, function keys) is a later,
+      optional step.
+- [ ] **A mixed fleet, seen from Linux**: the Windows machines a Linux
+      admin deals with, without simulating Windows itself. A script copied
+      from Windows that fails with `/bin/bash^M: bad interpreter` (CRLF,
+      `file`, `dos2unix`, `.gitattributes`); a Windows file server through
+      SMB (`smbclient`, `mount -t cifs`, credentials file, `vers=`); WSL;
+      and a Windows Server reached through its built-in OpenSSH, where the
+      prompt is PowerShell (a handful of read-only commands: the bridge to
+      the next step).
+- [ ] **Windows administration: the basics** (cmd and PowerShell). A
+      second engine beside the POSIX one: PowerShell's pipeline carries
+      objects, not text (`Get-Process | Where-Object CPU -gt 50 | Sort-Object`),
+      paths are `C:\…` and case-insensitive, rights are ACLs (`icacls`,
+      `Get-Acl`), services are `Get-Service`/`Restart-Service`, the
+      configuration lives partly in the registry (`Get-ItemProperty
+      HKLM:\…`), logs in the Event Log (`Get-WinEvent`), the firewall is
+      `Get-NetFirewallRule`, scheduled tasks replace cron, local users and
+      groups (`Get-LocalUser`, `net user`), and `Get-Help` is the manual
+      (the "manual first" rule holds). cmd and batch only where they still
+      matter (`ipconfig`, `ping`, `net use`, reading an old `.bat`).
+      Possible stories: a Windows file server whose share refuses a
+      department (NTFS vs share permissions), a service that stops after a
+      password change (the service account), a disk full of logs, a
+      scheduled backup that silently stopped. Later: Active Directory
+      basics (users, groups, GPO, `Get-ADUser`), the natural sequel to "The
+      Directory" (OpenLDAP).
+      Engine work, to plan as several PRs: a PowerShell parser and object
+      pipeline, cmdlets with their `Get-Help` pages (texts in `.ftl` like
+      every other page), an NTFS-like world (drives, ACLs, case-insensitive
+      names), a registry, an event log; the workstation's `ssh` reaching a
+      Windows machine. The interface stays the same (terminal, notebook,
+      hints, map). The charter changes with it: "learn Linux system
+      administration" becomes "learn system administration" in `README.md`,
+      `CLAUDE.md` and the home page, once the first Windows story ships.
+
 ## More ideas
 
 ### New stories (defensive, within the charter)
