@@ -431,6 +431,58 @@ The architecture has prepared for it since phase 0 (see "Translations" in
 - [x] Quests replayed automatically in each language
       (`tests/quests.test.ts`)
 
+---
+
+## Phase 13 — Beyond Linux: the other machines a sysadmin meets
+
+The game started with Linux, but its aim is system administration, and a
+sysadmin meets Windows machines (and the odd other Unix) every week. The
+basics belong in the game. Three steps, from the cheapest to the largest;
+the first two reuse the current engine, the third needs a second one.
+
+- [ ] **Another Unix: portability** (a FreeBSD box, more alive and useful
+      today than Solaris). A backup script written for Debian breaks: GNU
+      vs BSD options (`sed -i ''`, `ps aux` vs `ps -ax`, `date -d`), `pw
+      useradd`, `/etc/rc.conf` and `service`, `pkg`, `sockstat`, a `pf`
+      rule. The lesson: "Linux" is not "Unix", read the manual of the
+      machine you are on, write POSIX `sh`. Same engine model (files, `rwx`,
+      text pipelines); new commands, and their entries in the differences
+      table. Solaris (SMF: `svcs -x`, `svcadm`) could be a single chapter,
+      not a story.
+- [ ] **A mixed fleet, seen from Linux**: the Windows machines a Linux
+      admin deals with, without simulating Windows itself. A script copied
+      from Windows that fails with `/bin/bash^M: bad interpreter` (CRLF,
+      `file`, `dos2unix`, `.gitattributes`); a Windows file server through
+      SMB (`smbclient`, `mount -t cifs`, credentials file, `vers=`); WSL;
+      and a Windows Server reached through its built-in OpenSSH, where the
+      prompt is PowerShell (a handful of read-only commands: the bridge to
+      the next step).
+- [ ] **Windows administration: the basics** (cmd and PowerShell). A
+      second engine beside the POSIX one: PowerShell's pipeline carries
+      objects, not text (`Get-Process | Where-Object CPU -gt 50 | Sort-Object`),
+      paths are `C:\…` and case-insensitive, rights are ACLs (`icacls`,
+      `Get-Acl`), services are `Get-Service`/`Restart-Service`, the
+      configuration lives partly in the registry (`Get-ItemProperty
+      HKLM:\…`), logs in the Event Log (`Get-WinEvent`), the firewall is
+      `Get-NetFirewallRule`, scheduled tasks replace cron, local users and
+      groups (`Get-LocalUser`, `net user`), and `Get-Help` is the manual
+      (the "manual first" rule holds). cmd and batch only where they still
+      matter (`ipconfig`, `ping`, `net use`, reading an old `.bat`).
+      Possible stories: a Windows file server whose share refuses a
+      department (NTFS vs share permissions), a service that stops after a
+      password change (the service account), a disk full of logs, a
+      scheduled backup that silently stopped. Later: Active Directory
+      basics (users, groups, GPO, `Get-ADUser`), the natural sequel to "The
+      Directory" (OpenLDAP).
+      Engine work, to plan as several PRs: a PowerShell parser and object
+      pipeline, cmdlets with their `Get-Help` pages (texts in `.ftl` like
+      every other page), an NTFS-like world (drives, ACLs, case-insensitive
+      names), a registry, an event log; the workstation's `ssh` reaching a
+      Windows machine. The interface stays the same (terminal, notebook,
+      hints, map). The charter changes with it: "learn Linux system
+      administration" becomes "learn system administration" in `README.md`,
+      `CLAUDE.md` and the home page, once the first Windows story ships.
+
 ## More ideas
 
 ### New stories (defensive, within the charter)
