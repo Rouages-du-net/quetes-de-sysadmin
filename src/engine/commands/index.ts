@@ -52,6 +52,7 @@ import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
 import { GPG } from './gpg';
+import { IPTABLES } from './iptables';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
@@ -152,6 +153,7 @@ function build(): Record<string, Command> {
     ...NFS,
     ...SAMBA,
   ...GPG,
+  ...IPTABLES,
     ...TIME,
     ...SUPERVISION,
     ...TRANSFERS,
