@@ -51,6 +51,7 @@ import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
+import { GPG } from './gpg';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
@@ -150,6 +151,7 @@ function build(): Record<string, Command> {
     ...SYSLOG,
     ...NFS,
     ...SAMBA,
+  ...GPG,
     ...TIME,
     ...SUPERVISION,
     ...TRANSFERS,
