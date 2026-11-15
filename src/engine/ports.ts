@@ -6,6 +6,7 @@
 
 import type { Game } from './shell';
 import { verdict, type Firewall } from './firewall';
+import { iptables, verdict as iptablesVerdict } from './iptables';
 import { dockerListeners, publishedToWorld } from './docker';
 import type { Listening } from './commands/ss';
 
@@ -16,8 +17,11 @@ export function portState(game: Game, port: number, local: boolean, source: stri
   const onAll = listeners.some((e) => e.address === '0.0.0.0' || e.address === '[::]' || e.address === '*');
   if (local) return listeners.length ? 'open' : 'refused';
   if (publishedToWorld(game, port)) return 'open';
+  // The machine's firewall: iptables if it has one (the classic host firewall),
+  // otherwise ufw. Both decide an incoming TCP connection the same way.
+  const direct = iptables(game.state);
   const pf: Firewall | undefined = game.state.ufw;
-  const pass = pf ? verdict(pf, port, source) : 'accepted';
+  const pass = direct ? iptablesVerdict(direct, port, source) : pf ? verdict(pf, port, source) : 'accepted';
   if (pass === 'blocked') return 'filtered';
   if (pass === 'refused') return 'refused';
   return onAll ? 'open' : 'refused';

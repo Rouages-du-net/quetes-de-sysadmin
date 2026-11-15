@@ -303,6 +303,12 @@ export const PAGES: Record<string, Page> = {
     examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M'], see: ['systemctl', 'dmesg', 'journald.conf'] },
   'journald.conf': { section: 5, examples: ['sudo nano /etc/systemd/journald.conf', 'sudo systemctl restart systemd-journald', 'journalctl --disk-usage'], see: ['journalctl', 'systemctl', 'df'] },
   logger: { examples: ['logger "test from the valley"', 'logger -t sshd "Failed password for test"', 'logger -p local0.warning "water tank low"'], see: ['rsyslogd', 'rsyslog.conf', 'journalctl'] },
+  iptables: {
+    section: 8,
+    examples: ['sudo iptables -L -n -v', 'sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT', 'sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT', 'sudo iptables -P INPUT DROP', 'sudo iptables -S', 'sudo iptables-save'],
+    see: ['ufw', 'nft', 'ss', 'netstat'],
+  },
+  'iptables-save': { section: 8, examples: ['sudo iptables-save', 'sudo iptables-save > /etc/iptables/rules.v4'], see: ['iptables'] },
   gpg: {
     section: 1,
     examples: ['gpg --list-keys', 'gpg -c backup.tar', 'gpg -o backup.tar.gpg -e -r admin@example backup.tar', 'gpg --decrypt backup.tar.gpg', 'gpg --import release.asc', 'gpg --verify sysadmin-quests.tar.gz.asc sysadmin-quests.tar.gz'],
