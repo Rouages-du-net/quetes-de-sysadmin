@@ -248,6 +248,57 @@ export const SYSTEM: Record<string, Command> = {
     },
   },
 
+  // killall: stops every process whose program name EXACTLY matches a name
+  // (unlike pkill, which matches a pattern). -SIGNAL or -s SIGNAL chooses the
+  // signal (TERM by default), -u limits it to an account, -v says what it did.
+  // Exit code 1 if a name matches nothing (like the real killall).
+  killall: {
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      let signal = 'TERM';
+      const is = args.findIndex((a) => a === '-s' || a === '--signal');
+      if (is >= 0) {
+        const s = readSignal(args[is + 1] ?? '');
+        if (!s) return game.error(`killall: Unknown signal "${args[is + 1] ?? ''}".`, 2);
+        signal = s;
+        args = args.filter((_, k) => k !== is && k !== is + 1);
+      }
+      const named = args.find((a) => /^-[A-Za-z0-9]+$/.test(a) && a !== '-u' && a !== '-v');
+      if (named) {
+        const s = readSignal(named.slice(1));
+        if (!s) return game.error(`killall: Unknown signal "${named.slice(1)}".`, 2);
+        signal = s;
+        args = args.filter((a) => a !== named);
+      }
+      const verbose = args.includes('-v') || args.includes('--verbose');
+      const iu = args.indexOf('-u');
+      const account = iu >= 0 ? args[iu + 1] : null;
+      const names = args.filter((a, k) => !a.startsWith('-') && (iu < 0 || k !== iu + 1) && a !== '-v' && a !== '--verbose');
+      if (!names.length) return game.error(game.t('killall-usage'), 2);
+      const listing: Process[] = game.state.process ?? [];
+      // The program's name, like /proc/pid/comm: the command's first word, without its path.
+      const comm = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
+      const messages: string[] = [];
+      for (const name of names) {
+        const chosen = listing.filter((p) => comm(p) === name && (!account || p.user === account) && !p.zombie);
+        if (!chosen.length) {
+          game.error(game.t('killall-none', { name: name }), 1);
+          continue;
+        }
+        for (const p of chosen) {
+          if (game.who !== 'root' && p.user !== game.who) {
+            game.error(game.t('killall-not-allowed', { name: name, pid: String(p.pid) }));
+            continue;
+          }
+          const m = sendSignal(game, p, signal);
+          if (m) messages.push(m);
+          if (verbose) messages.push(`Killed ${name}(${p.pid}) with signal ${SIGNALS.indexOf(signal) + 1}`);
+        }
+      }
+      return messages.join('\n');
+    },
+  },
+
   // who: the open sessions (a session lives as long as its sshd process runs).
   who: {
     launch: ({ game }) => {
