@@ -32,7 +32,26 @@ export type File = {
   // Last modification date (ms, local time read as UTC, like
   // systemd's clock); without it, the file is considered recent.
   mtime?: number;
+  // A gpg-encrypted or -signed file (see gpg.ts): `content` shows the PGP
+  // armour, this holds what the simulated gpg needs to decrypt or verify it.
+  crypto?: CryptoBlob;
 } & Rights;
+// What the simulated gpg stores on an encrypted, signed or key file.
+export interface CryptoBlob {
+  kind: 'message' | 'signature' | 'signed' | 'key';
+  // message: symmetric (a passphrase) or public (recipients' key ids).
+  mode?: 'symmetric' | 'public';
+  recipients?: string[];
+  passDigest?: string;
+  // signature / signed: who signed, and the digest of what was signed.
+  signer?: string;
+  signerUid?: string;
+  digest?: string;
+  // The plaintext of a message, or the text covered by a clearsign signature.
+  data?: string;
+  // key: the imported/exported public key (uid, fingerprint, …).
+  key?: { fingerprint: string; uid: string; created: string; algo: string };
+}
 // Unix owner, group and permissions (rwx for the owner, the
 // group, the others). By default: "you", the group named after the
 // owner, rw-r--r-- (file), rwxr-xr-x (place).

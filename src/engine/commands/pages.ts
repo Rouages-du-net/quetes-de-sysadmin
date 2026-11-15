@@ -303,6 +303,11 @@ export const PAGES: Record<string, Page> = {
     examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M'], see: ['systemctl', 'dmesg', 'journald.conf'] },
   'journald.conf': { section: 5, examples: ['sudo nano /etc/systemd/journald.conf', 'sudo systemctl restart systemd-journald', 'journalctl --disk-usage'], see: ['journalctl', 'systemctl', 'df'] },
   logger: { examples: ['logger "test from the valley"', 'logger -t sshd "Failed password for test"', 'logger -p local0.warning "water tank low"'], see: ['rsyslogd', 'rsyslog.conf', 'journalctl'] },
+  gpg: {
+    section: 1,
+    examples: ['gpg --list-keys', 'gpg -c backup.tar', 'gpg -o backup.tar.gpg -e -r admin@example backup.tar', 'gpg --decrypt backup.tar.gpg', 'gpg --import release.asc', 'gpg --verify sysadmin-quests.tar.gz.asc sysadmin-quests.tar.gz'],
+    see: ['tar', 'ssh-keygen'],
+  },
   rsyslogd: { examples: ['sudo rsyslogd -N1', 'sudo systemctl restart rsyslog', 'journalctl -u rsyslog'], see: ['rsyslog.conf', 'logger', 'ss', 'ufw'] },
   exportfs: { examples: ['sudo exportfs -v', 'sudo exportfs -ra', 'sudo exportfs -s'], see: ['exports', 'showmount', 'nfs'] },
   exports: { section: 5, examples: ['/srv/photos 192.0.2.32(rw,sync,no_subtree_check)', '/srv/photos 192.0.2.0/24(ro,sync,no_subtree_check)', '/srv/backup backup.internal(rw,sync,no_subtree_check,no_root_squash)'], see: ['exportfs', 'showmount', 'nfs'] },

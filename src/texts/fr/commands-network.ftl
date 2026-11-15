@@ -48,3 +48,7 @@ nft-preview-ufw = (Sur cette machine, ce sont ufw et fail2ban qui écrivent les 
 
 smbclient-interactive = smbclient : le jeu exécute les commandes données avec -c (ex. -c "ls" ; plusieurs : -c "put photo.jpg; ls"), pas une session interactive.
 pdbedit-usage = pdbedit : le jeu ne fait que lister les utilisateur·rices de Samba : pdbedit -L
+
+## gpg (GnuPG)
+
+gpg-usage = gpg : aucune action indiquée (essaie : gpg --list-keys, gpg -c fichier, gpg --verify fichier.asc ; voir man gpg)

@@ -48,3 +48,7 @@ nft-preview-ufw = (On this machine, ufw and fail2ban write the firewall rules: h
 
 smbclient-interactive = smbclient: the game runs the commands given with -c (e.g. -c "ls"; several: -c "put photo.jpg; ls"), not an interactive session.
 pdbedit-usage = pdbedit: the game only lists Samba's users: pdbedit -L
+
+## gpg (GnuPG)
+
+gpg-usage = gpg: no action given (try: gpg --list-keys, gpg -c file, gpg --verify file.asc; see man gpg)
