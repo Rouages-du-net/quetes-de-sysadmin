@@ -431,6 +431,7 @@ export const PAGES: Record<string, Page> = {
   ping: { see: ['traceroute', 'dig'] },
   ps: { examples: ['ps aux', 'ps -ef', 'ps -u marc', 'ps -eo pid,ni,%cpu,comm --sort=-%cpu', 'ps -p 3301'], see: ['kill', 'pkill', 'pgrep', 'top', 'systemctl'] },
   pkill: { long: { full: 'f' }, options: ['u', 'f'], examples: ['sudo pkill -u marc', 'pkill tail', 'sudo pkill -KILL -f sync-photos'], see: ['kill', 'pgrep', 'ps', 'who'] },
+  killall: { section: 1, options: ['u', 'v'], examples: ['killall tail', 'sudo killall -HUP nginx', 'sudo killall -u marc'], see: ['kill', 'pkill', 'ps', 'signal'] },
   pwd: { see: ['cd'] },
   reboot: { section: 8, examples: ['sudo reboot'], see: ['systemctl'] },
   rsnapshot: {
@@ -471,7 +472,8 @@ export const PAGES: Record<string, Page> = {
     examples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C you@desk'],
     see: ['ssh', 'ssh-copy-id'],
   },
-  ss: { long: { 'tcp': 't', 'udp': 'u', 'listening': 'l', 'all': 'a', 'numeric': 'n', 'processes': 'p' }, section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], examples: ['sudo ss -tlnp', 'ss -t'], see: ['ufw', 'ps', 'systemctl'] },
+  ss: { long: { 'tcp': 't', 'udp': 'u', 'listening': 'l', 'all': 'a', 'numeric': 'n', 'processes': 'p' }, section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], examples: ['sudo ss -tlnp', 'ss -t'], see: ['ufw', 'ps', 'systemctl', 'netstat'] },
+  netstat: { section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], examples: ['sudo netstat -tlnp', 'netstat -tn'], see: ['ss', 'ufw', 'ps'] },
   sshd: { section: 8, options: ['t', 'T', 'f'], examples: ['sudo sshd -t', 'sudo sshd -T | grep -i password'], see: ['sshd_config', 'ssh', 'systemctl'] },
   sshd_config: { section: 5, examples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], see: ['sshd', 'ssh', 'nano'] },
   ssh_config: { section: 5, examples: ['nano ~/.ssh/config', 'ssh -G wiki'], see: ['ssh', 'sshd_config'] },

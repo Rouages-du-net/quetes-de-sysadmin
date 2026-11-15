@@ -35,6 +35,11 @@ logrotate-usage =
 pkill-usage =
     pkill: no matching criteria specified
     Try `pkill --help' for more information.
+killall-usage = Usage: killall [-s SIGNAL | -SIGNAL] [-u user] [-v] name...
+# { $name }: the program name given to killall
+killall-none = killall: { $name }: no process found
+# { $name }: the program name, { $pid }: the process number
+killall-not-allowed = { $name }({ $pid }): Operation not permitted
 
 # ionice followed by a command: the game can only adjust processes already running.
 ionice-command = ionice: here, only for a process that is already running (ionice -p PID, or ionice -c 3 -p PID). See man ionice.
