@@ -54,6 +54,8 @@ import { SAMBA } from './samba';
 import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
 import { SED } from './sed';
+import { ICONV } from './iconv';
+import { SOLARIS } from './solaris';
 import { FREEBSD } from './freebsd';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
@@ -157,6 +159,8 @@ function build(): Record<string, Command> {
   ...GPG,
   ...IPTABLES,
     ...SED,
+    ...ICONV,
+    ...SOLARIS,
     ...FREEBSD,
     ...TIME,
     ...SUPERVISION,

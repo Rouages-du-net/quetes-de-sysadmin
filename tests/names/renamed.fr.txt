@@ -930,6 +930,56 @@ last-rule
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+read-first
+  /export/home/you → /export/home/vous
+  /export/home/you/email_inaya.txt → /export/home/vous/courriel_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/vous/notes-d-odette.txt
+  /export/home/you/migration.md → /export/home/vous/migration.md
+  /export/home/you/.ssh → /export/home/vous/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/vous/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/vous/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/vous/.ssh/id_ed25519.pub
+  /export/backup → /export/sauvegarde
+  /export/backup/pgdata-weekly.tar → /export/sauvegarde/pgdata-weekly.tar
+
+read-first:greenhouse
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+byte-order
+  /export/home/you → /export/home/vous
+  /export/home/you/email_inaya.txt → /export/home/vous/courriel_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/vous/notes-d-odette.txt
+  /export/home/you/migration.md → /export/home/vous/migration.md
+  /export/home/you/.ssh → /export/home/vous/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/vous/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/vous/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/vous/.ssh/id_ed25519.pub
+  /export/backup → /export/sauvegarde
+  /export/backup/pgdata-weekly.tar → /export/sauvegarde/pgdata-weekly.tar
+
+byte-order:greenhouse
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+switch-over
+  /export/home/you → /export/home/vous
+  /export/home/you/email_inaya.txt → /export/home/vous/courriel_inaya.txt
+  /export/home/you/migration.md → /export/home/vous/migration.md
+  /export/home/you/.ssh → /export/home/vous/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/vous/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/vous/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/vous/.ssh/id_ed25519.pub
+  /export/backup → /export/sauvegarde
+  /export/backup/pgdata-weekly.tar → /export/sauvegarde/pgdata-weekly.tar
+
+switch-over:greenhouse
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

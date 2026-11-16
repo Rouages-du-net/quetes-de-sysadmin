@@ -159,6 +159,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `stat` | GNU's `-c FORMAT` (`%s`, `%n`, `%U`, `%G`, `%a`, `%A`, `%y`, `%Y`, `%F`) and `-f` (file system); BSD's `-f FORMAT` (`%z`, `%N`, `%Su`, `%Sg`, `%Lp`, `%Sp`, `%Sm`, `%m`) on FreeBSD; each refuses the other's option | the other format sequences, `-L`, `-t`, inodes and devices |
 | `date` | `+FORMAT`; on Linux, GNU's `-d` (`yesterday`, `tomorrow`, `N days ago`, `+N weeks`, an ISO date, `@seconds`) and `-s` (root); on FreeBSD, BSD's `-v` (adjust or set a field: `y m w d H M S`), `-j`, `-u`; each refuses the other's options | GNU's full date grammar ("next Friday"), BSD's `-f` input format, `-r` |
 | FreeBSD (`state.os`) | a machine of the story "The Other Unix": its login banner and `uname`, `freebsd-version`; Debian's commands are "not found" (`systemctl`, `journalctl`, `apt`, `ss`, `ip`, `ufw`, `iptables`…), `bash` too until `pkg install bash`; a script's `#!` line names an interpreter that must exist ("./script: not found"); sudo reads `/usr/local/etc/sudoers`; `man` shows the BSD page of `date`, `sed`, `stat`, `ps`, `ls`, `grep`, `find`, `du` (and SEE ALSO leaves out Debian-only commands) | the other tools' BSD versions (`cp`, `tar`, `xargs`… behave as on Linux), `csh`/`tcsh`, `pw`, jails, ZFS, ports |
+| Solaris 10 (`state.os`) | a machine of the story "The Old Sun": its login banner, `uname` (SunOS, sun4u sparc) and `isainfo`; Debian's and FreeBSD's commands are "not found" (`systemctl`, `top`, `free`, `stat`, `ss`, `ip`…); the old `/usr/bin` tools refuse modern options with Solaris's messages (`grep` without `-q`/`-E`/`-r`, `sed` without `-i`, `tar` without `z`, `find` without `-maxdepth`/`-delete`, `du` without `-b`, `date` without `-d`, `ps aux` without a dash), while `/usr/xpg4/bin/…` and `/usr/ucb/ps` behave like their POSIX and BSD versions; `man` shows the Solaris page of `grep` and `ps`; sudo (from sunfreeware) reads `/usr/local/etc/sudoers` | a single global zone, Solaris's `ls -l` and `df` formats, `pfexec` and RBAC, `/usr/xpg4/bin` for other tools than those named |
+| `svcs`, `svcadm`, `svcprop` | SMF services by FMRI (or the end of it), their state (online, disabled, maintenance, legacy_run), `svcs -a`, `-x` (why a service is in maintenance), `-l`, `-p`, `-H`; `svcadm enable`/`disable` (`-t`), `restart`, `refresh`, `clear` (root); `svcprop -p` | milestones, dependencies between services, `svccfg` and manifests, `svcs -d`/`-D`, `-o` |
+| `zfs`, `zpool` | `zfs list` (`-t snapshot`), `zfs snapshot` (root), `zfs destroy` of a snapshot, `zfs get`; `zpool list`, `zpool status` | `zfs rollback`, `send`/`receive`, clones, properties beyond a few, sizes that follow the files |
+| `prstat`, `pkginfo`, `isainfo`, `zoneadm`, `zonename` | one snapshot of the processes (`prstat`); the SVR4 packages (`pkginfo`, `-l`); the instruction sets; the global zone | `prstat`'s refresh and sorting options, `pkgadd`/`pkgrm`, non-global zones |
+| `iconv`, `file`, character sets | a file may be LATIN1 (`File.charset`): `cat`, `grep`, `head`… show `�` for its accented letters on the UTF-8 terminal; `iconv -f`/`-t` between LATIN1 and UTF-8 (`-l`), and a UTF-8 text converted "from LATIN1" becomes mojibake (`Ã©`); `file` tells ASCII, UTF-8 and ISO-8859 texts, tar archives, data; a redirection keeps the charset a command wrote in (`pg_dump` of a LATIN1 database), `scp` keeps a file's charset and archive | other charsets (CP1252, EBCDIC…), `//TRANSLIT`, `file -i` |
+| PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
 | `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
 | `service`, `sysrc`, `rc.conf` | rc services: `start`, `stop`, `restart`, `reload`, `status`, the `one` prefix, `enable`/`disable`, `service -e`; rc.subr's refusal without `NAME_enable="YES"` in `/etc/rc.conf`; `sysrc NAME`, `NAME=VALUE`, `-x`, `-a` | `rcorder`, `/etc/rc.conf.local` and `rc.conf.d`, rc script variables beyond `_enable` |
@@ -2649,6 +2655,63 @@ reachable from the internet and from the workstation, 3306 not, the rules
 in force equal to `/etc/pf.conf`. Expected traps: enabling it as it is (the
 next ssh connection would be refused), `pfctl -e` without `pf_enable`, an
 edited file not reloaded. Other accepted solution: `quick` passes.
+
+## Story 27: The Old Sun (three chapters)
+
+The neighbourhood seed library's catalogue has lived since 2009 on a Sun
+Fire V240 (`herbarium`, 192.0.2.35): Solaris 10 on SPARC, PostgreSQL 8.4 in
+LATIN1, set up by Odette, now retired. Inaya, who coordinates the
+volunteers, bought a new Debian server, `greenhouse` (192.0.2.36, reached
+over ssh from herbarium). Moving off an old system: read it before touching
+it, take a copy that travels, mind the character set, check, and keep the
+old box. The machine's flavour is in `state.os` (`src/engine/solaris.ts`).
+It opens after "The Database" and "The Script That Broke".
+
+### Chapter 1 — Read Before Touching (done)
+
+| Step | Command learnt |
+|---|---|
+| The services | `systemctl`, `top`: not found; `svcs`, `svcs -x` (sendmail, broken and unrelated), `svcs -l` |
+| The data | `svcprop -p postgresql_84/data …`, `prstat`, `ps -ef` |
+| The disks | `zfs list`, `zpool status`; `uname -a`, `isainfo -v` (SPARC) |
+| The database | `sudo -u postgres psql -l` (seeds, LATIN1), `SELECT version()` |
+| The safety net | `zfs snapshot data/postgres@before-migration`, `zfs list -t snapshot` |
+
+Goal checked on the state: migration.md names the service, the data
+directory and its dataset, the database, its version and its character
+set; a snapshot of data/postgres exists. Expected traps: `grep -q` (the old
+`/usr/bin/grep`; `/usr/xpg4/bin/grep`), `ps aux` (`/usr/ucb/ps aux`), the
+notes without a snapshot.
+
+### Chapter 2 — Bytes in the Wrong Order (done)
+
+| Step | Command learnt |
+|---|---|
+| Odette's way | `scp` the weekly tar, `tar -xf`, `/usr/lib/postgresql/16/bin/pg_ctl -D data_64 start`: incompatible (another version; another byte order) |
+| Stop what writes | `svcadm disable seed-catalogue` (the catalogue records lendings while online) |
+| A dump | `pg_dump seeds > seeds.sql` (LATIN1: `file` says ISO-8859, `�` on the terminal), `scp` |
+| Restore | `createdb -O catalogue seeds`, `psql -d seeds -f seeds.sql`, `SELECT name FROM varieties` |
+
+Goal checked on the state: the catalogue stopped, greenhouse's seeds
+database holds exactly herbarium's rows, accents intact. Expected traps:
+starting the copied data files, dumping while the catalogue still writes
+(rows missing), `iconv` to UTF-8 while the dump still says `SET
+client_encoding = 'LATIN1'` (double conversion: `CrimÃ©e`). Other accepted
+solutions: `pg_dump -E UTF8`, or `iconv` and the `SET` line changed too.
+
+### Chapter 3 — Trust, Then Switch (done)
+
+| Step | Command learnt |
+|---|---|
+| Check | `SELECT count(*)` on both sides |
+| Switch | `catalogue.ini` (`db_host = greenhouse.internal`), `svcadm enable seed-catalogue` |
+| Freeze | `ALTER DATABASE seeds SET default_transaction_read_only = on`, or `svcadm disable postgresql_84` |
+
+Goal checked on the state: the catalogue online and writing to greenhouse,
+the old database read-only or stopped, its data directory and the snapshot
+still there. Expected traps: restarting the catalogue without changing its
+configuration (it still writes to the old box), erasing the old data or
+the snapshot.
 
 ## Ideas for later
 

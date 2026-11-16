@@ -408,3 +408,7 @@ name-email_selma-txt = email_selma.txt
 name-message_from_yanis-txt = message_from_yanis.txt
 name-message_from_romy-txt = message_from_romy.txt
 name-lucien-notes-txt = lucien-notes.txt
+
+## The Old Sun
+name-email_inaya-txt = email_inaya.txt
+name-odette-notes-txt = odette-notes.txt

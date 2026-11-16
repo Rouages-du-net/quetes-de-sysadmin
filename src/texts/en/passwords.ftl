@@ -59,3 +59,5 @@ password-slide-2028 = slide-2028
 ## The Bastion
 password-sandwich-loaf-2029 = sandwich-loaf-2029
 password-film-reel-2029 = film-reel-2029
+
+password-seed-2029 = seed-2029

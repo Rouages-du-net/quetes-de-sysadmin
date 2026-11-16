@@ -96,7 +96,7 @@ for (const width of [1000, 375]) {
   check(!recalled.includes('ssh royaume'), `${width} px: the up arrow ignores the workstation's history`);
   await input.fill('');
   // Every group of commands is in the bundle (a module loaded too early used to leave some out).
-  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat']) {
+  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat', 'svcs', 'zfs', 'iconv', 'file']) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }

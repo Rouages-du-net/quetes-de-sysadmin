@@ -457,16 +457,15 @@ each need an engine of their own.
       where the last matching rule wins. The lesson: "Linux" is not "Unix",
       read the manual of the machine you are on, write POSIX `sh`. Later:
       `pw useradd`, `ps` and `ls` in their BSD versions.
-- [ ] **Solaris: migrating off an old server** (a real job, still done
-      today). A Solaris 10 box nobody dares touch holds a database that
-      must move to a recent Linux server. Reading an unfamiliar system
-      before touching it: SMF (`svcs -a`, `svcs -x`, `svcadm`), `prstat`,
-      `zfs list` and snapshots, zones (`zoneadm list`), `pkginfo`, `/usr/xpg4/bin`
-      vs `/usr/bin` tools; then the move itself: a consistent dump taken
-      with the service stopped, endianness and character sets (SPARC is
-      big-endian: binary data files don't travel, dumps do), `scp`/`rsync`
-      to the new server, a restore, checks, and the old box kept read-only
-      until the new one is trusted. Same engine model as the other Unix.
+- [x] **Solaris: migrating off an old server** ("The Old Sun", story 27 in
+      `docs/SCENARIOS.md`; `src/engine/solaris.ts`). A Solaris 10 SPARC box
+      holds a PostgreSQL 8.4 database in LATIN1 that moves to a Debian
+      server: reading the system first (SMF with `svcs`/`svcadm`/`svcprop`,
+      `prstat`, `zfs` and a snapshot, `pkginfo`, `isainfo`, the old
+      `/usr/bin` tools and `/usr/xpg4/bin`), then a dump rather than the data
+      files (another version, another byte order), character sets
+      (`file`, `iconv`, `SET client_encoding`), checks, and the old box
+      frozen rather than erased.
 
 ### Legacy systems: old but valuable
 

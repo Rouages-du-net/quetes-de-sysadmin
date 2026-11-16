@@ -53,3 +53,5 @@ story-bastion = The Bastion
     .summary = A year after The Watch, the Bakery's delivery server talks all night to a mining pool: find what runs and how it got in, contain it without locking yourself out, remove what was left behind and check what was changed, then harden so it can't happen again.
 story-other-unix = The Other Unix
     .summary = The film club's server runs FreeBSD, and Debian habits break: a script written with GNU's tools, services without systemd (pkg, rc.conf, service), and a firewall where the last rule wins (pf).
+story-old-sun = The Old Sun
+    .summary = The seed library's catalogue has lived since 2009 on a Sun box running Solaris 10: read the system before touching it (SMF, ZFS), move its database to a new Debian server with a dump (byte order, character sets), then switch over and keep the old box frozen.

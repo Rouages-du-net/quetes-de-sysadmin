@@ -35,3 +35,4 @@ machine-valley = vallee
 machine-nas = nas
 machine-oven = four
 machine-projector = projecteur
+machine-herbarium = herbier

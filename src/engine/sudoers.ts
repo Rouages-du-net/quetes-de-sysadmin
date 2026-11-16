@@ -17,7 +17,7 @@ import { wildcard } from './tools';
 
 export const SUDOERS = '/etc/sudoers';
 /** sudo's main file: /etc/sudoers, or /usr/local/etc/sudoers where sudo is a package (FreeBSD). */
-export const sudoersFile = (game: { state: Record<string, unknown> }) => (game.state.os === 'freebsd' ? '/usr/local/etc/sudoers' : SUDOERS);
+export const sudoersFile = (game: { state: Record<string, unknown> }) => (game.state.os === 'freebsd' || game.state.os === 'solaris' ? '/usr/local/etc/sudoers' : SUDOERS);
 
 export interface Rule {
   who: string[];

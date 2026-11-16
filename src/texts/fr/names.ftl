@@ -411,3 +411,7 @@ name-email_selma-txt = courriel_selma.txt
 name-message_from_yanis-txt = message_de_yanis.txt
 name-message_from_romy-txt = message_de_romy.txt
 name-lucien-notes-txt = notes-de-lucien.txt
+
+## Le vieux Soleil
+name-email_inaya-txt = courriel_inaya.txt
+name-odette-notes-txt = notes-d-odette.txt

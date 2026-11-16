@@ -10,7 +10,8 @@
 // \l, \dt, \d, \du; psql without -c or -f doesn't open in interactive mode.
 
 import type { Shell } from '../shell';
-import { connection, copyOf, dumpSql, readDumpSql, postgres, grid, type Table } from '../postgres';
+import { connection, copyOf, dumpEncoding, dumpSql, readDumpSql, postgres, grid, versionLine, type Table } from '../postgres';
+import { bytes, decode, hexBytes } from '../charset';
 import { hex } from './restic';
 import { adminSql } from './pg-admin';
 import { roleSql } from './pg-roles';
@@ -54,7 +55,16 @@ function sql(game: Shell, base: string, httpRequest: string): string {
   if (admin !== null) return admin;
   // A standby in recovery refuses every write.
   const write = /^(insert|update|delete|truncate|drop|create|alter\s+(table|role|user|default)|grant|revoke)\b/i.exec(r);
-  if (write && server(game)?.recovery) return game.error(`ERROR:  cannot execute ${write[1].toUpperCase()} in a read-only transaction`);
+  if (write && (server(game)?.recovery || b.readOnly)) return game.error(`ERROR:  cannot execute ${write[1].toUpperCase()} in a read-only transaction`);
+  if (/^select\s+version\(\)$/i.test(r)) return grid(['version'], [[versionLine(pg)]]);
+  // ALTER DATABASE … SET default_transaction_read_only = on: the old database kept, but frozen.
+  const readOnly = /^alter\s+database\s+"?(\w+)"?\s+set\s+default_transaction_read_only\s*(?:=|to)\s*'?(on|off|true|false)'?$/i.exec(r);
+  if (readOnly) {
+    if (game.who !== 'postgres' && pg.bases[readOnly[1]]?.owner !== game.who) return game.error(`ERROR:  must be owner of database ${readOnly[1]}`);
+    if (!pg.bases[readOnly[1]]) return game.error(`ERROR:  database "${readOnly[1]}" does not exist`);
+    pg.bases[readOnly[1]].readOnly = /on|true/i.test(readOnly[2]);
+    return 'ALTER DATABASE';
+  }
   const roles = roleSql(game, base, r);
   if (roles !== null) return roles;
   // Privileges (when the chapter models them): the role must be allowed on the table.
@@ -68,7 +78,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
       ['Name', 'Owner', 'Encoding'],
       Object.entries(pg.bases)
         .sort(([a], [z]) => a.localeCompare(z))
-        .map(([name, x]) => [name, x.owner, 'UTF8']),
+        .map(([name, x]) => [name, x.owner, x.encoding ?? 'UTF8']),
       'List of databases',
     );
   if (/^\\dt\+?$/.test(r)) {
@@ -238,8 +248,17 @@ export const POSTGRES: Record<string, Command> = {
       }
       const file = options['-f'] ?? options['--file'];
       if (file) {
-        const text = game.readFor('psql', file);
-        if (text === null) return '';
+        const raw = game.readFor('psql', file);
+        if (raw === null) return '';
+        // The script's bytes, read with the encoding it declares (SET client_encoding).
+        const node = game.find(file);
+        const declared = dumpEncoding(raw).toUpperCase().replace(/[^A-Z0-9]/g, '');
+        const decoded = decode(bytes(raw, node?.type === 'file' && node.charset === 'latin1' ? 'latin1' : 'utf8'), declared === 'LATIN1' ? 'latin1' : 'utf8');
+        if ('invalid' in decoded) {
+          const line = raw.split('\n').findIndex((l) => /[\u0080-\u00ff]/.test(l)) + 1;
+          return game.error(`psql:${file}:${line}: ERROR:  invalid byte sequence for encoding "UTF8": ${hexBytes(decoded.invalid)}\nCONTEXT:  COPY failed`);
+        }
+        const text = decoded.text;
         const tables = readDumpSql(text);
         if (!tables) return game.error(`psql:${file}:1: ERROR:  syntax error at or near "${text.split(/\s+/)[0] ?? ''}"`);
         const errors = restore(game, base, tables, false, false).map((l) =>
@@ -266,6 +285,8 @@ export const POSTGRES: Record<string, Command> = {
         '--dbname',
         '-U',
         '--username',
+        '-E',
+        '--encoding',
       ]);
       const base = options['-d'] ?? options['--dbname'] ?? positional[0] ?? game.who;
       const e = connection(game, 'pg_dump', base);
@@ -276,6 +297,8 @@ export const POSTGRES: Record<string, Command> = {
       if (unknown) return game.error(`pg_dump: error: no matching tables were found for pattern "${unknown}"`);
       const tables = copyOf(Object.fromEntries(Object.entries(b.tables).filter(([n]) => !chosen.length || chosen.includes(n))));
       const format = (options['-F'] ?? options['--format'] ?? 'p').toLowerCase()[0];
+      const encoding = (options['-E'] ?? options['--encoding'] ?? b.encoding ?? 'UTF8').toUpperCase().replace(/^UTF-8$/, 'UTF8');
+      const latin1 = format !== 'c' && /^(LATIN1|ISO88591|ISO-8859-1)$/.test(encoding.replace(/_/g, ''));
       let text: string;
       if (format === 'c') {
         const time = systemd(game)?.clock ?? 0;
@@ -285,17 +308,23 @@ export const POSTGRES: Record<string, Command> = {
         );
         postgres(game)!.archives[id] = { base, tables, time };
         text = `PGDMP ${id}`;
-      } else text = dumpSql(base, tables, b.owner);
+      } else text = dumpSql(base, tables, b.owner, { encoding: encoding, version: postgres(game)!.version });
       const file = options['-f'] ?? options['--file'];
-      if (!file) return text;
+      // Written in the client encoding: the database's own unless -E says otherwise.
+      if (!file) {
+        if (latin1) game.outputCharset = 'latin1';
+        return text;
+      }
       const n = game.find(file);
       if (n?.type === 'file') {
         if (!game.can(n, 'w')) return game.error(`pg_dump: error: could not open output file "${file}": Permission denied`);
         n.content = text;
         delete n.size;
+        if (latin1) n.charset = 'latin1';
+        else delete n.charset;
         return '';
       }
-      const error = game.place('pg_dump', file, { type: 'file', content: text, lines: true, owner: game.who, mode: 'rw-r--r--' });
+      const error = game.place('pg_dump', file, { type: 'file', content: text, lines: true, owner: game.who, mode: 'rw-r--r--', ...(latin1 ? { charset: 'latin1' as const } : {}) });
       return error
         ? game.error(
             `pg_dump: error: could not open output file "${file}": ${game.find(file + '/..') ? 'Permission denied' : 'No such file or directory'}`,
@@ -356,15 +385,56 @@ export const POSTGRES: Record<string, Command> = {
   createdb: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      const { options, positionnels: positional } = readOptions(args, ['-O', '--owner', '-U', '--username']);
+      const { options, positionnels: positional } = readOptions(args, ['-O', '--owner', '-U', '--username', '-E', '--encoding', '-T', '--template', '-l', '--locale']);
       const name = positional[0] ?? game.who;
       const e = connection(game, 'createdb', 'postgres');
       if (e) return game.error(e);
       const pg = postgres(game)!;
       if (game.who !== 'postgres') return game.error('createdb: error: database creation failed: ERROR:  permission denied to create database');
       if (pg.bases[name]) return game.error(`createdb: error: database creation failed: ERROR:  database "${name}" already exists`);
-      pg.bases[name] = { owner: options['-O'] ?? options['--owner'] ?? game.who, tables: {} };
+      const encoding = (options['-E'] ?? options['--encoding'] ?? 'UTF8').toUpperCase().replace(/^UTF-8$/, 'UTF8');
+      pg.bases[name] = { owner: options['-O'] ?? options['--owner'] ?? game.who, tables: {}, ...(encoding !== 'UTF8' ? { encoding } : {}) };
       return '';
+    },
+  },
+
+  // pg_ctl: starts a server on a data directory by hand. On Debian it lives in
+  // /usr/lib/postgresql/16/bin, outside the PATH (pg_ctlcluster drives the
+  // clusters). A data directory from another version (or another processor's
+  // byte order) won't start: the files are not portable, a dump is.
+  // https://www.postgresql.org/docs/16/app-pg-ctl.html
+  pg_ctl: {
+    ownOptions: true,
+    directory: '/usr/lib/postgresql/16/bin',
+    launch: ({ args, game }) => {
+      const i = args.indexOf('-D');
+      const dir = i >= 0 ? args[i + 1] : undefined;
+      const action = args.find((a, k) => !a.startsWith('-') && (i < 0 || k !== i + 1));
+      if (game.who === 'root')
+        return game.error('pg_ctl: cannot be run as root\nPlease log in (using, e.g., "su") as the (unprivileged) user that will\nown the server process.', 1);
+      if (!action) return game.error('pg_ctl: no operation specified\nTry "pg_ctl --help" for more information.', 1);
+      if (!dir) return game.error('pg_ctl: no database directory specified and environment variable PGDATA unset\nTry "pg_ctl --help" for more information.', 1);
+      const n = game.find(dir);
+      if (!n || n.type !== 'directory') return game.error(`pg_ctl: directory "${dir}" does not exist`, 1);
+      const version = game.read(`${dir.replace(/\/$/, '')}/PG_VERSION`)?.trim();
+      if (!version) return game.error(`pg_ctl: directory "${dir}" is not a database cluster directory`, 1);
+      if (action === 'status') return game.error('pg_ctl: no server running', 3);
+      if (action !== 'start') return game.error(`pg_ctl: unrecognized operation mode "${action}"\nTry "pg_ctl --help" for more information.`, 1);
+      if (version !== '16') {
+        game.state.foreignCluster = version;
+        return game.error(
+          [
+            'waiting for server to start....',
+            '2029-11-20 14:02:11.315 CET [4182] FATAL:  database files are incompatible with server',
+            `2029-11-20 14:02:11.315 CET [4182] DETAIL:  The data directory was initialized by PostgreSQL version ${version}, which is not compatible with this version 16.9 (Debian 16.9-1.pgdg120+1).`,
+            ' stopped waiting',
+            'pg_ctl: could not start server',
+            'Examine the log output.',
+          ].join('\n'),
+          1,
+        );
+      }
+      return game.error('pg_ctl: another server might be running; trying to start server anyway', 1);
     },
   },
 

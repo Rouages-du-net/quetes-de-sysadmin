@@ -103,6 +103,9 @@ import { hardening } from './hardening';
 import { portableScript } from './portable-script';
 import { rcServices } from './rc-services';
 import { lastRule } from './last-rule';
+import { readFirst } from './read-first';
+import { byteOrder } from './byte-order';
+import { switchOver } from './switch-over';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -240,6 +243,11 @@ export const STORIES: Story[] = [
     id: 'other-unix',
     after: ['firewall', 'bare-repo'],
     chapters: [portableScript, rcServices, lastRule],
+  },
+  {
+    id: 'old-sun',
+    after: ['database', 'portable-script'],
+    chapters: [readFirst, byteOrder, switchOver],
   },
 ];
 

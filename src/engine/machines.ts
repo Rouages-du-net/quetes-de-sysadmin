@@ -16,7 +16,7 @@ export interface Machine {
   // The game gives no key: you create your own (ssh-keygen, ssh-copy-id).
   withoutKey?: boolean;
   // Another system than Debian (see freebsd.ts): its login banner.
-  os?: 'freebsd';
+  os?: 'freebsd' | 'solaris';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
@@ -71,6 +71,8 @@ export const MACHINES: Machine[] = [
   machine('oven', '192.0.2.33', 'bastion'),
   // The Other Unix: the film club's FreeBSD server.
   { ...machine('projector', '192.0.2.34', 'other-unix'), os: 'freebsd' },
+  // The Old Sun: the seed library's Sun Fire, Solaris 10 on SPARC (its new server, greenhouse, is behind it).
+  { ...machine('herbarium', '192.0.2.35', 'old-sun'), os: 'solaris' },
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

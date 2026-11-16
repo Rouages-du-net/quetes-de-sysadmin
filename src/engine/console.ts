@@ -208,6 +208,8 @@ export class Console {
     const banner =
       machine.os === 'freebsd'
         ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', this.t(`machine-${machine.name}-motd`)]
+        : machine.os === 'solaris'
+        ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', this.t(`machine-${machine.name}-motd`)]
         : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
     // A session created from afar (a port tested with nc): the first real
     // connection opens the chapter, with its welcome text.
