@@ -7,7 +7,7 @@
 // translation.
 
 import type { Shell } from '../shell';
-import { parse, read, rulesFor, SUDOERS, type SudoersError } from '../sudoers';
+import { parse, read, rulesFor, sudoersFile, type SudoersError } from '../sudoers';
 import type { Command } from './index';
 
 // The error as sudo shows it: file:line:column: message, the line, and ^~~~ under the faulty part.
@@ -74,7 +74,7 @@ export const COMMANDS_SUDOERS: Record<string, Command> = {
     section: 8,
     launch: ({ args, game }) => {
       const i = args.indexOf('-f');
-      const target = i >= 0 ? (args[i + 1] ?? '') : SUDOERS;
+      const target = i >= 0 ? (args[i + 1] ?? '') : sudoersFile(game);
       if (i >= 0 && !target) return game.error(game.t('visudo-usage'), 1);
       // -c: check without changing anything.
       if (args.includes('-c')) {
@@ -108,10 +108,10 @@ export function listSudo(game: Shell, args: string[]): string {
   if (i >= 0 && !game.accounts.users[account]) return game.error(game.t('sudo-account-unknown', { account: account }), 1);
   const host = game.read('/etc/hostname')?.trim() || game.host;
   // A machine with no /etc/sudoers described by the chapter: Debian's (the sudo group has all rights).
-  const rules = game.exists(SUDOERS) ? rulesFor(game, account) : game.groupsFor(account).includes('sudo') || account === 'root' ? ['(ALL : ALL) ALL'] : [];
+  const rules = game.exists(sudoersFile(game)) ? rulesFor(game, account) : game.groupsFor(account).includes('sudo') || account === 'root' ? ['(ALL : ALL) ALL'] : [];
   if (!rules.length) return game.t('sudo-none', { account: account, host: host });
   // Like sudo -l: without the quotes, colons escaped.
-  const defaults = game.exists(SUDOERS)
+  const defaults = game.exists(sudoersFile(game))
     ? read(game)
         .defaults.flatMap((x) => x.split(','))
         .map((x) => x.trim().replace(/"/g, '').replace(/:/g, '\\:'))

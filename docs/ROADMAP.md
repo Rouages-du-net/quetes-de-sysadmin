@@ -449,13 +449,14 @@ sometimes systems older than themselves. The basics belong in the game.
 The Unix and mixed-fleet steps reuse the current engine; Windows and IBM i
 each need an engine of their own.
 
-- [ ] **Another Unix: portability** (a FreeBSD box). A backup script
-      written for Debian breaks: GNU vs BSD options (`sed -i ''`, `ps aux`
-      vs `ps -ax`, `date -d`), `pw useradd`, `/etc/rc.conf` and `service`,
-      `pkg`, `sockstat`, a `pf` rule. The lesson: "Linux" is not "Unix",
-      read the manual of the machine you are on, write POSIX `sh`. Same
-      engine model (files, `rwx`, text pipelines); new commands, and their
-      entries in the differences table.
+- [x] **Another Unix: portability** ("The Other Unix", story 26 in
+      `docs/SCENARIOS.md`, on a FreeBSD box: `src/engine/freebsd.ts`). A
+      backup script written for Debian breaks (`#!/bin/bash`, `date -d`,
+      `stat -c`, `sed -i` without a suffix), services without systemd
+      (`pkg`, `/etc/rc.conf`, `service`, `sysrc`, `sockstat`), and `pf`,
+      where the last matching rule wins. The lesson: "Linux" is not "Unix",
+      read the manual of the machine you are on, write POSIX `sh`. Later:
+      `pw useradd`, `ps` and `ls` in their BSD versions.
 - [ ] **Solaris: migrating off an old server** (a real job, still done
       today). A Solaris 10 box nobody dares touch holds a database that
       must move to a recent Linux server. Reading an unfamiliar system

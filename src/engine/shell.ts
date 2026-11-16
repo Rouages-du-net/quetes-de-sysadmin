@@ -9,6 +9,8 @@
 // be redirected to a file (> overwrites, >> appends). Error messages do
 // not go through pipes (separate error output).
 
+import { isBsd, LINUX_ONLY } from './freebsd';
+import { BSD_CHECKS } from './commands/bsd-tools';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -21,11 +23,13 @@ import { live } from './activity';
 export { split, applyMode } from './tools';
 import { applyMode, compareNames, content, split, wildcard, modeWithMask, sizeFor, type Word } from './tools';
 import { launchScript } from './commands/scripts';
-import { read as readSudoers, SUDOERS } from './sudoers';
+import { read as readSudoers, sudoersFile } from './sudoers';
 
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
 const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf'];
+// Commands whose BSD version answers its own way (see freebsd.ts).
+const BSD_TOOLS = ['date', 'sed', 'stat', 'service', 'sysrc', 'pkg', 'sockstat', 'pfctl', 'freebsd-version'];
 
 // What the game (the chapters and the commands) can read or change.
 // The easter eggs: xyzzy (the magic word of Colossal Cave Adventure), the
@@ -634,7 +638,7 @@ export class Shell implements Game {
         this.error(cmd === 'man' ? this.t('manual-not-page', { command: name }) : this.t('manual-nothing', { word: name }));
         continue;
       }
-      outputs.push(cmd === 'man' ? pageMan(name, c, this.t) + notStill(name) : whatisLine(name, this.t));
+      outputs.push(cmd === 'man' ? pageMan(name, c, this.t, isBsd(this)) + notStill(name) : whatisLine(name, this.t, isBsd(this)));
     }
     return outputs.join(cmd === 'man' ? '\n\n' : '\n');
   }
@@ -727,7 +731,7 @@ export class Shell implements Game {
     // sudo asks for the password before running anything.
     const withSudo = words.some((m, i) => !m.city && m.text === 'sudo' && (i === 0 || words[i - 1].op === '|'));
     // An error in sudo's policy (a file in /etc/sudoers.d written without visudo): sudo refuses everything.
-    if (withSudo && this.known().includes('sudo') && this.exists(SUDOERS)) {
+    if (withSudo && this.known().includes('sudo') && this.exists(sudoersFile(this))) {
       const { error } = readSudoers(this);
       if (error) {
         this.status = 1;
@@ -928,12 +932,25 @@ export class Shell implements Game {
     if (root && cmd === 'cd') return this.error(this.t('sudo-cd'));
     if (cmd === 'help' || cmd === this.t('command-help')) return this.t('help-commands', { commands: this.known().join(', ') });
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, rest);
+    // A FreeBSD machine: what only a Debian system has is simply not there
+    // (sh: "systemctl: not found"), and bash only after pkg install bash.
+    if (isBsd(this) && (LINUX_ONLY.includes(cmd) || (cmd === 'bash' && !this.exists('/usr/local/bin/bash')))) {
+      this.status = 127;
+      return this.error(`${cmd}: not found`);
+    }
     // A path (./deployer.sh, /srv/site/deployer.sh): a script, if it is executable.
     if (cmd.includes('/')) {
       const n = this.find(cmd);
       if (!n) return this.error(this.t('script-missing', { command: cmd }));
       if (n.type === 'directory') return this.error(this.t('script-directory', { command: cmd }));
       if (!this.traverses(cmd) || !this.can(n, 'x') || !this.can(n, 'r')) return this.error(this.t('script-permission', { command: cmd }));
+      // FreeBSD checks the #! line: an interpreter that doesn't exist (#!/bin/bash,
+      // when bash lives in /usr/local/bin) makes sh say the SCRIPT is not found.
+      const interpreter = isBsd(this) && n.type === 'file' ? /^#!\s*(\S+)/.exec(content(n, this))?.[1] : undefined;
+      if (interpreter && !this.exists(interpreter)) {
+        this.status = 127;
+        return this.error(`${cmd}: not found`);
+      }
       const before = this.who;
       if (root) this.who = this.as;
       try {
@@ -960,11 +977,21 @@ export class Shell implements Game {
       return this.error(this.t(root ? 'sudo-list-arguments-too-long' : 'list-arguments-too-long', { program: `/usr/bin/${cmd}` }));
     }
     // Self-help reflexes: --help and unknown options.
-    if (rest.includes('--help')) return help(cmd, command, this.t);
-    const invalid = invalidOption(cmd, command, rest, this.t);
+    // On FreeBSD, the tools whose BSD version takes other options check them first, BSD's way.
+    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : undefined;
+    if (bsdCheck) {
+      const refused = bsdCheck(rest);
+      if (refused) {
+        this.status = cmd === 'grep' ? 2 : 1;
+        return this.error(refused);
+      }
+    }
+    // BSD tools have no --help: their own option parsing answers (illegal option -- -).
+    if (rest.includes('--help') && !(isBsd(this) && (BSD_TOOLS.includes(cmd) || bsdCheck))) return help(cmd, command, this.t);
+    const invalid = bsdCheck ? null : invalidOption(cmd, command, rest, this.t);
     if (invalid) return this.error(invalid);
     // --all → -a: the command only reads its short options.
-    const options = command.ownOptions ? rest : shorten(command, rest);
+    const options = command.ownOptions || bsdCheck ? rest : shorten(command, rest);
     const before = this.who;
     if (root) this.who = this.as;
     try {

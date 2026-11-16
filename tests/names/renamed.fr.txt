@@ -910,6 +910,26 @@ hardening
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+portable-script
+  /home/you → /home/vous
+  /home/you/message_from_yanis.txt → /home/vous/message_de_yanis.txt
+  /home/you/nightly-backup.sh → /home/vous/nightly-backup.sh
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+rc-services
+  /home/you → /home/vous
+  /home/you/message_from_romy.txt → /home/vous/message_de_romy.txt
+  /home/you/lucien-notes.txt → /home/vous/notes-de-lucien.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+last-rule
+  /home/you → /home/vous
+  /home/you/message_from_romy.txt → /home/vous/message_de_romy.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

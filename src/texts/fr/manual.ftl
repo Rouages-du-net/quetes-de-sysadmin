@@ -229,8 +229,8 @@ man-createdb = crée une base PostgreSQL vide. Il faut en avoir le droit : sudo 
     .synopsis = createdb nom
     .example-1 = une base de test, pour essayer une restauration
     .command-1 = sudo -u postgres createdb ludo_test
-man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à sa façon : %Y l'année, %m le mois, %d le jour, %H l'heure, %M les minutes, %S les secondes, %F pour 2027-05-17, %T pour 20:30:12. Pratique pour nommer un dossier ou une sauvegarde : date +%Y%m%d%H%M%S. %Z et %z donnent le fuseau (CEST, +0200). L'heure affichée est celle du fuseau de la machine (timedatectl). -s règle l'horloge à la main (root) : à éviter, NTP le fait mieux.
-    .synopsis = date [+FORMAT] ; date -s "AAAA-MM-JJ HH:MM:SS"
+man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à sa façon : %Y l'année, %m le mois, %d le jour, %H l'heure, %M les minutes, %S les secondes, %F pour 2027-05-17, %T pour 20:30:12. Pratique pour nommer un dossier ou une sauvegarde : date +%Y%m%d%H%M%S. %Z et %z donnent le fuseau (CEST, +0200). L'heure affichée est celle du fuseau de la machine (timedatectl). -d CHAÎNE affiche une autre date que maintenant : yesterday, tomorrow, "3 days ago", "+2 weeks", 2028-09-01 (date de GNU seulement : celui de BSD, sur FreeBSD, utilise -v). -s règle l'horloge à la main (root) : à éviter, NTP le fait mieux.
+    .synopsis = date [-d CHAÎNE] [+FORMAT] ; date -s "AAAA-MM-JJ HH:MM:SS"
     .example-1 = la date et l'heure
     .example-2 = un nom qui se trie dans l'ordre : année, mois, jour, heure, minutes, secondes
     .example-3 = la date seule, au format ISO
@@ -466,11 +466,12 @@ man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer
     .example-1 = ce qui change entre deux fichiers
     .example-2 = la même chose, au format de git diff
     .example-3 = tout ce qui diffère entre deux lieux
-man-du = mesure la place occupée (disk usage), lieu par lieu. Un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois. -s donne seulement le total, -h écrit en K, M, G, -d N s'arrête à N niveaux de profondeur. --inodes compte les fichiers (les inodes) au lieu des octets : pour trouver le lieu qui contient des milliers de fichiers. Ex. : du -sh *
+man-du = mesure la place occupée (disk usage), lieu par lieu. Un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois. -s donne seulement le total, -h écrit en K, M, G, -d N s'arrête à N niveaux de profondeur. --inodes compte les fichiers (les inodes) au lieu des octets : pour trouver le lieu qui contient des milliers de fichiers. -b donne la taille apparente en octets (du de GNU seulement). Ex. : du -sh *
     .synopsis = du [-s] [-h] [-d N] [--inodes] [lieu...]
     .option-h = tailles lisibles : K, M, G.
     .option-s = un seul total par lieu (summary), sans le détail.
     .option-d = n'afficher que N niveaux sous le lieu donné (--max-depth=N).
+    .option-b = la taille apparente en octets (du de GNU seulement).
     .example-1 = la place prise par chaque journal
     .example-2 = le nombre de fichiers, lieu par lieu, sur un niveau
     .example-3 = le nombre de fichiers de chaque lieu
@@ -513,7 +514,7 @@ man-git =
     À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
     .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=QUAND]] motif [fichier...]
@@ -522,6 +523,7 @@ man-grep = affiche les lignes qui contiennent le motif. Le motif est une express
     .option-c = compte les lignes trouvées au lieu de les afficher.
     .option-q = silencieux (quiet) : n'affiche rien, réussit si le motif est trouvé, échoue sinon.
     .option-E = expressions régulières étendues : + ? | ( ) ont leur sens spécial.
+    .option-P = expressions régulières compatibles Perl (\d, \w, assertions) : grep de GNU seulement.
     .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
     .option-h = n’affiche jamais le nom du fichier devant les lignes (par défaut, il l’affiche s’il y a plusieurs fichiers).
     .option-H = affiche toujours le nom du fichier devant les lignes, même avec un seul fichier.
@@ -1287,6 +1289,7 @@ man-crontab = gère tes tâches planifiées : des commandes que cron lance tout 
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »
 manual-header = Manuel du jeu
+manual-header-bsd = Manuel des commandes générales de FreeBSD
 manual-section-name = NOM
 manual-section-synopsis = SYNOPSIS
 manual-section-description = DESCRIPTION
@@ -1493,3 +1496,169 @@ man-smb_conf = la configuration de Samba : /etc/samba/smb.conf. [global] pour le
     .example-4 = pour le groupe club seulement
     .example-5 = des fichiers modifiables par le groupe
     .example-6 = ce qui est créé appartient au club
+
+## FreeBSD (l'histoire « L'Autre Unix ») : ses propres outils, et les versions BSD de date, sed et stat
+
+man-sed = l'éditeur de flux (stream editor) : lit un texte ligne par ligne et applique un petit script à chaque ligne. Sa commande la plus utilisée, s/motif/remplacement/, remplace la première correspondance de chaque ligne (avec g : toutes ; & dans le remplacement est ce qui correspond, \1 un groupe). d supprime la ligne, p l'affiche (avec -n, seul ce que p affiche sort). Une adresse devant choisit les lignes : un numéro (2p), $ (la dernière), /regex/ (/^#/d supprime les commentaires). -E pour les expressions régulières étendues. -i modifie le fichier sur place (GNU : -i seul, ou -i.bak pour garder une copie ; le sed de BSD exige le suffixe : -i '').
+    .synopsis = sed [-n] [-E] [-i[SUFFIXE]] script [fichier...] ; sed -e script [-e script]... [fichier...]
+    .option-n = n'affiche que ce que p affiche.
+    .option-E = expressions régulières étendues.
+    .option-i = modifie les fichiers sur place (-i.bak : garde une copie avec ce suffixe).
+    .option-e = ajoute un script (plusieurs -e se suivent).
+    .example-1 = remplacer http: par https: sur chaque ligne (affiché, le fichier ne change pas)
+    .example-2 = changer la ligne dans le fichier lui-même (GNU)
+    .example-3 = n'afficher que la ligne 2
+    .example-4 = supprimer les lignes de commentaire
+man-sed-bsd = l'éditeur de flux (celui de BSD) : lit un texte ligne par ligne et applique un script à chaque ligne. s/motif/remplacement/ remplace (g : toutes les correspondances), d supprime la ligne, p l'affiche (avec -n, seulement ce que p affiche), une adresse choisit les lignes (un numéro, $, /regex/). -E pour les expressions régulières étendues. -i EXTENSION modifie le fichier sur place et garde une copie avec cette extension : l'extension est OBLIGATOIRE, en mot suivant ; donnez-en une vide, -i '', pour aucune copie. Attention à un script écrit pour GNU : sed -i 's/a/b/' fichier prend 's/a/b/' pour l'extension, et fichier pour le script (« invalid command code »).
+    .synopsis = sed [-Ealnru] [-i extension] script [fichier ...] ; sed [-Ealnu] [-i extension] [-e script] ... [fichier ...]
+    .options = E i n
+    .option-E = expressions régulières étendues.
+    .option-i = modifie les fichiers sur place ; le mot suivant est l'extension de la copie ('' pour aucune).
+    .option-n = n'affiche que ce que p affiche.
+    .command-1 = sed -i '' 's/^last=.*/last=2029-10-05/' state.conf
+    .example-1 = changer la ligne dans le fichier lui-même, sans copie
+    .command-2 = sed -i .bak 's/80/8080/' nginx.conf
+    .example-2 = la changer, et garder l'ancienne version dans nginx.conf.bak
+    .command-3 = sed -n 2p notes.txt
+    .example-3 = n'afficher que la ligne 2
+man-stat = affiche les détails d'un fichier : taille, droits, propriétaire, dates. -c FORMAT n'affiche que ce qu'on demande : %s la taille en octets, %n le nom, %U le propriétaire, %G le groupe, %a les droits en octal (644), %A en lettres, %y la date de dernière modification, %Y en secondes depuis 1970. C'est le stat de GNU (Debian) ; celui de BSD, sur FreeBSD, prend son format avec -f et d'autres lettres (%z pour la taille).
+    .synopsis = stat [-c FORMAT] fichier...
+    .option-c = n'affiche que FORMAT (%s taille, %n nom, %U propriétaire, %a droits…).
+    .example-1 = tous les détails de l'archive
+    .example-2 = sa taille en octets, seule (pratique dans un script)
+    .example-3 = propriétaire, droits en octal et nom
+man-stat-bsd = affiche les détails d'un fichier (le stat de BSD). -f FORMAT n'affiche que ce qu'on demande : %z la taille en octets, %N le nom, %Su le propriétaire, %Sg le groupe, %Lp les droits en octal, %Sp en lettres, %Sm la date de dernière modification, %m en secondes depuis 1970. Il n'y a pas de -c (c'est le stat de GNU, sous Linux).
+    .synopsis = stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [fichier ...]
+    .options = f l
+    .option-f = n'affiche que FORMAT (%z taille, %N nom, %Su propriétaire, %Lp droits…).
+    .option-l = comme ls -l.
+    .command-1 = stat -f %z backup.tar.gz
+    .example-1 = sa taille en octets, seule (pratique dans un script)
+    .command-2 = stat -f '%Su %Lp %N' /etc/master.passwd
+    .example-2 = propriétaire, droits en octal et nom
+man-date-bsd = affiche la date et l'heure (le date de BSD). Avec +FORMAT, à sa façon : %Y l'année, %m le mois, %d le jour, %H:%M:%S l'heure, %F pour 2029-10-05. -v décale la date avant de l'afficher : -v-1d c'est hier, -v+2w dans deux semaines, -v-1m il y a un mois (y années, m mois, w semaines, d jours, H heures, M minutes, S secondes) ; plusieurs -v s'additionnent. Sans signe, -v fixe le champ (-v1d : le premier du mois). Il n'y a pas de -d (c'est le date de GNU, sous Linux).
+    .synopsis = date [-jnRu] [-v[+|-]val[y|m|w|d|H|M|S]] [+format]
+    .options = j u v
+    .option-j = ne pas essayer de régler l'horloge (avec une date donnée).
+    .option-u = en UTC.
+    .option-v = décaler la date (-v-1d : hier).
+    .command-1 = date -v-1d +%F
+    .example-1 = la date d'hier, au format ISO
+    .command-2 = date -v-1m -v1d +%F
+    .example-2 = le premier jour du mois dernier
+    .command-3 = date +%F
+    .example-3 = la date d'aujourd'hui, au format ISO
+man-service = pilote les services de FreeBSD : leurs scripts rc, dans /etc/rc.d (système de base) et /usr/local/etc/rc.d (paquets). service NOM start, stop, restart, reload, status. Un service ne tourne que si /etc/rc.conf l'active (NOM_enable="YES") : sinon start refuse (« Cannot 'start' … »). onestart le lance cette fois-ci, quoi que dise rc.conf (il ne reviendra pas après un redémarrage). enable et disable écrivent ou retirent la ligne de rc.conf. service -e liste ce qui démarre au boot. Root pour changer quoi que ce soit.
+    .synopsis = service nom start|stop|restart|reload|status|onestart|enable|disable ; service -e
+    .example-1 = nginx tourne-t-il ?
+    .example-2 = le démarrer (il doit être activé dans rc.conf)
+    .example-3 = l'activer au boot (écrit nginx_enable="YES" dans rc.conf)
+    .example-4 = le démarrer une fois, sans l'activer
+    .example-5 = les services lancés au boot
+man-sysrc = lit et écrit /etc/rc.conf sans risque, sans ouvrir d'éditeur. sysrc NOM affiche une variable ; sysrc NOM=VALEUR la fixe (et affiche ancienne -> nouvelle) ; -x la retire ; -a les liste toutes. Root pour changer quoi que ce soit.
+    .synopsis = sysrc [-x] nom[=valeur] ... ; sysrc -a
+    .example-1 = nginx est-il activé au boot ?
+    .example-2 = l'activer
+    .example-3 = retirer la ligne
+    .example-4 = toutes les variables définies
+man-pkg = le gestionnaire de paquets de FreeBSD (des paquets binaires, ce qu'apt est pour Debian). pkg search trouve un paquet, pkg install l'installe avec ce dont il a besoin (demande confirmation ; -y pour s'en passer), pkg info liste ce qui est installé (pkg info NOM : les détails), pkg delete le retire. Les paquets vont sous /usr/local : leurs programmes dans /usr/local/bin et /usr/local/sbin, leur configuration dans /usr/local/etc, leur script rc dans /usr/local/etc/rc.d. Certains affichent un message après l'installation : lisez-le. Root pour installer ou retirer.
+    .synopsis = pkg search motif ; pkg install [-y] nom... ; pkg info [nom] ; pkg delete nom
+    .example-1 = chercher nginx
+    .example-2 = l'installer
+    .example-3 = installer bash, sans la question
+    .example-4 = ce qui est installé
+    .example-5 = les détails de nginx
+    .example-6 = le retirer
+man-sockstat = liste les sockets ouvertes, avec qui les a ouvertes : le compte, le programme, son PID, le protocole et les adresses. -l celles à l'écoute, -4 et -6 seulement IPv4 ou IPv6. La réponse de FreeBSD à ss -tlnp (ou netstat -tlnp) sous Linux.
+    .synopsis = sockstat [-46l]
+    .example-1 = ce qui écoute, en IPv4
+    .example-2 = toutes les sockets à l'écoute
+    .example-3 = à l'écoute, IPv4 et IPv6
+man-pfctl = pilote pf, le filtre de paquets (le pare-feu de FreeBSD, venu d'OpenBSD). -nf FICHIER vérifie une configuration sans la charger ; -f FICHIER charge ses règles ; -e active pf, -d le désactive ; -sr montre les règles en vigueur (telles que pf les comprend) ; -si son état. Les règles sont dans /etc/pf.conf (man pf.conf). Attention en l'activant par ssh : des règles qui bloquent le port 22 coupent la prochaine connexion. Pour que pf démarre au boot : pf_enable="YES" dans rc.conf (puis service pf start). Root seulement.
+    .synopsis = pfctl [-n] -f fichier ; pfctl -e | -d ; pfctl -s rules | -s info
+    .example-1 = vérifier pf.conf sans le charger
+    .example-2 = charger les règles
+    .example-3 = activer pf
+    .example-4 = les règles en vigueur
+    .example-5 = l'état de pf
+    .example-6 = désactiver pf
+man-pf_conf = la configuration de pf (/etc/pf.conf), lue par pfctl. Une règle par ligne : pass ou block, in ou out, quick, proto tcp, from SOURCE, to DESTINATION, port N (ou une liste {"{"} 22 80 {"}"}) ; « all » pour toutes les adresses. MACRO = "valeur" définit un nom utilisé ensuite comme $MACRO. L'essentiel : pf lit TOUTES les règles, et c'est la DERNIÈRE qui correspond à un paquet qui décide — l'inverse d'iptables, où la première gagne. Donc « block in all » vient EN PREMIER, puis les pass ; ou une règle marquée quick décide tout de suite. set skip on lo0 laisse la boucle locale tranquille.
+    .synopsis = /etc/pf.conf
+    .example-1 = bloquer tout ce qui entre (d'abord : les règles suivantes ouvriront le nécessaire)
+    .example-2 = puis laisser entrer ssh et le web
+    .example-3 = décider tout de suite pour cette adresse (quick)
+    .example-4 = laisser sortir ce que le serveur ouvre
+man-rc_conf = la configuration du système FreeBSD (/etc/rc.conf) : des variables shell lues au démarrage. Le nom de la machine, le réseau, et quels services démarrent : NOM_enable="YES" (nginx_enable, sshd_enable, pf_enable…). Sans elle, le service ne démarre pas au boot, et service NOM start refuse. Se modifie avec sysrc (ou un éditeur) ; les valeurs par défaut des paquets restent dans leurs scripts rc.
+    .synopsis = /etc/rc.conf
+    .example-1 = démarrer nginx au boot
+    .example-2 = activer pf au boot
+    .example-3 = démarrer sshd au boot
+man-freebsd-version = affiche la version de FreeBSD installée (le système de base, 14.2-RELEASE…), là où uname -r donne celle du noyau en marche.
+    .synopsis = freebsd-version [-kru]
+    .example-1 = la version installée
+    .example-2 = le système et son noyau
+man-ps-bsd = liste les processus (le ps de BSD). Sans option, seulement VOS processus attachés à un terminal. a ajoute ceux des autres comptes, x ceux sans terminal (les démons) : ps aux (ou ps -ax) les montre tous ; u donne les colonnes orientées utilisateur (USER, %CPU, %MEM, STARTED…), j les parents (PPID). -U compte garde ceux d'un compte, -p PID un processus ; -o choisit les colonnes (pid,ppid,user,%cpu,command…). Attention : -e montre l'ENVIRONNEMENT de chaque processus (ses variables), pas tous les processus : ps -ef, une habitude de Linux, ne liste que vos propres processus, avec leurs variables. Pas d'options longues (--sort…).
+    .synopsis = ps [-aCcdefHhjlmrSTuvwXxZ] [-O fmt | -o fmt] [-p pid[,pid...]] [-U utilisateur[,utilisateur...]]
+    .options = a x u j e U p o
+    .option-a = les processus de tous les comptes (avec un terminal).
+    .option-x = aussi ceux sans terminal (les démons).
+    .option-u = colonnes orientées utilisateur : USER, %CPU, %MEM, VSZ, RSS, STARTED…
+    .option-j = les colonnes de tâches, avec le parent (PPID).
+    .option-e = montre l'environnement de chaque processus (ses variables).
+    .option-U = seulement les processus de ce compte.
+    .option-p = seulement ces processus.
+    .option-o = les colonnes à afficher (pid,ppid,user,%cpu,%mem,command…).
+    .command-1 = ps aux
+    .example-1 = tous les processus, avec leur compte et ce qu'ils prennent à la machine
+    .command-2 = ps -axj
+    .example-2 = tous les processus avec leur parent (PPID) : la réponse de BSD à ps -ef
+    .command-3 = ps -U www
+    .example-3 = les processus du compte www
+    .command-4 = ps -ax -o pid,ppid,user,command
+    .example-4 = des colonnes choisies
+man-ls-bsd = liste le contenu d'un lieu (le ls de BSD). -a montre les fichiers cachés (et . et ..), -l le format long, -h des tailles lisibles avec -l, -d le lieu lui-même, -i les numéros d'inode, -t trié par date, -r à l'envers, -G en couleur (ou --color=auto). Pas d'autre option longue : --all, --human-readable… sont celles de GNU (unknown option).
+    .synopsis = ls [-ABCFGHILPRSTUWZabcdfghiklmnopqrstuvwxy1,] [--color=quand] [-D format] [fichier ...]
+    .options = a l h d G t r
+    .option-a = tout, fichiers cachés compris.
+    .option-l = format long.
+    .option-h = avec -l, des tailles lisibles.
+    .option-d = le lieu lui-même, pas son contenu.
+    .option-G = en couleur (comme CLICOLOR=1).
+    .option-t = trié par date de modification, le plus récent d'abord.
+    .option-r = dans l'ordre inverse.
+    .command-1 = ls -la
+    .example-1 = tout, en format long
+    .command-2 = ls -lG /usr/local/etc
+    .example-2 = en couleur
+man-grep-bsd = affiche les lignes qui contiennent le motif (le grep de FreeBSD). Mêmes options que celui de GNU pour l'usage courant : -E expressions étendues, -F le texte tel quel, -i sans tenir compte de la casse, -v inverser, -c compter, -q silencieux, -r dans toute une arborescence, -n les numéros de ligne, --color. Pas de -P (expressions de Perl) : utiliser -E, où [0-9] remplace \d.
+    .synopsis = grep [-abcdDEFGHhIiLlmnOopqRSsUVvwxz] [-A num] [-B num] [-C num] [-e motif] [motif] [fichier ...]
+    .options = E F i v c q r n
+    .option-E = expressions régulières étendues.
+    .option-F = le motif tel quel.
+    .option-i = sans tenir compte de la casse.
+    .option-v = les lignes qui ne correspondent PAS.
+    .option-c = compter les lignes.
+    .option-q = silencieux : seulement le code de retour.
+    .option-r = chercher dans toute une arborescence.
+    .option-n = les numéros de ligne.
+    .command-1 = grep -E '[0-9]+ bytes' /var/log/messages
+    .example-1 = ce que grep -P '\d+ bytes' trouverait sous Linux
+    .command-2 = grep -rn nginx_enable /etc
+    .example-2 = où nginx est activé, avec les numéros de ligne
+man-find-bsd = cherche des fichiers dans un lieu et tous ses sous-lieux (le find de BSD). -name, -type f ou d, -mtime ±N, -maxdepth N, -delete, -print, et -ls pour les détails. Pas de -printf (celui de GNU) : pour afficher chaque fichier à sa façon, combiner find et stat : find . -type f -exec stat -f '%z %N' {"{"}{"}"} +
+    .synopsis = find [-H | -L | -P] [-EXdsx] chemin ... [expression]
+    .command-1 = find /var/log -name '*.log' -mtime +30
+    .example-1 = les journaux de plus de 30 jours
+    .command-2 = find /usr/local/etc -maxdepth 1 -type d
+    .example-2 = les lieux de configuration des paquets
+man-du-bsd = mesure la place occupée, lieu par lieu (le du de BSD) : en blocs de BLOCKSIZE (1K par défaut ici). -s un seul total, -h des tailles lisibles, -d N s'arrête à N niveaux, -A la taille apparente au lieu des blocs vraiment occupés. Pas de -b (les octets de GNU) : BLOCKSIZE=1 avec -A, ou stat -f %z pour un fichier.
+    .synopsis = du [-Aclnx] [-H | -L | -P] [-g | -h | -k | -m] [-a | -s | -d profondeur] [fichier ...]
+    .options = s h d A
+    .option-s = un seul total par lieu.
+    .option-h = des tailles lisibles : K, M, G.
+    .option-d = seulement N niveaux de profondeur.
+    .option-A = la taille apparente, pas les blocs occupés.
+    .command-1 = du -sh /usr/local/www/club
+    .example-1 = la taille totale du site
+    .command-2 = du -d 1 -h /var
+    .example-2 = ce qui prend de la place dans /var, sur un niveau

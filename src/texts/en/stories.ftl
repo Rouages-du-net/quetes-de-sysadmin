@@ -51,3 +51,5 @@ story-photo-club = The Photo Club
     .summary = A photo club's NAS and its darkroom computer: an NFS share and its mount, the uids that NFS carries, and a Samba share for the members' laptops.
 story-bastion = The Bastion
     .summary = A year after The Watch, the Bakery's delivery server talks all night to a mining pool: find what runs and how it got in, contain it without locking yourself out, remove what was left behind and check what was changed, then harden so it can't happen again.
+story-other-unix = The Other Unix
+    .summary = The film club's server runs FreeBSD, and Debian habits break: a script written with GNU's tools, services without systemd (pkg, rc.conf, service), and a firewall where the last rule wins (pf).

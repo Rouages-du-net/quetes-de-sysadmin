@@ -408,3 +408,6 @@ name-message_from_margot-txt = message_de_margot.txt
 
 ## Le Bastion
 name-email_selma-txt = courriel_selma.txt
+name-message_from_yanis-txt = message_de_yanis.txt
+name-message_from_romy-txt = message_de_romy.txt
+name-lucien-notes-txt = notes-de-lucien.txt

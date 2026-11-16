@@ -58,3 +58,4 @@ password-slide-2028 = diapo-2028
 
 ## Le Bastion
 password-sandwich-loaf-2029 = pain-de-mie-2029
+password-film-reel-2029 = bobine-2029

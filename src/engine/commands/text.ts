@@ -67,7 +67,8 @@ export const TEXT: Record<string, Command> = {
       let re: RegExp | null = null;
       if (!letters.has('F'))
         try {
-          re = new RegExp(letters.has('E') ? pattern : toBasicRegex(pattern), broken ? 'i' : '');
+          // -P (GNU): Perl-compatible expressions, close to JavaScript's (\d, \w, lookarounds).
+          re = new RegExp(letters.has('E') || letters.has('P') ? pattern : toBasicRegex(pattern), broken ? 'i' : '');
         } catch {
           c.game.status = 2;
           return c.game.error(/\[/.test(pattern) && !/\]/.test(pattern) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression');

@@ -5,6 +5,8 @@
 //   state.onKill(game, process), state.onSystemctl(game, action, name):
 //   the story's own reactions, which return an optional message.
 
+import { isBsd } from '../freebsd';
+import { bsdPs } from './bsd-tools';
 import type { Command } from './index';
 import type { Game } from '../shell';
 import { dockerProcess } from '../docker';
@@ -104,6 +106,8 @@ export const SYSTEM: Record<string, Command> = {
   ps: {
     launch: ({ args, game }) => {
       refreshCpu(game);
+      // FreeBSD's ps: BSD's options and formats (see bsd-tools.ts).
+      if (isBsd(game)) return bsdPs(game, args);
       // -o FORMAT (and -eo FORMAT): the columns chosen; --sort=[-]KEY.
       const io = args.findIndex((a) => /^-\w*o$/.test(a) || a === '--format');
       const format = io >= 0 ? (args[io + 1] ?? '') : args.find((a) => a.startsWith('--format='))?.slice(9) ?? null;

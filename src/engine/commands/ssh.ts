@@ -15,6 +15,7 @@
 // shortened usage message. OpenSSH is not translated: its messages
 // stay in English.
 
+import { pfVerdict, type PfState } from '../freebsd';
 import type { File } from '../world';
 import type { Shell } from '../shell';
 import { hostKey, privateKey, condensed, fingerprint, keyFingerprint, machineByAddress, machineName, WORKSTATION, type Machine } from '../machines';
@@ -389,7 +390,8 @@ export const SSH: Record<string, Command> = {
         );
       // The remote firewall: deny leaves you waiting (timeout), reject refuses at once.
       const pf: Firewall | null = game.state.remoteFirewall?.(m.name) ?? null;
-      const pass = pf ? verdict(pf, Number(d.port), WORKSTATION.address) : 'accepted';
+      const bsdPf: PfState | null = game.state.remotePf?.(m.name) ?? null;
+      const pass = pf ? verdict(pf, Number(d.port), WORKSTATION.address) : bsdPf ? pfVerdict(bsdPf, Number(d.port), WORKSTATION.address) : 'accepted';
       if (pass !== 'accepted')
         return game.error(
           `ssh: connect to host ${d.host} port ${d.port}: ${pass === 'blocked' ? 'Connection timed out' : 'Connection refused'}\n` +
