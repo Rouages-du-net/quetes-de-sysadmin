@@ -104,3 +104,6 @@ hardening
 portable-script
 rc-services
 last-rule
+read-first
+byte-order
+switch-over

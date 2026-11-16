@@ -53,3 +53,5 @@ story-bastion = Le Bastion
     .summary = Un an après La Veille, le serveur des livraisons du Fournil parle toute la nuit à un pool de minage : trouver ce qui tourne et par où c'est entré, confiner sans s'enfermer dehors, retirer ce qui a été laissé et vérifier ce qui a été modifié, puis durcir pour que ça ne recommence pas.
 story-other-unix = L'Autre Unix
     .summary = Le serveur du ciné-club tourne sous FreeBSD, et les habitudes de Debian cassent : un script écrit avec les outils de GNU, des services sans systemd (pkg, rc.conf, service), et un pare-feu où c'est la dernière règle qui gagne (pf).
+story-old-sun = Le vieux Soleil
+    .summary = Le catalogue de la grainothèque vit depuis 2009 sur un serveur Sun sous Solaris 10 : lire le système avant d'y toucher (SMF, ZFS), déplacer sa base vers un nouveau serveur Debian avec une sauvegarde logique (ordre des octets, jeux de caractères), puis basculer et garder l'ancien serveur figé.

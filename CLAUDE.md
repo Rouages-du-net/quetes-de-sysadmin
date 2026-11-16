@@ -280,6 +280,18 @@ presents them for people.
   `commands/sed.ts`, `date -d`/`-v` in `commands/scripts.ts`;
   `chapters/film-club.ts`: what the chapters of "The Other Unix" share
   (`portable-script.ts`, `rc-services.ts`, `last-rule.ts`).
+- `src/engine/solaris.ts`: a Solaris 10 machine (`state.os = 'solaris'`):
+  SMF (`state.smf`: services by FMRI, `matchFmri`), ZFS (`state.zfs`),
+  Debian and FreeBSD commands "not found"; `svcs`, `svcadm`, `svcprop`,
+  `prstat`, `zfs`, `zpool`, `zoneadm`, `zonename`, `pkginfo`, `isainfo` in
+  `commands/solaris.ts`; the old `/usr/bin` tools' refusals and the
+  `/usr/xpg4/bin`, `/usr/ucb` paths in `commands/solaris-tools.ts`;
+  character sets (`File.charset`, `Shell.outputCharset`) in
+  `src/engine/charset.ts`, `iconv` and `file` in `commands/iconv.ts`;
+  PostgreSQL encodings, an 8.4 server, `pg_ctl` in `commands/postgres.ts`;
+  `chapters/seed-bank.ts`: what the chapters of "The Old Sun" share
+  (`read-first.ts`, `byte-order.ts`, `switch-over.ts`; greenhouse is an
+  internal host).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

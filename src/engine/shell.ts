@@ -9,8 +9,11 @@
 // be redirected to a file (> overwrites, >> appends). Error messages do
 // not go through pipes (separate error output).
 
+import { onUtf8Terminal } from './charset';
 import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
+import { SOLARIS_CHECKS, OTHER_BINS } from './commands/solaris-tools';
+import { isSolaris, NOT_ON_SOLARIS } from './solaris';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -28,6 +31,8 @@ import { read as readSudoers, sudoersFile } from './sudoers';
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
 const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf'];
+// The tools that read a file's bytes themselves (its charset matters to them, see charset.ts).
+const RAW_READERS = ['psql', 'iconv', 'file'];
 // Commands whose BSD version answers its own way (see freebsd.ts).
 const BSD_TOOLS = ['date', 'sed', 'stat', 'service', 'sysrc', 'pkg', 'sockstat', 'pfctl', 'freebsd-version'];
 
@@ -150,6 +155,8 @@ export class Shell implements Game {
   // monitoring plugin: 0 OK, 1 WARNING, 2 CRITICAL); otherwise, it is 1 if
   // it wrote an error, 0 otherwise.
   status: number | null = null;
+  // The charset the last command of a line wrote in (pg_dump of a LATIN1 database), for a redirection.
+  outputCharset: 'latin1' | null = null;
   // The permission mask of created files (umask), specific to this session.
   mask = '0022';
   // The file the current command's output goes to (> file), if there is one: wg genkey looks at it.
@@ -379,6 +386,8 @@ export class Shell implements Game {
     if (reason) return this.error(reason), null;
     if (!this.traverses(target) || !this.can(n, 'r')) return this.error(this.t('error-permission', v)), null;
     if (n.archive) return this.error(this.t('error-binary', v)), null;
+    // A LATIN1 file read by a tool that only passes bytes on to a UTF-8 terminal: � for each accent.
+    if (n.charset === 'latin1' && !RAW_READERS.includes(cmd)) return onUtf8Terminal(content(n, this));
     return content(n, this);
   }
 
@@ -638,7 +647,8 @@ export class Shell implements Game {
         this.error(cmd === 'man' ? this.t('manual-not-page', { command: name }) : this.t('manual-nothing', { word: name }));
         continue;
       }
-      outputs.push(cmd === 'man' ? pageMan(name, c, this.t, isBsd(this)) + notStill(name) : whatisLine(name, this.t, isBsd(this)));
+      const flavour = isBsd(this) ? 'bsd' : isSolaris(this) ? 'solaris' : '';
+      outputs.push(cmd === 'man' ? pageMan(name, c, this.t, flavour) + notStill(name) : whatisLine(name, this.t, flavour));
     }
     return outputs.join(cmd === 'man' ? '\n\n' : '\n');
   }
@@ -880,6 +890,10 @@ export class Shell implements Game {
       this.outputTo = null;
     });
     let output: string = input ?? '';
+    const charset = this.outputCharset;
+    this.outputCharset = null;
+    // On screen, LATIN1 bytes show as � on the UTF-8 terminal.
+    if (charset === 'latin1' && !redirection) output = onUtf8Terminal(output);
     // Events read the output as the player reads it, without colour codes.
     this.last = { line, commands, output: withoutColours(output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
 
@@ -887,6 +901,12 @@ export class Shell implements Game {
       // The redirection is done by YOUR shell, before sudo: even with sudo in
       // front of the command, it is "you" who writes to the file.
       const error = this.redirect(redirection.file, output, redirection.addition);
+      // A command that wrote LATIN1 (pg_dump of a LATIN1 database): the file keeps those bytes.
+      const written = this.find(redirection.file);
+      if (!error && written?.type === 'file') {
+        if (charset === 'latin1') written.charset = 'latin1';
+        else if (!redirection.addition) delete written.charset;
+      }
       if (error) {
         this.error(error);
         if (/(^|\|)\s*sudo\s/.test(line)) this.error(this.t('redirection-sudo'));
@@ -921,8 +941,10 @@ export class Shell implements Game {
     // (and /usr/lib/nagios/plugins/check_disk for those outside the PATH).
     const onlyName = raw?.split('/').at(-1) ?? '';
     const outsidePath = COMMANDS[onlyName]?.directory;
+    // On Solaris, the POSIX (/usr/xpg4/bin), BSD (/usr/ucb) and add-on versions of a tool.
+    const otherBin = isSolaris(this) && !!raw && OTHER_BINS.test(raw) && !!COMMANDS[onlyName];
     const cmd =
-      raw && ((/^\/(usr\/)?s?bin\/[\w.-]+$/.test(raw) && COMMANDS[onlyName] && !outsidePath) || (outsidePath && raw === `${outsidePath}/${onlyName}`))
+      raw && ((/^\/(usr\/)?s?bin\/[\w.-]+$/.test(raw) && COMMANDS[onlyName] && !outsidePath) || (outsidePath && raw === `${outsidePath}/${onlyName}`) || otherBin)
         ? onlyName
         : raw;
     if (cmd && COMMANDS[cmd]?.directory && cmd === raw) return this.error(this.t('command-missing', { command: cmd }));
@@ -935,6 +957,11 @@ export class Shell implements Game {
     // A FreeBSD machine: what only a Debian system has is simply not there
     // (sh: "systemctl: not found"), and bash only after pkg install bash.
     if (isBsd(this) && (LINUX_ONLY.includes(cmd) || (cmd === 'bash' && !this.exists('/usr/local/bin/bash')))) {
+      this.status = 127;
+      return this.error(`${cmd}: not found`);
+    }
+    // Solaris 10: neither Linux's tools nor FreeBSD's.
+    if (isSolaris(this) && NOT_ON_SOLARIS.includes(cmd) && !otherBin) {
       this.status = 127;
       return this.error(`${cmd}: not found`);
     }
@@ -978,16 +1005,17 @@ export class Shell implements Game {
     }
     // Self-help reflexes: --help and unknown options.
     // On FreeBSD, the tools whose BSD version takes other options check them first, BSD's way.
-    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : undefined;
+    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : isSolaris(this) && !otherBin ? SOLARIS_CHECKS[cmd] : undefined;
     if (bsdCheck) {
       const refused = bsdCheck(rest);
       if (refused) {
         this.status = cmd === 'grep' ? 2 : 1;
+        if (cmd === 'ps' && isSolaris(this)) this.status = 1;
         return this.error(refused);
       }
     }
     // BSD tools have no --help: their own option parsing answers (illegal option -- -).
-    if (rest.includes('--help') && !(isBsd(this) && (BSD_TOOLS.includes(cmd) || bsdCheck))) return help(cmd, command, this.t);
+    if (rest.includes('--help') && !(isBsd(this) && (BSD_TOOLS.includes(cmd) || bsdCheck)) && !(isSolaris(this) && bsdCheck)) return help(cmd, command, this.t);
     const invalid = bsdCheck ? null : invalidOption(cmd, command, rest, this.t);
     if (invalid) return this.error(invalid);
     // --all → -a: the command only reads its short options.

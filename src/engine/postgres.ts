@@ -23,6 +23,10 @@ export interface Table {
 export interface Base {
   owner: string;
   tables: Record<string, Table>;
+  // Its character set (UTF8 by default; an old database may be LATIN1, see charset.ts).
+  encoding?: string;
+  // ALTER DATABASE … SET default_transaction_read_only = on: every write refused.
+  readOnly?: boolean;
 }
 
 export interface PostgresState {
@@ -35,7 +39,18 @@ export interface PostgresState {
   archives: Record<string, { base: string; tables: Record<string, Table>; time: number }>;
   // The running server (sessions, settings, indexes), when the chapter models it: see pg-server.ts.
   server?: import('./pg-server').PgServer;
+  // An older server than PostgreSQL 16 (8.4.22 on an old Solaris box): its version and platform.
+  version?: string;
+  platform?: string;
+  // Its socket's directory, when it isn't Debian's (/tmp on Solaris).
+  socketDir?: string;
 }
+
+/** The server's version line (SELECT version()). */
+export const versionLine = (pg: PostgresState) =>
+  pg.version
+    ? `PostgreSQL ${pg.version} on ${pg.platform ?? 'x86_64-pc-linux-gnu'}, compiled by GCC gcc (GCC) 3.4.3 (csl-sol210-3_4-branch+sol_rpath), 64-bit`
+    : 'PostgreSQL 16.9 (Debian 16.9-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit';
 
 export const SOCKET = '/var/run/postgresql/.s.PGSQL.5432';
 export const postgres = (j: Game): PostgresState | undefined => j.state.postgres;
@@ -44,8 +59,19 @@ export const postgres = (j: Game): PostgresState | undefined => j.state.postgres
 export function connection(j: Game, tool: string, base: string): string | null {
   const pg = postgres(j);
   const service = systemd(j)?.services.postgresql;
-  if (!pg || (service && service.state !== 'active'))
+  // A server managed by SMF (Solaris): its service must be online.
+  const smf = j.state.smf as { services: Record<string, { state: string }> } | undefined;
+  const smfDown = !!smf && !Object.entries(smf.services).some(([fmri, s]) => fmri.includes('postgresql') && s.state === 'online');
+  // PostgreSQL 8.4's libpq words it differently.
+  if (pg?.version?.startsWith('8') && smfDown)
+    return `${tool}: could not connect to server: No such file or directory\n\tIs the server running locally and accepting\n\tconnections on Unix domain socket "${pg.socketDir ?? '/tmp'}/.s.PGSQL.5432"?`;
+  if (!pg || (service && service.state !== 'active') || smfDown)
     return `${tool}: error: connection to server on socket "${SOCKET}" failed: No such file or directory\n\tIs the server running locally and accepting connections on that socket?`;
+  if (pg.version?.startsWith('8')) {
+    if (!pg.roles.includes(j.who)) return `${tool}: FATAL:  role "${j.who}" does not exist`;
+    if (!pg.bases[base]) return `${tool}: FATAL:  database "${base}" does not exist`;
+    return null;
+  }
   if (!pg.roles.includes(j.who)) return `${tool}: error: connection to server on socket "${SOCKET}" failed: FATAL:  role "${j.who}" does not exist`;
   if (!pg.bases[base]) return `${tool}: error: connection to server on socket "${SOCKET}" failed: FATAL:  database "${base}" does not exist`;
   // A modelled server: no slot left, no connection (the superuser keeps the reserved ones).
@@ -74,16 +100,17 @@ export function grid(columns: string[], lines: string[][], title?: string): stri
 }
 
 /** The contents of a dump in text format (SQL): what pg_dump writes without -Fc. */
-export function dumpSql(base: string, tables: Record<string, Table>, owner: string): string {
+export function dumpSql(base: string, tables: Record<string, Table>, owner: string, o: { encoding?: string; version?: string } = {}): string {
+  const version = o.version ?? '16.9 (Debian 16.9-1.pgdg120+1)';
   const lines = [
     '--',
     '-- PostgreSQL database dump',
     '--',
     '',
-    '-- Dumped from database version 16.9 (Debian 16.9-1.pgdg120+1)',
-    '-- Dumped by pg_dump version 16.9 (Debian 16.9-1.pgdg120+1)',
+    `-- Dumped from database version ${version}`,
+    `-- Dumped by pg_dump version ${version}`,
     '',
-    "SET client_encoding = 'UTF8';",
+    `SET client_encoding = '${o.encoding ?? 'UTF8'}';`,
     '',
   ];
   for (const [name, t] of Object.entries(tables)) {
@@ -103,6 +130,9 @@ export function dumpSql(base: string, tables: Record<string, Table>, owner: stri
   lines.push('--', `-- PostgreSQL database dump complete (${base})`, '--');
   return lines.join('\n');
 }
+
+/** The client_encoding a text dump declares (UTF8 if it says nothing). */
+export const dumpEncoding = (text: string) => /^SET client_encoding = '([^']+)';$/m.exec(text)?.[1] ?? 'UTF8';
 
 /** Rereads a text dump (ours): its tables, or null if it isn't one. */
 export function readDumpSql(text: string): Record<string, Table> | null {

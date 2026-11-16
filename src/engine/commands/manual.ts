@@ -10,6 +10,7 @@ import { translateHosts } from '../machines';
 import { COMMANDS, type Command } from './index';
 import { player } from '../world';
 import { LINUX_ONLY } from '../freebsd';
+import { NOT_ON_SOLARIS } from '../solaris';
 
 // The page's Fluent identifier: the dot is reserved for attributes
 // ("jail.conf" → man-jail_conf).
@@ -18,10 +19,11 @@ export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
 const section = (name: string) => COMMANDS[name]?.section ?? 1;
 
 // On a FreeBSD machine, a command whose BSD version differs has its own page (man-<command>-bsd).
-const key = (name: string, t: Translate, bsd: boolean) => (bsd && t.exists(`${page(name)}-bsd`) ? `${page(name)}-bsd` : page(name));
+export type Flavour = '' | 'bsd' | 'solaris';
+const key = (name: string, t: Translate, flavour: Flavour) => (flavour && t.exists(`${page(name)}-${flavour}`) ? `${page(name)}-${flavour}` : page(name));
 
-function texts(name: string, t: Translate, bsd = false) {
-  const k = key(name, t, bsd);
+function texts(name: string, t: Translate, flavour: Flavour = '') {
+  const k = key(name, t, flavour);
   const synopsis = t.exists(`${k}.synopsis`) ? t(`${k}.synopsis`) : '';
   const options = (name: string, c: Command): [string, string][] => (k !== page(name) ? bsdOptions(k, t) : (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]));
   // A language can adapt the command of an example that contains words (.command-N): grep "my password".
@@ -59,16 +61,16 @@ const indent = (text: string, n = 7) =>
     .map((l) => (l ? ' '.repeat(n) + l : l))
     .join('\n');
 
-export function whatisLine(name: string, t: Translate, bsd = false): string {
-  return `${`${name} (${section(name)})`.padEnd(21)}- ${recap(t(key(name, t, bsd)))}`;
+export function whatisLine(name: string, t: Translate, flavour: Flavour = ''): string {
+  return `${`${name} (${section(name)})`.padEnd(21)}- ${recap(t(key(name, t, flavour)))}`;
 }
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-export function pageMan(name: string, c: Command, t: Translate, bsd = false): string {
-  const { synopsis, description, options, examples } = texts(name, t, bsd);
+export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour = ''): string {
+  const { synopsis, description, options, examples } = texts(name, t, flavour);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t(bsd ? 'manual-header-bsd' : 'manual-header');
+  const middle = t(flavour ? `manual-header-${flavour}` : 'manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
@@ -80,7 +82,7 @@ export function pageMan(name: string, c: Command, t: Translate, bsd = false): st
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).
-  const see = (c.see ?? []).filter((v) => !bsd || !LINUX_ONLY.includes(v));
+  const see = (c.see ?? []).filter((v) => !(flavour === 'bsd' && LINUX_ONLY.includes(v)) && !(flavour === 'solaris' && NOT_ON_SOLARIS.includes(v)));
   if (see.length) sections.push([t('manual-section-see-also'), indent(see.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${title}${' '.repeat(white)}${middle}${' '.repeat(white)}${title}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }

@@ -56,6 +56,9 @@ export const CODE_ORDER = [
   'portable-script',
   'rc-services',
   'last-rule',
+  'read-first',
+  'byte-order',
+  'switch-over',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

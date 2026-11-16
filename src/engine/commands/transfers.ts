@@ -126,11 +126,15 @@ export function copy(src: Shell, dst: Shell, path: string, dest: string, recursi
       owner: dst.who,
       mode: f.mode,
       mtime: f.mtime,
+      // The bytes travel as they are: a tar stays an archive, a LATIN1 text stays LATIN1.
+      ...(f.archive ? { archive: f.archive } : {}),
+      ...(f.charset ? { charset: f.charset } : {}),
+      ...(f.crypto ? { crypto: f.crypto } : {}),
     };
     const old = dst.find(to);
     const e =
       old?.type === 'file' && dst.can(old, 'w')
-        ? (Object.assign(old, { content: copyOf.content, size: copyOf.size }), null)
+        ? (Object.assign(old, { content: copyOf.content, size: copyOf.size, archive: copyOf.archive, charset: copyOf.charset }), null)
         : dst.place('scp', to, copyOf);
     if (e) return void errors.push(`scp: ${to}: Permission denied`);
     const size = sizeFor(f, src);

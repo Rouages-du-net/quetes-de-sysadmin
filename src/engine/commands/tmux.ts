@@ -10,6 +10,7 @@
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
 import { isBsd } from '../freebsd';
+import { isSolaris } from '../solaris';
 import type { Command } from './index';
 
 export interface SessionTmux {
@@ -87,6 +88,15 @@ export const TMUX: Record<string, Command> = {
 
   uname: {
     launch: ({ args, game }) => {
+      // A Solaris 10 machine on SPARC (see solaris.ts).
+      if (isSolaris(game)) {
+        if (args.some((a) => /^-\w*a/.test(a))) return `SunOS ${game.host} 5.10 Generic_150400-40 sun4u sparc SUNW,Sun-Fire-V240`;
+        if (args.some((a) => /^-\w*r/.test(a))) return '5.10';
+        if (args.some((a) => /^-\w*p/.test(a))) return 'sparc';
+        if (args.some((a) => /^-\w*m/.test(a))) return 'sun4u';
+        if (args.some((a) => /^-\w*i/.test(a))) return 'SUNW,Sun-Fire-V240';
+        return 'SunOS';
+      }
       // A FreeBSD machine (see freebsd.ts): its kernel, its release.
       if (isBsd(game)) {
         if (args.some((a) => /^-\w*a/.test(a))) return `FreeBSD ${game.host} 14.2-RELEASE FreeBSD 14.2-RELEASE releng/14.2-n269506-c8918d6c7412 GENERIC amd64`;

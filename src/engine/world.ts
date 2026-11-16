@@ -35,6 +35,9 @@ export type File = {
   // A gpg-encrypted or -signed file (see gpg.ts): `content` shows the PGP
   // armour, this holds what the simulated gpg needs to decrypt or verify it.
   crypto?: CryptoBlob;
+  // A text written in ISO 8859-1 (LATIN1) rather than UTF-8 (see charset.ts):
+  // its accented letters show as � on the (UTF-8) terminal.
+  charset?: 'latin1';
 } & Rights;
 // What the simulated gpg stores on an encrypted, signed or key file.
 export interface CryptoBlob {
