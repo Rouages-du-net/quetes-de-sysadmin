@@ -427,3 +427,42 @@ display-quit-focus = Leave full screen (Esc)
 ## Difficulty of a chapter or a story (1 to 5, see difficulty.ts)
 difficulty = Difficulty: { $level } out of 5
 difficulty-tidy = Difficulty: { $min } to { $max } out of 5
+
+## Tips: one-time advice, shown when a shortcut or a habit would help (see tips.ts)
+
+tip-label = Tip
+tip-silence = No message? On Linux, a command that succeeds usually says nothing. Check the result yourself: ls shows where things are now.
+tip-up-twice = Going up several levels? cd ../.. goes up two in one go (and ../../.. three).
+tip-cd-back = Back where you just were? cd - takes you to the previous folder, whatever its path.
+tip-cd-home = Going home? cd alone, or cd ~, takes you there from anywhere.
+tip-tab = Long names to type? Press Tab: it completes the name for you. Pressed twice, it lists the possible choices.
+display-tips = Tips
+display-tour = Tour
+
+## The notebook's button and window
+
+notebook-button = Notebook
+notebook-close = Close
+
+## The navigation cheat sheet, at the top of the notebook
+
+shortcuts-title = Shortcuts worth knowing
+shortcuts-home = your home folder (cd ~, or cd alone)
+shortcuts-back = the previous folder (cd -)
+shortcuts-up = the folder above (cd ..); two levels up: cd ../..
+shortcuts-tab = completes a name; pressed twice, lists the choices
+shortcuts-history = the previous commands; Ctrl-R searches them
+shortcuts-cancel = abandons the line, or stops a command that keeps running
+
+## The intro tour, on a first visit
+
+tour-label = Getting started
+tour-step = { $step } of { $total }
+tour-next = Next
+tour-done = Let's go
+tour-skip = Skip the tour
+tour-input = Type your commands here, then press Enter. It's a real terminal: the text above tells you what to type first.
+tour-mission = Mission: what you have to do in this chapter, what has already happened, and hints if you are stuck.
+tour-map = Map: the places you have already visited, to find your way back.
+tour-notebook = Notebook: every command you run is written here, with what it does. Your cheat sheet.
+tour-tab = Tab completes names for you: type the first letters, then Tab. Pressed twice, it lists the choices.

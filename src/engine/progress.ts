@@ -7,6 +7,7 @@
 
 import { STORIES } from './chapters';
 import { ACHIEVEMENTS } from './achievements';
+import { TIPS } from './tips';
 
 // The order of the chapters in the short code. Only ever add to it, at the
 // end: a code given yesterday must stay valid tomorrow (tests/progress.test.ts).
@@ -158,6 +159,8 @@ export interface Backup {
   name?: string;
   // The achievements earned (see achievements.ts): identifier → date (ISO).
   achievements?: Record<string, string>;
+  // The tips already shown (see tips.ts): each one only once.
+  tips?: string[];
 }
 
 const FORMAT = 'quetes-de-sysadmin';
@@ -209,6 +212,7 @@ export function readFile(text: string): { backup: Backup } | { error: FileError 
       ...(dictionary(s.achievements)
         ? { achievements: Object.fromEntries(Object.entries(s.achievements).filter(([id, date]) => ACHIEVEMENTS.some((x) => x.id === id) && string(date))) as Record<string, string> }
         : {}),
+      ...(Array.isArray(s.tips) ? { tips: s.tips.filter((x): x is string => string(x) && (TIPS as readonly string[]).includes(x)) } : {}),
     },
   };
 }

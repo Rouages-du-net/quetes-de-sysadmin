@@ -427,3 +427,42 @@ display-quit-focus = Quitter le plein écran (Échap)
 ## Difficulté d'un chapitre ou d'une histoire (de 1 à 5, voir difficulty.ts)
 difficulty = Difficulté : { $level } sur 5
 difficulty-tidy = Difficulté : de { $min } à { $max } sur 5
+
+## Astuces : des conseils montrés une fois, quand un raccourci ou une habitude aiderait (voir tips.ts)
+
+tip-label = Astuce
+tip-silence = Pas de message ? Sous Linux, une commande qui réussit ne dit en général rien. Vérifie toi-même le résultat : ls montre où sont les choses maintenant.
+tip-up-twice = Tu remontes de plusieurs niveaux ? cd ../.. remonte de deux d'un coup (et ../../.. de trois).
+tip-cd-back = Tu reviens là où tu étais ? cd - te ramène au dossier précédent, quel que soit son chemin.
+tip-cd-home = Tu rentres chez toi ? cd tout seul, ou cd ~, t'y ramène de n'importe où.
+tip-tab = Des noms longs à taper ? Appuie sur Tab : il complète le nom pour toi. Deux fois, il liste les choix possibles.
+display-tips = Astuces
+display-tour = Visite guidée
+
+## Le bouton et la fenêtre du carnet
+
+notebook-button = Carnet
+notebook-close = Fermer
+
+## L'aide-mémoire de navigation, en haut du carnet
+
+shortcuts-title = Raccourcis à connaître
+shortcuts-home = ton dossier personnel (cd ~, ou cd tout seul)
+shortcuts-back = le dossier précédent (cd -)
+shortcuts-up = le dossier au-dessus (cd ..) ; deux niveaux plus haut : cd ../..
+shortcuts-tab = complète un nom ; deux fois, liste les choix
+shortcuts-history = les commandes précédentes ; Ctrl-R les recherche
+shortcuts-cancel = abandonne la ligne, ou arrête une commande qui continue de tourner
+
+## La visite guidée, à la première visite
+
+tour-label = Pour commencer
+tour-step = { $step } sur { $total }
+tour-next = Suivant
+tour-done = C'est parti
+tour-skip = Passer la visite
+tour-input = Tape tes commandes ici, puis Entrée. C'est un vrai terminal : le texte au-dessus te dit quoi taper en premier.
+tour-mission = Mission : ce que tu dois faire dans ce chapitre, ce qui s'est déjà passé, et des indices si tu bloques.
+tour-map = Carte : les lieux déjà visités, pour retrouver ton chemin.
+tour-notebook = Carnet : chaque commande que tu lances y est notée, avec ce qu'elle fait. Ton aide-mémoire.
+tour-tab = Tab complète les noms pour toi : tape les premières lettres, puis Tab. Deux fois, il liste les choix.

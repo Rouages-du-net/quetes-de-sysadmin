@@ -281,14 +281,28 @@
 .qds .tools { margin-left: auto; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
 .qds .map-button,
 .qds .mission-button,
+.qds .notebook-button,
 .qds .hint-button,
 .qds .rescue-button,
 .qds .setting-button { font: inherit; font-size: 0.9rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
 .qds .map-button:hover, .qds .map-button:focus-visible,
+.qds .notebook-button:hover, .qds .notebook-button:focus-visible,
 .qds .mission-button:hover, .qds .mission-button:focus-visible,
 .qds .hint-button:hover, .qds .hint-button:focus-visible,
 .qds .rescue-button:hover:not(:disabled), .qds .rescue-button:focus-visible,
 .qds .setting-button:hover, .qds .setting-button:focus-visible { border-color: var(--_accent); }
+/* The bar's tools (Mission, Map, Notebook): an icon and a label; on a narrow
+   screen, the icon only (the label stays for screen readers). */
+.qds .tool-button { display: inline-flex; align-items: center; gap: 0.35rem; position: relative; }
+.qds .tool-button .icon { color: var(--_accent); }
+@media (max-width: 40rem) {
+  .qds .tool-button { padding: 0.35rem 0.55rem; }
+  .qds .tool-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* New commands in the notebook since it was last opened: a dot on its button. */
+.qds .notebook-button.fresh::after { content: ''; position: absolute; top: -0.25rem; right: -0.25rem; width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--_accent); animation: qds-fresh 1.2s ease-out 2; }
+@keyframes qds-fresh { 50% { transform: scale(1.6); } }
+@media (prefers-reduced-motion: reduce) { .qds .notebook-button.fresh::after { animation: none; } }
 /* A small inline line-icon: it follows the text colour and size. */
 .qds .icon { width: 1.1em; height: 1.1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 /* The chapter's actions, under the tip: buttons with an icon, not links. */
@@ -299,12 +313,15 @@
 .qds .map-window,
 .qds .progress-window,
 .qds .mission-window,
+.qds .notebook-window,
 .qds .achievements-window { width: min(36rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
 .qds .map-window::backdrop,
+.qds .notebook-window::backdrop,
 .qds .progress-window::backdrop,
 .qds .mission-window::backdrop,
 .qds .achievements-window::backdrop { background: rgb(0 0 0 / 0.5); }
 .qds .map-window h2,
+.qds .notebook-window h2,
 .qds .progress-window h2,
 .qds .mission-window h2,
 .qds .achievements-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
@@ -409,9 +426,12 @@
 .qds .to-understand p { margin: 0 0 0.25rem; }
 .qds .to-understand ul { margin: 0; padding-left: 1.25rem; }
 /* The sysadmin's notebook: a folded panel under the terminal. */
-.qds .notebook { margin-top: 1rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); padding: 0.5rem 0.75rem; }
-.qds .notebook summary { cursor: pointer; font-weight: 600; }
-.qds .notebook summary .account { font-weight: normal; color: var(--_muted); }
+.qds .notebook h2 .account { font-weight: normal; font-size: 0.9rem; color: var(--_muted); }
+/* The shortcuts worth knowing, at the top of the notebook. */
+.qds .shortcuts { margin: 0.75rem 0; padding: 0.5rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); }
+.qds .shortcuts h3 { margin: 0 0 0.4rem; font-size: 0.95rem; }
+.qds .shortcuts dl { margin: 0; }
+.qds .shortcuts kbd { font-family: var(--_font-mono); font-size: 0.85rem; padding: 0 0.3rem; border: 1px solid var(--_border); border-radius: 0.25rem; white-space: nowrap; }
 .qds .notebook-help { font-size: 0.85rem; color: var(--_muted); }
 .qds .notebook dl { margin: 0.5rem 0; display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 0.75rem; }
 .qds .notebook dd { margin: 0; overflow-wrap: anywhere; }
@@ -423,6 +443,17 @@
   .qds .notebook dl { grid-template-columns: 1fr; }
   .qds .notebook dd { margin-bottom: 0.5rem; }
 }
+/* A tip (see tips.ts), between the outputs: set apart, without breaking the story. */
+.qds .output .tip { margin: 0.4rem 0; padding: 0.3rem 0.6rem; border-left: 3px solid currentColor; font-family: var(--_font); font-size: 0.85em; opacity: 0.9; white-space: normal; }
+/* The intro tour: a bubble under the element it points at, which is outlined. */
+.qds { position: relative; }
+.qds .tour { position: absolute; z-index: 20; max-width: 100%; padding: 0.75rem 0.9rem; border: 2px solid var(--_accent); border-radius: 0.5rem; background: var(--_card); color: var(--_text); box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 0.25); font-size: 0.95rem; }
+.qds .tour[hidden] { display: none; }
+.qds .tour-head { margin: 0 0 0.35rem; }
+.qds .tour-count { color: var(--_muted); font-size: 0.85rem; }
+.qds .tour-text { margin: 0 0 0.6rem; }
+.qds .tour-actions { margin: 0; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.qds .tour-target { outline: 3px solid var(--_accent); outline-offset: 3px; border-radius: 0.4rem; }
 .qds .tips, .qds .credit { font-size: 0.85rem; color: var(--_muted); margin: 1rem 0 0; }
 .qds a { color: var(--_accent); }
 .qds .link { font: inherit; background: none; border: none; padding: 0; color: var(--_accent); text-decoration: underline; cursor: pointer; }
