@@ -429,6 +429,8 @@ export const SSH: Record<string, Command> = {
       let file = '~/.ssh/known_hosts';
       let action: 'R' | 'F' | 'l' | null = null;
       let host = '';
+      // Grouped short options, like getopt: -lf FILE is -l -f FILE.
+      args = args.flatMap((a) => (/^-[A-Za-z]{2,}$/.test(a) ? [...a.slice(1)].map((l) => `-${l}`) : [a]));
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a === '-t' || a === '-C' || a === '-N' || a === '-b') {

@@ -405,3 +405,6 @@ name-hut-ridge = refuge-crete
 
 ## Le Club photo
 name-message_from_margot-txt = message_de_margot.txt
+
+## Le Bastion
+name-email_selma-txt = courriel_selma.txt

@@ -402,3 +402,6 @@ name-hut-ridge = hut-ridge
 
 ## The Photo Club
 name-message_from_margot-txt = message_from_margot.txt
+
+## The Bastion
+name-email_selma-txt = email_selma.txt

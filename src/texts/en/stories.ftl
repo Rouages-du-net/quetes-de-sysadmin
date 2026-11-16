@@ -49,3 +49,5 @@ story-huts = The Huts
     .summary = A federation of mountain huts and the valley's server: the huts' logs gathered with rsyslog, a journal that fills the disk, and an alert for failed SSH logins.
 story-photo-club = The Photo Club
     .summary = A photo club's NAS and its darkroom computer: an NFS share and its mount, the uids that NFS carries, and a Samba share for the members' laptops.
+story-bastion = The Bastion
+    .summary = A year after The Watch, the Bakery's delivery server talks all night to a mining pool: find what runs and how it got in, contain it without locking yourself out, remove what was left behind and check what was changed, then harden so it can't happen again.

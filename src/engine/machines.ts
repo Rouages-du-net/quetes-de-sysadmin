@@ -65,6 +65,8 @@ export const MACHINES: Machine[] = [
   machine('valley', '192.0.2.30', 'huts'),
   // The Photo Club: the club's NAS, and its darkroom computer behind it (NFS, Samba).
   machine('nas', '192.0.2.31', 'photo-club'),
+  // The Bastion: the Bakery's delivery server, a year after The Watch (an incident to handle).
+  machine('oven', '192.0.2.33', 'bastion'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

@@ -55,3 +55,6 @@ password-summit-2028 = summit-2028
 password-shutter-2028 = shutter-2028
 password-negative-2028 = negative-2028
 password-slide-2028 = slide-2028
+
+## The Bastion
+password-sandwich-loaf-2029 = sandwich-loaf-2029

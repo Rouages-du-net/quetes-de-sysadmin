@@ -20,6 +20,7 @@ export const PATH: Path[] = [
       'shut-the-door', 'firewall', 'sentinel', 'port', 'repeat-offenders', 'keys', 'departure', 'shared-rights', 'secret', 'updates', 'auto-updates',
       'scope', 'report', 'exposure', 'traces', 'follow-up',
       'bulletin', 'priority', 'fix', 'proof', 'routine',
+      'alarm', 'containment', 'eradication', 'hardening',
     ],
   },
   {

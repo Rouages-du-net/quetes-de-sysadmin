@@ -655,7 +655,7 @@ for (const width of [1000, 375]) {
   await game.locator('.view-choice button', { hasText: 'Parcours' }).click();
   await game.locator('.paths select').selectOption('security');
   const maps = game.locator('.paths-list button');
-  check((await maps.count()) === 21 && (await game.locator('.paths-progress').textContent()).includes('1 sur 21'), `paths ${width} px: the path and its progress`);
+  check((await maps.count()) === 25 && (await game.locator('.paths-progress').textContent()).includes('1 sur 25'), `paths ${width} px: the path and its progress`);
   const next = game.locator('.paths-list button[data-next]');
   check((await next.textContent()).includes('Le pare-feu') && (await game.locator('.paths-list button[data-state="locked"]').first().textContent()).includes('D\'abord'), `paths ${width} px: the next one, and what is waiting`);
   await next.click();

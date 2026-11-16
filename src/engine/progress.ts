@@ -48,6 +48,10 @@ export const CODE_ORDER = [
   'nfs-export',
   'nfs-owners',
   'samba-share',
+  'alarm',
+  'containment',
+  'eradication',
+  'hardening',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

@@ -4,7 +4,8 @@
 // resolving service names, -p the process (only for root, like the real
 // tools for other accounts' sockets).
 // The sockets come from state.listening; the current ssh session appears as
-// an established connection. Output in English (neither tool is translated).
+// an established connection, and so do the chapter's other connections
+// (state.established), as long as their process lives. Output in English (neither tool is translated).
 // Differences: Internet sockets only (no Unix domain sockets), and netstat's
 // -r (routing) and -i (interfaces) are not modelled.
 
@@ -54,6 +55,10 @@ export function connections(game: Shell, o: { listening: boolean; established: b
   const portSession: number = game.state.portSession ?? 22;
   if (o.established && o.tcp && here && listening.some((e) => e.process === 'sshd'))
     out.push({ proto: 'tcp', state: 'ESTAB', local: { address: here.address, port: portSession }, peer: { address: WORKSTATION.address, port: 51234 }, process: 'sshd', pid: 2741 });
+  // The chapter's other connections (a program calling out): gone with their process.
+  const alive = (pid: number) => ((game.state.process ?? []) as { pid: number }[]).some((p) => p.pid === pid);
+  if (o.established)
+    for (const c of (game.state.established ?? []) as Connection[]) if ((c.proto === 'tcp' ? o.tcp : o.udp) && alive(c.pid)) out.push({ ...c });
   return out;
 }
 

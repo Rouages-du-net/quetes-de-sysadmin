@@ -274,25 +274,26 @@ export const SYSTEM: Record<string, Command> = {
       const iu = args.indexOf('-u');
       const account = iu >= 0 ? args[iu + 1] : null;
       const names = args.filter((a, k) => !a.startsWith('-') && (iu < 0 || k !== iu + 1) && a !== '-v' && a !== '--verbose');
-      if (!names.length) return game.error(game.t('killall-usage'), 2);
+      // With -u, the names are optional: every process of the account.
+      if (!names.length && !account) return game.error(game.t('killall-usage'), 2);
       const listing: Process[] = game.state.process ?? [];
       // The program's name, like /proc/pid/comm: the command's first word, without its path.
       const comm = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '');
       const messages: string[] = [];
-      for (const name of names) {
-        const chosen = listing.filter((p) => comm(p) === name && (!account || p.user === account) && !p.zombie);
+      for (const name of names.length ? names : [null]) {
+        const chosen = listing.filter((p) => (name === null || comm(p) === name) && (!account || p.user === account) && !p.zombie);
         if (!chosen.length) {
-          game.error(game.t('killall-none', { name: name }), 1);
+          game.error(game.t('killall-none', { name: name ?? account ?? '' }), 1);
           continue;
         }
         for (const p of chosen) {
           if (game.who !== 'root' && p.user !== game.who) {
-            game.error(game.t('killall-not-allowed', { name: name, pid: String(p.pid) }));
+            game.error(game.t('killall-not-allowed', { name: name ?? comm(p), pid: String(p.pid) }));
             continue;
           }
           const m = sendSignal(game, p, signal);
           if (m) messages.push(m);
-          if (verbose) messages.push(`Killed ${name}(${p.pid}) with signal ${SIGNALS.indexOf(signal) + 1}`);
+          if (verbose) messages.push(`Killed ${name ?? comm(p)}(${p.pid}) with signal ${SIGNALS.indexOf(signal) + 1}`);
         }
       }
       return messages.join('\n');

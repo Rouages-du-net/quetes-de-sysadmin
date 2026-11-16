@@ -68,6 +68,7 @@ machine-observatory-motd = The Observatory — the astronomy club's server: the 
 machine-theatre-motd = The Theatre — the neighbourhood theatre's server: the ticket office and its database. Break a leg!
 machine-valley-motd = The Huts — the valley's server: the logs of the mountain huts, gathered in one place.
 machine-nas-motd = The Photo Club — the club's NAS: the photos of every album, shared with the darkroom.
+machine-oven-motd = The Bastion — the Bakery's delivery server: the rounds, the drivers, the orders of the day.
 machine-kneader-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

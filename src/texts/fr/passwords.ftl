@@ -55,3 +55,6 @@ password-summit-2028 = sommet-2028
 password-shutter-2028 = obturateur-2028
 password-negative-2028 = negatif-2028
 password-slide-2028 = diapo-2028
+
+## Le Bastion
+password-sandwich-loaf-2029 = pain-de-mie-2029

@@ -264,6 +264,13 @@ presents them for people.
   access log) and `routine.ts` (`unattended-upgrades` restricted to
   security via `src/engine/apt-conf.ts`, a hand-written timer or cron job,
   `src/engine/timers.ts`).
+- `chapters/bastion.ts`: what the chapters of "The Bastion" share (the
+  `oven` server (`four` in French), a year after "The Watch": the deploy
+  account, the miner and its watchdog (`state.onKill`), the delivery
+  service, ssh's log, the signed release); `alarm.ts`, `containment.ts`,
+  `eradication.ts`, `hardening.ts`. A chapter's outgoing connections go in
+  `state.established` (`ss`, `netstat`); iptables' OUTPUT chain decides
+  them (`outVerdict`).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

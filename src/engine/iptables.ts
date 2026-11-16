@@ -55,6 +55,12 @@ function matches(r: Rule, port: number, source: string, proto: 'tcp' | 'udp', is
   if (r.proto && r.proto !== 'all' && r.proto !== proto) return false;
   if (r.dport !== undefined && r.dport !== port) return false;
   if (r.source && !inNetwork(source, r.source.includes('/') ? r.source : `${r.source}/32`)) return false;
+  // -i: a connection from the machine itself arrives on lo, any other on
+  // the network interface (eth0); "eth+" matches every eth interface.
+  if (r.inFace) {
+    const face = source.startsWith('127.') ? 'lo' : 'eth0';
+    if (r.inFace.endsWith('+') ? !face.startsWith(r.inFace.slice(0, -1)) : r.inFace !== face) return false;
+  }
   // -m state --state: an incoming new connection is NEW. A rule that only
   // accepts ESTABLISHED,RELATED must not match it (the classic stateful set-up).
   if (r.states && r.states.length && !r.states.includes(isNew ? 'NEW' : 'ESTABLISHED')) return false;
@@ -90,13 +96,31 @@ export function verdict(ipt: Iptables, port: number, source: string, proto: 'tcp
   return ipt.filter.chains.INPUT?.policy === 'DROP' ? 'blocked' : 'accepted';
 }
 
+/**
+ * Walk the OUTPUT chain for a new outgoing connection to `address`:`port`
+ * (a program on the machine calling out). Same rules as verdict, with the
+ * destination (-d) instead of the source.
+ */
+export function outVerdict(ipt: Iptables, address: string, port: number, proto: 'tcp' | 'udp' = 'tcp'): Verdict {
+  for (const r of ipt.filter.chains.OUTPUT?.rules ?? []) {
+    if (r.proto && r.proto !== 'all' && r.proto !== proto) continue;
+    if (r.dport !== undefined && r.dport !== port) continue;
+    if (r.destination && !inNetwork(address, r.destination.includes('/') ? r.destination : `${r.destination}/32`)) continue;
+    if (r.states && r.states.length && !r.states.includes('NEW')) continue;
+    if (r.target === 'ACCEPT') return 'accepted';
+    if (r.target === 'DROP') return 'blocked';
+    if (r.target === 'REJECT') return 'refused';
+  }
+  return ipt.filter.chains.OUTPUT?.policy === 'DROP' ? 'blocked' : 'accepted';
+}
+
 // ——— rendering ———
 
 /** One rule as `iptables -S` prints it ("-A INPUT -p tcp --dport 22 -j ACCEPT"). */
 export function ruleSpec(chain: string, r: Rule): string {
   const p: string[] = [`-A ${chain}`];
   if (r.source) p.push(`-s ${r.source.includes('/') ? r.source : `${r.source}/32`}`);
-  if (r.destination) p.push(`-d ${r.destination}`);
+  if (r.destination) p.push(`-d ${r.destination.includes('/') ? r.destination : `${r.destination}/32`}`);
   if (r.inFace) p.push(`-i ${r.inFace}`);
   if (r.outFace) p.push(`-o ${r.outFace}`);
   if (r.proto) p.push(`-p ${r.proto}`);
@@ -107,8 +131,9 @@ export function ruleSpec(chain: string, r: Rule): string {
   return p.join(' ');
 }
 
-/** The `-L` line for a rule (target, prot, opt, source, destination, extra). */
-export function ruleLine(r: Rule, verboseCounters: boolean): string {
+/** The `-L` line for a rule (target, prot, opt, source, destination, extra); -n shows 0.0.0.0/0 for "anywhere". */
+export function ruleLine(r: Rule, verboseCounters: boolean, numeric = false): string {
+  const any = numeric ? '0.0.0.0/0' : 'anywhere';
   const prot = r.proto ?? 'all';
   const extra: string[] = [];
   if (r.states && r.states.length) extra.push(`state ${r.states.join(',')}`);
@@ -116,6 +141,6 @@ export function ruleLine(r: Rule, verboseCounters: boolean): string {
   if (r.sport !== undefined) extra.push(`${prot} spt:${r.sport}`);
   if (r.inFace) extra.push(`in:${r.inFace}`);
   if (r.outFace) extra.push(`out:${r.outFace}`);
-  const cols = [r.target.padEnd(9), prot.padEnd(4), '--', (r.source ?? 'anywhere').padEnd(18), (r.destination ?? 'anywhere').padEnd(18), extra.join(' ')];
+  const cols = [r.target.padEnd(10), prot.padEnd(4), '-- ', (r.source ?? any).padEnd(20), (r.destination ?? any).padEnd(20), extra.join(' ')];
   return (verboseCounters ? '    0     0 ' : '') + cols.join(' ').trimEnd();
 }

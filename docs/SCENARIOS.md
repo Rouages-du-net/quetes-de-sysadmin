@@ -155,9 +155,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `systemctl` without being root | "Access denied", you need `sudo` | asks for the password (polkit) |
 | `sudo` after `reboot` | still remembers the password | asks for it again |
 | `sshd` | some of the keywords; all errors listed at once; the password is only asked on machines with the real ssh (`maison`); no `StrictModes` (rights of `~/.ssh` not checked) nor options in `authorized_keys` | stops at the first error; offers the password everywhere; refuses an `authorized_keys` writable by others |
-| `iptables`, `iptables-save` | the host firewall's **filter** table: the built-in chains INPUT/OUTPUT/FORWARD, their policy, user chains; matches `-p`, `--dport`/`--sport`, `-s`/`-d`, `-i`/`-o`, `-m state`/`conntrack --state`/`--ctstate`; targets ACCEPT, DROP, REJECT, LOG, RETURN, a jump to a user chain; `-L` (`-n`, `-v`, `--line-numbers`), `-S`, `-A`/`-I`/`-D`/`-R`, `-P`, `-F`, `-N`/`-X`; `iptables-save`. The INPUT chain decides an incoming TCP connection (ssh and the port scanners see it, like ufw). Root only | the nat table's packet rewriting (a router's NAT is in `nft`), mangle/raw, counters, `-m` beyond state/conntrack, `ip6tables`, `iptables-restore`, the web of rule extensions |
+| `iptables`, `iptables-save` | the host firewall's **filter** table: the built-in chains INPUT/OUTPUT/FORWARD, their policy, user chains; matches `-p`, `--dport`/`--sport`, `-s`/`-d`, `-i`/`-o`, `-m state`/`conntrack --state`/`--ctstate`; targets ACCEPT, DROP, REJECT, LOG, RETURN, a jump to a user chain; `-L` (`-n`, `-v`, `--line-numbers`), `-S`, `-A`/`-I`/`-D`/`-R`, `-P`, `-F`, `-N`/`-X`; `iptables-save`. The INPUT chain decides an incoming TCP connection (ssh and the port scanners see it, like ufw); it arrives on `eth0`, a connection from the machine itself on `lo`. The OUTPUT chain decides a program's outgoing connection (The Bastion's miner). Root only | the nat table's packet rewriting (a router's NAT is in `nft`), mangle/raw, counters, `-m` beyond state/conntrack, `ip6tables`, `iptables-restore`, the web of rule extensions |
 | `ufw` | IPv4 and IPv6 rules merged ("(v6)" lines for show); no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
-| `ss`, `netstat` | the sockets described by the chapter, and the current ssh session (on the port you came in through); `netstat` is the net-tools counterpart of `ss` (`-t`, `-u`, `-l`, `-a`, `-n`, `-p`) | every socket of the system; Unix domain sockets; `netstat -r`/`-i` |
+| `ss`, `netstat` | the sockets described by the chapter, the current ssh session (on the port you came in through), and the chapter's other connections while their process lives; `netstat` is the net-tools counterpart of `ss` (`-t`, `-u`, `-l`, `-a`, `-n`, `-p`) | every socket of the system; Unix domain sockets; `netstat -r`/`-i` |
 | fail2ban | `sshd`, `nginx-limit-req` and `recidive` jails (others load, without a filter; an enabled jail without a log prevents starting); a jail's `port` limits the ban; `findtime` not applied (every failure in the log counts); filter reduced to "Failed password", "Invalid user", "Failed publickey"; the banned workstation keeps its open session | several jails; `findtime` window; full filters; the ban also cuts the current session |
 | `rsync` | `-a`, `-v`, `-n`, `--delete`; local, or remote over ssh (`machine:path`, in either direction, with the same keys and jumps as `ssh`); a file changes if its contents change; "sent/received" figures approximate | compares size and date, every option, rsync daemon |
 | `scp`, `ssh-copy-id` | `scp`: `-r`, `-P`, `-J`, `-i`, a copy in either direction (not between two remote machines), immediate progress line; `ssh-copy-id`: `-i`, `-p`, `-J`, the most recent `~/.ssh/id*.pub` key by default | `scp` between two remote machines (`-3`); `ssh-copy-id -f`, `-n` |
@@ -2513,6 +2513,83 @@ default), `guest ok = yes`, no `valid users` (Tom), the default masks.
 Other accepted solutions: `writable = yes`, a list of names, `force create
 mode`, the setgid of `/srv/photos` instead of `force group`, `ufw allow
 445/tcp`.
+
+## Story 25: The Bastion (four chapters)
+
+A year after "The Watch", the Bakery delivers: a new server (`oven`,
+192.0.2.33) runs the delivery app (`/srv/delivery`, a small Node app written
+by Selma, a freelance developer, who deploys it with the `deploy` account).
+On a Saturday morning, the hosting provider reports that the server has been
+talking all night to a mining pool. Someone guessed deploy's password (a
+drop-in left "for a while" in `/etc/ssh/sshd_config.d` accepted passwords
+again), started a miner disguised as a kernel thread, and left ways back.
+The story is incident response, after NIST SP 800-61r2: detect, contain,
+eradicate, harden. It stays defensive: the intrusion is only seen through
+what it left (logs, history, files), nothing teaches how to break in. It
+opens after "Settling Into a Routine" (the end of The Watch).
+
+### Chapter 1 — The Alarm (done)
+
+| Step | Command learnt |
+|---|---|
+| What runs | `ps aux`, `top`, `ps -ef` (a `kworkerd` at 200 % CPU, owned by deploy, from `/tmp/.cache`; its parent `/bin/sh /tmp/.cache/.w`) |
+| Where it talks to | `ss -tn` (no process), `sudo ss -tnp`, `sudo netstat -tnp` (198.51.100.66:3333) |
+| How it got in | `journalctl -u ssh` (fourteen `Failed password`, then `Accepted password for deploy from 203.0.113.66`), `last` |
+| The notes | `incident.md`: the program, the pool, the account, the address, the time |
+
+Goal checked on the state: `incident.md` holds the program, the pool's
+address, the account, the intruder's address and the time of the login, and
+the three findings were seen. Expected traps: `ss` without `-p` or without
+sudo (the process column), stopping the miner before noting (it comes back).
+
+### Chapter 2 — Containment (done)
+
+| Step | Command learnt |
+|---|---|
+| The pool | `iptables -A OUTPUT -d 198.51.100.66 -j DROP` (or its replies on INPUT) |
+| The intruder | `iptables -A INPUT -s 203.0.113.66 -j DROP`, `iptables -L -n` |
+| The miner | `killall kworkerd` (it comes back), the watchdog first: `kill`, `kill -STOP`, then the miner |
+| The account | `usermod -L` (the password only: a key still opens it), `usermod -e 1` or `chage -E 0`, or a nologin shell |
+
+Goal checked on the state: the pool and the intruder's address blocked,
+the workstation still allowed on 22, nothing from `/tmp/.cache` running,
+deploy unable to log in, the delivery app running. Expected traps: `iptables
+-P INPUT DROP` without accepting ssh (the next login), the miner killed
+before its watchdog, `killall -u deploy` (the app goes too, and restarting
+it relaunches the miner: its `server.js` was changed), `usermod -L` alone.
+
+### Chapter 3 — Eradication (done)
+
+| Step | Command learnt |
+|---|---|
+| The crontab | `crontab -u deploy -l`/`-e`: the `@reboot` line out, `sync-orders` kept |
+| The keys | `ssh-keygen -lf /home/deploy/.ssh/authorized_keys`, the fingerprint Selma gives, the intruder's line out |
+| The files | `rm /tmp/.cache/kworkerd /tmp/.cache/.w` |
+| What was changed | `find /srv/delivery -type f -mtime -3`, deploy's `.bash_history`, `tail server.js` |
+| The signed release | `gpg --list-keys`, `gpg --verify` (BAD on the copy in deploy's home, Good in `/srv/releases`), `tar -xzf … -C /srv` |
+
+Goal checked on the state: no `@reboot` line and `sync-orders` kept, the
+intruder's key removed and Selma's kept, the miner's files gone,
+`server.js` identical to the release, the app running and nothing
+relaunched. Expected traps: `crontab -r`, emptying `authorized_keys`,
+trusting the key's comment, restoring from the rebuilt copy, restarting the
+app before `server.js` is clean.
+
+### Chapter 4 — Hardening (done)
+
+| Step | Command learnt |
+|---|---|
+| Passwords | `sshd -T` (`passwordauthentication yes` while `sshd_config` says no), the drop-in in `sshd_config.d` read first, `systemctl reload ssh` |
+| Default-deny | `iptables -A INPUT -i lo -j ACCEPT`, `-m state --state ESTABLISHED,RELATED`, ports 22, 80, 443, `iptables -P INPUT DROP`, `nmap` (3000 filtered) |
+| After a reboot | `iptables-save \| sudo tee /etc/iptables/rules.v4` (a redirection runs as you) |
+| deploy back | `usermod -e ""` or `chage -E -1` |
+
+Goal checked on the state: password authentication off in the applied
+configuration, INPUT policy DROP with lo, the replies, 22, 80 and 443
+accepted and the app's 3000 closed from outside, the workstation still
+allowed, the rules saved, deploy usable again. Expected traps: changing the
+main `sshd_config` (the drop-in wins), no reload, no loopback rule, the
+policy before ssh is accepted, `sudo iptables-save > file`.
 
 ## Ideas for later
 
