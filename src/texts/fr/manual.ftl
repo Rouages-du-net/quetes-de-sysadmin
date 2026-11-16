@@ -229,8 +229,8 @@ man-createdb = crée une base PostgreSQL vide. Il faut en avoir le droit : sudo 
     .synopsis = createdb nom
     .example-1 = une base de test, pour essayer une restauration
     .command-1 = sudo -u postgres createdb ludo_test
-man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à sa façon : %Y l'année, %m le mois, %d le jour, %H l'heure, %M les minutes, %S les secondes, %F pour 2027-05-17, %T pour 20:30:12. Pratique pour nommer un dossier ou une sauvegarde : date +%Y%m%d%H%M%S. %Z et %z donnent le fuseau (CEST, +0200). L'heure affichée est celle du fuseau de la machine (timedatectl). -s règle l'horloge à la main (root) : à éviter, NTP le fait mieux.
-    .synopsis = date [+FORMAT] ; date -s "AAAA-MM-JJ HH:MM:SS"
+man-date = affiche la date et l'heure de la machine. Avec +FORMAT, les écrit à sa façon : %Y l'année, %m le mois, %d le jour, %H l'heure, %M les minutes, %S les secondes, %F pour 2027-05-17, %T pour 20:30:12. Pratique pour nommer un dossier ou une sauvegarde : date +%Y%m%d%H%M%S. %Z et %z donnent le fuseau (CEST, +0200). L'heure affichée est celle du fuseau de la machine (timedatectl). -d CHAÎNE affiche une autre date que maintenant : yesterday, tomorrow, "3 days ago", "+2 weeks", 2028-09-01 (date de GNU seulement : celui de BSD, sur FreeBSD, utilise -v). -s règle l'horloge à la main (root) : à éviter, NTP le fait mieux.
+    .synopsis = date [-d CHAÎNE] [+FORMAT] ; date -s "AAAA-MM-JJ HH:MM:SS"
     .example-1 = la date et l'heure
     .example-2 = un nom qui se trie dans l'ordre : année, mois, jour, heure, minutes, secondes
     .example-3 = la date seule, au format ISO
@@ -1287,6 +1287,7 @@ man-crontab = gère tes tâches planifiées : des commandes que cron lance tout 
 
 # En-tête de chaque page, entre « LS(1) » et « LS(1) »
 manual-header = Manuel du jeu
+manual-header-bsd = Manuel des commandes générales de FreeBSD
 manual-section-name = NOM
 manual-section-synopsis = SYNOPSIS
 manual-section-description = DESCRIPTION
@@ -1493,3 +1494,104 @@ man-smb_conf = la configuration de Samba : /etc/samba/smb.conf. [global] pour le
     .example-4 = pour le groupe club seulement
     .example-5 = des fichiers modifiables par le groupe
     .example-6 = ce qui est créé appartient au club
+
+## FreeBSD (l'histoire « L'Autre Unix ») : ses propres outils, et les versions BSD de date, sed et stat
+
+man-sed = l'éditeur de flux (stream editor) : lit un texte ligne par ligne et applique un petit script à chaque ligne. Sa commande la plus utilisée, s/motif/remplacement/, remplace la première correspondance de chaque ligne (avec g : toutes ; & dans le remplacement est ce qui correspond, \1 un groupe). d supprime la ligne, p l'affiche (avec -n, seul ce que p affiche sort). Une adresse devant choisit les lignes : un numéro (2p), $ (la dernière), /regex/ (/^#/d supprime les commentaires). -E pour les expressions régulières étendues. -i modifie le fichier sur place (GNU : -i seul, ou -i.bak pour garder une copie ; le sed de BSD exige le suffixe : -i '').
+    .synopsis = sed [-n] [-E] [-i[SUFFIXE]] script [fichier...] ; sed -e script [-e script]... [fichier...]
+    .option-n = n'affiche que ce que p affiche.
+    .option-E = expressions régulières étendues.
+    .option-i = modifie les fichiers sur place (-i.bak : garde une copie avec ce suffixe).
+    .option-e = ajoute un script (plusieurs -e se suivent).
+    .example-1 = remplacer http: par https: sur chaque ligne (affiché, le fichier ne change pas)
+    .example-2 = changer la ligne dans le fichier lui-même (GNU)
+    .example-3 = n'afficher que la ligne 2
+    .example-4 = supprimer les lignes de commentaire
+man-sed-bsd = l'éditeur de flux (celui de BSD) : lit un texte ligne par ligne et applique un script à chaque ligne. s/motif/remplacement/ remplace (g : toutes les correspondances), d supprime la ligne, p l'affiche (avec -n, seulement ce que p affiche), une adresse choisit les lignes (un numéro, $, /regex/). -E pour les expressions régulières étendues. -i EXTENSION modifie le fichier sur place et garde une copie avec cette extension : l'extension est OBLIGATOIRE, en mot suivant ; donnez-en une vide, -i '', pour aucune copie. Attention à un script écrit pour GNU : sed -i 's/a/b/' fichier prend 's/a/b/' pour l'extension, et fichier pour le script (« invalid command code »).
+    .synopsis = sed [-Ealnru] [-i extension] script [fichier ...] ; sed [-Ealnu] [-i extension] [-e script] ... [fichier ...]
+    .options = E i n
+    .option-E = expressions régulières étendues.
+    .option-i = modifie les fichiers sur place ; le mot suivant est l'extension de la copie ('' pour aucune).
+    .option-n = n'affiche que ce que p affiche.
+    .command-1 = sed -i '' 's/^last=.*/last=2029-10-05/' state.conf
+    .example-1 = changer la ligne dans le fichier lui-même, sans copie
+    .command-2 = sed -i .bak 's/80/8080/' nginx.conf
+    .example-2 = la changer, et garder l'ancienne version dans nginx.conf.bak
+    .command-3 = sed -n 2p notes.txt
+    .example-3 = n'afficher que la ligne 2
+man-stat = affiche les détails d'un fichier : taille, droits, propriétaire, dates. -c FORMAT n'affiche que ce qu'on demande : %s la taille en octets, %n le nom, %U le propriétaire, %G le groupe, %a les droits en octal (644), %A en lettres, %y la date de dernière modification, %Y en secondes depuis 1970. C'est le stat de GNU (Debian) ; celui de BSD, sur FreeBSD, prend son format avec -f et d'autres lettres (%z pour la taille).
+    .synopsis = stat [-c FORMAT] fichier...
+    .option-c = n'affiche que FORMAT (%s taille, %n nom, %U propriétaire, %a droits…).
+    .example-1 = tous les détails de l'archive
+    .example-2 = sa taille en octets, seule (pratique dans un script)
+    .example-3 = propriétaire, droits en octal et nom
+man-stat-bsd = affiche les détails d'un fichier (le stat de BSD). -f FORMAT n'affiche que ce qu'on demande : %z la taille en octets, %N le nom, %Su le propriétaire, %Sg le groupe, %Lp les droits en octal, %Sp en lettres, %Sm la date de dernière modification, %m en secondes depuis 1970. Il n'y a pas de -c (c'est le stat de GNU, sous Linux).
+    .synopsis = stat [-FLnq] [-f format | -l | -r | -s | -x] [-t timefmt] [fichier ...]
+    .options = f l
+    .option-f = n'affiche que FORMAT (%z taille, %N nom, %Su propriétaire, %Lp droits…).
+    .option-l = comme ls -l.
+    .command-1 = stat -f %z backup.tar.gz
+    .example-1 = sa taille en octets, seule (pratique dans un script)
+    .command-2 = stat -f '%Su %Lp %N' /etc/master.passwd
+    .example-2 = propriétaire, droits en octal et nom
+man-date-bsd = affiche la date et l'heure (le date de BSD). Avec +FORMAT, à sa façon : %Y l'année, %m le mois, %d le jour, %H:%M:%S l'heure, %F pour 2029-10-05. -v décale la date avant de l'afficher : -v-1d c'est hier, -v+2w dans deux semaines, -v-1m il y a un mois (y années, m mois, w semaines, d jours, H heures, M minutes, S secondes) ; plusieurs -v s'additionnent. Sans signe, -v fixe le champ (-v1d : le premier du mois). Il n'y a pas de -d (c'est le date de GNU, sous Linux).
+    .synopsis = date [-jnRu] [-v[+|-]val[y|m|w|d|H|M|S]] [+format]
+    .options = j u v
+    .option-j = ne pas essayer de régler l'horloge (avec une date donnée).
+    .option-u = en UTC.
+    .option-v = décaler la date (-v-1d : hier).
+    .command-1 = date -v-1d +%F
+    .example-1 = la date d'hier, au format ISO
+    .command-2 = date -v-1m -v1d +%F
+    .example-2 = le premier jour du mois dernier
+    .command-3 = date +%F
+    .example-3 = la date d'aujourd'hui, au format ISO
+man-service = pilote les services de FreeBSD : leurs scripts rc, dans /etc/rc.d (système de base) et /usr/local/etc/rc.d (paquets). service NOM start, stop, restart, reload, status. Un service ne tourne que si /etc/rc.conf l'active (NOM_enable="YES") : sinon start refuse (« Cannot 'start' … »). onestart le lance cette fois-ci, quoi que dise rc.conf (il ne reviendra pas après un redémarrage). enable et disable écrivent ou retirent la ligne de rc.conf. service -e liste ce qui démarre au boot. Root pour changer quoi que ce soit.
+    .synopsis = service nom start|stop|restart|reload|status|onestart|enable|disable ; service -e
+    .example-1 = nginx tourne-t-il ?
+    .example-2 = le démarrer (il doit être activé dans rc.conf)
+    .example-3 = l'activer au boot (écrit nginx_enable="YES" dans rc.conf)
+    .example-4 = le démarrer une fois, sans l'activer
+    .example-5 = les services lancés au boot
+man-sysrc = lit et écrit /etc/rc.conf sans risque, sans ouvrir d'éditeur. sysrc NOM affiche une variable ; sysrc NOM=VALEUR la fixe (et affiche ancienne -> nouvelle) ; -x la retire ; -a les liste toutes. Root pour changer quoi que ce soit.
+    .synopsis = sysrc [-x] nom[=valeur] ... ; sysrc -a
+    .example-1 = nginx est-il activé au boot ?
+    .example-2 = l'activer
+    .example-3 = retirer la ligne
+    .example-4 = toutes les variables définies
+man-pkg = le gestionnaire de paquets de FreeBSD (des paquets binaires, ce qu'apt est pour Debian). pkg search trouve un paquet, pkg install l'installe avec ce dont il a besoin (demande confirmation ; -y pour s'en passer), pkg info liste ce qui est installé (pkg info NOM : les détails), pkg delete le retire. Les paquets vont sous /usr/local : leurs programmes dans /usr/local/bin et /usr/local/sbin, leur configuration dans /usr/local/etc, leur script rc dans /usr/local/etc/rc.d. Certains affichent un message après l'installation : lisez-le. Root pour installer ou retirer.
+    .synopsis = pkg search motif ; pkg install [-y] nom... ; pkg info [nom] ; pkg delete nom
+    .example-1 = chercher nginx
+    .example-2 = l'installer
+    .example-3 = installer bash, sans la question
+    .example-4 = ce qui est installé
+    .example-5 = les détails de nginx
+    .example-6 = le retirer
+man-sockstat = liste les sockets ouvertes, avec qui les a ouvertes : le compte, le programme, son PID, le protocole et les adresses. -l celles à l'écoute, -4 et -6 seulement IPv4 ou IPv6. La réponse de FreeBSD à ss -tlnp (ou netstat -tlnp) sous Linux.
+    .synopsis = sockstat [-46l]
+    .example-1 = ce qui écoute, en IPv4
+    .example-2 = toutes les sockets à l'écoute
+    .example-3 = à l'écoute, IPv4 et IPv6
+man-pfctl = pilote pf, le filtre de paquets (le pare-feu de FreeBSD, venu d'OpenBSD). -nf FICHIER vérifie une configuration sans la charger ; -f FICHIER charge ses règles ; -e active pf, -d le désactive ; -sr montre les règles en vigueur (telles que pf les comprend) ; -si son état. Les règles sont dans /etc/pf.conf (man pf.conf). Attention en l'activant par ssh : des règles qui bloquent le port 22 coupent la prochaine connexion. Pour que pf démarre au boot : pf_enable="YES" dans rc.conf (puis service pf start). Root seulement.
+    .synopsis = pfctl [-n] -f fichier ; pfctl -e | -d ; pfctl -s rules | -s info
+    .example-1 = vérifier pf.conf sans le charger
+    .example-2 = charger les règles
+    .example-3 = activer pf
+    .example-4 = les règles en vigueur
+    .example-5 = l'état de pf
+    .example-6 = désactiver pf
+man-pf_conf = la configuration de pf (/etc/pf.conf), lue par pfctl. Une règle par ligne : pass ou block, in ou out, quick, proto tcp, from SOURCE, to DESTINATION, port N (ou une liste {"{"} 22 80 {"}"}) ; « all » pour toutes les adresses. MACRO = "valeur" définit un nom utilisé ensuite comme $MACRO. L'essentiel : pf lit TOUTES les règles, et c'est la DERNIÈRE qui correspond à un paquet qui décide — l'inverse d'iptables, où la première gagne. Donc « block in all » vient EN PREMIER, puis les pass ; ou une règle marquée quick décide tout de suite. set skip on lo0 laisse la boucle locale tranquille.
+    .synopsis = /etc/pf.conf
+    .example-1 = bloquer tout ce qui entre (d'abord : les règles suivantes ouvriront le nécessaire)
+    .example-2 = puis laisser entrer ssh et le web
+    .example-3 = décider tout de suite pour cette adresse (quick)
+    .example-4 = laisser sortir ce que le serveur ouvre
+man-rc_conf = la configuration du système FreeBSD (/etc/rc.conf) : des variables shell lues au démarrage. Le nom de la machine, le réseau, et quels services démarrent : NOM_enable="YES" (nginx_enable, sshd_enable, pf_enable…). Sans elle, le service ne démarre pas au boot, et service NOM start refuse. Se modifie avec sysrc (ou un éditeur) ; les valeurs par défaut des paquets restent dans leurs scripts rc.
+    .synopsis = /etc/rc.conf
+    .example-1 = démarrer nginx au boot
+    .example-2 = activer pf au boot
+    .example-3 = démarrer sshd au boot
+man-freebsd-version = affiche la version de FreeBSD installée (le système de base, 14.2-RELEASE…), là où uname -r donne celle du noyau en marche.
+    .synopsis = freebsd-version [-kru]
+    .example-1 = la version installée
+    .example-2 = le système et son noyau

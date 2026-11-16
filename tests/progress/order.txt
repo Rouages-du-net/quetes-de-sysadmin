@@ -101,3 +101,6 @@ alarm
 containment
 eradication
 hardening
+portable-script
+rc-services
+last-rule

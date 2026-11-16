@@ -16,9 +16,13 @@ export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
 
 const section = (name: string) => COMMANDS[name]?.section ?? 1;
 
-function texts(name: string, t: Translate) {
-  const synopsis = t.exists(`${page(name)}.synopsis`) ? t(`${page(name)}.synopsis`) : '';
-  const options = (name: string, c: Command): [string, string][] => (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]);
+// On a FreeBSD machine, a command whose BSD version differs has its own page (man-<command>-bsd).
+const key = (name: string, t: Translate, bsd: boolean) => (bsd && t.exists(`${page(name)}-bsd`) ? `${page(name)}-bsd` : page(name));
+
+function texts(name: string, t: Translate, bsd = false) {
+  const k = key(name, t, bsd);
+  const synopsis = t.exists(`${k}.synopsis`) ? t(`${k}.synopsis`) : '';
+  const options = (name: string, c: Command): [string, string][] => (k !== page(name) ? bsdOptions(k, t) : (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]));
   // A language can adapt the command of an example that contains words (.command-N): grep "my password".
   const examples = (name: string, c: Command): [string, string][] =>
     (c.examples ?? []).map((e, i) => {
@@ -27,7 +31,22 @@ function texts(name: string, t: Translate) {
       const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\byou\b/g, player(t)), t, [translator('en')]);
       return [command, t(`${page(name)}.example-${i + 1}`)];
     });
-  return { synopsis, description: t(page(name)), options, examples };
+  // A BSD page brings its own examples (.bsd-example-N with .bsd-command-N).
+  const bsdExamples = (): [string, string][] => {
+    const out: [string, string][] = [];
+    for (let i = 1; t.exists(`${k}.command-${i}`); i++) out.push([t(`${k}.command-${i}`), t(`${k}.example-${i}`)]);
+    return out;
+  };
+  return { synopsis, description: t(k), options, examples: k !== page(name) ? () => bsdExamples() : examples, bsd: k !== page(name) };
+}
+
+// A BSD page's options: .option-X attributes, in the order of .options (a list of letters).
+function bsdOptions(k: string, t: Translate): [string, string][] {
+  if (!t.exists(`${k}.options`)) return [];
+  return t(`${k}.options`)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((o) => [o, t(`${k}.option-${o}`)]);
 }
 
 // The first sentence, without a final full stop, for the NAME line and whatis.
@@ -39,16 +58,16 @@ const indent = (text: string, n = 7) =>
     .map((l) => (l ? ' '.repeat(n) + l : l))
     .join('\n');
 
-export function whatisLine(name: string, t: Translate): string {
-  return `${`${name} (${section(name)})`.padEnd(21)}- ${recap(t(page(name)))}`;
+export function whatisLine(name: string, t: Translate, bsd = false): string {
+  return `${`${name} (${section(name)})`.padEnd(21)}- ${recap(t(key(name, t, bsd)))}`;
 }
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-export function pageMan(name: string, c: Command, t: Translate): string {
-  const { synopsis, description, options, examples } = texts(name, t);
+export function pageMan(name: string, c: Command, t: Translate, bsd = false): string {
+  const { synopsis, description, options, examples } = texts(name, t, bsd);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t('manual-header');
+  const middle = t(bsd ? 'manual-header-bsd' : 'manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];

@@ -9,6 +9,58 @@ import { runScript } from '../script';
 import { summerTime, systemd } from '../systemd';
 import { timeOfDay, machineTime, setClock } from '../time';
 import { content } from '../tools';
+import { isBsd } from '../freebsd';
+
+const BSD_DATE_USAGE = `usage: date [-jnRu] [-I[date|hours|minutes|seconds|ns]] [-f input_fmt]
+            [ -z output_zone ] [-r filename|seconds] [-v[+|-]val[y|m|w|d|H|M|S]]
+            [[[[[[cc]yy]mm]dd]HH]MM[.SS] | new_date] [+output_fmt]`;
+
+const UNITS: Record<string, number> = { S: 1000, M: 60_000, H: 3_600_000, d: 86_400_000, w: 7 * 86_400_000 };
+
+/** BSD date -v: "-1d", "+2H", "-1m" (a month), "1d" (sets the day of the month to 1). */
+function adjustBsd(ms: number, value: string): number | null {
+  const m = /^([+-]?)(\d+)([ymwdHMS])$/.exec(value);
+  if (!m) return null;
+  const [, sign, n, unit] = m;
+  const d = new Date(ms);
+  const k = Number(n);
+  if (!sign) {
+    if (unit === 'y') d.setUTCFullYear(k < 100 ? 2000 + k : k);
+    else if (unit === 'm') d.setUTCMonth(k - 1);
+    else if (unit === 'd') d.setUTCDate(k);
+    else if (unit === 'H') d.setUTCHours(k);
+    else if (unit === 'M') d.setUTCMinutes(k);
+    else if (unit === 'S') d.setUTCSeconds(k);
+    else return null;
+    return d.getTime();
+  }
+  const s = sign === '-' ? -k : k;
+  if (unit === 'y') d.setUTCFullYear(d.getUTCFullYear() + s);
+  else if (unit === 'm') d.setUTCMonth(d.getUTCMonth() + s);
+  else return ms + s * UNITS[unit];
+  return d.getTime();
+}
+
+const GNU_UNITS: Record<string, string> = { second: 'S', sec: 'S', minute: 'M', min: 'M', hour: 'H', day: 'd', week: 'w', fortnight: 'f', month: 'm', year: 'y' };
+
+/** GNU date -d: "yesterday", "tomorrow", "now", "3 days ago", "-1 day", "+2 weeks", "2028-09-01", "@1700000000". */
+function relativeGnu(ms: number, text: string): number | null {
+  const t = text.trim().toLowerCase();
+  if (t === '' || t === 'now' || t === 'today') return ms;
+  if (t === 'yesterday') return ms - 86_400_000;
+  if (t === 'tomorrow') return ms + 86_400_000;
+  const epoch = /^@(-?\d+)$/.exec(t);
+  if (epoch) return Number(epoch[1]) * 1000;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:[ t](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(t);
+  if (iso) return Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]), Number(iso[4] ?? 0), Number(iso[5] ?? 0), Number(iso[6] ?? 0));
+  const rel = /^([+-]?\d+)?\s*(second|sec|minute|min|hour|day|week|fortnight|month|year)s?(\s+ago)?$/.exec(t);
+  if (!rel) return null;
+  let n = Number(rel[1] ?? 1);
+  if (rel[3]) n = -n;
+  const unit = GNU_UNITS[rel[2]];
+  if (unit === 'f') return ms + n * 14 * 86_400_000;
+  return adjustBsd(ms, `${n < 0 ? '-' : '+'}${Math.abs(n)}${unit}`);
+}
 import type { Command } from './index';
 
 /** Runs a file as a /bin/sh script; returns its output (failure if its code is not 0). */
@@ -151,9 +203,9 @@ export const SCRIPTS: Record<string, Command> = {
   date: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      // -s "2027-08-30 09:12" (or --set=…): set the clock, reserved to root.
+      // -s "2027-08-30 09:12" (or --set=…): set the clock, reserved to root (GNU).
       const i = args.findIndex((a) => a === '-s' || a.startsWith('--set='));
-      if (i >= 0) {
+      if (i >= 0 && !isBsd(game)) {
         const text = args[i] === '-s' ? args[i + 1] : args[i].slice(6);
         if (text === undefined) return game.error(game.t('date-option-argument'));
         const wall = readDate(game, text);
@@ -164,11 +216,37 @@ export const SCRIPTS: Record<string, Command> = {
         return formatValue(wall, game.t('date-format'), game.t.language, timeOfDay(game) ? machineTime(game) : undefined);
       }
       const machine = timeOfDay(game) ? machineTime(game) : null;
-      const ms = machine?.wall ?? systemd(game)?.clock ?? Date.UTC(2027, 0, 1);
-      const format = args.find((a) => a.startsWith('+'));
-      const unknown = args.find((a) => !a.startsWith('+'));
+      let ms = machine?.wall ?? systemd(game)?.clock ?? Date.UTC(2027, 0, 1);
+      const words: string[] = [];
+      for (let k = 0; k < args.length; k++) {
+        const a = args[k];
+        if (isBsd(game)) {
+          // BSD: -v[+|-]N[ymwdHMS] adjusts (or, without a sign, sets) a field; -j, -u change nothing here.
+          if (a.startsWith('-v')) {
+            const value = a.length > 2 ? a.slice(2) : args[++k];
+            const next = adjustBsd(ms, value ?? '');
+            if (next === null) return game.error(`date: ${value ?? ''}: illegal time adjustment`, 1);
+            ms = next;
+          } else if (a === '-j' || a === '-u' || a === '-n') continue;
+          else if (a.startsWith('-') && a.length > 1) return game.error(`date: illegal option -- ${a.charAt(1)}\n${BSD_DATE_USAGE}`, 1);
+          else words.push(a);
+        } else {
+          // GNU: -d STRING (or --date=STRING): another date than now.
+          if (a === '-d' || a === '--date' || a.startsWith('--date=') || (a.startsWith('-d') && a.length > 2)) {
+            const text = a === '-d' || a === '--date' ? args[++k] : a.startsWith('--date=') ? a.slice(7) : a.slice(2);
+            if (text === undefined) return game.error(`date: option requires an argument -- 'd'\nTry 'date --help' for more information.`, 1);
+            const when = relativeGnu(ms, text);
+            if (when === null) return game.error(`date: invalid date '${text}'`, 1);
+            ms = when;
+          } else if (a === '-u' || a === '--utc') continue;
+          else if (a.startsWith('-') && a.length > 1) return game.error(`date: invalid option -- '${a.charAt(1)}'\nTry 'date --help' for more information.`, 1);
+          else words.push(a);
+        }
+      }
+      const format = words.find((a) => a.startsWith('+'));
+      const unknown = words.find((a) => !a.startsWith('+'));
       if (unknown) return game.error(game.t('date-invalid', { argument: unknown }));
-      // Without a format: like date in French (LANG=fr_FR.UTF-8).
+      // Without a format: like date in the game's language (LANG).
       return formatValue(ms, format ? format.slice(1) : game.t('date-format'), game.t.language, machine ?? undefined);
     },
   },

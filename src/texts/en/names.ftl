@@ -405,3 +405,6 @@ name-message_from_margot-txt = message_from_margot.txt
 
 ## The Bastion
 name-email_selma-txt = email_selma.txt
+name-message_from_yanis-txt = message_from_yanis.txt
+name-message_from_romy-txt = message_from_romy.txt
+name-lucien-notes-txt = lucien-notes.txt

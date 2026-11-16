@@ -7,6 +7,7 @@
 import type { Game } from './shell';
 import { verdict, type Firewall } from './firewall';
 import { iptables, verdict as iptablesVerdict } from './iptables';
+import { pfVerdict, type PfState } from './freebsd';
 import { dockerListeners, publishedToWorld } from './docker';
 import type { Listening } from './commands/ss';
 
@@ -21,7 +22,8 @@ export function portState(game: Game, port: number, local: boolean, source: stri
   // otherwise ufw. Both decide an incoming TCP connection the same way.
   const direct = iptables(game.state);
   const pf: Firewall | undefined = game.state.ufw;
-  const pass = direct ? iptablesVerdict(direct, port, source) : pf ? verdict(pf, port, source) : 'accepted';
+  const bsd = game.state.pf as PfState | undefined;
+  const pass = direct ? iptablesVerdict(direct, port, source) : pf ? verdict(pf, port, source) : bsd ? pfVerdict(bsd, port, source) : 'accepted';
   if (pass === 'blocked') return 'filtered';
   if (pass === 'refused') return 'refused';
   return onAll ? 'open' : 'refused';

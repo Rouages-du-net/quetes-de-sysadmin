@@ -155,6 +155,14 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `systemctl` without being root | "Access denied", you need `sudo` | asks for the password (polkit) |
 | `sudo` after `reboot` | still remembers the password | asks for it again |
 | `sshd` | some of the keywords; all errors listed at once; the password is only asked on machines with the real ssh (`maison`); no `StrictModes` (rights of `~/.ssh` not checked) nor options in `authorized_keys` | stops at the first error; offers the password everywhere; refuses an `authorized_keys` writable by others |
+| `sed` | GNU's on Linux, BSD's on FreeBSD: `s` (flags `g`, `p`, `I`, N), `d`, `p`, `q`, one address (a number, `$`, `/regex/`) and `!`, `-n`, `-E`/`-r`, `-e`, `-i` (GNU: optional suffix glued to the option; BSD: required, as the next word, `-i ''`). The BSD version reads the file's name as the script when `-i` takes the script as its suffix, with BSD's messages | `a`, `i`, `c`, `y`, hold space, labels (a branch fails with "undefined label"), ranges of addresses, `-f`, `-s`, `-z` |
+| `stat` | GNU's `-c FORMAT` (`%s`, `%n`, `%U`, `%G`, `%a`, `%A`, `%y`, `%Y`, `%F`) and `-f` (file system); BSD's `-f FORMAT` (`%z`, `%N`, `%Su`, `%Sg`, `%Lp`, `%Sp`, `%Sm`, `%m`) on FreeBSD; each refuses the other's option | the other format sequences, `-L`, `-t`, inodes and devices |
+| `date` | `+FORMAT`; on Linux, GNU's `-d` (`yesterday`, `tomorrow`, `N days ago`, `+N weeks`, an ISO date, `@seconds`) and `-s` (root); on FreeBSD, BSD's `-v` (adjust or set a field: `y m w d H M S`), `-j`, `-u`; each refuses the other's options | GNU's full date grammar ("next Friday"), BSD's `-f` input format, `-r` |
+| FreeBSD (`state.os`) | a machine of the story "The Other Unix": its login banner and `uname`, `freebsd-version`; Debian's commands are "not found" (`systemctl`, `journalctl`, `apt`, `ss`, `ip`, `ufw`, `iptables`…), `bash` too until `pkg install bash`; a script's `#!` line names an interpreter that must exist ("./script: not found"); sudo reads `/usr/local/etc/sudoers`; `man` shows the BSD page of `date`, `sed`, `stat` | the other tools' BSD versions (`ls`, `ps`, `grep`… behave as on Linux), `csh`/`tcsh`, `pw`, jails, ZFS, ports |
+| `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
+| `service`, `sysrc`, `rc.conf` | rc services: `start`, `stop`, `restart`, `reload`, `status`, the `one` prefix, `enable`/`disable`, `service -e`; rc.subr's refusal without `NAME_enable="YES"` in `/etc/rc.conf`; `sysrc NAME`, `NAME=VALUE`, `-x`, `-a` | `rcorder`, `/etc/rc.conf.local` and `rc.conf.d`, rc script variables beyond `_enable` |
+| `sockstat` | the listening sockets with their account, program and PID (`-4`, `-6`, `-l`) | connected sockets, `-c`, Unix sockets, jails |
+| `pfctl`, `pf.conf` | `-nf` (check), `-f` (load), `-e`/`-d`, `-sr`, `-si`, `-F rules`; `service pf start` with `pf_enable`; rules `pass`/`block` (`drop`, `return`), `in`/`out`, `quick`, `proto`, `from`, `to`, `port` (numbers, names, lists `{ }`), `all`, macros, `set skip`; the LAST matching rule decides unless `quick`; an incoming TCP connection is decided this way (ssh and the port scanners see it); the connections already open are kept | NAT and `rdr`, tables, anchors, `scrub` (accepted, ignored), state options, `max-src-conn-rate`, logging (`pflog`) |
 | `iptables`, `iptables-save` | the host firewall's **filter** table: the built-in chains INPUT/OUTPUT/FORWARD, their policy, user chains; matches `-p`, `--dport`/`--sport`, `-s`/`-d`, `-i`/`-o`, `-m state`/`conntrack --state`/`--ctstate`; targets ACCEPT, DROP, REJECT, LOG, RETURN, a jump to a user chain; `-L` (`-n`, `-v`, `--line-numbers`), `-S`, `-A`/`-I`/`-D`/`-R`, `-P`, `-F`, `-N`/`-X`; `iptables-save`. The INPUT chain decides an incoming TCP connection (ssh and the port scanners see it, like ufw); it arrives on `eth0`, a connection from the machine itself on `lo`. The OUTPUT chain decides a program's outgoing connection (The Bastion's miner). Root only | the nat table's packet rewriting (a router's NAT is in `nft`), mangle/raw, counters, `-m` beyond state/conntrack, `ip6tables`, `iptables-restore`, the web of rule extensions |
 | `ufw` | IPv4 and IPv6 rules merged ("(v6)" lines for show); no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
 | `ss`, `netstat` | the sockets described by the chapter, the current ssh session (on the port you came in through), and the chapter's other connections while their process lives; `netstat` is the net-tools counterpart of `ss` (`-t`, `-u`, `-l`, `-a`, `-n`, `-p`) | every socket of the system; Unix domain sockets; `netstat -r`/`-i` |
@@ -2590,6 +2598,56 @@ accepted and the app's 3000 closed from outside, the workstation still
 allowed, the rules saved, deploy usable again. Expected traps: changing the
 main `sshd_config` (the drop-in wins), no reload, no loopback rule, the
 policy before ssh is accepted, `sudo iptables-save > file`.
+
+## Story 26: The Other Unix (three chapters)
+
+The neighbourhood film club's server (`projector`, 192.0.2.34) runs
+FreeBSD 14: Lucien, who set it up, has moved away; Yanis, the new volunteer,
+knows Debian; Romy chairs the club. In each chapter, a Debian habit breaks,
+and the manual of the machine you are on is the way out. The machine's
+flavour is in `state.os` (`src/engine/freebsd.ts`). It opens after "The
+Firewall" and "The Bare Repository" (scripts).
+
+### Chapter 1 — The Script That Broke (done)
+
+| Step | Command learnt |
+|---|---|
+| Not found | `./nightly-backup.sh` says "not found": `#!/bin/bash`, and bash isn't in the base system (`/bin/sh`) |
+| date | `date: illegal option -- d`, `man date` (BSD's), `date -v-1d +%F` |
+| stat | `stat: illegal option -- c`, `stat -f %z` |
+| sed | `sed -i "s/…/"` reads the file's name as the script (`undefined label`), `sed -i '' "s/…/"` |
+
+Goal checked on the state: yesterday's archive in `/var/backups`, and
+`state.conf` updated with yesterday's date. Expected traps: installing bash
+(the GNU options still fail), `systemctl` and the other Linux commands.
+
+### Chapter 2 — No systemd Here (done)
+
+| Step | Command learnt |
+|---|---|
+| Not here | `systemctl`, `apt`: not found |
+| The package | `pkg install nginx` (its files under `/usr/local`, its message) |
+| rc.conf | `service nginx start` refuses ("Cannot 'start' nginx"), `sysrc nginx_enable=YES` or `service nginx enable` |
+| Who listens | `service nginx start`, `sockstat -4l` |
+
+Goal checked on the state: nginx installed, enabled in rc.conf, running and
+listening on 80. Expected trap: `onestart` (running, but not after a
+reboot).
+
+### Chapter 3 — The Last Rule Wins (done)
+
+| Step | Command learnt |
+|---|---|
+| Check | `cat /etc/pf.conf`, `pfctl -nf /etc/pf.conf` |
+| Switch on | `sysrc pf_enable=YES`, `service pf start`: Yanis's last `block in all` blocks ssh and the web too (the last matching rule wins) |
+| Fix | block first then pass, or `quick`; `pfctl -f /etc/pf.conf`, `pfctl -sr` |
+| From outside | `nc -zv projector 80`, `nc -zv projector 3306` from the workstation |
+
+Goal checked on the state: pf enabled and enabled at boot, 22 and 80
+reachable from the internet and from the workstation, 3306 not, the rules
+in force equal to `/etc/pf.conf`. Expected traps: enabling it as it is (the
+next ssh connection would be refused), `pfctl -e` without `pf_enable`, an
+edited file not reloaded. Other accepted solution: `quick` passes.
 
 ## Ideas for later
 

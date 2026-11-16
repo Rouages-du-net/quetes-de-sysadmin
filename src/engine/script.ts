@@ -67,6 +67,9 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
   let cwd = options.cwd;
   let stopOnError = false;
   const outputs: string[] = [];
+  // The exit code of the line's last $(command): an assignment alone takes it
+  // (DAY=$(date -d …) fails, and set -e stops there, as in sh).
+  let substituted = 0;
 
   // $NAME, ${NAME}, $1, $? and $(command); nothing inside single quotes.
   const expand = (s: string): string => {
@@ -86,7 +89,12 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
           let j = i + 2;
           for (; j < s.length && depth; j++) depth += s[j] === '(' ? 1 : s[j] === ')' ? -1 : 0;
           const inside = s.slice(i + 2, j - 1);
-          result += game.underCommand(expand(inside), cwd).output.trim();
+          const r = game.underCommand(expand(inside), cwd);
+          substituted = r.code;
+          // A failing command's message goes to the screen (stderr), not into the value.
+          if (r.code !== 0) {
+            if (r.output.trim()) outputs.push(r.output.trim());
+          } else result += r.output.trim();
           i = j - 1;
         } else {
           const m = /^\{([A-Za-z_][A-Za-z0-9_]*|\d+|\?)\}|^([A-Za-z_][A-Za-z0-9_]*|\d|\?)/.exec(s.slice(i + 1));
@@ -103,6 +111,7 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
 
   // A simple command; returns its exit code.
   const launch = (rawValue: string, number: number): number => {
+    substituted = 0;
     let line = expand(rawValue).trim();
     if (!line || line === ':' || line === 'true') return 0;
     if (line === 'false') return 1;
@@ -141,7 +150,7 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
     }
     if (!line) {
       Object.assign(variables, assignments);
-      return 0;
+      return substituted;
     }
     if (line.startsWith('git ')) {
       const options = [

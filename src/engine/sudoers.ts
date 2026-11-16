@@ -16,6 +16,8 @@ import type { Shell } from './shell';
 import { wildcard } from './tools';
 
 export const SUDOERS = '/etc/sudoers';
+/** sudo's main file: /etc/sudoers, or /usr/local/etc/sudoers where sudo is a package (FreeBSD). */
+export const sudoersFile = (game: { state: Record<string, unknown> }) => (game.state.os === 'freebsd' ? '/usr/local/etc/sudoers' : SUDOERS);
 
 export interface Rule {
   who: string[];
@@ -119,7 +121,7 @@ export function read(game: Shell): { rules: Rule[]; defaults: string[]; files: s
     }
     return null;
   };
-  const error = readFile(SUDOERS);
+  const error = readFile(sudoersFile(game));
   return { rules, defaults, files: [...seen], error };
 }
 

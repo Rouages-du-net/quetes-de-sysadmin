@@ -15,6 +15,8 @@ export interface Machine {
   story?: string;
   // The game gives no key: you create your own (ssh-keygen, ssh-copy-id).
   withoutKey?: boolean;
+  // Another system than Debian (see freebsd.ts): its login banner.
+  os?: 'freebsd';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
@@ -67,6 +69,8 @@ export const MACHINES: Machine[] = [
   machine('nas', '192.0.2.31', 'photo-club'),
   // The Bastion: the Bakery's delivery server, a year after The Watch (an incident to handle).
   machine('oven', '192.0.2.33', 'bastion'),
+  // The Other Unix: the film club's FreeBSD server.
+  { ...machine('projector', '192.0.2.34', 'other-unix'), os: 'freebsd' },
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

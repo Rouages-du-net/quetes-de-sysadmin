@@ -9,6 +9,7 @@
 
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
+import { isBsd } from '../freebsd';
 import type { Command } from './index';
 
 export interface SessionTmux {
@@ -86,6 +87,12 @@ export const TMUX: Record<string, Command> = {
 
   uname: {
     launch: ({ args, game }) => {
+      // A FreeBSD machine (see freebsd.ts): its kernel, its release.
+      if (isBsd(game)) {
+        if (args.some((a) => /^-\w*a/.test(a))) return `FreeBSD ${game.host} 14.2-RELEASE FreeBSD 14.2-RELEASE releng/14.2-n269506-c8918d6c7412 GENERIC amd64`;
+        if (args.some((a) => /^-\w*r/.test(a))) return '14.2-RELEASE';
+        return 'FreeBSD';
+      }
       const kernel = (game.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
       const all = args.some((a) => /^-\w*a/.test(a));
       if (all) return `Linux ${game.host} ${kernel} #1 SMP PREEMPT_DYNAMIC Debian ${kernel.replace(/\+.*$/, '')}-1 x86_64 GNU/Linux`;

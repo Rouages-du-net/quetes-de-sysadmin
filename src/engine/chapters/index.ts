@@ -100,6 +100,9 @@ import { alarm } from './alarm';
 import { containment } from './containment';
 import { eradication } from './eradication';
 import { hardening } from './hardening';
+import { portableScript } from './portable-script';
+import { rcServices } from './rc-services';
+import { lastRule } from './last-rule';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -232,6 +235,11 @@ export const STORIES: Story[] = [
     id: 'bastion',
     after: ['routine'],
     chapters: [alarm, containment, eradication, hardening],
+  },
+  {
+    id: 'other-unix',
+    after: ['firewall', 'bare-repo'],
+    chapters: [portableScript, rcServices, lastRule],
   },
 ];
 

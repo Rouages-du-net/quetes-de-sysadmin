@@ -53,6 +53,9 @@ export const CODE_ORDER = [
   'containment',
   'eradication',
   'hardening',
+  'portable-script',
+  'rc-services',
+  'last-rule',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

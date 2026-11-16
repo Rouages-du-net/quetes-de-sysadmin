@@ -74,6 +74,8 @@ export class Console {
     s.state.remoteSshd = (name: string) => this.sessionFor(name).state.sshd?.load ?? null;
     // … and its firewall (ufw), which can block the connection before sshd even sees it.
     s.state.remoteFirewall = (name: string) => this.sessions.get(name)?.state.ufw ?? null;
+    // A FreeBSD machine's pf (see freebsd.ts).
+    s.state.remotePf = (name: string) => this.sessions.get(name)?.state.pf ?? null;
     // … and the addresses its fail2ban has banned (for this port, if given: the jail only blocks its own ports).
     s.state.remoteBanned = (name: string, port?: number): string[] => {
       const f2b: Fail2banState | undefined = this.sessions.get(name)?.state.fail2ban;
@@ -203,7 +205,10 @@ export class Console {
     const old = this.sessions.get(name);
     // The banner gives the running kernel (the session's, if it has one).
     const kernel = (old?.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
-    const banner = [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
+    const banner =
+      machine.os === 'freebsd'
+        ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', this.t(`machine-${machine.name}-motd`)]
+        : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
     // A session created from afar (a port tested with nc): the first real
     // connection opens the chapter, with its welcome text.
     if (!chapter && old?.state.prepared && old.chapter === c) {

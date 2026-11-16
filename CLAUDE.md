@@ -271,6 +271,15 @@ presents them for people.
   `eradication.ts`, `hardening.ts`. A chapter's outgoing connections go in
   `state.established` (`ss`, `netstat`); iptables' OUTPUT chain decides
   them (`outVerdict`).
+- `src/engine/freebsd.ts`: a FreeBSD machine (`state.os = 'freebsd'`):
+  Linux-only commands "not found", `#!` checked, BSD man pages
+  (`man-<command>-bsd`), `/etc/rc.conf`, packages (`state.pkg`), rc services
+  (`state.rc`), pf (`state.pf`: `pf.conf` parsed, the last matching rule
+  wins); `service`, `sysrc`, `pkg`, `sockstat`, `pfctl`, `freebsd-version`
+  in `commands/freebsd.ts`; `sed` and `stat` (GNU and BSD) in
+  `commands/sed.ts`, `date -d`/`-v` in `commands/scripts.ts`;
+  `chapters/film-club.ts`: what the chapters of "The Other Unix" share
+  (`portable-script.ts`, `rc-services.ts`, `last-rule.ts`).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
