@@ -451,11 +451,12 @@ man-diff = compares two files line by line, and shows what to change to go from 
     .example-1 = what changes between two files
     .example-2 = the same thing, in git diff format
     .example-3 = everything that differs between two places
-man-du = measures the space used (disk usage), place by place. A file with several names (hard links) is only counted once. -s gives only the total, -h writes in K, M, G, -d N stops N levels deep. --inodes counts files (inodes) instead of bytes: to find the place that holds thousands of files. E.g.: du -sh *
+man-du = measures the space used (disk usage), place by place. A file with several names (hard links) is only counted once. -s gives only the total, -h writes in K, M, G, -d N stops N levels deep. --inodes counts files (inodes) instead of bytes: to find the place that holds thousands of files. -b gives the apparent size in bytes (GNU du only). E.g.: du -sh *
     .synopsis = du [-s] [-h] [-d N] [--inodes] [place...]
     .option-h = readable sizes: K, M, G.
     .option-s = a single total per place (summary), without the details.
     .option-d = only show N levels below the given place (--max-depth=N).
+    .option-b = the apparent size in bytes (GNU du only).
     .example-1 = the space taken by each log
     .example-2 = the number of files, place by place, one level deep
     .example-3 = the number of files in each place
@@ -463,7 +464,7 @@ man-echo = prints the text. Very useful with > to write into a file: echo "hello
     .synopsis = echo text
 man-exit = leaves the shell. In an ssh session, closes the connection and takes you back to the machine you came from (here, your workstation).
     .synopsis = exit
-man-find = searches for files in a place and all its sub-places. E.g.: find . -name "*.pdf"; -type f keeps only files, -type d only directories; -mtime +30 those modified more than 30 days ago (-mtime -7: less than 7 days); -maxdepth 1 does not go down into sub-places; -delete deletes what is found (careful: run it first without -delete to see the list). find walks through places by itself: it deletes hundreds of thousands of files where rm * fails ("Argument list too long").
+man-find = searches for files in a place and all its sub-places. E.g.: find . -name "*.pdf"; -type f keeps only files, -type d only directories; -mtime +30 those modified more than 30 days ago (-mtime -7: less than 7 days); -maxdepth 1 does not go down into sub-places; -delete deletes what is found (careful: run it first without -delete to see the list); -printf FORMAT prints each one your way (%p the path, %f the name, %s the size, %u the owner, %m the rights, \n a new line: GNU find only). find walks through places by itself: it deletes hundreds of thousands of files where rm * fails ("Argument list too long").
     .synopsis = find [place] [-maxdepth N] [-name pattern] [-type f|d] [-mtime [+|-]N] [-delete]
     .example-1 = the text files, here and below
     .example-2 = the statistics older than 30 days (to look)
@@ -498,13 +499,14 @@ man-git =
     On screen, status, diff, log and show are in colour (color.ui=auto): what goes in red, what comes in green; --no-color turns them off.
     A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
     .synopsis = git [--git-dir=repository] [--work-tree=place] command
-man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off.
+man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off.
     .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=WHEN]] pattern [file...]
     .option-i = ignores the difference between uppercase and lowercase.
     .option-v = inverts the search: keeps the lines that do NOT contain the pattern.
     .option-c = counts the matching lines instead of printing them.
     .option-q = silent (quiet): prints nothing, succeeds if the pattern is found, fails otherwise.
     .option-E = extended regular expressions: + ? | ( ) have their special meaning.
+    .option-P = Perl-compatible regular expressions (\d, \w, lookarounds): GNU grep only.
     .option-F = searches for the pattern as is, without regular expressions (fixed strings).
     .option-h = never prints the file name before the lines (by default, it does with several files).
     .option-H = always prints the file name before the lines, even with a single file.
@@ -1577,3 +1579,68 @@ man-freebsd-version = prints the version of FreeBSD installed (the userland, 14.
     .synopsis = freebsd-version [-kru]
     .example-1 = the installed version
     .example-2 = the system and its kernel
+man-ps-bsd = lists the processes (BSD's ps). Without options, only YOUR processes attached to a terminal. a adds those of the other accounts, x those without a terminal (the daemons): ps aux (or ps -ax) shows them all; u gives the user-oriented columns (USER, %CPU, %MEM, STARTED…), j the parents (PPID). -U account keeps one account's, -p PID one process; -o chooses the columns (pid,ppid,user,%cpu,command…). Careful: -e shows each process's ENVIRONMENT (its variables), not every process: ps -ef, a Linux habit, lists only your own processes, with their variables. No long options (--sort…).
+    .synopsis = ps [-aCcdefHhjlmrSTuvwXxZ] [-O fmt | -o fmt] [-p pid[,pid...]] [-U user[,user...]]
+    .options = a x u j e U p o
+    .option-a = the processes of every account (with a terminal).
+    .option-x = also those without a terminal (the daemons).
+    .option-u = user-oriented columns: USER, %CPU, %MEM, VSZ, RSS, STARTED…
+    .option-j = the job columns, with the parent (PPID).
+    .option-e = show each process's environment (its variables).
+    .option-U = only this account's processes.
+    .option-p = only these processes.
+    .option-o = the columns to show (pid,ppid,user,%cpu,%mem,command…).
+    .command-1 = ps aux
+    .example-1 = every process, with its account and its use of the machine
+    .command-2 = ps -axj
+    .example-2 = every process with its parent (PPID): the BSD answer to ps -ef
+    .command-3 = ps -U www
+    .example-3 = the www account's processes
+    .command-4 = ps -ax -o pid,ppid,user,command
+    .example-4 = chosen columns
+man-ls-bsd = lists the contents of a place (BSD's ls). -a shows the hidden files (and . and ..), -l the long format, -h readable sizes with -l, -d the place itself, -i the inode numbers, -t sorted by date, -r in reverse, -G in colour (or --color=auto). No other long option: --all, --human-readable… are GNU's (unknown option).
+    .synopsis = ls [-ABCFGHILPRSTUWZabcdfghiklmnopqrstuvwxy1,] [--color=when] [-D format] [file ...]
+    .options = a l h d G t r
+    .option-a = everything, hidden files included.
+    .option-l = long format.
+    .option-h = with -l, readable sizes.
+    .option-d = the place itself, not its contents.
+    .option-G = in colour (like CLICOLOR=1).
+    .option-t = sorted by modification date, newest first.
+    .option-r = in reverse order.
+    .command-1 = ls -la
+    .example-1 = everything, in long format
+    .command-2 = ls -lG /usr/local/etc
+    .example-2 = in colour
+man-grep-bsd = prints the lines that contain the pattern (FreeBSD's grep). Same options as GNU's for the usual cases: -E extended expressions, -F the text as is, -i ignore case, -v invert, -c count, -q quiet, -r in a whole tree, -n line numbers, --color. No -P (Perl expressions): use -E, where [0-9] stands for \d.
+    .synopsis = grep [-abcdDEFGHhIiLlmnOopqRSsUVvwxz] [-A num] [-B num] [-C num] [-e pattern] [pattern] [file ...]
+    .options = E F i v c q r n
+    .option-E = extended regular expressions.
+    .option-F = the pattern as is.
+    .option-i = ignore case.
+    .option-v = the lines that do NOT match.
+    .option-c = count the lines.
+    .option-q = quiet: only the exit code.
+    .option-r = search a whole tree.
+    .option-n = the line numbers.
+    .command-1 = grep -E '[0-9]+ bytes' /var/log/messages
+    .example-1 = what grep -P '\d+ bytes' would find on Linux
+    .command-2 = grep -rn nginx_enable /etc
+    .example-2 = where is nginx enabled, with the line numbers
+man-find-bsd = searches for files in a place and all its sub-places (BSD's find). -name, -type f or d, -mtime ±N, -maxdepth N, -delete, -print, and -ls for details. No -printf (GNU's): to print each file your way, combine find with stat: find . -type f -exec stat -f '%z %N' {"{"}{"}"} +
+    .synopsis = find [-H | -L | -P] [-EXdsx] path ... [expression]
+    .command-1 = find /var/log -name '*.log' -mtime +30
+    .example-1 = logs older than 30 days
+    .command-2 = find /usr/local/etc -maxdepth 1 -type d
+    .example-2 = the packages' configuration places
+man-du-bsd = measures the space used, place by place (BSD's du): in blocks of BLOCKSIZE (1K by default here). -s a single total, -h readable sizes, -d N stops N levels deep, -A the apparent size instead of the blocks really used. No -b (GNU's bytes): BLOCKSIZE=1 with -A, or stat -f %z for one file.
+    .synopsis = du [-Aclnx] [-H | -L | -P] [-g | -h | -k | -m] [-a | -s | -d depth] [file ...]
+    .options = s h d A
+    .option-s = a single total per place.
+    .option-h = readable sizes: K, M, G.
+    .option-d = only N levels deep.
+    .option-A = the apparent size, not the blocks used.
+    .command-1 = du -sh /usr/local/www/club
+    .example-1 = the site's total size
+    .command-2 = du -d 1 -h /var
+    .example-2 = what takes room in /var, one level deep

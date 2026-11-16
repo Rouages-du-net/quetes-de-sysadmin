@@ -466,11 +466,12 @@ man-diff = compare deux fichiers ligne à ligne, et montre ce qu'il faut changer
     .example-1 = ce qui change entre deux fichiers
     .example-2 = la même chose, au format de git diff
     .example-3 = tout ce qui diffère entre deux lieux
-man-du = mesure la place occupée (disk usage), lieu par lieu. Un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois. -s donne seulement le total, -h écrit en K, M, G, -d N s'arrête à N niveaux de profondeur. --inodes compte les fichiers (les inodes) au lieu des octets : pour trouver le lieu qui contient des milliers de fichiers. Ex. : du -sh *
+man-du = mesure la place occupée (disk usage), lieu par lieu. Un fichier qui a plusieurs noms (liens physiques) n'est compté qu'une fois. -s donne seulement le total, -h écrit en K, M, G, -d N s'arrête à N niveaux de profondeur. --inodes compte les fichiers (les inodes) au lieu des octets : pour trouver le lieu qui contient des milliers de fichiers. -b donne la taille apparente en octets (du de GNU seulement). Ex. : du -sh *
     .synopsis = du [-s] [-h] [-d N] [--inodes] [lieu...]
     .option-h = tailles lisibles : K, M, G.
     .option-s = un seul total par lieu (summary), sans le détail.
     .option-d = n'afficher que N niveaux sous le lieu donné (--max-depth=N).
+    .option-b = la taille apparente en octets (du de GNU seulement).
     .example-1 = la place prise par chaque journal
     .example-2 = le nombre de fichiers, lieu par lieu, sur un niveau
     .example-3 = le nombre de fichiers de chaque lieu
@@ -513,7 +514,7 @@ man-git =
     À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
     .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=QUAND]] motif [fichier...]
@@ -522,6 +523,7 @@ man-grep = affiche les lignes qui contiennent le motif. Le motif est une express
     .option-c = compte les lignes trouvées au lieu de les afficher.
     .option-q = silencieux (quiet) : n'affiche rien, réussit si le motif est trouvé, échoue sinon.
     .option-E = expressions régulières étendues : + ? | ( ) ont leur sens spécial.
+    .option-P = expressions régulières compatibles Perl (\d, \w, assertions) : grep de GNU seulement.
     .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
     .option-h = n’affiche jamais le nom du fichier devant les lignes (par défaut, il l’affiche s’il y a plusieurs fichiers).
     .option-H = affiche toujours le nom du fichier devant les lignes, même avec un seul fichier.
@@ -1595,3 +1597,68 @@ man-freebsd-version = affiche la version de FreeBSD installée (le système de b
     .synopsis = freebsd-version [-kru]
     .example-1 = la version installée
     .example-2 = le système et son noyau
+man-ps-bsd = liste les processus (le ps de BSD). Sans option, seulement VOS processus attachés à un terminal. a ajoute ceux des autres comptes, x ceux sans terminal (les démons) : ps aux (ou ps -ax) les montre tous ; u donne les colonnes orientées utilisateur (USER, %CPU, %MEM, STARTED…), j les parents (PPID). -U compte garde ceux d'un compte, -p PID un processus ; -o choisit les colonnes (pid,ppid,user,%cpu,command…). Attention : -e montre l'ENVIRONNEMENT de chaque processus (ses variables), pas tous les processus : ps -ef, une habitude de Linux, ne liste que vos propres processus, avec leurs variables. Pas d'options longues (--sort…).
+    .synopsis = ps [-aCcdefHhjlmrSTuvwXxZ] [-O fmt | -o fmt] [-p pid[,pid...]] [-U utilisateur[,utilisateur...]]
+    .options = a x u j e U p o
+    .option-a = les processus de tous les comptes (avec un terminal).
+    .option-x = aussi ceux sans terminal (les démons).
+    .option-u = colonnes orientées utilisateur : USER, %CPU, %MEM, VSZ, RSS, STARTED…
+    .option-j = les colonnes de tâches, avec le parent (PPID).
+    .option-e = montre l'environnement de chaque processus (ses variables).
+    .option-U = seulement les processus de ce compte.
+    .option-p = seulement ces processus.
+    .option-o = les colonnes à afficher (pid,ppid,user,%cpu,%mem,command…).
+    .command-1 = ps aux
+    .example-1 = tous les processus, avec leur compte et ce qu'ils prennent à la machine
+    .command-2 = ps -axj
+    .example-2 = tous les processus avec leur parent (PPID) : la réponse de BSD à ps -ef
+    .command-3 = ps -U www
+    .example-3 = les processus du compte www
+    .command-4 = ps -ax -o pid,ppid,user,command
+    .example-4 = des colonnes choisies
+man-ls-bsd = liste le contenu d'un lieu (le ls de BSD). -a montre les fichiers cachés (et . et ..), -l le format long, -h des tailles lisibles avec -l, -d le lieu lui-même, -i les numéros d'inode, -t trié par date, -r à l'envers, -G en couleur (ou --color=auto). Pas d'autre option longue : --all, --human-readable… sont celles de GNU (unknown option).
+    .synopsis = ls [-ABCFGHILPRSTUWZabcdfghiklmnopqrstuvwxy1,] [--color=quand] [-D format] [fichier ...]
+    .options = a l h d G t r
+    .option-a = tout, fichiers cachés compris.
+    .option-l = format long.
+    .option-h = avec -l, des tailles lisibles.
+    .option-d = le lieu lui-même, pas son contenu.
+    .option-G = en couleur (comme CLICOLOR=1).
+    .option-t = trié par date de modification, le plus récent d'abord.
+    .option-r = dans l'ordre inverse.
+    .command-1 = ls -la
+    .example-1 = tout, en format long
+    .command-2 = ls -lG /usr/local/etc
+    .example-2 = en couleur
+man-grep-bsd = affiche les lignes qui contiennent le motif (le grep de FreeBSD). Mêmes options que celui de GNU pour l'usage courant : -E expressions étendues, -F le texte tel quel, -i sans tenir compte de la casse, -v inverser, -c compter, -q silencieux, -r dans toute une arborescence, -n les numéros de ligne, --color. Pas de -P (expressions de Perl) : utiliser -E, où [0-9] remplace \d.
+    .synopsis = grep [-abcdDEFGHhIiLlmnOopqRSsUVvwxz] [-A num] [-B num] [-C num] [-e motif] [motif] [fichier ...]
+    .options = E F i v c q r n
+    .option-E = expressions régulières étendues.
+    .option-F = le motif tel quel.
+    .option-i = sans tenir compte de la casse.
+    .option-v = les lignes qui ne correspondent PAS.
+    .option-c = compter les lignes.
+    .option-q = silencieux : seulement le code de retour.
+    .option-r = chercher dans toute une arborescence.
+    .option-n = les numéros de ligne.
+    .command-1 = grep -E '[0-9]+ bytes' /var/log/messages
+    .example-1 = ce que grep -P '\d+ bytes' trouverait sous Linux
+    .command-2 = grep -rn nginx_enable /etc
+    .example-2 = où nginx est activé, avec les numéros de ligne
+man-find-bsd = cherche des fichiers dans un lieu et tous ses sous-lieux (le find de BSD). -name, -type f ou d, -mtime ±N, -maxdepth N, -delete, -print, et -ls pour les détails. Pas de -printf (celui de GNU) : pour afficher chaque fichier à sa façon, combiner find et stat : find . -type f -exec stat -f '%z %N' {"{"}{"}"} +
+    .synopsis = find [-H | -L | -P] [-EXdsx] chemin ... [expression]
+    .command-1 = find /var/log -name '*.log' -mtime +30
+    .example-1 = les journaux de plus de 30 jours
+    .command-2 = find /usr/local/etc -maxdepth 1 -type d
+    .example-2 = les lieux de configuration des paquets
+man-du-bsd = mesure la place occupée, lieu par lieu (le du de BSD) : en blocs de BLOCKSIZE (1K par défaut ici). -s un seul total, -h des tailles lisibles, -d N s'arrête à N niveaux, -A la taille apparente au lieu des blocs vraiment occupés. Pas de -b (les octets de GNU) : BLOCKSIZE=1 avec -A, ou stat -f %z pour un fichier.
+    .synopsis = du [-Aclnx] [-H | -L | -P] [-g | -h | -k | -m] [-a | -s | -d profondeur] [fichier ...]
+    .options = s h d A
+    .option-s = un seul total par lieu.
+    .option-h = des tailles lisibles : K, M, G.
+    .option-d = seulement N niveaux de profondeur.
+    .option-A = la taille apparente, pas les blocs occupés.
+    .command-1 = du -sh /usr/local/www/club
+    .example-1 = la taille totale du site
+    .command-2 = du -d 1 -h /var
+    .example-2 = ce qui prend de la place dans /var, sur un niveau

@@ -59,7 +59,8 @@ chmod-mode-incorrect = chmod : mode incorrect : « { $permissions } » (voir man
 ## find
 
 # { $predicate } : l'option inconnue tapée
-find-predicate-unknown = find : prédicat inconnu « { $predicate } » (ici : -name, -type, -mtime, -maxdepth, -delete)
+find-predicate-unknown = find : prédicat inconnu « { $predicate } » (ici : -name, -type, -mtime, -maxdepth, -delete, -printf)
+find-argument-missing = find: argument manquant pour « { $predicate } »
 # { $predicate } : -mtime, -maxdepth ; { $value } : ce qui a été tapé
 find-argument-numeric = find: argument « { $value } » non valable pour « { $predicate } »
 find-missing = find : '{ $target }' : aucun fichier ou dossier de ce nom

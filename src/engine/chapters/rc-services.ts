@@ -29,7 +29,7 @@ const said = (j: Game, text: string) => j.last.errors.some((e) => e.includes(tex
 export const rcServices: Chapter = {
   id: 'rc-services',
   number: 2,
-  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'uname', 'freebsd-version', 'ps', 'pkg', 'service', 'sysrc', 'sockstat', 'which'],
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'uname', 'freebsd-version', 'ps', 'pkg', 'service', 'sysrc', 'sockstat', 'which', 'find', 'du'],
   home: M,
   welcome: 'message_from_romy.txt',
   names: true,
@@ -41,6 +41,8 @@ export const rcServices: Chapter = {
   createWorld: (t) => filmWorld(t, { home: { 'message_from_romy.txt': f(t('rc-services-message-romy')), 'lucien-notes.txt': f(t('rc-services-notes-lucien'), { lines: true }) } }),
   events: [
     { id: 'no-systemd', condition: (j) => said(j, 'systemctl: not found') || said(j, 'apt: not found') || said(j, 'apt-get: not found'), message: (j) => j.t('rc-services-event-no-systemd') },
+    // Optional: ps -ef, a Linux habit, lists only your own processes, with their environment.
+    { id: 'ps-ef', condition: (j) => j.last.commands.some((c) => c[0] === 'ps' && c.slice(1).some((a) => /^-\w*e/.test(a))) && j.last.output.includes('HOME='), message: (j) => j.t('rc-services-event-ps-ef') },
     { id: 'installed', condition: (j) => installed(j, 'nginx'), message: (j) => j.t('rc-services-event-installed') },
     { id: 'not-enabled', condition: (j) => said(j, "Cannot 'start' nginx"), message: (j) => j.t('rc-services-event-not-enabled') },
     { id: 'onestart', condition: (j) => running(j) && !enabled(j, 'nginx'), message: (j) => j.t('rc-services-event-onestart') },

@@ -9,6 +9,7 @@ import { translator, type Translate } from '../../texts';
 import { translateHosts } from '../machines';
 import { COMMANDS, type Command } from './index';
 import { player } from '../world';
+import { LINUX_ONLY } from '../freebsd';
 
 // The page's Fluent identifier: the dot is reserved for attributes
 // ("jail.conf" → man-jail_conf).
@@ -78,7 +79,9 @@ export function pageMan(name: string, c: Command, t: Translate, bsd = false): st
     sections.push([t('manual-section-options'), opts.map(([o, d]) => indent(`-${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
-  if (c.see?.length) sections.push([t('manual-section-see-also'), indent(c.see.map((v) => `${v}(${section(v)})`).join(', '))]);
+  // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).
+  const see = (c.see ?? []).filter((v) => !bsd || !LINUX_ONLY.includes(v));
+  if (see.length) sections.push([t('manual-section-see-also'), indent(see.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${title}${' '.repeat(white)}${middle}${' '.repeat(white)}${title}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }
 

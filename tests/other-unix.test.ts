@@ -90,6 +90,21 @@ for (const language of LANGUAGES)
       expect(c.finished).toContain('rc-services');
     });
 
+    it('chapter 2 — BSD tools: ps -ef, ls --all, grep -P, find -printf, du -b', () => {
+      const { c, play, flag } = part(['portable-script']);
+      expect(play(['ps -ef'])).toContain('HOME=');
+      expect(flag('ps-ef')).toBe(true);
+      expect(play(['ps aux'])).toContain('/usr/sbin/sshd');
+      expect(play(['ls --all'])).toContain('ls: unknown option -- all');
+      expect(play(['grep -P "[0-9]" lucien-notes.txt'])).toContain('grep: unknown option -- P');
+      expect(play(['find . -printf "%f"'])).toContain('find: -printf: unknown primary or operator');
+      expect(play(['du -b lucien-notes.txt'])).toContain('du: illegal option -- b');
+      const manual = play(['man ps']);
+      expect(manual).toContain('ps -axj');
+      expect(manual).not.toContain('systemctl(');
+      expect(c.finished).not.toContain('rc-services');
+    });
+
     // ——— Chapter 3: "The Last Rule Wins" ———
     const PF_GOOD = `block in all
 pass in proto tcp to port { 22 80 }

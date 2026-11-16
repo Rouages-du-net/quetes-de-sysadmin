@@ -31,6 +31,12 @@ rc-services-event-no-systemd =
     Not found: FreeBSD has neither systemd nor apt. Packages come from
     pkg (man pkg), and services are rc scripts, driven by service (man
     service).
+rc-services-event-ps-ef =
+    ps -ef, on FreeBSD, isn't "every process, full format": -e shows each
+    process's environment (those HOME=, PATH=…), and without a or x, ps
+    only lists your own processes attached to a terminal. The BSD way:
+    ps aux (or ps -ax), and ps -axj for the parents. man ps, on this
+    machine.
 rc-services-event-installed =
     nginx is installed, under /usr/local: its configuration in
     /usr/local/etc/nginx, its rc script in /usr/local/etc/rc.d/nginx.

@@ -1,6 +1,7 @@
 // File commands: moving around, reading, creating, copying, deleting,
 // permissions, archives, disk space.
 
+import { isBsd } from '../freebsd';
 import { shownOwner } from '../nfs';
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -185,7 +186,12 @@ export const FILES: Record<string, Command> = {
   ls: {
     launch: (raw) => {
       // --color: like the "ls --color=auto" alias of Debian's ~/.bashrc, ls colours on screen by default.
-      const { when, args, invalid } = readColour(raw.args, 'auto');
+      // BSD's ls (FreeBSD) only colours with -G (or --color): no alias there.
+      const bsd = isBsd(raw.game);
+      const { when, args, invalid } = readColour(
+        bsd ? raw.args.map((a) => (/^-[A-Za-z1,]*G/.test(a) && !a.startsWith('--') ? a.replace('G', '') : a)).filter((a) => a !== '-') : raw.args,
+        bsd && !raw.args.some((a) => /^-[A-Za-z1,]*G/.test(a) && !a.startsWith('--')) ? 'never' : 'auto',
+      );
       if (invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'ls', invalid));
       const c = { ...raw, args };
       const paint = painting(colourise(c, when));
@@ -442,11 +448,17 @@ export const FILES: Record<string, Command> = {
       // -mtime +N: modified more than N days ago (age in whole days, like find); -N: less; N: exactly.
       let age: { sign: string; days: number } | null = null;
       let depth = Infinity;
+      let printf: string | undefined;
       for (let i = 0; i < crit.length; i++) {
         if (crit[i] === '-name') name = wildcard(crit[++i] ?? '');
         else if (crit[i] === '-type') type = crit[++i] ?? null;
         else if (crit[i] === '-delete') erase = true;
         else if (crit[i] === '-print') continue;
+        // -printf FORMAT (GNU find): %p the path, %f the name, %s the size, %u the owner, %g the group, %m the rights in octal, \n a newline.
+        else if (crit[i] === '-printf') {
+          printf = crit[++i];
+          if (printf === undefined) return game.error(game.t('find-argument-missing', { predicate: '-printf' }));
+        }
         else if (crit[i] === '-maxdepth') {
           const v = crit[++i] ?? '';
           if (!/^\d+$/.test(v)) return game.error(game.t('find-argument-numeric', { predicate: '-maxdepth', value: v }));
@@ -476,6 +488,21 @@ export const FILES: Record<string, Command> = {
           walk(`${path.replace(/\/$/, '')}/${k}`, child, level + 1);
       };
       walk(departure, n, 0);
+      if (printf !== undefined) {
+        const octal = (m: string) => [0, 3, 6].map((k) => [...m.slice(k, k + 3)].reduce((t, c) => t + (({ r: 4, w: 2, x: 1 } as Record<string, number>)[c] ?? 0), 0)).join('');
+        return found
+          .map((path) => {
+            const e = game.find(path)!;
+            const mode = e.mode ?? (e.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
+            const values: Record<string, string> = {
+              p: path, f: path.split('/').filter(Boolean).at(-1) ?? path, s: String(e.type === 'file' ? sizeFor(e, game) : 4096),
+              u: e.owner ?? game.who, g: e.group ?? e.owner ?? game.who, m: octal(mode), '%': '%',
+            };
+            return printf!.replace(/%([pfsugm%])/g, (_, k: string) => values[k]).replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+          })
+          .join('')
+          .replace(/\n$/, '');
+      }
       if (!erase) return found.join('\n');
       for (const path of found.reverse()) {
         const e = game.find(path)!;
@@ -501,7 +528,8 @@ export const FILES: Record<string, Command> = {
       }
       if (Number.isNaN(depth)) return game.error(game.t('depth'));
       const { letters, rest } = options(raw);
-      const fmt = (o: number) => (inodes ? String(o) : letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
+      // -b (GNU): the apparent size in bytes.
+      const fmt = (o: number) => (inodes || letters.has('b') ? String(o) : letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
       const lines: string[] = [];
       // Like du: a file with several names (hard links) is counted only once.
       const seen = new Set<Node>();

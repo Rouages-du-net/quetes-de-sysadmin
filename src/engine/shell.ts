@@ -10,6 +10,7 @@
 // not go through pipes (separate error output).
 
 import { isBsd, LINUX_ONLY } from './freebsd';
+import { BSD_CHECKS } from './commands/bsd-tools';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -976,12 +977,21 @@ export class Shell implements Game {
       return this.error(this.t(root ? 'sudo-list-arguments-too-long' : 'list-arguments-too-long', { program: `/usr/bin/${cmd}` }));
     }
     // Self-help reflexes: --help and unknown options.
+    // On FreeBSD, the tools whose BSD version takes other options check them first, BSD's way.
+    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : undefined;
+    if (bsdCheck) {
+      const refused = bsdCheck(rest);
+      if (refused) {
+        this.status = cmd === 'grep' ? 2 : 1;
+        return this.error(refused);
+      }
+    }
     // BSD tools have no --help: their own option parsing answers (illegal option -- -).
-    if (rest.includes('--help') && !(isBsd(this) && BSD_TOOLS.includes(cmd))) return help(cmd, command, this.t);
-    const invalid = invalidOption(cmd, command, rest, this.t);
+    if (rest.includes('--help') && !(isBsd(this) && (BSD_TOOLS.includes(cmd) || bsdCheck))) return help(cmd, command, this.t);
+    const invalid = bsdCheck ? null : invalidOption(cmd, command, rest, this.t);
     if (invalid) return this.error(invalid);
     // --all → -a: the command only reads its short options.
-    const options = command.ownOptions ? rest : shorten(command, rest);
+    const options = command.ownOptions || bsdCheck ? rest : shorten(command, rest);
     const before = this.who;
     if (root) this.who = this.as;
     try {

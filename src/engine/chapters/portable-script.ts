@@ -44,7 +44,7 @@ const said = (j: Game, text: string) => j.last.errors.some((e) => e.includes(tex
 export const portableScript: Chapter = {
   id: 'portable-script',
   number: 1,
-  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'uname', 'freebsd-version', 'sh', 'date', 'sed', 'stat', 'tar', 'which', 'pkg', 'test', 'echo'],
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'head', 'tail', 'grep', 'nano', 'sudo', 'id', 'whoami', 'uname', 'freebsd-version', 'sh', 'date', 'sed', 'stat', 'tar', 'which', 'pkg', 'test', 'echo', 'find', 'du', 'ps'],
   home: M,
   welcome: 'message_from_yanis.txt',
   names: true,

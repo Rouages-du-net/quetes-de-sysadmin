@@ -63,6 +63,28 @@ describe('stat and date: GNU and BSD', () => {
   });
 });
 
+describe('ps, ls, grep, find, du: GNU and BSD', () => {
+  it('BSD ps: -ef shows only your processes, with their environment; aux shows them all', () => {
+    const s = shell(true);
+    s.who = 'you';
+    s.state.process = [{ pid: 598, user: 'root', cpu: 0, mem: 0.2, command: '/usr/sbin/sshd' }];
+    const ef = run(s, 'ps', '-ef');
+    expect(ef).toContain('HOME=');
+    expect(ef).not.toContain('sshd');
+    expect(run(s, 'ps', 'aux')).toContain('/usr/sbin/sshd');
+    expect(run(s, 'ps', '-axj')).toMatch(/PPID/);
+    expect(run(s, 'ps', '--sort=-%cpu')).toContain('ps: illegal option -- -');
+    expect(run(s, 'ps', '-o', 'cmd')).toContain('ps: cmd: keyword not found');
+  });
+  it('Linux keeps grep -P, find -printf and du -b', () => {
+    const s = shell(false);
+    s.place('test', '/tmp/log', f('sent 512 bytes\nnothing', { lines: true }));
+    expect(run(s, 'grep', '-P', '\\d+ bytes', '/tmp/log')).toBe('sent 512 bytes');
+    expect(run(s, 'find', '/tmp', '-name', 'state.conf', '-printf', '%f %s\\n')).toBe('state.conf 15');
+    expect(run(s, 'du', '-b', '/tmp/state.conf')).toBe('15\t/tmp/state.conf');
+  });
+});
+
 describe('rc.conf and pf', () => {
   it('sysrc-like writes keep the other lines', () => {
     const s = shell(true);
