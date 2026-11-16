@@ -360,6 +360,14 @@ which works on machines rather than switches).
       files" (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`,
       `src/engine/limits.ts`); a stuck process (`kill` and its signals, a
       script's trap, a stale PID file).
+- [x] **Incident response** ("The Bastion", story 25 in `docs/SCENARIOS.md`):
+      the blue-team sequel to "The Watch". A compromised delivery server:
+      detect (`ps`, `top`, `ss -tnp`, `netstat`, `journalctl`, `last`),
+      contain (`iptables` INPUT and OUTPUT, the watchdog before the miner,
+      `usermod -L` versus `-e 1`), eradicate (crontab, `authorized_keys`,
+      `find -mtime`, `gpg --verify` of a signed release, `tar -x`), harden
+      (the `sshd_config.d` drop-in that wins, default-deny `iptables` saved
+      to `rules.v4`). Defensive only.
 - [x] **File sharing** ("The Photo Club", story 24 in `docs/SCENARIOS.md`):
       an association's NAS. NFS (`/etc/exports`, `exportfs`, `showmount`,
       `mount -t nfs`, fstab, `root_squash`, the uids NFS carries;

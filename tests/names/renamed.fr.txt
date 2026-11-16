@@ -882,6 +882,34 @@ samba-share:darkroom
   /home/sam/scans/roll-04.tif → /home/sam/numerisations/roll-04.tif
   /home/sam/scans/roll-05.tif → /home/sam/numerisations/roll-05.tif
 
+alarm
+  /home/you → /home/vous
+  /home/you/email_nadia.txt → /home/vous/courriel_nadia.txt
+  /home/you/incident.md → /home/vous/incident.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+containment
+  /home/you → /home/vous
+  /home/you/email_nadia.txt → /home/vous/courriel_nadia.txt
+  /home/you/incident.md → /home/vous/incident.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+eradication
+  /home/you → /home/vous
+  /home/you/email_selma.txt → /home/vous/courriel_selma.txt
+  /home/you/incident.md → /home/vous/incident.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+hardening
+  /home/you → /home/vous
+  /home/you/email_nadia.txt → /home/vous/courriel_nadia.txt
+  /home/you/incident.md → /home/vous/incident.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

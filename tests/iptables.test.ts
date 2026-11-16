@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { COMMANDS } from '../src/engine/commands';
-import { newIptables, verdict, type Iptables } from '../src/engine/iptables';
+import { newIptables, outVerdict, verdict, type Iptables } from '../src/engine/iptables';
 import { portState } from '../src/engine/ports';
 
 const chapter = STORIES[0].chapters[0];
@@ -43,6 +43,25 @@ describe('iptables: the command and the model', () => {
     run(s, '-P', 'INPUT', 'DROP');
     expect(verdict(state(s), 22, '203.0.113.9')).toBe('accepted'); // explicit NEW accept
     expect(verdict(state(s), 80, '203.0.113.9')).toBe('blocked'); // only the stateful rule would match, and not for NEW
+  });
+
+  it('-i lo only matches the machine itself; -L -n shows 0.0.0.0/0', () => {
+    const s = shell();
+    run(s, '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT');
+    run(s, '-A', 'INPUT', '-p', 'tcp', '--dport', '22', '-j', 'ACCEPT');
+    run(s, '-P', 'INPUT', 'DROP');
+    expect(verdict(state(s), 3000, '127.0.0.1')).toBe('accepted');
+    expect(verdict(state(s), 3000, '203.0.113.9')).toBe('blocked');
+    expect(verdict(state(s), 22, '203.0.113.9')).toBe('accepted');
+    expect(run(s, '-L', 'INPUT', '-n')).toMatch(/ACCEPT\s+all\s+--\s+0\.0\.0\.0\/0\s+0\.0\.0\.0\/0\s+in:lo/);
+  });
+
+  it('the OUTPUT chain decides an outgoing connection', () => {
+    const s = shell();
+    run(s, '-A', 'OUTPUT', '-d', '198.51.100.66', '-j', 'DROP');
+    expect(outVerdict(state(s), '198.51.100.66', 3333)).toBe('blocked');
+    expect(outVerdict(state(s), '198.51.100.67', 3333)).toBe('accepted');
+    expect(run(s, '-S', 'OUTPUT')).toContain('-A OUTPUT -d 198.51.100.66/32 -j DROP');
   });
 
   it('-L lists, -S dumps, -D and -I edit, -F flushes', () => {

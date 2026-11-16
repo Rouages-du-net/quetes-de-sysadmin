@@ -33,3 +33,4 @@ machine-observatory = observatoire
 machine-theatre = theatre
 machine-valley = vallee
 machine-nas = nas
+machine-oven = four

@@ -26,6 +26,13 @@ describe('killall', () => {
     expect((s.state.process as Process[]).map((p) => p.pid)).toEqual([12]);
   });
 
+  it('-u without a name stops every process of the account', () => {
+    const s = shell('root');
+    s.state.process = [proc(10, 'deploy', 'node server.js'), proc(11, 'deploy', '/bin/sh loop'), proc(12, 'root', 'cron -f')];
+    run(s, 'killall', '-u', 'deploy');
+    expect((s.state.process as Process[]).map((p) => p.pid)).toEqual([12]);
+  });
+
   it('exits 1 and reports when a name matches nothing', () => {
     const s = shell('root');
     s.state.process = [proc(10, 'root', 'nginx: master process')];

@@ -33,16 +33,16 @@ function parseRule(words: string[]): Rule | string {
   return r;
 }
 
-function list(game: Shell, table: Table, only: string | undefined, o: { numbers: boolean; verbose: boolean }): string {
+function list(game: Shell, table: Table, only: string | undefined, o: { numbers: boolean; verbose: boolean; numeric: boolean }): string {
   const names = only ? [only] : Object.keys(table.chains);
   const out: string[] = [];
   for (const name of names) {
     const chain: Chain | undefined = table.chains[name];
     if (!chain) return game.error(`iptables: No chain/target/match by that name.`, 1);
     out.push(`Chain ${name} ${chain.policy ? `(policy ${chain.policy})` : '(0 references)'}`);
-    const header = (o.verbose ? ' pkts bytes ' : '') + 'target     prot opt source               destination';
+    const header = (o.verbose ? ' pkts bytes ' : '') + 'target     prot opt source               destination         ';
     out.push(o.numbers ? `num  ${header}` : header);
-    chain.rules.forEach((r, i) => out.push((o.numbers ? `${String(i + 1).padEnd(4)} ` : '') + ruleLine(r, o.verbose)));
+    chain.rules.forEach((r, i) => out.push((o.numbers ? `${String(i + 1).padEnd(4)} ` : '') + ruleLine(r, o.verbose, o.numeric)));
     out.push('');
   }
   return out.join('\n').trimEnd();
@@ -51,7 +51,7 @@ function list(game: Shell, table: Table, only: string | undefined, o: { numbers:
 function run(game: Shell, args: string[]): string {
   let table: 'filter' | 'nat' = 'filter';
   const rest: string[] = [];
-  const flags = { numbers: false, verbose: false };
+  const flags = { numbers: false, verbose: false, numeric: false };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '-t' || a === '--table') {
@@ -59,7 +59,7 @@ function run(game: Shell, args: string[]): string {
       if (t !== 'filter' && t !== 'nat') return game.error(`iptables v1.8.9 (nf_tables): can't initialize iptables table \`${t}': Table does not exist (do you need to insmod?)`, 3);
       table = t;
     } else if (a === '--line-numbers') flags.numbers = true;
-    else if (a === '-n' || a === '--numeric') void 0;
+    else if (a === '-n' || a === '--numeric') flags.numeric = true;
     else if (a === '-v' || a === '--verbose') flags.verbose = true;
     else rest.push(a);
   }

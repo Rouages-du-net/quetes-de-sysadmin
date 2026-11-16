@@ -49,3 +49,5 @@ story-huts = Les Refuges
     .summary = Une fédération de refuges de montagne et le serveur de la vallée : les journaux des refuges rassemblés avec rsyslog, un journal qui remplit le disque, et une alerte pour les échecs de connexion SSH.
 story-photo-club = Le Club photo
     .summary = Le NAS d'un club photo et l'ordinateur de son labo : un partage NFS et son montage, les uid que NFS transporte, et un partage Samba pour les portables des membres.
+story-bastion = Le Bastion
+    .summary = Un an après La Veille, le serveur des livraisons du Fournil parle toute la nuit à un pool de minage : trouver ce qui tourne et par où c'est entré, confiner sans s'enfermer dehors, retirer ce qui a été laissé et vérifier ce qui a été modifié, puis durcir pour que ça ne recommence pas.

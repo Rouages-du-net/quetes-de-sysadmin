@@ -68,6 +68,7 @@ machine-observatory-motd = L'Observatoire — le serveur du club d'astronomie : 
 machine-theatre-motd = Le Théâtre — le serveur du théâtre de quartier : la billetterie et sa base de données. Merde pour ce soir !
 machine-valley-motd = Les Refuges — le serveur de la vallée : les journaux des refuges de montagne, rassemblés au même endroit.
 machine-nas-motd = Le Club photo — le NAS du club : les photos de tous les albums, partagées avec le labo.
+machine-oven-motd = Le Bastion — le serveur des livraisons du Fournil : les tournées, les livreur·ses, les commandes du jour.
 machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.

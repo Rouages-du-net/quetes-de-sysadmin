@@ -97,3 +97,7 @@ ssh-alerts
 nfs-export
 nfs-owners
 samba-share
+alarm
+containment
+eradication
+hardening

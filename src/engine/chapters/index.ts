@@ -96,6 +96,10 @@ import { centralLogs } from './central-logs';
 import { nfsExport } from './nfs-export';
 import { nfsOwners } from './nfs-owners';
 import { sambaShare } from './samba-share';
+import { alarm } from './alarm';
+import { containment } from './containment';
+import { eradication } from './eradication';
+import { hardening } from './hardening';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -223,6 +227,11 @@ export const STORIES: Story[] = [
     id: 'photo-club',
     after: ['late-disk', 'shared-rights'],
     chapters: [nfsExport, nfsOwners, sambaShare],
+  },
+  {
+    id: 'bastion',
+    after: ['routine'],
+    chapters: [alarm, containment, eradication, hardening],
   },
 ];
 
