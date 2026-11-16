@@ -292,7 +292,11 @@ presents them for people.
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
   graduated hints in `src/engine/hints.ts`, their texts in
   `src/texts/<language>/hints-<story>.ftl`: every new chapter has some,
-  `tests/hints.test.ts` checks it) and styles (`styles.css`, everything
+  `tests/hints.test.ts` checks it), one-time tips earned by what the
+  player types (silence means success, `cd ../..`, `cd -`, `cd ~`, Tab) in
+  `src/engine/tips.ts` (texts `tip-*`, shown ones saved with the progress,
+  a "Tips" setting), the intro tour of a first visit and the notebook's
+  window (with its shortcuts) in `game.ts`; and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
   attributes `lang`, `story`, `save-key`, `theme="light|dark"`,

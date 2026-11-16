@@ -10,6 +10,7 @@ import type { Shell } from '../engine/shell';
 import { STORIES } from '../engine/chapters';
 import { machineDomain, storyMachine, WORKSTATION, type Machine } from '../engine/machines';
 import { description, inMarkdown, note, type Notebook } from '../engine/notebook';
+import { newMemory, newTips, type TipMemory } from '../engine/tips';
 import { rouagesLinks } from '../engine/rouages';
 import { map, type Place } from '../engine/map';
 import { layOut, landmarks as planLandmarks, type ElementPlan } from '../engine/plan';
@@ -63,6 +64,9 @@ function icon(...paths: string[]): SVGElement {
 // achievements (a trophy).
 const ICON_RESTART = ['M3 12a9 9 0 1 0 2.6-6.3L3 8', 'M3 3v5h5'];
 const ICON_PROGRESS = ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z', 'M17 21v-8H7v8', 'M7 3v5h8'];
+const ICON_MISSION = ['M4 22V4', 'M4 4h13l-2.5 4 2.5 4H4'];
+const ICON_MAP = ['M9 3 3 6v15l6-3 6 3 6-3V3l-6 3z', 'M9 3v15', 'M15 6v15'];
+const ICON_NOTEBOOK = ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z', 'M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5', 'M8 7h8', 'M8 11h6'];
 const ICON_TROPHY = ['M7 4h10v5a5 5 0 0 1-10 0z', 'M7 6H4v1a4 4 0 0 0 4 4', 'M17 6h3v1a4 4 0 0 0-4 4', 'M9 21h6', 'M12 17v4'];
 
 // The lines kept on screen for a single output.
@@ -79,7 +83,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Display (theme, size, menu view, colours): a setting of this browser only.
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '' };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -170,7 +174,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const stopwatch = el('span', { class: 'timer', role: 'timer' });
   // The map: a button next to the terminal opens, in a dialog, the known
   // places of the machine the player is on (see map.ts).
-  const mapButton = el('button', { type: 'button', class: 'map-button', 'aria-haspopup': 'dialog' }, t('map-button'));
+  // The bar's tools: an icon and a label (the label is hidden on a narrow screen, still read aloud).
+  const toolButton = (cls: string, paths: string[], label: string) =>
+    el('button', { type: 'button', class: `${cls} tool-button`, 'aria-haspopup': 'dialog' }, icon(...paths), el('span', { class: 'tool-label' }, label));
+  const mapButton = toolButton('map-button', ICON_MAP, t('map-button'));
+  // The notebook: the commands already run (see notebook.ts), in a dialog like the map.
+  const notebookButton = toolButton('notebook-button', ICON_NOTEBOOK, t('notebook-button'));
   // The terminal's display: theme, text size, full screen (settings of this browser).
   const THEMES = ['phosphor', 'amber', 'contrast', 'paper'];
   const themeChoice = el(
@@ -182,9 +191,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const moreGrand = el('button', { type: 'button', class: 'setting-button', 'aria-label': t('display-more-big') }, 'A+');
   const focusButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'false' }, t('display-focus'));
   const coloursButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true' }, t('display-colours'));
-  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, focusButton);
+  // Tips (see tips.ts) on or off, and the intro tour, to see again.
+  const tipsButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true' }, t('display-tips'));
+  const tourButton = el('button', { type: 'button', class: 'setting-button' }, t('display-tour'));
+  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, tipsButton, tourButton, focusButton);
   // The mission: the chapter's objective, its instructions, and what has already happened.
-  const missionButton = el('button', { type: 'button', class: 'mission-button', 'aria-haspopup': 'dialog' }, t('mission-button'));
+  const missionButton = toolButton('mission-button', ICON_MISSION, t('mission-button'));
   const onCallGauge = el('span', { class: 'on-call-gauge', role: 'timer', hidden: '' });
   // The exam-mode checkbox, at the bottom of the game (a choice for a class
   // test, not an everyday tool); the host page may show its own instead.
@@ -195,7 +207,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     { class: 'exam' },
     stopwatch,
     onCallGauge,
-    el('span', { class: 'tools' }, missionButton, mapButton, settings),
+    el('span', { class: 'tools' }, missionButton, mapButton, notebookButton, settings),
   );
   const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
   const titleMission = el('h2', { id: idMission });
@@ -337,15 +349,34 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const copyNotebook = el('button', { type: 'button', class: 'link' }, t('notebook-copy-button'));
   const stateNotebook = el('span', { class: 'notebook-state', role: 'status' });
   const actionsNotebook = el('p', { class: 'notebook-actions' }, exported, ' · ', copyNotebook, ' ', stateNotebook);
-  const notebookPanel = el(
-    'details',
-    { class: 'notebook' },
-    el('summary', {}, titleNotebook, ' ', accountNotebook),
+  // The shortcuts worth knowing, at the top of the notebook (keys and syntax are not translated).
+  const SHORTCUTS: [string, string][] = [
+    ['~', 'shortcuts-home'],
+    ['-', 'shortcuts-back'],
+    ['..', 'shortcuts-up'],
+    ['Tab', 'shortcuts-tab'],
+    ['↑ ↓', 'shortcuts-history'],
+    ['Ctrl-C', 'shortcuts-cancel'],
+  ];
+  const shortcuts = el(
+    'section',
+    { class: 'shortcuts' },
+    el('h3', {}, t('shortcuts-title')),
+    el('dl', {}, ...SHORTCUTS.flatMap(([key, text]) => [el('dt', {}, el('kbd', {}, key)), el('dd', {}, typo(t(text)))])),
+  );
+  const notebookId = `qds-notebook-${Math.random().toString(36).slice(2, 8)}`;
+  const closeNotebook = el('button', { type: 'button', class: 'button' }, t('notebook-close'));
+  const notebookWindow = el(
+    'dialog',
+    { class: 'notebook notebook-window', 'aria-labelledby': notebookId },
+    el('h2', { id: notebookId }, titleNotebook, ' ', accountNotebook),
+    shortcuts,
     el('p', { class: 'notebook-help' }, typo(t('notebook-help'))),
     emptyNotebook,
     listNotebook,
     actionsNotebook,
-  );
+    el('p', { class: 'map-actions' }, closeNotebook),
+  ) as HTMLDialogElement;
   const restart = el('button', { type: 'button', class: 'pill' }, icon(...ICON_RESTART), el('span', {}, t('button-restart')));
   // My progress: a name for the notebook, and a way to continue on another
   // device (the short code, or the file; see progress.ts).
@@ -477,7 +508,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, notebookPanel, tips, chapterActions, examChoice, credit, mapWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -502,6 +533,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const records: Record<string, number> = saved.records && typeof saved.records === 'object' ? saved.records : {};
   let playerName = typeof saved.name === 'string' ? cleanName(saved.name) : '';
   const achievements: Record<string, string> = saved.achievements && typeof saved.achievements === 'object' ? { ...saved.achievements } : {};
+  // The tips already shown (see tips.ts), and what each session remembers for them.
+  const shownTips: string[] = Array.isArray(saved.tips) ? saved.tips.filter((x): x is string => typeof x === 'string') : [];
+  const tipMemories = new WeakMap<Shell, TipMemory>();
+  // Tab was pressed while typing the current line.
+  let tabUsed = false;
   gameTerminal.exam = saved.exam === true;
   examCase.checked = gameTerminal.exam;
   // The start of the current chapter, in exam mode (null: no timer).
@@ -519,6 +555,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     records,
     ...(playerName ? { name: playerName } : {}),
     achievements,
+    tips: shownTips,
   });
   const save = () => {
     try {
@@ -699,8 +736,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     );
   };
 
+  // The notebook's button shows a dot when commands were added since it was last opened.
+  let notebookSeen = Object.keys(notebook).length;
   const notebookUpdate = () => {
     const names = Object.keys(notebook).sort((a, b) => a.localeCompare(b));
+    notebookButton.classList.toggle('fresh', names.length > notebookSeen);
     titleNotebook.textContent = playerName ? t('notebook-title-of', { name: playerName }) : t('notebook-title');
     accountNotebook.textContent = t('notebook-account', { count: names.length });
     emptyNotebook.hidden = names.length > 0;
@@ -850,6 +890,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
+    const cwdBefore = shell.cwd;
     // The text size may have changed (A+, A−): so has the width in characters.
     columnsUpdate();
     const result = gameTerminal.execute(line);
@@ -858,6 +899,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const lineFor = response ? null : shell;
     if (result === null) output.replaceChildren(measure);
     else show(result);
+    if (!response) showTips(shell, cwdBefore, !!result);
+    tabUsed = false;
     // The staging: connecting to another machine, rebooting.
     if (gameTerminal.shell.host !== hostBefore) putInScene(shell.last.commands.some((c) => c.includes('reboot')) ? 'reboot' : 'connection');
     input.value = '';
@@ -986,6 +1029,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }
     if (e.key === 'Tab') {
       e.preventDefault();
+      tabUsed = true;
       const before = input.value;
       input.value = gameTerminal.complete(before);
       // Like bash: a second Tab with nothing more to complete shows the possibilities.
@@ -1505,6 +1549,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     display.colours = display.colours !== false;
     gameTerminal.colours = display.colours;
     coloursButton.setAttribute('aria-pressed', String(display.colours));
+    display.tips = display.tips !== false;
+    tipsButton.setAttribute('aria-pressed', String(display.tips));
     colourInput();
     VIEWS.forEach((v) => viewBoutons[v].setAttribute('aria-pressed', String(v === display.view)));
     moreSmall.disabled = display.size === 0;
@@ -1527,6 +1573,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     display.colours = !display.colours;
     applyDisplay();
   });
+  tipsButton.addEventListener('click', () => {
+    display.tips = !display.tips;
+    applyDisplay();
+  });
+  tourButton.addEventListener('click', () => startTour());
   moreSmall.addEventListener('click', () => {
     display.size--;
     applyDisplay();
@@ -1664,11 +1715,107 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     input.focus();
   });
 
+  // ——— The notebook's window ———
+  notebookButton.addEventListener('click', () => {
+    notebookUpdate();
+    notebookSeen = Object.keys(notebook).length;
+    notebookButton.classList.remove('fresh');
+    notebookWindow.showModal();
+  });
+  closeNotebook.addEventListener('click', () => notebookWindow.close());
+  notebookWindow.addEventListener('close', () => setTimeout(() => input.focus()));
+
+  // ——— Tips (see tips.ts): once each, never in exam mode, unless turned off ———
+  function showTips(sh: Shell, before: string, said: boolean) {
+    if (!display.tips || gameTerminal.exam) return;
+    let memory = tipMemories.get(sh);
+    if (!memory) tipMemories.set(sh, (memory = newMemory()));
+    for (const tip of newTips({ sh, before, tab: tabUsed, said }, memory, shownTips)) {
+      shownTips.push(tip);
+      output.appendChild(el('p', { class: 'tip', role: 'note' }, el('strong', {}, t('tip-label')), ' ', typo(t(`tip-${tip}`))));
+    }
+  }
+
+  // ——— The intro tour: a few bubbles pointing at the real interface ———
+  const tourId = `qds-tour-${Math.random().toString(36).slice(2, 8)}`;
+  const tourCount = el('span', { class: 'tour-count' });
+  const tourText = el('p', { class: 'tour-text' });
+  const tourSkip = el('button', { type: 'button', class: 'link' }, t('tour-skip'));
+  const tourNext = el('button', { type: 'button', class: 'button primary' }, t('tour-next'));
+  const tourBox = el(
+    'div',
+    { class: 'tour', role: 'dialog', 'aria-modal': 'false', 'aria-labelledby': tourId, hidden: '' },
+    el('p', { class: 'tour-head' }, el('strong', { id: tourId }, t('tour-label')), ' ', tourCount),
+    tourText,
+    el('p', { class: 'tour-actions' }, tourSkip, tourNext),
+  );
+  game.append(tourBox);
+  const TOUR: [() => HTMLElement, string][] = [
+    [() => field, 'tour-input'],
+    [() => missionButton, 'tour-mission'],
+    [() => mapButton, 'tour-map'],
+    [() => notebookButton, 'tour-notebook'],
+    [() => field, 'tour-tab'],
+  ];
+  let tourStep = -1;
+  let tourTarget: HTMLElement | null = null;
+  const placeTour = () => {
+    if (tourStep < 0 || !tourTarget) return;
+    const r = tourTarget.getBoundingClientRect();
+    const g = game.getBoundingClientRect();
+    const width = Math.min(22 * 16, g.width);
+    tourBox.style.width = `${width}px`;
+    tourBox.style.top = `${r.bottom - g.top + 8}px`;
+    tourBox.style.left = `${Math.max(0, Math.min(r.left - g.left, g.width - width))}px`;
+  };
+  const endTour = () => {
+    tourTarget?.classList.remove('tour-target');
+    tourTarget = null;
+    tourStep = -1;
+    tourBox.hidden = true;
+    display.tour = 'done';
+    applyDisplay();
+    input.focus();
+  };
+  const showTourStep = () => {
+    tourTarget?.classList.remove('tour-target');
+    const [target, text] = TOUR[tourStep];
+    tourTarget = target();
+    tourTarget.classList.add('tour-target');
+    tourCount.textContent = t('tour-step', { step: tourStep + 1, total: TOUR.length });
+    tourText.replaceChildren(typo(t(text)));
+    tourNext.textContent = t(tourStep === TOUR.length - 1 ? 'tour-done' : 'tour-next');
+    tourBox.hidden = false;
+    placeTour();
+    tourTarget.scrollIntoView({ block: 'center' });
+    tourBox.scrollIntoView({ block: 'nearest' });
+    tourNext.focus();
+  };
+  function startTour() {
+    if (gameTerminal.exam) return;
+    tourStep = 0;
+    showTourStep();
+  }
+  tourNext.addEventListener('click', () => {
+    if (++tourStep >= TOUR.length) endTour();
+    else showTourStep();
+  });
+  tourSkip.addEventListener('click', endTour);
+  tourBox.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      endTour();
+    }
+  });
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(placeTour).observe(game);
+
   // At start: the story requested by the attribute, otherwise the one where the
   // player stopped, otherwise the workstation.
   const departure = STORIES.findIndex((h) => h.id === (options.story ?? saved.story));
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();
+  // A first visit (nothing played yet): the tour, once the page is laid out.
+  if (display.tour !== 'done' && !finished.length && !Object.keys(notebook).length && !gameTerminal.exam) setTimeout(startTour, 300);
   return {
     root: game,
     /** Exam mode, on or off. */

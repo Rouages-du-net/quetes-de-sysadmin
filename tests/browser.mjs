@@ -19,11 +19,21 @@ const browser = await chromium.launch({
 // The preview server doesn't read .htaccess: we add ourselves the CSP
 // header Apache will send, so that a violation fails the test.
 const CSP = readFileSync('public/.htaccess', 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
-const withCsp = (page) =>
-  page.route(`${BASE}/**`, async (route) => {
+// Every page gets the site's CSP; the intro tour (a first visit's bubbles) is
+// marked as seen, except where the test is about it (tour: true).
+const withCsp = async (page, { tour = false } = {}) => {
+  if (!tour)
+    await page.addInitScript(() => {
+      try {
+        const key = 'quetes-de-sysadmin-display';
+        localStorage.setItem(key, JSON.stringify({ ...JSON.parse(localStorage.getItem(key) ?? '{}'), tour: 'done' }));
+      } catch {}
+    });
+  await page.route(`${BASE}/**`, async (route) => {
     const response = await route.fetch();
     await route.fulfill({ response: response, headers: { ...response.headers(), 'content-security-policy': CSP } });
   });
+};
 let failures = 0;
 const check = (cond, msg) => {
   console.log(`${cond ? '✓' : '✗'} ${msg}`);
@@ -37,7 +47,7 @@ for (const width of [1000, 375]) {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('request', (r) => !r.url().startsWith(BASE) && !r.url().startsWith('data:') && externes.push(r.url()));
-  await withCsp(page);
+  await withCsp(page, { tour: true });
   await page.goto(`${BASE}/fr/`);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -48,6 +58,19 @@ for (const width of [1000, 375]) {
     await input.press('Enter');
   };
   check((await game.locator('.output').textContent()).includes('Bienvenue sur ton poste'), `${width} px: starting from the workstation`);
+  // A first visit: the intro tour points at the real interface, one bubble at a time, then goes away for good.
+  const tour = game.locator('.tour');
+  await tour.waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  check(await tour.isVisible(), `${width} px: the intro tour starts on a first visit`);
+  const tourBox = await tour.boundingBox();
+  check(tourBox && tourBox.x >= 0 && tourBox.x + tourBox.width <= width, `${width} px: the tour's bubble fits on the screen`);
+  check((await game.locator('.tour-target').count()) === 1, `${width} px: the tour outlines what it points at`);
+  for (let i = 0; i < 4; i++) await tour.locator('.button').click();
+  check((await tour.textContent()).includes('Tab'), `${width} px: the tour's last step is about Tab`);
+  await tour.locator('.button').click();
+  check(await tour.isHidden(), `${width} px: the tour ends`);
+  // The toolbar: Mission, Map, Notebook, as icons with labels (hidden on a narrow screen, still named).
+  check((await game.locator('.notebook-button').getAttribute('aria-haspopup')) === 'dialog' && (await game.locator('.notebook-button').textContent()).includes('Carnet'), `${width} px: the notebook has its button`);
   check(await game.locator('button[data-story="1"]').isDisabled(), `${width} px: without its key, the Datacenter is locked`);
   check(await game.locator('.incident').isHidden(), `${width} px: no chapter open for an incident yet, the button is hidden`);
   await input.fill('ssh roy');
@@ -77,7 +100,12 @@ for (const width of [1000, 375]) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }
-  for (const c of ['mv Jetee/filet Port/Hangar', 'cd Port/Remise']) await tape(c);
+  await tape('mv Jetee/filet Port/Hangar');
+  check((await game.locator('.output .tip').count()) === 0, `${width} px: no tip when the story already answers`);
+  await tape('mv Port/Hangar/filet Port');
+  check((await game.locator('.output .tip').last().textContent()).includes('ne dit en général rien'), `${width} px: a silent mv earns the "silence means success" tip`);
+  check(await game.locator('.notebook-button.fresh').count() === 1, `${width} px: the notebook button shows new commands`);
+  await tape('cd Port/Remise');
   await input.fill('mv .a');
   await input.press('Tab');
   check((await input.inputValue()) === 'mv .ampoule_de_secours ', `${width} px: Tab completes`);
@@ -123,14 +151,22 @@ for (const width of [1000, 375]) {
   await tape('cat notes.txt');
   check((await game.locator('.output').textContent()).includes('Bonjour depuis nano\nencore'), `${width} px: the file is written`);
   // The sysadmin's notebook: the commands run, with their manual line; it survives a reload.
-  const notebook = game.locator('details.notebook');
-  await notebook.locator('summary').click();
+  const notebook = game.locator('dialog.notebook');
+  await game.locator('.notebook-button').click();
+  check(await notebook.evaluate((d) => d.open), `${width} px: the notebook opens from its button`);
   check((await notebook.locator('dt').allTextContents()).includes('nano'), `${width} px: nano is in the notebook`);
-  check((await notebook.locator('summary').textContent()).match(/\(\d+ commandes\)/), `${width} px: the notebook counts its commands`);
+  check((await notebook.locator('h2').textContent()).match(/\(\d+ commandes\)/), `${width} px: the notebook counts its commands`);
+  check((await notebook.locator('.shortcuts kbd').allTextContents()).includes('Tab'), `${width} px: the notebook starts with the shortcuts`);
+  const notebookBox = await notebook.boundingBox();
+  check(notebookBox.x >= 0 && notebookBox.x + notebookBox.width <= width, `${width} px: the notebook fits on the screen`);
   const [download] = await Promise.all([page.waitForEvent('download'), notebook.locator('.notebook-actions button').first().click()]);
   check(download.suggestedFilename() === 'carnet-du-sysadmin.md', `${width} px: the notebook downloads as Markdown`);
+  await page.keyboard.press('Escape');
   await page.reload();
-  check((await game.locator('details.notebook dt').allTextContents()).includes('nano'), `${width} px: the notebook is kept in the browser`);
+  await game.locator('.notebook-button').click();
+  check((await game.locator('dialog.notebook dt').allTextContents()).includes('nano'), `${width} px: the notebook is kept in the browser`);
+  check(await game.locator('.tour').isHidden(), `${width} px: the tour doesn't come back after a reload`);
+  await page.keyboard.press('Escape');
   // The map: a button opens the dialog, with where you are; Escape closes it.
   await game.locator('.map-button').click();
   const window = game.locator('dialog.map-window');
@@ -312,7 +348,7 @@ for (const width of [1000, 375]) {
   const [download] = await Promise.all([page.waitForEvent('download'), window.locator('button', { hasText: 'Télécharger ma sauvegarde' }).click()]);
   const file = await download.path();
   await page.keyboard.press('Escape');
-  check((await game.locator('.notebook summary').textContent()).includes('Le carnet de Lina'), `progress ${width} px: the name at the top of the notebook`);
+  check((await game.locator('.notebook h2').textContent()).includes('Le carnet de Lina'), `progress ${width} px: the name at the top of the notebook`);
 
   // Another machine: a fresh browser.
   const elsewhere = await browser.newContext({ viewport: { width: width, height: 900 } });
@@ -341,8 +377,8 @@ for (const width of [1000, 375]) {
   game = third.locator('quetes-de-sysadmin');
   await game.locator('button', { hasText: 'Ma progression' }).click();
   await game.locator('dialog.progress-window input[type="file"]').setInputFiles(file);
-  await third.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.notebook summary')?.textContent?.includes('Lina'));
-  check((await game.locator('.notebook summary').textContent()).includes('Le carnet de Lina'), `progress ${width} px: the file restores everything, name and notebook included`);
+  await third.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.notebook h2')?.textContent?.includes('Lina'));
+  check((await game.locator('.notebook h2').textContent()).includes('Le carnet de Lina'), `progress ${width} px: the file restores everything, name and notebook included`);
   check(errors.length === 0, `progress ${width} px: no console error ${errors.join(' ')}`);
   await here.close();
   await elsewhere.close();
