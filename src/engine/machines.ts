@@ -77,6 +77,8 @@ export const MACHINES: Machine[] = [
   machine('abacus', '192.0.2.37', 'night-batch'),
   // The Order Book: the flour mill's IBM i, which has taken its bakeries' orders since 1996 (sieve, its new reporting server, is behind it).
   { ...machine('mill', '192.0.2.38', 'order-book'), os: 'ibmi' },
+  // Next Door Windows: the architects' Debian server, next to cabinet, their Windows Server file server (an internal host).
+  machine('compass', '192.0.2.40', 'mixed-fleet'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

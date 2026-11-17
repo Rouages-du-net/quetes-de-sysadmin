@@ -39,3 +39,5 @@ machine-herbarium = herbarium
 machine-abacus = abacus
 machine-mill = mill
 machine-sieve = sieve
+machine-compass = compass
+machine-cabinet = cabinet

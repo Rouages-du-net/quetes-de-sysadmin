@@ -16,8 +16,9 @@ import { NOT_ON_SOLARIS } from '../solaris';
 // ("jail.conf" → man-jail_conf).
 export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
 
-// A CL command (IBM i) is in no section of man: its pages say (CL).
-const section = (name: string) => (COMMANDS[name]?.cl ? 'CL' : COMMANDS[name]?.section ?? 1);
+// A CL command (IBM i) is in no section of man: its pages say (CL); a
+// PowerShell cmdlet's, (PS) (Get-Help shows the same text, see powershell.ts).
+const section = (name: string) => (COMMANDS[name]?.cl ? 'CL' : COMMANDS[name]?.cmdlet ? 'PS' : COMMANDS[name]?.section ?? 1);
 
 // On a FreeBSD machine, a command whose BSD version differs has its own page (man-<command>-bsd).
 export type Flavour = '' | 'bsd' | 'solaris';
@@ -71,7 +72,7 @@ const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour = ''): string {
   const { synopsis, description, options, examples } = texts(name, t, flavour);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t(c.cl ? 'manual-header-cl' : flavour ? `manual-header-${flavour}` : 'manual-header');
+  const middle = t(c.cl ? 'manual-header-cl' : c.cmdlet ? 'manual-header-ps' : flavour ? `manual-header-${flavour}` : 'manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
@@ -79,13 +80,20 @@ export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour
   sections.push([t('manual-section-description'), indent(majuscule(description))]);
   const opts = options(name, c);
   if (opts.length)
-    sections.push([t(c.cl ? 'manual-section-parameters' : 'manual-section-options'), opts.map(([o, d]) => indent(`${c.cl ? '' : '-'}${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
+    sections.push([t(c.cl || c.cmdlet ? 'manual-section-parameters' : 'manual-section-options'), opts.map(([o, d]) => indent(`${c.cl ? '' : '-'}${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).
   const see = (c.see ?? []).filter((v) => !(flavour === 'bsd' && LINUX_ONLY.includes(v)) && !(flavour === 'solaris' && NOT_ON_SOLARIS.includes(v)));
   if (see.length) sections.push([t('manual-section-see-also'), indent(see.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${title}${' '.repeat(white)}${middle}${' '.repeat(white)}${title}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
+}
+
+/** A page's parts, for Get-Help (PowerShell's layout, see commands/powershell.ts). */
+export function manualParts(name: string, t: Translate) {
+  const c = COMMANDS[name];
+  const x = texts(name, t);
+  return { synopsis: x.synopsis, description: x.description, options: x.options(name, c), examples: x.examples(name, c), see: c.see ?? [] };
 }
 
 export function help(name: string, c: Command, t: Translate): string {

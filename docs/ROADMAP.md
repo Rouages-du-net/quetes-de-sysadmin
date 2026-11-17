@@ -497,7 +497,9 @@ them safely.
       `ssh`, CCSID conversions). Interface: a CL command line first; the
       5250 green screen (fixed 80×24 menus, function keys) is a later,
       optional step.
-- [ ] **A mixed fleet, seen from Linux**: the Windows machines a Linux
+- [x] **A mixed fleet, seen from Linux** ("Next Door Windows", story 30 in
+      `docs/SCENARIOS.md`; `src/engine/windows.ts`, `src/engine/powershell.ts`,
+      `src/engine/cifs.ts`): the Windows machines a Linux
       admin deals with, without simulating Windows itself. A script copied
       from Windows that fails with `/bin/bash^M: bad interpreter` (CRLF,
       `file`, `dos2unix`, `.gitattributes`); a Windows file server through

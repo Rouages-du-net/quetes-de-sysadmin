@@ -59,3 +59,5 @@ story-night-batch = Le traitement de nuit
     .summary = Depuis trente ans, un traitement COBOL encaisse chaque nuit les cotisations de la Mutuelle sur un mainframe ; il déménage sous Linux. Lire le fichier EBCDIC du centre de traitement sans abîmer ses montants condensés, compiler le programme avec GnuCOBOL et lire son code retour, puis réparer la tuyauterie quand le fichier arrive en retard.
 story-order-book = Le carnet de commandes
     .summary = Depuis 1996, un moulin prend les commandes de ses boulangeries sur un IBM i. Un travail de nuit attend une réponse que personne n'a donnée, des impressions que personne n'imprime remplissent le disque, et la sauvegarde de la nuit a oublié les commandes : travaux, messages, fichiers spoule et fichiers de sauvegarde en CL, puis l'export des commandes vers Linux dans le bon jeu de caractères.
+story-mixed-fleet = Les voisins Windows
+    .summary = Un atelier d'architectes fait tourner un serveur Linux à côté d'un serveur de fichiers Windows : un script écrit sous Windows que bash ne sait pas lancer, le partage Windows monté proprement sous Linux, et un coup d'œil dans le serveur Windows par son OpenSSH et PowerShell.

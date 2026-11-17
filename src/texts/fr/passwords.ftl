@@ -65,3 +65,5 @@ password-seed-2029 = semence-2029
 password-ledger-2029 = registre-2029
 
 password-millstone-2029 = meule-2029
+
+password-drafting-2029 = calque-2029

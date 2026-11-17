@@ -113,3 +113,6 @@ late-file
 inquiry
 spooled
 save-file
+line-endings
+smb-mount
+full-volume

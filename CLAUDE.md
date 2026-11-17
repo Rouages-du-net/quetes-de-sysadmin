@@ -316,6 +316,23 @@ presents them for people.
   `man WRKACTJOB`); `chapters/order-book.ts`: what the chapters of "The
   Order Book" share (`inquiry.ts`, `spooled.ts`, `save-file.ts`; sieve is
   an internal host).
+- `src/engine/windows.ts`: a Windows Server seen from Linux (`state.os =
+  'windows'`, `state.windows`: drives as `/C`, `/D`, names without case,
+  volumes, services, SMB shares, the System log, SMB1 off); its OpenSSH
+  lands in Windows PowerShell 5.1: the pipeline of objects, parameter
+  binding, Out-Default's tables and lists, 5.1's error layout in
+  `src/engine/powershell.ts`, the read-only cmdlets and their aliases
+  (`Get-ChildItem`, `Get-Volume`, `Get-WinEvent`, `Get-Help`…, a cmdlet's
+  manual page: `cmdlet: true`, `man Get-ChildItem`) in
+  `commands/powershell.ts`; a Windows share mounted with `mount -t cifs`
+  or `mount.cifs` (`src/engine/cifs.ts`: credentials file, `uid=`/`gid=`,
+  `vers=`, owners shown from the options, `df` on the server's volume);
+  `dos2unix`, `unix2dos`, `tr` and the `gitattributes` page in
+  `commands/line-endings.ts` (CR LF symptoms in `script.ts`, `file`,
+  `cat -A`, nano's DOS format, git's `.gitattributes`);
+  `chapters/mixed-fleet.ts`: what the chapters of "Next Door Windows"
+  share (`line-endings.ts`, `smb-mount.ts`, `full-volume.ts`; cabinet is
+  an internal host).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

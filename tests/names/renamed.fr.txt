@@ -1035,6 +1035,58 @@ save-file:sieve
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+line-endings
+  /home/you → /home/vous
+  /home/you/email_ifeoma.txt → /home/vous/courriel_ifeoma.txt
+  /home/you/ops → /home/vous/ops
+  /home/you/ops/.git → /home/vous/ops/.git
+  /home/you/ops/.git/HEAD → /home/vous/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/vous/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/vous/ops/nightly-copy.sh
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+smb-mount
+  /home/you → /home/vous
+  /home/you/email_ifeoma.txt → /home/vous/courriel_ifeoma.txt
+  /home/you/notes-priya.txt → /home/vous/notes-de-priya.txt
+  /home/you/ops → /home/vous/ops
+  /home/you/ops/.git → /home/vous/ops/.git
+  /home/you/ops/.git/HEAD → /home/vous/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/vous/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/vous/ops/nightly-copy.sh
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+smb-mount:cabinet
+  /C/Users/you → /C/Users/vous
+  /C/Users/you/Desktop → /C/Users/vous/Desktop
+  /C/Users/you/Documents → /C/Users/vous/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/vous/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/lisezmoi.txt
+
+full-volume
+  /home/you → /home/vous
+  /home/you/email_ifeoma.txt → /home/vous/courriel_ifeoma.txt
+  /home/you/cabinet-report.txt → /home/vous/rapport-armoire.txt
+  /home/you/ops → /home/vous/ops
+  /home/you/ops/.git → /home/vous/ops/.git
+  /home/you/ops/.git/HEAD → /home/vous/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/vous/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/vous/ops/nightly-copy.sh
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+full-volume:cabinet
+  /C/Users/you → /C/Users/vous
+  /C/Users/you/Desktop → /C/Users/vous/Desktop
+  /C/Users/you/Documents → /C/Users/vous/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/vous/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/lisezmoi.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

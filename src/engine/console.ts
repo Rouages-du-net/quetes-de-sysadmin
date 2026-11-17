@@ -302,7 +302,8 @@ export class Console {
   // exit on an internal machine: go back one step (or to the workstation, after ssh -J).
   private quitInside(): string {
     const e = this.inside.pop()!;
-    const message = `logout\nConnection to ${e.domain} closed.`;
+    // Windows' OpenSSH says no "logout".
+    const message = `${e.shell.state.os === 'windows' ? '' : 'logout\n'}Connection to ${e.domain} closed.`;
     if (e.back) {
       this.inside = [];
       this.remote = null;
@@ -319,7 +320,12 @@ export class Console {
     d.shell.cwd = d.shell.home;
     this.inside.push({ shell: d.shell, domain: d.domain, back: sinceWorkstation && !!d.via });
     this.visited.add(d.shell.host);
-    chunks.push(`Linux ${d.shell.hostName} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
+    // A Windows Server's OpenSSH: no banner, PowerShell's own (DefaultShell = powershell.exe).
+    chunks.push(
+      d.shell.state.os === 'windows'
+        ? 'Windows PowerShell\nCopyright (C) Microsoft Corporation. All rights reserved.\n\nInstall the latest PowerShell for new features and improvements! https://aka.ms/PSWindows\n'
+        : `Linux ${d.shell.hostName} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`,
+    );
     return chunks.join('\n\n');
   }
 

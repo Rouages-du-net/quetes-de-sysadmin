@@ -174,6 +174,13 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | IBM i jobs and messages | jobs in subsystems (`state.ibmi`): status, function, job log, object and record locks; QBATCH runs one batch job at a time from its job queue; an inquiry message waits for a reply among its values at DSPMSG's `Reply` prompt (`?` shows its second-level text), the reply drives the story's program (R retries, C/D/F cancel, G skips); `ENDJOB` ends a job at once (end code 50) and releases its locks; `SBMJOB` queues `CALL PGM(…)` or a CL command; the history log (QHST) records job ends and saves; a fixed clock | job priorities, time slices, controlled-end delays, the system reply list (`WRKRPYLE`), `SNDRPY`, message keys, break messages, `WRKJOB`, job descriptions and routing |
 | Spooled files and the ASP | spooled files grouped per job (count, pages, status, user data, output queue, size); `WRKSPLF SELECT(user device form-type user-data)`, `DLTSPLF` by name and job (`SPLNBR` a number, `*LAST`, `*ALL`, `*ONLY`) or `FILE(*SELECT)`, `CLROUTQ`; the system ASP's use computed from its base and the spooled files, its threshold (CPF0907) | writers and printing, `CHGSPLFA`, `HLDSPLF`, printer files' attributes (`CHGPRTF`), the creation date selection, independent ASPs, the automatic cleanup |
 | Save files, `SAVLIB`, `CPYTOIMPF`, `db2` | `SAVLIB` of one library to a save file: an object locked for update by a job is skipped (CPF3202, CPF3741, CPF3771) unless `SAVACT` (`*LIB`, `*SYSDEFN`, `*SYNCLIB`, CPI3712); a save file with data asks CPA4067 (C, G) on a 5250 screen and takes the default reply C from PASE, unless `CLEAR(*ALL)`; `CPYTOIMPF` to a stream file in CSV with `MBROPT`, `STMFCCSID` (`*STMF`: the table's CCSID 37 for a new file, 819, 1208, 1252, `*PCASCII`, `*STDASCII`), `RCDDLM`, `STRDLM`, `FLDDLM`, `ADDCOLNAM`; `db2` in PASE: one `SELECT` on one table (columns, `COUNT(*)`, one `WHERE` comparison, `ORDER BY`, `FETCH FIRST`) | `RSTLIB`, tapes, `SAVOBJ`, `SAVACTWAIT`'s waiting, `TOFILE`, `DTAFMT(*FIXED)`, number and date formats, other CCSIDs, SQL joins and updates, `STRSQL` |
+| Line endings (CR LF) | a file written on Windows keeps its `\r\n`: `./script` with `#!/bin/bash\r` fails like the kernel and bash ("`/bin/bash^M: bad interpreter`", code 126); run by `bash`/`sh`, an empty line is the command `$'\r'`, an assignment at the end of a line keeps its `\r`, and `cd` refuses `$'…\r'` in bash's wording; `file` names the interpreter (Bourne-Again shell script, `executable`) and says "with CRLF line terminators"; `cat -A`/`-v`/`-E`/`-T`/`-n`; nano shows such a file converted ("Converted from DOS format") and writes it back in DOS format | other effects of a `\r` in an external command's arguments (the game's word splitting drops it), dash's own wording under `sh`, nano's M-D toggle |
+| `dos2unix`, `unix2dos`, `tr` | in-place conversion (`-n` to a new file, `-i` counts, `-q`, `-k`), a binary file skipped, its messages shown on the output rather than stderr; `tr` with `-d`, `-s`, translation, escapes (`\r`, `\n`, `\t`, octal), ranges and `[:upper:]`, `[:lower:]`, `[:digit:]`, `[:space:]`, GNU's "extra operand" errors (it reads no file) | code pages, BOM options, `-c` (complement) |
+| `.gitattributes` | the only hidden file git tracks in the game; `text`, `text=auto`, `eol=lf`, `eol=crlf` normalise CR LF to LF when a file goes into the repository (`git add` warns "CRLF will be replaced by LF"), `-text` and `binary` don't; the last matching line wins | checkout conversion (eol=crlf on checkout), `core.autocrlf`, `git add --renormalize`, `.gitignore`, patterns with directories |
+| A Windows Server (`state.os = 'windows'`) | an internal host of the story "Next Door Windows": drives as the world's top directories (`C:` is `/C`), names compared without case, volumes (size, what the system uses outside the modelled files), services, SMB shares (who may change them), the System log, SMB1 off, local accounts with their SMB passwords; its OpenSSH lands in Windows PowerShell 5.1 (DefaultShell), an administrator's key read from `C:\ProgramData\ssh\administrators_authorized_keys`; `exit` closes without "logout" | Windows itself: the registry, ACLs (`icacls`, `Get-Acl`), NTFS attributes but hidden, processes, scheduled tasks, Active Directory, WinRM, cmd.exe; a fixed clock |
+| PowerShell (`src/engine/powershell.ts`, `commands/powershell.ts`) | 21 read-only cmdlets (`Get-ChildItem`, `Get-Content`, `Set-Location`, `Get-Location`, `Get-Service`, `Get-PSDrive`, `Get-Volume`, `Get-WinEvent`, `Get-EventLog`, `Get-SmbShare`, `Where-Object`, `Sort-Object`, `Select-Object`, `Format-Table`, `Format-List`, `Measure-Object`, `Write-Output`, `Clear-Host`, `Get-Help`, `Get-Command`, `Get-Alias`), their 5.1 aliases (`ls`, `dir`, `cat`, `cd`, `pwd`, `sort`, `select`, `where`, `?`, `ft`, `fl`, `help`, `man`…), `cd..`, `hostname`, `whoami`; a pipeline of objects with typed properties; parameters by name, by unambiguous prefix (any case) or by position, `-Name:value`, `-?`, `-ErrorAction SilentlyContinue`; numbers with `KB`/`MB`/`GB`/`TB`; Where-Object's simple form (`Where-Object Length -gt 1GB`) and a script block with one comparison on `$_`; Out-Default's tables (grouped by directory or provider, as the format files do) and lists (five properties or more); errors in 5.1's layout (`CommandNotFoundException`, `NamedParameterNotFound`, `AmbiguousParameter`, `MissingArgument`, `PositionalParameterNotFound`, `PathNotFound`…); `Get-Help` shows the game's manual page in PowerShell's layout, `man Get-ChildItem` on Linux the same page (section PS) | variables and expressions, calculated properties, script blocks beyond one comparison, `-and`/`-or`, `Out-*`, `ForEach-Object`, providers other than the file system, Unicode box tables, column widths fixed by the format files (the game sizes them to their content and doesn't truncate), the cmdlets that change something (`Remove-Item`, `Restart-Service`…: they answer with a note of the game) |
+| `mount -t cifs`, `mount.cifs` (`src/engine/cifs.ts`) | the share's directory grafted at the mount point (like NFS); `cifs-utils` needed (util-linux's "helper program" message); options `credentials=` (username, password, domain), `username=`, `password=`, `domain=`, `uid=`/`gid=` (names or numbers), `file_mode=`, `dir_mode=`, `vers=` (1.0 refused by a server with SMB1 off: error 112), `ro`, `_netdev`, `nofail`, `noauto`, `x-systemd.*`, `guest`; the password prompt; errors 13, 2, 22, 16 and mount.cifs's own (bad UNC, credential file, bad user name, chdir); the files show the mount's owner, group and modes, chown and chmod change nothing visible; writes need the account's right on the share; `df` shows the server's volume; `mount`'s line like `/proc/mounts`; `mount -a` and `findmnt --verify` with network lines (no source check) | Kerberos (`sec=krb5`), `multiuser`, `cifsacl`, `noperm`, the cache options, reconnection, a second mount on the same point (refused with error 16), the server's ACLs (a share says who may change it), smbclient's dates on directories |
+| `smbclient` and a Windows server | `-L` (host or `//host`) lists the shares with the administrative ones (`ADMIN$`, `C$`, `D$`, `IPC$`) and "SMB1 disabled"; a session's `-c` commands on the share (writes if the account may change it); `-U user` without `%password` prompts | an interactive session, NetBIOS browsing |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
 | `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
@@ -2846,6 +2853,75 @@ too). Expected traps: SAVLIB without SAVACT (ORDHDR skipped again), a save
 file with data (CPA4067), CPYTOIMPF's default CCSID (37, EBCDIC: `file`
 says data), `*PCASCII` (� on sieve), `MBROPT(*ADD)` twice (every order
 twice), ORDSBS left stopped.
+
+## Story 30: Next Door Windows (three chapters)
+
+A cooperative of architects, the Drawing Office, runs `compass`
+(192.0.2.40, Debian): the backups of the projects and Plotter, the service
+that exports the drawings to PDF (account `plotter`). Next to it, `cabinet`
+(192.0.2.41, an internal host), a Windows Server 2022 file server that
+Priya, their contractor, installed and looks after once a month. Ifeoma
+runs the office; Henrik, an architect, writes scripts on his Windows
+laptop. The Linux admin's side of a mixed fleet, without simulating Windows
+itself (that is a later story): a script with Windows line endings, the
+Windows share mounted on Linux, and a look inside the Windows server
+through its built-in OpenSSH, where the shell is PowerShell (read only).
+Engine: `src/engine/windows.ts`, `src/engine/powershell.ts`,
+`src/engine/commands/powershell.ts`, `src/engine/cifs.ts`,
+`src/engine/commands/line-endings.ts`. It opens after "The Laptops" (the
+Samba chapter) and "The Script That Broke".
+
+### Chapter 1 — Invisible Characters (done)
+
+| Step | Command learnt |
+|---|---|
+| Bad interpreter | `./nightly-copy.sh`: "`/bin/bash^M: bad interpreter: No such file or directory`"; `bash nightly-copy.sh`: `$'\r': command not found`, `cd: $'/srv/projects\r'` |
+| See it | `file` ("with CRLF line terminators"), `cat -A` (`^M$`), `od -c` (`\r \n`), `dos2unix -i` |
+| Convert, run | `dos2unix nightly-copy.sh` (or `sed -i 's/\r$//'`, or `cat … \| tr -d '\r' > new`), `./nightly-copy.sh` |
+| Prevent it | `echo '*.sh text eol=lf' > .gitattributes`, `git add .gitattributes nightly-copy.sh`, `git commit` |
+
+Goal checked on the state: the script in LF with its commands, the backup
+made (`/srv/nightly/current`), and the repository's last commit holding a
+`.gitattributes` that makes `*.sh` text, with the script in LF. Expected
+traps: `chmod +x` (it was executable), a `.gitattributes` committed before
+the script was converted (git normalises the index; the working copy still
+has to be converted), `tr` given a file ("extra operand").
+
+### Chapter 2 — The Share Next Door (done)
+
+| Step | Command learnt |
+|---|---|
+| The shares | `smbclient -L //cabinet -U compass-svc` |
+| The helper | `mount -t cifs` → "helper program", `sudo apt install cifs-utils` |
+| Mount | a credentials file (`/root/.smbcredentials`, 600), `sudo mount -t cifs //cabinet/plans /mnt/plans -o credentials=…` |
+| Owners | `ls -l` (root, 0755), `uid=plotter,gid=plotter` (chown changes nothing) |
+| fstab | `//cabinet/plans /mnt/plans cifs credentials=…,uid=plotter,gid=plotter,_netdev,nofail 0 0`, `umount`, `mount -a` |
+
+Goal checked on the state: the plans share mounted on `/mnt/plans` and
+writable by `plotter`; a credentials file of root's readable by root alone
+with the account and its password; an fstab line for the share with
+`credentials=`, no password, `_netdev`, `nofail`, not SMB1, and owners that
+let `plotter` write. Expected traps: `vers=1.0` (error 112, SMB1 off),
+`password=` on the command line (it works, and stays in the history), a
+credentials file readable by all, `chown` on the mount, an fstab line
+without `nofail` or with the password.
+
+### Chapter 3 — The Other Side (done)
+
+| Step | Command learnt |
+|---|---|
+| Full | `tail /var/log/plotter/export.log`, `df -h /mnt/plans` (100%, 500G) |
+| Outside the share | `du -sh /mnt/plans` (62G) |
+| PowerShell | `ssh cabinet`: `PS C:\Users\you>`, `grep` "not recognized", `ls -la` "parameter name 'la'", `Get-Help`, `Get-Command` |
+| The volume | `Get-Volume` or `Get-PSDrive` (D: Data, 11 MB free) |
+| The culprit | `Get-ChildItem D:\ -Recurse -File \| Sort-Object Length -Descending \| Select-Object -First 5`; `Get-WinEvent -LogName System -MaxEvents 10` (srv, 2013) |
+| Report | `exit`, `nano ~/cabinet-report.txt` |
+
+Goal checked on the state: `cabinet-report.txt` names the volume `D:` and
+the file `plans-full-2029-11-03.zip`; Priya then removes it. Expected traps:
+deleting drawings on the share from Linux, the cmdlets that change
+something (`Remove-Item`, `Restart-Service`: the server is Priya's), Linux
+habits in PowerShell.
 
 ## Ideas for later
 

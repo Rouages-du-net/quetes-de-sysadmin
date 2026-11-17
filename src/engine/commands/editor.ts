@@ -18,15 +18,19 @@ export const EDITOR: Record<string, Command> = {
       if (n?.type === 'directory') return game.error(game.t('nano-directory', { path: path }));
       let text = '';
       let message: string;
+      // A file in DOS format (CR LF): nano shows it converted, and writes it back in DOS format.
+      let dos = false;
       if (!n) message = game.t('nano-new');
       else if (!game.traverses(target) || !game.can(n, 'r')) message = game.t('nano-error-read', { path: path });
       else if (n.archive) message = game.t('nano-binary', { path: path });
       else {
         text = content(n, game);
+        dos = text.includes('\r\n');
+        if (dos) text = text.replace(/\r\n/g, '\n');
         const lines = text === '' ? 0 : text.split('\n').length;
-        message = game.can(n, 'w') ? game.t('nano-lines-read', { lines: lines }) : game.t('nano-read-only', { path: path });
+        message = !game.can(n, 'w') ? game.t('nano-read-only', { path: path }) : game.t(dos ? 'nano-lines-read-dos' : 'nano-lines-read', { lines: lines });
       }
-      game.edition = { path, text: text && !text.endsWith('\n') ? text + '\n' : text, root: game.who === 'root', message };
+      game.edition = { path, text: text && !text.endsWith('\n') ? text + '\n' : text, root: game.who === 'root', message, ...(dos ? { dos } : {}) };
       return '';
     },
   },

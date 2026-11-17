@@ -423,3 +423,8 @@ name-check-txt = verification.txt
 ## Le carnet de commandes
 name-email_kwame-txt = courriel_kwame.txt
 name-notes-margit-txt = notes-de-margit.txt
+
+## Les voisins Windows
+name-email_ifeoma-txt = courriel_ifeoma.txt
+name-notes-priya-txt = notes-de-priya.txt
+name-cabinet-report-txt = rapport-armoire.txt

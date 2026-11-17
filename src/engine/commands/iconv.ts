@@ -51,10 +51,13 @@ function describe(n: import('../world').Node): string {
   const text = typeof n.content === 'string' ? n.content : '';
   if (/^\(binary/.test(text) || (!text && n.size)) return 'data';
   if (!text) return 'empty';
-  const kind = /^#!\s*\S*sh\b/.test(text) ? 'POSIX shell script, ' : '';
+  // libmagic names the interpreter of a #! line (bash: "Bourne-Again shell script"), and says "executable" if a x bit is set.
+  const shebang = /^#!\s*(?:\/usr\/bin\/env\s+)?\S*?(\w+)\r?(?:\s|$)/.exec(text)?.[1];
+  const kind = shebang === 'bash' ? 'Bourne-Again shell script, ' : shebang && /sh$/.test(shebang) ? 'POSIX shell script, ' : '';
+  const executable = kind && /x/.test(n.mode ?? '') ? ' executable' : '';
   const crlf = text.includes('\r\n') ? ', with CRLF line terminators' : '';
-  if (!/[^\x00-\x7f]/.test(text)) return `${kind}ASCII text${crlf}`;
-  return n.charset === 'latin1' ? `${kind}ISO-8859 text${crlf}` : `${kind}Unicode text, UTF-8 text${crlf}`;
+  if (!/[^\x00-\x7f]/.test(text)) return `${kind}ASCII text${executable}${crlf}`;
+  return n.charset === 'latin1' ? `${kind}ISO-8859 text${executable}${crlf}` : `${kind}Unicode text, UTF-8 text${executable}${crlf}`;
 }
 
 export const ICONV: Record<string, Command> = {

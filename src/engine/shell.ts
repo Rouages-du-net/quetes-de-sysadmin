@@ -18,6 +18,10 @@ import { SOLARIS_CHECKS, OTHER_BINS } from './commands/solaris-tools';
 import { isSolaris, NOT_ON_SOLARIS } from './solaris';
 import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
+import { cifsAccess, cifsUsage } from './cifs';
+import { isWindows, toWindows } from './windows';
+import { runPowerShell } from './commands/powershell';
+
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
 import { withoutColours } from './colours';
@@ -99,6 +103,8 @@ export interface Edition {
   message: string;
   // On closing (e.g. crontab -e checks and installs): message to display.
   after?: () => string;
+  // The file was in DOS format (CR LF): nano writes it back so (like nano without M-D).
+  dos?: boolean;
   // Closing changes the state (e.g. systemctl edit): it counts as a command, even without a message.
   conclude?: boolean;
 }
@@ -334,7 +340,7 @@ export class Shell implements Game {
   // have more). root has every right.
   can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
     // Through an NFS mount, the server decides, with this machine's numbers (see nfs.ts).
-    const remote = nfsAccess(this, n, right, user);
+    const remote = nfsAccess(this, n, right, user) ?? cifsAccess(this, n, right, user);
     if (remote !== null) return remote;
     if (user === 'root') return true;
     const mode = n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
@@ -466,6 +472,9 @@ export class Shell implements Game {
   private missingPlace(absolute: string, n: Node, old?: Node): boolean {
     const m = this.mount(absolute);
     if (!m) return false;
+    // A Windows share: the server's volume, files outside the share included.
+    const remote = cifsUsage(this, m.path);
+    if (remote) return remote.used - (old ? this.size(old) : 0) + this.size(n) > remote.capacity;
     // No free inode left: no way to create a file, even an empty one ("No space left on device").
     if (m.inodes && !old && this.usedInodes(m) >= m.inodes) return true;
     const place = this.find(m.path);
@@ -502,6 +511,8 @@ export class Shell implements Game {
   prompt(): string {
     if (this.waiting) return this.t('sudo-prompt', { user: this.player });
     if (this.question) return this.question.prompt;
+    // A Windows Server's PowerShell (see powershell.ts).
+    if (isWindows(this)) return `PS ${toWindows(this.cwd)}>`;
     const here =
       this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
     // In tmux, the status bar shows the session's name: we put it in front of the prompt.
@@ -535,7 +546,7 @@ export class Shell implements Game {
       id: `${p.chapter.id}:${name}`,
       number: p.chapter.number,
       commands: def.commands ?? p.chapter.commands,
-      home: '/home/you',
+      home: def.home ?? '/home/you',
       // Renamed like the main machine (the account you, /home/you…).
       names: p.chapter.names,
       welcome: '',
@@ -638,7 +649,7 @@ export class Shell implements Game {
   private consulter(cmd: string, rest: string[]): string {
     const all = Object.entries(COMMANDS).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
     // Files (section 5) and overviews (section 7) are not commands: no note for them.
-    const notStill = (n: string) => (this.known().includes(n) || COMMANDS[n]?.cl || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
+    const notStill = (n: string) => (this.known().includes(n) || COMMANDS[n]?.cl || COMMANDS[n]?.cmdlet || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
     if (cmd === 'apropos' || (cmd === 'man' && rest[0] === '-k')) {
       const word = cmd === 'apropos' ? rest[0] : rest[1];
       if (!word) return this.error(this.t('manual-what-search', { command: cmd === 'apropos' ? 'apropos' : 'man -k' }));
@@ -650,7 +661,9 @@ export class Shell implements Game {
     const outputs: string[] = [];
     for (const asked of rest) {
       // IBM i's CL commands are written in capitals, but man wrkactjob finds them too.
-      const name = !COMMANDS[asked] && COMMANDS[asked.toUpperCase()]?.cl ? asked.toUpperCase() : asked;
+      // PowerShell's cmdlets too, whatever the case (man get-childitem).
+      const cmdlet = !COMMANDS[asked] ? Object.keys(COMMANDS).find((k) => COMMANDS[k]?.cmdlet && k.toLowerCase() === asked.toLowerCase()) : undefined;
+      const name = cmdlet ?? (!COMMANDS[asked] && COMMANDS[asked.toUpperCase()]?.cl ? asked.toUpperCase() : asked);
       const c = COMMANDS[name];
       if (!c || name === 'aide') {
         this.error(cmd === 'man' ? this.t('manual-not-page', { command: name }) : this.t('manual-nothing', { word: name }));
@@ -672,6 +685,12 @@ export class Shell implements Game {
       const { answer } = this.question;
       this.question = null;
       return this.conclude(answer(line.trim()), true);
+    }
+    // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
+    if (isWindows(this)) {
+      if (line.trim() && !/^\s/.test(line) && this.history.at(-1) !== line) this.history.push(line);
+      const output = runPowerShell(this, line);
+      return output === null ? null : this.conclude(this.countLine(output), true);
     }
     // History, like bash: !! (the last command), !n, !-n, !prefix.
     // The expanded line is shown before it runs, and it is the one kept.
@@ -999,6 +1018,12 @@ export class Shell implements Game {
         this.status = 127;
         return this.error(`${cmd}: not found`);
       }
+      // A #! line saved on Windows ends with \r: the kernel looks for "/bin/bash\r" (bash shows it as ^M).
+      const first = n.type === 'file' && !n.program ? content(n, this).split('\n')[0] : '';
+      if (first.startsWith('#!') && first.endsWith('\r')) {
+        this.status = 126;
+        return this.error(`-bash: ${cmd}: ${first.slice(2).trim().split(/\s+/)[0]}^M: bad interpreter: No such file or directory`);
+      }
       const before = this.who;
       if (root) this.who = this.as;
       try {
@@ -1069,7 +1094,7 @@ export class Shell implements Game {
       const lines = text === '' ? 0 : text.replace(/\n$/, '').split('\n').length;
       if (n?.type === 'file') {
         if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-error-write', { path: e.path });
-        n.content = text.replace(/\n$/, '');
+        n.content = e.dos ? text.replace(/\n$/, '').replace(/\r?\n/g, '\r\n') : text.replace(/\n$/, '');
         n.lines = true;
         delete n.size;
       } else {

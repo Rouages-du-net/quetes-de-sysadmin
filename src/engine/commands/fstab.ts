@@ -91,7 +91,11 @@ function check(game: Shell, verbose: boolean): string {
   for (const e of inputs) {
     const notes: string[] = [];
     const dev = st ? resolveSource(st, e.source) : null;
-    if (!dev) {
+    // A network source (//server/share, host:/path) is not looked for on the disks.
+    const network = /^(cifs|smb3|nfs4?)$/.test(e.type);
+    if (network) {
+      if (verbose) notes.push(`   [ ] do not check ${e.source} source (pseudo/net)`);
+    } else if (!dev && !(!st && mounts(game).some((m) => m.path === e.target))) {
       errors++;
       notes.push(e.source.startsWith('/') ? `   [E] unreachable source: ${e.source}: No such file or directory` : `   [E] unreachable on-disk source: ${e.source} (no such device)`);
     } else if (verbose) notes.push(`   [ ] source ${e.source} found`);

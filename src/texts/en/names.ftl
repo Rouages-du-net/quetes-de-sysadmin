@@ -420,3 +420,8 @@ name-check-txt = check.txt
 ## The Order Book
 name-email_kwame-txt = email_kwame.txt
 name-notes-margit-txt = notes-margit.txt
+
+## Next Door Windows
+name-email_ifeoma-txt = email_ifeoma.txt
+name-notes-priya-txt = notes-priya.txt
+name-cabinet-report-txt = cabinet-report.txt

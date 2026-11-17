@@ -99,6 +99,8 @@ export interface InternalHost {
   initialise?: (game: Game) => void;
   // Known commands (by default, the chapter's).
   commands?: string[];
+  // The account's home (by default /home/you; C:\Users\you is /C/Users/you on Windows).
+  home?: string;
 }
 
 // A story event: when `condition` becomes true (checked

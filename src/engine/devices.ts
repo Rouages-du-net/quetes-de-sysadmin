@@ -11,6 +11,7 @@ import type { Shell } from './shell';
 import { storageOf } from './storage';
 import { readFstab, resolveSource, systemFor } from './fstab';
 import { mountNfs, type NfsMount } from './nfs';
+import { mountCifs, type CifsMount } from './cifs';
 
 export interface Device {
   // The whole disk (/dev/sdb) and its numbers (MAJ:MIN), removable or not.
@@ -35,8 +36,9 @@ export interface Mount {
   options?: string;
   // What the mount point hid, given back on unmount.
   cache?: { children: Record<string, Node>; owner?: string; group?: string; mode?: string };
-  // A network mount (see nfs.ts).
+  // A network mount (see nfs.ts, cifs.ts).
   nfs?: NfsMount;
+  cifs?: CifsMount;
 }
 
 export const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};
@@ -71,6 +73,17 @@ export function mountAll(game: Shell): string {
   const st = storageOf(game);
   for (const e of inputs) {
     if (e.type === 'swap' || e.options.includes('noauto') || mounts(game).some((m) => m.path === e.target)) continue;
+    if (e.type === 'cifs' || e.type === 'smb3') {
+      const apt = game.state.apt as { installed: Record<string, string> } | undefined;
+      if (apt && !apt.installed['cifs-utils']) {
+        game.error(`mount: ${e.target}: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program.${DMESG}`, 32);
+        continue;
+      }
+      // mount -a can't prompt: a line without a password fails like a wrong one.
+      const r = mountCifs(game, { source: e.source, point: e.target, options: e.options, typed: '' });
+      if (typeof r === 'string' && r) game.error(r, 32);
+      continue;
+    }
     if (e.type.startsWith('nfs')) {
       const r = mountNfs(game, e.source, e.target, e.options.join(','));
       if (r) game.error(r, 32);

@@ -78,3 +78,4 @@ machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois apr�
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $file } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
 resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $file }
+machine-compass-motd = Les voisins Windows — le serveur Linux de l'Atelier. Son voisin, armoire, est un Windows Server.

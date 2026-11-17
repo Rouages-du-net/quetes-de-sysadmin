@@ -207,6 +207,17 @@ export const PACKAGES: Record<string, Package> = {
   rsync: { version: '3.4.1+ds1-5', architecture: 'amd64', download: 445, installed: 806 },
   tar: { version: '1.35+dfsg-3.1', architecture: 'amd64', download: 846, installed: 3234 },
   'openssh-server': { version: '1:10.0p1-7', architecture: 'amd64', download: 610, installed: 2132 },
+  // mount.cifs, the helper mount -t cifs needs (see cifs.ts).
+  'cifs-utils': {
+    version: '2:7.2-2',
+    architecture: 'amd64',
+    download: 95,
+    installed: 337,
+    suggestions: ['smbclient', 'winbind'],
+    put: (game) => put(game, '/usr/sbin', d({ 'mount.cifs': f('', { owner: 'root', mode: 'rwxr-xr-x', size: 59_464 }) }, undefined, root)),
+  },
+  smbclient: { version: '2:4.22.3+dfsg-4', architecture: 'amd64', download: 488, installed: 1680 },
+  dos2unix: { version: '7.5.2-1', architecture: 'amd64', download: 497, installed: 1946 },
 };
 
 // The packages already present on the host's Debian image.

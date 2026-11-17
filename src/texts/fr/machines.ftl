@@ -39,3 +39,5 @@ machine-herbarium = herbier
 machine-abacus = boulier
 machine-mill = moulin
 machine-sieve = tamis
+machine-compass = compas
+machine-cabinet = armoire

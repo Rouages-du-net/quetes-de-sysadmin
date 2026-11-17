@@ -11,6 +11,7 @@ import type { Directory, File, Node } from '../world';
 import { allowed, dump, guestOk, modeFor, readConfig, samba, SMB_CONF, shareFor, writable, type Share } from '../samba';
 import { serverFor, addressOf } from '../nfs';
 import { verdict, type Firewall } from '../firewall';
+import { isWindows, windows as windowsOf } from '../windows';
 
 function testparm(game: Shell, args: string[]): string {
   const quiet = args.includes('-s') || args.includes('--suppress-prompt');
@@ -97,6 +98,8 @@ function date(ms: number): string {
 
 /** What a connected user may do on a node: their own rights, or those of force user / force group. */
 function canAs(server: Shell, share: Share, n: Node, right: 'r' | 'w' | 'x', user: string): boolean {
+  // A Windows server: the share says who may change it (no Unix rights there).
+  if (isWindows(server)) return right !== 'w' || writable(share);
   const as = share.params.forceuser ?? user;
   if (server.can(n, right, as)) return true;
   const g = share.params.forcegroup?.replace(/^\+/, '');
@@ -120,7 +123,7 @@ const windows = (s: Session, name: string) => `\\${join(s.cwd, name).replace(/^\
 function run(game: Shell, s: Session, line: string): string[] {
   const [cmd, ...a] = line.trim().split(/\s+/);
   const out: string[] = [];
-  const clock = (s.server.state.systemd as { clock?: number } | undefined)?.clock ?? 0;
+  const clock = (s.server.state.systemd as { clock?: number } | undefined)?.clock ?? (s.server.state.windows as { clock?: number } | undefined)?.clock ?? 0;
   if (cmd === 'ls' || cmd === 'dir') {
     const dir = s.server.find(remote(s, ''));
     if (dir?.type !== 'directory' || !canAs(s.server, s.share, dir, 'r', s.user)) return ['NT_STATUS_ACCESS_DENIED listing \\*'];
@@ -189,14 +192,19 @@ function smbclient(game: Shell, args: string[]): string {
   let service: string | null = null;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '-U' || a === '--user') [user, password] = ((args[++i] ?? '').split('%', 2) as [string, string | undefined]).map((x) => x ?? null) as [string, string | null];
+    if (a === '-U' || a === '--user') {
+      const [u, p] = (args[++i] ?? '').split('%', 2);
+      user = u;
+      password = p ?? null;
+    }
     else if (a === '-c' || a === '--command') commands = args[++i] ?? '';
     else if (a === '-L' || a === '--list') list = args[++i] ?? '';
     else if (a === '-N' || a === '--no-pass') anonymous = true;
     else if (a.startsWith('-')) return game.error(`smbclient: unknown option ${a}\nUsage: smbclient [-?EgqBNPkV] [-?|--help] [--usage] [-M|--message=HOST] [-I|--ip-address=IP] [-L|--list=HOST] [-U|--user=USERNAME] [-N|--no-pass] [-c|--command=STRING] service <password>`);
     else service = a;
   }
-  const target = list ?? /^\/\/([^/]+)\/?/.exec(service ?? '')?.[1] ?? null;
+  // -L takes a host, or //host.
+  const target = (list !== null ? list.replace(/^\/\//, '').replace(/\/.*$/, '') : null) ?? /^\/\/([^/]+)\/?/.exec(service ?? '')?.[1] ?? null;
   if (!target) return game.error('Usage: smbclient [OPTIONS] service <password>\n(e.g. smbclient //localhost/share -U user)');
   const shareName = list === null ? (/^\/\/[^/]+\/([^/]+)/.exec(service ?? '')?.[1] ?? null) : null;
   if (list === null && !shareName) return game.error(`\\\\${target}: Not enough '\\' characters in service`);
@@ -206,6 +214,28 @@ function smbclient(game: Shell, args: string[]): string {
     const found = local ? { shell: game, address: '127.0.0.1' } : serverFor(game, target);
     if (!found) return game.error(`do_connect: Connection to ${target} failed (Error NT_STATUS_UNSUCCESSFUL)`, 1), '';
     const server = found.shell;
+    // A Windows file server (see windows.ts): its accounts, its shares, SMB2/3 only.
+    if (isWindows(server)) {
+      const w = windowsOf(server);
+      if (anonymous || w.passwords[who] === undefined || w.passwords[who] !== secret) return game.error('session setup failed: NT_STATUS_LOGON_FAILURE', 1), '';
+      if (list !== null) {
+        game.state.smbListed = true;
+        const rows = w.shares.map((x) => `\t${x.name.padEnd(16)}${x.name === 'IPC$' ? 'IPC ' : 'Disk'}      ${x.description}`);
+        return ['', '\tSharename       Type      Comment', '\t---------       ----      -------', ...rows, 'SMB1 disabled -- no workgroup available'].join('\n');
+      }
+      const ws = w.shares.find((x) => x.name.toLowerCase() === shareName!.toLowerCase());
+      if (!ws || !ws.path) return game.error('tree connect failed: NT_STATUS_BAD_NETWORK_NAME', 1), '';
+      if (ws.special && !server.groupsFor(who).includes('Administrators')) return game.error('tree connect failed: NT_STATUS_ACCESS_DENIED', 1), '';
+      const internal = '/' + ws.path.replace(/:\\?/, '\\').split('\\').filter(Boolean).join('/');
+      const share: Share = { name: ws.name, params: { path: internal, writable: ws.change.includes(who) ? 'yes' : 'no' } };
+      (server.state.smbSessions ??= []).push({ user: who, share: ws.name });
+      if (commands === null) return game.error(game.t('smbclient-interactive')), '';
+      return commands
+        .split(';')
+        .filter((c) => c.trim())
+        .flatMap((c) => run(game, { server, share, user: who, cwd: '/', host: target }, c))
+        .join('\n');
+    }
     const pf = server.state.ufw as Firewall | undefined;
     if (!local && pf && verdict(pf, 445, addressOf(game)) !== 'accepted') return game.error(`do_connect: Connection to ${target} failed (Error NT_STATUS_IO_TIMEOUT)`, 1), '';
     const sd = server.state.systemd as { services: Record<string, { state: string }> } | undefined;

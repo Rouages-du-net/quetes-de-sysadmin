@@ -10,6 +10,11 @@ nano-lines-read =
         [one] Read { $lines } line
        *[other] Read { $lines } lines
     } ]
+nano-lines-read-dos =
+    {"["} { $lines ->
+        [one] Read { $lines } line (Converted from DOS format)
+       *[other] Read { $lines } lines (Converted from DOS format)
+    } ]
 nano-lines-written =
     {"["} { $lines ->
         [one] Wrote { $lines } line

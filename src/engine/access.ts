@@ -16,6 +16,7 @@ import type { Shell } from './shell';
 import { wildcard } from './tools';
 import { base64, hostKey, condensed, fingerprint, MACHINES, WORKSTATION } from './machines';
 import { allowed, methods } from './sshd';
+import { isWindows } from './windows';
 
 export const KEYS_BY_DEFAULT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
@@ -153,9 +154,13 @@ const passwordFor = (s: Shell, account: string): string | undefined =>
   (s.state.passwords as Record<string, string> | undefined)?.[account] ?? (account === s.player ? s.playerPassword() : undefined);
 
 // The public keys authorised for this account, on the remote machine.
+// On Windows, an administrator's keys are in C:\ProgramData\ssh\administrators_authorized_keys
+// (sshd_config's "Match Group administrators"), not in their profile
+// (https://learn.microsoft.com/windows-server/administration/openssh/openssh-server-configuration).
 function allowedKeys(s: Shell, account: string): string[] {
   const home = account === 'root' ? '/root' : (s.accounts.users[account]?.home ?? `/home/${account}`);
-  return (s.read(`${home}/.ssh/authorized_keys`) ?? '')
+  const file = isWindows(s) && s.groupsFor(account).includes('Administrators') ? '/C/ProgramData/ssh/administrators_authorized_keys' : `${home}/.ssh/authorized_keys`;
+  return (s.read(file) ?? '')
     .split('\n')
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith('#'))

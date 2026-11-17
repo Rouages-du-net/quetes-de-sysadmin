@@ -10,7 +10,8 @@
 // https://git-scm.com/docs/githooks).
 //
 // Deliberate differences: a single branch (main); only the files placed
-// directly in the repository's folder are tracked (no subfolders); IDs are
+// directly in the repository's folder are tracked (no subfolders, no hidden
+// file but .gitattributes, whose text and eol attributes normalise CR LF); IDs are
 // computed by the game (git uses SHA-1 or SHA-256); git commit without -m
 // would open a text editor: here, -m is required; no remote repository
 // over the network (ssh://, https://), only paths.
@@ -160,13 +161,36 @@ function hereRepo(game: Shell): { path: string; repo: Repo } | null {
   }
 }
 
-// The working copy's files (directly in the repository's folder).
+// .gitattributes (https://git-scm.com/docs/gitattributes): a file whose
+// attributes say text (text, text=auto, eol=lf or eol=crlf; not -text nor
+// binary) is normalised to LF when it goes into the repository, whatever
+// its working copy ends its lines with. The last matching line wins.
+export function textAttribute(game: Shell, path: string, name: string): boolean {
+  let text = false;
+  for (const raw of (game.read(`${path}/.gitattributes`) ?? '').split('\n')) {
+    const [pattern, ...attrs] = raw.replace(/#.*/, '').trim().split(/\s+/);
+    if (!pattern || !wildcardGit(pattern).test(name)) continue;
+    for (const a of attrs) {
+      if (a === 'text' || a === 'text=auto' || /^eol=(lf|crlf)$/.test(a)) text = true;
+      else if (a === '-text' || a === 'binary') text = false;
+    }
+  }
+  return text;
+}
+const wildcardGit = (pattern: string) => new RegExp(`^${pattern.replace(/^\//, '').replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*').replace(/\?/g, '.')}$`);
+
+// The working copy's files (directly in the repository's folder), as git
+// reads them (after the text attribute's normalisation); .gitattributes is
+// the only hidden file tracked.
 function travail(game: Shell, path: string): Record<string, string> {
   const place = game.find(path) as Directory;
   return Object.fromEntries(
     Object.entries(place.children)
-      .filter(([name, n]) => n.type === 'file' && !name.startsWith('.'))
-      .map(([name, n]) => [name, content(n as File, game)]),
+      .filter(([name, n]) => n.type === 'file' && (!name.startsWith('.') || name === '.gitattributes'))
+      .map(([name, n]) => {
+        const text = content(n as File, game);
+        return [name, textAttribute(game, path, name) ? text.replace(/\r\n/g, '\n') : text];
+      }),
   );
 }
 
@@ -294,12 +318,16 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const w = travail(game, here.path);
     const all = args.includes('.') || args.includes('-A') || args.includes('--all');
     const names = all ? [...new Set([...Object.keys(w), ...Object.keys(here.repo.index)])] : args.map((a) => game.name(a));
+    const warnings: string[] = [];
     for (const name of names) {
+      // git warns that it will normalise a working copy written in CRLF.
+      if (name in w && textAttribute(game, here.path, name) && (game.read(`${here.path}/${name}`) ?? '').includes('\r\n'))
+        warnings.push(`warning: in the working copy of '${name}', CRLF will be replaced by LF the next time Git touches it`);
       if (name in w) here.repo.index[name] = w[name];
       else if (name in here.repo.index) delete here.repo.index[name];
       else return game.error(game.t('git-path-unknown', { file: name }));
     }
-    return '';
+    return warnings.join('\n');
   },
 
   rm: (game, args) => {
