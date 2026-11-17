@@ -42,6 +42,8 @@ export type File = {
   charset?: 'latin1' | 'binary';
   // A program compiled by cobc (see cobol.ts): what runs when it is executed.
   program?: Program;
+  // NTFS compression (compact /c on Windows): the bytes it takes on the volume.
+  onDisk?: number;
 } & Rights;
 // What the simulated gpg stores on an encrypted, signed or key file.
 export interface CryptoBlob {
@@ -62,7 +64,27 @@ export interface CryptoBlob {
 // Unix owner, group and permissions (rwx for the owner, the
 // group, the others). By default: "you", the group named after the
 // owner, rw-r--r-- (file), rwxr-xr-x (place).
-export type Rights = { owner?: string; group?: string; mode?: string };
+export type Rights = { owner?: string; group?: string; mode?: string; acl?: NtfsAcl };
+// A Windows machine's NTFS security descriptor (see windows-acl.ts): the
+// owner and the explicit entries; the inherited ones come from the parents.
+export interface NtfsAce {
+  // The identity, canonical (BUILTIN\Users, CABINET\alice, Everyone).
+  id: string;
+  // The access mask (FileSystemRights, with Synchronize like icacls shows it).
+  mask: number;
+  deny?: boolean;
+  // Inheritance: object inherit (OI), container inherit (CI), inherit only (IO), no propagate (NP).
+  oi?: boolean;
+  ci?: boolean;
+  io?: boolean;
+  np?: boolean;
+}
+export interface NtfsAcl {
+  owner?: string;
+  aces: NtfsAce[];
+  // Inheritance disabled (icacls /inheritance:d or :r, SetAccessRuleProtection).
+  protected?: boolean;
+}
 
 // A machine's accounts, like /etc/passwd and /etc/group: each
 // user has a primary group and can be a member of other

@@ -1913,6 +1913,7 @@ for (const language of LANGUAGES)
       const s = new Shell(chapter('lighthouse'), language);
       for (const h of STORIES)
         for (const c of h.chapters)
-          for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase()}\\([18]\\)`));
+          // Windows' cmdlets and programs have their pages in sections PS and CMD.
+          for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase().replace('.', '\\.')}\\(([18]|PS|CMD)\\)`));
     });
   });

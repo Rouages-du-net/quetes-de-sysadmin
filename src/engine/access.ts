@@ -16,7 +16,8 @@ import type { Shell } from './shell';
 import { wildcard } from './tools';
 import { base64, hostKey, condensed, fingerprint, MACHINES, WORKSTATION } from './machines';
 import { allowed, methods } from './sshd';
-import { isWindows } from './windows';
+import { isWindows, windows } from './windows';
+import { findUser, logonError } from './windows-accounts';
 
 export const KEYS_BY_DEFAULT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
@@ -151,7 +152,13 @@ function failure(origin: Shell, text: string): string {
 }
 
 const passwordFor = (s: Shell, account: string): string | undefined =>
-  (s.state.passwords as Record<string, string> | undefined)?.[account] ?? (account === s.player ? s.playerPassword() : undefined);
+  // A Windows machine keeps its accounts' passwords itself (windows-accounts.ts).
+  (isWindows(s) ? windows(s).passwords[findUser(s, account)?.name ?? account] : undefined) ??
+  (s.state.passwords as Record<string, string> | undefined)?.[account] ??
+  (account === s.player ? s.playerPassword() : undefined);
+
+/** A Windows account that is disabled or whose password expired can't log on (its keys don't help). */
+const windowsRefuses = (s: Shell, account: string) => isWindows(s) && !!s.state.windows?.users && logonError(s, account, undefined) !== null;
 
 // The public keys authorised for this account, on the remote machine.
 // On Windows, an administrator's keys are in C:\ProgramData\ssh\administrators_authorized_keys
@@ -254,7 +261,7 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
   // The configuration applied by the remote sshd (if simulated), otherwise Debian's default.
   const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
   const existsAccount = !!s.shell.accounts.users[s.user];
-  const permitted = existsAccount && allowed(config, s.user);
+  const permitted = existsAccount && allowed(config, s.user) && !windowsRefuses(s.shell, s.user);
   // The workstation's keys, kept up to date on the story's machines (wherever the connection starts from).
   const workstation = origin.host === 'desk' ? origin : (s.shell.principal.state.workstation?.() as Shell | undefined);
   if (workstation && s.shell.principal.chapter.playerKeys) copyKeys(workstation, s.shell);

@@ -1,11 +1,11 @@
 # Sysadmin Quests
 
-*Learn the job of a Linux system administrator by playing, in your browser,
-with real commands and real behaviours.* — [Version française](README.fr.md)
+*Learn the job of a system administrator by playing, in your browser,
+with real commands and real behaviours, on Linux and on Windows.* — [Version française](README.fr.md)
 
 You learn the Linux command line, then how to connect to servers, secure
 them, serve websites, deploy, back up, and repair things when everything
-breaks. Each quest is a realistic incident or mission, in a fully simulated
+breaks; and to administer a Windows Server in PowerShell. Each quest is a realistic incident or mission, in a fully simulated
 system: nothing leaves the browser.
 
 > **Status**: about twenty playable stories and over a hundred chapters,

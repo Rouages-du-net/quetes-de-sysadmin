@@ -1,7 +1,8 @@
 # Sysadmin Quests — instructions for Claude
 
-An educational browser game to learn Linux system administration (see
-`README.md`, `CONTRIBUTING.md`, `docs/SCENARIOS.md` and `docs/ROADMAP.md`).
+An educational browser game to learn system administration, on Linux and
+on Windows (see `README.md`, `CONTRIBUTING.md`, `docs/SCENARIOS.md` and
+`docs/ROADMAP.md`).
 An **independent** project: all the code and documentation are in this
 repository (it was born in Les rouages du net, but no longer depends on it).
 It must embed in any website (`docs/EMBEDDING.md`): assume nothing about the
@@ -316,23 +317,65 @@ presents them for people.
   `man WRKACTJOB`); `chapters/order-book.ts`: what the chapters of "The
   Order Book" share (`inquiry.ts`, `spooled.ts`, `save-file.ts`; sieve is
   an internal host).
-- `src/engine/windows.ts`: a Windows Server seen from Linux (`state.os =
-  'windows'`, `state.windows`: drives as `/C`, `/D`, names without case,
-  volumes, services, SMB shares, the System log, SMB1 off); its OpenSSH
-  lands in Windows PowerShell 5.1: the pipeline of objects, parameter
-  binding, Out-Default's tables and lists, 5.1's error layout in
-  `src/engine/powershell.ts`, the read-only cmdlets and their aliases
-  (`Get-ChildItem`, `Get-Volume`, `Get-WinEvent`, `Get-Help`…, a cmdlet's
-  manual page: `cmdlet: true`, `man Get-ChildItem`) in
-  `commands/powershell.ts`; a Windows share mounted with `mount -t cifs`
+- `src/engine/windows.ts`: a Windows Server (`state.os = 'windows'`,
+  `state.windows`: drives as `/C`, `/D`, names without case, volumes,
+  services, SMB shares and their permissions, the event logs (`logEvent`,
+  `winLog`), the clock, the session's shells: `windowsPrompt`,
+  `currentShell`); `readOnly` keeps story 30's cabinet look-only. The model:
+  NTFS permissions (`Node.acl`: owner and explicit entries, inherited ones
+  computed, the access check, `shareAccess` = share AND NTFS, icacls'
+  forms) in `windows-acl.ts`; local users and groups, password policy,
+  logon errors, `windowsLogin` (OpenSSH lands in cmd.exe or, with
+  `HKLM:\SOFTWARE\OpenSSH` DefaultShell, PowerShell) in
+  `windows-accounts.ts`; the registry in `windows-registry.ts`; services
+  under a logon account (7038/7000 when its password changed) in
+  `windows-services.ts`; scheduled tasks (`runTask`, `advanceWindows`
+  minute by minute, LastTaskResult codes, the Task Scheduler's history) in
+  `windows-tasks.ts`; a default Windows Server 2022 for a story
+  (`windowsMachine()`: tree and ACLs, accounts, services, registry, logs)
+  in `windows-world.ts`. Windows PowerShell 5.1: the runtime (objects,
+  hashtables, script blocks, SecureString, `Cmdlet`/`Run`/`Native`,
+  Out-Default's views, 5.1's error layout) in `src/engine/powershell.ts`,
+  the parser (`powershell-parse.ts`), the interpreter (variables, operators,
+  binding with types, -WhatIf/-Confirm, questions that re-run the
+  statement, scripts, Tab completion, the pipeline's own cmdlets, Get-Help
+  from the manual: `cmdlet: true`, `man Get-ChildItem`) in
+  `commands/powershell.ts`; the cmdlets by family in
+  `commands/windows-files.ts` (FileSystem, Registry, Env: providers, `reg`),
+  `windows-acl.ts` (`Get-Acl`, `Set-Acl`, `icacls`, `takeown`),
+  `windows-accounts.ts` (`*-LocalUser`, `*-LocalGroup*`, `net user`,
+  `whoami`), `windows-services.ts` (`*-Service`, `Get-CimInstance`,
+  `Get-Process`, `sc.exe`, `net start`), `windows-events.ts`
+  (`Get-WinEvent`, `Get-EventLog`, `wevtutil`), `windows-tasks.ts`
+  (`*-ScheduledTask*`, `schtasks`), `windows-system.ts` (volumes, SMB
+  shares and their access, network, `ipconfig`, `ping`); the native
+  programs (a page: `winexe: true`, section CMD) in `windows-natives.ts`;
+  cmd.exe in `commands/cmd.ts`; number and date formats in
+  `windows-format.ts`. A Windows share mounted with `mount -t cifs`
   or `mount.cifs` (`src/engine/cifs.ts`: credentials file, `uid=`/`gid=`,
-  `vers=`, owners shown from the options, `df` on the server's volume);
+  `vers=`, owners shown from the options, `df` on the server's volume,
+  access through `shareAccess`);
   `dos2unix`, `unix2dos`, `tr` and the `gitattributes` page in
   `commands/line-endings.ts` (CR LF symptoms in `script.ts`, `file`,
   `cat -A`, nano's DOS format, git's `.gitattributes`);
   `chapters/mixed-fleet.ts`: what the chapters of "Next Door Windows"
   share (`line-endings.ts`, `smb-mount.ts`, `full-volume.ts`; cabinet is
-  an internal host).
+  an internal host). Tests: `tests/windows*.test.ts` (fixture LEDGER).
+  `chapters/music-school.ts`: what the chapters of "The Music School"
+  share (`stave`, a Windows Server as the story's main machine, built by
+  `stave()`/`staveOptions()`: users, groups, shares and NTFS permissions,
+  the Agenda service under `svc_agenda`, the nightly backup task, the logs
+  on D:, the update restart's events); `two-locks.ts` (share AND NTFS,
+  checked with `shareAccess`), `service-logon.ts` (the service's stored
+  password), `log-flood.ts` (D: full of debug logs: a file a service
+  holds open, `WinService.opens`, its configuration read at start,
+  `onStart`), `silent-backup.ts` (the nights replayed with
+  `advanceWindows`, an expired password, a script whose runs are kept in
+  `state.psScriptRuns`). PowerShell's `try`/`catch`/`finally`, script
+  scopes and script-terminating errors (`Terminate.fatal`),
+  `-ErrorVariable` in `commands/powershell.ts`; `Register-ScheduledTask`
+  and `New-ScheduledTask*` in `commands/windows-tasks.ts`; `compact`
+  (NTFS compression, `File.onDisk`) in `commands/windows-files.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

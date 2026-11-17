@@ -41,3 +41,4 @@ machine-mill = moulin
 machine-sieve = tamis
 machine-compass = compas
 machine-cabinet = armoire
+machine-stave = portee

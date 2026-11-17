@@ -115,6 +115,10 @@ import { saveFile } from './save-file';
 import { lineEndings } from './line-endings';
 import { smbMount } from './smb-mount';
 import { fullVolume } from './full-volume';
+import { twoLocks } from './two-locks';
+import { serviceLogon } from './service-logon';
+import { logFlood } from './log-flood';
+import { silentBackup } from './silent-backup';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -272,6 +276,11 @@ export const STORIES: Story[] = [
     id: 'mixed-fleet',
     after: ['samba-share', 'portable-script'],
     chapters: [lineEndings, smbMount, fullVolume],
+  },
+  {
+    id: 'music-school',
+    after: ['full-volume', 'smb-mount'],
+    chapters: [twoLocks, serviceLogon, logFlood, silentBackup],
   },
 ];
 

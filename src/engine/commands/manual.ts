@@ -15,10 +15,12 @@ import { NOT_ON_SOLARIS } from '../solaris';
 // The page's Fluent identifier: the dot is reserved for attributes
 // ("jail.conf" → man-jail_conf).
 export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
+// An option's key: a Windows program's /grant or /inheritance:r → grant, inheritance-r.
+const optionKey = (o: string) => o.replace(/^\//, '').replace(/[^A-Za-z0-9_-]/g, '-');
 
 // A CL command (IBM i) is in no section of man: its pages say (CL); a
 // PowerShell cmdlet's, (PS) (Get-Help shows the same text, see powershell.ts).
-const section = (name: string) => (COMMANDS[name]?.cl ? 'CL' : COMMANDS[name]?.cmdlet ? 'PS' : COMMANDS[name]?.section ?? 1);
+const section = (name: string) => (COMMANDS[name]?.cl ? 'CL' : COMMANDS[name]?.cmdlet ? 'PS' : COMMANDS[name]?.winexe ? 'CMD' : COMMANDS[name]?.section ?? 1);
 
 // On a FreeBSD machine, a command whose BSD version differs has its own page (man-<command>-bsd).
 export type Flavour = '' | 'bsd' | 'solaris';
@@ -27,7 +29,7 @@ const key = (name: string, t: Translate, flavour: Flavour) => (flavour && t.exis
 function texts(name: string, t: Translate, flavour: Flavour = '') {
   const k = key(name, t, flavour);
   const synopsis = t.exists(`${k}.synopsis`) ? t(`${k}.synopsis`) : '';
-  const options = (name: string, c: Command): [string, string][] => (k !== page(name) ? bsdOptions(k, t) : (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${o}`)]));
+  const options = (name: string, c: Command): [string, string][] => (k !== page(name) ? bsdOptions(k, t) : (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${optionKey(o)}`)]));
   // A language can adapt the command of an example that contains words (.command-N): grep "my password".
   const examples = (name: string, c: Command): [string, string][] =>
     (c.examples ?? []).map((e, i) => {
@@ -72,7 +74,7 @@ const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour = ''): string {
   const { synopsis, description, options, examples } = texts(name, t, flavour);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t(c.cl ? 'manual-header-cl' : c.cmdlet ? 'manual-header-ps' : flavour ? `manual-header-${flavour}` : 'manual-header');
+  const middle = t(c.cl ? 'manual-header-cl' : c.cmdlet ? 'manual-header-ps' : c.winexe ? 'manual-header-cmd' : flavour ? `manual-header-${flavour}` : 'manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
@@ -80,7 +82,7 @@ export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour
   sections.push([t('manual-section-description'), indent(majuscule(description))]);
   const opts = options(name, c);
   if (opts.length)
-    sections.push([t(c.cl || c.cmdlet ? 'manual-section-parameters' : 'manual-section-options'), opts.map(([o, d]) => indent(`${c.cl ? '' : '-'}${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
+    sections.push([t(c.cl || c.cmdlet ? 'manual-section-parameters' : 'manual-section-options'), opts.map(([o, d]) => indent(`${c.cl || c.winexe ? '' : '-'}${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).

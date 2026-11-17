@@ -1,7 +1,7 @@
 {
   "name": "quetes-de-sysadmin",
   "version": "0.1.0",
-  "description": "Learn Linux system administration by playing, in the browser.",
+  "description": "Learn system administration, on Linux and Windows, by playing in the browser.",
   "license": "GPL-3.0-or-later",
   "private": true,
   "type": "module",

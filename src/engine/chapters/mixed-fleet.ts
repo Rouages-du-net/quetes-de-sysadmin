@@ -282,6 +282,8 @@ export function cabinetHost(o: CabinetOptions): InternalHost {
           { name: 'scans', path: 'D:\\Shares\\Scans', description: 'Scanner drop folder', change: ['Administrator'] },
         ],
         smb1: false,
+        // Priya's server: the story only looks (write cmdlets answer with a note of the game).
+        readOnly: true,
         passwords: { [SVC]: SVC_PASSWORD },
         clock: o.clock,
       } satisfies Windows,

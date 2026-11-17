@@ -1,12 +1,13 @@
 # Quêtes de Sysadmin
 
 *Apprendre le métier d'administrateur·rice système en jouant, dans le
-navigateur, avec de vraies commandes et de vrais comportements.* —
+navigateur, avec de vraies commandes et de vrais comportements, sous Linux
+et sous Windows.* —
 [English version](README.md) (la version de référence)
 
 On y apprend la ligne de commande Linux, puis à se connecter à des serveurs,
 à les sécuriser, à servir des sites, à déployer, à sauvegarder et à réparer
-quand tout casse. Chaque quête est un incident ou une mission réaliste, dans
+quand tout casse ; et à administrer un Windows Server en PowerShell. Chaque quête est un incident ou une mission réaliste, dans
 un système entièrement simulé : rien ne sort du navigateur.
 
 > **État** : une vingtaine d'histoires jouables, reliées par `ssh` depuis son poste
