@@ -416,3 +416,7 @@ name-odette-notes-txt = odette-notes.txt
 ## The Night Batch
 name-email_ayesha-txt = email_ayesha.txt
 name-check-txt = check.txt
+
+## The Order Book
+name-email_kwame-txt = email_kwame.txt
+name-notes-margit-txt = notes-margit.txt

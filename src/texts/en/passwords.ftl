@@ -63,3 +63,5 @@ password-film-reel-2029 = film-reel-2029
 password-seed-2029 = seed-2029
 
 password-ledger-2029 = ledger-2029
+
+password-millstone-2029 = millstone-2029

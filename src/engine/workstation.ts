@@ -74,6 +74,7 @@ export function workstation(keys: Machine[]): Chapter {
       'ps',
       'kill',
       'nc',
+      'tn5250',
     ],
     home: HOME,
     names: true,

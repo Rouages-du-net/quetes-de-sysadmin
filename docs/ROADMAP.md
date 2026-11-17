@@ -483,7 +483,7 @@ them safely.
       the job chained by cron or a systemd timer, its return code checked,
       a file that arrives late. The lesson: the program is fine, the
       plumbing around it is what breaks.
-- [ ] **IBM i (AS/400)** (needs its own small engine). An IBM i that has
+- [x] **IBM i (AS/400)** (needs its own small engine; done: story 29, "The Order Book"). An IBM i that has
       run a company's orders since the 1990s. A different world: everything
       is an object in a library (`WRKLIB`, `DSPLIB`, `WRKOBJ`), commands are
       CL with a fixed grammar and prompting (F4), jobs and subsystems

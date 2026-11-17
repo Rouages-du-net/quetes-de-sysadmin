@@ -15,6 +15,7 @@ import { bannedOnPort, type Fail2banState } from './fail2ban';
 import { noteTmux } from './commands/tmux';
 import { inColumns } from './commands/files';
 import { live } from './activity';
+import { signOn } from './commands/ibmi';
 import { LANGUAGES, translator, type Language, type Translate } from '../texts';
 
 export interface OptionsConsole {
@@ -197,7 +198,14 @@ export class Console {
    * chapter. Without a forced chapter, resumes the session left on this
    * machine if it is still on the current chapter.
    */
-  connect(name: string, chapter?: Chapter, jump = false, port = 22): string {
+  connect(name: string, chapter?: Chapter, jump = false, port = 22, terminal?: string): string {
+    // tn5250: the chapter opens as usual, then the IBM i's sign-on display (see commands/ibmi.ts).
+    if (terminal === '5250') {
+      const opened = this.connect(name, chapter, true, port);
+      // What follows is typed at the 5250 screen: no rescue snapshot for this session.
+      this.inputs = null;
+      return [opened, signOn(this.remote!.shell)].filter(Boolean).join('\n\n');
+    }
     this.inside = [];
     const machine = MACHINES.find((m) => m.name === name)!;
     const story = STORIES.find((h) => h.id === machine.story)!;
@@ -208,6 +216,8 @@ export class Console {
     const banner =
       machine.os === 'freebsd'
         ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', this.t(`machine-${machine.name}-motd`)]
+        : machine.os === 'ibmi'
+        ? [this.t(`machine-${machine.name}-motd`)]
         : machine.os === 'solaris'
         ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', this.t(`machine-${machine.name}-motd`)]
         : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
@@ -276,7 +286,14 @@ export class Console {
   }
 
   disconnect(): string {
-    const { machine } = this.remote!;
+    const { machine, shell } = this.remote!;
+    // Signing off a 5250 session: tn5250 closes.
+    if (shell.state.session5250 === false) {
+      delete shell.state.session5250;
+      this.remote = null;
+      this.inside = [];
+      return '';
+    }
     this.remote = null;
     this.inside = [];
     return `logout\nConnection to ${machineDomain(this.t, machine)} closed.`;
@@ -365,7 +382,9 @@ export class Console {
     } else if (sh.connectionRequest) {
       const name = sh.connectionRequest;
       sh.connectionRequest = null;
-      chunks.push(this.connect(name, undefined, false, sh.state.connectionPort ?? 22));
+      const terminal = sh.state.connectionTerminal as string | undefined;
+      delete sh.state.connectionTerminal;
+      chunks.push(this.connect(name, undefined, false, sh.state.connectionPort ?? 22, terminal));
     } else if (sh.sessionRequest) {
       const d = sh.sessionRequest;
       sh.sessionRequest = null;

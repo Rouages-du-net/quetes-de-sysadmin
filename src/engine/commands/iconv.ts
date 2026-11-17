@@ -52,8 +52,9 @@ function describe(n: import('../world').Node): string {
   if (/^\(binary/.test(text) || (!text && n.size)) return 'data';
   if (!text) return 'empty';
   const kind = /^#!\s*\S*sh\b/.test(text) ? 'POSIX shell script, ' : '';
-  if (!/[^\x00-\x7f]/.test(text)) return `${kind}ASCII text`;
-  return n.charset === 'latin1' ? `${kind}ISO-8859 text` : `${kind}Unicode text, UTF-8 text`;
+  const crlf = text.includes('\r\n') ? ', with CRLF line terminators' : '';
+  if (!/[^\x00-\x7f]/.test(text)) return `${kind}ASCII text${crlf}`;
+  return n.charset === 'latin1' ? `${kind}ISO-8859 text${crlf}` : `${kind}Unicode text, UTF-8 text${crlf}`;
 }
 
 export const ICONV: Record<string, Command> = {

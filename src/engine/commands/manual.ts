@@ -16,7 +16,8 @@ import { NOT_ON_SOLARIS } from '../solaris';
 // ("jail.conf" → man-jail_conf).
 export const page = (name: string) => `man-${name.replace(/\./g, '_')}`;
 
-const section = (name: string) => COMMANDS[name]?.section ?? 1;
+// A CL command (IBM i) is in no section of man: its pages say (CL).
+const section = (name: string) => (COMMANDS[name]?.cl ? 'CL' : COMMANDS[name]?.section ?? 1);
 
 // On a FreeBSD machine, a command whose BSD version differs has its own page (man-<command>-bsd).
 export type Flavour = '' | 'bsd' | 'solaris';
@@ -70,7 +71,7 @@ const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour = ''): string {
   const { synopsis, description, options, examples } = texts(name, t, flavour);
   const title = `${name.toUpperCase()}(${section(name)})`;
-  const middle = t(flavour ? `manual-header-${flavour}` : 'manual-header');
+  const middle = t(c.cl ? 'manual-header-cl' : flavour ? `manual-header-${flavour}` : 'manual-header');
   const white = Math.max(2, Math.floor((60 - title.length * 2 - middle.length) / 2));
   // Like a real page: the section title, then its indented text.
   const sections: [string, string][] = [[t('manual-section-name'), indent(`${name} - ${recap(description)}`)]];
@@ -78,7 +79,7 @@ export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour
   sections.push([t('manual-section-description'), indent(majuscule(description))]);
   const opts = options(name, c);
   if (opts.length)
-    sections.push([t('manual-section-options'), opts.map(([o, d]) => indent(`-${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
+    sections.push([t(c.cl ? 'manual-section-parameters' : 'manual-section-options'), opts.map(([o, d]) => indent(`${c.cl ? '' : '-'}${o}`) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).

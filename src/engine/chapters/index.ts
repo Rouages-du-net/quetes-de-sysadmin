@@ -109,6 +109,9 @@ import { switchOver } from './switch-over';
 import { copybook } from './copybook';
 import { returnCode } from './return-code';
 import { lateFile } from './late-file';
+import { inquiry } from './inquiry';
+import { spooled } from './spooled';
+import { saveFile } from './save-file';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -256,6 +259,11 @@ export const STORIES: Story[] = [
     id: 'night-batch',
     after: ['switch-over', 'probe'],
     chapters: [copybook, returnCode, lateFile],
+  },
+  {
+    id: 'order-book',
+    after: ['late-file', 'transfers'],
+    chapters: [inquiry, spooled, saveFile],
   },
 ];
 

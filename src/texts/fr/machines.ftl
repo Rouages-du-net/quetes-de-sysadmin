@@ -37,3 +37,5 @@ machine-oven = four
 machine-projector = projecteur
 machine-herbarium = herbier
 machine-abacus = boulier
+machine-mill = moulin
+machine-sieve = tamis

@@ -63,3 +63,5 @@ password-film-reel-2029 = bobine-2029
 password-seed-2029 = semence-2029
 
 password-ledger-2029 = registre-2029
+
+password-millstone-2029 = meule-2029

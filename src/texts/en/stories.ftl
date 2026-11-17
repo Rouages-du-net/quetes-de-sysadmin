@@ -57,3 +57,5 @@ story-old-sun = The Old Sun
     .summary = The seed library's catalogue has lived since 2009 on a Sun box running Solaris 10: read the system before touching it (SMF, ZFS), move its database to a new Debian server with a dump (byte order, character sets), then switch over and keep the old box frozen.
 story-night-batch = The Night Batch
     .summary = For thirty years, a COBOL batch collected the Mutual's contributions every night on a mainframe; it moves to Linux. Read the bureau's EBCDIC file without damaging its packed amounts, compile the program with GnuCOBOL and read its return code, then fix the plumbing when the file arrives late.
+story-order-book = The Order Book
+    .summary = Since 1996, a flour mill has taken its bakeries' orders on an IBM i. A night job waits for a reply nobody gave, printed output nobody prints fills the disk, and the night's save left the orders out: work with jobs, messages, spooled files and save files in CL, then export the orders to Linux in the right character set.

@@ -419,3 +419,7 @@ name-odette-notes-txt = notes-d-odette.txt
 ## Le traitement de nuit
 name-email_ayesha-txt = courriel_ayesha.txt
 name-check-txt = verification.txt
+
+## Le carnet de commandes
+name-email_kwame-txt = courriel_kwame.txt
+name-notes-margit-txt = notes-de-margit.txt

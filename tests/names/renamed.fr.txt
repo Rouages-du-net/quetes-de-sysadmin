@@ -993,6 +993,48 @@ late-file
   /home/you → /home/vous
   /home/you/email_ayesha.txt → /home/vous/courriel_ayesha.txt
 
+inquiry
+  /home/you → /home/vous
+  /home/you/email_kwame.txt → /home/vous/courriel_kwame.txt
+  /home/you/notes-margit.txt → /home/vous/notes-de-margit.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+inquiry:sieve
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+spooled
+  /home/you → /home/vous
+  /home/you/email_kwame.txt → /home/vous/courriel_kwame.txt
+  /home/you/notes-margit.txt → /home/vous/notes-de-margit.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+spooled:sieve
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+save-file
+  /home/you → /home/vous
+  /home/you/email_kwame.txt → /home/vous/courriel_kwame.txt
+  /home/you/notes-margit.txt → /home/vous/notes-de-margit.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+save-file:sieve
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

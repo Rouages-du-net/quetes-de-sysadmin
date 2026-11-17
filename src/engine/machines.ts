@@ -16,7 +16,7 @@ export interface Machine {
   // The game gives no key: you create your own (ssh-keygen, ssh-copy-id).
   withoutKey?: boolean;
   // Another system than Debian (see freebsd.ts): its login banner.
-  os?: 'freebsd' | 'solaris';
+  os?: 'freebsd' | 'solaris' | 'ibmi';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
@@ -75,6 +75,8 @@ export const MACHINES: Machine[] = [
   { ...machine('herbarium', '192.0.2.35', 'old-sun'), os: 'solaris' },
   // The Night Batch: the Mutual's Debian server, where its nightly COBOL batch moved off the bureau's mainframe.
   machine('abacus', '192.0.2.37', 'night-batch'),
+  // The Order Book: the flour mill's IBM i, which has taken its bakeries' orders since 1996 (sieve, its new reporting server, is behind it).
+  { ...machine('mill', '192.0.2.38', 'order-book'), os: 'ibmi' },
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

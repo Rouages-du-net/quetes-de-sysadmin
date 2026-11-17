@@ -62,6 +62,9 @@ export const CODE_ORDER = [
   'copybook',
   'return-code',
   'late-file',
+  'inquiry',
+  'spooled',
+  'save-file',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

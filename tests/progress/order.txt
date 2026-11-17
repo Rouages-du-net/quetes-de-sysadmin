@@ -110,3 +110,6 @@ switch-over
 copybook
 return-code
 late-file
+inquiry
+spooled
+save-file

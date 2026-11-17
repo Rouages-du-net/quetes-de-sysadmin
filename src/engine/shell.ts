@@ -16,6 +16,7 @@ import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
 import { SOLARIS_CHECKS, OTHER_BINS } from './commands/solaris-tools';
 import { isSolaris, NOT_ON_SOLARIS } from './solaris';
+import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -637,7 +638,7 @@ export class Shell implements Game {
   private consulter(cmd: string, rest: string[]): string {
     const all = Object.entries(COMMANDS).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
     // Files (section 5) and overviews (section 7) are not commands: no note for them.
-    const notStill = (n: string) => (this.known().includes(n) || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
+    const notStill = (n: string) => (this.known().includes(n) || COMMANDS[n]?.cl || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
     if (cmd === 'apropos' || (cmd === 'man' && rest[0] === '-k')) {
       const word = cmd === 'apropos' ? rest[0] : rest[1];
       if (!word) return this.error(this.t('manual-what-search', { command: cmd === 'apropos' ? 'apropos' : 'man -k' }));
@@ -647,7 +648,9 @@ export class Shell implements Game {
     if (!rest.length)
       return this.error(cmd === 'man' ? this.t('manual-which-page') : this.t('manual-what-search', { command: 'whatis' }));
     const outputs: string[] = [];
-    for (const name of rest) {
+    for (const asked of rest) {
+      // IBM i's CL commands are written in capitals, but man wrkactjob finds them too.
+      const name = !COMMANDS[asked] && COMMANDS[asked.toUpperCase()]?.cl ? asked.toUpperCase() : asked;
       const c = COMMANDS[name];
       if (!c || name === 'aide') {
         this.error(cmd === 'man' ? this.t('manual-not-page', { command: name }) : this.t('manual-nothing', { word: name }));
@@ -976,6 +979,12 @@ export class Shell implements Game {
     if (isSolaris(this) && NOT_ON_SOLARIS.includes(cmd) && !otherBin) {
       this.status = 127;
       return this.error(`${cmd}: not found`);
+    }
+    // IBM i's PASE: a bash, Unix utilities, but no Linux administration.
+    // A CL command is no PASE program (system "WRKACTJOB" runs it), and tn5250 is a client of the workstation.
+    if (isIbmi(this) && (NOT_ON_IBMI.includes(cmd) || COMMANDS[cmd]?.cl || cmd === 'tn5250')) {
+      this.status = 127;
+      return this.error(`-bash: ${cmd}: command not found`);
     }
     // A path (./deployer.sh, /srv/site/deployer.sh): a script, if it is executable.
     if (cmd.includes('/')) {

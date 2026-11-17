@@ -168,6 +168,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `od`, `xxd`, `hexdump`, `dd` | `od` with `-A`, `-t` (c, x, o, u, d on 1, 2 or 4 bytes), `-c`, `-b`, `-x`, `-N`, `-j`, `-v`, repeated lines as `*`; `xxd` with `-s`, `-l`, `-c`, `-g`, `-p`, `-u`; `hexdump` default and `-C`, `-n`, `-s`, `-v`; `dd` with `if`, `of` (`/dev/null` included), `bs`, `ibs`, `obs`, `cbs`, `count`, `skip`, `conv=ascii,ebcdic,ibm,block,unblock,lcase,ucase`, `status=none`, GNU's translation tables; its statistics always show the same duration | `od -w`, `-a`, floating types; `xxd -r`, `-b`, `-i`; `hexdump -e`; `dd`'s `seek`, `iflag`/`oflag` effects, devices |
 | `cobc` and COBOL programs | GnuCOBOL 3.1.2: fixed (reference) format checked for its column-7 indicator, `-free` refusing sequence numbers, COPY looked up in the current directory, `-I` and `/usr/share/gnucobol/copy`, PERFORM of a missing paragraph, PROGRAM-ID; `-x`, `-m` (default, `NAME.so`, a segmentation fault if executed), `-c`, `-o`, `--version`; a program's RETURN-CODE is its exit code; the story's programs (EBC2ASC, CONTRIB) are recognised by their PROGRAM-ID and run in TypeScript from their files, another program only prints its DISPLAY literals | a real compiler: no other syntax or semantic checks, no listing, `cobcrun`, `-j`, environment-variable file mapping (the programs take their files as arguments) |
 | `$?` | the interactive shell expands `$?` (outside single quotes) to the previous line's exit code | `;`, `&&` and `\|\|` on the interactive line (they work in scripts) |
+| IBM i (`state.os = 'ibmi'`) and PASE | a machine of the story "The Order Book": `ssh` lands in PASE (bash and Unix utilities: `ls`, `cat`, `grep`, `file`, `iconv`, `od`, `scp`, `ssh`; `uname` says OS400), Linux's administration tools are "command not found"; the IFS shows `/QSYS.LIB/ORDERS.LIB/…` (ORDHDR's member as fixed EBCDIC records); PASE resolves names through `/etc/hosts`; the profile is the player's account in capitals (YOU) | the IFS's case-insensitive root, CCSID tags on every stream file (only CPYTOIMPF's files have one), QShell (`qsh`), `/QOpenSys` and the IBM i host table (`CFGTCP`) |
+| `tn5250` and the 5250 session | `tn5250 HOST` from the workstation: the sign-on display (user, then a hidden password; CPF1120, CPF1107), a short main menu (90 signs off), then the `===>` command line where each line is a CL command, until `SIGNOFF`; no rescue snapshot during such a session | a real 5250 screen: 24×80 fields, function keys (F3, F4 prompting, F1 help: replaced by `CMD ?` and `?` at a reply prompt), the menus (only typed commands), subfile options in list panels (replaced by the equivalent commands), paging (long lists show their first and last lines and how many were left out), `tn5250`'s options and keyboard maps |
+| CL commands (`src/engine/cl.ts`, `commands/ibmi.ts`) | 27 commands: `SIGNOFF`, `WRKACTJOB`, `WRKSBS`, `WRKJOBQ`, `WRKSYSSTS`, `DSPMSG`, `WRKMSGQ`, `DSPJOBLOG`, `WRKOBJLCK`, `DSPRCDLCK`, `ENDJOB`, `SBMJOB`, `CALL`, `ENDSBS`, `STRSBS`, `WRKOUTQ`, `WRKSPLF`, `DLTSPLF`, `CLROUTQ`, `DSPDTAARA`, `CHGDTAARA`, `DSPLIB`, `DSPLOG`, `CRTSAVF`, `DSPSAVF`, `SAVLIB`, `CPYTOIMPF`, with their key parameters, keywords or positional values (up to their positional limit), quoted strings, special values and lists; the analyser's errors CPD0030 (unknown command, then CPF0006), CPD0043, CPD0065, CPD0071, CPD0040, CPD0013, CPD0018 (then CPF0001); every message is shown with its ID in front (`CPF3771: …`), the way PASE's `system` prints them; their manual pages (`man WRKACTJOB`, `man wrkactjob`, `CMD ?`) list parameters | prompting, continuation lines, variables and expressions, `*LIBL` searches through a real library list, authority checking (the profile acts as if it had *JOBCTL, *SPLCTL and *SAVSYS), the other parameters and their validity checks, message files (texts written in the game, from IBM's), a few message IDs written from memory (CPD2420 for an invalid reply, CPF3794) |
+| IBM i jobs and messages | jobs in subsystems (`state.ibmi`): status, function, job log, object and record locks; QBATCH runs one batch job at a time from its job queue; an inquiry message waits for a reply among its values at DSPMSG's `Reply` prompt (`?` shows its second-level text), the reply drives the story's program (R retries, C/D/F cancel, G skips); `ENDJOB` ends a job at once (end code 50) and releases its locks; `SBMJOB` queues `CALL PGM(…)` or a CL command; the history log (QHST) records job ends and saves; a fixed clock | job priorities, time slices, controlled-end delays, the system reply list (`WRKRPYLE`), `SNDRPY`, message keys, break messages, `WRKJOB`, job descriptions and routing |
+| Spooled files and the ASP | spooled files grouped per job (count, pages, status, user data, output queue, size); `WRKSPLF SELECT(user device form-type user-data)`, `DLTSPLF` by name and job (`SPLNBR` a number, `*LAST`, `*ALL`, `*ONLY`) or `FILE(*SELECT)`, `CLROUTQ`; the system ASP's use computed from its base and the spooled files, its threshold (CPF0907) | writers and printing, `CHGSPLFA`, `HLDSPLF`, printer files' attributes (`CHGPRTF`), the creation date selection, independent ASPs, the automatic cleanup |
+| Save files, `SAVLIB`, `CPYTOIMPF`, `db2` | `SAVLIB` of one library to a save file: an object locked for update by a job is skipped (CPF3202, CPF3741, CPF3771) unless `SAVACT` (`*LIB`, `*SYSDEFN`, `*SYNCLIB`, CPI3712); a save file with data asks CPA4067 (C, G) on a 5250 screen and takes the default reply C from PASE, unless `CLEAR(*ALL)`; `CPYTOIMPF` to a stream file in CSV with `MBROPT`, `STMFCCSID` (`*STMF`: the table's CCSID 37 for a new file, 819, 1208, 1252, `*PCASCII`, `*STDASCII`), `RCDDLM`, `STRDLM`, `FLDDLM`, `ADDCOLNAM`; `db2` in PASE: one `SELECT` on one table (columns, `COUNT(*)`, one `WHERE` comparison, `ORDER BY`, `FETCH FIRST`) | `RSTLIB`, tapes, `SAVOBJ`, `SAVACTWAIT`'s waiting, `TOFILE`, `DTAFMT(*FIXED)`, number and date formats, other CCSIDs, SQL joins and updates, `STRSQL` |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
 | `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
@@ -2779,6 +2785,67 @@ failed unit; never an old file. Expected traps: a later fixed time (03:00:
 the second night reprocesses the old file), a `.done` checked but never
 taken away (the file processed every ten minutes), a timer edited but not
 reloaded, the final `echo` that hides the code.
+
+## Story 29: The Order Book (three chapters)
+
+Since 1996, a flour mill has taken its bakeries' orders on an IBM i (an
+AS/400 when it was bought): `mill` (192.0.2.38, IBM i 7.5). Margit wrote
+its RPG programs and its nights (the import of the web's orders, the
+picking lists, the invoices, the save); she has retired and comes on
+Thursdays. Kwame runs the mill; Soraya takes the orders on the green screen.
+Two doors to the same machine: `tn5250 mill` from the workstation (the
+sign-on display, then the `===>` CL command line), and `ssh mill`, which
+lands in PASE (a Unix shell, `system "CL COMMAND"`, `db2`). Behind it,
+`sieve` (192.0.2.39, Debian), the new reporting server. Engine:
+`src/engine/ibmi.ts`, `src/engine/cl.ts`, `src/engine/commands/ibmi.ts`.
+It opens after "The Late File" and "Transfers".
+
+### Chapter 1 — Waiting for a Reply (done)
+
+| Step | Command learnt |
+|---|---|
+| MSGW | `tn5250 mill`, `WRKACTJOB` (ORDIMPORT in MSGW), `WRKJOBQ QBATCH` (the queue behind it) |
+| The question | `DSPMSG QSYSOPR`: RNQ1218 "Unable to allocate a record in file ORDHDR (R C G D F)", `?` for its help |
+| The cause | `DSPJOBLOG JOB(412907/ORDBATCH/ORDIMPORT)` (CPF5027), `DSPRCDLCK FILE(ORDERS/ORDHDR)`, `WRKOBJLCK` |
+| Release, reply | `ENDJOB JOB(412655/SORAYA/QPADEV0004)`, then the reply R |
+
+Goal checked on the state: every incoming order in ORDHDR, order 1847
+changed, no job waiting for a reply, the job queue empty, ORDWEB running.
+Expected traps: R while the record is still held (the question comes back),
+`ENDJOB` on the import or C (the run lost: `SBMJOB CMD(CALL
+PGM(ORDERS/ORDIMP))`, as Margit's notes say), G (the change skipped),
+`CALL` (the night's programs must run in batch).
+
+### Chapter 2 — Paper Nobody Prints (done)
+
+| Step | Command learnt |
+|---|---|
+| Storage | `DSPMSG QSYSOPR` (CPF0907), `WRKSYSSTS` (% system ASP used: 91) |
+| The culprit | `WRKOUTQ` (QPRINT: 18,031 files), `WRKSPLF SELECT(ORDBATCH)`: DBGLIST, user data ORDPICKDBG, HLD |
+| Delete them only | `DLTSPLF FILE(*SELECT) SELECT(ORDBATCH *ALL *ALL ORDPICKDBG)` (or job by job) |
+| The cause | `DSPLIB ORDERS`, `DSPDTAARA ORDERS/ORDDEBUG`, `CHGDTAARA … VALUE('N')` |
+
+Goal checked on the state: no DBGLIST left, the 31 invoices in QPRINT,
+ORDDEBUG off, the ASP under its threshold. Expected traps: `CLROUTQ QPRINT`
+or every file of ORDBATCH (the invoices go too: `SBMJOB CMD(CALL
+PGM(ORDERS/ORDINV))` prints them again).
+
+### Chapter 3 — Saved, Except One (done)
+
+| Step | Command learnt |
+|---|---|
+| Not saved | `DSPLOG JOB(NIGHTSAV)` (CPF3771: 15 saved, 1 not), `DSPSAVF BACKUP/ORDERS` (no ORDHDR) |
+| In use | `WRKOBJLCK OBJ(ORDERS/ORDHDR) OBJTYPE(*FILE)`: ORDWEB |
+| Save again | `SAVLIB LIB(ORDERS) DEV(*SAVF) SAVF(BACKUP/ORDERS) SAVACT(*LIB) CLEAR(*ALL)`, or `ENDSBS ORDSBS`, `SAVLIB`, `STRSBS ORDERS/ORDSBS` |
+| Export | `CPYTOIMPF FROMFILE(ORDERS/ORDHDR) TOSTMF('/home/you/orders.csv') MBROPT(*REPLACE) STMFCCSID(1208) RCDDLM(*LF)`, `file`, `scp orders.csv sieve:/srv/reports/inbox/` |
+
+Goal checked on the state: a save of ORDERS with ORDHDR, ORDSBS active,
+and in sieve's inbox a CSV in UTF-8 with every order once and the bakeries'
+names intact (an EBCDIC export converted with `iconv -f IBM037` passes
+too). Expected traps: SAVLIB without SAVACT (ORDHDR skipped again), a save
+file with data (CPA4067), CPYTOIMPF's default CCSID (37, EBCDIC: `file`
+says data), `*PCASCII` (� on sieve), `MBROPT(*ADD)` twice (every order
+twice), ORDSBS left stopped.
 
 ## Ideas for later
 

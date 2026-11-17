@@ -37,3 +37,5 @@ machine-oven = oven
 machine-projector = projector
 machine-herbarium = herbarium
 machine-abacus = abacus
+machine-mill = mill
+machine-sieve = sieve

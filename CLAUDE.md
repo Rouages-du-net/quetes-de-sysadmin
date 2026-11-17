@@ -304,6 +304,18 @@ presents them for people.
   `chapters/night-batch.ts`: what the chapters of "The Night Batch" share
   (`copybook.ts`, `return-code.ts`, `late-file.ts`: the bureau's uploads and
   the two-night rehearsal through `passTime`).
+- `src/engine/ibmi.ts`: an IBM i (`state.os = 'ibmi'`, `state.ibmi`):
+  libraries and objects, DB2 tables, jobs in subsystems (status, job log,
+  locks), job queues (`runQueues`), message queues and inquiry messages
+  (`onReply`), spooled files and output queues, the system ASP, save files,
+  the history log; PASE (Linux tools "command not found"). The CL parser
+  (keywords, positional values, quotes, lists, the CPD messages) in
+  `src/engine/cl.ts`; the CL commands (`CL`), the 5250 session
+  (`tn5250` from the workstation, `signOn`, the `===>` loop), `system` and
+  `db2` in `commands/ibmi.ts` (a CL command's manual page: `cl: true`,
+  `man WRKACTJOB`); `chapters/order-book.ts`: what the chapters of "The
+  Order Book" share (`inquiry.ts`, `spooled.ts`, `save-file.ts`; sieve is
+  an internal host).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
