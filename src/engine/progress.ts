@@ -68,6 +68,8 @@ export const CODE_ORDER = [
   'line-endings',
   'smb-mount',
   'full-volume',
+  'two-locks',
+  'service-logon',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

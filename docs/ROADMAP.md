@@ -543,8 +543,12 @@ them safely.
       with LastTaskResult codes and a clock that runs (schtasks); cmd.exe
       where OpenSSH lands without DefaultShell; `windowsMachine()` builds a
       default Windows Server 2022 for a story (see the "Windows engine" rows
-      of `docs/SCENARIOS.md`). Next: the stories, then the firewall
-      (`Get-NetFirewallRule`).
+      of `docs/SCENARIOS.md`). First story under way: "The Music School"
+      (story 31 in `docs/SCENARIOS.md`, on `stave`, a Windows Server 2022
+      reached by ssh): chapters 1 (share vs NTFS permissions) and 2 (a
+      service locked out after its password changed) done, chapters 3 (a
+      disk full of logs) and 4 (the backup that silently stopped) planned.
+      Next: those two chapters, then the firewall (`Get-NetFirewallRule`).
 
 ## More ideas
 

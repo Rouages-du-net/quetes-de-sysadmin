@@ -425,3 +425,9 @@ name-notes-margit-txt = notes-margit.txt
 name-email_ifeoma-txt = email_ifeoma.txt
 name-notes-priya-txt = notes-priya.txt
 name-cabinet-report-txt = cabinet-report.txt
+
+## The Music School
+name-email_samir-txt = email_samir.txt
+name-email_mariam-txt = email_mariam.txt
+name-handover-txt = handover.txt
+name-vault-svc_agenda-txt = vault-svc_agenda.txt

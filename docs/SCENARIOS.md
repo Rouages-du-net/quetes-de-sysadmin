@@ -191,6 +191,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | **Windows engine:** scheduled tasks (`windows-tasks.ts`, `commands/windows-tasks.ts`) | tasks with a principal (SYSTEM, or a local user and the stored password), actions, daily, weekly and once triggers; Get-ScheduledTask (its table and list), Get-ScheduledTaskInfo (LastTaskResult in decimal: 0, 267011, 267009, 2147943726, 2147943731, 2147943730, 2147942402), Start/Stop/Enable/Disable-ScheduledTask, Set-ScheduledTask `-User`/`-Password` (checked when set: "The user name or password is incorrect."), Unregister-ScheduledTask; a run: the logon (events 104 and 101, 4625), then the action as that account (powershell.exe `-File` runs the script through the game's PowerShell: non-terminating errors leave the exit code at 0, `exit N` and `throw` set it), events 107/110, 100, 200, 201, 102, 203/103; `advanceWindows` lets the clock run minute by minute; `schtasks /query` (`/fo LIST`, `/v`), `/run`, `/end`, `/change` (`/ru`, `/rp`, `/enable`, `/disable`), `/delete` | Register-ScheduledTask and New-ScheduledTask* (a story declares its tasks), several actions, conditions and settings (idle, AC power, "run as soon as possible after a missed start"), repetition within a day, schtasks /v shows a subset of its fields |
 | **Windows engine:** the machine, its shares and network (`commands/windows-system.ts`, `windows-world.ts`) | `windowsMachine()`: a Windows Server 2022 with C:\ (Windows, Program Files, ProgramData, Users and profiles) and its default ACLs, data volumes, the default services, the registry's usual keys, local accounts, logs, OpenSSH with password logon; Get-Volume, Get-PSDrive (the registry's current location too), Get-SmbShare, Get-SmbShareAccess, Grant/Revoke/Block/Unblock-SmbShareAccess (asking unless `-Force`), New-SmbShare (`-FullAccess`, `-ChangeAccess`, `-ReadAccess`, `-NoAccess`), Remove-SmbShare, Get-ComputerInfo, Get-NetIPAddress, Test-NetConnection (`-Port`), `hostname`, `ipconfig` (`/all`), `ping` (the addresses of the machine's hosts file, itself, its gateway) | one network adapter, no firewall (`Get-NetFirewallRule` is a later step), no DNS client, no WinRM, made-up figures for memory and CPU |
 | **Windows engine:** reaching it, cmd.exe (`commands/cmd.ts`, `console.ts`) | a story's main machine with `os: 'windows'` reached by `ssh` from the workstation (keys from `administrators_authorized_keys` for administrators, or a password; a disabled account refused), an internal host the same way; OpenSSH lands in PowerShell when `HKLM:\SOFTWARE\OpenSSH` has DefaultShell, otherwise in cmd.exe (prompt `user@HOST C:\…>`); `powershell` and `cmd` start one shell inside the other, `exit` comes back, then closes ("Connection to … closed." without "logout"); cmd's `dir` (its header and totals), `cd`, `type`, `echo`, `set`, `ver`, `mkdir`, `cls`, `exit`, `%VAR%`, and the programs; `powershell -Command`, `-File`, `cmd /c` | batch files, cmd's pipes and redirections, `for`, `if`, `start`, `copy`/`del`/`move` in cmd, the exact case of the computer name in cmd's prompt (`user@COMPUTER`), PowerShell 7, the console's colours |
+| The Music School (story 31) | `stave` as the story's main machine, built with `windowsMachine()`; its users, groups, shares with their own permissions, NTFS permissions on the shares' folders, the Agenda service under `.\svc_agenda`, a nightly task, System events of an update restart (1074, 6006, 6005, 6013) and the service's logon failure at boot (7038, 7000, 4625); a chapter's goal checked through `shareAccess` (what each teacher could do over SMB) and on the service's stored password | the teachers' and the office's own attempts are told by the story (Samir's messages), not made over SMB; the password manager is an exported text entry; no Effective Access tab nor `Get-NTFSAccess`; `Set-Service -Credential` doesn't exist in 5.1, so `sc.exe config` (or the Services console, not simulated) is the way; `sc.exe config` doesn't check the password, as on Windows (the next start does) |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
 | `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
@@ -2932,6 +2933,77 @@ the file `plans-full-2029-11-03.zip`; Priya then removes it. Expected traps:
 deleting drawings on the share from Linux, the cmdlets that change
 something (`Remove-Item`, `Restart-Service`: the server is Priya's), Linux
 habits in PowerShell.
+
+## Story 31: The Music School (four chapters planned, two done)
+
+A community music school (lessons for children and adults, a few concerts
+a year) has one server, `stave` (`portee` in French, 192.0.2.42), a
+Windows Server 2022: the game's first story played *on* Windows. Gabriel, a
+parent who was its volunteer admin for six years, has just handed it over;
+you are the new admin, a few hours a week. Mariam runs the school, Samir
+coordinates the teachers, Beatriz runs the office. The server holds the
+departments' shares (`Teachers`, `Office`, `Public` under `D:\Shares`,
+local groups `Teachers` and `Office`, each folder with its own NTFS
+permissions), the Agenda (the lesson and room booking app, a service under
+its own local account `svc_agenda`), a nightly backup task (`Nightly
+Backup`, `C:\Scripts\backup.ps1` as `svc_backup`, to `D:\Backup`) and their
+logs in `D:\Logs`. `ssh stave` lands in cmd.exe (no OpenSSH DefaultShell):
+`powershell` switches. Engine: the Windows engine (`windows*.ts`,
+`commands/windows-*.ts`, `windows-world.ts`); the shared world in
+`chapters/music-school.ts` (`stave()`, `staveOptions()`). It opens after
+"The Other Side" and "The Share Next Door" (Next Door Windows).
+
+### Chapter 1 — Two Locks (done)
+
+| Step | Command learnt |
+|---|---|
+| cmd.exe | `ssh stave` lands in cmd.exe (`Get-SmbShare` "is not recognized as an internal or external command"); `powershell` |
+| The shares | `Get-SmbShare` (or `net share` in cmd) |
+| The share's lock | `Get-SmbShareAccess Teachers`: Everyone, Read (New-SmbShare's default) |
+| NTFS's lock | `icacls D:\Shares\Teachers` or `Get-Acl … \| Format-List`: Teachers Modify; `Get-LocalGroupMember Teachers` |
+| Open the share | `Grant-SmbShareAccess -Name Teachers -AccountName Teachers -AccessRight Change` |
+| The frozen folder | `icacls D:\Shares\Teachers\LessonPlans`: no `(I)`, `Teachers:(OI)(CI)(RX)`; `icacls … /grant "Teachers:(OI)(CI)(M)"` or `/inheritance:e` |
+
+Goal checked on the state, through the share as each teacher reaches it
+(share AND NTFS, `shareAccess`): samir, lucia and yuki write in `Scores`
+and in `LessonPlans` (the folder and its files); the office's accounts
+can't write anywhere in the teachers' share; NTFS lets neither Everyone,
+Users nor Authenticated Users write there; no teacher is in
+Administrators; the teachers don't get Full Control through both layers.
+Expected traps: Everyone Full Control on the share *and* NTFS (Everyone
+on the share alone passes: NTFS still keeps the office out), a teacher
+added to Administrators, a grant on `LessonPlans` without `(OI)(CI)` (the
+folder, not its files), unquoted `(OI)(CI)` in PowerShell.
+
+### Chapter 2 — Locked Out (done)
+
+| Step | Command learnt |
+|---|---|
+| Stopped | `Get-Service Agenda` (or `sc query Agenda`): Stopped, StartType Automatic |
+| Refused | `Start-Service Agenda` ("cannot be started"), `sc.exe start` (FAILED 1069), `net start` |
+| Why | `Get-WinEvent -FilterHashtable @{LogName='System'; Id=7000,7038}` or `Get-EventLog System -EntryType Error`: 7038 "unable to log on as .\svc_agenda" at Sunday's boot, after the 1074 restart |
+| Which account | `Get-CimInstance Win32_Service -Filter "Name='Agenda'" \| Select-Object Name, StartName, State`, `sc.exe qc Agenda`; `Get-LocalUser svc_agenda \| Select-Object Name, PasswordLastSet` (Friday) |
+| The new password | `Get-Content Documents\vault-svc_agenda.txt` (the password manager's entry Mariam exported) |
+| Give it to the service | `sc.exe config Agenda obj= .\svc_agenda password= …` (`sc` alone is Set-Content in PowerShell), `Start-Service Agenda` |
+
+Goal checked on the state: the Agenda runs under `svc_agenda` with the
+account's current password stored, StartType Automatic, and `svc_agenda`
+isn't an administrator. Expected traps: `sc config` in PowerShell (the
+alias), LocalSystem (it starts, the check refuses it: least privilege), a
+new password set on the account only, a mistyped password, the service
+disabled or set to Manual, `svc_agenda` added to Administrators. Deleting
+the exported entry is thanked, not required.
+
+### Chapter 3 — A disk full of logs (planned)
+
+D: full: IIS/app logs, `Get-ChildItem -Recurse | Sort-Object Length`,
+`Remove-Item -WhatIf`, a cleanup task.
+
+### Chapter 4 — The backup that silently stopped (planned)
+
+`Get-ScheduledTaskInfo` LastTaskResult, the task's account disabled or its
+password expired, TaskScheduler events, the script's non-terminating
+errors.
 
 ## Ideas for later
 

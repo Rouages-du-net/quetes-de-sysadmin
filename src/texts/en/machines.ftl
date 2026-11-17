@@ -41,3 +41,4 @@ machine-mill = mill
 machine-sieve = sieve
 machine-compass = compass
 machine-cabinet = cabinet
+machine-stave = stave

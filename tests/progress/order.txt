@@ -116,3 +116,5 @@ save-file
 line-endings
 smb-mount
 full-volume
+two-locks
+service-logon

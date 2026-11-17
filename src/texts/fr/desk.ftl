@@ -79,3 +79,4 @@ machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois apr�
 # { $file } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
 resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $file }
 machine-compass-motd = Les voisins Windows — le serveur Linux de l'Atelier. Son voisin, armoire, est un Windows Server.
+machine-stave-motd = L'École de musique — le serveur de fichiers de l'école, un Windows Server 2022 (OpenSSH arrive dans cmd.exe).

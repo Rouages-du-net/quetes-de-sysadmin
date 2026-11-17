@@ -360,6 +360,13 @@ presents them for people.
   `chapters/mixed-fleet.ts`: what the chapters of "Next Door Windows"
   share (`line-endings.ts`, `smb-mount.ts`, `full-volume.ts`; cabinet is
   an internal host). Tests: `tests/windows*.test.ts` (fixture LEDGER).
+  `chapters/music-school.ts`: what the chapters of "The Music School"
+  share (`stave`, a Windows Server as the story's main machine, built by
+  `stave()`/`staveOptions()`: users, groups, shares and NTFS permissions,
+  the Agenda service under `svc_agenda`, the nightly backup task, the logs
+  on D:, the update restart's events); `two-locks.ts` (share AND NTFS,
+  checked with `shareAccess`), `service-logon.ts` (the service's stored
+  password).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

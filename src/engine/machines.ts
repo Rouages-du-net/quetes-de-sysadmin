@@ -80,6 +80,8 @@ export const MACHINES: Machine[] = [
   { ...machine('mill', '192.0.2.38', 'order-book'), os: 'ibmi' },
   // Next Door Windows: the architects' Debian server, next to cabinet, their Windows Server file server (an internal host).
   machine('compass', '192.0.2.40', 'mixed-fleet'),
+  // The Music School: its file server, a Windows Server 2022 (OpenSSH lands in cmd.exe).
+  { ...machine('stave', '192.0.2.42', 'music-school'), os: 'windows' },
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */
