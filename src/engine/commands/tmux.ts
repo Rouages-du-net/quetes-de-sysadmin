@@ -11,6 +11,7 @@ import type { Shell } from '../shell';
 import { systemd } from '../systemd';
 import { isBsd } from '../freebsd';
 import { isSolaris } from '../solaris';
+import { isIbmi } from '../ibmi';
 import type { Command } from './index';
 
 export interface SessionTmux {
@@ -96,6 +97,13 @@ export const TMUX: Record<string, Command> = {
         if (args.some((a) => /^-\w*m/.test(a))) return 'sun4u';
         if (args.some((a) => /^-\w*i/.test(a))) return 'SUNW,Sun-Fire-V240';
         return 'SunOS';
+      }
+      // IBM i's PASE: uname says OS400, the release in two fields (7 5).
+      if (isIbmi(game)) {
+        if (args.some((a) => /^-\w*a/.test(a))) return `OS400 ${game.hostName.toUpperCase()} 5 7 00F8A1B24C00`;
+        if (args.some((a) => /^-\w*r/.test(a))) return '5';
+        if (args.some((a) => /^-\w*v/.test(a))) return '7';
+        return 'OS400';
       }
       // A FreeBSD machine (see freebsd.ts): its kernel, its release.
       if (isBsd(game)) {

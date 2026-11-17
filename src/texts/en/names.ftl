@@ -412,3 +412,16 @@ name-lucien-notes-txt = lucien-notes.txt
 ## The Old Sun
 name-email_inaya-txt = email_inaya.txt
 name-odette-notes-txt = odette-notes.txt
+
+## The Night Batch
+name-email_ayesha-txt = email_ayesha.txt
+name-check-txt = check.txt
+
+## The Order Book
+name-email_kwame-txt = email_kwame.txt
+name-notes-margit-txt = notes-margit.txt
+
+## Next Door Windows
+name-email_ifeoma-txt = email_ifeoma.txt
+name-notes-priya-txt = notes-priya.txt
+name-cabinet-report-txt = cabinet-report.txt

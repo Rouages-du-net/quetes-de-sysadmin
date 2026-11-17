@@ -15,7 +15,7 @@ import type { Translate } from '../src/texts';
 
 const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name).join('|');
 const HOST = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
-const NETWORK = /^\s*(?:sudo\s+)?(?:ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
+const NETWORK = /^\s*(?:sudo\s+)?(?:tn5250|ssh|ssh-copy-id|sftp|scp|rsync|nc|ping|nmap|host|dig|curl)\b/;
 
 const PASSWORDS = [...readFileSync(new URL('../src/texts/fr/passwords.ftl', import.meta.url), 'utf8').matchAll(/^password-(\S+) =/gm)].map((m) => m[1]);
 const MDP = new RegExp(`(?<![\\w-])(${PASSWORDS.join('|')})(?![\\w-])`, 'g');

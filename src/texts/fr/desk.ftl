@@ -71,8 +71,11 @@ machine-nas-motd = Le Club photo — le NAS du club : les photos de tous les alb
 machine-oven-motd = Le Bastion — le serveur des livraisons du Fournil : les tournées, les livreur·ses, les commandes du jour.
 machine-projector-motd = L'Autre Unix — le serveur du ciné-club : le programme, les billets, et le vieux FreeBSD de Lucien.
 machine-herbarium-motd = Le vieux Soleil — le catalogue de la grainothèque depuis 2009, sur un Sun Fire V240. Merci de ne pas débrancher.
+machine-abacus-motd = Le traitement de nuit — le serveur de la Mutuelle : le traitement des cotisations de chaque nuit, en COBOL, descendu du mainframe du centre de traitement.
+machine-mill-motd = Le carnet de commandes — l'IBM i du moulin (PASE, le côté Unix). tn5250 moulin depuis le poste de travail ouvre son écran vert.
 machine-kneader-motd = Le Fournil — nouveau serveur (migration), six mois après l'audit. La veille de sécurité, maintenant sans Salomé.
 
 # En se reconnectant à une machine dont le chapitre est en cours.
 # { $file } : le fichier d'accueil du chapitre (ex. bienvenue.txt)
 resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relire ce qui t'attend :   cat { $file }
+machine-compass-motd = Les voisins Windows — le serveur Linux de l'Atelier. Son voisin, armoire, est un Windows Server.

@@ -474,7 +474,8 @@ decades, and that a sysadmin may inherit. The game can show them with
 respect: why they are still there, how to read them, how to move data off
 them safely.
 
-- [ ] **COBOL batch on Linux** (fits the current engine). A nightly COBOL
+- [x] **COBOL batch on Linux** ("The Night Batch", story 28 in
+      `docs/SCENARIOS.md`; `src/engine/ebcdic.ts`, `src/engine/cobol.ts`). A nightly COBOL
       batch moved from a mainframe to Linux with GnuCOBOL: fixed-width
       record files described by a copybook, EBCDIC data to convert
       (`iconv -f EBCDIC-US`, `dd conv=ascii`, and why packed decimals,
@@ -482,7 +483,7 @@ them safely.
       the job chained by cron or a systemd timer, its return code checked,
       a file that arrives late. The lesson: the program is fine, the
       plumbing around it is what breaks.
-- [ ] **IBM i (AS/400)** (needs its own small engine). An IBM i that has
+- [x] **IBM i (AS/400)** (needs its own small engine; done: story 29, "The Order Book"). An IBM i that has
       run a company's orders since the 1990s. A different world: everything
       is an object in a library (`WRKLIB`, `DSPLIB`, `WRKOBJ`), commands are
       CL with a fixed grammar and prompting (F4), jobs and subsystems
@@ -496,7 +497,9 @@ them safely.
       `ssh`, CCSID conversions). Interface: a CL command line first; the
       5250 green screen (fixed 80×24 menus, function keys) is a later,
       optional step.
-- [ ] **A mixed fleet, seen from Linux**: the Windows machines a Linux
+- [x] **A mixed fleet, seen from Linux** ("Next Door Windows", story 30 in
+      `docs/SCENARIOS.md`; `src/engine/windows.ts`, `src/engine/powershell.ts`,
+      `src/engine/cifs.ts`): the Windows machines a Linux
       admin deals with, without simulating Windows itself. A script copied
       from Windows that fails with `/bin/bash^M: bad interpreter` (CRLF,
       `file`, `dos2unix`, `.gitattributes`); a Windows file server through

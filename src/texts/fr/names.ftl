@@ -415,3 +415,16 @@ name-lucien-notes-txt = notes-de-lucien.txt
 ## Le vieux Soleil
 name-email_inaya-txt = courriel_inaya.txt
 name-odette-notes-txt = notes-d-odette.txt
+
+## Le traitement de nuit
+name-email_ayesha-txt = courriel_ayesha.txt
+name-check-txt = verification.txt
+
+## Le carnet de commandes
+name-email_kwame-txt = courriel_kwame.txt
+name-notes-margit-txt = notes-de-margit.txt
+
+## Les voisins Windows
+name-email_ifeoma-txt = courriel_ifeoma.txt
+name-notes-priya-txt = notes-de-priya.txt
+name-cabinet-report-txt = rapport-armoire.txt

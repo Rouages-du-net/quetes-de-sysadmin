@@ -67,6 +67,11 @@ import { APACHE } from './apache';
 import { MAIL } from './mail';
 import { ANSIBLE } from './ansible';
 import { CADDY } from './caddy';
+import { BYTES } from './bytes';
+import { COBOL } from './cobol';
+import { IBMI } from './ibmi';
+import { POWERSHELL } from './powershell';
+import { LINE_ENDINGS } from './line-endings';
 
 export interface Context {
   args: string[];
@@ -97,6 +102,10 @@ export interface Command {
   // A command outside the PATH (a monitoring plugin): it only runs by its
   // full path, in this directory.
   directory?: string;
+  // An IBM i CL command (see ibmi.ts): its page lists parameters, not options.
+  cl?: boolean;
+  // A Windows PowerShell cmdlet (see powershell.ts): its page lists parameters (-Name).
+  cmdlet?: boolean;
   launch: (c: Context) => string;
 }
 
@@ -169,6 +178,11 @@ function build(): Record<string, Command> {
     ...MAIL,
     ...ANSIBLE,
     ...CADDY,
+    ...BYTES,
+    ...COBOL,
+    ...IBMI,
+    ...POWERSHELL,
+    ...LINE_ENDINGS,
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

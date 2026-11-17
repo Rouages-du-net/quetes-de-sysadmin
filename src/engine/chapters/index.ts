@@ -106,6 +106,15 @@ import { lastRule } from './last-rule';
 import { readFirst } from './read-first';
 import { byteOrder } from './byte-order';
 import { switchOver } from './switch-over';
+import { copybook } from './copybook';
+import { returnCode } from './return-code';
+import { lateFile } from './late-file';
+import { inquiry } from './inquiry';
+import { spooled } from './spooled';
+import { saveFile } from './save-file';
+import { lineEndings } from './line-endings';
+import { smbMount } from './smb-mount';
+import { fullVolume } from './full-volume';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -248,6 +257,21 @@ export const STORIES: Story[] = [
     id: 'old-sun',
     after: ['database', 'portable-script'],
     chapters: [readFirst, byteOrder, switchOver],
+  },
+  {
+    id: 'night-batch',
+    after: ['switch-over', 'probe'],
+    chapters: [copybook, returnCode, lateFile],
+  },
+  {
+    id: 'order-book',
+    after: ['late-file', 'transfers'],
+    chapters: [inquiry, spooled, saveFile],
+  },
+  {
+    id: 'mixed-fleet',
+    after: ['samba-share', 'portable-script'],
+    chapters: [lineEndings, smbMount, fullVolume],
   },
 ];
 

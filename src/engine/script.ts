@@ -10,6 +10,9 @@
 // "a && b", "a || b".
 // An assignment in front of a command (GIT_WORK_TREE=… git …) only applies
 // to git, which reads it as the matching option.
+// A script saved with Windows line endings (CR LF) shows bash's symptoms:
+// an empty line is the command $'\r', a variable assigned at the end of a
+// line keeps the \r, and cd says so (bash's wording, also under sh).
 // Differences: no if, for, while, case nor functions (an error says so),
 // and a command's exit code is 0 if it wrote no error
 // (unless it sets its own, like monitoring plugins or grep).
@@ -112,7 +115,13 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
   // A simple command; returns its exit code.
   const launch = (rawValue: string, number: number): number => {
     substituted = 0;
-    let line = expand(rawValue).trim();
+    // A carriage return (a script saved on Windows) stays in the words: only spaces and tabs are trimmed.
+    let line = expand(rawValue).replace(/^[ \t]+|[ \t]+$/g, '');
+    const cd = /^cd\s+([^]*)$/.exec(line);
+    if (cd && cd[1].includes('\r')) {
+      outputs.push(`${options.name}: line ${number}: cd: $'${cd[1].replace(/\r/g, '\\r')}': No such file or directory`);
+      return 1;
+    }
     if (!line || line === ':' || line === 'true') return 0;
     if (line === 'false') return 1;
     // [ condition ] is the test command (its last argument must be "]").
@@ -169,6 +178,21 @@ export function runScript(game: Shell, text: string, options: OptionsScript): Sc
   const lines = text.replace(/\\\n/g, ' ').split('\n');
   for (let n = 0; n < lines.length; n++) {
     const line = lines[n].trim();
+    // A line saved on Windows ends with \r (CR LF), which bash reads as part of the last word:
+    // an empty line is a command named \r, and a variable keeps it at the end of its value.
+    if (lines[n].endsWith('\r') && !line.startsWith('#')) {
+      if (!line) {
+        outputs.push(`${options.name}: line ${n + 1}: $'\\r': command not found`);
+        variables['?'] = '127';
+        if (stopOnError) return { output: outputs.join('\n'), code: 127 };
+        continue;
+      }
+      const assignment = /^([A-Za-z_][A-Za-z0-9_]*)=(\S*)$/.exec(line);
+      if (assignment) {
+        variables[assignment[1]] = expand(assignment[2]).replace(/^(["'])(.*)\1$/, '$2') + '\r';
+        continue;
+      }
+    }
     if (!line || line.startsWith('#')) continue;
     const exit = /^exit(?:\s+(\S+))?$/.exec(line);
     if (exit) return { output: outputs.join('\n'), code: Number(expand(exit[1] ?? '$?')) || 0 };

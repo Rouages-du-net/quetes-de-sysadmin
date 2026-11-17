@@ -6,6 +6,7 @@ import type { Game } from './shell';
 import type { Activity } from './activity';
 import type { Translate } from '../texts';
 import type { ElementPlan } from './plan';
+import type { Program } from './cobol';
 
 export type File = {
   type: 'file';
@@ -36,8 +37,11 @@ export type File = {
   // armour, this holds what the simulated gpg needs to decrypt or verify it.
   crypto?: CryptoBlob;
   // A text written in ISO 8859-1 (LATIN1) rather than UTF-8 (see charset.ts):
-  // its accented letters show as � on the (UTF-8) terminal.
-  charset?: 'latin1';
+  // its accented letters show as � on the (UTF-8) terminal. 'binary': raw
+  // bytes, one character per byte (an EBCDIC file from a mainframe, see ebcdic.ts).
+  charset?: 'latin1' | 'binary';
+  // A program compiled by cobc (see cobol.ts): what runs when it is executed.
+  program?: Program;
 } & Rights;
 // What the simulated gpg stores on an encrypted, signed or key file.
 export interface CryptoBlob {
@@ -95,6 +99,8 @@ export interface InternalHost {
   initialise?: (game: Game) => void;
   // Known commands (by default, the chapter's).
   commands?: string[];
+  // The account's home (by default /home/you; C:\Users\you is /C/Users/you on Windows).
+  home?: string;
 }
 
 // A story event: when `condition` becomes true (checked

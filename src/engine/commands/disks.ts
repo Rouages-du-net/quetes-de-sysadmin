@@ -20,7 +20,8 @@ import { storageOf } from '../storage';
 import { readFstab, systemFor } from '../fstab';
 import { lsblkStockage } from './storage';
 import { mountLine, mountNfs, unmountNfs, type NfsMount } from '../nfs';
-import { brancher, deviceFor, devices, mountAll, mounts, type Mount } from '../devices';
+import { brancher, deviceFor, devices, mountAll, mounts, DMESG, type Mount } from '../devices';
+import { cifsLine, mountCifs, unmountCifs, type CifsMount } from '../cifs';
 
 // Re-exported for the chapters (see devices.ts).
 export { brancher, detachDevices, deviceFor, mountToBoot, type Device, type Mount } from '../devices';
@@ -125,7 +126,7 @@ function lsblk(game: Shell, args: string[]): string {
 function mount(game: Shell, args: string[]): string {
   if (!args.length)
     return mounts(game)
-      .map((m) => (m.nfs ? mountLine(game, m as Mount & { nfs: NfsMount }) : `${m.name} on ${m.path} type ${m.system ?? 'ext4'} (${m.onlyRead ? 'ro' : 'rw'},${m.options ?? 'relatime'})`))
+      .map((m) => (m.cifs ? cifsLine(game, m as Mount & { cifs: CifsMount }) : m.nfs ? mountLine(game, m as Mount & { nfs: NfsMount }) : `${m.name} on ${m.path} type ${m.system ?? 'ext4'} (${m.onlyRead ? 'ro' : 'rw'},${m.options ?? 'relatime'})`))
       .join('\n');
   let options = '';
   let type = '';
@@ -151,6 +152,11 @@ function mount(game: Shell, args: string[]): string {
   const absolute = game.resolve(point);
   if (game.who !== 'root')
     return game.error(`mount: ${absolute}: must be superuser to use mount.\n       dmesg(1) may have more information after failed mount system call.`);
+  // A Windows (SMB) share: //server/share, -t cifs (mount.cifs, see cifs.ts).
+  if (type === 'cifs' || type === 'smb3' || source.startsWith('//')) {
+    if (positional.length === 2 && !options) options = readFstab(game.read('/etc/fstab') ?? '').inputs.find((e) => e.source === source && e.target === absolute)?.options.join(',') ?? '';
+    return cifs(game, source, point, options);
+  }
   // A network file system: host:/path (or -t nfs, nfs4), see nfs.ts.
   if (type.startsWith('nfs') || /^[^/:]+:\//.test(source)) {
     if (positional.length === 2 && readFstab(game.read('/etc/fstab') ?? '').inputs.some((e) => e.source === source && e.target === absolute))
@@ -191,12 +197,43 @@ function mount(game: Shell, args: string[]): string {
   return '';
 }
 
+/** mount -t cifs (and mount.cifs): cifs-utils must be there; the password may be asked. */
+export function cifs(game: Shell, source: string, point: string, options: string): string {
+  const apt = game.state.apt as { installed: Record<string, string> } | undefined;
+  if (apt && !apt.installed['cifs-utils'])
+    return game.error(`mount: ${game.resolve(point)}: bad option; for several filesystems (e.g. nfs, cifs) you might need a /sbin/mount.<type> helper program.${DMESG}`, 32);
+  const request = { source, point, options: options.split(',').filter(Boolean) };
+  // The errors stay readable by the chapters (an answer to the prompt is not in game.last).
+  const noted = (e: string) => ((game.state.cifsErrors ??= []) as string[]).push(e);
+  const r = mountCifs(game, request);
+  if (typeof r === 'string') return r ? (noted(r), game.error(r, 32)) : '';
+  game.ask(
+    r.ask,
+    (typed) => {
+      const again = mountCifs(game, { ...request, typed });
+      if (typeof again === 'string' && again) {
+        noted(again);
+        game.status = 32;
+        return again;
+      }
+      return '';
+    },
+    true,
+  );
+  return '';
+}
+
 function unmount(game: Shell, args: string[]): string {
   const target = args.find((a) => !a.startsWith('-'));
   if (!target) return game.error(game.t('umount-usage'));
   const m = mounts(game).find((x) => x.name === target || x.path === game.resolve(target));
   const shows = m?.path ?? game.resolve(target);
   if (game.who !== 'root') return game.error(`umount: ${shows}: must be superuser to unmount.`);
+  if (m?.cifs) {
+    if (game.cwd === m.path || game.cwd.startsWith(m.path + '/')) return game.error(`umount: ${m.path}: target is busy.`, 32);
+    unmountCifs(game, m.path);
+    return '';
+  }
   if (m?.nfs) {
     if (game.cwd === m.path || game.cwd.startsWith(m.path + '/')) return game.error(`umount.nfs4: ${m.path}: device is busy`);
     unmountNfs(game, m.path);
@@ -219,4 +256,17 @@ export const DISKS: Record<string, Command> = {
   lsblk: { options: ['f'], launch: ({ args, game }) => lsblk(game, args) },
   mount: { section: 8, ownOptions: true, launch: ({ args, game }) => mount(game, args) },
   umount: { section: 8, ownOptions: true, launch: ({ args, game }) => unmount(game, args) },
+  // mount.cifs (cifs-utils), which mount -t cifs runs: mount.cifs //server/share point -o options.
+  'mount.cifs': {
+    section: 8,
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      const o = args.indexOf('-o');
+      const options = o >= 0 ? (args[o + 1] ?? '') : '';
+      const [source, point] = args.filter((a, i) => !a.startsWith('-') && (o < 0 || i !== o + 1));
+      if (!source || !point) return game.error('\nUsage:  mount.cifs <remotetarget> <dir> -o <options>\n\nMount the remote target, specified as a UNC name, to a local directory.', 1);
+      if (game.who !== 'root') return game.error('mount error: permission denied or not superuser and mount.cifs not installed SUID', 1);
+      return cifs(game, source, point, options);
+    },
+  },
 };

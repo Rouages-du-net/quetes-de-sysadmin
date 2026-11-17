@@ -107,3 +107,12 @@ last-rule
 read-first
 byte-order
 switch-over
+copybook
+return-code
+late-file
+inquiry
+spooled
+save-file
+line-endings
+smb-mount
+full-volume

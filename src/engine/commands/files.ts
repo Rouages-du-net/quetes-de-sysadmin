@@ -3,6 +3,7 @@
 
 import { isBsd } from '../freebsd';
 import { shownOwner } from '../nfs';
+import { cifsShown, cifsUsage } from '../cifs';
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
 import { applyMode, compareNames, content, wildcard, readable, modeWithMask, options, sizeFor } from '../tools';
@@ -34,7 +35,9 @@ const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColo
 function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting): string {
   // -n: the numbers (uid, gid) instead of the names.
   // Through an NFS mount: the server's numbers, with this machine's names.
-  const remote = shownOwner(game, n);
+  // Through a Windows share (cifs): the mount's owner, group and modes.
+  const share = cifsShown(game, n);
+  const remote = shownOwner(game, n) ?? share;
   const ownerName = remote?.owner ?? n.owner ?? game.player;
   const groupName = remote?.group ?? n.group ?? ownerName;
   const owner = numeric ? String(game.accounts.users[ownerName]?.uid ?? ownerName) : ownerName;
@@ -45,7 +48,7 @@ function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = 
   // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
   if (n.type === 'file' && n.link !== undefined)
     return `lrwxrwxrwx ${owner.padEnd(8)} ${group.padEnd(8)} ${String(n.link.length).padStart(6)} ${paint(name, n)} -> ${n.link}`;
-  return `${n.type === 'directory' ? 'd' : '-'}${modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
+  return `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
 }
 
 // Source → (destination place, final name), like mv and cp on Linux:
@@ -236,14 +239,25 @@ export const FILES: Record<string, Command> = {
 
   cat: {
     launch: ({ args, input, game }) => {
-      if (!args.length) return input ?? game.error(game.t('cat-usage'));
-      return args
+      // -A (-vET), -E ($ at the end of each line), -T (tabs as ^I), -v (^M for a carriage return), -n (numbers).
+      const { letters, rest } = options(args);
+      if (letters.has('A')) ['v', 'E', 'T'].forEach((l) => letters.add(l));
+      const shown = (text: string) => {
+        let lines = text.split('\n');
+        if (letters.has('v')) lines = lines.map((l) => l.replace(/\r/g, '^M'));
+        if (letters.has('T')) lines = lines.map((l) => l.replace(/\t/g, '^I'));
+        if (letters.has('E')) lines = lines.map((l) => `${l}$`);
+        if (letters.has('n')) lines = lines.map((l, i) => `${String(i + 1).padStart(6)}\t${l}`);
+        return lines.join('\n');
+      };
+      if (!rest.length) return input === null ? game.error(game.t('cat-usage')) : letters.size ? shown(input) : input;
+      return rest
         .map((target) => {
           const text = game.readFor('cat', target);
           if (text === null) return null;
           const n = game.find(target) as File;
           const effect = n.read?.(game);
-          return [text, effect].filter(Boolean).join('\n\n');
+          return [letters.size ? shown(text) : text, effect].filter(Boolean).join('\n\n');
         })
         .filter((t) => t !== null)
         .join('\n');
@@ -585,10 +599,13 @@ export const FILES: Record<string, Command> = {
         // Not counting the other media mounted inside (/srv/radio isn't on /).
         const inside = mounts.filter((x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')));
         const other = inside.reduce((t, x) => t + ((n) => (n ? game.size(n) : 0))(game.find(x.path)), 0);
-        const inUse = Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path));
-        const pct = Math.round((100 * inUse) / m.capacity);
+        // A Windows share (cifs): the server's volume, as the server counts it.
+        const remote = cifsUsage(game, m.path);
+        const capacity = remote?.capacity ?? m.capacity;
+        const inUse = remote ? Math.min(capacity, remote.used) : Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path));
+        const pct = Math.round((100 * inUse) / capacity);
         lines.push(
-          `${(m.name ?? m.path).padEnd(18)} ${fmt(m.capacity).padStart(6)} ${fmt(inUse).padStart(7)} ${fmt(Math.max(0, m.capacity - inUse)).padStart(6)} ${String(pct).padStart(3)}% ${m.path}`,
+          `${(m.name ?? m.path).padEnd(18)} ${fmt(capacity).padStart(6)} ${fmt(inUse).padStart(7)} ${fmt(Math.max(0, capacity - inUse)).padStart(6)} ${String(pct).padStart(3)}% ${m.path}`,
         );
       }
       return lines.join('\n');

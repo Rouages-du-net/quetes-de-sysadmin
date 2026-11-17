@@ -292,6 +292,47 @@ presents them for people.
   `chapters/seed-bank.ts`: what the chapters of "The Old Sun" share
   (`read-first.ts`, `byte-order.ts`, `switch-over.ts`; greenhouse is an
   internal host).
+- `src/engine/ebcdic.ts`: EBCDIC (IBM-037, glibc's EBCDIC-US gaps, GNU dd's
+  tables), binary files (`File.charset = 'binary'`: one character per byte,
+  shown with � on the terminal), packed decimals (COMP-3); `od`, `xxd`,
+  `hexdump`, `dd` in `commands/bytes.ts`, `iconv` (ASCII, EBCDIC, `-c`,
+  `-o`) in `commands/iconv.ts`; `$?` in the shell (`Shell.lastStatus`).
+  GnuCOBOL in `src/engine/cobol.ts` (`cobc`'s checks: reference format,
+  COPY and `-I`, PERFORM targets; compiled programs, `File.program`, run
+  by the shell: the story's EBC2ASC and CONTRIB, their runs in
+  `state.batchRuns`), `cobc` in `commands/cobol.ts`;
+  `chapters/night-batch.ts`: what the chapters of "The Night Batch" share
+  (`copybook.ts`, `return-code.ts`, `late-file.ts`: the bureau's uploads and
+  the two-night rehearsal through `passTime`).
+- `src/engine/ibmi.ts`: an IBM i (`state.os = 'ibmi'`, `state.ibmi`):
+  libraries and objects, DB2 tables, jobs in subsystems (status, job log,
+  locks), job queues (`runQueues`), message queues and inquiry messages
+  (`onReply`), spooled files and output queues, the system ASP, save files,
+  the history log; PASE (Linux tools "command not found"). The CL parser
+  (keywords, positional values, quotes, lists, the CPD messages) in
+  `src/engine/cl.ts`; the CL commands (`CL`), the 5250 session
+  (`tn5250` from the workstation, `signOn`, the `===>` loop), `system` and
+  `db2` in `commands/ibmi.ts` (a CL command's manual page: `cl: true`,
+  `man WRKACTJOB`); `chapters/order-book.ts`: what the chapters of "The
+  Order Book" share (`inquiry.ts`, `spooled.ts`, `save-file.ts`; sieve is
+  an internal host).
+- `src/engine/windows.ts`: a Windows Server seen from Linux (`state.os =
+  'windows'`, `state.windows`: drives as `/C`, `/D`, names without case,
+  volumes, services, SMB shares, the System log, SMB1 off); its OpenSSH
+  lands in Windows PowerShell 5.1: the pipeline of objects, parameter
+  binding, Out-Default's tables and lists, 5.1's error layout in
+  `src/engine/powershell.ts`, the read-only cmdlets and their aliases
+  (`Get-ChildItem`, `Get-Volume`, `Get-WinEvent`, `Get-Help`…, a cmdlet's
+  manual page: `cmdlet: true`, `man Get-ChildItem`) in
+  `commands/powershell.ts`; a Windows share mounted with `mount -t cifs`
+  or `mount.cifs` (`src/engine/cifs.ts`: credentials file, `uid=`/`gid=`,
+  `vers=`, owners shown from the options, `df` on the server's volume);
+  `dos2unix`, `unix2dos`, `tr` and the `gitattributes` page in
+  `commands/line-endings.ts` (CR LF symptoms in `script.ts`, `file`,
+  `cat -A`, nano's DOS format, git's `.gitattributes`);
+  `chapters/mixed-fleet.ts`: what the chapters of "Next Door Windows"
+  share (`line-endings.ts`, `smb-mount.ts`, `full-volume.ts`; cabinet is
+  an internal host).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
