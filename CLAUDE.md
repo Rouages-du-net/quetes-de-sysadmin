@@ -1,7 +1,8 @@
 # Sysadmin Quests — instructions for Claude
 
-An educational browser game to learn Linux system administration (see
-`README.md`, `CONTRIBUTING.md`, `docs/SCENARIOS.md` and `docs/ROADMAP.md`).
+An educational browser game to learn system administration, on Linux and
+on Windows (see `README.md`, `CONTRIBUTING.md`, `docs/SCENARIOS.md` and
+`docs/ROADMAP.md`).
 An **independent** project: all the code and documentation are in this
 repository (it was born in Les rouages du net, but no longer depends on it).
 It must embed in any website (`docs/EMBEDDING.md`): assume nothing about the
@@ -366,7 +367,15 @@ presents them for people.
   the Agenda service under `svc_agenda`, the nightly backup task, the logs
   on D:, the update restart's events); `two-locks.ts` (share AND NTFS,
   checked with `shareAccess`), `service-logon.ts` (the service's stored
-  password).
+  password), `log-flood.ts` (D: full of debug logs: a file a service
+  holds open, `WinService.opens`, its configuration read at start,
+  `onStart`), `silent-backup.ts` (the nights replayed with
+  `advanceWindows`, an expired password, a script whose runs are kept in
+  `state.psScriptRuns`). PowerShell's `try`/`catch`/`finally`, script
+  scopes and script-terminating errors (`Terminate.fatal`),
+  `-ErrorVariable` in `commands/powershell.ts`; `Register-ScheduledTask`
+  and `New-ScheduledTask*` in `commands/windows-tasks.ts`; `compact`
+  (NTFS compression, `File.onDisk`) in `commands/windows-files.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

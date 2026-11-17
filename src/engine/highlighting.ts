@@ -9,6 +9,7 @@
 
 import type { Shell } from './shell';
 import { COMMANDS } from './commands';
+import { currentShell, isWindows } from './windows';
 
 export type Kind = 'command' | 'unknown' | 'option' | 'string' | 'operator' | 'path' | 'glob' | 'text';
 
@@ -85,6 +86,8 @@ function exists(sh: Shell, name: string): boolean {
   if (COMMANDS[name]?.section === 5) return false;
   // !!, !12, !cat: the history, which the shell expands before running the command.
   if (/^!(!|-?\d+|[A-Za-z_./])/.test(name)) return true;
+  // PowerShell's keywords (if, foreach, try…) on a Windows machine.
+  if (isWindows(sh) && currentShell(sh) === 'powershell' && /^(if|elseif|else|foreach|try|catch|finally|throw|exit|return)$/i.test(name)) return true;
   // help is built into the shell: it always answers.
   return name === 'help' || sh.known().includes(name);
 }

@@ -55,6 +55,10 @@ export interface WinService {
   exitCode?: number;
   // Its own process (svchost.exe otherwise).
   process?: string;
+  // The files it holds open while it runs (D:\Logs\Agenda\agenda.log): another process can't delete them.
+  opens?: string[];
+  // What it does when it starts (a story's service reading its configuration file).
+  onStart?: (game: Game) => void;
 }
 export interface WinVolume {
   letter: string;
@@ -211,7 +215,13 @@ export const hidden = (name: string) => name.startsWith('$') || name === 'System
 export function volumeUsed(game: Shell, letter: string): number {
   const v = windows(game).volumes.find((x) => x.letter === letter);
   const tree = game.find(`/${letter}`);
-  return (v?.base ?? 0) + (tree ? game.size(tree) : 0);
+  return (v?.base ?? 0) + (tree ? onDisk(game, tree) : 0);
+}
+
+/** The bytes a file or folder takes on its volume (NTFS-compressed files take less). */
+export function onDisk(game: Shell, n: Node): number {
+  if (n.type === 'file') return n.onDisk ?? game.size(n);
+  return Object.values(n.children).reduce((sum, c) => sum + onDisk(game, c), 0);
 }
 
 /** The volume a Windows path (D:\Shares\plans) lies on. */

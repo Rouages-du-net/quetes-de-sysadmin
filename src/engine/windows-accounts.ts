@@ -34,6 +34,8 @@ export interface WinUser {
   neverExpires?: boolean;
   mayChange?: boolean;
   lastLogon: number | null;
+  // When the account itself expires (net user /expires:, not the password): null or absent, never.
+  accountExpires?: number | null;
 }
 export interface WinGroup {
   name: string;

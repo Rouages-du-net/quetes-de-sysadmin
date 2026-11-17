@@ -73,8 +73,17 @@ export function formatDate(ms: number, format: string): string {
 export const longDateTime = (ms: number) => formatDate(ms, 'dddd, MMMM d, yyyy h:mm:ss tt');
 
 /** A date typed by the user: 2029-11-20, 2029-11-20 02:00[:00], 11/20/2029 [2:00[:00] [AM]]; null if not one. */
-export function parseDate(t: string): number | null {
+export function parseDate(t: string, today?: number): number | null {
   const s = t.trim();
+  // A time alone (3am, 3:30, 1:30 PM): today at that time, as [datetime] does.
+  const time = /^(\d{1,2})(?::(\d{2})(?::(\d{2}))?)?\s*(AM|PM)?$/i.exec(s);
+  if (time && today !== undefined && (time[2] !== undefined || time[4])) {
+    let h = +time[1];
+    if (time[4]?.toUpperCase() === 'PM' && h < 12) h += 12;
+    if (time[4]?.toUpperCase() === 'AM' && h === 12) h = 0;
+    if (h > 23) return null;
+    return today - (today % 86_400_000) + h * 3_600_000 + +(time[2] ?? 0) * 60_000 + +(time[3] ?? 0) * 1000;
+  }
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?Z?$/.exec(s);
   if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] ?? 0), +(m[5] ?? 0), +(m[6] ?? 0));
   m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i.exec(s);

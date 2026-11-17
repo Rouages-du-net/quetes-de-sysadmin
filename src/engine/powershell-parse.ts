@@ -5,7 +5,7 @@
 // parameter), the rest in EXPRESSION mode (numbers, strings, variables,
 // operators). Supported:
 //   - statements separated by ; or a new line; if/elseif/else, foreach,
-//     exit, throw; assignments ($x = …, +=, -=, $env:NAME = …, $x.Prop = …);
+//     try/catch/finally (catch [Type]), exit, throw; assignments ($x = …, +=, -=, $env:NAME = …, $x.Prop = …);
 //   - pipelines (|) whose first element may be an expression, redirections
 //     (> >> 2> 2>&1 *> to a file or $null);
 //   - numbers (10, 1.5, 0x1F, 1GB), 'single' and "double" strings ($var,
@@ -21,7 +21,7 @@
 // Sources (Microsoft Learn, PowerShell 5.1): about_Parsing,
 // about_Operator_Precedence, about_Quoting_Rules, about_Special_Characters,
 // about_Comparison_Operators, about_Hash_Tables, about_Script_Blocks,
-// about_Redirection, about_Assignment_Operators, about_If, about_Foreach,
+// about_Redirection, about_Assignment_Operators, about_If, about_Foreach, about_Try_Catch_Finally,
 // https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-5.1
 // Simplifications (docs/SCENARIOS.md): no functions, no while/for/switch,
 // no here-strings, no splatting, no classes; one line at a time.
@@ -82,7 +82,8 @@ export type Statement =
   | { k: 'if'; clauses: { cond: Statement; body: Statement[] }[]; otherwise?: Statement[] }
   | { k: 'foreach'; name: string; source: Statement; body: Statement[] }
   | { k: 'exit'; e?: Expr }
-  | { k: 'throw'; e?: Expr; pos: number };
+  | { k: 'throw'; e?: Expr; pos: number }
+  | { k: 'try'; body: Statement[]; catches: { types: string[]; body: Statement[] }[]; final?: Statement[] };
 
 export class ParseError {
   constructor(
@@ -178,9 +179,9 @@ export class Parser {
     return true;
   }
 
-  private block(): Statement[] {
+  private block(missing = "Missing statement block after if ( condition ).", id = 'MissingStatementBlock'): Statement[] {
     this.wsn();
-    if (this.ch() !== '{') this.fail("Missing statement block after if ( condition ).", 'MissingStatementBlock');
+    if (this.ch() !== '{') this.fail(missing, id);
     this.i++;
     const body = this.statements('}');
     this.wsn();
@@ -237,6 +238,37 @@ export class Parser {
       if (this.ch() !== ')') this.fail("Missing closing ')' after expression in 'foreach' statement.", 'MissingEndParenthesisAfterForeach');
       this.i++;
       return { k: 'foreach', name: v[1], source, body: this.block() };
+    }
+    if (this.keyword('try')) {
+      const body = this.block('The Try statement is missing its statement block.', 'MissingTryStatementBlock');
+      const catches: { types: string[]; body: Statement[] }[] = [];
+      let final: Statement[] | undefined;
+      for (;;) {
+        const save = this.i;
+        this.wsn();
+        if (this.keyword('catch')) {
+          const types: string[] = [];
+          for (;;) {
+            this.ws();
+            const m = /^\[([\w.]+)\]/.exec(this.s.slice(this.i));
+            if (!m) break;
+            types.push(m[1]);
+            this.i += m[0].length;
+            this.ws();
+            if (this.ch() !== ',') break;
+            this.i++;
+          }
+          catches.push({ types, body: this.block('The Catch block is missing its statement block.', 'MissingCatchBlock') });
+        } else if (this.keyword('finally')) {
+          final = this.block('The Finally block is missing its statement block.', 'MissingFinallyStatementBlock');
+          break;
+        } else {
+          this.i = save;
+          break;
+        }
+      }
+      if (!catches.length && !final) this.fail('The Try statement is missing its Catch or Finally block.', 'MissingCatchOrFinally');
+      return { k: 'try', body, catches, final };
     }
     if (this.keyword('exit') || this.keyword('return')) {
       this.ws();

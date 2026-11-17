@@ -55,8 +55,17 @@ const CORE = 'Microsoft.PowerShell.Core';
 class Exit {
   constructor(public code: number) {}
 }
+/**
+ * A terminating error. `fatal`: script-terminating (throw, -ErrorAction Stop,
+ * $ErrorActionPreference = 'Stop'), which ends the whole line or script
+ * unless a try/catch takes it; otherwise statement-terminating (a binding
+ * error, a cmdlet's own terminating error): the next statement runs.
+ */
 class Terminate {
-  constructor(public record: string) {}
+  constructor(
+    public record: string,
+    public fatal = false,
+  ) {}
 }
 /** A question: the statement waits for the next line, then runs again with the answer. */
 class Suspend {
@@ -86,6 +95,9 @@ interface Ctx {
   mute: number;
   merged: unknown[] | null;
   ok: boolean;
+  // A script's own scope: its variables ($ErrorActionPreference included); `isolated` for a new
+  // powershell.exe (a scheduled task), which doesn't see the session's variables.
+  scope?: { vars: Record<string, { name: string; value: unknown }>; isolated: boolean };
 }
 
 // ——— Variables ———
@@ -152,6 +164,9 @@ function getVar(ctx: Ctx, name: string): unknown {
   if (low.startsWith('env:')) return envGet(g, name.slice(4));
   for (let i = ctx.frames.length - 1; i >= 0; i--) if (ctx.frames[i].has(low)) return ctx.frames[i].get(low);
   if (low === 'psitem') return getVar(ctx, '_');
+  const local = ctx.scope?.vars[low];
+  if (local) return local.value;
+  const global = ctx.scope?.isolated ? undefined : vars(g)[low];
   switch (low) {
     case 'true':
       return true;
@@ -172,13 +187,13 @@ function getVar(ctx: Ctx, name: string): unknown {
     case 'pshome':
       return 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0';
     case 'erroractionpreference':
-      return vars(g)[low]?.value ?? 'Continue';
+      return global?.value ?? 'Continue';
     case 'confirmpreference':
-      return vars(g)[low]?.value ?? 'High';
+      return global?.value ?? 'High';
     case 'host':
       return { type: 'InternalHost', props: { Name: 'ConsoleHost', Version: '5.1.20348.2700' }, text: 'System.Management.Automation.Internal.Host.InternalHost' } satisfies PSObject;
   }
-  return vars(g)[low]?.value ?? null;
+  return global?.value ?? null;
 }
 
 function setVar(ctx: Ctx, name: string, value: unknown): void {
@@ -198,7 +213,8 @@ function setVar(ctx: Ctx, name: string, value: unknown): void {
       return;
     }
   if (['true', 'false', 'null'].includes(low)) throw new Terminate(record(ctx, '', { message: `Cannot overwrite variable ${name} because it is read-only or constant.`, pos: 0, length: 1, category: 'WriteError', target: `${name}:String`, cmdlet: '', exception: 'SessionStateUnauthorizedAccessException', id: 'VariableNotWritable' }));
-  vars(ctx.game)[low] = { name, value };
+  if (ctx.scope) ctx.scope.vars[low] = { name, value };
+  else vars(ctx.game)[low] = { name, value };
 }
 
 // ——— Values ———
@@ -296,7 +312,7 @@ function convert(ctx: Ctx, v: unknown, type: string, pos: number): unknown {
       return truthy(v);
     case 'System.DateTime': {
       if (v instanceof PSDate) return v;
-      const ms = parseDate(text(v));
+      const ms = parseDate(text(v), DATES.today);
       return ms === null ? fail() : new PSDate(ms);
     }
     case 'System.Array':
@@ -801,9 +817,80 @@ function runStatement(ctx: Ctx, st: Statement): unknown[] {
     case 'throw': {
       const v = st.e ? evalExpr(ctx, st.e) : 'ScriptHalted';
       const message = text(v);
-      throw new Terminate(record(ctx, '', { message, pos: st.pos, length: 5, category: 'OperationStopped', target: `${message}:String`, cmdlet: '', exception: 'RuntimeException', id: message }, true));
+      throw new Terminate(record(ctx, '', { message, pos: st.pos, length: 5, category: 'OperationStopped', target: `${message}:String`, cmdlet: '', exception: 'RuntimeException', id: message }, true), true);
     }
+    case 'try':
+      return runTry(ctx, st);
   }
+}
+
+/**
+ * try/catch/finally (about_Try_Catch_Finally): a terminating error in the
+ * try block runs the first catch whose type matches (or a catch without
+ * type), with the error record in $_; a non-terminating error isn't caught
+ * (hence -ErrorAction Stop); finally always runs.
+ */
+function runTry(ctx: Ctx, st: Extract<Statement, { k: 'try' }>): unknown[] {
+  const out: unknown[] = [];
+  const all = (body: Statement[]) => {
+    for (const s of body) out.push(...runStatement(ctx, s));
+  };
+  try {
+    all(st.body);
+  } catch (e) {
+    if (e instanceof Suspend) throw e;
+    if (!(e instanceof Terminate) || !e.record) {
+      if (st.final) all(st.final);
+      throw e;
+    }
+    const rec = errorRecordObject(e.record);
+    const exception = String((rec.props.Exception as PSObject).fullType ?? '').replace(/^System\./, '').toLowerCase();
+    const matches = (type: string) => {
+      const low = type.toLowerCase().replace(/^system\./, '');
+      return ['exception', 'systemexception', 'management.automation.runtimeexception', 'management.automation.actionpreferencestopexception'].includes(low) || low === exception || low.split('.').at(-1) === exception.split('.').at(-1);
+    };
+    const handler = st.catches.find((c) => !c.types.length || c.types.some(matches));
+    if (!handler) {
+      if (st.final) all(st.final);
+      throw e;
+    }
+    errorList(ctx.game).unshift(rec.text);
+    const frame = new Map<string, unknown>([['_', rec]]);
+    ctx.frames.push(frame);
+    try {
+      all(handler.body);
+    } catch (inner) {
+      if (st.final && !(inner instanceof Suspend)) all(st.final);
+      throw inner;
+    } finally {
+      ctx.frames.pop();
+    }
+    if (st.final) all(st.final);
+    return out;
+  }
+  if (st.final) all(st.final);
+  return out;
+}
+
+/** An error record as an object ($_ in a catch block): its message, exception and ids. */
+function errorRecordObject(rec: string): PSObject {
+  const lines = rec.split('\n');
+  const message = lines[0].replace(/^[^:'"]+ : /, '');
+  const category = (lines.find((l) => l.includes('+ CategoryInfo')) ?? '').replace(/^.*?: /, '');
+  const exception = /\], (\w+)\s*$/.exec(category)?.[1] ?? 'RuntimeException';
+  const id = (lines.find((l) => l.includes('+ FullyQualifiedErrorId')) ?? '').replace(/^.*?: /, '').trim();
+  const ns = /^(RuntimeException|ActionPreferenceStopException|ParameterBindingException|CommandNotFoundException|ItemNotFoundException)$/.test(exception) ? 'System.Management.Automation' : exception === 'IOException' || exception === 'DirectoryNotFoundException' ? 'System.IO' : 'System';
+  return {
+    type: 'ErrorRecord',
+    fullType: 'System.Management.Automation.ErrorRecord',
+    text: message,
+    props: {
+      Exception: { type: 'Exception', fullType: `${ns}.${exception}`, text: `${ns}.${exception}: ${message}`, props: { Message: message } },
+      CategoryInfo: category,
+      FullyQualifiedErrorId: id,
+      TargetObject: '',
+    },
+  };
 }
 
 function runBlock(ctx: Ctx, block: PSScriptBlock, item?: unknown): unknown[] {
@@ -919,7 +1006,7 @@ function bindRaw(c: Cmdlet, def: Param, v: unknown): unknown {
   }
   if (/DateTime$/.test(type)) {
     if (v instanceof PSDate) return v;
-    const ms = parseDate(text(v));
+    const ms = parseDate(text(v), DATES.today);
     return ms === null ? failure(`Cannot bind parameter '${def.name}'. Cannot convert value "${text(v)}" to type "System.DateTime". Error: "String was not recognized as a valid DateTime."`) : new PSDate(ms);
   }
   if (def.list || type.endsWith('[]')) return enumerate(v).flat();
@@ -1009,9 +1096,13 @@ function ask(ctx: Ctx, prompt: string, lines: string[], secret: boolean, script:
   throw new Suspend(prompt, lines, secret);
 }
 
+/** The machine's day, for a time alone bound to a DateTime parameter (-At 3am). */
+const DATES = { today: 0 };
+
 function runCommand(ctx: Ctx, el: Element, input: unknown[] | null): unknown[] {
   const game = ctx.game;
   const w = windows(game);
+  DATES.today = w.clock;
   let name = el.name ?? '';
   if (el.call) {
     const target = evalExpr(ctx, el.call);
@@ -1079,12 +1170,18 @@ function runCommand(ctx: Ctx, el: Element, input: unknown[] | null): unknown[] {
     if (answer === 'L') noToAll = true;
     return answer === '' || answer === 'Y' || answer === 'A';
   };
+  // -ErrorVariable NAME (or +NAME to add to it): the command's errors, also kept in that variable.
+  const ev = p.ErrorVariable !== undefined ? text(p.ErrorVariable) : null;
+  const caught: unknown[] = ev?.startsWith('+') ? enumerate(getVar(ctx, ev.slice(1))) : [];
+  if (ev) setVar(ctx, ev.replace(/^\+/, ''), caught);
   const r: Run = {
     game,
     p,
     input,
     fail: (e) => {
-      if (pref === 'stop') throw new Terminate(record(ctx, name, { ...e, ...span, cmdlet: c.name }));
+      game.state.psFailures = ((game.state.psFailures as number | undefined) ?? 0) + 1;
+      if (ev) caught.push(errorRecordObject(record(ctx, name, { ...e, ...span, cmdlet: c.name })));
+      if (pref === 'stop') throw new Terminate(record(ctx, name, { ...e, ...span, cmdlet: c.name }), true);
       if (pref === 'silentlycontinue' || pref === 'ignore') {
         ctx.ok = false;
         if (pref === 'silentlycontinue') errorList(game).unshift(e.message);
@@ -1150,7 +1247,8 @@ function runPipeline(ctx: Ctx, p: Pipeline): unknown[] {
 /** A script's text run in this session (.\backup.ps1): its output, and its exit code through exit. */
 function runScriptFile(ctx: Ctx, source: string, file: string): unknown[] {
   const statements = parse(source.replace(/\r\n/g, '\n'));
-  const inner: Ctx = { ...ctx, source: source.replace(/\r\n/g, '\n'), file, frames: [...ctx.frames] };
+  // The script's own scope: it reads the session's variables, its assignments stay its own.
+  const inner: Ctx = { ...ctx, source: source.replace(/\r\n/g, '\n'), file, frames: [...ctx.frames], scope: { vars: {}, isolated: false } };
   if (statements instanceof ParseError) {
     ctx.out.push(parseErrorText(inner, statements));
     ctx.ok = false;
@@ -1159,9 +1257,19 @@ function runScriptFile(ctx: Ctx, source: string, file: string): unknown[] {
   const out: unknown[] = [];
   for (const st of statements) {
     try {
+      inner.ok = true;
       out.push(...runStatement(inner, st));
+      ctx.game.state.psSuccess = inner.ok;
+      if (!inner.ok) ctx.ok = false;
     } catch (e) {
-      if (e instanceof Terminate) {
+      // exit N ends the script (not the session): $LASTEXITCODE is N.
+      if (e instanceof Exit) {
+        vars(ctx.game).lastexitcode = { name: 'LASTEXITCODE', value: e.code };
+        ctx.ok = e.code === 0;
+        return out;
+      }
+      // A script-terminating error stops the script and goes on to its caller.
+      if (e instanceof Terminate && !e.fatal) {
         if (e.record) emitError(inner, e.record);
         continue;
       }
@@ -1627,6 +1735,7 @@ Object.assign(VIEWS, FILE_VIEWS, ACL_VIEWS, ACCOUNT_VIEWS, SERVICE_VIEWS, EVENT_
   GroupInfo: { columns: [{ label: 'Count', value: (o: PSObject) => o.props.Count, right: true }, { label: 'Name', value: (o: PSObject) => o.props.Name }, { label: 'Group', value: (o: PSObject) => `{${(o.props.Group as unknown[]).map(text).join(', ')}}` }] },
   GroupInfoNoElement: { columns: [{ label: 'Count', value: (o: PSObject) => o.props.Count, right: true }, { label: 'Name', value: (o: PSObject) => o.props.Name }] },
   MemberDefinition: { group: (o: PSObject) => `   TypeName: ${o.group}`, columns: ['Name', 'MemberType', 'Definition'].map((n) => ({ label: n, value: (o: PSObject) => o.props[n] })) },
+  ErrorRecord: { columns: [], asText: true },
   RuntimeType: { columns: ['IsPublic', 'IsSerial', 'Name', 'BaseType'].map((n) => ({ label: n, value: (o: PSObject) => o.props[n] })) },
   MatchInfo: { columns: [], asText: true },
   TimeSpan: { columns: [], list: true },
@@ -1696,6 +1805,8 @@ function runFrom(game: Shell, line: string, statements: Statement[], from: numbe
       if (e instanceof Terminate) {
         if (e.record) emitError(ctx, e.record);
         else ctx.ok = false;
+        // throw, -ErrorAction Stop: the rest of the line doesn't run.
+        if (e.fatal) break;
         continue;
       }
       throw e;
@@ -1729,21 +1840,51 @@ export function runPowerShell(game: Shell, line: string): string | null {
 
 /** A script run by a scheduled task (powershell.exe -File): its exit code. */
 export function runScript(game: Shell, source: string, path: string): number {
-  const ctx: Ctx = { game, source: source.replace(/\r\n/g, '\n'), file: toWindows(path), out: [], answers: [], asked: 0, frames: [], errors: [], commands: [], script: true, mute: 0, merged: null, ok: true };
+  // A new powershell.exe: its own variables ($ErrorActionPreference is Continue), not the session's.
+  const ctx: Ctx = { game, source: source.replace(/\r\n/g, '\n'), file: toWindows(path), out: [], answers: [], asked: 0, frames: [], errors: [], commands: [], script: true, mute: 0, merged: null, ok: true, scope: { vars: {}, isolated: true } };
   const statements = parse(ctx.source);
   if (statements instanceof ParseError) return 1;
-  for (const st of statements) {
-    try {
-      runStatement(ctx, st);
-    } catch (e) {
-      if (e instanceof Exit) return e.code;
-      // throw: the script stops, powershell.exe -File exits with 1.
-      if (e instanceof Terminate && /OperationStopped/.test(e.record)) return 1;
-      if (e instanceof Terminate || e instanceof Suspend) continue;
-      throw e;
+  const errorsBefore = errorList(game).length;
+  const failuresBefore = (game.state.psFailures as number | undefined) ?? 0;
+  const code = ((): number => {
+    for (const st of statements) {
+      try {
+        ctx.ok = true;
+        runStatement(ctx, st);
+        game.state.psSuccess = ctx.ok;
+      } catch (e) {
+        if (e instanceof Exit) return e.code;
+        // throw, -ErrorAction Stop: the script stops, powershell.exe -File exits with 1.
+        if (e instanceof Terminate && e.fatal) {
+          ctx.errors.push(e.record);
+          return 1;
+        }
+        if (e instanceof Terminate) {
+          if (e.record) ctx.errors.push(e.record);
+          continue;
+        }
+        if (e instanceof Suspend) continue;
+        throw e;
+      }
     }
-  }
-  return 0;
+    return 0;
+  })();
+  // The errors of that other process don't go to the session's $Error. What the runs were is
+  // kept (a story reads whether a script's failures showed in its exit code).
+  errorList(game).splice(0, errorList(game).length - errorsBefore);
+  const runs = (game.state.psScriptRuns ??= []) as ScriptRun[];
+  runs.push({ file: toWindows(path), code, failures: ((game.state.psFailures as number | undefined) ?? 0) - failuresBefore, errors: ctx.errors.map((x) => x.split('\n')[0]), at: windows(game).clock, who: game.who });
+  return code;
+}
+
+/** A script run by powershell.exe -File: its exit code, how many errors it met, the errors left unhandled. */
+export interface ScriptRun {
+  file: string;
+  code: number;
+  failures: number;
+  errors: string[];
+  at: number;
+  who: string;
 }
 scripting.run = (game, source, path) => runScript(game, source, path);
 SHELL_HOOKS.script = (game, source, file) => runScript(game, source, file);

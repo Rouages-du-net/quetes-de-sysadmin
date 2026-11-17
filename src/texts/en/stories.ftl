@@ -62,4 +62,4 @@ story-order-book = The Order Book
 story-mixed-fleet = Next Door Windows
     .summary = An architects' office runs a Linux server next to a Windows file server: a script written on Windows that bash can't run, the Windows share mounted on Linux the right way, and a look inside the Windows server through its OpenSSH and PowerShell.
 story-music-school = The Music School
-    .summary = A community music school's file server is a Windows Server, and you are its new admin, over ssh and PowerShell: the teachers can't save in their share (share and NTFS permissions), then the booking app's service won't start after its account's password was changed.
+    .summary = A community music school's file server is a Windows Server, and you are its new admin, over ssh and PowerShell: the teachers can't save in their share (share and NTFS permissions), the booking app's service won't start after its account's password was changed, its forgotten debug logs fill the data volume, and the nightly backup has failed in silence for weeks.

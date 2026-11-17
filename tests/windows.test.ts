@@ -319,6 +319,98 @@ describe('Scheduled tasks', () => {
   });
 });
 
+describe('Errors in scripts: try/catch, -ErrorAction Stop, script scope', () => {
+  it('try/catch takes a terminating error only; finally always runs; catch [Type]', () => {
+    const s = ledger();
+    expect(run(s, 'try { Get-Item D:\\nope -ErrorAction Stop; "not here" } catch { "caught: $($_.Exception.Message)" } finally { "done" }')).toBe("caught: Cannot find path 'D:\\nope' because it does not exist.\ndone");
+    // A non-terminating error isn't caught: the next statement runs.
+    const loose = run(s, 'try { Get-Item D:\\nope; "after" } catch { "caught" }');
+    expect(loose).toContain("Get-Item : Cannot find path 'D:\\nope' because it does not exist.");
+    expect(loose).toMatch(/after$/);
+    expect(run(s, 'try { throw "boom" } catch [System.IO.IOException] { "io" } catch { "other: $_" }')).toBe('other: boom');
+    expect(run(s, 'try { "x" }')).toContain('The Try statement is missing its Catch or Finally block.');
+    // A throw ends the line.
+    expect(run(s, 'throw "stop"; "never"')).not.toMatch(/^never$/m);
+  });
+
+  it('-ErrorVariable keeps a command\'s errors; $? after a failure', () => {
+    const s = ledger();
+    expect(run(s, 'Get-Item D:\\nope -ErrorVariable oops -ErrorAction SilentlyContinue', '$oops.Count', '"$oops"')).toBe("1\nCannot find path 'D:\\nope' because it does not exist.");
+    expect(run(s, 'Get-Item D:\\nope -ErrorAction SilentlyContinue', '$?')).toBe('False');
+  });
+
+  it('a task\'s script fails loudly with $ErrorActionPreference = Stop, try/catch and exit 1; its variables are its own', () => {
+    const s = ledger();
+    run(s, 'icacls D:\\Shares\\Finance /deny "svc_backup:(OI)(CI)(R)"');
+    run(s, `Set-Content C:\\Scripts\\backup.ps1 -Value '$ErrorActionPreference = "Stop"', 'try { Copy-Item D:\\Shares\\Finance\\* D:\\Backup -Recurse -Force } catch { Add-Content D:\\Backup\\backup.log "FAILED: $_"; exit 1 }'`);
+    run(s, 'Start-ScheduledTask "Nightly Backup"');
+    expect(tasks(s)[0].lastResult).toBe(1);
+    expect(run(s, 'Get-Content D:\\Backup\\backup.log')).toContain("FAILED: Access to the path 'D:\\Shares\\Finance\\budget.xlsx' is denied.");
+    // The script's preference stayed in its own process.
+    expect(run(s, '$ErrorActionPreference')).toBe('Continue');
+    // Without a catch, Stop alone ends the script: powershell.exe -File returns 1.
+    run(s, `Set-Content C:\\Scripts\\backup.ps1 -Value 'Copy-Item D:\\Shares\\Finance\\* D:\\Backup -Recurse -ErrorAction Stop', 'Add-Content D:\\Backup\\backup.log "done"'`);
+    run(s, 'Start-ScheduledTask "Nightly Backup"');
+    expect(tasks(s)[0].lastResult).toBe(1);
+    // exit N in .\script.ps1 ends the script, not the session.
+    run(s, `Set-Content C:\\Scripts\\exit.ps1 -Value '"one"', 'exit 3', '"two"'`);
+    expect(run(s, 'C:\\Scripts\\exit.ps1', '$LASTEXITCODE')).toBe('one\n3');
+    expect(s.prompt()).toMatch(/^PS /);
+  });
+});
+
+describe('Copy-Item -Recurse, files in use, compact', () => {
+  it('copies what it can read and gives an error for each folder it can\'t, merging into an existing folder', () => {
+    const s = ledger();
+    run(s, 'New-Item D:\\Shares\\Finance\\Payroll -ItemType Directory', 'Set-Content D:\\Shares\\Finance\\Payroll\\march.txt "x"', 'icacls D:\\Shares\\Finance\\Payroll /inheritance:r /grant "Administrators:(OI)(CI)(F)"');
+    run(s, 'New-Item D:\\Backup\\Finance -ItemType Directory', 'Set-Content D:\\Backup\\Finance\\old.txt "kept"');
+    s.who = 'svc_backup';
+    const out = run(s, 'Copy-Item D:\\Shares\\Finance D:\\Backup -Recurse -Force');
+    s.who = 'you';
+    expect(out).toContain("Copy-Item : Access to the path 'D:\\Shares\\Finance\\Payroll' is denied.");
+    expect(s.find('/D/Backup/Finance/budget.xlsx')).not.toBeNull();
+    expect(s.find('/D/Backup/Finance/old.txt')).not.toBeNull();
+    expect(s.find('/D/Backup/Finance/Payroll')).toBeNull();
+  });
+
+  it('a file a running service holds open can\'t be removed nor moved; compact compresses, except that file', () => {
+    const s = ledger();
+    const svc = windows(s).services.find((x) => x.name === 'BackupAgent')!;
+    svc.opens = ['D:\\Backup\\agent.log'];
+    run(s, 'Set-Content D:\\Backup\\agent.log "line"', 'Set-Content D:\\Backup\\old.log "line"');
+    expect(run(s, 'Remove-Item D:\\Backup\\agent.log')).toContain("Remove-Item : Cannot remove item D:\\Backup\\agent.log: The process cannot access the file 'D:\\Backup\\agent.log' because it is being used by another process.");
+    expect(run(s, 'Move-Item D:\\Backup\\agent.log D:\\agent.log')).toContain('being used by another process');
+    expect(run(s, 'compact /c D:\\Backup\\*.log')).toContain('agent.log [ERR]');
+    const out = run(s, 'compact /c /i D:\\Backup\\*.log');
+    expect(out).toMatch(/old\.log +\d+ : +\d+ = [\d.]+ to 1 \[OK\]/);
+    expect(out).toContain('1 files within 1 directories were compressed.');
+    run(s, 'Stop-Service BackupAgent -Force');
+    run(s, 'Remove-Item D:\\Backup\\agent.log');
+    expect(s.find('/D/Backup/agent.log')).toBeNull();
+  });
+});
+
+describe('Registering a task', () => {
+  it('New-ScheduledTaskAction, New-ScheduledTaskTrigger, Register-ScheduledTask (password checked, name taken, -Force)', () => {
+    const s = ledger();
+    run(s, '$action = New-ScheduledTaskAction -Execute powershell.exe -Argument "-NoProfile -File C:\\Scripts\\backup.ps1"');
+    expect(run(s, '$action')).toContain('Execute          : powershell.exe');
+    run(s, '$trigger = New-ScheduledTaskTrigger -Daily -At 3am');
+    expect(run(s, '$trigger')).toMatch(/StartBoundary +: 2029-11-\d\dT03:00:00/);
+    expect(run(s, 'New-ScheduledTaskTrigger -Daily -Weekly -At 3am')).toContain('Parameter set cannot be resolved using the specified named parameters.');
+    expect(run(s, 'Register-ScheduledTask -TaskName "Copy" -Action $action -Trigger $trigger -User svc_backup -Password wrong')).toContain('The user name or password is incorrect.');
+    expect(run(s, 'Register-ScheduledTask -TaskName "Copy" -Action $action -Trigger $trigger -User svc_backup -Password Backup-2029-svc')).toMatch(/\\ +Copy +Ready/);
+    expect(run(s, 'Register-ScheduledTask -TaskName "Copy" -Action $action -Trigger $trigger -User svc_backup -Password Backup-2029-svc')).toContain('Cannot create a file when that file already exists.');
+    run(s, '$p = New-ScheduledTaskPrincipal -UserId SYSTEM -LogonType ServiceAccount', 'Register-ScheduledTask -TaskName "Copy" -Action $action -Trigger $trigger -Principal $p -Force');
+    const copy = tasks(s).find((t) => t.name === 'Copy')!;
+    expect(copy.user).toBe('SYSTEM');
+    expect(run(s, 'Get-ScheduledTaskInfo Copy')).toContain('LastTaskResult     : 267011');
+    advanceWindows(s, windows(s).clock + 86_400_000);
+    expect(copy.lastResult).toBe(0);
+    expect(s.find('/D/Backup/budget.xlsx')).not.toBeNull();
+  });
+});
+
 describe('Event logs', () => {
   it('Get-WinEvent -ListLog, an unknown log, a disabled history', () => {
     const s = ledger({ taskHistory: false });

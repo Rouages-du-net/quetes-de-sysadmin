@@ -10,15 +10,24 @@
 // (https://learn.microsoft.com/powershell/module/scheduledtasks/?view=windowsserver2022-ps),
 // schtasks query, run, change
 // (https://learn.microsoft.com/windows-server/administration/windows-commands/schtasks-query).
-// Differences (docs/SCENARIOS.md): no Register-ScheduledTask nor
-// New-ScheduledTaskAction/Trigger (a story declares its tasks), one
-// action per task, schtasks /query /v shows a subset of its fields.
+// A new task: New-ScheduledTaskAction (-Execute, -Argument,
+// -WorkingDirectory), New-ScheduledTaskTrigger (-Daily, -Weekly, -Once,
+// -AtStartup, -AtLogOn, -At), New-ScheduledTaskPrincipal (-UserId,
+// -LogonType, -RunLevel), then Register-ScheduledTask (-Action, -Trigger,
+// -User and -Password, or -Principal; -Force replaces a task of that name).
+// Sources: Register-ScheduledTask, New-ScheduledTaskAction,
+// New-ScheduledTaskTrigger, New-ScheduledTaskPrincipal (same module).
+// Differences (docs/SCENARIOS.md): one action per task runs (the first),
+// no settings (New-ScheduledTaskSettingsSet), a task registered without a
+// password runs at night as if its user were logged on, schtasks /query
+// /v shows a subset of its fields, no schtasks /create.
 
 import type { Shell } from '../shell';
-import { longDate, windows } from '../windows';
+import { logEvent, longDate, TASK_LOG, windows } from '../windows';
 import { findUser, logonError } from '../windows-accounts';
 import { RUNNING, findTask, hexResult, nextRun, runTask, taskUser, tasks, type WinTask } from '../windows-tasks';
 import { PSDate, arr, isObject, str, values, wildcard, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
+import type { TaskAction, TaskTrigger } from '../windows-tasks';
 
 const MODULE = 'ScheduledTasks';
 
@@ -137,6 +146,128 @@ function unregister(r: Run): unknown[] {
   return [];
 }
 
+// ——— A new task: its action, trigger, principal, then Register-ScheduledTask ———
+
+const CIM = 'Microsoft.Management.Infrastructure.CimInstance';
+const actionObject = (a: TaskAction): PSObject => ({
+  type: 'TaskExecAction',
+  fullType: `${CIM}#Root/Microsoft/Windows/TaskScheduler/MSFT_TaskExecAction`,
+  data: { action: a },
+  text: 'MSFT_TaskExecAction',
+  props: { Id: '', Arguments: a.arguments ?? '', Execute: a.execute, WorkingDirectory: a.workingDirectory ?? '', PSComputerName: '' },
+});
+const iso = (ms: number) => new Date(ms).toISOString().slice(0, 19);
+const triggerObject = (tr: TaskTrigger): PSObject => ({
+  type: 'TaskTrigger',
+  fullType: `${CIM}#Root/Microsoft/Windows/TaskScheduler/MSFT_Task${tr.kind === 'AtStartup' ? 'Boot' : tr.kind === 'AtLogOn' ? 'Logon' : tr.kind === 'Once' ? 'Time' : tr.kind}Trigger`,
+  data: { trigger: tr },
+  text: `MSFT_Task${tr.kind === 'AtStartup' ? 'Boot' : tr.kind === 'AtLogOn' ? 'Logon' : tr.kind === 'Once' ? 'Time' : tr.kind}Trigger`,
+  props: {
+    Enabled: tr.enabled !== false,
+    EndBoundary: '',
+    ExecutionTimeLimit: '',
+    Id: '',
+    Repetition: 'MSFT_TaskRepetitionPattern',
+    RandomDelay: '',
+    StartBoundary: tr.kind === 'AtStartup' || tr.kind === 'AtLogOn' ? '' : iso(tr.start),
+    ...(tr.kind === 'Daily' ? { DaysInterval: tr.every ?? 1 } : {}),
+    ...(tr.kind === 'Weekly' ? { DaysOfWeek: (tr.days ?? []).reduce((m, d) => m | (1 << d), 0), WeeksInterval: 1 } : {}),
+    PSComputerName: '',
+  },
+});
+interface Principal {
+  user: string;
+  logon: WinTask['logon'];
+  runLevel: 'Limited' | 'Highest';
+}
+const principalObject = (p: Principal): PSObject => ({
+  type: 'TaskPrincipal',
+  fullType: `${CIM}#Root/Microsoft/Windows/TaskScheduler/MSFT_TaskPrincipal2`,
+  data: { principal: p },
+  text: 'MSFT_TaskPrincipal2',
+  props: { DisplayName: '', GroupId: '', Id: 'Author', LogonType: p.logon, RunLevel: p.runLevel, UserId: p.user, ProcessTokenSidType: 'Default', RequiredPrivilege: '', PSComputerName: '' },
+});
+
+const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const ambiguous = (r: Run, cmdlet: string): never =>
+  r.stop({ message: 'Parameter set cannot be resolved using the specified named parameters.', category: 'InvalidArgument', target: ':', exception: 'ParameterBindingException', id: `AmbiguousParameterSet,${cmdlet}` });
+
+function newTrigger(r: Run): unknown[] {
+  const { p } = r;
+  const kinds = (['Once', 'Daily', 'Weekly', 'AtStartup', 'AtLogOn'] as const).filter((k) => p[k]);
+  if (kinds.length !== 1) ambiguous(r, 'New-ScheduledTaskTrigger');
+  const kind = kinds[0];
+  const at = p.At instanceof PSDate ? p.At.ms : null;
+  if ((kind === 'Once' || kind === 'Daily' || kind === 'Weekly') && at === null) ambiguous(r, 'New-ScheduledTaskTrigger');
+  const tr: TaskTrigger = { kind, start: at ?? windows(r.game).clock };
+  if (kind === 'Daily' && p.DaysInterval !== undefined) tr.every = Math.max(1, Number(p.DaysInterval));
+  if (kind === 'Weekly') {
+    const days = arr(p.DaysOfWeek).map((d) => DAYS.indexOf(d.toLowerCase()));
+    if (!days.length) ambiguous(r, 'New-ScheduledTaskTrigger');
+    const bad = arr(p.DaysOfWeek).find((d) => !DAYS.includes(d.toLowerCase()));
+    if (bad)
+      r.stop({ message: `Cannot process argument transformation on parameter 'DaysOfWeek'. Cannot convert value "${bad}" to type "Microsoft.PowerShell.Cmdletization.GeneratedTypes.ScheduledTask.DaysOfWeekEnum[]".`, category: 'InvalidData', target: ':', exception: 'ParameterBindingArgumentTransformationException', id: 'ParameterArgumentTransformationError,New-ScheduledTaskTrigger' });
+    tr.days = days;
+  }
+  return [triggerObject(tr)];
+}
+
+/** The account a new task runs as: SYSTEM, a local user with its password, or the user without one. */
+function principalFor(r: Run, user: string | null, password: string | undefined, cmdlet: string): Principal | null {
+  const game = r.game;
+  const name = user ?? game.who;
+  if (/^(nt authority\\)?system$/i.test(name)) return { user: 'SYSTEM', logon: 'ServiceAccount', runLevel: 'Limited' };
+  const u = findUser(game, name);
+  if (!u || (password !== undefined && logonError(game, u.name, password) === 1326)) {
+    r.fail({ message: u ? 'The user name or password is incorrect.' : 'No mapping between account names and security IDs was done.', category: u ? 'AuthenticationError' : 'NotSpecified', target: 'PS_ScheduledTask:Root/Microsoft/...S_ScheduledTask', exception: 'CimException', id: `HRESULT ${u ? '0x8007052e' : '0x80070534'},${cmdlet}` });
+    return null;
+  }
+  return { user: `${windows(game).computer}\\${u.name}`, logon: password !== undefined ? 'Password' : 'InteractiveToken', runLevel: 'Limited' };
+}
+
+function register(r: Run): unknown[] {
+  const { game, p } = r;
+  const name = str(p.TaskName);
+  let path = p.TaskPath !== undefined ? str(p.TaskPath) : '\\';
+  if (!path.startsWith('\\')) path = `\\${path}`;
+  if (!path.endsWith('\\')) path = `${path}\\`;
+  const actions = values(p.Action).filter(isObject).map((x) => (x.data as { action?: TaskAction })?.action).filter((x): x is TaskAction => !!x);
+  if (!actions.length)
+    r.stop({ message: "Cannot validate argument on parameter 'Action'. The argument is null or empty. Provide an argument that is not null or empty, and then try the command again.", category: 'InvalidData', target: ':', exception: 'ParameterBindingValidationException', id: 'ParameterArgumentValidationError,Register-ScheduledTask' });
+  const triggers = values(p.Trigger).filter(isObject).map((x) => (x.data as { trigger?: TaskTrigger })?.trigger).filter((x): x is TaskTrigger => !!x);
+  const given = values(p.Principal).filter(isObject).map((x) => (x.data as { principal?: Principal })?.principal).find(Boolean);
+  let principal: Principal | null;
+  if (given) principal = given.user === 'SYSTEM' ? given : principalFor(r, given.user, undefined, 'Register-ScheduledTask') && { ...given, user: `${windows(game).computer}\\${findUser(game, given.user)!.name}` };
+  else principal = principalFor(r, p.User !== undefined ? str(p.User) : null, p.Password !== undefined ? str(p.Password) : undefined, 'Register-ScheduledTask');
+  if (!principal) return [];
+  if (p.RunLevel !== undefined) principal.runLevel = /^highest$/i.test(str(p.RunLevel)) ? 'Highest' : 'Limited';
+  const existing = findTask(game, name, path);
+  if (existing && !p.Force) {
+    r.fail({ message: 'Cannot create a file when that file already exists.', category: 'ResourceExists', target: 'PS_ScheduledTask:Root/Microsoft/...S_ScheduledTask', exception: 'CimException', id: 'HRESULT 0x800700b7,Register-ScheduledTask' });
+    return [];
+  }
+  if (!r.should('Register-ScheduledTask', `${path}${name}`)) return [];
+  const list = tasks(game);
+  if (existing) list.splice(list.indexOf(existing), 1);
+  const t: WinTask = {
+    path,
+    name,
+    state: 'Ready',
+    author: `${windows(game).computer}\\${game.who}`,
+    description: p.Description !== undefined ? str(p.Description) : undefined,
+    user: principal.user,
+    logon: principal.logon,
+    ...(principal.logon === 'Password' ? { password: str(p.Password) } : {}),
+    runLevel: principal.runLevel,
+    actions,
+    triggers,
+    lastResult: 267011,
+  };
+  list.push(t);
+  logEvent(game, TASK_LOG, { id: 106, level: 'Information', provider: 'Microsoft-Windows-TaskScheduler', message: `User "${windows(game).computer}\\${game.who}"  registered Task Scheduler task "${path}${name}"` });
+  return [taskObject(game, t)];
+}
+
 const TN = { name: 'TaskName', list: true };
 const TP = { name: 'TaskPath', type: 'System.String' };
 const IN = { name: 'InputObject', type: 'Microsoft.Management.Infrastructure.CimInstance' };
@@ -156,11 +287,43 @@ export const TASK_CMDLETS: Cmdlet[] = [
   { name: 'Disable-ScheduledTask', module: MODULE, version: '1.0.0.0', kind: 'Function', writes: true, positional: ['TaskName', 'TaskPath'], params: [TN, TP, IN], run: (r) => setState(r, 'Disable-ScheduledTask', 'Disabled') },
   { name: 'Set-ScheduledTask', module: MODULE, version: '1.0.0.0', kind: 'Function', writes: true, positional: ['TaskName', 'TaskPath'], params: [TN, TP, IN, { name: 'User', type: 'System.String' }, { name: 'Password', type: 'System.String' }], run: setTask },
   { name: 'Unregister-ScheduledTask', module: MODULE, version: '1.0.0.0', kind: 'Function', writes: true, positional: ['TaskName', 'TaskPath'], params: [TN, TP, IN], run: unregister },
+  {
+    name: 'New-ScheduledTaskAction', module: MODULE, version: '1.0.0.0', kind: 'Function', positional: ['Execute', 'Argument', 'WorkingDirectory'],
+    params: [{ name: 'Execute', type: 'System.String' }, { name: 'Argument', type: 'System.String' }, { name: 'WorkingDirectory', type: 'System.String' }, { name: 'Id', type: 'System.String' }],
+    run: (r) => {
+      if (r.p.Execute === undefined) r.stop({ message: "Cannot process command because of one or more missing mandatory parameters: Execute.", category: 'InvalidArgument', target: ':', exception: 'ParameterBindingException', id: 'MissingMandatoryParameter,New-ScheduledTaskAction' });
+      return [actionObject({ execute: str(r.p.Execute), ...(r.p.Argument !== undefined ? { arguments: str(r.p.Argument) } : {}), ...(r.p.WorkingDirectory !== undefined ? { workingDirectory: str(r.p.WorkingDirectory) } : {}) })];
+    },
+  },
+  {
+    name: 'New-ScheduledTaskTrigger', module: MODULE, version: '1.0.0.0', kind: 'Function',
+    params: [{ name: 'Once', switch: true }, { name: 'Daily', switch: true }, { name: 'Weekly', switch: true }, { name: 'AtStartup', switch: true }, { name: 'AtLogOn', switch: true }, { name: 'At', type: 'System.DateTime' }, { name: 'DaysInterval', type: 'System.UInt32' }, { name: 'DaysOfWeek', list: true, type: 'Microsoft.PowerShell.Cmdletization.GeneratedTypes.ScheduledTask.DaysOfWeekEnum[]' }, { name: 'User', type: 'System.String' }],
+    run: newTrigger,
+  },
+  {
+    name: 'New-ScheduledTaskPrincipal', module: MODULE, version: '1.0.0.0', kind: 'Function', positional: ['UserId'],
+    params: [{ name: 'UserId', type: 'System.String' }, { name: 'LogonType', type: 'Microsoft.PowerShell.Cmdletization.GeneratedTypes.ScheduledTask.LogonTypeEnum' }, { name: 'RunLevel', type: 'Microsoft.PowerShell.Cmdletization.GeneratedTypes.ScheduledTask.RunLevelEnum' }],
+    run: (r) => {
+      const user = r.p.UserId !== undefined ? str(r.p.UserId) : r.game.who;
+      const system = /^(nt authority\\)?system$/i.test(user);
+      const logon = r.p.LogonType !== undefined ? (str(r.p.LogonType) as Principal['logon']) : system ? 'ServiceAccount' : 'InteractiveToken';
+      const runLevel = r.p.RunLevel !== undefined && /^highest$/i.test(str(r.p.RunLevel)) ? 'Highest' : 'Limited';
+      return [principalObject({ user: system ? 'SYSTEM' : user.replace(/^.*\\/, ''), logon, runLevel })];
+    },
+  },
+  {
+    name: 'Register-ScheduledTask', module: MODULE, version: '1.0.0.0', kind: 'Function', writes: true, positional: ['TaskName', 'TaskPath', 'Action', 'Trigger', 'User', 'Password'],
+    params: [{ name: 'TaskName', type: 'System.String' }, TP, { name: 'Action', list: true, type: `${CIM}[]` }, { name: 'Trigger', list: true, type: `${CIM}[]` }, { name: 'User', type: 'System.String' }, { name: 'Password', type: 'System.String' }, { name: 'Principal', type: CIM }, { name: 'RunLevel', type: 'Microsoft.PowerShell.Cmdletization.GeneratedTypes.ScheduledTask.RunLevelEnum' }, { name: 'Description', type: 'System.String' }, { name: 'Force', switch: true }],
+    run: register,
+  },
 ];
 
 export const TASK_VIEWS: Record<string, View> = {
   ScheduledTask: { columns: [{ label: 'TaskPath', value: (o) => o.props.TaskPath }, { label: 'TaskName', value: (o) => o.props.TaskName }, { label: 'State', value: (o) => o.props.State }], listProps: ['Actions', 'Author', 'Description', 'Principal', 'State', 'TaskName', 'TaskPath', 'Triggers', 'URI'] },
   ScheduledTaskInfo: { columns: [], list: true },
+  TaskExecAction: { columns: [], list: true },
+  TaskTrigger: { columns: [], list: true },
+  TaskPrincipal: { columns: [], list: true },
 };
 
 // ——— schtasks ———

@@ -42,6 +42,8 @@ export type File = {
   charset?: 'latin1' | 'binary';
   // A program compiled by cobc (see cobol.ts): what runs when it is executed.
   program?: Program;
+  // NTFS compression (compact /c on Windows): the bytes it takes on the volume.
+  onDisk?: number;
 } & Rights;
 // What the simulated gpg stores on an encrypted, signed or key file.
 export interface CryptoBlob {

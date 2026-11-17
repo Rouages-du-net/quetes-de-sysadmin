@@ -36,7 +36,7 @@ function userObject(game: Shell, u: WinUser): PSObject {
     text: u.name,
     data: u,
     props: {
-      AccountExpires: null,
+      AccountExpires: u.accountExpires ? new PSDate(u.accountExpires) : null,
       Description: u.description,
       Enabled: u.enabled,
       FullName: u.fullName,
@@ -323,7 +323,17 @@ function netUser(game: Shell, args: string[]) {
   if (rest.length) {
     for (const a of rest) {
       const m = /^\/active:(yes|no)$/i.exec(a);
+      // /expires: the ACCOUNT's expiry date (never, or mm/dd/yyyy), not the password's.
+      const exp = /^\/expires:(.+)$/i.exec(a);
       if (m) u.enabled = m[1].toLowerCase() === 'yes';
+      else if (exp) {
+        if (/^never$/i.test(exp[1])) u.accountExpires = null;
+        else {
+          const d = /^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(exp[1]);
+          if (!d) return { out: '', err: 'The syntax of this command is:\n\nNET USER\n[username [password | *] [options]] [/DOMAIN]\n\nMore help is available by typing NET HELPMSG 3505.\n', code: 1 };
+          u.accountExpires = Date.UTC(+d[3] < 100 ? 2000 + +d[3] : +d[3], +d[1] - 1, +d[2]);
+        }
+      }
       else if (/^\/delete$/i.test(a)) {
         delete users(game)[u.name];
         delete w.passwords[u.name];
@@ -347,7 +357,7 @@ function netUser(game: Shell, args: string[]) {
     pad("User's comment", ''),
     pad('Country/region code', '000 (System Default)'),
     pad('Account active', yesNo(u.enabled)),
-    pad('Account expires', 'Never'),
+    pad('Account expires', when(u.accountExpires ?? null)),
     '',
     pad('Password last set', when(u.passwordLastSet)),
     pad('Password expires', when(passwordExpires(game, u))),

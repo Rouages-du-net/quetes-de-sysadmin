@@ -10,8 +10,9 @@
 // nightly backup task under svc_backup (C:\Scripts\backup.ps1 copies the
 // shares to D:\Backup), and the logs of both on D:\Logs.
 // OpenSSH lands in cmd.exe (no DefaultShell set): `powershell` switches.
-// Chapters 3 and 4 (planned) reuse this world: the logs filling D:, and the
-// backup task that silently stopped (see docs/SCENARIOS.md).
+// Chapters 3 and 4 reuse this world: the Agenda's logs filling D:
+// (log-flood.ts), and the backup task that silently stopped
+// (silent-backup.ts).
 // Sources (Microsoft Learn): "Share and NTFS permissions"
 // (https://learn.microsoft.com/troubleshoot/windows-server/networking/permissions-on-shared-folders-and-ntfs),
 // "Service user accounts" (https://learn.microsoft.com/windows/win32/services/service-user-accounts),
@@ -65,6 +66,19 @@ const GROUPS = [
   { name: 'Office', description: 'Registrations, fees, planning' },
 ];
 
+export const AGENDA_INI = '/C/ProgramData/Agenda/agenda.ini';
+export const AGENDA_LOG = 'D:\\Logs\\Agenda\\agenda.log';
+
+/** The Agenda's configuration file, with its log level. */
+export const agendaIni = (level: string) =>
+  ['[server]', 'port=8080', 'database=C:\\ProgramData\\Agenda\\agenda.db', '', '[log]', `file=${AGENDA_LOG}`, '; debug, info, warning or error (debug: every request, for troubleshooting only)', `level=${level}`, '; a new file each day: at midnight agenda.log becomes agenda-YYYY-MM-DD.log', 'rotate=daily'].join('\r\n');
+
+/** The log level in the Agenda's configuration file as it is now (null: none). */
+export function iniLevel(game: Game): string | null {
+  const text = game.read(AGENDA_INI) ?? '';
+  return /^\s*level\s*=\s*(\w+)/im.exec(text)?.[1].toLowerCase() ?? null;
+}
+
 /** The Agenda: the lesson and room booking app, a service under its own local account. */
 export const AGENDA: WinService = {
   name: 'Agenda',
@@ -76,6 +90,12 @@ export const AGENDA: WinService = {
   path: '"C:\\Program Files\\Agenda\\agenda-server.exe" --config "C:\\ProgramData\\Agenda\\agenda.ini"',
   process: 'agenda-server.exe',
   description: 'Bookings of lessons and rooms for the music school (web app on port 8080).',
+  // Its log, open while it runs.
+  opens: [AGENDA_LOG],
+  // It reads its configuration when it starts (the log level it then keeps).
+  onStart: (game) => {
+    game.state.agendaLevel = iniLevel(game) ?? 'info';
+  },
 };
 
 /** The nightly backup: C:\Scripts\backup.ps1 under svc_backup, at 1:30. */
@@ -127,6 +147,21 @@ export interface StaveOptions {
   home?: (t: Translate) => Record<string, Node>;
   // Extra log files (D:\Logs\Agenda), for a chapter that needs them.
   agendaLogs?: Record<string, Node>;
+  // The current agenda.log, if a chapter writes its own (its text, size and last write).
+  agendaLog?: File;
+  // The Agenda's log level in agenda.ini (info by default).
+  agendaLevel?: string;
+  // The free space on D: (the volume's base is computed for it), when a chapter sets it.
+  dataFree?: number;
+  // svc_backup's password (when it was set, in days before the clock; whether it never expires).
+  backupPasswordAge?: number;
+  backupNeverExpires?: boolean;
+  // A chapter's own changes to the shares' folders (a new folder, new files).
+  shares?: (t: Translate, shares: Directory) => void;
+  // The Task Scheduler's history (Microsoft-Windows-TaskScheduler/Operational) enabled.
+  taskHistory?: boolean;
+  // The backup log's last nights end at this time (the clock by default).
+  backupLogUntil?: number;
 }
 
 /** The options of stave's windowsMachine(), in the language (player, computer's name). */
@@ -145,7 +180,16 @@ export function staveOptions(t: Translate, o: StaveOptions): WindowsOptions {
     { name: 'Office', path: 'D:\\Shares\\Office', description: 'Registrations and fees', change: [], access: [{ account: `${C}\\Office`, right: 'Change' }, { account: 'BUILTIN\\Administrators', right: 'Full' }] },
     { name: 'Public', path: 'D:\\Shares\\Public', description: 'Posters, concert programmes', change: [], access: [{ account: 'Everyone', right: 'Read' }, { account: `${C}\\Teachers`, right: 'Change' }, { account: `${C}\\Office`, right: 'Change' }] },
   ];
-  const users = USERS.map((u) => (u.name === 'svc_agenda' ? { ...u, password: o.agendaPassword ?? u.password, passwordAge: o.agendaPasswordAge ?? u.passwordAge } : u));
+  const users = USERS.map((u) =>
+    u.name === 'svc_agenda'
+      ? { ...u, password: o.agendaPassword ?? u.password, passwordAge: o.agendaPasswordAge ?? u.passwordAge }
+      : u.name === 'svc_backup'
+        ? { ...u, passwordAge: o.backupPasswordAge ?? u.passwordAge, neverExpires: o.backupNeverExpires ?? u.neverExpires }
+        : u,
+  );
+  // D:'s base: what the system uses there, or what leaves the chapter's free space.
+  const dataSize = 500 * GIB;
+  const dataBase = o.dataFree === undefined ? Math.round(1.2 * GIB) : dataSize - o.dataFree - treeBytes(dir(dataDrive(t, o)));
   return {
     computer: C,
     player: player(t),
@@ -155,7 +199,7 @@ export function staveOptions(t: Translate, o: StaveOptions): WindowsOptions {
     groups: GROUPS,
     volumes: [
       { letter: 'C', label: '', size: Math.round(126.4 * GIB), base: Math.round(24.8 * GIB) },
-      { letter: 'D', label: 'Data', size: 500 * GIB, base: Math.round(1.2 * GIB) },
+      { letter: 'D', label: 'Data', size: dataSize, base: dataBase },
     ],
     network: { address: ADDRESS, mask: '255.255.255.0', gateway: '192.0.2.1', dns: '192.0.2.1', suffix: 'internal' },
     // No DefaultShell: OpenSSH lands in cmd.exe (chapter 1's first lesson).
@@ -164,12 +208,28 @@ export function staveOptions(t: Translate, o: StaveOptions): WindowsOptions {
     shares,
     tasks: [{ ...backupTask(t), lastRun: o.clock - ((o.clock - 1.5 * H) % DAY) }],
     events: o.events ?? quietEvents(o.clock),
-    taskHistory: false,
+    taskHistory: o.taskHistory ?? false,
   };
 }
 
-/** The music school's files on D: (shares, backup, logs), with their NTFS permissions. */
-function dataDrive(t: Translate, o: StaveOptions): Record<string, Node> {
+/** The bytes of a tree as the game counts them (a file's size, or its text's length). */
+function treeBytes(n: Node): number {
+  if (n.type === 'directory') return Object.values(n.children).reduce((sum, c) => sum + treeBytes(c), 0);
+  return n.size ?? (typeof n.content === 'string' ? new TextEncoder().encode(n.content).length : 0);
+}
+
+/** A copy of a tree without its permissions (what a copy leaves in the backup: inherited ones). */
+function plainCopy(n: Node): Node {
+  if (n.type === 'file') {
+    const { acl: _acl, ...rest } = n;
+    void _acl;
+    return { ...rest };
+  }
+  return { type: 'directory', children: Object.fromEntries(Object.entries(n.children).map(([k, c]) => [k, plainCopy(c)])) };
+}
+
+/** The departments' shares (D:\Shares), as the story starts them, with their NTFS permissions. */
+function sharesBase(t: Translate, o: StaveOptions): Directory {
   const C = computer(t);
   const ago = (days: number) => o.clock - days * DAY;
   const teachers = `${C}\\Teachers`;
@@ -184,8 +244,7 @@ function dataDrive(t: Translate, o: StaveOptions): Record<string, Node> {
     // Gabriel froze LessonPlans during the summer copy: inheritance off, the teachers read only.
     o.frozenLessonPlans ? { protected: true, aces: [...SYSTEM_ADMINS, ace(teachers, READ_EXECUTE), ace(`${C}\\svc_backup`, READ_EXECUTE)] } : undefined,
   );
-  return {
-    Shares: dir(
+  return dir(
       {
         Teachers: dir(
           {
@@ -205,15 +264,31 @@ function dataDrive(t: Translate, o: StaveOptions): Record<string, Node> {
         ),
       },
       { protected: true, aces: [...SYSTEM_ADMINS, ace('BUILTIN\\Users', READ_EXECUTE, false)] },
-    ),
-    Backup: dir({ Shares: dir() }, { protected: true, aces: [...SYSTEM_ADMINS, ace(`${C}\\svc_backup`, MODIFY)] }),
+    );
+}
+
+/** The music school's files on D: (shares, backup, logs), with their NTFS permissions. */
+function dataDrive(t: Translate, o: StaveOptions): Record<string, Node> {
+  const C = computer(t);
+  const ago = (days: number) => o.clock - days * DAY;
+  const sharesTree = sharesBase(t, o);
+  o.shares?.(t, sharesTree);
+  // The backup as the last nights' copies left it (the shares, without the chapter's own changes).
+  const copied = plainCopy(sharesBase(t, o)) as Directory;
+  return {
+    Shares: sharesTree,
+    Backup: dir({ Shares: copied }, { protected: true, aces: [...SYSTEM_ADMINS, ace(`${C}\\svc_backup`, MODIFY)] }),
     Logs: dir(
       {
-        Agenda: dir({
-          'agenda.log': file(agendaLog(o.clock), o.clock - 2 * H, 3.1 * MIB),
-          ...(o.agendaLogs ?? {}),
-        }),
-        Backup: dir({ 'backup.log': file(backupLog(o.clock), ago(0) - ((o.clock - 1.5 * H) % DAY) + 4 * 60_000) }, { protected: true, aces: [...SYSTEM_ADMINS, ace(`${C}\\svc_backup`, MODIFY)] }),
+        Agenda: dir(
+          {
+            // Copies: each new world gets its own files (a chapter declares them once).
+            'agenda.log': o.agendaLog ? structuredClone(o.agendaLog) : file(agendaLog(o.clock), o.clock - 2 * H, 3.1 * MIB),
+            ...structuredClone(o.agendaLogs ?? {}),
+          },
+          { protected: false, aces: [ace(`${C}\\svc_agenda`, MODIFY)] },
+        ),
+        Backup: dir({ 'backup.log': file(backupLog(o.backupLogUntil ?? o.clock), (o.backupLogUntil ?? o.clock) - (((o.backupLogUntil ?? o.clock) - 1.5 * H) % DAY) + 4 * 60_000) }, { protected: true, aces: [...SYSTEM_ADMINS, ace(`${C}\\svc_backup`, MODIFY)] }),
       },
       { protected: true, aces: [...SYSTEM_ADMINS, ace('BUILTIN\\Users', READ_EXECUTE)] },
     ),
@@ -263,7 +338,7 @@ export function stave(o: StaveOptions) {
           if (programFiles?.type === 'directory') programFiles.children.Agenda = dir({ 'agenda-server.exe': binary(24 * MIB, Date.UTC(2029, 5, 2, 10, 0, 0)) });
           const programData = c.children.ProgramData;
           if (programData?.type === 'directory') {
-            programData.children.Agenda = dir({ 'agenda.ini': file('[server]\r\nport=8080\r\ndatabase=C:\\ProgramData\\Agenda\\agenda.db\r\nlog=D:\\Logs\\Agenda\\agenda.log', Date.UTC(2029, 5, 2, 10, 0, 0)), 'agenda.db': binary(41 * MIB, o.clock - 3 * H) });
+            programData.children.Agenda = dir({ 'agenda.ini': file(agendaIni(o.agendaLevel ?? 'info'), o.agendaLevel === 'debug' ? Date.UTC(2029, 5, 12, 18, 4, 0) : Date.UTC(2029, 5, 2, 10, 0, 0)), 'agenda.db': binary(41 * MIB, o.clock - 3 * H) });
             // The game's key for stave, authorised for its administrators (Gabriel put it there for you).
             const ssh = programData.children.ssh;
             const m = storyMachine(STORY);

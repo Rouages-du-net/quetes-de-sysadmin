@@ -118,3 +118,5 @@ smb-mount
 full-volume
 two-locks
 service-logon
+log-flood
+silent-backup

@@ -18,7 +18,7 @@
 // once), no recovery actions, no service SIDs.
 
 import type { Game } from './shell';
-import { logEvent, serial, windows, type WinService } from './windows';
+import { logEvent, serial, toWindows, windows, type WinService } from './windows';
 import { findUser, logonError } from './windows-accounts';
 
 /** A Win32 error's text (net helpmsg). */
@@ -103,7 +103,25 @@ export function startService(game: Game, s: WinService, seen = new Set<string>()
   s.exitCode = 0;
   (s as WinService & { pid?: number }).pid = 2000 + serial(game) * 4;
   scm(game, 7036, 'Information', `The ${s.display} service entered the running state.`);
+  s.onStart?.(game);
   return 0;
+}
+
+/**
+ * The running service that holds this file open, or a file below this
+ * folder (null if none): deleting or moving it fails with "being used by
+ * another process" (ERROR_SHARING_VIOLATION), as a log a service writes to.
+ */
+export function heldOpen(game: Game, path: string): { service: WinService; file: string } | null {
+  const low = toWindows(path).toLowerCase();
+  for (const s of windows(game).services) {
+    if (s.status !== 'Running') continue;
+    for (const f of s.opens ?? []) {
+      const fl = f.toLowerCase();
+      if (fl === low || fl.startsWith(`${low.replace(/\\$/, '')}\\`)) return { service: s, file: f };
+    }
+  }
+  return null;
 }
 
 /** Stops a service (its running dependents first when forced). 1062 if it wasn't running, 1051 if dependents run. */

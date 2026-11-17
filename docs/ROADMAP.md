@@ -507,7 +507,7 @@ them safely.
       and a Windows Server reached through its built-in OpenSSH, where the
       prompt is PowerShell (a handful of read-only commands: the bridge to
       the next step).
-- [ ] **Windows administration: the basics** (cmd and PowerShell). A
+- [x] **Windows administration: the basics** (cmd and PowerShell). A
       second engine beside the POSIX one: PowerShell's pipeline carries
       objects, not text (`Get-Process | Where-Object CPU -gt 50 | Sort-Object`),
       paths are `C:\…` and case-insensitive, rights are ACLs (`icacls`,
@@ -521,18 +521,16 @@ them safely.
       Possible stories: a Windows file server whose share refuses a
       department (NTFS vs share permissions), a service that stops after a
       password change (the service account), a disk full of logs, a
-      scheduled backup that silently stopped. Later: Active Directory
-      basics (users, groups, GPO, `Get-ADUser`), the natural sequel to "The
-      Directory" (OpenLDAP).
+      scheduled backup that silently stopped.
       Engine work, to plan as several PRs: a PowerShell parser and object
       pipeline, cmdlets with their `Get-Help` pages (texts in `.ftl` like
       every other page), an NTFS-like world (drives, ACLs, case-insensitive
       names), a registry, an event log; the workstation's `ssh` reaching a
       Windows machine. The interface stays the same (terminal, notebook,
-      hints, map). The charter changes with it: "learn Linux system
-      administration" becomes "learn system administration" in `README.md`,
-      `CLAUDE.md` and the home page, once the first Windows story ships.
-      Engine step 1 done (no story yet): a Windows PowerShell 5.1 language
+      hints, map). The charter changed with it: "learn Linux system
+      administration" became "learn system administration" (on Linux and
+      Windows) in `README.md`, `CLAUDE.md` and the home pages.
+      Engine step 1: a Windows PowerShell 5.1 language
       (variables, expressions, script blocks, hashtables, -WhatIf/-Confirm,
       Read-Host, scripts) and about 90 cmdlets with their Get-Help pages;
       FileSystem, Registry and Env: providers; NTFS permissions (Get-Acl,
@@ -543,12 +541,18 @@ them safely.
       with LastTaskResult codes and a clock that runs (schtasks); cmd.exe
       where OpenSSH lands without DefaultShell; `windowsMachine()` builds a
       default Windows Server 2022 for a story (see the "Windows engine" rows
-      of `docs/SCENARIOS.md`). First story under way: "The Music School"
+      of `docs/SCENARIOS.md`). The first story, "The Music School"
       (story 31 in `docs/SCENARIOS.md`, on `stave`, a Windows Server 2022
-      reached by ssh): chapters 1 (share vs NTFS permissions) and 2 (a
-      service locked out after its password changed) done, chapters 3 (a
-      disk full of logs) and 4 (the backup that silently stopped) planned.
-      Next: those two chapters, then the firewall (`Get-NetFirewallRule`).
+      reached by ssh), is complete: share vs NTFS permissions, a service
+      locked out after its password changed, a disk full of debug logs
+      (files in use, `compact`, `Register-ScheduledTask`), and a backup
+      task that silently stopped (an expired password, then a script whose
+      non-terminating errors left its exit code at 0: `try`/`catch`,
+      `$ErrorActionPreference`, `-ErrorVariable` in the engine).
+- [ ] **Later on Windows: Active Directory basics** (users, groups, GPO,
+      `Get-ADUser`), the natural sequel to "The Directory" (OpenLDAP); the
+      firewall (`Get-NetFirewallRule`); functions and loops in the
+      PowerShell engine (`function`, `while`, `for`, `switch`).
 
 ## More ideas
 

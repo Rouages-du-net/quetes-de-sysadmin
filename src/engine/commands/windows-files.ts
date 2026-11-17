@@ -30,6 +30,7 @@ import type { Shell } from '../shell';
 import type { Directory, File, Node } from '../world';
 import { hidden, resolveWindows, shortDate, toWindows, volumeFree, windows } from '../windows';
 import { canNtfs, descriptor, token } from '../windows-acl';
+import { heldOpen } from '../windows-services';
 import { createKey, driveName, findKey, fullName, isRegistryPath, parseRegPath, REG_TYPE, registry, removeKey, removeValue, valueText, writeValue, type RegKey, type RegKind, type RegValue } from '../windows-registry';
 import { PSDate, arr, isObject, str, text, values, wildcard, type Cmdlet, type Failure, type Native, type PSObject, type Run, type View } from '../powershell';
 
@@ -219,6 +220,7 @@ export function writeFile(game: Shell, path: string, content: string, append: bo
   if (node?.type === 'file') {
     node.content = text;
     delete node.size;
+    delete node.onDisk;
     node.mtime = windows(game).clock;
   } else placeNode(game, parentPath, path.split('/').at(-1)!, { type: 'file', content: text, lines: true, mtime: windows(game).clock });
   return null;
@@ -494,6 +496,13 @@ function removeItem(r: Run): unknown[] {
         }
         return null;
       };
+      // A file a running service holds open (its log): "being used by another process".
+      const held = heldOpen(game, w.path);
+      if (held) {
+        r.fail({ message: `Cannot remove item ${held.file}: The process cannot access the file '${held.file}' because it is being used by another process.`, category: 'WriteError', target: `${held.file}:FileInfo`, exception: 'IOException', id: 'RemoveFileSystemItemIOError,Microsoft.PowerShell.Commands.RemoveItemCommand' });
+        if (dir) removeAllBut(game, w.path, held.file);
+        continue;
+      }
       const b = blocked(w.path, n);
       if (b) {
         const bn = game.find(b)!;
@@ -505,6 +514,24 @@ function removeItem(r: Run): unknown[] {
     }
   }
   return [];
+}
+
+/** Remove-Item -Recurse of a folder holding an open file: the rest goes, the folder and that file stay. */
+function removeAllBut(game: Shell, path: string, keep: string): void {
+  const keepLow = keep.toLowerCase();
+  const walk = (p: string, d: Directory): boolean => {
+    let kept = false;
+    for (const [c, x] of Object.entries(d.children)) {
+      const child = `${p}/${c}`;
+      const win = toWindows(child).toLowerCase();
+      if (win === keepLow) kept = true;
+      else if (x.type === 'directory' && keepLow.startsWith(`${win}\\`)) kept = walk(child, x) || kept;
+      else if (canNtfs(game, child, 'delete')) delete d.children[c];
+    }
+    return kept;
+  };
+  const n = game.find(path);
+  if (n?.type === 'directory') walk(path, n);
 }
 
 const targetsOf = (r: Run) => (r.input ?? []).map((x) => (isObject(x) ? text(x.props.FullName ?? x.props.PSPath ?? x.props.Name) : text(x)));
@@ -545,7 +572,7 @@ function copyOrMove(r: Run, move: boolean): unknown[] {
       // Reading the source, writing the destination.
       const unreadable = (path: string, node: Node): string | null => {
         if (!canNtfs(game, path, node.type === 'directory' ? 'list' : 'read')) return path;
-        if (node.type === 'directory' && (p.Recurse || move)) for (const [c, x] of Object.entries(node.children)) {
+        if (node.type === 'directory' && move) for (const [c, x] of Object.entries(node.children)) {
           const u = unreadable(`${path}/${c}`, x);
           if (u) return u;
         }
@@ -553,11 +580,16 @@ function copyOrMove(r: Run, move: boolean): unknown[] {
       };
       const u = unreadable(w.path, n);
       if (u) {
-        denied(r, toWindows(u), `${move ? 'MoveFileInfoItemUnauthorizedAccessError' : 'CopyFileInfoItemUnauthorizedAccessError'},Microsoft.PowerShell.Commands.${cmdlet}Command`);
+        denied(r, toWindows(u), `${move ? 'MoveFileInfoItemUnauthorizedAccessError' : n.type === 'directory' ? 'CopyDirectoryInfoItemUnauthorizedAccessError' : 'CopyFileInfoItemUnauthorizedAccessError'},Microsoft.PowerShell.Commands.${cmdlet}Command`);
         continue;
       }
       if (!canNtfs(game, targetParent, n.type === 'directory' ? 'append' : 'write') || (game.find(target) && !canNtfs(game, target, 'write'))) {
         denied(r, win, `${move ? 'MoveFileInfoItemUnauthorizedAccessError' : 'CopyFileInfoItemUnauthorizedAccessError'},Microsoft.PowerShell.Commands.${cmdlet}Command`);
+        continue;
+      }
+      const held = move ? heldOpen(game, w.path) : null;
+      if (held) {
+        r.fail({ message: `The process cannot access the file because it is being used by another process.`, category: 'WriteError', target: `${w.win}:${n.type === 'directory' ? 'DirectoryInfo' : 'FileInfo'}`, exception: 'IOException', id: 'MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand' });
         continue;
       }
       if (move && !canNtfs(game, w.path, 'delete')) {
@@ -565,6 +597,13 @@ function copyOrMove(r: Run, move: boolean): unknown[] {
         continue;
       }
       const existing = game.find(target);
+      // Copy-Item -Recurse of a folder: what can be read is copied (into the existing folder, if any),
+      // each item it can't read is a non-terminating error of its own.
+      if (!move && n.type === 'directory' && p.Recurse) {
+        copyTree(r, w.path, n as Directory, targetParent, target.split('/').at(-1)!);
+        if (p.PassThru) out.push(fileItem(game, target, game.find(target)!));
+        continue;
+      }
       if (existing && move && !p.Force) {
         r.fail({ message: `Cannot create a file when that file already exists.`, category: 'WriteError', target: `${w.win}:FileInfo`, exception: 'IOException', id: 'MoveFileInfoItemIOError,Microsoft.PowerShell.Commands.MoveItemCommand' });
         continue;
@@ -592,6 +631,46 @@ function copyOrMove(r: Run, move: boolean): unknown[] {
     }
   }
   return out;
+}
+
+/** Copies a readable tree into a folder (merging with what is there), skipping, with an error each, what it can't read. */
+function copyTree(r: Run, src: string, d: Directory, parentPath: string, name: string): void {
+  const game = r.game;
+  const id = (dir: boolean) => `${dir ? 'CopyDirectoryInfoItemUnauthorizedAccessError' : 'CopyFileInfoItemUnauthorizedAccessError'},Microsoft.PowerShell.Commands.CopyItemCommand`;
+  // What it will write, to check the space first.
+  const readable = (path: string, x: Node): number => {
+    if (x.type === 'file') return canNtfs(game, path, 'read') ? game.size(x) : 0;
+    if (!canNtfs(game, path, 'list')) return 0;
+    return Object.entries(x.children).reduce((sum, [c, y]) => sum + readable(`${path}/${c}`, y), 0);
+  };
+  const dest = `${parentPath === '/' ? '' : parentPath}/${name}`;
+  const already = game.find(dest);
+  if (readable(src, d) - (already ? game.size(already) : 0) > volumeFree(game, letterOf(dest))) {
+    r.fail(noSpace('CopyItem'));
+    return;
+  }
+  const walk = (from: string, dir: Directory, toParent: string, toName: string) => {
+    const to = `${toParent === '/' ? '' : toParent}/${toName}`;
+    let target = game.find(to);
+    if (target?.type !== 'directory') {
+      placeNode(game, toParent, toName, { type: 'directory', children: {} } as Directory);
+      target = game.find(to)!;
+    }
+    for (const [c, x] of Object.entries(dir.children)) {
+      const path = `${from}/${c}`;
+      if (!canNtfs(game, path, x.type === 'directory' ? 'list' : 'read')) {
+        denied(r, toWindows(path), id(x.type === 'directory'));
+        continue;
+      }
+      if (x.type === 'directory') walk(path, x, to, c);
+      else {
+        const { acl: _acl, ...rest } = x as File;
+        void _acl;
+        placeNode(game, to, c, { ...rest });
+      }
+    }
+  };
+  walk(src, d, parentPath, name);
 }
 
 function renameItem(r: Run): unknown[] {
@@ -904,4 +983,80 @@ function reg(game: Shell, args: string[]) {
   return regError(`ERROR: Invalid syntax.\nType "REG /?" for usage.`);
 }
 
-export const FILE_NATIVES: Native[] = [{ name: 'reg.exe', page: 'reg', run: (game, args) => reg(game, args) }];
+// ——— compact.exe: NTFS compression ———
+
+// How much NTFS compression (LZNT1) shrinks a text log, and anything else (already compressed).
+const TEXT_RATIO = 6.7;
+const thousands = (n: number) => n.toLocaleString('en-US');
+
+/**
+ * compact [/c | /u] [/s[:DIR]] [/i] [/q] [FILES]: compresses (/c) or
+ * uncompresses (/u) files, or lists their state. A text log shrinks about
+ * 6.7 to 1, a zip or a picture hardly at all; a file a service holds open
+ * can't be compressed ([ERR], the error stops unless /i). The file keeps
+ * its Length: only the space it takes on the volume changes.
+ * Source: https://learn.microsoft.com/windows-server/administration/windows-commands/compact
+ */
+function compact(game: Shell, args: string[]) {
+  const flag = (f: string) => args.some((a) => a.toLowerCase() === f);
+  const sub = args.find((a) => /^\/s(:|$)/i.test(a));
+  const bad = args.find((a) => a.startsWith('/') && !/^\/(c|u|s(:.*)?|i|q|f|a)$/i.test(a));
+  if (bad) return { out: '', err: `Invalid parameter - ${bad.slice(1)}`, code: 1 };
+  const mode = flag('/c') ? 'c' : flag('/u') ? 'u' : 'list';
+  const specs = args.filter((a) => !a.startsWith('/'));
+  const base = sub && sub.includes(':') ? sub.slice(3) : '.';
+  const groups: { dir: string; files: [string, File][] }[] = [];
+  for (const spec of specs.length ? specs : ['*']) {
+    const typed = /[\\/]/.test(spec) || /^[A-Za-z]:/.test(spec) ? spec : `${base}\\${spec}`;
+    const last = typed.split(/[\\/]/).at(-1) ?? '*';
+    const where = resolveWindows(game, typed);
+    const isDir = where.exists && game.find(where.path)?.type === 'directory';
+    const dirPath = isDir ? where.path : resolveWindows(game, typed.slice(0, typed.length - last.length) || '.').path;
+    const re = wildcard(isDir ? '*' : last);
+    const walk = (path: string) => {
+      const d = game.find(path);
+      if (d?.type !== 'directory') return;
+      groups.push({ dir: path, files: Object.entries(d.children).filter(([n, c]) => c.type === 'file' && re.test(n)).map(([n, c]) => [n, c as File]) });
+      if (sub) for (const [n, c] of Object.entries(d.children)) if (c.type === 'directory') walk(`${path}/${n}`);
+    };
+    walk(dirPath);
+  }
+  const out: string[] = [];
+  let files = 0;
+  let dirs = 0;
+  let total = 0;
+  let stored = 0;
+  const ratio = (a: number, b: number) => (b ? (a / b).toFixed(1) : '1.0');
+  for (const g of groups) {
+    out.push('', ` ${mode === 'c' ? 'Compressing files in' : mode === 'u' ? 'Uncompressing files in' : 'Listing'} ${toWindows(g.dir)}\\`, '');
+    dirs++;
+    for (const [name, f] of g.files) {
+      const path = `${g.dir}/${name}`;
+      const size = game.size(f);
+      if (mode !== 'list') {
+        const held = heldOpen(game, path);
+        if (held || !canNtfs(game, path, 'write')) {
+          out.push(`${name} [ERR]`, `${toWindows(path)}: ${held ? 'The process cannot access the file because it is being used by another process.' : 'Access is denied.'}`);
+          if (!flag('/i')) return { out: out.join('\n'), code: 1 };
+          continue;
+        }
+        if (mode === 'c') f.onDisk = Math.ceil(size / (f.lines ? TEXT_RATIO : 1.02));
+        else delete f.onDisk;
+      }
+      const disk = f.onDisk ?? size;
+      files++;
+      total += size;
+      stored += disk;
+      if (mode === 'list') out.push(`${String(size).padStart(15)} : ${String(disk).padStart(15)} = ${ratio(size, disk)} to 1 ${f.onDisk !== undefined ? 'C' : ' '} ${name}`);
+      else if (!flag('/q')) out.push(`${name.padEnd(28)} ${String(size).padStart(12)} : ${String(disk).padStart(12)} = ${ratio(size, disk)} to 1 [OK]`);
+    }
+  }
+  const verb = mode === 'c' ? 'compressed' : mode === 'u' ? 'uncompressed' : null;
+  out.push('', verb ? `${files} files within ${dirs} directories were ${verb}.` : `Of ${files} files within ${dirs} directories`, ...(verb ? [] : [`${groups.flatMap((g) => g.files).filter(([, f]) => f.onDisk !== undefined).length} are compressed and ${groups.flatMap((g) => g.files).filter(([, f]) => f.onDisk === undefined).length} are not compressed.`]), `${thousands(total)} total bytes of data are stored in ${thousands(stored)} bytes.`, `The compression ratio is ${ratio(total, stored)} to 1.`);
+  return { out: out.join('\n'), code: 0 };
+}
+
+export const FILE_NATIVES: Native[] = [
+  { name: 'reg.exe', page: 'reg', run: (game, args) => reg(game, args) },
+  { name: 'compact.exe', page: 'compact', run: (game, args) => compact(game, args) },
+];
