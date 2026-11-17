@@ -55,3 +55,5 @@ story-other-unix = The Other Unix
     .summary = The film club's server runs FreeBSD, and Debian habits break: a script written with GNU's tools, services without systemd (pkg, rc.conf, service), and a firewall where the last rule wins (pf).
 story-old-sun = The Old Sun
     .summary = The seed library's catalogue has lived since 2009 on a Sun box running Solaris 10: read the system before touching it (SMF, ZFS), move its database to a new Debian server with a dump (byte order, character sets), then switch over and keep the old box frozen.
+story-night-batch = The Night Batch
+    .summary = For thirty years, a COBOL batch collected the Mutual's contributions every night on a mainframe; it moves to Linux. Read the bureau's EBCDIC file without damaging its packed amounts, compile the program with GnuCOBOL and read its return code, then fix the plumbing when the file arrives late.

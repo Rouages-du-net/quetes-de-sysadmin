@@ -412,3 +412,7 @@ name-lucien-notes-txt = lucien-notes.txt
 ## The Old Sun
 name-email_inaya-txt = email_inaya.txt
 name-odette-notes-txt = odette-notes.txt
+
+## The Night Batch
+name-email_ayesha-txt = email_ayesha.txt
+name-check-txt = check.txt

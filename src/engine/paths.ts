@@ -33,7 +33,7 @@ export const PATH: Path[] = [
     id: 'deployment',
     chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal'],
   },
-  { id: 'production', chapters: ['portable-script', 'rc-services', 'last-rule', 'read-first', 'byte-order', 'switch-over', 'reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot', 'boot-order', 'restart-loop', 'slow-boot', 'late-disk', 'heavy-load', 'quota', 'too-many-files', 'stuck-process', 'too-many-clients', 'slow-query', 'read-only', 'failover', 'central-logs', 'journal-full', 'ssh-alerts'] },
+  { id: 'production', chapters: ['portable-script', 'rc-services', 'last-rule', 'read-first', 'byte-order', 'switch-over', 'copybook', 'return-code', 'late-file', 'reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot', 'boot-order', 'restart-loop', 'slow-boot', 'late-disk', 'heavy-load', 'quota', 'too-many-files', 'stuck-process', 'too-many-clients', 'slow-query', 'read-only', 'failover', 'central-logs', 'journal-full', 'ssh-alerts'] },
   { id: 'identities', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi', 'nfs-export', 'nfs-owners', 'samba-share'] },
 ];
 

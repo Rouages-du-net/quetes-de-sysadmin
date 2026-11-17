@@ -149,11 +149,14 @@ export const TEXT: Record<string, Command> = {
       const all = !letters.has('l') && !letters.has('w') && !letters.has('c');
       return texts('wc', c, rest)
         .map(({ name, text }) => {
+          // Raw bytes (an EBCDIC file): counted as they are, no final newline; a line is a 0x0A byte.
+          const node = name ? c.game.find(name) : null;
+          const raw = node ? node.type === 'file' && node.charset === 'binary' : c.game.outputCharset === 'binary';
           // Like the real wc: line endings are counted.
           const fields: number[] = [];
-          if (all || letters.has('l')) fields.push(text === '' ? 0 : text.split('\n').length);
-          if (all || letters.has('w')) fields.push(text.split(/\s+/).filter(Boolean).length);
-          if (all || letters.has('c')) fields.push(new TextEncoder().encode(text).length + (text ? 1 : 0));
+          if (all || letters.has('l')) fields.push(raw ? text.split('\n').length - 1 : text === '' ? 0 : text.split('\n').length);
+          if (all || letters.has('w')) fields.push(text.split(/[\s]+/).filter(Boolean).length);
+          if (all || letters.has('c')) fields.push(raw ? text.length : new TextEncoder().encode(text).length + (text ? 1 : 0));
           return [fields.length === 1 ? String(fields[0]) : fields.map((n) => String(n).padStart(6)).join(' '), name].filter(Boolean).join(' ');
         })
         .join('\n');

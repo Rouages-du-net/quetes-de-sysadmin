@@ -71,6 +71,7 @@ machine-nas-motd = The Photo Club — the club's NAS: the photos of every album,
 machine-oven-motd = The Bastion — the Bakery's delivery server: the rounds, the drivers, the orders of the day.
 machine-projector-motd = The Other Unix — the film club's server: the programme, the tickets, and Lucien's old FreeBSD.
 machine-herbarium-motd = The Old Sun — the seed library's catalogue since 2009, on a Sun Fire V240. Please do not unplug.
+machine-abacus-motd = The Night Batch — the Mutual's server: the nightly contributions batch, in COBOL, moved off the bureau's mainframe.
 machine-kneader-motd = The Bakery — new server (migration), six months after the audit. The security watch, now without Salomé.
 
 # When reconnecting to a machine whose chapter is in progress.

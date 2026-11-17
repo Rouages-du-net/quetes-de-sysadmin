@@ -10,6 +10,8 @@
 // not go through pipes (separate error output).
 
 import { onUtf8Terminal } from './charset';
+import { binaryOnTerminal, isBinary } from './ebcdic';
+import { runProgram } from './cobol';
 import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
 import { SOLARIS_CHECKS, OTHER_BINS } from './commands/solaris-tools';
@@ -156,7 +158,9 @@ export class Shell implements Game {
   // it wrote an error, 0 otherwise.
   status: number | null = null;
   // The charset the last command of a line wrote in (pg_dump of a LATIN1 database), for a redirection.
-  outputCharset: 'latin1' | null = null;
+  outputCharset: 'latin1' | 'binary' | null = null;
+  // The exit code of the previous line ($? in the next one).
+  lastStatus = 0;
   // The permission mask of created files (umask), specific to this session.
   mask = '0022';
   // The file the current command's output goes to (> file), if there is one: wg genkey looks at it.
@@ -388,6 +392,8 @@ export class Shell implements Game {
     if (n.archive) return this.error(this.t('error-binary', v)), null;
     // A LATIN1 file read by a tool that only passes bytes on to a UTF-8 terminal: � for each accent.
     if (n.charset === 'latin1' && !RAW_READERS.includes(cmd)) return onUtf8Terminal(content(n, this));
+    // Raw bytes (an EBCDIC file): passed on as they are; the terminal shows them its own way (see tube).
+    if (n.charset === 'binary') this.outputCharset = 'binary';
     return content(n, this);
   }
 
@@ -713,6 +719,8 @@ export class Shell implements Game {
 
   // The line, once history is expanded.
   private runLine(line: string): string | null {
+    // $? (outside single quotes): the exit code of the previous line.
+    line = line.replace(/'[^']*'|\$\?|\$\{\?\}/g, (m) => (m.startsWith("'") ? m : String(this.lastStatus)));
     const words = split(line);
     if (!words.length) return '';
     this.typedCommands++;
@@ -766,6 +774,7 @@ export class Shell implements Game {
 
   // A line that ended in error (an error message, or a non-zero exit code) counts for the summary.
   private countLine(output: string): string {
+    this.lastStatus = this.status ?? (this.errors.length ? 1 : 0);
     if (this.errors.length || (this.status ?? 0) !== 0) this.commandsInError++;
     return output;
   }
@@ -894,6 +903,8 @@ export class Shell implements Game {
     this.outputCharset = null;
     // On screen, LATIN1 bytes show as � on the UTF-8 terminal.
     if (charset === 'latin1' && !redirection) output = onUtf8Terminal(output);
+    // Raw bytes on the terminal: � above 0x7F, control bytes unseen.
+    if (charset === 'binary' && !redirection) output = binaryOnTerminal(output);
     // Events read the output as the player reads it, without colour codes.
     this.last = { line, commands, output: withoutColours(output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
 
@@ -905,6 +916,7 @@ export class Shell implements Game {
       const written = this.find(redirection.file);
       if (!error && written?.type === 'file') {
         if (charset === 'latin1') written.charset = 'latin1';
+        else if (charset === 'binary' && isBinary(output)) written.charset = 'binary';
         else if (!redirection.addition) delete written.charset;
       }
       if (error) {
@@ -981,6 +993,8 @@ export class Shell implements Game {
       const before = this.who;
       if (root) this.who = this.as;
       try {
+        // A compiled program (cobc): it runs, it doesn't go through sh.
+        if (n.type === 'file' && n.program) return runProgram(this, n.program, rest);
         return launchScript(this, cmd, rest);
       } finally {
         this.who = before;

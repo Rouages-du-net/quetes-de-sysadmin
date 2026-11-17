@@ -415,3 +415,7 @@ name-lucien-notes-txt = notes-de-lucien.txt
 ## Le vieux Soleil
 name-email_inaya-txt = courriel_inaya.txt
 name-odette-notes-txt = notes-d-odette.txt
+
+## Le traitement de nuit
+name-email_ayesha-txt = courriel_ayesha.txt
+name-check-txt = verification.txt
