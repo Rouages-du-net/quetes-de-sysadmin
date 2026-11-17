@@ -980,6 +980,19 @@ switch-over:greenhouse
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+copybook
+  /home/you → /home/vous
+  /home/you/email_ayesha.txt → /home/vous/courriel_ayesha.txt
+  /home/you/check.txt → /home/vous/verification.txt
+
+return-code
+  /home/you → /home/vous
+  /home/you/email_ayesha.txt → /home/vous/courriel_ayesha.txt
+
+late-file
+  /home/you → /home/vous
+  /home/you/email_ayesha.txt → /home/vous/courriel_ayesha.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -292,6 +292,18 @@ presents them for people.
   `chapters/seed-bank.ts`: what the chapters of "The Old Sun" share
   (`read-first.ts`, `byte-order.ts`, `switch-over.ts`; greenhouse is an
   internal host).
+- `src/engine/ebcdic.ts`: EBCDIC (IBM-037, glibc's EBCDIC-US gaps, GNU dd's
+  tables), binary files (`File.charset = 'binary'`: one character per byte,
+  shown with � on the terminal), packed decimals (COMP-3); `od`, `xxd`,
+  `hexdump`, `dd` in `commands/bytes.ts`, `iconv` (ASCII, EBCDIC, `-c`,
+  `-o`) in `commands/iconv.ts`; `$?` in the shell (`Shell.lastStatus`).
+  GnuCOBOL in `src/engine/cobol.ts` (`cobc`'s checks: reference format,
+  COPY and `-I`, PERFORM targets; compiled programs, `File.program`, run
+  by the shell: the story's EBC2ASC and CONTRIB, their runs in
+  `state.batchRuns`), `cobc` in `commands/cobol.ts`;
+  `chapters/night-batch.ts`: what the chapters of "The Night Batch" share
+  (`copybook.ts`, `return-code.ts`, `late-file.ts`: the bureau's uploads and
+  the two-night rehearsal through `passTime`).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

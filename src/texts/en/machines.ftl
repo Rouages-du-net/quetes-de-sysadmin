@@ -36,3 +36,4 @@ machine-nas = nas
 machine-oven = oven
 machine-projector = projector
 machine-herbarium = herbarium
+machine-abacus = abacus

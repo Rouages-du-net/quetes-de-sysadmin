@@ -7,7 +7,7 @@ import { typography } from '../texts';
 
 export const content = (n: File, game: Game) =>
   typeof n.content === 'function' ? n.content(game) : n.prose && !n.lines ? typography(n.content, game.t.language) : n.content;
-export const sizeFor = (n: File, game: Game) => n.size ?? new TextEncoder().encode(content(n, game)).length;
+export const sizeFor = (n: File, game: Game) => n.size ?? (n.charset === 'binary' ? content(n, game).length : new TextEncoder().encode(content(n, game)).length);
 
 // Wildcard pattern (*, ?) → regular expression.
 export function wildcard(pattern: string): RegExp {

@@ -59,6 +59,9 @@ export const CODE_ORDER = [
   'read-first',
   'byte-order',
   'switch-over',
+  'copybook',
+  'return-code',
+  'late-file',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

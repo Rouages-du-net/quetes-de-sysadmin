@@ -73,6 +73,8 @@ export const MACHINES: Machine[] = [
   { ...machine('projector', '192.0.2.34', 'other-unix'), os: 'freebsd' },
   // The Old Sun: the seed library's Sun Fire, Solaris 10 on SPARC (its new server, greenhouse, is behind it).
   { ...machine('herbarium', '192.0.2.35', 'old-sun'), os: 'solaris' },
+  // The Night Batch: the Mutual's Debian server, where its nightly COBOL batch moved off the bureau's mainframe.
+  machine('abacus', '192.0.2.37', 'night-batch'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

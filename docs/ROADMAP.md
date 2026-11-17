@@ -474,7 +474,8 @@ decades, and that a sysadmin may inherit. The game can show them with
 respect: why they are still there, how to read them, how to move data off
 them safely.
 
-- [ ] **COBOL batch on Linux** (fits the current engine). A nightly COBOL
+- [x] **COBOL batch on Linux** ("The Night Batch", story 28 in
+      `docs/SCENARIOS.md`; `src/engine/ebcdic.ts`, `src/engine/cobol.ts`). A nightly COBOL
       batch moved from a mainframe to Linux with GnuCOBOL: fixed-width
       record files described by a copybook, EBCDIC data to convert
       (`iconv -f EBCDIC-US`, `dd conv=ascii`, and why packed decimals,

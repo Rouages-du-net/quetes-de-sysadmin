@@ -67,6 +67,8 @@ import { APACHE } from './apache';
 import { MAIL } from './mail';
 import { ANSIBLE } from './ansible';
 import { CADDY } from './caddy';
+import { BYTES } from './bytes';
+import { COBOL } from './cobol';
 
 export interface Context {
   args: string[];
@@ -169,6 +171,8 @@ function build(): Record<string, Command> {
     ...MAIL,
     ...ANSIBLE,
     ...CADDY,
+    ...BYTES,
+    ...COBOL,
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

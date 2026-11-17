@@ -107,3 +107,6 @@ last-rule
 read-first
 byte-order
 switch-over
+copybook
+return-code
+late-file

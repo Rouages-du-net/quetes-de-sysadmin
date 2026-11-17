@@ -163,7 +163,11 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `svcs`, `svcadm`, `svcprop` | SMF services by FMRI (or the end of it), their state (online, disabled, maintenance, legacy_run), `svcs -a`, `-x` (why a service is in maintenance), `-l`, `-p`, `-H`; `svcadm enable`/`disable` (`-t`), `restart`, `refresh`, `clear` (root); `svcprop -p` | milestones, dependencies between services, `svccfg` and manifests, `svcs -d`/`-D`, `-o` |
 | `zfs`, `zpool` | `zfs list` (`-t snapshot`), `zfs snapshot` (root), `zfs destroy` of a snapshot, `zfs get`; `zpool list`, `zpool status` | `zfs rollback`, `send`/`receive`, clones, properties beyond a few, sizes that follow the files |
 | `prstat`, `pkginfo`, `isainfo`, `zoneadm`, `zonename` | one snapshot of the processes (`prstat`); the SVR4 packages (`pkginfo`, `-l`); the instruction sets; the global zone | `prstat`'s refresh and sorting options, `pkgadd`/`pkgrm`, non-global zones |
-| `iconv`, `file`, character sets | a file may be LATIN1 (`File.charset`): `cat`, `grep`, `head`… show `�` for its accented letters on the UTF-8 terminal; `iconv -f`/`-t` between LATIN1 and UTF-8 (`-l`), and a UTF-8 text converted "from LATIN1" becomes mojibake (`Ã©`); `file` tells ASCII, UTF-8 and ISO-8859 texts, tar archives, data; a redirection keeps the charset a command wrote in (`pg_dump` of a LATIN1 database), `scp` keeps a file's charset and archive | other charsets (CP1252, EBCDIC…), `//TRANSLIT`, `file -i` |
+| `iconv`, `file`, character sets | a file may be LATIN1 (`File.charset`): `cat`, `grep`, `head`… show `�` for its accented letters on the UTF-8 terminal; `iconv -f`/`-t` between LATIN1 and UTF-8 (`-l`), and a UTF-8 text converted "from LATIN1" becomes mojibake (`Ã©`); `file` tells ASCII, UTF-8 and ISO-8859 texts, tar archives, data; a redirection keeps the charset a command wrote in (`pg_dump` of a LATIN1 database), `scp` keeps a file's charset and archive | other charsets (CP1252…; EBCDIC: see below), `//TRANSLIT`, `file -i` |
+| EBCDIC and binary files | a file may hold raw bytes (`File.charset = 'binary'`): `cat`, `head`… show � above 0x7F and drop control bytes; `wc -c` counts its bytes; `file` says data; `iconv` knows EBCDIC-US (glibc's gaps), IBM037/CP037 and ASCII, stops at the first byte or character it can't convert with its position, `-c` drops them (exit code 0, like glibc 2.39), `-o`; a redirection keeps raw bytes | other EBCDIC code pages (1047, 500…), `//TRANSLIT`, `iconv`'s partial output buffering |
+| `od`, `xxd`, `hexdump`, `dd` | `od` with `-A`, `-t` (c, x, o, u, d on 1, 2 or 4 bytes), `-c`, `-b`, `-x`, `-N`, `-j`, `-v`, repeated lines as `*`; `xxd` with `-s`, `-l`, `-c`, `-g`, `-p`, `-u`; `hexdump` default and `-C`, `-n`, `-s`, `-v`; `dd` with `if`, `of` (`/dev/null` included), `bs`, `ibs`, `obs`, `cbs`, `count`, `skip`, `conv=ascii,ebcdic,ibm,block,unblock,lcase,ucase`, `status=none`, GNU's translation tables; its statistics always show the same duration | `od -w`, `-a`, floating types; `xxd -r`, `-b`, `-i`; `hexdump -e`; `dd`'s `seek`, `iflag`/`oflag` effects, devices |
+| `cobc` and COBOL programs | GnuCOBOL 3.1.2: fixed (reference) format checked for its column-7 indicator, `-free` refusing sequence numbers, COPY looked up in the current directory, `-I` and `/usr/share/gnucobol/copy`, PERFORM of a missing paragraph, PROGRAM-ID; `-x`, `-m` (default, `NAME.so`, a segmentation fault if executed), `-c`, `-o`, `--version`; a program's RETURN-CODE is its exit code; the story's programs (EBC2ASC, CONTRIB) are recognised by their PROGRAM-ID and run in TypeScript from their files, another program only prints its DISPLAY literals | a real compiler: no other syntax or semantic checks, no listing, `cobcrun`, `-j`, environment-variable file mapping (the programs take their files as arguments) |
+| `$?` | the interactive shell expands `$?` (outside single quotes) to the previous line's exit code | `;`, `&&` and `\|\|` on the interactive line (they work in scripts) |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
 | `pkg` | `search`, `install` (with its question, `-y`), `info` (`NAME`), `delete`, `update`, `upgrade`: the story's catalogue (nginx, bash); an installed package's files under `/usr/local`, its rc script and its message | dependencies, repositories, `pkg audit`, locks |
@@ -2712,6 +2716,69 @@ the old database read-only or stopped, its data directory and the snapshot
 still there. Expected traps: restarting the catalogue without changing its
 configuration (it still writes to the old box), erasing the old data or
 the snapshot.
+
+## Story 28: The Night Batch (three chapters)
+
+For thirty years, the Mutual (a small mutual-aid fund) collected its
+members' contributions with a COBOL batch that ran every night on a service
+bureau's mainframe. The bureau closes its computer room: the batch moves to
+`abacus` (192.0.2.37, Debian, GnuCOBOL 3.1). The bureau still uploads the
+day's contributions every night into `/srv/drop`: EBCDIC, fixed records of
+40 bytes, amounts in packed decimal (COMP-3). Ramón, who wrote the programs
+in 1994, retires and leaves his notes, copybooks and sources; Ayesha runs
+the Mutual's IT. The lesson: the program is fine, the plumbing around it is
+what breaks. Engine: `src/engine/ebcdic.ts`, `src/engine/cobol.ts`. It
+opens after "Trust, Then Switch" and "The Probe".
+
+### Chapter 1 — Fixed Width (done)
+
+| Step | Command learnt |
+|---|---|
+| Not text | `file` (data), `cat` (� and @: EBCDIC, no newline) |
+| Records | `wc -c` (560 = 14 × 40), the copybook `CONTRIB.cpy` (RECFM=FB, LRECL=40) |
+| Bytes | `xxd`, `od -c`, `hexdump -C`: C8 = H, F0-F9 digits, 40 space, `00 00 04 25 0C` = 42.50 packed |
+| Convert | `/opt/batch/bin/ebc2asc` (field by field) into `/srv/batch/in/contrib.dat`; `check.txt` |
+
+Goal checked on the state: `contrib.dat` holds the 14 records converted
+with the right amounts, and `check.txt` gives 12 contributions and the
+control total 515.20. Expected traps: `iconv -f EBCDIC-US -t ASCII`
+("illegal input sequence at position 75", inside the first amount),
+`iconv -f IBM037 -t UTF-8` (0x25 becomes a newline), `dd conv=ascii`
+(the amounts silently changed; ebc2asc then refuses them).
+
+### Chapter 2 — Return Code (done)
+
+| Step | Command learnt |
+|---|---|
+| Copybooks | `cobc -x contrib.cob`: `CONTRIBA: No such file or directory`, `-I /opt/batch/copybooks` |
+| Columns | `invalid indicator 'T' at column 7`: Ayesha's lines start in column 1; code from column 8 |
+| Executable | `-x` (without it, `contrib.so`: Segmentation fault) |
+| Return code | `./contrib IN REPORT`, `echo $?`: 0 for the night's file, 8 for the bureau's test file |
+
+Goal checked on the state: an executable CONTRIB with Ayesha's check
+exists, it wrote the report of the 21st with return code 0, and ended with
+8 on `test-bad.dat`. Expected traps: `-free` (Ramón's sequence numbers
+become syntax errors), commenting out the check (`'CHECK-TOTALS' is not
+defined`, or a test file that passes with 0).
+
+### Chapter 3 — The Late File (done)
+
+| Step | Command learnt |
+|---|---|
+| Diagnose | `journalctl -u night-batch` (two runs on RUN DATE 291122), `stat /srv/drop/contrib.ebc` (02:39) |
+| Wait | the wrapper: `test -f /srv/drop/contrib.ebc.done \|\| exit 0`, then `rm` (or `mv`) of the `.done` |
+| Try again | `OnCalendar=*-*-* 02..06:00/10` and `systemctl daemon-reload`, or a crontab (`*/15 2-6 * * *`) |
+| Be told | `set -e` (no final `echo`): the unit fails; or `… \|\| … \| mail -s … you` |
+
+Each change to the wrapper, the units or a crontab is rehearsed on the next
+two nights: the file arrives at 02:41, then at 03:26 with a record lost on
+the bureau's side. Goal checked on the state: in one rehearsal, the first
+night's file processed once, complete, with return code 0, before 07:00;
+the second night's processed, its return code 8 followed by a mail or a
+failed unit; never an old file. Expected traps: a later fixed time (03:00:
+the second night reprocesses the old file), a `.done` checked but never
+taken away (the file processed every ten minutes), a timer edited but not
+reloaded, the final `echo` that hides the code.
 
 ## Ideas for later
 
