@@ -19,8 +19,9 @@ import { isSolaris, NOT_ON_SOLARIS } from './solaris';
 import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { cifsAccess, cifsUsage } from './cifs';
-import { isWindows, toWindows } from './windows';
-import { runPowerShell } from './commands/powershell';
+import { currentShell, isWindows, windowsPrompt } from './windows';
+import { psCandidates, psComplete, runPowerShell } from './commands/powershell';
+import { runCmd } from './commands/cmd';
 
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -512,7 +513,7 @@ export class Shell implements Game {
     if (this.waiting) return this.t('sudo-prompt', { user: this.player });
     if (this.question) return this.question.prompt;
     // A Windows Server's PowerShell (see powershell.ts).
-    if (isWindows(this)) return `PS ${toWindows(this.cwd)}>`;
+    if (isWindows(this)) return windowsPrompt(this);
     const here =
       this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
     // In tmux, the status bar shows the session's name: we put it in front of the prompt.
@@ -612,6 +613,8 @@ export class Shell implements Game {
   }
 
   complete(line: string): string {
+    // PowerShell: cmdlet names, parameters, Windows paths (commands/powershell.ts).
+    if (isWindows(this)) return psComplete(this, line);
     const c = this.candidates(line);
     if (!c || c.names.length === 0) return line;
     if (c.names.length > 1) {
@@ -626,6 +629,10 @@ export class Shell implements Game {
 
   /** The possibilities, when Tab cannot choose (bash shows them on the second Tab); empty otherwise. */
   suggestions(line: string): string[] {
+    if (isWindows(this)) {
+      const { names } = psCandidates(this, line);
+      return names.length > 1 ? names : [];
+    }
     const c = this.candidates(line);
     if (!c || c.names.length < 2) return [];
     return c.names.map((n) => (c.directories.has(n) ? `${n}/` : n));
@@ -649,7 +656,7 @@ export class Shell implements Game {
   private consulter(cmd: string, rest: string[]): string {
     const all = Object.entries(COMMANDS).filter(([n]) => n !== 'aide').sort(([a], [b]) => a.localeCompare(b));
     // Files (section 5) and overviews (section 7) are not commands: no note for them.
-    const notStill = (n: string) => (this.known().includes(n) || COMMANDS[n]?.cl || COMMANDS[n]?.cmdlet || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
+    const notStill = (n: string) => (this.known().includes(n) || COMMANDS[n]?.cl || COMMANDS[n]?.cmdlet || COMMANDS[n]?.winexe || [5, 7].includes(COMMANDS[n]?.section ?? 1) ? '' : '\n\n' + this.t('manual-not-still'));
     if (cmd === 'apropos' || (cmd === 'man' && rest[0] === '-k')) {
       const word = cmd === 'apropos' ? rest[0] : rest[1];
       if (!word) return this.error(this.t('manual-what-search', { command: cmd === 'apropos' ? 'apropos' : 'man -k' }));
@@ -662,7 +669,7 @@ export class Shell implements Game {
     for (const asked of rest) {
       // IBM i's CL commands are written in capitals, but man wrkactjob finds them too.
       // PowerShell's cmdlets too, whatever the case (man get-childitem).
-      const cmdlet = !COMMANDS[asked] ? Object.keys(COMMANDS).find((k) => COMMANDS[k]?.cmdlet && k.toLowerCase() === asked.toLowerCase()) : undefined;
+      const cmdlet = !COMMANDS[asked] ? Object.keys(COMMANDS).find((k) => (COMMANDS[k]?.cmdlet || COMMANDS[k]?.winexe) && k.toLowerCase() === asked.toLowerCase()) : undefined;
       const name = cmdlet ?? (!COMMANDS[asked] && COMMANDS[asked.toUpperCase()]?.cl ? asked.toUpperCase() : asked);
       const c = COMMANDS[name];
       if (!c || name === 'aide') {
@@ -689,7 +696,7 @@ export class Shell implements Game {
     // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
     if (isWindows(this)) {
       if (line.trim() && !/^\s/.test(line) && this.history.at(-1) !== line) this.history.push(line);
-      const output = runPowerShell(this, line);
+      const output = currentShell(this) === 'cmd' ? runCmd(this, line) : runPowerShell(this, line);
       return output === null ? null : this.conclude(this.countLine(output), true);
     }
     // History, like bash: !! (the last command), !n, !-n, !prefix.

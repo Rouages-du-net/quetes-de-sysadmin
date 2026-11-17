@@ -532,6 +532,19 @@ them safely.
       hints, map). The charter changes with it: "learn Linux system
       administration" becomes "learn system administration" in `README.md`,
       `CLAUDE.md` and the home page, once the first Windows story ships.
+      Engine step 1 done (no story yet): a Windows PowerShell 5.1 language
+      (variables, expressions, script blocks, hashtables, -WhatIf/-Confirm,
+      Read-Host, scripts) and about 90 cmdlets with their Get-Help pages;
+      FileSystem, Registry and Env: providers; NTFS permissions (Get-Acl,
+      Set-Acl, icacls, takeown) and share permissions combined with them;
+      local users and groups (net user); services under a logon account
+      that break when its password changes (events 7038/7000, sc.exe);
+      event logs (Get-WinEvent -FilterHashtable, wevtutil); scheduled tasks
+      with LastTaskResult codes and a clock that runs (schtasks); cmd.exe
+      where OpenSSH lands without DefaultShell; `windowsMachine()` builds a
+      default Windows Server 2022 for a story (see the "Windows engine" rows
+      of `docs/SCENARIOS.md`). Next: the stories, then the firewall
+      (`Get-NetFirewallRule`).
 
 ## More ideas
 

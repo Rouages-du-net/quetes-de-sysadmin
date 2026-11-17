@@ -22,7 +22,7 @@ import { resolveWindows, toWindows, windows } from '../windows';
 import {
   R, accessLine, canonical, canNtfs, descriptor, icaclsLines, inheritanceFlags, ownAcl, parseGrant, principal, propagationFlags, rightsFromName, rightsName, sddl, token, type Descriptor,
 } from '../windows-acl';
-import { MethodError, arr, isObject, str, text, values, wildcard, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
+import { MethodError, arr, isObject, text, wildcard, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
 import { locate } from './windows-files';
 
 const SECURITY = 'Microsoft.PowerShell.Security';
@@ -426,9 +426,6 @@ function icacls(game: Shell, args: string[]) {
   return { out: [...out, summary].join('\n'), err: errors.length ? errors.join('\n') : undefined, code: failed ? (errors.some((e) => e.includes('No mapping')) ? 1332 : errors.some((e) => e.includes('denied')) ? 5 : 1) : 0 };
 }
 
-const sameFlagsLoose = sameFlags;
-void sameFlagsLoose;
-
 // ——— takeown ———
 
 function takeown(game: Shell, args: string[]) {
@@ -477,5 +474,3 @@ export const rightsOf = (game: Shell, path: string, user: string) => {
   }
   return rightsName(granted);
 };
-
-export { values as _values, str as _str };

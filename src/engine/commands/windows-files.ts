@@ -197,7 +197,7 @@ function placeNode(game: Shell, parentPath: string, name: string, n: Node): void
 
 const letterOf = (path: string) => path.split('/').filter(Boolean)[0] ?? 'C';
 
-const noSpace = (r: Run, cmdlet: string): Failure => ({ message: 'There is not enough space on the disk.', category: 'NotSpecified', target: ':', exception: 'IOException', id: `System.IO.IOException,Microsoft.PowerShell.Commands.${cmdlet}Command` });
+const noSpace = (cmdlet: string): Failure => ({ message: 'There is not enough space on the disk.', category: 'NotSpecified', target: ':', exception: 'IOException', id: `System.IO.IOException,Microsoft.PowerShell.Commands.${cmdlet}Command` });
 
 /** Writes a file's text (Set-Content, Add-Content, Out-File, >): a Failure, or null. */
 export function writeFile(game: Shell, path: string, content: string, append: boolean, cmdlet: string): Failure | null {
@@ -215,7 +215,7 @@ export function writeFile(game: Shell, path: string, content: string, append: bo
   const old = node?.type === 'file' ? (game.read(path) ?? '') : '';
   const text = append && old ? `${old.replace(/\r?\n$/, '')}\r\n${content}` : content;
   const grow = text.length - (node ? game.size(node) : 0);
-  if (grow > volumeFree(game, letterOf(path))) return noSpace({} as Run, cmdlet);
+  if (grow > volumeFree(game, letterOf(path))) return noSpace(cmdlet);
   if (node?.type === 'file') {
     node.content = text;
     delete node.size;
@@ -303,7 +303,7 @@ function getChildItem(r: Run): unknown[] {
   return out;
 }
 
-const environmentOf = (game: Shell): Record<string, string> => (windows(game) as { envOf?: () => Record<string, string> }).envOf?.() ?? ENV_HOOK.get?.(game) ?? {};
+const environmentOf = (game: Shell): Record<string, string> => ENV_HOOK.get?.(game) ?? {};
 /** The interpreter gives the environment (commands/powershell.ts). */
 export const ENV_HOOK: { get: ((game: Shell) => Record<string, string>) | null } = { get: null };
 const envItem = (k: string, v: string): PSObject => ({ type: 'EnvEntry', fullType: 'System.Collections.DictionaryEntry', props: { Name: k, Value: v, Key: k } });
@@ -571,7 +571,7 @@ function copyOrMove(r: Run, move: boolean): unknown[] {
       }
       const sameVolume = letterOf(w.path) === letterOf(target);
       if (!(move && sameVolume) && game.size(n) - (existing ? game.size(existing) : 0) > volumeFree(game, letterOf(target))) {
-        r.fail(noSpace(r, cmdlet));
+        r.fail(noSpace(cmdlet));
         continue;
       }
       const copy: Node = move ? n : n.type === 'directory' && !p.Recurse ? ({ type: 'directory', children: {} } as Directory) : copyNode(n);

@@ -34,8 +34,9 @@ import {
 } from '../powershell';
 import { parse, ParseError, type Arg, type Element, type Expr, type Pipeline, type Statement } from '../powershell-parse';
 import { scripting } from '../windows-tasks';
-import { FILE_CMDLETS, FILE_VIEWS, outFile } from './windows-files';
-import { ACL_CMDLETS, ACL_VIEWS } from './windows-acl';
+import { ENV_HOOK, FILE_CMDLETS, FILE_VIEWS, RENDER, outFile } from './windows-files';
+import { SHELL_HOOKS } from './windows-shells';
+import { ACL_CMDLETS, ACL_TYPES, ACL_VIEWS } from './windows-acl';
 import { ACCOUNT_CMDLETS, ACCOUNT_VIEWS } from './windows-accounts';
 import { SERVICE_CMDLETS, SERVICE_VIEWS } from './windows-services';
 import { EVENT_CMDLETS, EVENT_VIEWS } from './windows-events';
@@ -46,7 +47,6 @@ import { formatValue, formatDate, parseDate, longDateTime } from './windows-form
 
 export type { Cmdlet };
 
-const MGMT = 'Microsoft.PowerShell.Management';
 const UTIL = 'Microsoft.PowerShell.Utility';
 const CORE = 'Microsoft.PowerShell.Core';
 
@@ -972,7 +972,8 @@ function bindInner(c: Cmdlet, args: Evaluated[], pos: (a: Arg) => ErrorSpec): Re
     const e = set(def, next.value, arg);
     if (e) return e;
   }
-  // Where-Object { … } and ForEach-Object { … }: the script block is the first positional value.
+  // Where-Object { … }: the script block is the first positional value (otherwise the property, then the value).
+  if (c.name === 'Where-Object' && positional[0]?.value instanceof PSScriptBlock && p.FilterScript === undefined) p.FilterScript = positional.shift()!.value;
   if (c.rest) {
     if (positional.length) p[c.rest] = [...values(p[c.rest]), ...positional.flatMap((x) => enumerate(x.value))];
     return p;
@@ -1543,7 +1544,7 @@ function getVariable(r: Run): unknown[] {
 
 const PIPE_CMDLETS: Cmdlet[] = [
   {
-    name: 'Where-Object', module: CORE, version: '3.0.0.0', positional: ['FilterScript'],
+    name: 'Where-Object', module: CORE, version: '3.0.0.0', positional: ['Property', 'Value'],
     params: [
       { name: 'FilterScript', type: 'System.Management.Automation.ScriptBlock' }, { name: 'Property', type: 'System.String' }, { name: 'Value', type: 'System.Object' }, { name: 'InputObject', type: 'System.Management.Automation.PSObject' },
       ...['EQ', 'NE', 'GT', 'GE', 'LT', 'LE', 'Like', 'NotLike', 'Match', 'NotMatch', 'Contains', 'NotContains', 'In', 'NotIn', 'CEQ', 'CNE', 'CLike', 'CMatch'].map((n) => ({ name: n, switch: true })),
@@ -1745,6 +1746,20 @@ export function runScript(game: Shell, source: string, path: string): number {
   return 0;
 }
 scripting.run = (game, source, path) => runScript(game, source, path);
+SHELL_HOOKS.script = (game, source, file) => runScript(game, source, file);
+SHELL_HOOKS.powershell = (game, line) => {
+  const w = windows(game);
+  const shells = w.shells;
+  w.shells = [...(shells ?? []), 'powershell'];
+  try {
+    return runPowerShell(game, line) ?? '';
+  } finally {
+    w.shells = shells;
+  }
+};
+ENV_HOOK.get = environment;
+RENDER.fn = render;
+Object.assign(NEW_OBJECT, ACL_TYPES);
 
 // ——— cmd.exe and the shells ———
 
@@ -1808,6 +1823,3 @@ export const POWERSHELL: Record<string, Command> = Object.fromEntries([
   ...CMDLETS.map((c) => [c.name, { cmdlet: true, ownOptions: true, launch: onLinux } as Command]),
   ...NATIVES.filter((n) => n.page).map((n) => [n.page!, { winexe: true, ownOptions: true, launch: onLinux } as Command]),
 ]);
-
-export { evalExpr as _evalExpr, runCommand as _runCommand };
-export type { Ctx as _Ctx, Element as _Element };

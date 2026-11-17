@@ -16,6 +16,8 @@ import { noteTmux } from './commands/tmux';
 import { inColumns } from './commands/files';
 import { live } from './activity';
 import { signOn } from './commands/ibmi';
+import { isWindows } from './windows';
+import { windowsLogin } from './windows-accounts';
 import { LANGUAGES, translator, type Language, type Translate } from '../texts';
 
 export interface OptionsConsole {
@@ -218,16 +220,20 @@ export class Console {
         ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', this.t(`machine-${machine.name}-motd`)]
         : machine.os === 'ibmi'
         ? [this.t(`machine-${machine.name}-motd`)]
+        : machine.os === 'windows'
+        ? []
         : machine.os === 'solaris'
         ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', this.t(`machine-${machine.name}-motd`)]
         : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];
     // A session created from afar (a port tested with nc): the first real
     // connection opens the chapter, with its welcome text.
+    // A Windows Server: the session lands in its DefaultShell (cmd or PowerShell), which prints its own banner.
+    const login = (sh: Shell) => (machine.os === 'windows' && !jump ? [windowsLogin(sh)] : []);
     if (!chapter && old?.state.prepared && old.chapter === c) {
       delete old.state.prepared;
       old.state.portSession = port;
       this.remote = { machine, story, shell: old };
-      return [...(jump ? [] : banner), this.openChapter(c)].join('\n\n');
+      return [...(jump ? [] : banner), ...login(old), this.openChapter(c)].join('\n\n');
     }
     if (!chapter && old && (old.chapter === c || !old.finished)) {
       // Like a new connection: start again from your home. Reconnecting
@@ -244,12 +250,12 @@ export class Console {
       // A chapter in progress: remind where to reread its instructions.
       const rappel = old.finished ? '' : this.t('resumed-chapter', { file: old.welcome });
       // A mere jump (ssh -J) opens no session on the gateway: no banner, no reminder.
-      const header = jump ? [] : [...banner, this.title(story, old.chapter), rappel];
+      const header = jump ? [] : [...banner, ...login(old), this.title(story, old.chapter), rappel];
       return [...header, next, this.noteEnd(old, alreadyFinished)].filter(Boolean).join('\n\n');
     }
     this.remote = { machine, story, shell: this.newSession(machine, c) };
     this.remote.shell.state.portSession = port;
-    return [...(jump ? [] : banner), this.openChapter(c)].join('\n\n');
+    return [...(jump ? [] : banner), ...login(this.remote.shell), this.openChapter(c)].join('\n\n');
   }
 
   /** (Re)starts a chapter on the current machine. */
@@ -282,7 +288,10 @@ export class Console {
   private openChapter(c: Chapter): string {
     this.inputs = [];
     if (!this.inRestore) this.serial++;
-    return [this.title(this.remote!.story, c), this.remote!.shell.execute(`cat ${this.remote!.shell.welcome}`) ?? ''].join('\n\n');
+    const sh = this.remote!.shell;
+    // On Windows, the welcome text is read directly (the session may be in cmd, where cat doesn't exist).
+    if (isWindows(sh)) return [this.title(this.remote!.story, c), (sh.read(`${sh.home}/${sh.welcome}`) ?? '').replace(/\r\n/g, '\n'), sh.events()].filter(Boolean).join('\n\n');
+    return [this.title(this.remote!.story, c), sh.execute(`cat ${sh.welcome}`) ?? ''].join('\n\n');
   }
 
   disconnect(): string {
@@ -296,7 +305,8 @@ export class Console {
     }
     this.remote = null;
     this.inside = [];
-    return `logout\nConnection to ${machineDomain(this.t, machine)} closed.`;
+    // Windows' OpenSSH says no "logout".
+    return `${isWindows(shell) ? '' : 'logout\n'}Connection to ${machineDomain(this.t, machine)} closed.`;
   }
 
   // exit on an internal machine: go back one step (or to the workstation, after ssh -J).
@@ -320,12 +330,8 @@ export class Console {
     d.shell.cwd = d.shell.home;
     this.inside.push({ shell: d.shell, domain: d.domain, back: sinceWorkstation && !!d.via });
     this.visited.add(d.shell.host);
-    // A Windows Server's OpenSSH: no banner, PowerShell's own (DefaultShell = powershell.exe).
-    chunks.push(
-      d.shell.state.os === 'windows'
-        ? 'Windows PowerShell\nCopyright (C) Microsoft Corporation. All rights reserved.\n\nInstall the latest PowerShell for new features and improvements! https://aka.ms/PSWindows\n'
-        : `Linux ${d.shell.hostName} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`,
-    );
+    // A Windows Server's OpenSSH: no banner; its DefaultShell's own (PowerShell, or cmd.exe without it).
+    chunks.push(isWindows(d.shell) ? windowsLogin(d.shell) : `Linux ${d.shell.hostName} 6.12.0-quetes #1 SMP x86_64 GNU/Linux`);
     return chunks.join('\n\n');
   }
 

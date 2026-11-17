@@ -156,7 +156,8 @@ const SPECIFIC: [string, number][] = [
 
 /** A mask as icacls writes it: F, M, RX, R, W, or (RX,W), or its specific rights (S,RD). */
 export function icaclsRights(mask: number): string {
-  const simple = SIMPLE.find(([, v]) => v === mask);
+  // A deny entry has no Synchronize: it shows as the simple right all the same.
+  const simple = SIMPLE.find(([, v]) => v === mask || (v === (mask | SYNC) && (mask & 0xffff) !== 0));
   if (simple) return simple[0];
   // Two simple rights together (RX,W), as icacls shows them.
   for (const [a, va] of SIMPLE) for (const [b, vb] of SIMPLE) if (a < b && a !== b && (va | vb) === mask && a !== 'D' && b !== 'D') return `${a === 'W' ? b : a},${a === 'W' ? a : b}`;

@@ -97,7 +97,7 @@ const COMPARISON = ['eq', 'ne', 'gt', 'ge', 'lt', 'le', 'like', 'notlike', 'matc
 const LOGICAL = ['and', 'or', 'xor'];
 export const OPERATORS = new Set([...COMPARISON, ...COMPARISON.flatMap((o) => [`c${o}`, `i${o}`]), ...LOGICAL, 'not', 'f', 'band', 'bor', 'bxor', 'bnot']);
 
-const NUMBER = /^(?:0x[0-9a-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?|\.\d+)(kb|mb|gb|tb|pb)?(?![\w.])/i;
+const NUMBER = /^(?:0x[0-9a-f]+|\d+(?:\.\d+)?(?:e[+-]?\d+)?|\.\d+)(kb|mb|gb|tb|pb)?(?![\w]|\.(?!\.))/i;
 const SUFFIX: Record<string, number> = { kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3, tb: 1024 ** 4, pb: 1024 ** 5 };
 
 /** A number literal's value (12, 1.5GB, 0x1F). */
@@ -406,7 +406,8 @@ export class Parser {
     const start = this.i;
     const parts: (string | Expr)[] = [];
     let text = '';
-    while (this.i < this.s.length && !/[\s|;),}]/.test(this.ch())) {
+    // A parenthesis ends a bareword (alice:(R) is alice: then the expression (R), as in PowerShell).
+    while (this.i < this.s.length && !/[\s|;),}]/.test(this.ch()) && !(this.ch() === '(' && (text || parts.length))) {
       if (this.ch() === '`' && this.i + 1 < this.s.length) {
         text += ESCAPES[this.s[this.i + 1]] ?? this.s[this.i + 1];
         this.i += 2;

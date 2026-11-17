@@ -336,7 +336,9 @@ function netUser(game: Shell, args: string[]) {
     syncAccounts(game);
     return { out: OK, code: 0 };
   }
-  const local = Object.values(groups(game)).filter((g) => g.members.some((m) => canonical(game, m) === `${w.computer}\\${u.name}`)).map((g) => `*${g.name}`);
+  const local = Object.values(groups(game)).filter((g) => g.members.some((m) => canonical(game, m) === `${w.computer}\\${u.name}`))
+    .map((g) => `*${g.name}`)
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   const pad = (k: string, v: string) => `${k.padEnd(29)}${v}`.trimEnd();
   const lines = [
     pad('User name', u.name),

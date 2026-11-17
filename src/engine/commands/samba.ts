@@ -12,6 +12,7 @@ import { allowed, dump, guestOk, modeFor, readConfig, samba, SMB_CONF, shareFor,
 import { serverFor, addressOf } from '../nfs';
 import { verdict, type Firewall } from '../firewall';
 import { isWindows, windows as windowsOf } from '../windows';
+import { shareAccess, shareRights, token } from '../windows-acl';
 
 function testparm(game: Shell, args: string[]): string {
   const quiet = args.includes('-s') || args.includes('--suppress-prompt');
@@ -96,10 +97,26 @@ function date(ms: number): string {
   return `${DAYS[d.getUTCDay()]} ${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, ' ')} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}:${two(d.getUTCSeconds())} ${d.getUTCFullYear()}`;
 }
 
+/** A node's internal path on a server (null if not found). */
+function nodePath(root: Node, n: Node, at = ''): string | null {
+  if (root === n) return at || '/';
+  if (root.type !== 'directory') return null;
+  for (const [name, c] of Object.entries(root.children)) {
+    const r = nodePath(c, n, `${at}/${name}`);
+    if (r !== null) return r;
+  }
+  return null;
+}
+
 /** What a connected user may do on a node: their own rights, or those of force user / force group. */
 function canAs(server: Shell, share: Share, n: Node, right: 'r' | 'w' | 'x', user: string): boolean {
-  // A Windows server: the share says who may change it (no Unix rights there).
-  if (isWindows(server)) return right !== 'w' || writable(share);
+  // A Windows server: the share permissions and NTFS together (windows-acl.ts).
+  if (isWindows(server)) {
+    const ws = windowsOf(server).shares.find((x) => x.name.toLowerCase() === share.name.toLowerCase());
+    const path = nodePath(server.root, n);
+    if (!ws || path === null) return right !== 'w' || writable(share);
+    return shareAccess(server, ws, path, user, right === 'w' ? 'write' : 'read');
+  }
   const as = share.params.forceuser ?? user;
   if (server.can(n, right, as)) return true;
   const g = share.params.forcegroup?.replace(/^\+/, '');
@@ -227,7 +244,7 @@ function smbclient(game: Shell, args: string[]): string {
       if (!ws || !ws.path) return game.error('tree connect failed: NT_STATUS_BAD_NETWORK_NAME', 1), '';
       if (ws.special && !server.groupsFor(who).includes('Administrators')) return game.error('tree connect failed: NT_STATUS_ACCESS_DENIED', 1), '';
       const internal = '/' + ws.path.replace(/:\\?/, '\\').split('\\').filter(Boolean).join('/');
-      const share: Share = { name: ws.name, params: { path: internal, writable: ws.change.includes(who) ? 'yes' : 'no' } };
+      const share: Share = { name: ws.name, params: { path: internal, writable: shareRights(server, ws, token(server, who, true)) & 2 ? 'yes' : 'no' } };
       (server.state.smbSessions ??= []).push({ user: who, share: ws.name });
       if (commands === null) return game.error(game.t('smbclient-interactive')), '';
       return commands

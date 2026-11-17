@@ -15,8 +15,9 @@ export interface Machine {
   story?: string;
   // The game gives no key: you create your own (ssh-keygen, ssh-copy-id).
   withoutKey?: boolean;
-  // Another system than Debian (see freebsd.ts): its login banner.
-  os?: 'freebsd' | 'solaris' | 'ibmi';
+  // Another system than Debian (see freebsd.ts): its login banner. A Windows
+  // Server (windows.ts) shows no banner: its OpenSSH lands in cmd or PowerShell.
+  os?: 'freebsd' | 'solaris' | 'ibmi' | 'windows';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({

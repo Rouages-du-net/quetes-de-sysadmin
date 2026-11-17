@@ -18,6 +18,7 @@ import type { Shell } from './shell';
 import type { Directory, Node } from './world';
 import { serverFor } from './nfs';
 import { isWindows, volumeUsed, windows } from './windows';
+import { shareAccess } from './windows-acl';
 
 export interface CifsMount {
   host: string;
@@ -66,6 +67,17 @@ function accountFor(client: Shell, value: string, kind: 'users' | 'groups'): str
 /** The mounts of this machine that are cifs. */
 export const cifsMounts = (j: Shell) => ((j.state.mounts ?? []) as { path: string; cifs?: CifsMount }[]).filter((m) => m.cifs) as { path: string; name: string; cifs: CifsMount }[];
 
+/** A node's path below a root ('' for the root itself, /a/b below it), or null. */
+function relativePath(root: Node, n: Node, at = ''): string | null {
+  if (root === n) return at;
+  if (root.type !== 'directory') return null;
+  for (const [name, c] of Object.entries(root.children)) {
+    const r = relativePath(c, n, `${at}/${name}`);
+    if (r !== null) return r;
+  }
+  return null;
+}
+
 const contains = (root: Node, n: Node): boolean => root === n || (root.type === 'directory' && Object.values(root.children).some((c) => contains(c, n)));
 
 /** The cifs mount a node is reached through, if any. */
@@ -82,12 +94,17 @@ export function cifsAccess(client: Shell, n: Node, right: 'r' | 'w' | 'x', user:
   const m = cifsMountOf(client, n);
   if (!m) return null;
   const c = m.cifs;
-  if (right === 'w') {
-    if (c.readOnly) return false;
-    // The server: may the account change this share?
-    const server = serverFor(client, c.host)?.shell;
-    const share = server && isWindows(server) ? windows(server).shares.find((s) => s.name.toLowerCase() === c.share.toLowerCase()) : null;
-    if (!share?.change.includes(c.user)) return false;
+  if (right === 'w' && c.readOnly) return false;
+  // The server decides for the account the session authenticated as: the
+  // share permissions and the NTFS permissions together (windows-acl.ts).
+  const server = serverFor(client, c.host)?.shell;
+  const share = server && isWindows(server) ? windows(server).shares.find((s) => s.name.toLowerCase() === c.share.toLowerCase()) : null;
+  if (right === 'w' && !share) return false;
+  if (server && share) {
+    const root = client.find(m.path);
+    const rel = root ? relativePath(root, n) : null;
+    const on = rel === null ? c.path : `${c.path}${rel}`;
+    if (!shareAccess(server, share, on, c.user, right === 'w' ? 'write' : 'read')) return false;
   }
   if (user === 'root') return true;
   const mode = n.type === 'directory' ? octalToMode(c.dirMode) : octalToMode(c.fileMode);

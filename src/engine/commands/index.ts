@@ -106,6 +106,8 @@ export interface Command {
   cl?: boolean;
   // A Windows PowerShell cmdlet (see powershell.ts): its page lists parameters (-Name).
   cmdlet?: boolean;
+  // A Windows program (icacls, net, sc.exe…, see windows-natives.ts): its page lists /options.
+  winexe?: boolean;
   launch: (c: Context) => string;
 }
 
