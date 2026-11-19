@@ -1116,6 +1116,15 @@ stale-password
   /C/Users/vous/Documents/vault-svc_scans.txt → /C/Users/vous/Documents/coffre-svc_scans.txt
   /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
 
+unapplied-policy
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
+dormant-accounts
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/Documents/city-it-audit.txt → /C/Users/vous/Documents/audit-informatique-ville.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

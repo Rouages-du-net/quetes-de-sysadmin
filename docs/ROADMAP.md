@@ -549,7 +549,7 @@ them safely.
       task that silently stopped (an expired password, then a script whose
       non-terminating errors left its exit code at 0: `try`/`catch`,
       `$ErrorActionPreference`, `-ErrorVariable` in the engine).
-- [ ] **Later on Windows: Active Directory basics** (users, groups, GPO,
+- [x] **Later on Windows: Active Directory basics** (users, groups, GPO,
       `Get-ADUser`), the natural sequel to "The Directory" (OpenLDAP); the
       firewall (`Get-NetFirewallRule`); functions and loops in the
       PowerShell engine (`function`, `while`, `for`, `switch`).
@@ -572,9 +572,15 @@ them safely.
       conventions (AGDLP, a leaver disabled and moved, not deleted), and a
       lockout whose source is a scheduled task holding an old password
       (tasks under domain accounts, a trigger's repetition, ssh.exe,
-      Add-/Remove-ADPrincipalGroupMembership in the engine). Next:
-      chapters 3 (a GPO linked to the wrong OU) and 4 (a firewall rule to
-      narrow, dormant accounts audited with a loop and a CSV).
+      Add-/Remove-ADPrincipalGroupMembership in the engine), and chapters
+      3-4 done: a GPO linked to the wrong OU and filtered one group short
+      (the domain's workstations and their RSoP: `gpresult /s /user`,
+      Get-GPResultantSetOfPolicy, Invoke-GPUpdate `-Computer`), a Remote
+      Desktop rule open to Any narrowed or disabled, dormant accounts
+      closed by a loop or a function with a CSV report (Export-Csv,
+      ConvertTo-Csv, Import-Csv); the AD Recycle Bin (Get-ADObject
+      `-IncludeDeletedObjects`, Restore-ADObject, Get-ADOptionalFeature)
+      makes chapter 1's deletion recoverable.
 
 ## More ideas
 

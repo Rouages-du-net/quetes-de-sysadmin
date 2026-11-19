@@ -791,10 +791,11 @@ export function filterMatches(node: FilterNode, props: Record<string, unknown>):
         return v instanceof PSDate ? v.ms === asDate(want) : text.toLowerCase() === w.toLowerCase();
       case 'ne':
         return text.toLowerCase() !== w.toLowerCase();
+      // (A deleted object's name holds a line feed: the directory's * matches it.)
       case 'like':
-        return v !== null && v !== undefined && wildcard(w).test(text);
+        return v !== null && v !== undefined && wildcard(w).test(text.replace(/\n/g, ' '));
       case 'notlike':
-        return !(v !== null && v !== undefined && wildcard(w).test(text));
+        return !(v !== null && v !== undefined && wildcard(w).test(text.replace(/\n/g, ' ')));
       case 'band':
         return ((num(v) ?? 0) & (num(want) ?? 0)) !== 0;
       case 'bor':

@@ -418,7 +418,19 @@ presents them for people.
   task; `passMinutes` lets the domain's time pass with stacks' tasks);
   `comings-and-goings.ts` (an arrival and a departure checked on the
   directory), `stale-password.ts` (a lockout from a task's stale password,
-  `afterCommand` lets half an hour pass after an unlock).
+  `afterCommand` lets half an hour pass after an unlock),
+  `unapplied-policy.ts` (a GPO's link and security filtering, checked
+  with `resultant()` for every account; the domain's workstations as RSoP
+  sources: `ad.clients`, `logonClients`, `refreshClient` of
+  `windows-gpo.ts`, `gpresult /s /user`, Get-GPResultantSetOfPolicy) and
+  `dormant-accounts.ts` (a local firewall rule of stacks,
+  `WindowsOptions.firewallRules`; dormant accounts compared with a
+  snapshot taken by `initialise`; the CSV report read with `csvObjects`).
+  The AD Recycle Bin (`ad.recycleBin`, `ad.deleted`, `removeObject`,
+  `restoreObject`; Get-ADObject `-IncludeDeletedObjects`,
+  Restore-ADObject, Get-ADOptionalFeature) in `windows-ad.ts` and
+  `commands/windows-ad.ts`; Export-Csv, ConvertTo-Csv and Import-Csv in
+  `commands/windows-files.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
