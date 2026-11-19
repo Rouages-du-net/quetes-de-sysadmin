@@ -42,3 +42,5 @@ machine-sieve = tamis
 machine-compass = compas
 machine-cabinet = armoire
 machine-stave = portee
+machine-register = registre
+machine-stacks = rayons

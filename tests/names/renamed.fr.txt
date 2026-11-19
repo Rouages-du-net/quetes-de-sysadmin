@@ -1105,6 +1105,17 @@ silent-backup
   /C/Users/vous/Documents/vault-svc_backup.txt → /C/Users/vous/Documents/coffre-svc_backup.txt
   /C/Users/vous/email_mariam.txt → /C/Users/vous/courriel_mariam.txt
 
+comings-and-goings
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/Documents/hr-0112-arrival.txt → /C/Users/vous/Documents/rh-0112-arrivee.txt
+  /C/Users/vous/Documents/hr-0113-departure.txt → /C/Users/vous/Documents/rh-0113-depart.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
+stale-password
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/Documents/vault-svc_scans.txt → /C/Users/vous/Documents/coffre-svc_scans.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

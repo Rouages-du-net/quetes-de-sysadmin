@@ -22,13 +22,19 @@
 // schtasks (https://learn.microsoft.com/windows-server/administration/windows-commands/schtasks),
 // about_PowerShell_exe (-File: exit code)
 // (https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_powershell_exe?view=powershell-5.1).
+// A task may run as a domain account (LENDING\rsilva): the domain
+// controller checks its stored password, and a stale one counts towards the
+// lockout like any wrong password (a classic source of lockouts: "Account
+// lockouts", https://learn.microsoft.com/troubleshoot/windows-server/windows-security/account-lockout-event-id-4740).
+// A trigger may repeat within its day ("Repeat task every 5 minutes for a
+// duration of 12 hours": the trigger's Repetition, Interval and Duration).
 // Simplifications: one action runs (the first), no conditions (idle, AC
 // power), no "run task as soon as possible after a scheduled start is
-// missed", no repetition within a day.
+// missed".
 
 import type { Shell } from './shell';
 import { guid, logEvent, resolveWindows, TASK_LOG, windows } from './windows';
-import { findUser, logonError } from './windows-accounts';
+import { domainAccountLogon, findUser, logonError, type DomainLogon } from './windows-accounts';
 
 export interface TaskTrigger {
   kind: 'Daily' | 'Weekly' | 'Once' | 'AtStartup' | 'AtLogOn';
@@ -39,6 +45,9 @@ export interface TaskTrigger {
   // Daily: every N days.
   every?: number;
   enabled?: boolean;
+  // Repetition: every `repeat` ms after each start, for `duration` ms (indefinitely: until the next start).
+  repeat?: number;
+  duration?: number;
 }
 export interface TaskAction {
   execute: string;
@@ -71,6 +80,10 @@ export const LOGON_FAILURE = 2147943726;
 export const ACCOUNT_DISABLED = 2147943731;
 export const PASSWORD_EXPIRED = 2147943730;
 export const FILE_NOT_FOUND = 2147942402;
+// 0x80070775 ERROR_ACCOUNT_LOCKED_OUT, 0x80070701 ERROR_ACCOUNT_EXPIRED, 0x80070773 ERROR_PASSWORD_MUST_CHANGE.
+export const ACCOUNT_LOCKED = 2147944309;
+export const ACCOUNT_EXPIRED = 2147944193;
+export const MUST_CHANGE = 2147944307;
 const DAY = 86_400_000;
 
 /** The machine's tasks. */
@@ -89,8 +102,38 @@ export function taskUser(game: Shell, t: WinTask): string {
   return u ? `${windows(game).computer}\\${u.name}` : t.user;
 }
 
-/** The next time a trigger fires after `after` (null: never). */
+/** The next time a trigger fires after `after` (null: never), its repetitions included. */
 export function nextTrigger(tr: TaskTrigger, after: number): number | null {
+  const next = nextStart(tr, after);
+  if (!tr.repeat || tr.enabled === false) return next;
+  // The start this repetition follows: the last one at or before `after`.
+  const previous = lastStart(tr, after);
+  if (previous === null) return next;
+  const repeated = previous + (Math.floor((after - previous) / tr.repeat) + 1) * tr.repeat;
+  const end = tr.duration ? previous + tr.duration : (next ?? Infinity);
+  return repeated < end && (next === null || repeated < next) ? repeated : next;
+}
+
+/** The last start of a trigger at or before `at` (null: none yet). */
+function lastStart(tr: TaskTrigger, at: number): number | null {
+  if (tr.start > at) return null;
+  if (tr.kind === 'Once') return tr.start;
+  if (tr.kind === 'Daily') {
+    const every = (tr.every ?? 1) * DAY;
+    return tr.start + Math.floor((at - tr.start) / every) * every;
+  }
+  if (tr.kind === 'Weekly') {
+    const days = tr.days ?? [new Date(tr.start).getUTCDay()];
+    for (let day = Math.floor(at / DAY) * DAY, i = 0; i < 8; i++, day -= DAY) {
+      const s = day + (tr.start % DAY);
+      if (s <= at && s >= tr.start && days.includes(new Date(s).getUTCDay())) return s;
+    }
+  }
+  return null;
+}
+
+/** The next start of a trigger after `after` (without its repetitions). */
+function nextStart(tr: TaskTrigger, after: number): number | null {
   if (tr.enabled === false) return null;
   if (tr.kind === 'Once') return tr.start > after ? tr.start : null;
   if (tr.kind === 'Daily') {
@@ -142,6 +185,17 @@ function launch(game: Shell, t: WinTask, a: TaskAction): number {
   return where.exists ? 0 : FILE_NOT_FOUND;
 }
 
+/** The task's error for a refused domain logon (the domain controller wrote 4740 if it locked; the member, 4625). */
+const DOMAIN_ERRORS: Record<Exclude<DomainLogon['result'], 'ok'>, number> = {
+  unknown: LOGON_FAILURE,
+  'bad-password': LOGON_FAILURE,
+  locked: ACCOUNT_LOCKED,
+  disabled: ACCOUNT_DISABLED,
+  'account-expired': ACCOUNT_EXPIRED,
+  'password-expired': PASSWORD_EXPIRED,
+  'must-change': MUST_CHANGE,
+};
+
 /**
  * Runs a task now (Start-ScheduledTask, schtasks /run, or its trigger):
  * the logon, the action as its account, the result and the history.
@@ -155,7 +209,16 @@ export function runTask(game: Shell, t: WinTask, cause: 'user' | 'time'): number
   if (cause === 'user') task(game, 110, 'Information', `Task Scheduler launched "${id}"  instance of task "${name}" for user "${game.who}" .`);
   else task(game, 107, 'Information', `Task Scheduler launched "${id}"  instance of task "${name}" due to a time trigger condition.`);
   // The logon (a stored password, or the account's state).
-  if (who !== 'SYSTEM') {
+  // A domain account: the domain controller checks the stored password (or the account's state).
+  const domain: DomainLogon | null = who === 'SYSTEM' || findUser(game, t.user) ? null : domainAccountLogon(game, t.user, t.logon === 'Password' ? (t.password ?? '') : undefined, { address: null, caller: w.computer, type: 4 });
+  if (domain && domain.result !== 'ok') {
+    const code = DOMAIN_ERRORS[domain.result];
+    t.lastResult = code;
+    task(game, 104, 'Error', `Task Scheduler failed to log on "${domain.name}" .  Failure occurred in "LogonUserCall" .  User Action: Ensure the credentials for the task are correctly specified. Additional Data: Error Value: ${code}.`);
+    task(game, 101, 'Error', `Task Scheduler failed to start "${name}" task for user "${domain.name}". Additional Data: Error Value: ${code}.`);
+    return code;
+  }
+  if (who !== 'SYSTEM' && !domain) {
     const u = findUser(game, t.user);
     const error = !u ? 1326 : logonError(game, u.name, t.logon === 'Password' ? (t.password ?? '') : undefined);
     if (error) {

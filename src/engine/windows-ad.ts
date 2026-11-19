@@ -484,6 +484,14 @@ DOMAIN_HOOKS.all = (game) => {
   return d ? d.ad.objects.filter(isPrincipal).map((o) => asPrincipal(d.ad, o)) : [];
 };
 
+LOGON_HOOKS.domainResult = (game, account, password, from) => {
+  const d = domainOf(game);
+  if (!d) return null;
+  const known = findAccount(d.ad, account);
+  if (!known && !/[\\@]/.test(account)) return null;
+  const result = adLogon(game as Shell, account, password, { address: from?.address ?? null, caller: from?.caller ?? windows(game).computer, type: from?.type });
+  return { name: known && known.cls === 'user' ? accountName(d.ad, known) : account, result };
+};
 LOGON_HOOKS.domain = (game, account, password, from) => {
   const d = domainOf(game);
   if (!d) return null;

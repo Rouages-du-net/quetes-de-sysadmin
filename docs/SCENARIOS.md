@@ -195,6 +195,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | **Windows engine:** Windows Defender Firewall (`windows-firewall.ts`, `commands/windows-firewall.ts`) | profiles Domain, Private, Public (on by default, `NotConfigured` defaults: inbound blocked, outbound allowed), the adapter's category (DomainAuthenticated on a domain's machine, Private otherwise); rules with name, display name, group, direction, action, profiles, protocol, local and remote ports, remote addresses (Any, an address, a range, a CIDR or mask, LocalSubnet, DefaultGateway, DNS); the decision: a matching block rule wins, then a matching allow rule, otherwise the profile's default; a profile turned off lets everything in; Windows Server 2022's defaults for what the game models (OpenSSH SSH Server (sshd) on, File and Printer Sharing (SMB-In) on, Echo Request off, Remote Desktop off, WinRM HTTP-In with its Public rule limited to LocalSubnet; on a domain controller the AD DS, Kerberos and DNS rules); Get-NetFirewallRule (its list view with PolicyStoreSource, `-Name`, `-DisplayName`, `-DisplayGroup`, `-Enabled`, `-Direction`, `-Action`, `-PolicyStore`, `CmdletizationQuery_NotFound_*`), Get-NetFirewallPortFilter and Get-NetFirewallAddressFilter in both directions of the pipeline, New-NetFirewallRule (GUID name without `-Name`, `-PolicyStore "domain\GPO"`), Set-, Enable-, Disable-, Remove-NetFirewallRule, Get-/Set-NetFirewallProfile, Get-/Set-NetConnectionProfile; `netsh advfirewall firewall show/add/delete/set rule`, `netsh advfirewall show/set allprofiles state`; ssh (`Connection timed out`), smbclient (`NT_STATUS_IO_TIMEOUT`), `mount -t cifs` (`mount error(115)`), Test-NetConnection (`TcpTestSucceeded`, the port's service must run) and `ping` from a Windows machine go through the target's firewall | IPsec and connection security rules, program and service conditions, edge traversal, the firewall's log file, outbound filtering of the game's own connections, `ping` from Linux (it ignores the Windows firewall), the exact wording of New-NetFirewallRule's errors for a port without TCP/UDP and for an invalid address (uncertain), `RemoteDynamicKeywordAddresses` shown on every rule (uncertain on Server 2022), the default File and Printer Sharing (SMB-In) rule on with profile Any (Windows enables it when a share is created; uncertain) |
 | **Windows engine:** Active Directory (`windows-ad.ts`, `commands/windows-ad.ts`) | a domain on its domain controller (`state.ad`, built by `domainController()`), members joined with `windowsMachine({ domain })` (local Administrators hold Domain Admins, Users hold Domain Users; the player is a domain account); objects with DN, objectGUID and SID (the domain's SID and RID, deterministic), the default containers (CN=Users, CN=Computers, CN=Builtin, OU=Domain Controllers) and groups (Domain Admins 512, Domain Users 513, Domain Computers 515…; Builtin Administrators, Users…), OUs protected from accidental deletion, users (enabled, the password and when it was set, must change at next logon, never expires, the account's expiry, badPwdCount, lockout, last logon, Department, Title, Office, Manager…), groups (Global, DomainLocal, Universal; Security, Distribution; nesting; the primary group), computers; the domain's policy (7 characters, complexity, 42 days, 24 remembered, no lockout by default); a logon with `DOMAIN\user` or `user@domain` on a member (ssh: Logon Type 8; smbclient `-U DOMAIN\user` or `-W`, `mount -t cifs` with `domain=`: Logon Type 3): a wrong password counts, resets after the observation window, locks at the threshold (4740 on the domain controller with the Caller Computer Name: the member for ssh, the client for SMB), 4625 with its status and sub-status on the member, 4624 on success; a locked, disabled, expired or must-change account refused; domain groups (nested) in the tokens of NTFS and share permissions, icacls and Grant-SmbShareAccess take them; Get-ADUser, Get-ADComputer, Get-ADGroup, Get-ADOrganizationalUnit, Get-ADObject (`-Identity` as DN, GUID, SID or sAMAccountName, a missing one terminating even with `-ErrorAction SilentlyContinue`; `-Filter` with `-eq -ne -like -notlike -gt -ge -lt -le -and -or -not`, `*`, `$variables` and dates; `-LDAPFilter` with the bitwise matching rules; `-SearchBase`, `-SearchScope`; `-Properties` list or `*`, the default property sets sorted by name; "One or more properties are invalid"), New-ADUser (created disabled, a refused password leaves it created and disabled), Set-ADUser (`-Replace`, `-Clear`, `-Add`), Remove-ADUser (asks), Enable-/Disable-/Unlock-ADAccount, Set-ADAccountPassword (`-Reset`, `-OldPassword`; complexity: three kinds, not the sAMAccountName nor a part of the name; a reset doesn't unlock), Search-ADAccount (`-LockedOut`, `-AccountDisabled`, `-AccountInactive` 15 days or `-TimeSpan`/`-DateTime`, never used counting, `-AccountExpired`, `-AccountExpiring`, `-PasswordExpired`, `-PasswordNeverExpires`, `-UsersOnly`, `-ComputersOnly`), New-/Set-/Remove-ADGroup, Get-ADGroupMember (`-Recursive`, lower-case property names), Add-/Remove-ADGroupMember, Get-ADPrincipalGroupMembership, New-/Set-/Remove-ADOrganizationalUnit (`Access is denied` while protected, leaf only without `-Recursive`), Move-ADObject, Get-ADDomain, Get-ADDomainController, Get-/Set-ADDefaultDomainPasswordPolicy; the module only on the domain controller or a member with the tools (`domain.tools`); `net user /domain`, `whoami` and `whoami /groups` with the domain | one domain and one domain controller (no replication, sites, trusts, FSMO transfers), no Kerberos (a logon is checked at once, no tickets, no 4768/4771), no fine-grained password policies, no password history, no ACLs on directory objects nor delegation, no recycle bin, `-Server`/`-Credential` accepted and ignored, a few properties (`-Properties *` lists the game's), the order of results (creation order), New-ADUser's sAMAccountName defaulting to `-Name` (uncertain), OpenSSH's logon type for a password (8, uncertain), Search-ADAccount `-AccountInactive` counting accounts never used (as documented by observation, uncertain) |
 | **Windows engine:** Group Policy (`windows-gpo.ts`, `commands/windows-gpo.ts`) | GPOs (`state.ad.gpos`: name, id, status, versions, owner, settings for the computer or the user: a firewall rule, a firewall profile, a drive map, a logon script, a user right, the account policies, a registry value; permissions with GpoApply for security filtering, Authenticated Users by default), the Default Domain Policy and Default Domain Controllers Policy with their real ids, links on the domain and OUs (enabled, enforced, link order), inheritance blocked on an OU; the resulting policy (LSDOU without L and S: the domain then each OU down, link order 1 last in its container, a blocked OU dropping what comes from above unless enforced, enforced links winning over those below) with each GPO applied or filtered out (`Disabled (Link)`, `Disabled (GPO)`, `Denied (Security)`, `Not Applied (Empty)`); its application at logon (`windowsLogin`) and by `gpupdate` (`/force`, `/target:`) or Invoke-GPUpdate (`-Computer` a machine of the story): GPO firewall rules replace the previous ones (PolicyStoreSource the GPO's name, PolicyStoreSourceType GroupPolicy), drive maps (`net use`); `gpresult /r` (its layout: RSOP data, COMPUTER and USER SETTINGS, applied GPOs highest precedence first, filtered GPOs with their reason, the security groups; `/scope:`, `/h` a file); Get-GPO, New-GPO, Remove-GPO, New-GPLink (`-Order`), Set-GPLink (`-LinkEnabled`, `-Enforced`, `-Order`), Remove-GPLink, Get-GPInheritance (lower-case Name and Path, GpoLinks, InheritedGpoLinks in precedence order), Set-GPInheritance, Get-GPPermission, Set-GPPermission (`-Replace` to lower a permission), Get-GPOReport (XML or HTML) | no sites nor local policy (Local Group Policy always "Not Applied (Empty)"), no WMI filters, loopback processing, slow-link detection or background refresh every 90 minutes, a small set of settings (no Set-GPRegistryValue; settings are declared by the story or by New-NetFirewallRule `-PolicyStore`), Get-GPOReport's content in the game's short form, user rights and logon scripts recorded (gpresult, `appliedSettings`) but not enforced at logon, the computer's token shown with INTERACTIVE, the texts of Get-GPO's "not found", New-/Set-GPLink's link errors and Set-GPPermission's refusal (uncertain), gpresult's copyright line without its year |
+| **Windows engine:** domain accounts on members, Windows' OpenSSH client (`windows-tasks.ts`, `commands/windows-tasks.ts`, `commands/windows-system.ts`, `commands/windows-ad.ts`, `ldap.ts`) | a scheduled task under a domain account (`LENDING\rsilva`): the domain controller checks its stored password at each run like any logon (Logon Type 4: a wrong one counts towards the lockout, 4740 names the member as the caller, 4625 on the member), LastTaskResult 0x8007052E, 0x80070775 when locked, 0x80070533/0x80070532/0x80070701/0x80070773 for disabled, password expired, account expired, must change; Set-ScheduledTask, Register-ScheduledTask and `schtasks /change /ru /rp` take a domain account (its password checked, a wrong one counting too; "No mapping between account names and security IDs was done" for an unknown one); Principal.UserId and schtasks' Run As User show `DOMAIN\user`; a trigger's repetition (every N minutes for a duration, or until the next start), shown in Triggers' Repetition (Interval PT5M, Duration PT12H) and by `schtasks /query /v` (Repeat: Every, Until: Duration); `ssh` (ssh.exe, installed by default on Windows Server 2019 and later) from a Windows machine to the story's other machines: the game's ssh, keys in `%USERPROFILE%\.ssh`, names resolved by the hosts file then the domain's DNS (the story's machines, in the language); Add-/Remove-ADPrincipalGroupMembership (`-MemberOf`, removing asks), the primary group refused ("The user cannot be removed from a group because the group is currently the user's primary group"); LDAP filters' ordering matches `>=` and `<=` (numbers compared as numbers, text without case), in Get-AD* `-LDAPFilter` and `ldapsearch` | services under a domain account (still local only), New-ScheduledTaskTrigger's `-RepetitionInterval`/`-RepetitionDuration`, the task's random delay and "stop at duration end", `cmdkey` and saved credentials, Enter-PSSession, Invoke-Command and `-CimSession` (remoting goes through ssh), ssh.exe's Windows-only options, an ordering match on an attribute without an ordering rule (accepted, uncertain) |
 | The Music School (story 31) | `stave` as the story's main machine, built with `windowsMachine()`; its users, groups, shares with their own permissions, NTFS permissions on the shares' folders, the Agenda service under `.\svc_agenda`, a nightly task, System events of an update restart (1074, 6006, 6005, 6013) and the service's logon failure at boot (7038, 7000, 4625); a chapter's goal checked through `shareAccess` (what each teacher could do over SMB) and on the service's stored password; the Agenda's log (open while it runs: `opens`) and its level read from `agenda.ini` when it starts (`onStart`); 189 daily logs of a few GB filling D: (the volume's base computed for 180 MB free); the backup nights replayed at the start of chapter 4 with `advanceWindows` (the real script, as `svc_backup`: silent successes that skip Bank, then the expired password), each script run of a task recorded (`psScriptRuns`: exit code, errors met) | the Agenda's log doesn't grow while you play, nor does the app write anything at the debug or info level; the teachers' and the office's own attempts are told by the story (Samir's messages), not made over SMB; the password manager is an exported text entry; no Effective Access tab nor `Get-NTFSAccess`; `Set-Service -Credential` doesn't exist in 5.1, so `sc.exe config` (or the Services console, not simulated) is the way; `sc.exe config` doesn't check the password, as on Windows (the next start does) |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
 | BSD `ps`, `ls`, `grep`, `find`, `du` | on FreeBSD: `ps` with BSD options (`aux` with or without a dash, `a`, `x`, `u`, `j`, `l`, `-e` the environment, `-U`, `-p`, `-o`/`-O` with BSD keywords, no long options), only your terminal processes by default, your login shell and `ps` itself listed; `ls` refuses GNU's long options (only `--color`) and colours only with `-G`; `grep -P`, `find -printf`, `du -b` refused (GNU only), with getopt's or find's messages. On Linux, GNU's `grep -P` (JavaScript's regular expressions), `find -printf` (`%p %f %s %u %g %m`, `\n`) and `du -b` | BSD `ps`'s other keywords and `-L`, `ls`'s BSD-only options (`-T`, `-W`…) and its long format's dates, BSD `grep`'s finer differences, `find -ls` |
@@ -3043,6 +3044,101 @@ a password that still expires in 42 days, the task as SYSTEM or as an
 administrator, `svc_backup` in Administrators, the task disabled, the
 script run by hand as an administrator (it reads Bank), a script that
 copies everything but would still hide tomorrow's failure.
+
+## Story 32: The Card Catalogue (four chapters)
+
+Three public libraries (Central, Riverside, Hilltop) share one Active
+Directory domain, `lending.internal` (NetBIOS `LENDING`): `register`
+(`registre` in French, 192.0.2.46), its domain controller, a Windows Server
+2022 and the story's machine (`ssh register` lands in PowerShell: the
+player knows the drill since The Music School), and `stacks` (`rayons`,
+192.0.2.47), the member file server, an internal host reached from
+register with Windows' own OpenSSH client (`ssh stacks`). Tomas, who built
+the domain, has moved to the city's IT department; you take over. Nandini
+directs the network; Ines and Bongani run Riverside and Hilltop. The
+natural sequel to "The Directory" (OpenLDAP): DNs, LDAP filters
+(`Get-ADUser -LDAPFilter`), and the debriefs draw the parallel. Engine:
+the Windows engine and its Active Directory (`windows-ad.ts`,
+`windows-gpo.ts`); the whole domain in `chapters/card-catalogue.ts`
+(`register()`, `stacksHost()`, `domainSpec()`): OUs per branch
+(`Branches/Central`…), Groups, Leavers, Servers, Service Accounts,
+Workstations (and Kiosks); people by department, sAMAccountName = first
+initial + surname; AGDLP (GG_Lending, GG_Children, GG_LocalHistory,
+GG_Management inside DL_Staff_RW, DL_Events_RW, DL_Archives_RW,
+DL_Archives_RO, DL_Finance_RW, which alone appear in stacks' NTFS
+permissions); an old leaver still in groups (`oadeyemi`), inactive
+accounts (`ychen`, `pmorel`); computers (STACKS, desks, kiosks); the
+Default Domain Policy (10 characters, 90 days, locked after 5 tries for 30
+minutes); GPOs Staff Drives, Archives Drive (filtered to GG_LocalHistory),
+Events Drive (linked to OU=Central only: chapter 3), Server Firewall; the
+scan import task on stacks under Rafael's account. Tomas's handover and
+conventions are in Documents. It opens after "The Silent Backup" and "The
+Directory".
+
+### Chapter 1 — Comings and Goings (done)
+
+| Step | Command learnt |
+|---|---|
+| The tree | `Get-Content Documents\conventions.txt`; `Get-ADOrganizationalUnit -Filter * \| Select-Object DistinguishedName` |
+| "Same as Amara" | `Get-ADPrincipalGroupMembership aokoye`: GG_Children, but also GG_Management (acting deputy) and DL_Finance_RW (an exception) |
+| AGDLP | `Get-ADGroupMember DL_Events_RW`: GG_Children and GG_Management |
+| Kofi | `New-ADUser -Name 'Kofi Mensah' -GivenName Kofi -Surname Mensah -SamAccountName kmensah -Path 'OU=Riverside,OU=Branches,DC=lending,DC=internal' -Department Children -Title 'Youth Librarian' -Manager iduarte -AccountPassword (ConvertTo-SecureString … -AsPlainText -Force) -ChangePasswordAtLogon $true -Enabled $true` |
+| His group | `Add-ADGroupMember GG_Children kmensah` |
+| Mateo | `Disable-ADAccount mrossi`, `Remove-ADPrincipalGroupMembership mrossi -MemberOf GG_Lending` (or `Remove-ADGroupMember`), `Move-ADObject … -TargetPath 'OU=Leavers,DC=lending,DC=internal'` |
+
+Goal checked on the state: `kmensah` exists in OU=Riverside, enabled, with
+a password he must change at his first logon, the ticket's GivenName,
+Surname, Department, Title and Manager, and directly in GG_Children only
+(no DL_ group, no administrators' group, even nested); `mrossi` still
+exists, disabled, in OU=Leavers, in no group but his primary one. Expected
+traps: copying Amara's groups (GG_Management, DL_Finance_RW), a DL_ group
+directly (AGDLP), Domain Admins, a password with the person's name
+(refused: the account is then created disabled, "The password does not
+meet the length, complexity, or history requirement of the domain."), the
+account left in CN=Users, another account name than the conventions',
+no "change at logon", deleting Mateo (his SID; no AD Recycle Bin: the
+chapter must be restarted).
+
+### Chapter 2 — The Stale Password (done)
+
+| Step | Command learnt |
+|---|---|
+| Locked | `Search-ADAccount -LockedOut`: rsilva |
+| How | `Get-ADUser rsilva -Properties LockedOut, BadLogonCount, LastBadPasswordAttempt, PasswordLastSet`: changed on Monday, wrong passwords since |
+| From where | `Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4740} \| Format-List Message`: Caller Computer Name STACKS; `Get-ADUser -LDAPFilter '(lockoutTime>=1)'` |
+| There | `ssh stacks` (Windows' OpenSSH client); `Get-WinEvent` Security 4625: Logon Type 4 (batch) |
+| The source | `Get-ScheduledTask \| Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}`, `Get-ScheduledTaskInfo 'Scan Import'` (0x80070775), `schtasks /query /v /fo list`: the scan import, every 5 minutes, as LENDING\rsilva with the old password |
+| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (the vault's entry), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
+| Unlock | `exit`, `Unlock-ADAccount rsilva` |
+
+Since Rafael's change on Monday at 8:52, the chapter replays the task every
+5 minutes (locked at the fifth try, again each time the 30 minutes end).
+Unlocking lets half an hour pass (`passMinutes`): while the task holds the
+old password, Rafael is locked again. Goal checked on the state: rsilva
+isn't locked out half an hour after the unlock; no enabled task on stacks
+holds a wrong password for him; the scan import is Ready under a service
+account (OU=Service Accounts) whose stored password works, enabled, not an
+administrator; the lockout policy is unchanged (5 tries, at least 30
+minutes). Expected traps: unlocking first (it relocks), raising the
+threshold or disabling the lockout, resetting Rafael's password (it
+doesn't unlock), the task as SYSTEM, under a person's account or simply
+disabled (the scans stop arriving), a wrong password for svc_scans
+(refused, and it counts).
+
+### Chapter 3 — The Policy That Doesn't Apply (planned)
+
+The children's staff of Riverside and Hilltop have no E: drive: the GPO
+"Events Drive" is linked to OU=Central only (where Tomas tested it), or
+security filtering leaves them out. `gpresult /r`, `Get-GPInheritance`,
+`Get-GPOReport`, `New-GPLink` on OU=Branches (and `Remove-GPLink` from
+Central), `gpupdate /force`.
+
+### Chapter 4 — Doors and Dormant Accounts (planned)
+
+A firewall rule opening Remote Desktop to Any on stacks, narrowed with
+`Set-NetFirewallRule -RemoteAddress`; an audit function with a loop:
+`Search-ADAccount -AccountInactive`, disable and move to OU=Leavers, a CSV
+report (`Export-Csv`); the old leaver still in groups (`oadeyemi`).
 
 ## Ideas for later
 

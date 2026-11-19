@@ -173,7 +173,30 @@ export const LOGON_HOOKS: {
   domain?: (game: Game, account: string, password: string | undefined, from?: LogonOrigin) => boolean | null;
   // After a session opens (windows-gpo.ts: the domain's policy is applied at logon).
   afterLogin?: (game: Game) => void;
+  // A domain logon's detailed result (windows-ad.ts): the account as DOMAIN\name and why it fails, or null when not a domain account.
+  domainResult?: (game: Game, account: string, password: string | undefined, from?: LogonOrigin) => DomainLogon | null;
 } = {};
+
+/** A domain logon as a task or a service makes it (LogonUser): the account, and its result. */
+export interface DomainLogon {
+  // The account as Windows names it (LENDING\rsilva).
+  name: string;
+  result: 'ok' | 'unknown' | 'bad-password' | 'locked' | 'disabled' | 'account-expired' | 'password-expired' | 'must-change';
+}
+
+/**
+ * The logon of a task or a service under a domain account (DOMAIN\user,
+ * user@domain): checked by the domain controller, a wrong stored password
+ * counting towards the lockout like any other; null when the account isn't
+ * a domain one (a local account, or a name the domain doesn't know).
+ */
+export function domainAccountLogon(game: Game, account: string, password: string | undefined, from?: LogonOrigin): DomainLogon | null {
+  const w = windows(game);
+  const qualified = /^([^\\]+)\\(.+)$/.exec(account);
+  if (qualified && (qualified[1] === '.' || qualified[1].toLowerCase() === w.computer.toLowerCase())) return null;
+  if (!qualified && !account.includes('@') && findUser(game, account)) return null;
+  return LOGON_HOOKS.domainResult?.(game, account, password, from) ?? null;
+}
 
 /**
  * A logon with a domain account on this machine (OpenSSH, SMB): true when

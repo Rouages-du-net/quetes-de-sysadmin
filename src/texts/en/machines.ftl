@@ -42,3 +42,5 @@ machine-sieve = sieve
 machine-compass = compass
 machine-cabinet = cabinet
 machine-stave = stave
+machine-register = register
+machine-stacks = stacks

@@ -33,7 +33,7 @@
 
 import type { Game, Shell } from './shell';
 import { isWindows, windows } from './windows';
-import { MACHINES, WORKSTATION } from './machines';
+import { MACHINES, WORKSTATION, machineName } from './machines';
 
 export type FwProfileName = 'Domain' | 'Private' | 'Public';
 export const PROFILES: FwProfileName[] = ['Domain', 'Private', 'Public'];
@@ -242,7 +242,11 @@ export function storyMachines(game: Shell): { name: string; address: string; nam
   const out: { name: string; address: string; names: string[] }[] = [];
   const main = shellAddress(p);
   if (main) out.push({ name: p.host, address: main, names: [p.host, ...(isWindows(p) ? [windows(p).computer] : [])] });
-  for (const [name, h] of Object.entries(p.chapter.hosts ?? {})) out.push({ name, address: h.address, names: [name, h.domain] });
+  for (const [name, h] of Object.entries(p.chapter.hosts ?? {})) {
+    // Its name in the language too (stacks: rayons in French, rayons.lending.internal).
+    const local = machineName(p.t, name);
+    out.push({ name, address: h.address, names: [name, h.domain, ...(local !== name ? [local, h.domain.replace(new RegExp(`^${name}(?=\\.|$)`), local)] : [])] });
+  }
   return out;
 }
 
@@ -264,6 +268,24 @@ export function storyAddress(game: Shell, name: string): string | null {
     if (sh && isWindows(sh) && windows(sh).computer.toLowerCase() === low) return shellAddress(sh);
   }
   return null;
+}
+
+/**
+ * The address a name resolves to on a Windows machine: itself, its hosts
+ * file (C:\Windows\System32\drivers\etc\hosts), then the story's other
+ * machines (the domain's DNS knows them: dc01, dc01.school.internal); null
+ * if unknown.
+ */
+export function windowsResolve(game: Shell, host: string): string | null {
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return host;
+  const w = windows(game);
+  if (host === 'localhost') return '127.0.0.1';
+  if (host.toLowerCase() === w.computer.toLowerCase()) return w.network?.address ?? null;
+  for (const line of (game.read('/C/Windows/System32/drivers/etc/hosts') ?? '').split('\n')) {
+    const [addr, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
+    if (names.some((x) => x.toLowerCase() === host.toLowerCase())) return addr;
+  }
+  return storyAddress(game, host);
 }
 
 /** May a client reach a Windows machine on this port (TCP) or by ping (port null)? */

@@ -24,12 +24,56 @@
 
 import type { Shell } from '../shell';
 import { logEvent, longDate, TASK_LOG, windows } from '../windows';
-import { findUser, logonError } from '../windows-accounts';
+import { domainAccountLogon, findUser, knownPrincipal, logonError, memberName } from '../windows-accounts';
 import { RUNNING, findTask, hexResult, nextRun, runTask, taskUser, tasks, type WinTask } from '../windows-tasks';
 import { PSDate, arr, isObject, str, values, wildcard, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
 import type { TaskAction, TaskTrigger } from '../windows-tasks';
 
 const MODULE = 'ScheduledTasks';
+
+/**
+ * The account a task is set to run as, checked as the Task Scheduler does
+ * when it stores a password: a local user (CABINET\\name) or a domain one
+ * (LENDING\\name, whose wrong password counts towards the domain's
+ * lockout); without a password, the account must exist.
+ */
+function runAs(game: Shell, typed: string, password: string | undefined): { user: string } | { error: 'unknown' | 'password' | 'locked' } {
+  const computer = windows(game).computer;
+  const u = findUser(game, typed);
+  if (u) return password !== undefined && logonError(game, u.name, password) === 1326 ? { error: 'password' } : { user: `${computer}\\${u.name}` };
+  if (password === undefined) return knownPrincipal(game, typed) ? { user: memberName(game, typed) } : { error: 'unknown' };
+  const d = domainAccountLogon(game, typed, password, { address: null, caller: computer, type: 4 });
+  if (!d || d.result === 'unknown') return { error: 'unknown' };
+  if (d.result === 'bad-password') return { error: 'password' };
+  if (d.result === 'locked') return { error: 'locked' };
+  return { user: d.name };
+}
+
+/** What the Task Scheduler answers when it can't store the account. */
+const RUN_AS_ERRORS = {
+  unknown: ['No mapping between account names and security IDs was done.', 'NotSpecified', '0x80070534'],
+  password: ['The user name or password is incorrect.', 'AuthenticationError', '0x8007052e'],
+  locked: ['The referenced account is currently locked out and may not be logged on to.', 'AuthenticationError', '0x80070775'],
+} as const;
+const runAsFailure = (r: Run, error: keyof typeof RUN_AS_ERRORS, cmdlet: string) => {
+  const [message, category, code] = RUN_AS_ERRORS[error];
+  r.fail({ message, category, target: 'PS_ScheduledTask:Root/Microsoft/...S_ScheduledTask', exception: 'CimException', id: `HRESULT ${code},${cmdlet}` });
+};
+
+/** The task's account as its Principal.UserId shows it: a local user's name, a domain account with its domain. */
+const userId = (game: Shell, t: WinTask) => (findUser(game, t.user) || taskUser(game, t) === 'SYSTEM' ? taskUser(game, t).replace(/^.*\\/, '') : t.user);
+
+/** ISO 8601 durations, as the Task Scheduler writes them (PT5M, PT12H, P1D). */
+const isoDuration = (ms: number) => {
+  const m = Math.round(ms / 60_000);
+  if (m % 1440 === 0) return `P${m / 1440}D`;
+  return `PT${m >= 60 ? `${Math.floor(m / 60)}H` : ''}${m % 60 ? `${m % 60}M` : ''}`;
+};
+const repetitionObject = (tr: TaskTrigger): PSObject => ({
+  type: 'TaskRepetitionPattern',
+  text: 'MSFT_TaskRepetitionPattern',
+  props: { Duration: tr.repeat && tr.duration ? isoDuration(tr.duration) : '', Interval: tr.repeat ? isoDuration(tr.repeat) : '', StopAtDurationEnd: false, PSComputerName: '' },
+});
 
 function taskObject(game: Shell, t: WinTask): PSObject {
   return {
@@ -44,8 +88,8 @@ function taskObject(game: Shell, t: WinTask): PSObject {
       Author: t.author ?? '',
       Description: t.description ?? '',
       Actions: t.actions.map((a) => ({ type: 'MSFT_TaskExecAction', props: { Execute: a.execute, Arguments: a.arguments ?? '', WorkingDirectory: a.workingDirectory ?? '' }, text: 'MSFT_TaskExecAction' })),
-      Triggers: t.triggers.map((tr) => ({ type: 'MSFT_TaskTrigger', props: { Enabled: tr.enabled !== false, StartBoundary: new Date(tr.start).toISOString().slice(0, 19), DaysInterval: tr.every ?? 1 }, text: `MSFT_Task${tr.kind}Trigger` })),
-      Principal: { type: 'MSFT_TaskPrincipal2', props: { UserId: taskUser(game, t).replace(/^.*\\/, ''), LogonType: t.logon, RunLevel: t.runLevel ?? 'Limited' }, text: 'MSFT_TaskPrincipal2' },
+      Triggers: t.triggers.map((tr) => ({ type: 'MSFT_TaskTrigger', props: { Enabled: tr.enabled !== false, Repetition: repetitionObject(tr), StartBoundary: new Date(tr.start).toISOString().slice(0, 19), DaysInterval: tr.every ?? 1 }, text: `MSFT_Task${tr.kind}Trigger` })),
+      Principal: { type: 'MSFT_TaskPrincipal2', props: { UserId: userId(game, t), LogonType: t.logon, RunLevel: t.runLevel ?? 'Limited' }, text: 'MSFT_TaskPrincipal2' },
       URI: `${t.path}${t.name}`,
     },
   };
@@ -112,15 +156,15 @@ function setTask(r: Run): unknown[] {
       const user = r.p.User !== undefined ? str(r.p.User) : t.user;
       const system = /^(nt authority\\)?system$/i.test(user);
       if (!system) {
-        const u = findUser(r.game, user);
         const password = r.p.Password !== undefined ? str(r.p.Password) : undefined;
         // Registering checks the password (it is stored for "Run whether user is logged on or not").
-        if (!u || (password !== undefined && logonError(r.game, u.name, password) === 1326)) {
-          r.fail({ message: 'The user name or password is incorrect.', category: 'AuthenticationError', target: 'PS_ScheduledTask:Root/Microsoft/...S_ScheduledTask', exception: 'CimException', id: 'HRESULT 0x8007052e,Set-ScheduledTask' });
+        const account = runAs(r.game, user, password);
+        if ('error' in account) {
+          runAsFailure(r, account.error, 'Set-ScheduledTask');
           continue;
         }
         if (!r.should('Set-ScheduledTask', `${t.path}${t.name}`)) continue;
-        t.user = `${windows(r.game).computer}\\${u.name}`;
+        t.user = account.user;
         if (password !== undefined) {
           t.password = password;
           t.logon = 'Password';
@@ -217,12 +261,12 @@ function principalFor(r: Run, user: string | null, password: string | undefined,
   const game = r.game;
   const name = user ?? game.who;
   if (/^(nt authority\\)?system$/i.test(name)) return { user: 'SYSTEM', logon: 'ServiceAccount', runLevel: 'Limited' };
-  const u = findUser(game, name);
-  if (!u || (password !== undefined && logonError(game, u.name, password) === 1326)) {
-    r.fail({ message: u ? 'The user name or password is incorrect.' : 'No mapping between account names and security IDs was done.', category: u ? 'AuthenticationError' : 'NotSpecified', target: 'PS_ScheduledTask:Root/Microsoft/...S_ScheduledTask', exception: 'CimException', id: `HRESULT ${u ? '0x8007052e' : '0x80070534'},${cmdlet}` });
+  const account = runAs(game, name, password);
+  if ('error' in account) {
+    runAsFailure(r, account.error, cmdlet);
     return null;
   }
-  return { user: `${windows(game).computer}\\${u.name}`, logon: password !== undefined ? 'Password' : 'InteractiveToken', runLevel: 'Limited' };
+  return { user: account.user, logon: password !== undefined ? 'Password' : 'InteractiveToken', runLevel: 'Limited' };
 }
 
 function register(r: Run): unknown[] {
@@ -237,7 +281,10 @@ function register(r: Run): unknown[] {
   const triggers = values(p.Trigger).filter(isObject).map((x) => (x.data as { trigger?: TaskTrigger })?.trigger).filter((x): x is TaskTrigger => !!x);
   const given = values(p.Principal).filter(isObject).map((x) => (x.data as { principal?: Principal })?.principal).find(Boolean);
   let principal: Principal | null;
-  if (given) principal = given.user === 'SYSTEM' ? given : principalFor(r, given.user, undefined, 'Register-ScheduledTask') && { ...given, user: `${windows(game).computer}\\${findUser(game, given.user)!.name}` };
+  if (given) principal = given.user === 'SYSTEM' ? given : (() => {
+        const p = principalFor(r, given.user, undefined, 'Register-ScheduledTask');
+        return p && { ...given, user: p.user };
+      })();
   else principal = principalFor(r, p.User !== undefined ? str(p.User) : null, p.Password !== undefined ? str(p.Password) : undefined, 'Register-ScheduledTask');
   if (!principal) return [];
   if (p.RunLevel !== undefined) principal.runLevel = /^highest$/i.test(str(p.RunLevel)) ? 'Highest' : 'Limited';
@@ -329,6 +376,8 @@ export const TASK_VIEWS: Record<string, View> = {
 // ——— schtasks ———
 
 const ok = (out: string) => ({ out, code: 0 });
+// "0 Hour(s), 5 Minute(s)", as schtasks /query /v shows a repetition.
+const hoursMinutes = (ms: number) => `${Math.floor(ms / 3_600_000)} Hour(s), ${Math.round((ms % 3_600_000) / 60_000)} Minute(s)`;
 const err = (e: string, code = 1) => ({ out: '', err: e, code });
 
 function schtasks(game: Shell, args: string[]) {
@@ -370,9 +419,12 @@ function schtasks(game: Shell, args: string[]) {
                       pad('Start In', x.actions[0]?.workingDirectory ?? 'N/A'),
                       pad('Comment', x.description ?? 'N/A'),
                       pad('Scheduled Task State', x.state === 'Disabled' ? 'Disabled' : 'Enabled'),
-                      pad('Run As User', taskUser(game, x).replace(/^.*\\/, '')),
+                      pad('Run As User', userId(game, x)),
                       pad('Schedule Type', x.triggers[0]?.kind ?? 'On demand only'),
                       pad('Start Time', x.triggers[0] ? longDate(x.triggers[0].start).replace(/^\S+ /, '') : 'N/A'),
+                      pad('Repeat: Every', x.triggers[0]?.repeat ? hoursMinutes(x.triggers[0].repeat) : 'Disabled'),
+                      pad('Repeat: Until: Time', x.triggers[0]?.repeat ? 'None' : 'Disabled'),
+                      pad('Repeat: Until: Duration', x.triggers[0]?.repeat ? (x.triggers[0].duration ? hoursMinutes(x.triggers[0].duration) : 'Disabled') : 'Disabled'),
                     ]
                   : []),
               ].join('\n'),
@@ -398,9 +450,9 @@ function schtasks(game: Shell, args: string[]) {
       if (ru !== undefined || rp !== undefined) {
         const user = ru ?? t.user;
         if (!/^(nt authority\\)?system$/i.test(user)) {
-          const u = findUser(game, user);
-          if (!u || (rp !== undefined && logonError(game, u.name, rp) === 1326)) return err('ERROR: The user name or password is incorrect.');
-          t.user = `${windows(game).computer}\\${u.name}`;
+          const account = runAs(game, user, rp);
+          if ('error' in account) return err(account.error === 'unknown' ? 'ERROR: No mapping between account names and security IDs was done.' : account.error === 'locked' ? 'ERROR: The referenced account is currently locked out and may not be logged on to.' : 'ERROR: The user name or password is incorrect.');
+          t.user = account.user;
           if (rp !== undefined) {
             t.password = rp;
             t.logon = 'Password';

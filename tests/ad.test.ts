@@ -14,6 +14,7 @@ import { shareAccess, token } from '../src/engine/windows-acl';
 import { windows } from '../src/engine/windows';
 import { domainOf, findIdentity, lockedOut } from '../src/engine/windows-ad';
 import { applyPolicy, resultant, appliedSettings } from '../src/engine/windows-gpo';
+import { advanceWindows, nextTrigger, tasks, ACCOUNT_LOCKED, LOGON_FAILURE } from '../src/engine/windows-tasks';
 import { CMDLETS } from '../src/engine/commands/powershell';
 import { NATIVES } from '../src/engine/commands/windows-natives';
 import { COMMANDS } from '../src/engine/commands';
@@ -213,6 +214,47 @@ describe('Active Directory: logons, tokens and the lockout', () => {
     expect(run(dc, 'Search-ADAccount -PasswordNeverExpires -UsersOnly | Where-Object Enabled | Select-Object -ExpandProperty SamAccountName')).toBe('Administrator\nsvc_backup');
     expect(run(dc, 'Search-ADAccount')).toContain('Parameter set cannot be resolved');
     expect(run(dc, 'Search-ADAccount -AccountDisabled -UsersOnly | Disable-ADAccount -WhatIf')).toContain('What if: Performing the operation "Set" on target "CN=Carla Nguyen');
+  });
+});
+
+describe('Active Directory: tasks under domain accounts, group membership from the account, LDAP ordering', () => {
+  it("a task's stale domain password counts towards the lockout: 4740 names the member; Set-ScheduledTask takes a domain account", () => {
+    const { dc, files } = domain();
+    const start = Date.UTC(2029, 10, 20, 7, 0, 0);
+    tasks(files).push({ path: '\\', name: 'Sync', state: 'Ready', user: 'HARBOUR\\bob', logon: 'Password', password: 'Bob-2028-old', actions: [{ execute: 'cmd.exe' }], triggers: [{ kind: 'Daily', start, repeat: 5 * 60_000, duration: 60 * 60_000 }], lastResult: 0, run: () => 0 });
+    // Repetition: every 5 minutes for an hour, then the next day.
+    expect(nextTrigger(tasks(files)[0].triggers[0], start + 2 * 60_000)).toBe(start + 5 * 60_000);
+    expect(nextTrigger(tasks(files)[0].triggers[0], start + 56 * 60_000)).toBe(start + 86_400_000);
+    windows(files).clock = start - 60_000;
+    windows(dc).clock = start + 30 * 60_000;
+    advanceWindows(files, start + 20 * 60_000);
+    const ad = domainOf(dc)!.ad;
+    expect(lockedOut(ad, findIdentity(ad, 'bob')!, windows(dc).clock)).toBe(true);
+    expect(run(dc, 'Get-WinEvent -FilterHashtable @{LogName="Security"; Id=4740} -MaxEvents 1 | Select-Object -ExpandProperty Message')).toContain('Caller Computer Name:\tFILES');
+    expect(tasks(files)[0].lastResult).toBe(LOGON_FAILURE);
+    advanceWindows(files, start + 25 * 60_000);
+    expect(tasks(files)[0].lastResult).toBe(ACCOUNT_LOCKED);
+    expect(run(files, "Get-ScheduledTask Sync | Select-Object -ExpandProperty Principal | Select-Object -ExpandProperty UserId")).toBe('HARBOUR\\bob');
+    expect(run(files, 'schtasks /query /tn Sync /v /fo list')).toContain('Repeat: Every:                        0 Hour(s), 5 Minute(s)');
+    expect(run(files, "Set-ScheduledTask Sync -User 'HARBOUR\\svc_backup' -Password nope")).toContain('The user name or password is incorrect.');
+    expect(run(files, "Set-ScheduledTask Sync -User 'HARBOUR\\ghost' -Password nope")).toContain('No mapping between account names and security IDs was done.');
+    run(files, "Set-ScheduledTask Sync -User 'HARBOUR\\svc_backup' -Password 'Backup-2029-svc'");
+    expect(tasks(files)[0].user).toBe('HARBOUR\\svc_backup');
+    advanceWindows(files, start + 30 * 60_000);
+    expect(tasks(files)[0].lastResult).toBe(0);
+  });
+
+  it('Add-/Remove-ADPrincipalGroupMembership; the primary group stays; LDAP filters with >= and <=', () => {
+    const { dc } = domain();
+    run(dc, "Add-ADPrincipalGroupMembership bob -MemberOf Pilots, 'Docs Editors'");
+    expect(run(dc, 'Get-ADPrincipalGroupMembership bob | Select-Object -ExpandProperty name')).toBe('Domain Users\nPilots\nOffice Staff\nDocs Editors');
+    expect(run(dc, 'Add-ADPrincipalGroupMembership bob -MemberOf Pilots')).toContain('The specified account name is already a member of the group');
+    expect(run(dc, 'Remove-ADPrincipalGroupMembership bob -MemberOf Pilots')).toContain('Are you sure you want to perform this action?');
+    run(dc, 'Y');
+    expect(run(dc, "Remove-ADPrincipalGroupMembership bob -MemberOf 'Domain Users' -Confirm:$false")).toContain("The user cannot be removed from a group because the group is currently the user's primary group");
+    expect(run(dc, 'Get-ADPrincipalGroupMembership bob | Select-Object -ExpandProperty name')).toBe('Domain Users\nOffice Staff\nDocs Editors');
+    expect(run(dc, "Get-ADUser -LDAPFilter '(&(objectClass=user)(sn>=M))' | Select-Object -ExpandProperty SamAccountName")).toBe('alice\ncarla');
+    expect(run(dc, "Get-ADUser -LDAPFilter '(badPwdCount<=0)' -SearchBase 'OU=Staff,DC=harbour,DC=internal' | Measure-Object | Select-Object -ExpandProperty Count")).toBe('3');
   });
 });
 

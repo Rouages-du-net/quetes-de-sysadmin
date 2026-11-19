@@ -402,8 +402,23 @@ presents them for people.
   `src/engine/windows-gpo.ts`, the GroupPolicy module, `gpupdate`,
   `gpresult` and `net use` in `commands/windows-gpo.ts`; `domainController()`
   and `windowsMachine({ domain })` (a member server) in `windows-world.ts`.
+  A scheduled task may run as a domain account (the domain controller
+  checks its stored password, a stale one counts towards the lockout) and
+  repeat within its day (`TaskTrigger.repeat`, `duration`); `ssh` (ssh.exe)
+  from a Windows machine to the story's others (names: hosts file, then
+  `windowsResolve` of `windows-firewall.ts`).
   Tests: `tests/ad.test.ts` (fixture HARBOUR, `tests/ad-fixture.ts`),
   `tests/windows-firewall.test.ts`, `tests/powershell-language.test.ts`.
+  `chapters/card-catalogue.ts`: what the chapters of "The Card Catalogue"
+  share (the domain `lending.internal`: `register`, its domain controller,
+  as the story's machine, built by `register()`; `stacks`, a member file
+  server, an internal host built by `stacksHost()`; `domainSpec()`: OUs per
+  branch, users by department, AGDLP groups GG_/DL_, a leaver and inactive
+  accounts, computers, GPOs (Events Drive on the wrong OU), the scan import
+  task; `passMinutes` lets the domain's time pass with stacks' tasks);
+  `comings-and-goings.ts` (an arrival and a departure checked on the
+  directory), `stale-password.ts` (a lockout from a task's stale password,
+  `afterCommand` lets half an hour pass after an unlock).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

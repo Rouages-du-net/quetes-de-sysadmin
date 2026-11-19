@@ -16,7 +16,8 @@ import type { Shell } from '../shell';
 import { volumeUsed, windows, type ShareAce, type ShareRight, type WinShare } from '../windows';
 import { canonical, principal, shareAces } from '../windows-acl';
 import { isWindows } from '../windows';
-import { machineAt, reaches, storyAddress } from '../windows-firewall';
+import { machineAt, reaches, windowsResolve } from '../windows-firewall';
+import { SSH } from './ssh';
 import { PSDate, arr, str, wildcard, storageSize, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
 
 const GB = 1024 ** 3;
@@ -189,18 +190,7 @@ function getNetIPAddress(r: Run): unknown[] {
   return all.filter((a) => !family || String(a.props.AddressFamily).toLowerCase() === family.toLowerCase());
 }
 
-/** The address a name resolves to on the machine (its hosts file, itself); null if unknown. */
-function resolveHost(game: Shell, host: string): string | null {
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return host;
-  const w = windows(game);
-  if (host.toLowerCase() === w.computer.toLowerCase() || host === 'localhost') return host === 'localhost' ? '127.0.0.1' : net(game).address;
-  for (const line of (game.read('/C/Windows/System32/drivers/etc/hosts') ?? '').split('\n')) {
-    const [addr, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
-    if (names.some((x) => x.toLowerCase() === host.toLowerCase())) return addr;
-  }
-  // The story's other machines (the domain's DNS knows them: dc01, dc01.school.internal).
-  return storyAddress(game, host);
-}
+const resolveHost = windowsResolve;
 
 // The ports a Windows machine listens on, by the service that opens them.
 const LISTENERS: Record<number, string> = { 22: 'sshd', 445: 'LanmanServer', 139: 'LanmanServer', 5985: 'WinRM', 3389: 'TermService', 88: 'Kdc', 389: 'NTDS', 636: 'NTDS', 3268: 'NTDS', 53: 'DNS' };
@@ -332,4 +322,16 @@ export const SYSTEM_NATIVES: Native[] = [
   { name: 'hostname.exe', run: (game, args) => hostname(game, args) },
   { name: 'ipconfig.exe', page: 'ipconfig', run: (game, args) => ipconfig(game, args) },
   { name: 'PING.EXE', run: (game, args) => ping(game, args) },
+  // The OpenSSH client Windows Server 2019 and later install by default
+  // (C:\Windows\System32\OpenSSH\ssh.exe): the game's ssh, which resolves names
+  // with the hosts file and the domain's DNS, and reads keys in the profile's .ssh
+  // (https://learn.microsoft.com/windows-server/administration/openssh/openssh_overview).
+  {
+    name: 'ssh.exe',
+    run: (game, args) => {
+      game.status = 0;
+      const out = SSH.ssh.launch({ args, game, input: null, last: true });
+      return { out, code: game.status ?? 0 };
+    },
+  },
 ];

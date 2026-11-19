@@ -82,6 +82,8 @@ export const MACHINES: Machine[] = [
   machine('compass', '192.0.2.40', 'mixed-fleet'),
   // The Music School: its file server, a Windows Server 2022 (OpenSSH lands in cmd.exe).
   { ...machine('stave', '192.0.2.42', 'music-school'), os: 'windows' },
+  // The Card Catalogue: the libraries' domain controller (lending.internal), a Windows Server 2022; stacks, their file server, is an internal host.
+  { ...machine('register', '192.0.2.46', 'card-catalogue'), os: 'windows' },
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

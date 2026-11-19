@@ -18,7 +18,7 @@ import { base64, hostKey, condensed, fingerprint, MACHINES, WORKSTATION } from '
 import { allowed, methods } from './sshd';
 import { isWindows, windows } from './windows';
 import { domainLogon, findUser, logonError } from './windows-accounts';
-import { reaches, shellAddress } from './windows-firewall';
+import { reaches, shellAddress, windowsResolve } from './windows-firewall';
 
 export const KEYS_BY_DEFAULT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
@@ -62,6 +62,8 @@ export function configuration(game: Shell, alias: string): Record<string, string
 /** A name → an address, according to the /etc/hosts of the machine looking it up. */
 export function resolveName(game: Shell, host: string): string | null {
   if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return host;
+  // Windows: its hosts file, then the domain's DNS (windows-firewall.ts).
+  if (isWindows(game)) return windowsResolve(game, host);
   for (const line of (game.read('/etc/hosts') ?? '').split('\n')) {
     const [address, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
     if (names.includes(host)) return address;

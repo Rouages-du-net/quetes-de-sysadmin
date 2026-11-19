@@ -72,6 +72,8 @@ export const CODE_ORDER = [
   'service-logon',
   'log-flood',
   'silent-backup',
+  'comings-and-goings',
+  'stale-password',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

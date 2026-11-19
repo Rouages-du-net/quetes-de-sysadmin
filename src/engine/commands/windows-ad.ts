@@ -425,7 +425,7 @@ function changeMembers(r: Run, add: boolean): unknown[] {
         continue;
       }
       if (!add && !there) {
-        r.fail(adFailure(cmdlet, 'The specified account name is not a member of the group', 'NotSpecified', 'ADException', `${g.dn}:ADGroup`));
+        r.fail(adFailure(cmdlet, primaryOf(g, m) ? PRIMARY : 'The specified account name is not a member of the group', 'NotSpecified', 'ADException', `${g.dn}:ADGroup`));
         continue;
       }
       if (add && m === g) continue;
@@ -434,6 +434,42 @@ function changeMembers(r: Run, add: boolean): unknown[] {
     }
   }
   return r.p.PassThru ? groups.map((g) => adObject(c, g)) : [];
+}
+
+/** Is this group the account's primary group (Domain Users), a membership kept by primaryGroupID, not by member? */
+const primaryOf = (g: AdObject, m: AdObject) => !g.builtin && m.primaryGroup !== undefined && g.rid === m.primaryGroup;
+const PRIMARY = "The user cannot be removed from a group because the group is currently the user's primary group";
+
+/**
+ * Add-ADPrincipalGroupMembership, Remove-ADPrincipalGroupMembership: the
+ * same change as Add-/Remove-ADGroupMember, seen from the account (its
+ * -MemberOf groups); removing asks first (ConfirmImpact High)
+ * (https://learn.microsoft.com/powershell/module/activedirectory/remove-adprincipalgroupmembership).
+ */
+function changeMemberOf(r: Run, add: boolean): unknown[] {
+  const cmdlet = add ? 'Add-ADPrincipalGroupMembership' : 'Remove-ADPrincipalGroupMembership';
+  const c = need(r, cmdlet);
+  if (!c) return [];
+  const accounts = identities(r, c, cmdlet, ['user', 'group', 'computer'], 'ADPrincipal');
+  const groups = identities({ ...r, input: null }, c, cmdlet, ['group'], 'ADGroup', 'MemberOf');
+  for (const m of accounts) {
+    if (!r.should('Set', m.dn, !add)) continue;
+    for (const g of groups) {
+      const there = (g.members ?? []).some((x) => sameDn(x, m.dn));
+      if (add && there) {
+        r.fail(adFailure(cmdlet, 'The specified account name is already a member of the group', 'NotSpecified', 'ADException', `${m.dn}:ADPrincipal`));
+        continue;
+      }
+      if (!add && !there) {
+        r.fail(adFailure(cmdlet, primaryOf(g, m) ? PRIMARY : 'The specified account name is not a member of the group', 'NotSpecified', 'ADException', `${m.dn}:ADPrincipal`));
+        continue;
+      }
+      if (add && m === g) continue;
+      g.members = add ? [...(g.members ?? []), m.dn] : (g.members ?? []).filter((x) => !sameDn(x, m.dn));
+      g.modified = c.now;
+    }
+  }
+  return r.p.PassThru ? accounts.map((m) => adObject(c, m)) : [];
 }
 
 function principalMembership(r: Run): unknown[] {
@@ -668,6 +704,8 @@ export const AD_CMDLETS: Cmdlet[] = [
   base('Add-ADGroupMember', (r) => changeMembers(r, true), [ID, { name: 'Members', list: true, type: 'System.Object[]' }, { name: 'PassThru', switch: true }], { positional: ['Identity', 'Members'], writes: true }),
   base('Remove-ADGroupMember', (r) => changeMembers(r, false), [ID, { name: 'Members', list: true, type: 'System.Object[]' }, { name: 'PassThru', switch: true }], { positional: ['Identity', 'Members'], writes: true }),
   base('Get-ADPrincipalGroupMembership', principalMembership, [ID], { positional: ['Identity'] }),
+  base('Add-ADPrincipalGroupMembership', (r) => changeMemberOf(r, true), [ID, { name: 'MemberOf', list: true, type: 'System.Object[]' }, { name: 'PassThru', switch: true }], { positional: ['Identity', 'MemberOf'], writes: true }),
+  base('Remove-ADPrincipalGroupMembership', (r) => changeMemberOf(r, false), [ID, { name: 'MemberOf', list: true, type: 'System.Object[]' }, { name: 'PassThru', switch: true }], { positional: ['Identity', 'MemberOf'], writes: true }),
   base('New-ADOrganizationalUnit', newOu, [{ name: 'Name', type: 'System.String' }, { name: 'Path', type: 'System.String' }, { name: 'Description', type: 'System.String' }, { name: 'ProtectedFromAccidentalDeletion', type: 'System.Boolean' }, { name: 'PassThru', switch: true }], { positional: ['Name'], writes: true }),
   base('Set-ADOrganizationalUnit', setOu, [ID, { name: 'Description', type: 'System.String' }, { name: 'ProtectedFromAccidentalDeletion', type: 'System.Boolean' }, { name: 'PassThru', switch: true }], { positional: ['Identity'], writes: true }),
   base('Remove-ADOrganizationalUnit', (r) => removeObjects(r, 'Remove-ADOrganizationalUnit', ['organizationalUnit'], 'ADOrganizationalUnit'), [ID, { name: 'Recursive', switch: true }], { positional: ['Identity'], writes: true }),
