@@ -10,6 +10,7 @@
 import type { Shell } from '../shell';
 import { systemd } from '../systemd';
 import { diskState, io } from '../disk-io';
+import { cpu } from '../cpu';
 import { help } from './manual';
 import type { Command } from './index';
 
@@ -17,13 +18,14 @@ const f2 = (n: number) => n.toFixed(2);
 
 // sysstat's header: kernel, machine, date (in the language's format), architecture, CPUs.
 function header(game: Shell): string {
-  const sd = systemd(game)!;
-  const date = new Date(sd.clock);
+  // A machine without a disk model (state.io) or a clock still answers with its header.
+  const sd = systemd(game);
+  const date = new Date(sd?.clock ?? 0);
   const day =
     game.t.language === 'fr'
       ? date.toISOString().slice(0, 10).split('-').reverse().join('/')
       : `${date.toISOString().slice(5, 7)}/${date.toISOString().slice(8, 10)}/${date.getUTCFullYear()}`;
-  return `Linux 6.12.0-quetes (${sd.host}) \t${day} \t_x86_64_\t(${io(game)!.cpus} CPU)`;
+  return `Linux 6.12.0-quetes (${sd?.host ?? game.hostName}) \t${day} \t_x86_64_\t(${io(game)?.cpus ?? cpu(game)?.cores ?? 2} CPU)`;
 }
 
 // Interval and number of reports (iostat 1 3).

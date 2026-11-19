@@ -167,9 +167,10 @@ export const NETWORK: Record<string, Command> = {
       const res = resolveName(game, host);
       if ('error' in res)
         return game.error(`ping: ${host}: ${res.error === 'timeout' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
-      const r: Network = game.state.network;
-      const m = r.machines[res.ip];
-      const jumps = r.routes[res.ip]?.length ?? 1;
+      const r: Network | undefined = game.state.network;
+      // A machine whose network the story doesn't describe: nobody answers.
+      const m = r?.machines?.[res.ip];
+      const jumps = r?.routes?.[res.ip]?.length ?? 1;
       const lines = [`PING ${host} (${res.ip}) 56(84) bytes of data.`];
       const time: number[] = [];
       if (m?.ping)

@@ -120,3 +120,12 @@ describe('curl -o, -O and ping -cN', () => {
     expect(out).toContain('1 packets transmitted');
   });
 });
+
+describe('Robustness on a machine without every model', () => {
+  it('iostat and ping by address do not break', () => {
+    const c = CHAPTERS.find((x) => x.id === 'fix')!;
+    const s = new Shell({ ...c, commands: [...c.commands, 'iostat', 'ping'], events: [] }, 'en');
+    expect(s.execute('iostat')).toMatch(/^Linux 6\.12\.0-quetes \(kneader\) \t09\/15\/2028 \t_x86_64_\t\(2 CPU\)$/);
+    expect(s.execute('ping -c 2 192.0.2.1')).toContain('2 packets transmitted, 0 received, 100% packet loss');
+  });
+});
