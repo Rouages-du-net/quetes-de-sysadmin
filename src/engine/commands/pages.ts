@@ -55,6 +55,9 @@ export const PAGES: Record<string, Page> = {
   echo: { options: ['n', 'e', 'E'], examples: ['echo "hello" > note.txt', 'echo -e "first\\tline\\nsecond"'], see: ['printf', 'tee', 'cat'] },
   printf: { examples: ["printf '%s\\n' alpha beta", "printf '%-10s %5d\\n' nginx 80 sshd 22", "printf '%.2f\\n' 3.14159"], see: ['echo'] },
   true: { examples: ['true'], see: ['false', 'test'] },
+  xargs: { options: ['0', 'n', 'I', 'L', 'r', 't', 'd'], examples: ["find /var/log -name '*.gz' | xargs ls -l", "find . -name '*.tmp' -print0 | xargs -0 rm", 'cat hosts.txt | xargs -n 1 ping -c 1', "ls *.conf | xargs -I {} cp {} {}.bak"], see: ['find', 'grep'] },
+  env: { options: ['i', 'u'], examples: ['env', 'env | grep PATH', 'env LANG=C date'], see: ['printenv', 'export'] },
+  printenv: { examples: ['printenv HOME', 'printenv'], see: ['env', 'export'] },
   false: { examples: ['false || echo failed'], see: ['true', 'test'] },
   type: { options: ['t', 'p', 'a'], examples: ['type ls cd', 'type -t ls'], see: ['command', 'which', 'man'] },
   command: { options: ['v', 'V'], examples: ['command -v rsync', 'command ls'], see: ['type', 'which'] },
@@ -212,8 +215,8 @@ export const PAGES: Record<string, Page> = {
   'fail2ban-client': { examples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client unban 198.51.100.40', 'sudo fail2ban-client get recidive bantime', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], see: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, examples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], see: ['fail2ban-client', 'nano', 'nft'] },
   find: {
-    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
-    see: ['ls', 'grep', 'du', 'rm', 'crontab'],
+    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete', 'find / -type f -size +100M', "find /etc -name '*.conf' -newer /etc/hostname", "find /var/www -type f -perm /o+w -o -type f -perm -002", "find . -name '*.log' -exec grep -l error {} +", 'find /home -user ana -type f'],
+    see: ['ls', 'grep', 'du', 'rm', 'crontab', 'xargs'],
   },
   grep: {
     long: {

@@ -59,7 +59,7 @@ chmod-mode-incorrect = chmod: invalid mode: '{ $permissions }' (see man chmod)
 ## find
 
 # { $predicate }: the unknown option typed
-find-predicate-unknown = find: unknown predicate `{ $predicate }' (here: -name, -type, -mtime, -maxdepth, -delete, -printf)
+find-predicate-unknown = find: unknown predicate `{ $predicate }'
 find-argument-missing = find: missing argument to `{ $predicate }'
 # { $predicate }: -mtime, -maxdepth; { $value }: what was typed
 find-argument-numeric = find: invalid argument `{ $value }' to `{ $predicate }'

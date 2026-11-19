@@ -106,6 +106,13 @@ describe('Variables, tilde and command substitution', () => {
   });
 });
 
+describe('Backslash', () => {
+  it('protects the next character, as in bash', () => {
+    const s = shell();
+    expect(s.execute('echo a\\ b \\* "a\\"b" \\$HOME "\\$HOME" "a\\nb" a\\\\b')).toBe('a b * a"b $HOME $HOME a\\nb a\\b');
+  });
+});
+
 describe('History: !$, !^, !*', () => {
   it('reuses the previous line\'s words, as typed', () => {
     const s = shell();

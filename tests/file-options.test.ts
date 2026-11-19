@@ -57,7 +57,7 @@ describe('ls', () => {
     expect(s.execute('ls -S /var/log')).toBe('dpkg.log  syslog  auth.log');
     expect(s.execute('ls --sort=size -r /var/log')).toBe('auth.log  syslog  dpkg.log');
     expect(s.execute('ls -r /var/log')).toBe('syslog  dpkg.log  auth.log');
-    expect(s.execute('ls -ltr /var/log').split('\n').map((l) => l.split(/\s+/).at(-1))).toEqual(['dpkg.log', 'syslog', 'auth.log']);
+    expect((s.execute('ls -ltr /var/log') ?? '').split('\n').map((l) => l.split(/\s+/).at(-1))).toEqual(['dpkg.log', 'syslog', 'auth.log']);
     expect(s.execute('ls --sort=foo')).toContain("ls: invalid argument 'foo' for '--sort'");
   });
 

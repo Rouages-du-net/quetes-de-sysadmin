@@ -130,6 +130,15 @@ export function split(line: string): Word[] {
   };
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
+    // A backslash (man bash, "QUOTING"): outside quotes, the next character as it is
+    // (\; \( \* are words, not operators nor patterns); inside double quotes, only
+    // before $ ` " \ (elsewhere it stays).
+    if (c === '\\' && quote !== "'" && i + 1 < line.length && (quote !== '"' || /[$`"\\]/.test(line[i + 1]))) {
+      active ??= { text: '', city: false };
+      if (!quote && /[*?[\]{}~]/.test(line[i + 1])) active.city = true;
+      active.text += line[++i];
+      continue;
+    }
     if (quote) {
       if (c === quote) quote = '';
       else active!.text += c;

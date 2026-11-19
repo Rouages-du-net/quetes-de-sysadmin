@@ -41,6 +41,7 @@ import { NC } from './nc';
 import { DIFF } from './diff';
 import { SCRIPTS } from './scripts';
 import { BUILTINS } from './builtins';
+import { EVERYDAY } from './everyday';
 import { DISKS } from './disks';
 import { RSNAPSHOT } from './rsnapshot';
 import { POSTGRES } from './postgres';
@@ -162,6 +163,7 @@ function build(): Record<string, Command> {
     ...DIFF,
     ...SCRIPTS,
     ...BUILTINS,
+    ...EVERYDAY,
     ...DISKS,
     ...STOCKAGE,
     ...LVM,

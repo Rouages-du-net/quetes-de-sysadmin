@@ -1018,6 +1018,11 @@ export class Shell implements Game {
         out += c;
         continue;
       }
+      // \$ and \` stay as typed (split() drops the backslash).
+      if (c === '\\' && i + 1 < line.length) {
+        out += c + line[++i];
+        continue;
+      }
       // $(…) and `…`: the command inside, up to its closing parenthesis or backtick.
       let inner: string | null = null;
       if (c === '$' && line[i + 1] === '(') {

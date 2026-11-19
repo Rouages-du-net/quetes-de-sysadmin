@@ -117,6 +117,8 @@ presents them for people.
   `false`, `type`, `command`, `printf` in `commands/builtins.ts` (`[ … ]`
   becomes `test` in `tube`); `ALWAYS_THERE` and `COMPANIONS` in `shell.ts`:
   what every chapter knows, and the companions a chapter's command brings.
+  `find` (an expression of tests, operators and actions, `-exec`) in
+  `commands/files.ts`; `xargs`, `env`, `printenv` in `commands/everyday.ts`.
 - Command lists on the interactive line (`a && b || c; d`): `splitList`
   and `listRuns` in `src/engine/tools.ts`, run by `Shell.runLine`/`runList`
   in `shell.ts` (each command as if typed alone: events, `afterCommand`;
