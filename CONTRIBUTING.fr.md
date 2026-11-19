@@ -100,8 +100,13 @@ traduit), et les textes vérifiés en français.
 ### La difficulté
 
 Chaque chapitre affiche une difficulté de 1 à 5 étoiles, calculée par
-`src/engine/difficulty.ts` d'après ce qui le précède dans le jeu et sa
-taille : rien à régler à la main.
+`src/engine/difficulty.ts` d'après les chapitres qu'il suppose (ceux qui
+ouvrent son histoire, puis les précédents de son histoire) et sa taille (les
+étapes que le jeu vérifie, les commandes qu'il introduit) : rien à régler à
+la main. L'échelle est absolue, avec des seuils fixes : une nouvelle
+histoire reçoit ses propres niveaux sans changer ceux des autres ; choisis
+donc son `after` d'après ce qu'elle suppose vraiment, pas d'après ses
+étoiles.
 
 ## Un nouvel outil simulé
 

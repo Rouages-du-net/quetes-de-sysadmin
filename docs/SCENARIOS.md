@@ -77,7 +77,9 @@ translates them (`src/texts/en/`).
   Progress is kept in the browser (`localStorage`, key
   `quetes-de-sysadmin`, set with the `save-key` attribute), chapter by
   chapter. Each chapter shows a difficulty from 1 to 5 stars
-  (`difficulty.ts`).
+  (`difficulty.ts`), on an absolute scale: what the chapter assumes (its
+  prerequisites) and its size, so adding a story never changes the level
+  of the chapters it doesn't come after.
 - **Safe examples**: private IP addresses (RFC 1918), carrier-grade NAT
   (RFC 6598) or addresses reserved for documentation (RFC 5737), names in
   `.internal` for internal machines and networks (reserved by ICANN for
@@ -3346,8 +3348,8 @@ discovery, the firewall's verdict, who listens); `ip -6`, `ip neigh`,
 and `nc` in both families in `commands/ipv6.ts`; nftables families in
 `nftables.ts`; `listen [::]`, `ipv6only`, localhost's two addresses in
 `nginx.ts`; `nmap -6`; `ss -4`/`-6`; ufw's `IPV6=` and `ufw reload`. The
-story's machine is built in `chapters/ferry.ts`. It opens after "VLANs"
-(The Hive: `ip`, `/etc/network/interfaces`) and "Works on my machine"
+story's machine is built in `chapters/ferry.ts`. It opens after "The Zones"
+(The Hive: `ip`, `/etc/network/interfaces`, an nftables ruleset) and "Works on my machine"
 (The Neighbourhood Letters: BIND), and extends the network path.
 
 ### Chapter 1 — The New Card (done)
@@ -3444,7 +3446,8 @@ every quarter of an hour, an incident in chapter 2); each command, a
 minute passes (`sleep` lets more pass), and Prometheus scrapes and
 evaluates every 15 seconds of it. The story's machine is built in
 `chapters/bike-share.ts`. It opens after "SSH Alerts" (The Huts: reading a
-service through its logs) and extends the production path.
+service through its logs) and "Heavy Load" (The Observatory: the load
+average and a process's CPU) and extends the production path.
 
 ### Chapter 1 — The Blind Spot (done)
 

@@ -1,54 +1,74 @@
 // How hard a chapter is, from 1 to 5, to help players and teachers choose.
-// It is computed from what the game already knows, not rated by hand:
-// - mostly, how far into the game the chapter sits: the chapters to finish
-//   before it (those that unlock its story, then the earlier chapters of its
-//   own story), which is what it takes for granted;
-// - a little, its size: the steps the game checks and the commands it
-//   introduces.
-// Each chapter's score is ranked among all chapters, and the ranking is cut
-// into five equal bands: about a fifth of the chapters have each level.
-// Within a story, a chapter is never easier than the one before it.
+// It is computed from what the game already knows, not rated by hand, and
+// on an absolute scale: a chapter's level depends only on the chapter itself
+// and on the chapters it assumes, never on the rest of the game. Adding a
+// story (or prerequisites to a new story) thus changes no other chapter's
+// level, except the chapters that come after it.
+//
+// - Knowledge: the chapters it assumes, `assumed`: those that unlock its
+//   story (prerequisites() of unlocking.ts) and the earlier chapters of its
+//   own story.
+// - Size: the steps the game checks (`events`) and the commands it
+//   introduces (known here, in none of the assumed chapters). A chapter of
+//   up to 12 counts as ordinary; a bigger one weighs as if it assumed more,
+//   up to twice as much (from 24).
+//
+//   weight = (assumed + 1) × min(2, max(1, (steps + new commands) / 12))
+//
+// The weight is cut by fixed thresholds (LEVELS): an ordinary chapter is
+// level 2 from 5 assumed chapters, 3 from 12, 4 from 18, 5 from 44. Each
+// doubling of what a chapter assumes is about one more level, which is how
+// learning feels: the twentieth chapter of background matters less than the
+// fifth.
+//
+// Then two floors, so the levels read as a progression:
+// - within a story, a chapter is never easier than the one before it;
+// - a story's first chapter is at most one level easier than the hardest
+//   chapter its story opens after (`after`), which it builds on.
 
 import { STORIES } from './chapters';
 import { prerequisites } from './unlocking';
-import { allSheets } from './sheets';
+import type { Story } from './world';
 
 export type Level = 1 | 2 | 3 | 4 | 5;
 
-const WEIGHT_PLACE = 0.75;
-const WEIGHT_SIZE = 0.25;
+// The weight from which each level starts (level 1 below the first).
+const LEVELS = [6, 13, 19, 45] as const;
+// Steps and new commands of an ordinary chapter, and the most size can multiply the weight by.
+const ORDINARY_SIZE = 12;
+const MAX_SIZE_FACTOR = 2;
 
-// The rank of each value among all values, from 0 (smallest) to 1 (largest); ties share a rank.
-function percentiles(values: number[]): number[] {
-  const sorted = [...values].sort((a, b) => a - b);
-  const last = Math.max(1, values.length - 1);
-  return values.map((v) => sorted.indexOf(v) / last);
+/** The level of every chapter of these stories (the game's by default; tests pass others). */
+export function levelsOf(stories: readonly Story[] = STORIES): Map<string, Level> {
+  const levels = new Map<string, Level>();
+  const storyOf = new Map(stories.flatMap((s) => s.chapters.map((c) => [c.id, s] as const)));
+  const commands = new Map(stories.flatMap((s) => s.chapters.map((c) => [c.id, c.commands] as const)));
+  const level = (id: string): Level => {
+    const known = levels.get(id);
+    if (known) return known;
+    const story = storyOf.get(id)!;
+    const index = story.chapters.findIndex((c) => c.id === id);
+    const chapter = story.chapters[index];
+    const assumed = new Set([...prerequisites(story.id, stories), ...story.chapters.slice(0, index).map((c) => c.id)]);
+    const seen = new Set([...assumed].flatMap((c) => commands.get(c) ?? []));
+    const fresh = chapter.commands.filter((c) => !seen.has(c)).length;
+    const factor = Math.min(MAX_SIZE_FACTOR, Math.max(1, (chapter.events.length + fresh) / ORDINARY_SIZE));
+    const weight = (assumed.size + 1) * factor;
+    let result = 1 + LEVELS.filter((t) => weight >= t).length;
+    if (index > 0) result = Math.max(result, level(story.chapters[index - 1].id));
+    else for (const c of story.after ?? []) result = Math.max(result, level(c) - 1);
+    levels.set(id, result as Level);
+    return result as Level;
+  };
+  for (const s of stories) for (const c of s.chapters) level(c.id);
+  return levels;
 }
 
 let levels: Map<string, Level> | null = null;
 
-function compute(): Map<string, Level> {
-  const sheets = allSheets();
-  const place = sheets.map((f) => {
-    const story = STORIES.find((h) => h.id === f.story.id)!;
-    return new Set([...prerequisites(story.id), ...story.chapters.slice(0, story.chapters.indexOf(f.chapter)).map((c) => c.id)]).size;
-  });
-  const size = sheets.map((f) => f.chapter.events.length + f.fresh.length);
-  const p = percentiles(place);
-  const s = percentiles(size);
-  const scores = sheets.map((_, i) => WEIGHT_PLACE * p[i] + WEIGHT_SIZE * s[i]);
-  const ranks = percentiles(scores);
-  const result = new Map(sheets.map((f, i) => [f.chapter.id, Math.min(5, 1 + Math.floor(ranks[i] * 5)) as Level]));
-  for (const story of STORIES)
-    story.chapters.forEach((c, i) => {
-      if (i > 0) result.set(c.id, Math.max(result.get(c.id)!, result.get(story.chapters[i - 1].id)!) as Level);
-    });
-  return result;
-}
-
 /** A chapter's difficulty, from 1 (a first step) to 5 (assumes most of the game). */
 export function difficulty(chapter: string): Level {
-  levels ??= compute();
+  levels ??= levelsOf();
   const level = levels.get(chapter);
   if (!level) throw new Error(`Unknown chapter: ${chapter}`);
   return level;

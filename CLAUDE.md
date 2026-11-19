@@ -186,9 +186,10 @@ presents them for people.
   declares in `chapters/index.ts` (`after`) the chapters to finish before
   receiving its key (`prerequisites()` for tests).
 - `src/engine/difficulty.ts`: each chapter's difficulty, 1 to 5, computed
-  from what comes before it in the game and from its size (nothing to set
-  by hand); shown as stars in the menu, the learning paths and the
-  teachers' sheets.
+  on an absolute scale from the chapters it assumes (its prerequisites) and
+  from its size (nothing to set by hand): adding a story never changes the
+  level of the chapters it doesn't come after (`levelsOf()` for tests);
+  shown as stars in the menu, the learning paths and the teachers' sheets.
 - `src/engine/console.ts`, `machines.ts`, `workstation.ts`: the simulated network
   (and the rescue snapshot, `Console.restore`: the engine stays
   deterministic, no `Date.now` nor `Math.random`); you start from the

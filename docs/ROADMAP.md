@@ -633,9 +633,10 @@ them safely.
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to
   build it is in `docs/OFFENSIVE-STORY.md`.
 - [x] **Difficulty**: 1 to 5 stars per chapter (and a range per story),
-  computed from what comes before it in the game and from its size
-  (`src/engine/difficulty.ts`); in the menu, the learning paths and the
-  teachers' sheets.
+  computed on an absolute scale from the chapters it assumes and from its
+  size (`src/engine/difficulty.ts`), so that adding a story changes no
+  other story's levels; in the menu, the learning paths and the teachers'
+  sheets.
 - [x] **On-call duty and the incident of the day** (`src/engine/on-call.ts`):
   every day, a chapter drawn from the date (the same for everyone, with no
   server) among the chapters of the learning paths about failures that
