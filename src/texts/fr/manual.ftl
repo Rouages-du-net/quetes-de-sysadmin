@@ -423,7 +423,7 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .example-2 = copier ici (.) un fichier d’ailleurs
     .example-3 = mettre de côté la configuration de nginx avant d'y toucher
     .example-4 = copier, en demandant avant de remplacer, et le dire
-man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. Il parle aussi aux API HTTP : -s le rend silencieux (pas de progression, pas de message d’erreur sans -S), -G envoie les données de -d ou --data-urlencode dans l’URL plutôt que dans un POST, --data-urlencode NOM=VALEUR encode la valeur (espaces, accolades, guillemets d’une requête PromQL), -X choisit la méthode (POST…), -f échoue avec l’erreur 22 sur une erreur HTTP. Les accolades et crochets d’une URL sont des motifs de curl : mettez l’URL entre guillemets et ajoutez -g (--globoff), ou passez la requête avec --data-urlencode. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<).
+man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. Il parle aussi aux API HTTP : -s le rend silencieux (pas de progression, pas de message d’erreur sans -S), -G envoie les données de -d ou --data-urlencode dans l’URL plutôt que dans un POST, --data-urlencode NOM=VALEUR encode la valeur (espaces, accolades, guillemets d’une requête PromQL), -X choisit la méthode (POST…), -f échoue avec l’erreur 22 sur une erreur HTTP. Les accolades et crochets d’une URL sont des motifs de curl : mettez l’URL entre guillemets et ajoutez -g (--globoff), ou passez la requête avec --data-urlencode. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<). -o fichier enregistre la page dans un fichier (-O : sous le nom qui termine l’URL).
     .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X MÉTHODE] [-d DONNÉES] [--data-urlencode NOM=VALEUR] adresse
     .option-4 = IPv4 seulement.
     .option-6 = IPv6 seulement.
@@ -434,12 +434,15 @@ man-curl = va chercher une page web, comme un navigateur mais sans l’afficher 
     .option-s = silencieux : pas de barre de progression, ni de message d’erreur sans -S (le code de sortie le dit quand même).
     .option-G = envoie les données de -d et --data-urlencode dans la chaîne de requête d’un GET (get).
     .option-X = la méthode de la requête : -X POST, -X DELETE…
+    .option-o = écrit le corps dans ce fichier plutôt qu’à l’écran (output).
+    .option-O = l’écrit dans un fichier nommé comme la fin de l’URL (remote name).
     .example-1 = seulement l’en-tête du site local
     .example-2 = le site en IPv6 seulement, étape par étape
     .example-3 = la page de réservation en IPv4 seulement
     .example-4 = le site local par la boucle locale IPv6
     .example-5 = les cibles de Prometheus, indentées par jq
     .example-6 = une requête PromQL, ses accolades et guillemets encodés par curl
+    .example-7 = enregistrer la page d’accueil dans page.html
 man-cut = découpe chaque ligne en champs selon le séparateur et garde le champ N (ou N,M). Ex. : cut -d " " -f 1 garde le premier mot. Une liste peut contenir des plages : 1-3, 2- (de 2 à la fin), -2 (jusqu'à 2). -c garde des caractères plutôt que des champs (cut -c1-15) ; --complement garde tout sauf la liste ; -s écarte les lignes sans séparateur.
     .synopsis = cut -d séparateur -f LISTE [-s] [--complement] [fichier] ; cut -c LISTE [fichier]
     .option-d = le séparateur (une tabulation par défaut).
@@ -3716,3 +3719,12 @@ man-printenv = affiche la valeur de variables d'environnement (seulement leurs v
     .synopsis = printenv [NOM…]
     .example-1 = ton dossier personnel
     .example-2 = tout l'environnement
+man-alias = donne un nom court à une commande, pour cette session : alias ll='ls -la', puis ll. Sans argument, liste les alias : sur Debian, ~/.bashrc définit déjà ls='ls --color=auto' et grep='grep --color=auto'. Un alias ne remplace que le premier mot d'une commande ; pour le garder, écris-le dans ~/.bashrc. Une commande interne du shell (help alias, sur un vrai Linux).
+    .synopsis = alias [nom[='valeur']…]
+    .example-1 = les alias déjà définis
+    .example-2 = ll pour une liste longue, fichiers cachés compris
+    .example-3 = ce qu'est ll maintenant
+man-unalias = oublie un alias de cette session ; -a les oublie tous. Une commande interne du shell.
+    .synopsis = unalias [-a] nom…
+    .option-a = oublie tous les alias.
+    .example-1 = oublier ll

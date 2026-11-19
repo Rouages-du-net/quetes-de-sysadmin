@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { d, f, type Chapter } from '../src/engine/world';
+import { CHAPTERS } from '../src/engine/chapters';
 
 const mine = { owner: 'you' };
 const chapter = (commands = ['tar', 'ls', 'df', 'du', 'nano', 'cat', 'echo']): Chapter => ({
@@ -73,5 +74,49 @@ describe('Another editor than nano', () => {
 
   it('without nano in the chapter, the usual message', () => {
     expect(shell(['ls']).execute('vim x')).toBe('vim: command not found. Type "help" for the list.');
+  });
+});
+
+describe('alias and unalias', () => {
+  it('lists Debian\'s, defines, expands and forgets', () => {
+    const s = shell();
+    expect(s.execute('alias')).toBe("alias egrep='egrep --color=auto'\nalias fgrep='fgrep --color=auto'\nalias grep='grep --color=auto'\nalias ls='ls --color=auto'");
+    expect(s.execute("alias ll='ls -d'")).toBe('');
+    expect(s.execute('ll d')).toBe('d');
+    expect(s.execute('ll d | cat')).toBe('d');
+    expect(s.execute('type ll')).toBe("ll is aliased to `ls -d'");
+    expect(s.execute('alias ll')).toBe("alias ll='ls -d'");
+    expect(s.execute("'ll' d")).toContain('command not found');
+    expect(s.execute('unalias ll')).toBe('');
+    expect(s.execute('ll')).toContain('ll: command not found');
+    expect(s.execute('unalias ll')).toBe('-bash: unalias: ll: not found');
+    expect(s.execute('alias nope')).toBe('-bash: alias: nope: not found');
+  });
+});
+
+describe('curl -o, -O and ping -cN', () => {
+  const story = (id: string) => {
+    const c = CHAPTERS.find((x) => x.id === id)!;
+    const s = new Shell({ ...c, commands: [...c.commands, 'curl', 'cat', 'ls', 'ping', 'echo'], events: [] }, 'en');
+    s.colours = false;
+    return s;
+  };
+
+  it('curl -o writes the page into a file, -O under the URL\'s last name', () => {
+    const s = story('fix');
+    const page = s.execute('curl -s http://localhost/') ?? '';
+    expect(page).toContain('<title>');
+    expect(s.execute('curl -o page.html http://localhost/')).toBe('');
+    expect(s.execute('cat page.html')).toBe(page);
+    expect(s.execute('curl -O http://localhost/')).toBe('curl: Remote file name has no length\ncurl: (23) Failure writing output to destination');
+    expect(s.execute('echo $?')).toBe('23');
+    expect(s.execute('curl -so /etc/page.html http://localhost/')).toBe('Warning: Failed to open the file /etc/page.html: Permission denied\ncurl: (23) Failure writing output to destination');
+    expect(s.execute("curl -s -o /dev/null -w '%{http_code}\\n' http://localhost/")).toBe('200');
+  });
+
+  it('ping -c1 is ping -c 1', () => {
+    const s = story('lost-packet');
+    const out = s.execute('ping -c1 192.168.1.1') ?? '';
+    expect(out).toContain('1 packets transmitted');
   });
 });

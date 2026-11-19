@@ -16,8 +16,12 @@ export const DEBIAN_ALIASES: Record<string, string> = { ls: 'ls --color=auto', g
 export const programPath = (name: string) => `${COMMANDS[name]?.section === 8 ? '/usr/sbin' : '/usr/bin'}/${name}`;
 
 // What a name is for bash on this machine: an alias, a keyword, a builtin, a program, or nothing.
+// An alias's text: one of the session, or Debian's for a command the chapter has.
+const aliasOf = (game: Shell, name: string): string | undefined =>
+  Object.hasOwn(game.aliases, name) ? game.aliases[name] : DEBIAN_ALIASES[name] && game.known().includes(name) ? DEBIAN_ALIASES[name] : undefined;
+
 function kind(game: Shell, name: string): 'alias' | 'keyword' | 'builtin' | 'file' | null {
-  if (DEBIAN_ALIASES[name] && game.known().includes(name)) return 'alias';
+  if (aliasOf(game, name) !== undefined) return 'alias';
   if (SHELL_KEYWORDS.includes(name)) return 'keyword';
   if (SHELL_BUILTINS.includes(name) && (game.known().includes(name) || ['true', 'false', 'type', 'command', 'test', '[', 'help', 'history', 'exit'].includes(name))) return 'builtin';
   const c = COMMANDS[name];
@@ -46,10 +50,10 @@ function type(game: Shell, args: string[]): string {
       if (k === 'file' || (flags.has('P') && COMMANDS[name])) out.push(programPath(name));
     } else {
       const all = flags.has('a');
-      if (k === 'alias') out.push(`${name} is aliased to \`${DEBIAN_ALIASES[name]}'`);
+      if (k === 'alias') out.push(`${name} is aliased to \`${aliasOf(game, name)}'`);
       if (k === 'keyword') out.push(`${name} is a shell keyword`);
       if (k === 'builtin' || (all && SHELL_BUILTINS.includes(name) && k === 'alias')) out.push(`${name} is a shell builtin`);
-      if (k === 'file' || (all && k === 'alias')) out.push(`${name} is ${programPath(name)}`);
+      if (k === 'file' || (all && k === 'alias' && COMMANDS[name] && game.known().includes(name))) out.push(`${name} is ${programPath(name)}`);
       if (all && k === 'file' && ['kill', 'echo', 'printf', 'test', 'pwd', 'true', 'false'].includes(name)) out.unshift(`${name} is a shell builtin`);
     }
   }
@@ -64,7 +68,7 @@ function command(game: Shell, args: string[], input: string | null, last: boolea
     const out: string[] = [];
     for (const name of names) {
       const k = kind(game, name);
-      if (k === 'alias') out.push(`alias ${name}='${DEBIAN_ALIASES[name]}'`);
+      if (k === 'alias') out.push(`alias ${name}='${aliasOf(game, name)}'`);
       else if (k === 'file') out.push(programPath(name));
       else if (k) out.push(name);
     }
@@ -189,7 +193,42 @@ export function escape(s: string, i: number): { text: string; end: number } {
   return { text: '\\', end: i };
 }
 
+// alias [name[=value]…]: lists, shows or defines aliases (for this session).
+function alias(game: Shell, args: string[]): string {
+  const all = { ...Object.fromEntries(Object.entries(DEBIAN_ALIASES).filter(([n]) => !Object.hasOwn(game.aliases, n))), ...game.aliases };
+  const show = (n: string) => `alias ${n}='${all[n].replace(/'/g, "'\\''")}'`;
+  const names = args.filter((a) => a !== '-p');
+  if (!names.length) return Object.keys(all).sort().map(show).join('\n');
+  const out: string[] = [];
+  for (const a of names) {
+    const eq = a.indexOf('=');
+    if (eq > 0) {
+      game.aliases[a.slice(0, eq)] = a.slice(eq + 1);
+      continue;
+    }
+    if (Object.hasOwn(all, a)) out.push(show(a));
+    else game.error(`-bash: alias: ${a}: not found`, 1);
+  }
+  return out.join('\n');
+}
+
+// unalias [-a] name…: forgets aliases.
+function unalias(game: Shell, args: string[]): string {
+  if (args.includes('-a')) {
+    for (const n of Object.keys(game.aliases)) delete game.aliases[n];
+    return '';
+  }
+  if (!args.length) return game.error('unalias: usage: unalias [-a] name [name ...]', 2);
+  for (const a of args) {
+    if (Object.hasOwn(game.aliases, a)) delete game.aliases[a];
+    else game.error(`-bash: unalias: ${a}: not found`, 1);
+  }
+  return '';
+}
+
 export const BUILTINS: Record<string, Command> = {
+  alias: { ownOptions: true, launch: ({ args, game }) => alias(game, args) },
+  unalias: { ownOptions: true, launch: ({ args, game }) => unalias(game, args) },
   true: { ownOptions: true, launch: () => '' },
   false: {
     ownOptions: true,

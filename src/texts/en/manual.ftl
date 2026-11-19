@@ -418,7 +418,7 @@ man-cp = copies a file (copy). The original stays in place. -r copies a whole pl
     .example-2 = copy a file from elsewhere to here (.)
     .example-3 = save nginx's configuration before touching it
     .example-4 = copy, asking before replacing, and say it
-man-curl = fetches a web page, like a browser but without displaying it nicely. It also talks to HTTP APIs: -s keeps it quiet (no progress, no error message unless -S), -G sends the data given with -d or --data-urlencode in the URL's query string rather than in a POST, --data-urlencode NAME=VALUE encodes the value (spaces, braces, quotes of a PromQL query), -X chooses the method (POST…), -f fails with error 22 on an HTTP error. Braces and brackets in a URL are curl's patterns: quote the URL and add -g (--globoff), or pass the query with --data-urlencode. -I only asks for the response header (the status code, for example 200 = OK). Over HTTPS (https://…), curl checks the server's certificate like a browser: validity dates, site name, trusted authority; if there is a problem, it stops with error 60. -4 and -6 choose the address family (IPv4, IPv6); without them, curl tries IPv6 first, then IPv4 (happy eyeballs): a site broken in IPv6 can still show. An IPv6 address goes in brackets: http://[2001:db8::80]/. -v (verbose) shows each attempt ("Trying [addr]:80...", "Connection refused"), the request sent (>) and the headers received (<).
+man-curl = fetches a web page, like a browser but without displaying it nicely. It also talks to HTTP APIs: -s keeps it quiet (no progress, no error message unless -S), -G sends the data given with -d or --data-urlencode in the URL's query string rather than in a POST, --data-urlencode NAME=VALUE encodes the value (spaces, braces, quotes of a PromQL query), -X chooses the method (POST…), -f fails with error 22 on an HTTP error. Braces and brackets in a URL are curl's patterns: quote the URL and add -g (--globoff), or pass the query with --data-urlencode. -I only asks for the response header (the status code, for example 200 = OK). Over HTTPS (https://…), curl checks the server's certificate like a browser: validity dates, site name, trusted authority; if there is a problem, it stops with error 60. -4 and -6 choose the address family (IPv4, IPv6); without them, curl tries IPv6 first, then IPv4 (happy eyeballs): a site broken in IPv6 can still show. An IPv6 address goes in brackets: http://[2001:db8::80]/. -v (verbose) shows each attempt ("Trying [addr]:80...", "Connection refused"), the request sent (>) and the headers received (<). -o file saves the page into a file (-O: under the name the URL ends with).
     .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X METHOD] [-d DATA] [--data-urlencode NAME=VALUE] address
     .option-4 = IPv4 only.
     .option-6 = IPv6 only.
@@ -429,12 +429,15 @@ man-curl = fetches a web page, like a browser but without displaying it nicely. 
     .option-s = silent: no progress meter, and no error message unless -S is given too (the exit code still tells).
     .option-G = sends the data of -d and --data-urlencode in the query string of a GET (get).
     .option-X = the request's method: -X POST, -X DELETE…
+    .option-o = writes the body into this file rather than on the screen (output).
+    .option-O = writes it into a file named like the end of the URL (remote name).
     .example-1 = only the header of the local site
     .example-2 = the site in IPv6 only, step by step
     .example-3 = the booking page in IPv4 only
     .example-4 = the local site through the IPv6 loopback
     .example-5 = Prometheus's targets, indented by jq
     .example-6 = a PromQL query, its braces and quotes encoded by curl
+    .example-7 = save the home page into page.html
 man-cut = splits each line into fields according to the separator and keeps field N (or N,M). E.g.: cut -d " " -f 1 keeps the first word. A list may hold ranges: 1-3, 2- (from 2 to the end), -2 (up to 2). -c keeps characters instead of fields (cut -c1-15); --complement keeps all but the list; -s drops the lines without the separator.
     .synopsis = cut -d separator -f LIST [-s] [--complement] [file] ; cut -c LIST [file]
     .option-d = the separator (a tab by default).
@@ -3695,3 +3698,12 @@ man-printenv = prints the value of environment variables (only their values), or
     .synopsis = printenv [NAME…]
     .example-1 = your home directory
     .example-2 = the whole environment
+man-alias = gives a command a short name, for this session: alias ll='ls -la', then ll. Without an argument, lists the aliases: on Debian, ~/.bashrc already defines ls='ls --color=auto' and grep='grep --color=auto'. An alias only replaces the first word of a command; to keep it, write it in ~/.bashrc. A shell built-in (help alias, on a real Linux).
+    .synopsis = alias [name[='value']…]
+    .example-1 = the aliases already defined
+    .example-2 = ll for a long listing, hidden files included
+    .example-3 = what ll is now
+man-unalias = forgets an alias of this session; -a forgets them all. A shell built-in.
+    .synopsis = unalias [-a] name…
+    .option-a = forgets every alias.
+    .example-1 = forget ll

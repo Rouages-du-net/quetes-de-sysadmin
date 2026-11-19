@@ -37,7 +37,7 @@ import { launchScript } from './commands/scripts';
 import { read as readSudoers, sudoersFile } from './sudoers';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
-const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test'];
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias'];
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
@@ -197,6 +197,8 @@ export class Shell implements Game {
   // The session's variables (NAME=value) and those exported (export): a
   // program sees the exported ones, and the NAME=value written before it.
   vars: Record<string, string> = {};
+  // The aliases defined in this session (alias ll='ls -l'); Debian's colour aliases are in builtins.ts.
+  aliases: Record<string, string> = {};
   exported = new Set<string>();
   // The environment of the command running now (restic reads RESTIC_* there).
   // sudo resets it (env_reset): only NAME=value written after sudo, or -E, pass.
@@ -938,7 +940,7 @@ export class Shell implements Game {
 
   // One command of the line (a pipeline, with its redirection).
   private runCommand(line: string): string | null {
-    const expanded = this.expandLine(line);
+    const expanded = this.expandLine(this.withAliases(line));
     line = expanded.line;
     const words = split(line);
     if (!words.length) return '';
@@ -990,6 +992,39 @@ export class Shell implements Game {
     if (this.chapter.activity) live(this, this.chapter.activity.not);
     const output = this.countLine(this.tube(line, words));
     return this.conclude([...expanded.errors, output].filter(Boolean).join('\n'), true);
+  }
+
+  /**
+   * Aliases (man bash, "ALIASES"): the first word of each command of the
+   * pipeline, unquoted, replaced by its alias's text (once: an alias that
+   * starts with its own name, alias ls='ls -F', is not expanded again).
+   */
+  withAliases(line: string): string {
+    if (!Object.keys(this.aliases).length) return line;
+    let out = '';
+    let quote = '';
+    let start = true;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quote) {
+        if (c === quote) quote = '';
+        out += c;
+        continue;
+      }
+      if (start && /\S/.test(c)) {
+        start = false;
+        const m = /^[^\s|;&<>()'"\\]+(?=[\s|;&<>()]|$)/.exec(line.slice(i));
+        if (m && Object.hasOwn(this.aliases, m[0])) {
+          out += this.aliases[m[0]];
+          i += m[0].length - 1;
+          continue;
+        }
+      }
+      if (c === '"' || c === "'") quote = c;
+      else if (c === '|') start = true;
+      out += c;
+    }
+    return out;
   }
 
   /**
