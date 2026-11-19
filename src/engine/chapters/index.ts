@@ -119,6 +119,8 @@ import { twoLocks } from './two-locks';
 import { serviceLogon } from './service-logon';
 import { logFlood } from './log-flood';
 import { silentBackup } from './silent-backup';
+import { comingsAndGoings } from './comings-and-goings';
+import { stalePassword } from './stale-password';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -281,6 +283,11 @@ export const STORIES: Story[] = [
     id: 'music-school',
     after: ['full-volume', 'smb-mount'],
     chapters: [twoLocks, serviceLogon, logFlood, silentBackup],
+  },
+  {
+    id: 'card-catalogue',
+    after: ['silent-backup', 'directory'],
+    chapters: [comingsAndGoings, stalePassword],
   },
 ];
 

@@ -63,3 +63,5 @@ story-mixed-fleet = Next Door Windows
     .summary = An architects' office runs a Linux server next to a Windows file server: a script written on Windows that bash can't run, the Windows share mounted on Linux the right way, and a look inside the Windows server through its OpenSSH and PowerShell.
 story-music-school = The Music School
     .summary = A community music school's file server is a Windows Server, and you are its new admin, over ssh and PowerShell: the teachers can't save in their share (share and NTFS permissions), the booking app's service won't start after its account's password was changed, its forgotten debug logs fill the data volume, and the nightly backup has failed in silence for weeks.
+story-card-catalogue = The Card Catalogue
+    .summary = Three public libraries share one Active Directory domain, and you take it over from the domain controller, in PowerShell: a new librarian's account with the rights of his job (AGDLP), a leaver closed without being deleted, and an account that locks every morning because a task on the file server still holds an old password.

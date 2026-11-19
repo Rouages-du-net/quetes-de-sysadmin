@@ -425,8 +425,13 @@ function netStartStop(game: Shell, op: 'start' | 'stop', name: string | undefine
   return { out: `${deps.length ? `The following services are dependent on the ${s.display} service.\nStopping the ${s.display} service will also stop these services.\n\n${deps.map((d) => `   ${d.display}`).join('\n')}\n\n` : ''}The ${s.display} service is stopping.\nThe ${s.display} service was stopped successfully.\n`, code: 0 };
 }
 
+/** What the domain adds to net (set by windows-ad.ts and windows-gpo.ts): net user /domain, net use. */
+export const NET_HOOKS: { userDomain?: (game: Shell, args: string[]) => { out: string; err?: string; code: number }; use?: (game: Shell) => { out: string; code: number } } = {};
+
 function net(game: Shell, args: string[]) {
   const [sub, ...rest] = args;
+  if (/^users?$/i.test(sub ?? '') && rest.some((a) => /^\/domain$/i.test(a)) && NET_HOOKS.userDomain) return NET_HOOKS.userDomain(game, rest.filter((a) => !/^\/domain$/i.test(a)));
+  if (/^use$/i.test(sub ?? '') && NET_HOOKS.use) return NET_HOOKS.use(game);
   const accounts = netAccountsPart(game, args);
   if (accounts) return accounts;
   switch (sub?.toLowerCase()) {

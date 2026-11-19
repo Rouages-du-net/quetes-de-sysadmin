@@ -144,6 +144,12 @@ export interface Windows {
   boot?: number;
   // Counters that keep ids deterministic (process ids, task instance GUIDs).
   serial?: number;
+  // Windows Defender Firewall (windows-firewall.ts); the defaults when absent.
+  firewall?: unknown;
+  // The domain the machine belongs to (windows-ad.ts: a member server; a domain controller has state.ad).
+  domain?: { dns: string; netbios: string; dc: string; ou?: string; tools?: boolean };
+  // The Group Policy applied on the machine (windows-gpo.ts).
+  gp?: unknown;
 }
 
 export const windows = (game: Game): Windows => game.state.windows as Windows;

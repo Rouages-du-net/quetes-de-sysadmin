@@ -448,7 +448,8 @@ describe('The manual', () => {
   it('every cmdlet and native program has its page, in every language', () => {
     for (const language of LANGUAGES) {
       const s = ledger({}, language as 'en');
-      for (const c of CMDLETS) {
+      // The modules this machine has (ActiveDirectory and GroupPolicy: tests/ad.test.ts, on a domain controller).
+      for (const c of CMDLETS.filter((x) => !x.available || x.available(s))) {
         expect(COMMANDS[c.name]?.cmdlet, c.name).toBe(true);
         const help = run(s, `Get-Help ${c.name}`);
         expect(help, c.name).toContain(c.name);

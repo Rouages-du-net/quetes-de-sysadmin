@@ -5,7 +5,15 @@
 // parameter), the rest in EXPRESSION mode (numbers, strings, variables,
 // operators). Supported:
 //   - statements separated by ; or a new line; if/elseif/else, foreach,
-//     try/catch/finally (catch [Type]), exit, throw; assignments ($x = …, +=, -=, $env:NAME = …, $x.Prop = …);
+//     while, do/while, do/until, for (init; cond; step), switch (values,
+//     -Wildcard, -Regex, -Exact, -CaseSensitive, script-block conditions,
+//     default), break, continue, return, try/catch/finally (catch [Type]),
+//     exit, throw; functions (function Name { param(...) ... } and
+//     function Name($a, $b) { ... }, typed parameters with defaults,
+//     [switch], [CmdletBinding()], [Parameter(Mandatory, Position,
+//     ValueFromPipeline)], [ValidateSet()], [Alias()], begin/process/end
+//     blocks); assignments ($x = …, +=, -=, *=, /=, $x++, $x--, $env:NAME = …, $x.Prop = …);
+//     <# block comments #>;
 //   - pipelines (|) whose first element may be an expression, redirections
 //     (> >> 2> 2>&1 *> to a file or $null);
 //   - numbers (10, 1.5, 0x1F, 1GB), 'single' and "double" strings ($var,
@@ -22,9 +30,12 @@
 // about_Operator_Precedence, about_Quoting_Rules, about_Special_Characters,
 // about_Comparison_Operators, about_Hash_Tables, about_Script_Blocks,
 // about_Redirection, about_Assignment_Operators, about_If, about_Foreach, about_Try_Catch_Finally,
+// about_While, about_Do, about_For, about_Switch, about_Break, about_Continue, about_Return,
+// about_Functions, about_Functions_Advanced_Parameters, about_Functions_CmdletBindingAttribute,
+// about_Comment_Based_Help,
 // https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_parsing?view=powershell-5.1
-// Simplifications (docs/SCENARIOS.md): no functions, no while/for/switch,
-// no here-strings, no splatting, no classes; one line at a time.
+// Simplifications (docs/SCENARIOS.md): no loop labels, no switch -File,
+// no here-strings, no splatting, no classes, no filter keyword; one line at a time.
 
 export type Expr =
   | { k: 'num'; v: number }
@@ -55,9 +66,11 @@ export interface Arg {
   pos: number;
 }
 export interface Element {
-  // A command (its name, or & expr) or an expression.
+  // A command (its name, or & expr / . expr) or an expression.
   name?: string;
   call?: Expr;
+  // . script.ps1: dot-sourced (runs in the caller's scope).
+  dot?: boolean;
   args: Arg[];
   expr?: Expr;
   pos: number;
@@ -76,11 +89,50 @@ export interface Pipeline {
   pos: number;
   end: number;
 }
+/** A function's parameter (param(...) or Name($a, $b)). */
+export interface FnParam {
+  name: string;
+  // [string], [int], [switch], [string[]]… as typed.
+  type?: string;
+  default?: Expr;
+  mandatory?: boolean;
+  position?: number;
+  fromPipeline?: boolean;
+  byPropertyName?: boolean;
+  aliases?: string[];
+  validateSet?: string[];
+}
+export interface FnDef {
+  name: string;
+  params: FnParam[];
+  // [CmdletBinding()] or a [Parameter()] attribute: an advanced function (common parameters, strict binding).
+  advanced: boolean;
+  begin?: Statement[];
+  process?: Statement[];
+  end: Statement[];
+  // Its source (Get-Command's Definition) and its comment-based help.
+  text: string;
+  synopsis?: string;
+  description?: string;
+}
+export interface SwitchClause {
+  // A value, a script block condition, or default.
+  pattern: Expr | null;
+  body: Statement[];
+}
 export type Statement =
   | { k: 'pipe'; p: Pipeline }
-  | { k: 'assign'; target: Expr; op: '=' | '+=' | '-='; value: Statement; pos: number }
+  | { k: 'assign'; target: Expr; op: '=' | '+=' | '-=' | '*=' | '/='; value: Statement; pos: number }
   | { k: 'if'; clauses: { cond: Statement; body: Statement[] }[]; otherwise?: Statement[] }
   | { k: 'foreach'; name: string; source: Statement; body: Statement[] }
+  | { k: 'while'; cond: Statement; body: Statement[] }
+  | { k: 'do'; body: Statement[]; cond: Statement; until: boolean }
+  | { k: 'for'; init?: Statement; cond?: Statement; step?: Statement; body: Statement[] }
+  | { k: 'switch'; subject: Statement; clauses: SwitchClause[]; wildcard: boolean; regex: boolean; sensitive: boolean; pos: number }
+  | { k: 'break' }
+  | { k: 'continue' }
+  | { k: 'return'; e?: Expr }
+  | { k: 'function'; def: FnDef }
   | { k: 'exit'; e?: Expr }
   | { k: 'throw'; e?: Expr; pos: number }
   | { k: 'try'; body: Statement[]; catches: { types: string[]; body: Statement[] }[]; final?: Statement[] };
@@ -131,7 +183,10 @@ export class Parser {
     while (this.i < this.s.length) {
       if (this.ch() === ' ' || this.ch() === '\t') this.i++;
       else if (this.ch() === '`' && this.s[this.i + 1] === '\n') this.i += 2;
-      else if (this.ch() === '#') {
+      else if (this.ch() === '<' && this.s[this.i + 1] === '#') {
+        const end = this.s.indexOf('#>', this.i + 2);
+        this.i = end < 0 ? this.s.length : end + 2;
+      } else if (this.ch() === '#') {
         while (this.i < this.s.length && this.ch() !== '\n') this.i++;
       } else break;
     }
@@ -270,11 +325,48 @@ export class Parser {
       if (!catches.length && !final) this.fail('The Try statement is missing its Catch or Finally block.', 'MissingCatchOrFinally');
       return { k: 'try', body, catches, final };
     }
-    if (this.keyword('exit') || this.keyword('return')) {
+    if (this.keyword('exit')) {
       this.ws();
       const e = this.i < this.s.length && !';\n})'.includes(this.ch()) ? this.expression() : undefined;
       return { k: 'exit', e };
     }
+    if (this.keyword('return')) {
+      this.ws();
+      const e = this.i < this.s.length && !';\n})'.includes(this.ch()) ? this.expression() : undefined;
+      return { k: 'return', e };
+    }
+    if (this.keyword('break')) return { k: 'break' };
+    if (this.keyword('continue')) return { k: 'continue' };
+    if (this.keyword('while')) {
+      const cond = this.loopCondition('while');
+      return { k: 'while', cond, body: this.block("Missing statement body in while loop.", 'MissingLoopStatement') };
+    }
+    if (this.keyword('do')) {
+      const body = this.block("Missing statement block after 'do'.", 'MissingLoopStatement');
+      this.wsn();
+      const until = this.keyword('until');
+      if (!until && !this.keyword('while')) this.fail("Missing while or until keyword in do loop.", 'MissingWhileOrUntilInDoWhile');
+      return { k: 'do', body, cond: this.loopCondition(until ? 'until' : 'while'), until };
+    }
+    if (this.keyword('for')) {
+      this.ws();
+      if (this.ch() !== '(') this.fail("Missing opening '(' after keyword 'for'.", 'MissingOpenParenthesisAfterKeyword');
+      this.i++;
+      const part = (last: boolean): Statement | undefined => {
+        this.wsn();
+        const st = this.ch() === (last ? ')' : ';') ? undefined : this.statement();
+        this.wsn();
+        if (this.ch() !== (last ? ')' : ';')) this.fail(last ? "Missing closing ')' after expression in 'for' statement." : "Missing ';' in 'for' statement.", last ? 'MissingEndParenthesisAfterStatement' : 'MissingSemicolonInForStatement');
+        this.i++;
+        return st;
+      };
+      const init = part(false);
+      const cond = part(false);
+      const step = part(true);
+      return { k: 'for', init, cond, step, body: this.block("Missing statement body in for loop.", 'MissingLoopStatement') };
+    }
+    if (this.keyword('switch')) return this.switchStatement(start);
+    if (this.keyword('function')) return { k: 'function', def: this.functionDefinition(start) };
     if (this.keyword('throw')) {
       this.ws();
       const e = this.i < this.s.length && !';\n})'.includes(this.ch()) ? this.expression() : undefined;
@@ -286,8 +378,17 @@ export class Parser {
       try {
         const target = this.postfix(this.primary());
         this.ws();
-        const op = this.at('+=') ? '+=' : this.at('-=') ? '-=' : this.ch() === '=' && this.s[this.i + 1] !== '=' ? '=' : null;
-        if (op && (target.k === 'var' || target.k === 'member' || target.k === 'index')) {
+        const settable = target.k === 'var' || target.k === 'member' || target.k === 'index';
+        // $i++ and $i-- (statements): about_Assignment_Operators.
+        if (settable && (this.at('++') || this.at('--'))) {
+          const op = this.at('++') ? '+=' : '-=';
+          const pos = this.i;
+          this.i += 2;
+          const one: Statement = { k: 'pipe', p: { elements: [{ expr: { k: 'num', v: 1 }, args: [], pos, end: pos }], redirects: [], pos, end: pos } };
+          return { k: 'assign', target, op, value: one, pos: start };
+        }
+        const op = this.at('+=') ? '+=' : this.at('-=') ? '-=' : this.at('*=') ? '*=' : this.at('/=') ? '/=' : this.ch() === '=' && this.s[this.i + 1] !== '=' ? '=' : null;
+        if (op && settable) {
           this.i += op.length;
           this.wsn();
           return { k: 'assign', target, op, value: this.statement(), pos: start };
@@ -298,6 +399,186 @@ export class Parser {
       this.i = save;
     }
     return { k: 'pipe', p: this.pipeline() };
+  }
+
+  /** while (…), until (…): the loop's condition. */
+  private loopCondition(word: string): Statement {
+    this.ws();
+    if (this.ch() !== '(') this.fail(`Missing opening '(' after keyword '${word}'.`, 'MissingOpenParenthesisAfterKeyword');
+    this.i++;
+    this.wsn();
+    const cond = this.statement();
+    this.wsn();
+    if (this.ch() !== ')') this.fail(`Missing closing ')' after expression in '${word}' statement.`, 'MissingEndParenthesisAfterStatement');
+    this.i++;
+    return cond;
+  }
+
+  /** switch [-Wildcard|-Regex|-Exact|-CaseSensitive] (value) { pattern { … } … default { … } } (about_Switch). */
+  private switchStatement(pos: number): Statement {
+    const flags = { wildcard: false, regex: false, sensitive: false };
+    for (;;) {
+      this.ws();
+      const m = /^-(\w+)/.exec(this.s.slice(this.i));
+      if (!m) break;
+      const f = m[1].toLowerCase();
+      if (f === 'wildcard') flags.wildcard = true;
+      else if (f === 'regex') flags.regex = true;
+      else if (f === 'casesensitive') flags.sensitive = true;
+      else if (f !== 'exact') this.fail(`Unexpected token '-${m[1]}' in expression or statement.`, 'InvalidSwitchFlag');
+      this.i += m[0].length;
+    }
+    this.ws();
+    if (this.ch() !== '(') this.fail("Missing '(' after 'switch' in switch statement.", 'MissingOpenParenthesisInSwitchStatement');
+    this.i++;
+    this.wsn();
+    const subject = this.statement();
+    this.wsn();
+    if (this.ch() !== ')') this.fail("Missing ')' after expression in switch statement.", 'MissingEndParenthesisInSwitchStatement');
+    this.i++;
+    this.wsn();
+    if (this.ch() !== '{') this.fail("Missing condition in switch statement clause.", 'MissingSwitchConditionExpression');
+    this.i++;
+    const clauses: { pattern: Expr | null; body: Statement[] }[] = [];
+    for (;;) {
+      this.wsn();
+      while (this.ch() === ';') {
+        this.i++;
+        this.wsn();
+      }
+      if (this.ch() === '}') {
+        this.i++;
+        break;
+      }
+      if (this.i >= this.s.length) this.fail("Missing closing '}' in statement block or type definition.", 'MissingEndCurlyBrace');
+      let pattern: Expr | null;
+      if (this.keyword('default')) pattern = null;
+      else if (this.ch() === '{') pattern = this.primary();
+      else pattern = this.argumentValue();
+      clauses.push({ pattern, body: this.block('Missing statement block in switch statement clause.', 'MissingSwitchStatementClause') });
+    }
+    return { k: 'switch', subject, clauses, ...flags, pos };
+  }
+
+  /** A parameter list, after its '(' (param(…) or Name(…)), up to its ')'. */
+  private paramList(): { params: FnParam[]; advanced: boolean } {
+    const params: FnParam[] = [];
+    let advanced = false;
+    for (;;) {
+      this.wsn();
+      if (this.ch() === ')') {
+        this.i++;
+        return { params, advanced };
+      }
+      const p: Partial<FnParam> = {};
+      while (this.ch() === '[') {
+        const attr = /^\[(\w+)\s*\(/.exec(this.s.slice(this.i));
+        if (attr) {
+          // [Parameter(Mandatory=$true, Position=0)]: up to the matching ')' then ']'.
+          let depth = 0;
+          let j = this.i + attr[0].length - 1;
+          for (; j < this.s.length; j++) {
+            if (this.s[j] === '(') depth++;
+            else if (this.s[j] === ')' && --depth === 0) break;
+          }
+          const inner = this.s.slice(this.i + attr[0].length, j);
+          if (this.s[j + 1] !== ']') this.fail("Missing closing ']' in attribute.", 'EndSquareBracketExpectedAtEndOfAttribute', j);
+          this.i = j + 2;
+          const name = attr[1].toLowerCase();
+          const flag = (key: string) => new RegExp(`\\b${key}\\b(?!\\s*=\\s*\\$false)`, 'i').test(inner);
+          if (name === 'parameter') {
+            advanced = true;
+            if (flag('Mandatory')) p.mandatory = true;
+            if (flag('ValueFromPipeline')) p.fromPipeline = true;
+            if (flag('ValueFromPipelineByPropertyName')) p.byPropertyName = true;
+            const pos = /\bPosition\s*=\s*(\d+)/i.exec(inner);
+            if (pos) p.position = Number(pos[1]);
+          } else if (name === 'validateset') p.validateSet = [...inner.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2]);
+          else if (name === 'alias') p.aliases = [...inner.matchAll(/'([^']*)'|"([^"]*)"/g)].map((m) => m[1] ?? m[2]);
+        } else {
+          const t = /^\[([A-Za-z_][\w.]*(?:\[\])?)\]/.exec(this.s.slice(this.i));
+          if (!t) this.fail("Missing type name after '['.", 'MissingTypename');
+          this.i += t[0].length;
+          p.type = t[1];
+        }
+        this.wsn();
+      }
+      const v = /^\$([A-Za-z_]\w*)/.exec(this.s.slice(this.i));
+      if (!v) this.fail("Missing ')' in function parameter list.", 'MissingEndParenthesisInFunctionParameterList');
+      this.i += v[0].length;
+      p.name = v[1];
+      this.ws();
+      if (this.ch() === '=') {
+        this.i++;
+        this.wsn();
+        this.noComma++;
+        try {
+          p.default = this.expression();
+        } finally {
+          this.noComma--;
+        }
+      }
+      params.push(p as FnParam);
+      this.wsn();
+      if (this.ch() === ',') {
+        this.i++;
+        continue;
+      }
+      if (this.ch() !== ')') this.fail("Missing ')' in function parameter list.", 'MissingEndParenthesisInFunctionParameterList');
+    }
+  }
+
+  /** function Name [(params)] { [<# help #>] [[CmdletBinding()]] [param(…)] body | begin {} process {} end {} } (about_Functions). */
+  private functionDefinition(start: number): FnDef {
+    this.ws();
+    const m = /^[A-Za-z_][\w-]*(?::[\w-]+)?/.exec(this.s.slice(this.i));
+    if (!m) this.fail('Missing name after function keyword.', 'MissingNameAfterKeyword');
+    this.i += m[0].length;
+    const name = m[0].replace(/^(global|script|local):/i, '');
+    this.ws();
+    let params: FnParam[] = [];
+    let advanced = false;
+    if (this.ch() === '(') {
+      this.i++;
+      ({ params, advanced } = this.paramList());
+    }
+    this.wsn();
+    if (this.ch() !== '{') this.fail('Missing function body in function declaration.', 'MissingFunctionBody');
+    const open = this.i;
+    this.i++;
+    // Comment-based help (.SYNOPSIS, .DESCRIPTION) at the start of the body.
+    const help = /^\s*<#([\s\S]*?)#>/.exec(this.s.slice(this.i));
+    const section = (key: string) => help && new RegExp(`\\.${key}\\s*\\n([\\s\\S]*?)(?=\\n\\s*\\.[A-Z]|$)`, 'i').exec(help[1])?.[1].trim().replace(/\s+/g, ' ');
+    this.wsn();
+    if (/^\[CmdletBinding\s*\(/i.test(this.s.slice(this.i))) {
+      advanced = true;
+      this.i = this.s.indexOf(']', this.i) + 1;
+      this.wsn();
+    }
+    if (/^param\s*\(/i.test(this.s.slice(this.i))) {
+      this.i = this.s.indexOf('(', this.i) + 1;
+      const list = this.paramList();
+      params = list.params;
+      advanced ||= list.advanced;
+    }
+    const def: FnDef = { name, params, advanced, end: [], text: '', synopsis: section('SYNOPSIS') ?? undefined, description: section('DESCRIPTION') ?? undefined };
+    this.wsn();
+    const named = /^(begin|process|end)\s*\{/i.exec(this.s.slice(this.i));
+    if (named) {
+      for (;;) {
+        this.wsn();
+        const b = /^(begin|process|end)(?=\s*\{)/i.exec(this.s.slice(this.i));
+        if (!b) break;
+        this.i += b[0].length;
+        def[b[1].toLowerCase() as 'begin' | 'process' | 'end'] = this.block();
+      }
+    } else def.end = this.statements('}');
+    this.wsn();
+    if (this.ch() !== '}') this.fail("Missing closing '}' in statement block or type definition.", 'MissingEndCurlyBrace', open);
+    this.i++;
+    def.text = this.s.slice(open + 1, this.i - 1);
+    void start;
+    return def;
   }
 
   // ——— Pipelines and commands ———
@@ -363,6 +644,7 @@ export class Parser {
     const pos = this.i;
     let name: string | undefined;
     let call: Expr | undefined;
+    const dot = this.ch() === '.';
     if (this.ch() === '&' || (this.ch() === '.' && /\s/.test(this.s[this.i + 1] ?? ''))) {
       this.i++;
       this.ws();
@@ -393,7 +675,7 @@ export class Parser {
       const value = this.argumentList();
       args.push({ value, text: this.s.slice(at, this.i), pos: at });
     }
-    return { name, call, args, pos, end: this.i };
+    return { name, call, args, pos, end: this.i, ...(call && dot ? { dot: true } : {}) };
   }
 
   /** A value in argument mode, with its comma list (Name,Length). */

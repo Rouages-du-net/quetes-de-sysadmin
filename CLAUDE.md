@@ -376,6 +376,49 @@ presents them for people.
   `-ErrorVariable` in `commands/powershell.ts`; `Register-ScheduledTask`
   and `New-ScheduledTask*` in `commands/windows-tasks.ts`; `compact`
   (NTFS compression, `File.onDisk`) in `commands/windows-files.ts`.
+  PowerShell's functions (`function`, `param()`, `[CmdletBinding()]`,
+  `[Parameter()]`, `[ValidateSet()]`, begin/process/end, `return`,
+  `$args`, dot-sourcing, `Import-Module` of a `.psm1`) and loops (`while`,
+  `do`, `for`, `switch`, `break`, `continue`; a guard stops endless loops)
+  in `powershell-parse.ts` and `commands/powershell.ts`; a cmdlet's module
+  may exist only on some machines (`Cmdlet.available`). Windows Defender
+  Firewall (`state.windows.firewall`: profiles, rules, the decision
+  `firewallAllows`, `reaches` used by ssh, smbclient, mount.cifs,
+  Test-NetConnection and ping towards a Windows machine of the story,
+  `machineAt`) in `src/engine/windows-firewall.ts`, its cmdlets
+  (`*-NetFirewallRule`, `Get-NetFirewall*Filter`, `*-NetFirewallProfile`,
+  `*-NetConnectionProfile`) and `netsh advfirewall` in
+  `commands/windows-firewall.ts`. Active Directory (`state.ad` on the
+  domain controller, `state.windows.domain` on a member: objects, DNs,
+  SIDs, users, groups and nesting, OUs, computers, the password and lockout
+  policy, `adLogon` with badPwdCount, lockout and events 4740/4625, the
+  `-Filter` language and LDAP filters, domain principals in tokens through
+  `DOMAIN_HOOKS` of `windows-acl.ts` and logons through `domainLogon` of
+  `windows-accounts.ts`, `buildDomain`) in `src/engine/windows-ad.ts`, the
+  ActiveDirectory module and `net user /domain` in `commands/windows-ad.ts`;
+  Group Policy (GPOs in `state.ad.gpos`, links, blocked inheritance,
+  enforcement, security filtering, the resulting policy `resultant`,
+  `applyPolicy` at logon and by gpupdate: firewall rules, drive maps) in
+  `src/engine/windows-gpo.ts`, the GroupPolicy module, `gpupdate`,
+  `gpresult` and `net use` in `commands/windows-gpo.ts`; `domainController()`
+  and `windowsMachine({ domain })` (a member server) in `windows-world.ts`.
+  A scheduled task may run as a domain account (the domain controller
+  checks its stored password, a stale one counts towards the lockout) and
+  repeat within its day (`TaskTrigger.repeat`, `duration`); `ssh` (ssh.exe)
+  from a Windows machine to the story's others (names: hosts file, then
+  `windowsResolve` of `windows-firewall.ts`).
+  Tests: `tests/ad.test.ts` (fixture HARBOUR, `tests/ad-fixture.ts`),
+  `tests/windows-firewall.test.ts`, `tests/powershell-language.test.ts`.
+  `chapters/card-catalogue.ts`: what the chapters of "The Card Catalogue"
+  share (the domain `lending.internal`: `register`, its domain controller,
+  as the story's machine, built by `register()`; `stacks`, a member file
+  server, an internal host built by `stacksHost()`; `domainSpec()`: OUs per
+  branch, users by department, AGDLP groups GG_/DL_, a leaver and inactive
+  accounts, computers, GPOs (Events Drive on the wrong OU), the scan import
+  task; `passMinutes` lets the domain's time pass with stacks' tasks);
+  `comings-and-goings.ts` (an arrival and a departure checked on the
+  directory), `stale-password.ts` (a lockout from a task's stale password,
+  `afterCommand` lets half an hour pass after an unlock).
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

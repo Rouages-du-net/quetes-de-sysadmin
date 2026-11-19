@@ -12,6 +12,13 @@
 // "Services on Windows Server"
 // (https://learn.microsoft.com/windows-server/security/windows-services/security-guidelines-for-disabling-system-services-in-windows-server),
 // "OpenSSH Server configuration for Windows" (DefaultShell, sshd_config).
+// A machine of a domain (options.domain): a member server, whose local
+// Administrators and Users hold the domain's Domain Admins and Domain Users
+// ("Join a computer to a domain",
+// https://learn.microsoft.com/windows-server/identity/ad-fs/deployment/join-a-computer-to-a-domain),
+// and the player logs on with a domain account; domainController() builds
+// the domain controller itself: no local accounts, the domain in state.ad
+// (windows-ad.ts), the firewall rules of AD DS.
 
 import type { Accounts, Directory, File, Node, NtfsAce } from './world';
 import type { WinEvent, WinService, WinShare, WinVolume, Windows } from './windows';
@@ -19,6 +26,8 @@ import type { WinTask } from './windows-tasks';
 import { BUILTIN_GROUPS, BUILTIN_USERS, type WinGroup, type WinUser } from './windows-accounts';
 import { FULL, MODIFY, READ_EXECUTE } from './windows-acl';
 import { dword, expand, key, sz, type Registry } from './windows-registry';
+import { buildDomain, type DomainSpec } from './windows-ad';
+import { newFirewall, type FwProfileName } from './windows-firewall';
 
 const DAY = 86_400_000;
 const GR_GE = 0x80000000 + 0x20000000;
@@ -62,6 +71,11 @@ export interface WindowsOptions {
   taskHistory?: boolean;
   // The local password policy (42 days, complexity on).
   policy?: Windows['policy'];
+  // The machine's domain: a member server (dc: the domain controller's host in the story), or its
+  // controller (role 'dc', built by domainController()). The player is then a domain account.
+  domain?: { dns: string; netbios: string; dc: string; ou?: string; role?: 'dc' | 'member'; tools?: boolean };
+  // The network's category for the firewall's profile, outside a domain (Private by default).
+  network_category?: FwProfileName;
 }
 
 const ace = (id: string, mask: number, flags: Partial<NtfsAce> = {}): NtfsAce => ({ id, mask, ...flags });
@@ -213,19 +227,35 @@ export function windowsAccounts(o: WindowsOptions): () => Accounts {
 /** The machine's state: state.os = 'windows', state.windows, OpenSSH's settings. */
 export function windowsState(o: WindowsOptions): Record<string, unknown> {
   const c = o.computer;
+  const dc = o.domain?.role === 'dc';
+  const nb = o.domain?.netbios.toUpperCase();
   const users: Record<string, WinUser> = {};
   for (const [name, rid, description, enabled] of BUILTIN_USERS) users[name] = { name, fullName: '', description, enabled, rid, passwordLastSet: name === 'Administrator' ? o.clock - 90 * DAY : null, neverExpires: name !== 'Administrator', lastLogon: null };
-  users[o.player] = { name: o.player, fullName: '', description: '', enabled: true, rid: 1000, passwordLastSet: o.clock - 20 * DAY, lastLogon: o.clock - DAY, neverExpires: false };
+  // In a domain, the player's account is the domain's (SCHOOL\you), not a local one.
+  if (!o.domain) users[o.player] = { name: o.player, fullName: '', description: '', enabled: true, rid: 1000, passwordLastSet: o.clock - 20 * DAY, lastLogon: o.clock - DAY, neverExpires: false };
   (o.users ?? []).forEach((u, i) => (users[u.name] = { name: u.name, fullName: u.fullName ?? '', description: u.description ?? '', enabled: u.enabled ?? true, rid: 1001 + i, passwordLastSet: o.clock - (u.passwordAge ?? 10) * DAY, neverExpires: u.neverExpires, lastLogon: null }));
   const groups: Record<string, WinGroup> = {};
   for (const [name, rid, description] of BUILTIN_GROUPS) groups[name] = { name, description, rid, builtin: true, members: [] };
   groups.Users.members.push('NT AUTHORITY\\INTERACTIVE', 'NT AUTHORITY\\Authenticated Users');
-  groups.Administrators.members.push(`${c}\\Administrator`, `${c}\\${o.player}`);
-  groups.Guests.members.push(`${c}\\Guest`);
+  if (dc) {
+    // A domain controller has no local accounts: its built-in groups are the domain's.
+    groups.Administrators.members.push(`${nb}\\Administrator`, `${nb}\\Domain Admins`, `${nb}\\Enterprise Admins`);
+    groups.Users.members.push(`${nb}\\Domain Users`);
+    groups.Guests.members.push(`${nb}\\Guest`, `${nb}\\Domain Guests`);
+    for (const k of Object.keys(users)) delete users[k];
+  } else if (o.domain) {
+    // Joining a domain puts Domain Admins in Administrators, Domain Users in Users.
+    groups.Administrators.members.push(`${c}\\Administrator`, `${nb}\\Domain Admins`);
+    groups.Users.members.push(`${nb}\\Domain Users`);
+    groups.Guests.members.push(`${c}\\Guest`);
+  } else {
+    groups.Administrators.members.push(`${c}\\Administrator`, `${c}\\${o.player}`);
+    groups.Guests.members.push(`${c}\\Guest`);
+  }
   (o.groups ?? []).forEach((g, i) => (groups[g.name] = { name: g.name, description: g.description ?? '', rid: 1100 + i, members: [] }));
   for (const u of o.users ?? []) for (const g of u.groups ?? ['Users']) groups[g]?.members.push(`${c}\\${u.name}`);
   for (const g of o.groups ?? []) for (const m of g.members ?? []) if (!groups[g.name].members.includes(`${c}\\${m}`)) groups[g.name].members.push(`${c}\\${m}`);
-  const passwords: Record<string, string> = { [o.player]: o.password, Administrator: `${o.password}!` };
+  const passwords: Record<string, string> = o.domain ? (dc ? {} : { Administrator: `${o.password}!` }) : { [o.player]: o.password, Administrator: `${o.password}!` };
   for (const u of o.users ?? []) passwords[u.name] = u.password;
   const windows: Windows = {
     computer: c,
@@ -257,6 +287,8 @@ export function windowsState(o: WindowsOptions): Record<string, unknown> {
     },
     network: o.network,
     shells: ['powershell'],
+    firewall: newFirewall({ dc, category: o.domain ? 'Domain' : (o.network_category ?? 'Private') }),
+    ...(o.domain ? { domain: { dns: o.domain.dns, netbios: nb!, dc: o.domain.dc, ou: o.domain.ou, tools: o.domain.tools } } : {}),
   };
   return { os: 'windows', windows, sshd: { load: { passwordauthentication: 'yes', pubkeyauthentication: 'yes' } }, realSsh: true };
 }
@@ -275,4 +307,18 @@ export function windowsMachine(o: WindowsOptions, drives: { C?: (c: Directory) =
       return { type: 'directory', children };
     },
   };
+}
+
+/**
+ * A domain controller as a story declares it: a Windows Server built by
+ * windowsMachine() (no local accounts: its built-in groups are the
+ * domain's), the domain in state.ad (users, groups, OUs, computers, GPOs,
+ * policy), the firewall rules of AD DS. The player is a Domain Admin
+ * (spec.player, or the options' player and password).
+ */
+export function domainController(o: WindowsOptions, spec: Omit<DomainSpec, 'dc'> & { dc?: string }, drives: { C?: (c: Directory) => void; D?: Record<string, Node> } = {}) {
+  const full: DomainSpec = { ...spec, dc: spec.dc ?? o.computer, dcAddress: spec.dcAddress ?? o.network?.address, player: spec.player ?? { sam: o.player, password: o.password } };
+  const options: WindowsOptions = { ...o, domain: { dns: spec.dns, netbios: spec.netbios, dc: '', role: 'dc', tools: true } };
+  const m = windowsMachine(options, drives);
+  return { ...m, state: () => ({ ...m.state(), ad: buildDomain(full, o.clock) }) };
 }

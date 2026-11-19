@@ -285,7 +285,8 @@ export function apply(a: Directory, c: Change): LdapError | null {
 
 // ——— Filters (RFC 4515) ———
 
-type Filter = { and: Filter[] } | { or: Filter[] } | { not: Filter } | { attr: string; pattern: string };
+// order: the ordering matches (attr>=value, attr<=value), compared as numbers when both are, as text otherwise.
+type Filter = { and: Filter[] } | { or: Filter[] } | { not: Filter } | { attr: string; pattern: string; order?: '>=' | '<=' };
 
 export function readFilter(text: string): Filter | null {
   let k = 0;
@@ -314,12 +315,14 @@ export function readFilter(text: string): Filter | null {
       const body = t.slice(k, end);
       const e = body.indexOf('=');
       if (e <= 0) return null;
+      const before = body[e - 1];
       f = {
         attr: body
           .slice(0, e)
           .replace(/[~<>]$/, '')
           .toLowerCase(),
         pattern: body.slice(e + 1),
+        ...(before === '>' || before === '<' ? { order: `${before}=` as const } : {}),
       };
       k = end;
     }
@@ -336,6 +339,14 @@ export function correspond(f: Filter, e: Input): boolean {
   if ('or' in f) return f.or.some((x) => correspond(x, e));
   if ('not' in f) return !correspond(f.not, e);
   const values = e.attrs[f.attr] ?? [];
+  if (f.order) {
+    const ge = f.order === '>=';
+    return values.some((v) => {
+      const [a, b] = [Number(v), Number(f.pattern)];
+      const cmp = v !== '' && f.pattern !== '' && !Number.isNaN(a) && !Number.isNaN(b) ? Math.sign(a - b) : v.toLowerCase().localeCompare(f.pattern.toLowerCase());
+      return ge ? cmp >= 0 : cmp <= 0;
+    });
+  }
   if (f.pattern === '*') return values.length > 0;
   const re = new RegExp(
     `^${f.pattern

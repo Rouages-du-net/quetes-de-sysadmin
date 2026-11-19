@@ -12,6 +12,8 @@ import { allowed, dump, guestOk, modeFor, readConfig, samba, SMB_CONF, shareFor,
 import { serverFor, addressOf } from '../nfs';
 import { verdict, type Firewall } from '../firewall';
 import { isWindows, windows as windowsOf } from '../windows';
+import { reaches, shellAddress } from '../windows-firewall';
+import { domainLogon } from '../windows-accounts';
 import { shareAccess, shareRights, token } from '../windows-acl';
 
 function testparm(game: Shell, args: string[]): string {
@@ -207,6 +209,7 @@ function smbclient(game: Shell, args: string[]): string {
   let list: string | null = null;
   let anonymous = false;
   let service: string | null = null;
+  let workgroupGiven: string | null = null;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '-U' || a === '--user') {
@@ -217,6 +220,7 @@ function smbclient(game: Shell, args: string[]): string {
     else if (a === '-c' || a === '--command') commands = args[++i] ?? '';
     else if (a === '-L' || a === '--list') list = args[++i] ?? '';
     else if (a === '-N' || a === '--no-pass') anonymous = true;
+    else if (a === '-W' || a === '--workgroup') workgroupGiven = args[++i] ?? '';
     else if (a.startsWith('-')) return game.error(`smbclient: unknown option ${a}\nUsage: smbclient [-?EgqBNPkV] [-?|--help] [--usage] [-M|--message=HOST] [-I|--ip-address=IP] [-L|--list=HOST] [-U|--user=USERNAME] [-N|--no-pass] [-c|--command=STRING] service <password>`);
     else service = a;
   }
@@ -225,7 +229,8 @@ function smbclient(game: Shell, args: string[]): string {
   if (!target) return game.error('Usage: smbclient [OPTIONS] service <password>\n(e.g. smbclient //localhost/share -U user)');
   const shareName = list === null ? (/^\/\/[^/]+\/([^/]+)/.exec(service ?? '')?.[1] ?? null) : null;
   if (list === null && !shareName) return game.error(`\\\\${target}: Not enough '\\' characters in service`);
-  const who = user ?? game.who;
+  // -W SCHOOL or -U 'SCHOOL\\alice': a domain account.
+  const who = workgroupGiven && user && !user.includes('\\') ? `${workgroupGiven}\\${user}` : (user ?? game.who);
   const connect = (secret: string | null): string => {
     const local = ['localhost', game.host].includes(target) || target.startsWith('127.');
     const found = local ? { shell: game, address: '127.0.0.1' } : serverFor(game, target);
@@ -234,7 +239,11 @@ function smbclient(game: Shell, args: string[]): string {
     // A Windows file server (see windows.ts): its accounts, its shares, SMB2/3 only.
     if (isWindows(server)) {
       const w = windowsOf(server);
-      if (anonymous || w.passwords[who] === undefined || w.passwords[who] !== secret) return game.error('session setup failed: NT_STATUS_LOGON_FAILURE', 1), '';
+      // Port 445 dropped by the server's firewall.
+      if (!local && !reaches(game, server, 445)) return game.error(`do_connect: Connection to ${target} failed (Error NT_STATUS_IO_TIMEOUT)`, 1), '';
+      // SCHOOL\\alice (or -W SCHOOL): a domain account, checked by the domain controller.
+      const viaDomain = anonymous ? false : domainLogon(server, who, secret ?? undefined, { address: shellAddress(game), caller: game.host.toUpperCase(), type: 3 });
+      if (anonymous || (viaDomain === null ? w.passwords[who] === undefined || w.passwords[who] !== secret : !viaDomain)) return game.error('session setup failed: NT_STATUS_LOGON_FAILURE', 1), '';
       if (list !== null) {
         game.state.smbListed = true;
         const rows = w.shares.map((x) => `\t${x.name.padEnd(16)}${x.name === 'IPC$' ? 'IPC ' : 'Disk'}      ${x.description}`);
@@ -284,7 +293,7 @@ function smbclient(game: Shell, args: string[]): string {
   };
   if (anonymous || password !== null) return connect(password);
   const workgroup = 'WORKGROUP';
-  game.ask(`Password for [${workgroup}\\${who}]:`, (secret) => connect(secret) || game.recoverErrors().join('\n'), true);
+  game.ask(`Password for [${who.includes('\\') ? who : `${workgroup}\\${who}`}]:`, (secret) => connect(secret) || game.recoverErrors().join('\n'), true);
   return '';
 }
 

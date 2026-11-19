@@ -87,7 +87,9 @@ function exists(sh: Shell, name: string): boolean {
   // !!, !12, !cat: the history, which the shell expands before running the command.
   if (/^!(!|-?\d+|[A-Za-z_./])/.test(name)) return true;
   // PowerShell's keywords (if, foreach, try…) on a Windows machine.
-  if (isWindows(sh) && currentShell(sh) === 'powershell' && /^(if|elseif|else|foreach|try|catch|finally|throw|exit|return)$/i.test(name)) return true;
+  if (isWindows(sh) && currentShell(sh) === 'powershell' && /^(if|elseif|else|foreach|try|catch|finally|throw|exit|return|function|param|while|do|until|for|switch|break|continue|default|begin|process|end)$/i.test(name)) return true;
+  // A function defined in the session (commands/powershell.ts keeps them in state.psFunctions).
+  if (isWindows(sh) && currentShell(sh) === 'powershell' && Object.hasOwn((sh.state.psFunctions as Record<string, unknown> | undefined) ?? {}, name.toLowerCase())) return true;
   // help is built into the shell: it always answers.
   return name === 'help' || sh.known().includes(name);
 }

@@ -17,7 +17,8 @@ import { wildcard } from './tools';
 import { base64, hostKey, condensed, fingerprint, MACHINES, WORKSTATION } from './machines';
 import { allowed, methods } from './sshd';
 import { isWindows, windows } from './windows';
-import { findUser, logonError } from './windows-accounts';
+import { domainLogon, findUser, logonError } from './windows-accounts';
+import { reaches, shellAddress, windowsResolve } from './windows-firewall';
 
 export const KEYS_BY_DEFAULT = ['~/.ssh/id_ed25519', '~/.ssh/id_ecdsa', '~/.ssh/id_rsa'];
 
@@ -61,6 +62,8 @@ export function configuration(game: Shell, alias: string): Record<string, string
 /** A name → an address, according to the /etc/hosts of the machine looking it up. */
 export function resolveName(game: Shell, host: string): string | null {
   if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return host;
+  // Windows: its hosts file, then the domain's DNS (windows-firewall.ts).
+  if (isWindows(game)) return windowsResolve(game, host);
   for (const line of (game.read('/etc/hosts') ?? '').split('\n')) {
     const [address, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
     if (names.includes(host)) return address;
@@ -113,14 +116,16 @@ export function prepare(
 ): Jump[] | string {
   const program = o.program ?? 'ssh';
   const steps: string[] = [];
-  const [targetUser, targetAlias] = target.includes('@') ? target.split('@', 2) : [null, target];
+  // The LAST @ separates the host: a Windows domain account may hold one (alice@school.internal@files).
+  const at = (x: string): [string | null, string] => (x.includes('@') ? [x.slice(0, x.lastIndexOf('@')), x.slice(x.lastIndexOf('@') + 1)] : [null, x]);
+  const [targetUser, targetAlias] = at(target);
   const jumps = o.hop ?? configuration(origin, targetAlias).proxyjump?.[0];
   if (jumps && jumps !== 'none') steps.push(...jumps.split(','));
   steps.push(target);
   const result: Jump[] = [];
   let since = origin;
   for (const [i, step] of steps.entries()) {
-    const [givesUser, alias] = step.includes('@') ? step.split('@', 2) : [null, step];
+    const [givesUser, alias] = at(step);
     const config = configuration(origin, alias);
     const last = i === steps.length - 1;
     const host = (config.hostname?.[0] ?? alias).toLowerCase();
@@ -131,6 +136,8 @@ export function prepare(
       return `${program}: connect to host ${host} port ${port}: Connection refused`;
     const inFace = machineInFace(since, address);
     if (!inFace) return `${program}: connect to host ${host} port ${port}: No route to host`;
+    // Windows Defender Firewall drops what no rule allows: the client waits, then gives up.
+    if (!reaches(since, inFace.shell, Number(port))) return `${program}: connect to host ${host} port ${port}: Connection timed out`;
     result.push({
       user: givesUser ?? (last ? targetUser : null) ?? config.user?.[0] ?? origin.who,
       host,
@@ -260,8 +267,11 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
   const warnings: string[] = [];
   // The configuration applied by the remote sshd (if simulated), otherwise Debian's default.
   const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
-  const existsAccount = !!s.shell.accounts.users[s.user];
-  const permitted = existsAccount && allowed(config, s.user) && !windowsRefuses(s.shell, s.user);
+  // A Windows domain account (SCHOOL\\alice, alice@school.internal): the domain controller decides.
+  const from = { address: shellAddress(i ? jumps[i - 1].shell : origin), caller: isWindows(s.shell) ? windows(s.shell).computer : '', type: 8 };
+  const domain = isWindows(s.shell) ? domainLogon(s.shell, s.user, undefined, from) : null;
+  const existsAccount = domain !== null || !!s.shell.accounts.users[s.user];
+  const permitted = existsAccount && allowed(config, s.user) && (domain ?? !windowsRefuses(s.shell, s.user));
   // The workstation's keys, kept up to date on the story's machines (wherever the connection starts from).
   const workstation = origin.host === 'desk' ? origin : (s.shell.principal.state.workstation?.() as Shell | undefined);
   if (workstation && s.shell.principal.chapter.playerKeys) copyKeys(workstation, s.shell);
@@ -277,7 +287,8 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
       origin.ask(
         `${s.user}@${s.host}'s password:`,
         (response) => {
-          if (permitted && response === passwordFor(s.shell, s.user)) {
+          const accepted = domain !== null ? allowed(config, s.user) && domainLogon(s.shell, s.user, response, from) === true : permitted && response === passwordFor(s.shell, s.user);
+          if (accepted) {
             note(s, 'password');
             return pass(origin, jumps, next, i + 1);
           }

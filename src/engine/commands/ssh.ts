@@ -139,7 +139,7 @@ function changedKey(game: Shell, d: Destination, m: Machine, line: number): stri
 
 // Does the target story machine manage its keys (authorized_keys, password)? Or is a jump needed?
 function trueSsh(game: Shell, target: string): boolean {
-  const alias = target.includes('@') ? target.split('@', 2)[1] : target;
+  const alias = target.includes('@') ? target.slice(target.lastIndexOf('@') + 1) : target;
   // A jump requested by ~/.ssh/config (ProxyJump).
   const hop = configuration(game, alias).proxyjump?.[0];
   if (hop && hop !== 'none') return true;
@@ -213,7 +213,7 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
 
 // ssh -G: the options that would apply (an excerpt, in OpenSSH's order), without connecting.
 function configurationEffective(game: Shell, target: string, o: { identities: string[]; port: string; hop?: string }): string {
-  const [user, alias] = target.includes('@') ? target.split('@', 2) : [null, target];
+  const [user, alias] = target.includes('@') ? [target.slice(0, target.lastIndexOf('@')), target.slice(target.lastIndexOf('@') + 1)] : [null, target];
   const c = configuration(game, alias);
   const hop = o.hop ?? c.proxyjump?.[0];
   const identities = [...o.identities, ...(c.identityfile ?? [])];
@@ -358,7 +358,7 @@ export const SSH: Record<string, Command> = {
       // The "real" ssh (acces.ts): jumps, tunnels, internal network, machines where you manage your keys.
       if (game.host !== 'desk' || hop || tunnels.length || withoutSession || trueSsh(game, target))
         return completeSsh(game, target, command, { identities, port, hop, tunnels, withoutSession, planBack });
-      const [givesUser, alias] = target.includes('@') ? target.split('@', 2) : [null, target];
+      const [givesUser, alias] = target.includes('@') ? [target.slice(0, target.lastIndexOf('@')), target.slice(target.lastIndexOf('@') + 1)] : [null, target];
       const config = configuration(game, alias);
       const host = (config.hostname?.[0] ?? alias).toLowerCase();
       const targetsPort = port || config.port?.[0] || '22';

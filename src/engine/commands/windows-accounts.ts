@@ -451,20 +451,22 @@ export function netAccountsPart(game: Shell, args: string[]) {
 
 function whoami(game: Shell, args: string[]) {
   const w = windows(game);
-  const me = `${w.computer.toLowerCase()}\\${game.who}`;
+  // A domain account shows its domain (school\\you), a local one the computer (ledger\\you).
+  const p = findUser(game, game.who) ? null : principal(game, game.who);
+  const me = (p?.name ?? `${w.computer}\\${game.who}`).toLowerCase();
   if (!args.length) return { out: me, code: 0 };
   const a = args[0].toLowerCase();
   const u = findUser(game, game.who);
-  const sid = u ? `${machineSid(game)}-${u.rid}` : 'S-1-5-18';
+  const sid = u ? `${machineSid(game)}-${u.rid}` : (p?.sid ?? 'S-1-5-18');
   if (a === '/user')
     return { out: ['', 'USER INFORMATION', '----------------', '', `${'User Name'.padEnd(me.length)} SID`, `${'='.repeat(me.length)} ${'='.repeat(sid.length)}`, `${me} ${sid}`].join('\n'), code: 0 };
   if (a === '/groups') {
-    const ids = [...token(game, game.who)].filter((x) => !x.toLowerCase().endsWith(`\\${game.who.toLowerCase()}`));
+    const ids = [...token(game, p?.name ?? game.who)].filter((x) => !x.toLowerCase().endsWith(`\\${game.who.toLowerCase()}`));
     const rows = ids.map((id) => {
       const wk = WELL_KNOWN.find((x) => x.name === id);
       const b = /^BUILTIN\\(.+)$/.exec(id);
       const s = wk?.sid ?? (b ? `S-1-5-32-${BUILTIN_RIDS[b[1]]?.[0] ?? groups(game)[b[1]]?.rid}` : (principal(game, id)?.sid ?? ''));
-      const type = wk ? 'Well-known group' : b ? 'Alias' : 'Alias';
+      const type = wk ? 'Well-known group' : b ? 'Alias' : principal(game, id)?.source === 'ActiveDirectory' ? 'Group' : 'Alias';
       return [id, type, s, 'Mandatory group, Enabled by default, Enabled group'];
     });
     const width = [0, 1, 2].map((i) => Math.max(['Group Name', 'Type', 'SID'][i].length, ...rows.map((r) => r[i].length)));

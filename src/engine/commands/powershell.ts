@@ -32,7 +32,7 @@ import {
   MethodError, PSDate, PSHashtable, PSScriptBlock, PSSecureString, PSType, arr, compare, errorRecord, isObject, list, outDefault, property, propertyColumns, show, str, table, text, values, wildcard,
   type Cmdlet, type ErrorSpec, type Failure, type Param, type PSObject, type Run, type View,
 } from '../powershell';
-import { parse, ParseError, type Arg, type Element, type Expr, type Pipeline, type Statement } from '../powershell-parse';
+import { parse, ParseError, type Arg, type Element, type Expr, type FnDef, type Pipeline, type Statement } from '../powershell-parse';
 import { scripting } from '../windows-tasks';
 import { ENV_HOOK, FILE_CMDLETS, FILE_VIEWS, RENDER, outFile } from './windows-files';
 import { SHELL_HOOKS } from './windows-shells';
@@ -42,6 +42,9 @@ import { SERVICE_CMDLETS, SERVICE_VIEWS } from './windows-services';
 import { EVENT_CMDLETS, EVENT_VIEWS } from './windows-events';
 import { TASK_CMDLETS, TASK_VIEWS } from './windows-tasks';
 import { SYSTEM_CMDLETS, SYSTEM_VIEWS } from './windows-system';
+import { FIREWALL_CMDLETS, FIREWALL_VIEWS } from './windows-firewall';
+import { AD_CMDLETS, AD_VIEWS } from './windows-ad';
+import { GPO_CMDLETS, GPO_VIEWS } from './windows-gpo';
 import { NATIVES, nativeNamed } from './windows-natives';
 import { formatValue, formatDate, parseDate, longDateTime } from './windows-format';
 
@@ -54,6 +57,21 @@ const CORE = 'Microsoft.PowerShell.Core';
 
 class Exit {
   constructor(public code: number) {}
+}
+/**
+ * break, continue, return: they unwind to their loop (or switch, or
+ * function), carrying what the statements they leave already wrote.
+ */
+class Flow {
+  items: unknown[] = [];
+}
+class Break extends Flow {}
+class Continue extends Flow {}
+class Return extends Flow {
+  constructor(items: unknown[]) {
+    super();
+    this.items = items;
+  }
 }
 /**
  * A terminating error. `fatal`: script-terminating (throw, -ErrorAction Stop,
@@ -97,8 +115,17 @@ interface Ctx {
   ok: boolean;
   // A script's own scope: its variables ($ErrorActionPreference included); `isolated` for a new
   // powershell.exe (a scheduled task), which doesn't see the session's variables.
-  scope?: { vars: Record<string, { name: string; value: unknown }>; isolated: boolean };
+  scope?: { vars: Record<string, { name: string; value: unknown }>; isolated: boolean; functions?: Record<string, FnDef> };
+  // The scopes of the functions being run, innermost last (their parameters and variables).
+  locals?: Map<string, { name: string; value: unknown }>[];
+  // Loop iterations and function calls on this line (a guard against endless loops).
+  budget?: { steps: number; depth: number };
 }
+
+/** The loops' guard: past this many iterations on one line, the game stops it. */
+const MAX_STEPS = 10_000;
+/** Nested function calls (Windows PowerShell stops at its call depth; the game lower). */
+const MAX_DEPTH = 100;
 
 // ——— Variables ———
 
@@ -159,11 +186,20 @@ const VERSION_TABLE = () =>
   ]);
 
 function getVar(ctx: Ctx, name: string): unknown {
-  const low = name.toLowerCase();
+  let low = name.toLowerCase();
   const g = ctx.game;
   if (low.startsWith('env:')) return envGet(g, name.slice(4));
+  // $global:x, $script:x, $local:x (about_Scopes).
+  const scoped = /^(global|script|local):(.+)$/.exec(low);
+  if (scoped?.[1] === 'global') return vars(g)[scoped[2]]?.value ?? getVar({ ...ctx, frames: [], locals: [], scope: undefined }, scoped[2]);
+  if (scoped?.[1] === 'script') return (ctx.scope?.vars[scoped[2]] ?? vars(g)[scoped[2]])?.value ?? null;
+  if (scoped) low = scoped[2];
   for (let i = ctx.frames.length - 1; i >= 0; i--) if (ctx.frames[i].has(low)) return ctx.frames[i].get(low);
   if (low === 'psitem') return getVar(ctx, '_');
+  for (let i = (ctx.locals?.length ?? 0) - 1; i >= 0; i--) {
+    const v = ctx.locals![i].get(low);
+    if (v) return v.value;
+  }
   const local = ctx.scope?.vars[low];
   if (local) return local.value;
   const global = ctx.scope?.isolated ? undefined : vars(g)[low];
@@ -207,13 +243,25 @@ function setVar(ctx: Ctx, name: string, value: unknown): void {
     else w.env[existing] = text(value);
     return;
   }
+  const scoped = /^(global|script|local):(.+)$/.exec(low);
+  if (scoped?.[1] === 'global') {
+    vars(ctx.game)[scoped[2]] = { name: name.slice(7), value };
+    return;
+  }
+  if (scoped?.[1] === 'script') {
+    (ctx.scope?.vars ?? vars(ctx.game))[scoped[2]] = { name: name.slice(7), value };
+    return;
+  }
+  if (scoped) return setVar(ctx, name.slice(6), value);
   for (let i = ctx.frames.length - 1; i >= 0; i--)
     if (ctx.frames[i].has(low)) {
       ctx.frames[i].set(low, value);
       return;
     }
   if (['true', 'false', 'null'].includes(low)) throw new Terminate(record(ctx, '', { message: `Cannot overwrite variable ${name} because it is read-only or constant.`, pos: 0, length: 1, category: 'WriteError', target: `${name}:String`, cmdlet: '', exception: 'SessionStateUnauthorizedAccessException', id: 'VariableNotWritable' }));
-  if (ctx.scope) ctx.scope.vars[low] = { name, value };
+  // Inside a function, an assignment creates (or changes) the function's own variable.
+  if (ctx.locals?.length) ctx.locals.at(-1)!.set(low, { name, value });
+  else if (ctx.scope) ctx.scope.vars[low] = { name, value };
   else vars(ctx.game)[low] = { name, value };
 }
 
@@ -779,6 +827,8 @@ function runStatement(ctx: Ctx, st: Statement): unknown[] {
       const current = () => evalExpr(ctx, t);
       if (st.op === '+=') value = arithmetic(ctx, '+', current() ?? (Array.isArray(value) ? [] : typeof value === 'string' ? '' : 0), value, st.pos);
       if (st.op === '-=') value = arithmetic(ctx, '-', current(), value, st.pos);
+      if (st.op === '*=') value = arithmetic(ctx, '*', current(), value, st.pos);
+      if (st.op === '/=') value = arithmetic(ctx, '/', current(), value, st.pos);
       if (t.k === 'var') setVar(ctx, t.name, value);
       else if (t.k === 'member') {
         const obj = evalExpr(ctx, t.obj);
@@ -793,8 +843,8 @@ function runStatement(ctx: Ctx, st: Statement): unknown[] {
       return [];
     }
     case 'if': {
-      for (const c of st.clauses) if (truthy(collect(runStatement(ctx, c.cond)))) return c.body.flatMap((s) => runStatement(ctx, s));
-      return st.otherwise ? st.otherwise.flatMap((s) => runStatement(ctx, s)) : [];
+      for (const c of st.clauses) if (truthy(collect(runStatement(ctx, c.cond)))) return runBody(ctx, c.body);
+      return st.otherwise ? runBody(ctx, st.otherwise) : [];
     }
     case 'foreach': {
       const out: unknown[] = [];
@@ -803,13 +853,49 @@ function runStatement(ctx: Ctx, st: Statement): unknown[] {
       try {
         for (const item of enumerate(collect(runStatement(ctx, st.source)))) {
           frame.set(st.name.toLowerCase(), item);
-          out.push(...st.body.flatMap((s) => runStatement(ctx, s)));
+          if (iteration(ctx, st.body, out)) break;
         }
       } finally {
         ctx.frames.pop();
       }
+      // The loop variable stays set after the loop, as in PowerShell.
+      if (frame.has(st.name.toLowerCase())) setVar(ctx, st.name, frame.get(st.name.toLowerCase()));
       return out;
     }
+    case 'while': {
+      const out: unknown[] = [];
+      while (truthy(collect(runStatement(ctx, st.cond)))) if (iteration(ctx, st.body, out)) break;
+      return out;
+    }
+    case 'do': {
+      const out: unknown[] = [];
+      for (;;) {
+        if (iteration(ctx, st.body, out)) break;
+        const c = truthy(collect(runStatement(ctx, st.cond)));
+        if (st.until ? c : !c) break;
+      }
+      return out;
+    }
+    case 'for': {
+      const out: unknown[] = [];
+      if (st.init) runStatement(ctx, st.init);
+      while (!st.cond || truthy(collect(runStatement(ctx, st.cond)))) {
+        if (iteration(ctx, st.body, out)) break;
+        if (st.step) runStatement(ctx, st.step);
+      }
+      return out;
+    }
+    case 'switch':
+      return runSwitch(ctx, st);
+    case 'break':
+      throw new Break();
+    case 'continue':
+      throw new Continue();
+    case 'return':
+      throw new Return(st.e ? enumerate(evalExpr(ctx, st.e)) : []);
+    case 'function':
+      defineFunction(ctx, st.def);
+      return [];
     case 'exit': {
       const v = st.e ? evalExpr(ctx, st.e) : 0;
       throw new Exit(toNumber(v) ?? 0);
@@ -822,6 +908,101 @@ function runStatement(ctx: Ctx, st: Statement): unknown[] {
     case 'try':
       return runTry(ctx, st);
   }
+}
+
+/** Statements in order, their output together; a break, continue or return carries what came before it. */
+function runBody(ctx: Ctx, body: Statement[]): unknown[] {
+  const out: unknown[] = [];
+  try {
+    for (const s of body) out.push(...runStatement(ctx, s));
+  } catch (e) {
+    if (e instanceof Flow) e.items.unshift(...out);
+    throw e;
+  }
+  return out;
+}
+
+/** The guard against endless loops (a line that never ends would freeze the page). */
+function tick(ctx: Ctx): void {
+  const b = (ctx.budget ??= { steps: 0, depth: 0 });
+  if (++b.steps > MAX_STEPS) throw new Terminate(ctx.game.t('powershell-loop-limit', { count: String(MAX_STEPS) }), true);
+}
+
+/** A loop's body once: true when a break ends the loop (continue goes on). */
+function iteration(ctx: Ctx, body: Statement[], out: unknown[]): boolean {
+  tick(ctx);
+  try {
+    out.push(...runBody(ctx, body));
+  } catch (e) {
+    if (e instanceof Break || e instanceof Continue) {
+      out.push(...e.items);
+      return e instanceof Break;
+    }
+    if (e instanceof Flow) e.items.unshift(...out);
+    throw e;
+  }
+  return false;
+}
+
+/**
+ * switch (about_Switch): each value of the subject (an array is taken item
+ * by item) against each clause in order, $_ the value; every clause that
+ * matches runs (not only the first); default only when none did; break
+ * leaves the switch, continue goes to the next value. A value pattern is
+ * compared like -eq (-like with -Wildcard, -match with -Regex, which sets
+ * $Matches); a script block pattern is a condition.
+ */
+function runSwitch(ctx: Ctx, st: Extract<Statement, { k: 'switch' }>): unknown[] {
+  const subject = runStatement(ctx, st.subject);
+  const out: unknown[] = [];
+  const frame = new Map<string, unknown>();
+  ctx.frames.push(frame);
+  try {
+    for (const v of subject.length ? subject : [null]) {
+      frame.set('_', v);
+      let matched = false;
+      const run = (body: Statement[]): 'break' | 'continue' | null => {
+        try {
+          out.push(...runBody(ctx, body));
+        } catch (e) {
+          if (e instanceof Break || e instanceof Continue) {
+            out.push(...e.items);
+            return e instanceof Break ? 'break' : 'continue';
+          }
+          if (e instanceof Flow) e.items.unshift(...out);
+          throw e;
+        }
+        return null;
+      };
+      let flow: 'break' | 'continue' | null = null;
+      for (const c of st.clauses) {
+        if (c.pattern === null) continue;
+        let hit: boolean;
+        if (c.pattern.k === 'block') hit = truthy(collect(runBody(ctx, c.pattern.body)));
+        else {
+          const pv = evalExpr(ctx, c.pattern);
+          if (st.regex) {
+            const m = new RegExp(text(pv), st.sensitive ? '' : 'i').exec(text(v));
+            hit = !!m;
+            if (m) lastMatches = new PSHashtable(m.map((g, i) => [String(i), g]));
+          } else if (st.wildcard) hit = (st.sensitive ? new RegExp(wildcard(text(pv)).source) : wildcard(text(pv))).test(text(v));
+          else hit = truthy(compareOp(st.sensitive ? 'ceq' : 'eq', v, pv));
+        }
+        if (!hit) continue;
+        matched = true;
+        flow = run(c.body);
+        if (flow) break;
+      }
+      if (!matched && !flow) {
+        const d = st.clauses.find((c) => c.pattern === null);
+        if (d) flow = run(d.body);
+      }
+      if (flow === 'break') break;
+    }
+  } finally {
+    ctx.frames.pop();
+  }
+  return out;
 }
 
 /**
@@ -839,6 +1020,11 @@ function runTry(ctx: Ctx, st: Extract<Statement, { k: 'try' }>): unknown[] {
     all(st.body);
   } catch (e) {
     if (e instanceof Suspend) throw e;
+    if (e instanceof Flow) {
+      e.items.unshift(...out);
+      if (st.final) all(st.final);
+      throw e;
+    }
     if (!(e instanceof Terminate) || !e.record) {
       if (st.final) all(st.final);
       throw e;
@@ -897,7 +1083,11 @@ function runBlock(ctx: Ctx, block: PSScriptBlock, item?: unknown): unknown[] {
   const frame = new Map<string, unknown>([['_', item]]);
   ctx.frames.push(frame);
   try {
-    return block.body.flatMap((s) => runStatement(ctx, s));
+    return runBody(ctx, block.body);
+  } catch (e) {
+    // return leaves the script block (in ForEach-Object: the next item).
+    if (e instanceof Return) return e.items;
+    throw e;
   } finally {
     ctx.frames.pop();
   }
@@ -931,6 +1121,160 @@ function emitError(ctx: Ctx, rec: string): void {
   ctx.errors.push(rec);
 }
 
+// ——— Functions (about_Functions) ———
+
+/** The session's functions (defined at the prompt, dot-sourced or imported). */
+const sessionFunctions = (game: Shell): Record<string, FnDef> => (game.state.psFunctions ??= {});
+
+/** A function by name: the script's own first, then the session's (a task's powershell.exe has only its own). */
+function findFunction(ctx: Ctx, name: string): FnDef | undefined {
+  const low = name.toLowerCase();
+  return ctx.scope?.functions?.[low] ?? (ctx.scope?.isolated ? undefined : sessionFunctions(ctx.game)[low]);
+}
+
+/** function Name { … }: defined in the current scope (a script's own, otherwise the session). */
+function defineFunction(ctx: Ctx, def: FnDef): void {
+  if (ctx.scope) (ctx.scope.functions ??= {})[def.name.toLowerCase()] = def;
+  else sessionFunctions(ctx.game)[def.name.toLowerCase()] = def;
+}
+
+/** A function's parameters as a cmdlet's (binding by name, prefix, position; its syntax). */
+function functionCmdlet(def: FnDef): Cmdlet {
+  const params: Param[] = def.params.map((p) => ({ name: p.name, switch: /^switch$/i.test(p.type ?? ''), aliases: p.aliases, type: 'System.Object' }));
+  const explicit = def.params.some((p) => p.position !== undefined);
+  const positional = (explicit ? def.params.filter((p) => p.position !== undefined).sort((a, b) => a.position! - b.position!) : def.params.filter((p) => !/^switch$/i.test(p.type ?? ''))).map((p) => p.name);
+  return { name: def.name, module: '', version: '', kind: 'Function', params, positional, run: () => [] };
+}
+
+/** A parameter's type as Get-Help writes it ([string] → string, [int[]] → int[]). */
+const typeLabel = (t?: string) => (t ? t.replace(/^system\./i, '').toLowerCase().replace(/^int32/, 'int') : 'Object');
+
+/** A function's syntax line (Get-Help, Get-Command -Syntax). */
+export function functionSyntax(def: FnDef): string {
+  const c = functionCmdlet(def);
+  const parts = def.params.map((p) => {
+    if (/^switch$/i.test(p.type ?? '')) return `[-${p.name}]`;
+    const name = c.positional!.includes(p.name) ? `[-${p.name}]` : `-${p.name}`;
+    const one = `${name} <${typeLabel(p.type)}>`;
+    return p.mandatory ? one : `[${one}]`;
+  });
+  return [def.name, ...parts, ...(def.advanced ? ['[<CommonParameters>]'] : [])].join(' ');
+}
+
+/**
+ * Calls a function: binds its parameters (by name, unambiguous prefix,
+ * position; a simple function's extra values go to $args, an advanced one's
+ * are errors), asks for a mandatory one that is missing, converts to the
+ * declared types, checks [ValidateSet()], then runs begin, process (once
+ * per item of the pipeline, $_ and the ValueFromPipeline parameter set),
+ * end, in a scope of its own; return ends it.
+ */
+function callFunction(ctx: Ctx, def: FnDef, el: Element, evaluated: Evaluated[], input: unknown[] | null, name: string): unknown[] {
+  const budget = (ctx.budget ??= { steps: 0, depth: 0 });
+  if (budget.depth >= MAX_DEPTH) throw new Terminate(record(ctx, '', { message: 'The script failed due to call depth overflow.', pos: el.pos, length: name.length, category: 'InvalidOperation', target: '0:Int32', cmdlet: '', exception: 'ParentContainsErrorRecordException', id: 'CallDepthOverflow' }), true);
+  const c = functionCmdlet(def);
+  let bound: Record<string, unknown>;
+  const rest: unknown[] = [];
+  if (def.advanced) {
+    const b = bind(c, evaluated, (a) => ({ pos: a.pos, length: a.text.length }) as ErrorSpec);
+    if ('error' in b) throw new Terminate(record(ctx, name, b.error));
+    bound = b.p;
+  } else {
+    // A simple function: its declared parameters by name or position; everything else in $args.
+    bound = {};
+    const positional: unknown[] = [];
+    for (let i = 0; i < evaluated.length; i++) {
+      const { arg, value } = evaluated[i];
+      if (arg.param === undefined) {
+        positional.push(value);
+        continue;
+      }
+      const low = arg.param.toLowerCase();
+      const matches = c.params.filter((x) => x.name.toLowerCase() === low || x.aliases?.some((a) => a.toLowerCase() === low));
+      const found = matches.length ? matches : c.params.filter((x) => x.name.toLowerCase().startsWith(low));
+      if (found.length !== 1) {
+        rest.push(arg.text);
+        if (arg.colon) rest.push(value);
+        continue;
+      }
+      if (found[0].switch) bound[found[0].name] = arg.colon ? truthy(value) : true;
+      else if (arg.colon) bound[found[0].name] = value;
+      else if (evaluated[i + 1] && evaluated[i + 1].arg.param === undefined) bound[found[0].name] = evaluated[++i].value;
+      else throw new Terminate(record(ctx, name, { message: `Missing an argument for parameter '${found[0].name}'. Specify a parameter of type 'System.Object' and try again.`, pos: arg.pos, length: arg.text.length, category: 'InvalidArgument', target: ':', cmdlet: name, exception: 'ParameterBindingException', id: `MissingArgument,${name}` }));
+    }
+    for (const p of c.positional ?? []) if (bound[p] === undefined && positional.length) bound[p] = positional.shift();
+    rest.push(...positional);
+  }
+  const local = new Map<string, { name: string; value: unknown }>();
+  const saved = { frames: ctx.frames, locals: ctx.locals };
+  ctx.frames = [];
+  ctx.locals = [...(ctx.locals ?? []), local];
+  budget.depth++;
+  try {
+    const boundTable = new PSHashtable();
+    const assign = (p: (typeof def.params)[number], v: unknown, at: number) => {
+      let value = v;
+      if (/^switch$/i.test(p.type ?? '')) value = truthy(v);
+      else if (p.type && typeFull(p.type)) value = convert(ctx, v, p.type, at);
+      if (p.validateSet && !p.validateSet.some((x) => x.toLowerCase() === text(value).toLowerCase()))
+        throw new Terminate(record(ctx, name, { message: `Cannot validate argument on parameter '${p.name}'. The argument "${text(value)}" does not belong to the set "${p.validateSet.join(',')}" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.`, pos: at, length: name.length, category: 'InvalidData', target: ':', cmdlet: name, exception: 'ParameterBindingValidationException', id: `ParameterArgumentValidationError,${name}` }));
+      local.set(p.name.toLowerCase(), { name: p.name, value });
+      boundTable.set(p.name, value);
+    };
+    for (const p of def.params) {
+      if (bound[p.name] !== undefined) assign(p, bound[p.name], el.pos);
+      else if (p.fromPipeline && input?.length) continue;
+      else if (p.mandatory) {
+        const answer = ask(ctx, `${p.name}: `, [`cmdlet ${def.name} at command pipeline position 1`, 'Supply values for the following parameters:'], false, '');
+        if (answer === '')
+          throw new Terminate(record(ctx, name, { message: `Cannot bind argument to parameter '${p.name}' because it is an empty string.`, pos: el.pos, length: name.length, category: 'InvalidData', target: ':', cmdlet: name, exception: 'ParameterBindingValidationException', id: `ParameterArgumentValidationErrorEmptyStringNotAllowed,${name}` }));
+        assign(p, answer, el.pos);
+      } else local.set(p.name.toLowerCase(), { name: p.name, value: p.default ? evalExpr(ctx, p.default) : /^switch$/i.test(p.type ?? '') ? false : null });
+    }
+    local.set('args', { name: 'args', value: rest });
+    local.set('input', { name: 'input', value: input ?? [] });
+    local.set('psboundparameters', { name: 'PSBoundParameters', value: boundTable });
+    const out: unknown[] = [];
+    try {
+      if (def.begin) out.push(...runBody(ctx, def.begin));
+      const fromPipe = def.params.find((p) => p.fromPipeline);
+      const byName = def.params.filter((p) => p.byPropertyName && bound[p.name] === undefined);
+      const each = (item: unknown) => {
+        if (fromPipe && bound[fromPipe.name] === undefined) assign(fromPipe, item, el.pos);
+        for (const p of byName) {
+          const v = property(item, p.name);
+          if (v !== undefined) assign(p, v, el.pos);
+        }
+      };
+      if (def.process) {
+        const items = input ?? [null];
+        for (const item of items) {
+          if (input) each(item);
+          ctx.frames = [new Map([['_', item]])];
+          try {
+            out.push(...runBody(ctx, def.process));
+          } catch (e) {
+            // return in process: on to the next item.
+            if (!(e instanceof Return)) throw e;
+            out.push(...e.items);
+          }
+        }
+        ctx.frames = [];
+      } else if (input?.length) each(input.at(-1));
+      out.push(...runBody(ctx, def.end));
+    } catch (e) {
+      if (e instanceof Return) return [...out, ...e.items];
+      if (e instanceof Flow) e.items.unshift(...out);
+      throw e;
+    }
+    return out;
+  } finally {
+    budget.depth--;
+    ctx.frames = saved.frames;
+    ctx.locals = saved.locals;
+  }
+}
+
 // ——— Commands ———
 
 /** Every cmdlet of the game, by family. */
@@ -960,6 +1304,9 @@ export function cmdletNamed(name: string): Cmdlet | undefined {
   const target = Object.entries(ALIASES).find(([a]) => a === low)?.[1] ?? name;
   return CMDLETS.find((c) => c.name.toLowerCase() === target.toLowerCase());
 }
+
+/** The cmdlets this machine has (its modules; story 30's read-only machine hides the writers). */
+export const visibleCmdlets = (game: Shell) => CMDLETS.filter((c) => !(windows(game).readOnly && c.writes) && (!c.available || c.available(game)));
 
 const COMMON: Param[] = [
   { name: 'ErrorAction', aliases: ['ea'], type: 'System.Management.Automation.ActionPreference' },
@@ -1108,13 +1455,24 @@ function runCommand(ctx: Ctx, el: Element, input: unknown[] | null): unknown[] {
     const target = evalExpr(ctx, el.call);
     if (target instanceof PSScriptBlock) return runBlock(ctx, target, input?.[0]);
     name = text(target);
+    // . .\lib.ps1: the script runs in this scope (its functions and variables stay).
+    if (el.dot && /\.ps1$/i.test(name)) {
+      const where = resolveWindows(game, name);
+      const node = where.exists ? game.find(where.path) : null;
+      if (node?.type === 'file') return runScriptFile(ctx, game.read(where.path) ?? '', toWindows(where.path), true);
+    }
   }
   const evaluated: Evaluated[] = el.args.map((arg) => ({ arg, value: arg.value ? evalExpr(ctx, arg.value) : undefined }));
   ctx.commands.push([name, ...el.args.map((a) => a.text)]);
   const span = { pos: el.pos, length: el.end - el.pos };
+  // A function (it comes before a cmdlet of the same name).
+  const own = !ALIASES[name.toLowerCase()] ? findFunction(ctx, name) : undefined;
+  if (own) return callFunction(ctx, own, el, evaluated, input, name);
   // cd.. and cd\ : the functions PowerShell defines for old habits.
   const fn = /^cd(\.\.|\\)$/i.exec(name);
-  const c = fn ? cmdletNamed('Set-Location') : cmdletNamed(name);
+  const found = fn ? cmdletNamed('Set-Location') : cmdletNamed(name);
+  // A module's cmdlets exist only where the module is installed (ActiveDirectory on a domain controller…).
+  const c = found && (!found.available || found.available(game)) ? found : undefined;
   if (!c) {
     if (/^mkdir$|^md$/i.test(name)) return runCommand(ctx, { ...el, name: 'New-Item', args: [{ param: 'ItemType', text: '-ItemType', pos: el.pos }, { value: { k: 'str', v: 'Directory' }, text: 'Directory', pos: el.pos }, ...el.args] }, input);
     const native = nativeNamed(name);
@@ -1204,6 +1562,8 @@ function runCommand(ctx: Ctx, el: Element, input: unknown[] | null): unknown[] {
     confirm,
     read: (prompt, secret) => ask(ctx, prompt, [], secret, ''),
     invoke: (block, item) => runBlock(ctx, block, item),
+    variable: (n) => getVar(ctx, n),
+    source: (code, file) => runScriptFile({ ...ctx, scope: undefined, locals: [] }, code, file, true),
   } as Run;
   const result = c.run(r);
   if (result === null) {
@@ -1245,10 +1605,11 @@ function runPipeline(ctx: Ctx, p: Pipeline): unknown[] {
 }
 
 /** A script's text run in this session (.\backup.ps1): its output, and its exit code through exit. */
-function runScriptFile(ctx: Ctx, source: string, file: string): unknown[] {
+function runScriptFile(ctx: Ctx, source: string, file: string, dot = false): unknown[] {
   const statements = parse(source.replace(/\r\n/g, '\n'));
-  // The script's own scope: it reads the session's variables, its assignments stay its own.
-  const inner: Ctx = { ...ctx, source: source.replace(/\r\n/g, '\n'), file, frames: [...ctx.frames], scope: { vars: {}, isolated: false } };
+  // The script's own scope: it reads the session's variables, its assignments stay its own
+  // (dot-sourced: the caller's scope, so its functions and variables stay).
+  const inner: Ctx = { ...ctx, source: source.replace(/\r\n/g, '\n'), file, frames: [...ctx.frames], scope: dot ? ctx.scope : { vars: {}, isolated: false } };
   if (statements instanceof ParseError) {
     ctx.out.push(parseErrorText(inner, statements));
     ctx.ok = false;
@@ -1268,6 +1629,8 @@ function runScriptFile(ctx: Ctx, source: string, file: string): unknown[] {
         ctx.ok = e.code === 0;
         return out;
       }
+      // return (or a stray break) ends the script.
+      if (e instanceof Flow) return [...out, ...e.items];
       // A script-terminating error stops the script and goes on to its caller.
       if (e instanceof Terminate && !e.fatal) {
         if (e.record) emitError(inner, e.record);
@@ -1554,7 +1917,7 @@ function readHost(r: Run): unknown[] {
 // ——— Help, commands, aliases ———
 
 const url = (c: Cmdlet) =>
-  ['Storage', 'SmbShare', 'ScheduledTasks', 'NetTCPIP', 'NetConnection', 'CimCmdlets'].includes(c.module)
+  ['Storage', 'SmbShare', 'ScheduledTasks', 'NetTCPIP', 'NetConnection', 'CimCmdlets', 'NetSecurity', 'ActiveDirectory', 'GroupPolicy'].includes(c.module)
     ? `https://learn.microsoft.com/powershell/module/${c.module.toLowerCase()}/${c.name.toLowerCase()}`
     : `https://learn.microsoft.com/powershell/module/${c.module.toLowerCase()}/${c.name.toLowerCase()}?view=powershell-5.1`;
 
@@ -1587,10 +1950,24 @@ export function helpPage(game: Shell, c: Cmdlet, mode: 'short' | 'examples' | 'f
   return out.join('\n');
 }
 
+/** Get-Help of a function of the session: its syntax, and its comment-based help if it has one. */
+function functionHelp(game: Shell, def: FnDef): string[] {
+  const t = game.t;
+  const out = ['', t('powershell-help-name'), indentPs(def.name), ''];
+  if (def.synopsis) out.push(t('powershell-help-synopsis'), indentPs(def.synopsis), '');
+  out.push('', t('powershell-help-syntax'), indentPs(functionSyntax(def)), '', '');
+  if (def.description) out.push(t('powershell-help-description'), indentPs(def.description), '', '');
+  out.push(t('powershell-help-aliases'), indentPs(t('powershell-help-none')), '', '', t('powershell-help-remarks'), indentPs(def.synopsis ? t('powershell-help-remarks-text', { name: def.name }) : t('powershell-help-none')), '');
+  return out;
+}
+
 function getHelp(r: Run): unknown[] {
   const name = str(r.p.Name);
   if (!name) return r.game.t('powershell-help-intro').split('\n');
-  const c = cmdletNamed(name);
+  const own = sessionFunctions(r.game)[name.toLowerCase()];
+  if (own) return functionHelp(r.game, own);
+  const found = cmdletNamed(name);
+  const c = found && (!found.available || found.available(r.game)) ? found : undefined;
   const native = c ? null : nativeNamed(name);
   if (!c && native) return [r.game.t('powershell-help-native', { name: native.name })];
   if (!c) {
@@ -1609,20 +1986,24 @@ function getCommand(r: Run): unknown[] {
   const commandItem = (c: Cmdlet): PSObject => ({ type: 'CommandInfo', props: { CommandType: c.kind ?? 'Cmdlet', Name: c.name, Version: c.version, Source: c.module } });
   const aliasItem = (a: string): PSObject => ({ type: 'CommandInfo', props: { CommandType: 'Alias', Name: `${a} -> ${ALIASES[a]}`, Version: '', Source: '' } });
   const appItem = (n: string): PSObject => ({ type: 'CommandInfo', props: { CommandType: 'Application', Name: n, Version: '10.0.20348.1', Source: `C:\\Windows\\system32\\${n}` } });
-  const visible = CMDLETS.filter((c) => !(windows(r.game).readOnly && c.writes));
+  const visible = visibleCmdlets(r.game);
+  const functions = Object.values(sessionFunctions(r.game)).map((def): PSObject => ({ type: 'CommandInfo', props: { CommandType: 'Function', Name: def.name, Version: '', Source: '', Definition: def.text } }));
   let all = visible.filter((c) => (!r.p.Verb || arr(r.p.Verb).some((v) => wildcard(v).test(c.name.split('-')[0]))) && (!r.p.Noun || arr(r.p.Noun).some((n) => wildcard(n).test(c.name.split('-').slice(1).join('-')))) && (!r.p.Module || arr(r.p.Module).some((m) => wildcard(m).test(c.module))));
-  if (!names.length) return [...all].sort((a, b) => a.name.localeCompare(b.name)).map(commandItem);
+  const ownFunctions = (match: (n: string) => boolean) => (r.p.Module ? [] : functions.filter((f) => match(String(f.props.Name))));
+  const byName = (a: PSObject, b: PSObject) => String(a.props.Name).localeCompare(String(b.props.Name));
+  if (!names.length) return [...all.map(commandItem), ...ownFunctions((n) => (!r.p.Verb || arr(r.p.Verb).some((v) => wildcard(v).test(n.split('-')[0]))) && (!r.p.Noun || arr(r.p.Noun).some((x) => wildcard(x).test(n.split('-').slice(1).join('-')))))].sort(byName);
   const out: unknown[] = [];
   for (const n of names) {
     const aliases = Object.keys(ALIASES).filter((a) => wildcard(n).test(a) && cmdletNamed(a) && visible.includes(cmdletNamed(a)!));
     all = visible.filter((c) => wildcard(n).test(c.name));
+    const mine = ownFunctions((x) => wildcard(n).test(x));
     const apps = NATIVES.filter((x) => wildcard(n).test(x.name) || wildcard(n).test(x.name.replace(/\.exe$/, ''))).map((x) => x.name);
-    if (!aliases.length && !all.length && !apps.length && !/[*?]/.test(n))
+    if (!aliases.length && !all.length && !apps.length && !mine.length && !/[*?]/.test(n))
       r.fail({
         message: `The term '${n}' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`,
         category: 'ObjectNotFound', target: `${n}:String`, exception: 'CommandNotFoundException', id: 'CommandNotFoundException,Microsoft.PowerShell.Commands.GetCommandCommand',
       });
-    out.push(...aliases.map(aliasItem), ...[...all].sort((a, b) => a.name.localeCompare(b.name)).map(commandItem), ...apps.map(appItem));
+    out.push(...aliases.map(aliasItem), ...[...all.map(commandItem), ...mine].sort(byName), ...apps.map(appItem));
   }
   return out;
 }
@@ -1632,7 +2013,7 @@ function getAlias(r: Run): unknown[] {
   const definition = arr(r.p.Definition);
   const visible = (a: string) => {
     const c = cmdletNamed(a);
-    return !!c && !(windows(r.game).readOnly && c.writes);
+    return !!c && visibleCmdlets(r.game).includes(c);
   };
   const keys = Object.keys(ALIASES)
     .filter(visible)
@@ -1648,6 +2029,38 @@ function getVariable(r: Run): unknown[] {
   const all = Object.values(vars(r.game)).filter((v) => !names.length || names.some((n) => wildcard(n).test(v.name)));
   if (r.p.ValueOnly) return all.map((v) => v.value);
   return all.sort((a, b) => a.name.localeCompare(b.name)).map((v) => ({ type: 'PSVariable', props: { Name: v.name, Value: v.value } }));
+}
+
+/** The modules of the machine: those of its cmdlets (ActiveDirectory only where it is installed). */
+function modules(game: Shell): string[] {
+  return [...new Set(visibleCmdlets(game).map((c) => c.module))].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Import-Module NAME: a module of the machine (already available: 5.1
+ * loads modules on first use) or a .psm1/.ps1 file, whose functions join
+ * the session (about_Modules).
+ */
+function importModule(r: Run): unknown[] {
+  for (const name of arr(r.p.Name)) {
+    if (/\.ps(m?)1$/i.test(name)) {
+      const where = resolveWindows(r.game, name);
+      const node = where.exists ? r.game.find(where.path) : null;
+      if (node?.type === 'file') {
+        r.source(r.game.read(where.path) ?? '', toWindows(where.path));
+        continue;
+      }
+    } else if (modules(r.game).some((m) => m.toLowerCase() === name.toLowerCase())) continue;
+    r.fail({ message: `The specified module '${name}' was not loaded because no valid module file was found in any module directory.`, category: 'ResourceUnavailable', target: `${name}:String`, exception: 'FileNotFoundException', id: 'Modules_ModuleNotFound,Microsoft.PowerShell.Commands.ImportModuleCommand' });
+  }
+  return [];
+}
+
+function getModule(r: Run): unknown[] {
+  const names = arr(r.p.Name);
+  const all = modules(r.game).filter((m) => !names.length || names.some((n) => wildcard(n).test(m)));
+  const kinds = (m: string) => visibleCmdlets(r.game).filter((c) => c.module === m);
+  return all.map((m) => ({ type: 'PSModuleInfo', props: { ModuleType: m.startsWith('Microsoft.PowerShell') ? 'Manifest' : 'Script', Version: kinds(m)[0]?.version || '1.0.0.0', Name: m, ExportedCommands: `{${kinds(m).map((c) => c.name).slice(0, 4).join(', ')}${kinds(m).length > 4 ? '...' : ''}}` } }));
 }
 
 const PIPE_CMDLETS: Cmdlet[] = [
@@ -1718,6 +2131,11 @@ const PIPE_CMDLETS: Cmdlet[] = [
     run: selectString,
   },
   { name: 'Get-Variable', module: UTIL, version: '3.1.0.0', positional: ['Name'], params: [{ name: 'Name', list: true }, { name: 'ValueOnly', switch: true }], run: getVariable },
+  {
+    name: 'Import-Module', module: CORE, version: '3.0.0.0', positional: ['Name'], params: [{ name: 'Name', list: true }, { name: 'Force', switch: true }, { name: 'PassThru', switch: true }],
+    run: importModule,
+  },
+  { name: 'Get-Module', module: CORE, version: '3.0.0.0', positional: ['Name'], params: [{ name: 'Name', list: true }, { name: 'ListAvailable', switch: true }], run: getModule },
   { name: 'Start-Sleep', module: UTIL, version: '3.1.0.0', positional: ['Seconds'], params: [{ name: 'Seconds', type: 'System.Double' }, { name: 'Milliseconds', type: 'System.Int32' }], run: () => [] },
   {
     name: 'Get-History', module: CORE, version: '3.0.0.0', positional: ['Id'], params: [{ name: 'Id', list: true, type: 'System.Int64[]' }, { name: 'Count', type: 'System.Int32' }],
@@ -1725,9 +2143,9 @@ const PIPE_CMDLETS: Cmdlet[] = [
   },
 ];
 
-CMDLETS.push(...PIPE_CMDLETS, ...FILE_CMDLETS, ...ACL_CMDLETS, ...ACCOUNT_CMDLETS, ...SERVICE_CMDLETS, ...EVENT_CMDLETS, ...TASK_CMDLETS, ...SYSTEM_CMDLETS);
+CMDLETS.push(...PIPE_CMDLETS, ...FILE_CMDLETS, ...ACL_CMDLETS, ...ACCOUNT_CMDLETS, ...SERVICE_CMDLETS, ...EVENT_CMDLETS, ...TASK_CMDLETS, ...SYSTEM_CMDLETS, ...FIREWALL_CMDLETS, ...AD_CMDLETS, ...GPO_CMDLETS);
 
-Object.assign(VIEWS, FILE_VIEWS, ACL_VIEWS, ACCOUNT_VIEWS, SERVICE_VIEWS, EVENT_VIEWS, TASK_VIEWS, SYSTEM_VIEWS, {
+Object.assign(VIEWS, FILE_VIEWS, ACL_VIEWS, ACCOUNT_VIEWS, SERVICE_VIEWS, EVENT_VIEWS, TASK_VIEWS, SYSTEM_VIEWS, FIREWALL_VIEWS, AD_VIEWS, GPO_VIEWS, {
   CommandInfo: { columns: ['CommandType', 'Name', 'Version', 'Source'].map((n) => ({ label: n, value: (o: PSObject) => o.props[n] })) },
   PathInfo: { columns: [{ label: 'Path', value: (o: PSObject) => o.props.Path }] },
   GenericMeasureInfo: { columns: [], list: true },
@@ -1740,6 +2158,7 @@ Object.assign(VIEWS, FILE_VIEWS, ACL_VIEWS, ACCOUNT_VIEWS, SERVICE_VIEWS, EVENT_
   MatchInfo: { columns: [], asText: true },
   TimeSpan: { columns: [], list: true },
   PSVariable: { columns: ['Name', 'Value'].map((n) => ({ label: n, value: (o: PSObject) => o.props[n] })) },
+  PSModuleInfo: { columns: ['ModuleType', 'Version', 'Name', 'ExportedCommands'].map((n) => ({ label: n, value: (o: PSObject) => o.props[n] })) },
   HistoryInfo: { columns: [{ label: 'Id', value: (o: PSObject) => o.props.Id, right: true }, { label: 'CommandLine', value: (o: PSObject) => o.props.CommandLine }] },
 } satisfies Record<string, View>);
 
@@ -1809,6 +2228,11 @@ function runFrom(game: Shell, line: string, statements: Statement[], from: numbe
         if (e.fatal) break;
         continue;
       }
+      // return at the prompt: its value, and the rest of the line doesn't run (a stray break or continue too).
+      if (e instanceof Flow) {
+        if (e.items.length) ctx.out.push(render(e.items));
+        break;
+      }
       throw e;
     }
     ctx.answers = [];
@@ -1864,6 +2288,7 @@ export function runScript(game: Shell, source: string, path: string): number {
           continue;
         }
         if (e instanceof Suspend) continue;
+        if (e instanceof Flow) return 0;
         throw e;
       }
     }
@@ -1918,8 +2343,8 @@ export function psCandidates(game: Shell, line: string): { before: string; names
   const atCommand = !!head && head[1] === word && !/\s$/.test(line.slice(0, line.length - word.length).replace(/[|;]\s*$/, '')) ? true : /(^|[|;]\s*)$/.test(before);
   if (atCommand) {
     const low = word.toLowerCase();
-    const visible = CMDLETS.filter((c) => !(windows(game).readOnly && c.writes)).map((c) => c.name);
-    const names = [...visible, ...NATIVES.map((x) => x.name)].filter((n) => n.toLowerCase().startsWith(low)).sort((a, b) => a.localeCompare(b));
+    const visible = visibleCmdlets(game).map((c) => c.name);
+    const names = [...visible, ...Object.values(sessionFunctions(game)).map((f) => f.name), ...NATIVES.map((x) => x.name)].filter((n) => n.toLowerCase().startsWith(low)).sort((a, b) => a.localeCompare(b));
     return { before, names };
   }
   if (word.startsWith('-')) {
