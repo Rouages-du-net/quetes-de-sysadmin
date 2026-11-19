@@ -84,6 +84,8 @@ export const MACHINES: Machine[] = [
   { ...machine('stave', '192.0.2.42', 'music-school'), os: 'windows' },
   // The Card Catalogue: the libraries' domain controller (lending.internal), a Windows Server 2022; stacks, their file server, is an internal host.
   { ...machine('register', '192.0.2.46', 'card-catalogue'), os: 'windows' },
+  // The Pantry: the community grocery's Debian server; spare, a borrowed laptop for the restore drill, is an internal host.
+  machine('crate', '192.0.2.48', 'pantry'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

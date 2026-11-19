@@ -67,3 +67,7 @@ password-ledger-2029 = registre-2029
 password-millstone-2029 = meule-2029
 
 password-drafting-2029 = calque-2029
+## L'Épicerie solidaire : sudo, la phrase de passe de Mei pour le disque, le mot de passe de secours de restic
+password-shelf-2029 = etagere-2029
+password-tram-lemon-harbour-58 = tram-citron-port-58
+password-basket-orchard-copper-73 = panier-verger-cuivre-73

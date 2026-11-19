@@ -444,3 +444,12 @@ name-hr-0113-departure-txt = rh-0113-depart.txt
 name-conventions-txt = conventions.txt
 name-vault-svc_scans-txt = coffre-svc_scans.txt
 name-city-it-audit-txt = audit-informatique-ville.txt
+
+## L'Épicerie solidaire
+name-message_from_fatou-txt = message_de_fatou.txt
+name-note_from_mei-txt = mot_de_mei.txt
+name-drill-txt = exercice.txt
+name-pantry = epicerie
+name-families-csv = familles.csv
+name-volunteers-csv = benevoles.csv
+name-last-sync-txt = derniere-synchro.txt

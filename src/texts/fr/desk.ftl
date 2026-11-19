@@ -81,3 +81,4 @@ resumed-chapter = Tu reprends ce chapitre là où tu l'avais laissé. Pour relir
 machine-compass-motd = Les voisins Windows — le serveur Linux de l'Atelier. Son voisin, armoire, est un Windows Server.
 machine-stave-motd = L'École de musique — le serveur de fichiers de l'école, un Windows Server 2022 (OpenSSH arrive dans cmd.exe).
 machine-register-motd = Le Catalogue — le contrôleur de domaine des bibliothèques, un Windows Server 2022 (Active Directory, lending.internal).
+machine-crate-motd = L'Épicerie solidaire — le serveur Debian de l'épicerie (ses fichiers, son appli, et le disque de sauvegarde qui part le vendredi).

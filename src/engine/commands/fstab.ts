@@ -19,7 +19,8 @@ function attributes(st: StorageState, dev: string): string | null {
   const fields: string[] = [];
   if (fs) {
     if (fs.label) fields.push(`LABEL="${fs.label}"`);
-    fields.push(`UUID="${fs.uuid}"`, 'BLOCK_SIZE="4096"', `TYPE="${fs.type}"`);
+    // A LUKS header has no block size (blkid, util-linux 2.40).
+    fields.push(`UUID="${fs.uuid}"`, ...(fs.type === 'crypto_LUKS' ? [] : ['BLOCK_SIZE="4096"']), `TYPE="${fs.type}"`);
   } else if (arrayFor(st, n)) {
     const [, g] = arrayFor(st, n)!;
     fields.push(`UUID="${g.uuid}"`, `LABEL="${g.name}"`, 'TYPE="linux_raid_member"');
@@ -37,7 +38,9 @@ function all(st: StorageState): string[] {
     .flatMap(([n, d]) => [`/dev/${n}`, ...d.partitions.map((p) => `/dev/${n}${p.number}`)]);
   const arrays = Object.keys(st.arrays).map((n) => `/dev/${n}`);
   const lvs = Object.entries(lvm(st).vgs).flatMap(([vg, g]) => Object.keys(g.lvs).map((lv) => `/dev/mapper/${vg}-${lv}`));
-  return [...disks, ...arrays, ...lvs];
+  // The open LUKS mappings (see luks.ts).
+  const crypt = Object.keys(st.crypt ?? {}).map((n) => `/dev/mapper/${n}`);
+  return [...disks, ...arrays, ...lvs, ...crypt];
 }
 
 function blkid(game: Shell, args: string[]): string {

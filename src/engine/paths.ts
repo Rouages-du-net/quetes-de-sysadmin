@@ -20,7 +20,7 @@ export const PATH: Path[] = [
       'shut-the-door', 'firewall', 'sentinel', 'port', 'repeat-offenders', 'keys', 'departure', 'shared-rights', 'secret', 'updates', 'auto-updates',
       'scope', 'report', 'exposure', 'traces', 'follow-up',
       'bulletin', 'priority', 'fix', 'proof', 'routine',
-      'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts',
+      'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
     ],
   },
   {
@@ -28,7 +28,7 @@ export const PATH: Path[] = [
     chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock'],
   },
   { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex'] },
-  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup'] },
+  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill'] },
   {
     id: 'deployment',
     chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal'],

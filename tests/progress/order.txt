@@ -124,3 +124,6 @@ comings-and-goings
 stale-password
 unapplied-policy
 dormant-accounts
+lost-disk
+spare-key
+restore-drill

@@ -44,3 +44,5 @@ machine-cabinet = cabinet
 machine-stave = stave
 machine-register = register
 machine-stacks = stacks
+machine-crate = crate
+machine-spare = spare

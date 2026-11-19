@@ -38,7 +38,7 @@ import { read as readSudoers, sudoersFile } from './sudoers';
 
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
-const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf'];
+const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf', 'export', 'unset'];
 // The tools that read a file's bytes themselves (its charset matters to them, see charset.ts).
 const RAW_READERS = ['psql', 'iconv', 'file'];
 // Commands whose BSD version answers its own way (see freebsd.ts).
@@ -171,6 +171,13 @@ export class Shell implements Game {
   lastStatus = 0;
   // The permission mask of created files (umask), specific to this session.
   mask = '0022';
+  // The session's variables (NAME=value) and those exported (export): a
+  // program sees the exported ones, and the NAME=value written before it.
+  vars: Record<string, string> = {};
+  exported = new Set<string>();
+  // The environment of the command running now (restic reads RESTIC_* there).
+  // sudo resets it (env_reset): only NAME=value written after sudo, or -E, pass.
+  environment: Record<string, string> = {};
   // The file the current command's output goes to (> file), if there is one: wg genkey looks at it.
   outputTo: string | null = null;
   // The tmux session being typed in (null: outside tmux); the sessions live in state.tmux.
@@ -749,7 +756,10 @@ export class Shell implements Game {
   // The line, once history is expanded.
   private runLine(line: string): string | null {
     // $? (outside single quotes): the exit code of the previous line.
-    line = line.replace(/'[^']*'|\$\?|\$\{\?\}/g, (m) => (m.startsWith("'") ? m : String(this.lastStatus)));
+    // $NAME and ${NAME}, for the session's variables (an unknown one stays as typed).
+    line = line.replace(/'[^']*'|\$\?|\$\{\?\}|\$\{([A-Za-z_]\w*)\}|\$([A-Za-z_]\w*)/g, (m, a?: string, b?: string) =>
+      m.startsWith("'") ? m : m === '$?' || m === '${?}' ? String(this.lastStatus) : (this.vars[(a ?? b)!] ?? m),
+    );
     const words = split(line);
     if (!words.length) return '';
     this.typedCommands++;
@@ -903,6 +913,7 @@ export class Shell implements Game {
       // Like the shell: wildcards are not expanded inside quotes.
       let args = segment.flatMap((m) => (m.city ? [m.text] : this.expand(m.text)));
       let root = false;
+      let keepEnv = false;
       // sudo -u account: act as that account rather than root.
       let as = 'root';
       // sudo -l: sudo itself answers (the list of allowed commands).
@@ -910,6 +921,11 @@ export class Shell implements Game {
       else if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
+        // sudo -E keeps the environment (the user may: ALL implies SETENV).
+        if (args[0] === '-E' || args[0] === '--preserve-env') {
+          keepEnv = true;
+          args = args.slice(1);
+        }
         if (args[0] === '-u') {
           as = args[1] ?? '';
           args = args.slice(2);
@@ -920,6 +936,21 @@ export class Shell implements Game {
           }
         }
       }
+      // NAME=value before the command: for its environment only (alone on the line: a session variable).
+      const assigned: Record<string, string> = {};
+      while (args.length && /^[A-Za-z_]\w*=/.test(args[0])) {
+        const [n, ...v] = args[0].split('=');
+        assigned[n] = v.join('=');
+        args = args.slice(1);
+      }
+      if (!args.length && Object.keys(assigned).length && !root) {
+        if (segments.length === 1) Object.assign(this.vars, assigned);
+        commands.push([]);
+        input = '';
+        return;
+      }
+      const exportedEnv = Object.fromEntries([...this.exported].filter((n) => n in this.vars).map((n) => [n, this.vars[n]]));
+      this.environment = root && !keepEnv ? assigned : { ...exportedEnv, ...assigned };
       commands.push(args);
       const last = i === segments.length - 1 && !redirection;
       this.as = as;

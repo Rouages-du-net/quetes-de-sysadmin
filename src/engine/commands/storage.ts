@@ -15,6 +15,7 @@ import type { Command } from './index';
 import { help } from './manual';
 import { systemd } from '../systemd';
 import { sizeFor, lvSize } from '../lvm';
+import { mappedBytes } from '../luks';
 import { systemFor } from '../fstab';
 import {
   active,
@@ -692,7 +693,7 @@ function grubInstall(game: Shell, args: string[]): string {
 interface LsblkLine {
   name: string;
   prefix: string;
-  type: 'disk' | 'part' | 'raid1' | 'lvm';
+  type: 'disk' | 'part' | 'raid1' | 'lvm' | 'crypt';
   bytes: number;
   majmin: [number, number];
   point: string;
@@ -715,12 +716,35 @@ export function lsblkStockage(game: Shell, st: StorageState, args: string[]): st
     Object.entries(st.lvm?.vgs ?? {}).flatMap(([vg, g]) => Object.entries(g.lvs).filter(([, lv]) => lv.segments.some((x) => x.pv === pv)).map(([n]) => `${vg}-${n}`));
   // What sits on a device: its array, its logical volumes, or its partitions.
   const children = (n: string): string[] => {
+    // An open LUKS device: its mapping (see luks.ts).
+    const opened = Object.entries(st.crypt ?? {}).filter(([, m]) => m.device === `/dev/${n}`).map(([name]) => name);
+    if (opened.length) return opened;
     const g = arrayFor(st, n);
     if (g) return [g[0]];
     if (pvs[n]) return lvsOn(n);
     return st.disks[n]?.partitions.map((p) => `${n}${p.number}`) ?? [];
   };
   const lineFor = (n: string, prefix: string): LsblkLine => {
+    const crypt = st.crypt?.[n];
+    if (crypt) {
+      const sysf = systemFor(st, `/dev/mapper/${n}`);
+      const mounted = mounts.find((m) => m.name === `/dev/mapper/${n}`);
+      return {
+        name: n,
+        prefix,
+        type: 'crypt',
+        bytes: mappedBytes(st, crypt.device),
+        majmin: [253, Object.keys(st.crypt!).indexOf(n)],
+        point: mounted?.path ?? '',
+        template: '',
+        serial: '',
+        fstype: sysf?.type ?? '',
+        uuid: sysf?.uuid ?? '',
+        label: sysf?.label ?? '',
+        // A device-mapper device is never removable itself (lsblk: RM 0).
+        removable: false,
+      };
+    }
     const sysf = systemFor(st, `/dev/${n}`) ?? systemFor(st, `/dev/mapper/${n}`);
     const fs = arrayFor(st, n) ? ['linux_raid_member', arrayFor(st, n)![1].uuid] : pvs[n] ? ['LVM2_member', pvs[n].uuid] : sysf ? [sysf.type, sysf.uuid] : null;
     const d = st.disks[n];

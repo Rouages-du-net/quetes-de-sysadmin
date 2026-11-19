@@ -123,6 +123,9 @@ import { comingsAndGoings } from './comings-and-goings';
 import { stalePassword } from './stale-password';
 import { unappliedPolicy } from './unapplied-policy';
 import { dormantAccounts } from './dormant-accounts';
+import { lostDisk } from './lost-disk';
+import { spareKey } from './spare-key';
+import { restoreDrill } from './restore-drill';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -290,6 +293,11 @@ export const STORIES: Story[] = [
     id: 'card-catalogue',
     after: ['silent-backup', 'directory'],
     chapters: [comingsAndGoings, stalePassword, unappliedPolicy, dormantAccounts],
+  },
+  {
+    id: 'pantry',
+    after: ['snapshots', 'stuck-boot'],
+    chapters: [lostDisk, spareKey, restoreDrill],
   },
 ];
 

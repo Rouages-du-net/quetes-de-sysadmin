@@ -238,7 +238,13 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) and `s_client -connect` (returns at once); the PEM contents are specific to the game | hundreds of subcommands; real X.509; `s_client` waits for input |
 | `curl https://` | checks the dates and names of the presented certificate (error 60), `-k` to skip | also checks the full chain of trust, OCSP… |
 | clock | Paris time: CET in winter, CEST in summer (unless the chapter sets a time zone) | the machine's time zone |
-| `restic` | `-r` and `--password-file` required (no environment variables); `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats`; no `init`; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `key`, `tag`, remote repositories (sftp, S3, rest-server) |
+| `restic` | `-r` and `--password-file`/`-p`, or the environment (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RESTIC_PASSWORD`), or the password typed; `init`, `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check` (`--read-data`), `stats`, `key list/add/remove/passwd` (`--new-password-file`, `--user`, `--host`); each key's password opens the repository, the current key can't be removed; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `tag`, `--repository-file`, `--password-command`, remote repositories (sftp, S3, rest-server) |
+| `cryptsetup` | LUKS2 only (one cipher, aes-xts-plain64, argon2id): `luksFormat` (the real YES question, the existing signature's warning, a passphrase twice or a key file, `-q`), `open`/`luksOpen` (three tries, `--key-file`), `close`/`luksClose`, `status`, `luksDump`, `luksAddKey`, `luksRemoveKey`, `luksKillSlot`, `isLuks`, `luksUUID`, `luksHeaderBackup`; the real refusals (a device in use, a mounted mapping, a wrong key) and exit codes; no real encryption: the clear file system is kept in the header while closed; salts and digests derived from the UUID | plain, LUKS1, BitLocker and TrueCrypt modes, `--header`, tokens, `reencrypt`, `luksHeaderRestore`, `benchmark`, `resize`, `refresh`, `erase` |
+| `/etc/crypttab`, `cryptdisks_start`, `cryptdisks_stop` | crypttab read by Debian's scripts (name, `UUID=` or `/dev/…` source, key file or `none`, options); the key file's rights checked (Debian's warning); outputs close to Debian's LSB messages; crypttab isn't read at boot (no simulated reboot here) | `systemd-cryptsetup@.service`, the initramfs, `keyscript=`, `tries=`, `discard` applied |
+| `mkfs.ext4` | `-L`, `-F`, `-q`; mke2fs 1.47's report (blocks, inodes, superblock backups computed from the size); refuses a mounted device or one in use (a LUKS device open, a RAID member); asks before writing over a file system | `-b`, `-i`, `-m`, `-O`, `-E`, other file systems (`mkfs` alone) |
+| `sha256sum` | a real SHA-256 (FIPS 180-4) of the file's bytes, ending newline included; `-c` (`--quiet`, `--status`), OK / FAILED / FAILED open or read and GNU's warnings; a file the game describes only by its size is hashed on its description | `-b`, `--tag`, `-z`, `--strict`, `--ignore-missing` |
+| shell variables (`export`, `unset`, `NAME=value command`) | `$NAME`/`${NAME}` replaced for the variables set in the session (an unset one stays as typed); exported variables form a program's environment; sudo resets it (env_reset) except `sudo NAME=value command` and `sudo -E` | `PATH`, `HOME` and the other usual variables, `env`, `set`, arrays, `${NAME:-default}` and other expansions |
+| `dd if=/dev/urandom` | `count=` is required (the device never ends); the "random" bytes are derived from the target and a counter, the same in every game | `/dev/zero`, `/dev/random` blocking, `iflag=fullblock` |
 | symbolic links | `ln -s` (`-f`, `-n`), followed to read, write and enter; `ls -l` shows them; `readlink` | also `realpath`, `find -L`… |
 | `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, or a forwarded header), `-X`, `-d` (only the method); only reaches the machine you are on (nginx, Caddy, an app on its port, a container) | every option, the whole network |
 | DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones | all of it |
@@ -254,7 +260,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Docker and the firewall | a port published on 0.0.0.0 answers from outside whatever the ufw rules (like Docker's iptables rules); `nc -zv` from another machine; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | the DOCKER-USER chain, ufw-docker, `iptables -L` |
 | A container's user | `--user`/`-u` and `user:` (a name from the image or `uid[:gid]`, an uid unknown to the image gets gid 0), `docker exec -u`; the container's uid is the machine's (no userns-remap): Unix rights applied by number on bind mounts, files created as that uid, processes visible in `ps aux`; `--read-only` prevents writing outside volumes; `--cap-drop` and `--security-opt` are kept (and shown by `inspect`) with no other effect; a fallen container is restarted on each command (no doubling delay) | userns-remap, rootless mode, real capabilities, seccomp, AppArmor, rights on named volumes |
 | `nc` | `-z`, `-v`, a port range; without `-z`, returns | full netcat (listen, send, proxy) |
-| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, The Lab), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
+| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, The Lab), `lsblk` shows disks, partitions, RAID arrays and open LUKS mappings (`crypt`), with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
 | `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (the test is logged at once, without waiting); an ATA disk's attributes, values derived from the chapter's counts; exit code as a bit mask (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, the drive database, every attribute |
 | `mdadm` | RAID 1 only: `--detail` (`-D`), `--detail --scan`, "manage" mode (`--fail`, `--remove` including `failed`, `--add`, `--re-add`, several in a row); the real kernel's refusals (removing an active member, failing the last up-to-date member, a partition already in use); one array rebuilt at a time, half an hour per command; a whole disk in an array erases its table | `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, other RAID levels, a real bitmap (`--re-add` catches up faster) |
 | `mdadm --create` | RAID 1 only (`--level`, `--raid-devices`, `--run`, `missing`), on free disks or partitions; the real "Continue creating array?" question; the initial sync progresses with the commands | other levels, `--chunk`, `--bitmap`, `--name`, `--homehost` |
@@ -3197,6 +3203,111 @@ narrowed away (a warning; once out, a rule added to the servers' GPO
 "Server Firewall" lets you in at the next background refresh), a
 `-TimeSpan` too short (Leila), svc_backup disabled, built-in accounts
 moved, accounts deleted (the Recycle Bin restores them).
+
+## Story 33: The Pantry (three chapters)
+
+A neighbourhood community grocery (L'Épicerie solidaire in French) keeps
+its files on `crate` (`cagette` in French, 192.0.2.48), a small Debian
+server: the households it helps (`/srv/pantry/families.csv`, sensitive
+data, households as codes), the stock, the volunteers, and the app's
+PostgreSQL database, dumped every night to `/var/backups/pantry.sql`. A USB
+disk takes a copy home every Friday (Joaquín) and comes back on Monday.
+Fatou coordinates; Mei, the treasurer, keeps the password manager and a
+sealed envelope at the bank; Noor writes the nightly job. Engine: LUKS in
+`luks.ts` (header, key slots, mappings, `/etc/crypttab`), `cryptsetup`,
+`cryptdisks_start`/`cryptdisks_stop` in `commands/cryptsetup.ts`;
+`mkfs.ext4` in `commands/disks.ts`; `sha256sum` (a real SHA-256) in
+`commands/checksums.ts`; shell variables (`export`, `unset`,
+`NAME=value command`, `$NAME`, `sudo -E`) in `shell.ts` and
+`commands/environment.ts`; restic's `init`, `key`, environment variables
+and `check --read-data`; `dd if=/dev/urandom`. The story's machine and the
+restore drill's laptop, `spare` (`secours`, 192.0.2.49, an internal host),
+are built in `chapters/pantry.ts`. It opens after "Snapshots" (The Game
+Library: restic, then rsnapshot) and "The stuck reboot" (The Lab: fstab),
+and extends the backups path (lost-disk is also in the security path).
+
+### Chapter 1 — The Lost Disk (done)
+
+| Step | Command learnt |
+|---|---|
+| The disk | `lsblk`, `lsblk -f`: sdb1, removable, ext4 OFFSITE, mounted on /mnt/offsite |
+| Free | `sudo umount /mnt/offsite` |
+| LUKS | `sudo cryptsetup luksFormat /dev/sdb1` (YES, Mei's passphrase twice), `cryptsetup luksDump` |
+| Open, file system | `sudo cryptsetup open /dev/sdb1 offsite`, `sudo mkfs.ext4 /dev/mapper/offsite` |
+| Key file | `sudo dd if=/dev/urandom of=/root/offsite.key bs=512 count=8`, `chmod 400`, `sudo cryptsetup luksAddKey /dev/sdb1 /root/offsite.key` |
+| crypttab | `cryptsetup luksUUID` or `blkid`; `offsite UUID=… /root/offsite.key luks,noauto` |
+| fstab | `/dev/mapper/offsite /mnt/offsite ext4 noauto,nofail 0 2` (the old `LABEL=OFFSITE` line gone) |
+| Copy, close | `cryptdisks_start offsite`, `mount /mnt/offsite`, `rsync -a /srv/pantry /mnt/offsite/`, `umount`, `cryptsetup close` (or `cryptdisks_stop`) |
+| The note | `rm note_from_mei.txt` |
+
+Goal checked on the state: sdb1 (or the whole sdb) is LUKS with an ext4
+inside, a slot opens with Mei's passphrase and one with a file of the
+server that only root reads (not on the disk); crypttab names the LUKS
+UUID (UUID= or by-uuid), that key file, `luks` and `noauto` or `nofail`;
+fstab mounts `/dev/mapper/NAME` with `noauto` or `nofail`, no
+`LABEL=OFFSITE` line; the pantry's files (today's families list) are on
+the encrypted file system; nothing open nor mounted from the disk; no file
+of the server holds the passphrase. Expected traps: luksFormat on sda1
+("Device /dev/sda1 is in use. Can not proceed with format operation.")
+or on the mounted sdb1, "yes" in lowercase ("Operation aborted."),
+mounting the LUKS device itself (unknown filesystem type
+'crypto_LUKS'), `mkfs.ext4` on the encrypted partition (the header is
+wiped), a key file readable by others (cryptdisks_start's warning), a
+passphrase nobody else knows, `/dev/sdb1` in crypttab, the note deleted
+before its passphrase is in a slot (Mei sends it again).
+
+### Chapter 2 — The Spare Key (done)
+
+| Step | Command learnt |
+|---|---|
+| Open | `sudo cryptdisks_start offsite`, `sudo mount /mnt/offsite` |
+| The job | `sudo cat /usr/local/sbin/nightly-backup`: `RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE=/root/.restic-pass` |
+| Snapshots | `export RESTIC_REPOSITORY=… RESTIC_PASSWORD_FILE=…` then `sudo -E restic snapshots` (or `sudo restic -r … -p … snapshots`) |
+| The keys | `restic key list`: one key, its password on crate only |
+| The spare key | `restic key add` (Mei's password twice) |
+| Check | `restic check` |
+| Close | `rm note_from_mei.txt`, `umount`, `cryptdisks_stop offsite` |
+
+Goal checked on the state: the repository has a key with Mei's password
+and, a different one, a key with the content of `/root/.restic-pass` (the
+job still works); `restic check` ran after Mei's key was added; no file
+on crate holds Mei's password; the disk is unmounted and closed. Expected
+traps: `sudo restic` with exported variables (env_reset: "Please specify
+repository location"), Mei's password before her key ("wrong password or
+no key found"), `restic init` ("config file already exists"),
+`restic key passwd` (the job's key replaced: put it back with
+`key add --new-password-file /root/.restic-pass`), removing the current
+key (refused), Mei's password written to a file.
+
+### Chapter 3 — The Restore Drill (done)
+
+Saturday: crate's loss staged on `spare`, a borrowed laptop with a fresh
+Debian, the USB disk plugged in, no key file, no crypttab: only the two
+secrets of Mei's envelope (in Fatou's message). The job only backs up
+`/srv/pantry`; the nightly dump is never in a snapshot.
+
+| Step | Command learnt |
+|---|---|
+| The log | `sudo cat /var/log/nightly-backup.log`: "backup completed" every night |
+| On spare | `ssh spare`, `lsblk -f`: sdb1 crypto_LUKS |
+| Open | `sudo cryptsetup open /dev/sdb1 offsite` (the passphrase), `sudo mkdir /mnt/offsite`, `sudo mount /dev/mapper/offsite /mnt/offsite` |
+| The repository | `sudo restic -r /mnt/offsite/restic snapshots` (the recovery password) |
+| Check it all | `restic check --read-data` |
+| Restore beside | `restic restore latest --target /srv/restore` |
+| Prove it | `cd /srv/restore/srv/pantry`, `sha256sum -c SHA256SUMS` |
+| The database | `restic find pantry.sql`: nothing |
+| Fix the job | on crate, `sudo nano /usr/local/sbin/nightly-backup`: `restic backup /srv/pantry /var/backups/pantry.sql` |
+| Close | on spare, `umount`, `cryptsetup close offsite` |
+
+Goal checked on the state: on spare, the disk was opened with a
+passphrase and the repository with Mei's key, `check --read-data` ran,
+the latest families list restored outside the disk, `sha256sum -c`
+passed for the three files, no secret of crate (the key file, the job's
+password) on spare, the disk closed; on crate, the job's `restic backup`
+line includes `/var/backups`. Expected traps: trusting "backup
+completed", crate's key file or password copied to spare (the drill
+proves nothing), `restic check` without `--read-data`, a restore over
+`/`, `sha256sum -c` from the wrong directory or on a modified file.
 
 ## Ideas for later
 

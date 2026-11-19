@@ -44,3 +44,5 @@ machine-cabinet = armoire
 machine-stave = portee
 machine-register = registre
 machine-stacks = rayons
+machine-crate = cagette
+machine-spare = secours

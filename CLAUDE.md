@@ -172,7 +172,7 @@ presents them for people.
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
   `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what The Lab's
   chapters share.
-- `commands/restic.ts`: restic repositories (snapshots, deduplication,
+- `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
   declares in `chapters/index.ts` (`after`) the chapters to finish before
@@ -431,6 +431,31 @@ presents them for people.
   Restore-ADObject, Get-ADOptionalFeature) in `windows-ad.ts` and
   `commands/windows-ad.ts`; Export-Csv, ConvertTo-Csv and Import-Csv in
   `commands/windows-files.ts`.
+- `src/engine/luks.ts`: LUKS2 on a machine's storage (`storage.luks`: the
+  header and its key slots, a passphrase or a key file's content;
+  `storage.crypt`: the open mappings, `/dev/mapper/NAME`, the clear file
+  system kept in the header while closed; `/etc/crypttab` read by
+  `readCrypttab`); `cryptsetup` (`luksFormat` with the real YES question,
+  `open`, `close`, `status`, `luksDump`, `luksAddKey`, `luksRemoveKey`,
+  `luksKillSlot`, `luksUUID`, `luksHeaderBackup`), `cryptdisks_start` and
+  `cryptdisks_stop` in `commands/cryptsetup.ts`; `lsblk` (`crypt`), `blkid`
+  (`crypto_LUKS`) and `mount` know them; `mkfs.ext4` in
+  `commands/disks.ts`; `sha256sum` (a real SHA-256, `-c`) in
+  `commands/checksums.ts`; `dd if=/dev/urandom` (deterministic bytes).
+  Shell variables: `Shell.vars`, `Shell.exported`, `Shell.environment`
+  (a command's environment: `NAME=value command`; sudo resets it, except
+  `sudo NAME=value` and `sudo -E`), `$NAME` expanded, `export` and `unset`
+  in `commands/environment.ts`. restic: `init`, `key list/add/remove/passwd`
+  (`Repo.keys`), `RESTIC_REPOSITORY`/`RESTIC_PASSWORD_FILE`/
+  `RESTIC_PASSWORD`, `check --read-data`, what was run in
+  `state.resticDone`. `chapters/pantry.ts`: what the chapters of "The
+  Pantry" share (`crate`, the community grocery's server: its files and
+  their SHA256SUMS, the USB disk in clear or encrypted, the restic
+  repository with Noor's key and Mei's, the nightly job and its log;
+  `spare`, the restore drill's laptop, an internal host built by
+  `spareHost()`; `filesOf` finds a secret wherever it was written);
+  `lost-disk.ts`, `spare-key.ts`, `restore-drill.ts`. Tests:
+  `tests/pantry.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

@@ -586,12 +586,16 @@ them safely.
 
 ### New stories (defensive, within the charter)
 
-- [ ] **Encrypted backups**: a backup you can actually trust. LUKS on a
+- [x] **Encrypted backups**: a backup you can actually trust. LUKS on a
   backup disk (`cryptsetup luksFormat`/`luksOpen`, a keyfile vs a
   passphrase, `/etc/crypttab`), restic or borg to an encrypted repository
   already partly modelled (`commands/restic.ts`), a restore drill, and the
   key-management trap (a backup whose key is only on the machine it backs
-  up). Extends the backups path.
+  up). Extends the backups path. Done: story 33, "The Pantry" (LUKS,
+  `cryptsetup`, crypttab and `cryptdisks_start`, `mkfs.ext4`; restic
+  `init`, `key`, its environment variables, `check --read-data`;
+  `sha256sum`; shell variables and `sudo -E`; a restore drill on an
+  internal host with only escrowed secrets).
 - [ ] **IPv6**: the same services, two address families. SLAAC vs a static
   address, `ip -6`, a firewall that only covered IPv4 (ufw and nftables
   rules duplicated for v6, the classic "closed on v4, open on v6" hole),

@@ -441,3 +441,12 @@ name-hr-0113-departure-txt = hr-0113-departure.txt
 name-conventions-txt = conventions.txt
 name-vault-svc_scans-txt = vault-svc_scans.txt
 name-city-it-audit-txt = city-it-audit.txt
+
+## The Pantry
+name-message_from_fatou-txt = message_from_fatou.txt
+name-note_from_mei-txt = note_from_mei.txt
+name-drill-txt = drill.txt
+name-pantry = pantry
+name-families-csv = families.csv
+name-volunteers-csv = volunteers.csv
+name-last-sync-txt = last-sync.txt

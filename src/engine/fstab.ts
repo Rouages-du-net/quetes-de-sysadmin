@@ -62,6 +62,8 @@ export function resolveSource(st: StorageState, source: string): string | null {
   const link = /^\/dev\/disk\/by-(uuid|label)\/(.+)$/.exec(source);
   if (link) return by(link[1] === 'uuid' ? 'uuid' : 'label', link[2]);
   if (!source.startsWith('/dev/')) return null;
+  // An open LUKS mapping with its file system (see luks.ts).
+  if (fs[source]) return source;
   const lv = readLv(st, source);
   if (lv) return `/dev/mapper/${lv[0]}-${lv[1]}`;
   const n = source.slice(5);

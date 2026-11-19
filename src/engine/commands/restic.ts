@@ -1,16 +1,21 @@
 // restic: encrypted, deduplicated backups, as snapshots. Based on the
 // documentation of restic 0.18 (https://restic.readthedocs.io/en/stable/):
 // backup, snapshots, ls, find, diff, dump, restore, forget (--keep-*
-// policies), prune, check, stats, init. The repository is kept in
+// policies), prune, check (--read-data), stats, init, key (list, add,
+// remove, passwd: https://restic.readthedocs.io/en/stable/070_encryption.html).
+// The repository is kept in
 // state.restic (like git repositories); its files on disk (config, keys/,
 // snapshots/, data/…) are unreadable without the password, and their size
 // follows what the repository contains: df sees the space freed by prune.
 //
 //   state.restic = { [repository path]: Repo }
 //
-// Differences: no environment variables (RESTIC_REPOSITORY…), -r and
-// --password-file are required (or typing the password); one output line
-// per step instead of progress bars; one "pack" per snapshot.
+// The repository and its password come from -r and --password-file (-p),
+// or from the environment (RESTIC_REPOSITORY, RESTIC_PASSWORD_FILE,
+// RESTIC_PASSWORD), or the password is typed. Each key opens the repository
+// with its own password (keys/); the password of a key opens nothing else.
+// Differences: one output line per step instead of progress bars; one
+// "pack" per snapshot; no --repository-file, no password-command.
 
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
@@ -32,9 +37,21 @@ export interface Snapshot {
   files: Record<string, Version>;
 }
 
-export interface Repo {
+export interface RepoKey {
   id: string;
   password: string;
+  user: string;
+  host: string;
+  created: number;
+}
+
+export interface Repo {
+  id: string;
+  // The first key's password (a repository made by a chapter); keys, when there are several.
+  password: string;
+  keys?: RepoKey[];
+  // check --read-data was run since the last change.
+  dataChecked?: boolean;
   snapshotList: Snapshot[];
   // The stored data: one pack per backup, with its blobs (stored size).
   packs: { id: string; blobs: Record<string, number> }[];
@@ -42,6 +59,11 @@ export interface Repo {
   checked: boolean;
   // forget removed snapshots, without prune: the space is not given back yet.
   pruneNeeded: boolean;
+}
+
+/** The repository's keys (a repository made with one password has one key). */
+export function keysOf(repo: Repo): RepoKey[] {
+  return (repo.keys ??= [{ id: hex(`key-${repo.id}`), password: repo.password, user: 'root', host: '', created: 0 }]);
 }
 
 // Hexadecimal hash derived from a text (FNV-1a), always the same.
@@ -126,10 +148,15 @@ const digit = (seed: string, bytes?: number): File => ({
 export function writeRepo(game: Shell, path: string, repo: Repo) {
   const n = game.find(path);
   if (n?.type !== 'directory') return;
+  n.children = repoChildren(repo);
+}
+
+/** The files of a repository on disk (a chapter builds a repository on a medium with it). */
+export function repoChildren(repo: Repo): Record<string, Node> {
   const place = (children: Record<string, Node>) => ({ type: 'directory' as const, children, mode: 'rwx------' });
-  n.children = {
+  return {
     config: digit(`config-${repo.id}`, 155),
-    keys: place({ [hex(`key-${repo.id}`)]: digit(`key-${repo.id}`, 455) }),
+    keys: place(Object.fromEntries(keysOf(repo).map((k) => [k.id, digit(`key-${k.id}`, 455)]))),
     snapshots: place(Object.fromEntries(repo.snapshotList.map((i) => [i.id, digit(`instantane-${i.id}`, 290)]))),
     index: place({ [hex(`index-${repo.packs.length}-${repoSize(repo)}`)]: digit(`index-${repo.id}`, 1200 + repo.packs.length * 180) }),
     data: place(Object.fromEntries(repo.packs.map((p) => [p.id, digit(p.id, Object.values(p.blobs).reduce((a, b) => a + b, 0) + 512)]))),
@@ -182,6 +209,8 @@ interface Context {
   game: Shell;
   path: string;
   repo: Repo;
+  // The key the password opened.
+  key: RepoKey;
 }
 
 const HEADER = (d: Repo) => `repository ${short(d.id)} opened (version 2, compression level auto)`;
@@ -303,6 +332,7 @@ function launch(c: Context, action: string, args: string[]): string {
     const re = wildcard(pattern);
     const long = options.has('-l') || options.has('--long');
     const blocks: string[] = [];
+    game.state.resticFound = [...((game.state.resticFound as { pattern: string; found: boolean }[] | undefined) ?? []), { pattern, found: repo.snapshotList.some((s) => Object.keys(s.files).some((p) => re.test(p) || re.test(p.split('/').at(-1)!))) }];
     for (const s of repo.snapshotList) {
       const found = Object.keys(s.files).filter((p) => re.test(p) || re.test(p.split('/').at(-1)!));
       if (!found.length) continue;
@@ -391,6 +421,7 @@ function launch(c: Context, action: string, args: string[]): string {
         else bytes += v.size;
       }
     if (errors.length) return game.error(errors.join('\n'));
+    if (!options.has('--dry-run')) game.state.resticRestoredTo = base;
     return [
       HEADER(repo),
       `restoring snapshot ${short(s.id)} of [${s.paths.join(' ')}] at ${date(s.time)} by ${game.player}@${s.host} to ${target}`,
@@ -420,7 +451,7 @@ function launch(c: Context, action: string, args: string[]): string {
       walk(ch);
     }
     game.state.resticClock = clock + 60_000;
-    const i: Snapshot = { id: hex(`instantane-${repo.snapshotList.length}-${clock}`), time: clock, host: game.host, paths, files };
+    const i: Snapshot = { id: hex(`instantane-${repo.snapshotList.length}-${clock}`), time: clock, host: game.hostName, paths, files };
     const r = addSnapshot(repo, i);
     writeRepo(game, c.path, repo);
     const total = Object.values(files).reduce((t, v) => t + v.size, 0);
@@ -493,6 +524,9 @@ function launch(c: Context, action: string, args: string[]): string {
 
   if (action === 'check') {
     repo.checked = true;
+    const readData = options.has('--read-data') || [...options].some((o) => o.startsWith('--read-data-subset'));
+    if (readData) repo.dataChecked = true;
+    const packs = repo.packs.length;
     return [
       'using temporary cache in /tmp/restic-check-cache-4012',
       HEADER(repo),
@@ -502,6 +536,7 @@ function launch(c: Context, action: string, args: string[]): string {
       'check all packs',
       'check snapshots, trees and blobs',
       `[0:00] 100.00%  ${repo.snapshotList.length} / ${repo.snapshotList.length} snapshots`,
+      ...(readData ? ['read all data', `[0:00] 100.00%  ${packs} / ${packs} packs`] : []),
       'no errors were found',
     ].join('\n');
   }
@@ -526,10 +561,171 @@ function launch(c: Context, action: string, args: string[]): string {
     ].join('\n');
   }
 
+  if (action === 'key') return key(c, positional, values);
+
   return game.error(`Fatal: unknown command "${action}" for "restic"\n${game.t('restic-usage')}`);
 }
 
-const ACTIONS = ['snapshots', 'ls', 'find', 'diff', 'dump', 'restore', 'backup', 'forget', 'prune', 'check', 'stats', 'init'];
+// ——— Keys (restic key list|add|remove|passwd) ———
+
+/** Asks a new password twice (or reads --new-password-file), then `then`. */
+function newPassword(c: Context, file: string | undefined, then: (password: string) => string): string {
+  const { game } = c;
+  if (file) {
+    const n = game.find(file);
+    if (!n || n.type !== 'file') return game.error(`Fatal: Load(<new password file>): open ${file}: no such file or directory`);
+    if (!game.traverses(file) || !game.can(n, 'r')) return game.error(`Fatal: Load(<new password file>): open ${file}: permission denied`);
+    return then((game.read(file) ?? '').split('\n')[0]);
+  }
+  const who = game.who;
+  const as = <T,>(f: () => T) => {
+    const before = game.who;
+    game.who = who;
+    try {
+      return f();
+    } finally {
+      game.who = before;
+    }
+  };
+  game.ask(
+    'enter new password: ',
+    (first) => {
+      game.ask(
+        'enter password again: ',
+        (second) => {
+          if (first !== second) return 'Fatal: passwords do not match';
+          if (!first) return 'Fatal: an empty password is not allowed by default. Pass the flag `--insecure-no-password` to restic to disable this check.';
+          return as(() => then(first));
+        },
+        true,
+      );
+      return '';
+    },
+    true,
+  );
+  return '';
+}
+
+function key(c: Context, positional: string[], values: (name: string) => string[]): string {
+  const { game, repo } = c;
+  const sub = positional[0];
+  const keys = keysOf(repo);
+  const clock = (game.state.resticClock ?? 0) as number;
+  const made = (password: string) => {
+    const k: RepoKey = {
+      id: hex(`key-${repo.id}-${keys.length}-${password}`),
+      password,
+      user: values('--user')[0] ?? game.who,
+      host: values('--host')[0] ?? game.hostName,
+      created: clock,
+    };
+    keys.push(k);
+    repo.checked = false;
+    return k;
+  };
+  if (sub === 'list' || sub === undefined) {
+    const rows = keys.map((k) => [`${k === c.key ? '*' : ' '}${short(k.id)}`, k.user, k.host, date(k.created)]);
+    const head = [' ID', 'User', 'Host', 'Created'];
+    const widths = head.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
+    const line = (r: string[]) => r.map((x, i) => (i === r.length - 1 ? x : x.padEnd(widths[i]))).join('  ');
+    const rule = '-'.repeat(widths.reduce((a, b) => a + b + 2, 0) - 2);
+    return [HEADER(repo), line(head), rule, ...rows.map(line), rule].join('\n');
+  }
+  if (sub === 'add')
+    return newPassword(c, values('--new-password-file')[0], (password) => {
+      const k = made(password);
+      writeRepo(game, c.path, repo);
+      game.state.resticKeyAdded = true;
+      return [HEADER(repo), `saved new key with ID ${k.id}`].join('\n');
+    });
+  if (sub === 'passwd')
+    return newPassword(c, values('--new-password-file')[0], (password) => {
+      const k = made(password);
+      repo.keys = keys.filter((x) => x !== c.key);
+      writeRepo(game, c.path, repo);
+      game.state.resticKeyChanged = true;
+      return [HEADER(repo), `saved new key as ${k.id}`].join('\n');
+    });
+  if (sub === 'remove') {
+    const id = positional[1];
+    if (!id) return game.error('Fatal: key remove expects one argument as the key id');
+    const found = keys.filter((k) => k.id.startsWith(id));
+    if (found.length !== 1) return game.error(found.length ? `Fatal: multiple IDs with prefix "${id}" found` : `Fatal: no matching ID found for prefix "${id}"`);
+    if (found[0] === c.key) {
+      game.state.resticRemoveCurrent = true;
+      return game.error('Fatal: refusing to remove key currently used to access repository');
+    }
+    repo.keys = keys.filter((k) => k !== found[0]);
+    repo.checked = false;
+    writeRepo(game, c.path, repo);
+    game.state.resticKeyRemoved = true;
+    return [HEADER(repo), `removed key ${found[0].id}`].join('\n');
+  }
+  return game.error(`Error: unknown command "${sub}" for "restic key"\nRun 'restic key --help' for usage.`);
+}
+
+// restic init: a new, empty repository, with one key.
+function init(game: Shell, path: string, given: string, passwordFile: string, envPassword: string | undefined): string {
+  const create = (password: string) => {
+    if (!game.exists(path)) {
+      const parts = path.split('/').filter(Boolean);
+      let at = '';
+      for (const part of parts) {
+        at += `/${part}`;
+        if (game.exists(at)) continue;
+        const refused = game.place('restic', at, { type: 'directory', children: {}, owner: game.who, mode: 'rwx------' });
+        if (refused) return game.error(`Fatal: create repository at ${given} failed: mkdir ${at}: permission denied`);
+      }
+    }
+    const clock = (game.state.resticClock ?? 0) as number;
+    const repo: Repo = { id: hex(`repository-${path}-${clock}`), password, snapshotList: [], packs: [], checked: false, pruneNeeded: false };
+    keysOf(repo)[0].host = game.hostName;
+    keysOf(repo)[0].user = game.who;
+    keysOf(repo)[0].created = clock;
+    ((game.state.restic ??= {}) as Record<string, Repo>)[path] = repo;
+    writeRepo(game, path, repo);
+    game.state.resticInit = path;
+    return [
+      `created restic repository ${repo.id.slice(0, 10)} at ${given}`,
+      '',
+      'Please note that knowledge of your password is required to access',
+      'the repository. Losing your password means that your data is',
+      'irrecoverably lost.',
+    ].join('\n');
+  };
+  if (passwordFile) {
+    const n = game.find(passwordFile);
+    if (!n || n.type !== 'file') return game.error(`Fatal: Load(<password file>): open ${passwordFile}: no such file or directory`);
+    if (!game.traverses(passwordFile) || !game.can(n, 'r')) return game.error(`Fatal: Load(<password file>): open ${passwordFile}: permission denied`);
+    return create((game.read(passwordFile) ?? '').trim());
+  }
+  if (envPassword !== undefined) return create(envPassword);
+  const who = game.who;
+  game.ask(
+    'enter password for new repository: ',
+    (first) => {
+      game.ask(
+        'enter password again: ',
+        (second) => {
+          if (first !== second) return 'Fatal: passwords do not match';
+          const before = game.who;
+          game.who = who;
+          try {
+            return [...game.recoverErrors(), create(first)].filter(Boolean).join('\n');
+          } finally {
+            game.who = before;
+          }
+        },
+        true,
+      );
+      return '';
+    },
+    true,
+  );
+  return '';
+}
+
+const ACTIONS = ['snapshots', 'ls', 'find', 'diff', 'dump', 'restore', 'backup', 'forget', 'prune', 'check', 'stats', 'init', 'key'];
 
 export const RESTIC: Record<string, Command> = {
   restic: {
@@ -552,6 +748,11 @@ export const RESTIC: Record<string, Command> = {
       if (!action) return game.error(game.t('restic-usage'));
       if (!ACTIONS.includes(action)) return game.error(`Error: unknown command "${action}" for "restic"\nRun 'restic --help' for usage.`);
       const next = rest.slice(rest.indexOf(action) + 1);
+      // The environment (export, or NAME=value before the command; sudo resets it).
+      const env = game.environment ?? {};
+      pathRepo ||= env.RESTIC_REPOSITORY ?? '';
+      mdpFile ||= env.RESTIC_PASSWORD_FILE ?? '';
+      const envPassword = mdpFile ? undefined : env.RESTIC_PASSWORD;
       if (!pathRepo) return game.error('Fatal: Please specify repository location (-r or --repository-file)');
       const path = game.resolve(pathRepo).replace(/\/$/, '');
       const depots: Record<string, Repo> = (game.state.restic ??= {});
@@ -560,19 +761,27 @@ export const RESTIC: Record<string, Command> = {
       if (action === 'init') {
         if (repo || game.exists(`${path}/config`))
           return game.error(`Fatal: create repository at ${pathRepo} failed: config file already exists`);
-        return game.error(game.t('restic-init'));
+        return init(game, path, pathRepo, mdpFile, envPassword);
       }
       if (!repo || !game.exists(`${path}/config`))
         return game.error(
           `Fatal: repository does not exist: unable to open config file: stat ${path}/config: no such file or directory\nIs there a repository at the following location?\n${pathRepo}`,
         );
-      const c: Context = { game, path, repo };
+      if (!game.traverses(`${path}/config`))
+        return game.error(`Fatal: unable to open config file: open ${path}/config: permission denied\nIs there a repository at the following location?\n${pathRepo}`);
       const execute = (mdp: string) => {
-        if (mdp !== repo.password) {
+        const k = keysOf(repo).find((x) => x.password === mdp);
+        if (!k) {
           game.state.resticWrongPassword = true;
           return game.error('Fatal: wrong password or no key found');
         }
-        return launch(c, action, next);
+        game.state.resticKeyUsed = k.id;
+        game.state.resticKeysUsed = [...new Set([...((game.state.resticKeysUsed as string[] | undefined) ?? []), k.id])];
+        // What was run, with which subcommand (key list…): the chapters read it (an answer to a prompt is not in game.last).
+        const done = action === 'key' ? `key ${next.find((a) => !a.startsWith('-')) ?? 'list'}` : action;
+        const output = launch({ game, path, repo, key: k }, action, next);
+        game.state.resticDone = [...((game.state.resticDone as string[] | undefined) ?? []), done];
+        return output;
       };
       if (mdpFile) {
         const n = game.find(mdpFile);
@@ -581,7 +790,8 @@ export const RESTIC: Record<string, Command> = {
         game.state.resticPasswordFile = game.resolve(mdpFile);
         return execute((game.read(mdpFile) ?? '').trim());
       }
-      // Without a file, restic asks for the password (the input follows, in clear text here).
+      if (envPassword !== undefined) return execute(envPassword);
+      // Without a file, restic asks for the password (not shown, like the real prompt).
       const who = game.who;
       game.ask('enter password for repository: ', (response) => {
         const before = game.who;
@@ -593,7 +803,7 @@ export const RESTIC: Record<string, Command> = {
         } finally {
           game.who = before;
         }
-      });
+      }, true);
       return '';
     },
   },
