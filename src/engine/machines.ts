@@ -90,6 +90,8 @@ export const MACHINES: Machine[] = [
   machine('quay', '192.0.2.52', 'ferry'),
   // The Bike Share: the cooperative's monitoring server (Prometheus, Alertmanager); saddle and hub are internal hosts.
   machine('gauge', '192.0.2.54', 'bike-share'),
+  // The Pool: the swimming pool's Debian server, a single-node k3s cluster (the booking app).
+  machine('lane', '192.0.2.62', 'pool'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

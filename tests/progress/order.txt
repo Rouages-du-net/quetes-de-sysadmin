@@ -133,3 +133,5 @@ both-ways
 blind-spot
 threshold
 quiet-hours
+wont-start
+front-desk

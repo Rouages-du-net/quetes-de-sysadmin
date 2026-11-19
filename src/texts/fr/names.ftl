@@ -464,3 +464,8 @@ name-note_from_lucia-txt = mot_de_lucia.txt
 name-message_from_ngozi-txt = message_de_ngozi.txt
 name-note_from_tomas-txt = mot_de_tomas.txt
 name-RELEASE-NOTES-txt = NOTES-DE-VERSION.txt
+
+## La Piscine
+name-message_from_folake-txt = message_de_folake.txt
+name-note_from_rui-txt = mot_de_rui.txt
+name-note_from_kemal-txt = mot_de_kemal.txt

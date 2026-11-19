@@ -75,3 +75,5 @@ password-basket-orchard-copper-73 = panier-verger-cuivre-73
 password-tide-2029 = maree-2029
 ## Les Vélos partagés : sudo
 password-pedal-2029 = pedale-2029
+## La Piscine : sudo
+password-splash-2029 = plouf-2029

@@ -235,13 +235,16 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (even without root); `start`, `stop`, `restart`, `graceful` go through systemd; some of the directives (others are refused like those of a missing module: "Invalid command"); virtual host chosen by address and port, then `ServerName`/`ServerAlias`, otherwise the first; `<Directory>` without wildcards; `.htaccess` reread on each request, with `AllowOverride` by category; `mod_rewrite`: `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), in the server or per directory, at most 10 internal redirects; no PHP, CGI, compression nor access log; without an argument, `a2ensite` & co. list the choices without asking | every directive and module, interactive `apache2ctl` without an argument |
 | `curl` on the site's machine | only reaches the machine itself (localhost, its name, its address), or an `ssh -L` tunnel opened on the workstation | the whole network |
 | `curl -4`, `-6`, `-v` (IPv6) | on a machine speaking IPv6 (and from a vantage point on the internet, `lookout`): names resolved through `/etc/hosts` and the story's DNS (the zone's public servers from outside), IPv6 first then IPv4 (happy eyeballs, a refusal moves on at once), `[addr]` URLs; `-v` shows curl 8's lines (resolution, tries, request, headers); a filtered port answers at once with its timeout's message (error 28); only nginx and the apps of the story's server answer | every option, real timings, proxies, HTTP/2 |
-| `curl` on a machine with metrics (The Bike Share) | the story's network (`state.metricsNet`): names from `/etc/hosts`, each machine's ufw (a dropped port answers at once with error 28), what listens on each port (Prometheus's and the Alertmanager's APIs, exporters, the app, a relay); `-s`, `-S`, `-f`, `-i`, `-I`, `-v` (short), `-X`, `-d`, `--data-urlencode`, `-G`, `-g` and curl's URL patterns (`{…}` in an unquoted URL), `-o`, `-w '%{http_code}'` | every option, real timings |
+| `curl` on a machine with metrics (The Bike Share) | the story's network (`state.metricsNet`): names from `/etc/hosts`, each machine's ufw (a dropped port answers at once with error 28), what listens on each port (Prometheus's and the Alertmanager's APIs, exporters, the app, a relay); `-s`, `-S`, `-f`, `-i`, `-I`, `-v` (short), `-X`, `-d`, `--data-urlencode`, `-G`, `-g`, `-H` (the Host header reaches a k3s cluster's Traefik: The Pool) and curl's URL patterns (`{…}` in an unquoted URL), `-o`, `-w '%{http_code}'` | every option, real timings |
 | Prometheus (`prometheus.ts`, `promql.ts`) | `prometheus.yml`: `global`, `rule_files` (globs), `scrape_configs` with `static_configs` (targets, labels), `alerting`; go-yaml's "field … not found" messages; scrapes every `scrape_interval` through the story's network (`up`, `scrape_duration_seconds`, `scrape_samples_scraped`, staleness markers), errors as Prometheus words them (context deadline exceeded, connection refused, no such host, HTTP status); a time series database kept 3 hours; recording and alerting rules (`for`, `labels`, `annotations` with `$labels`, `$value`, `humanize`, `humanizePercentage`, `printf`), alerts inactive, pending, firing, resolved, `ALERTS`, sent to the Alertmanager every minute; reload on SIGHUP or `POST /-/reload` (with `--web.enable-lifecycle` in `ARGS`), the old configuration kept on an error; the API: `/api/v1/query` (GET or POST, `time`), `/api/v1/targets`, `/api/v1/alerts`, `/api/v1/rules`, `/api/v1/status/config` (the file as written), `/api/v1/label/…/values`, `/-/healthy`, `/-/ready`, JSON as Go writes it (`<` as `\u003c`) | service discovery, relabelling, HTTPS and authentication, `query_range`, the web interface, remote write, native histograms, the rule's query printed back canonically |
 | PromQL | selectors and matchers (`=`, `!=`, `=~`, `!~`), range vectors, `offset`; `rate`, `irate`, `increase`, `delta` (Prometheus's extrapolation, counter resets), `deriv`, `predict_linear`, `*_over_time`, `abs`, `absent`, `clamp_min`, `clamp_max`, `round`, `time`, `vector`, `scalar`; `sum`, `avg`, `min`, `max`, `count` with `by`/`without`; arithmetic, comparisons (filter or `bool`), `and`, `or`, `unless`, one-to-one matching with `on`/`ignoring`; the "metric might not be a counter" info; Prometheus's parse errors | subqueries, `group_left`/`group_right`, `topk`, `quantile`, `histogram_quantile`, `@`, string functions |
 | `promtool` | `check config` (and the rule files it names), `check rules`, `check metrics` (two lint checks), `query instant` (`--time`); `test rules` not simulated (the story tries rules on made-up days itself) | `test rules`, `query range`, `tsdb`, `push` |
 | node exporter, the app's `/metrics` | a few families each: CPU, load, memory, file systems (computed from the machine's files, like `df`), network; the app's requests by route and status, a histogram, a gauge per station, computed from its traffic since its process started (a restart resets the counters) | every collector |
 | Alertmanager and `amtool` | `alertmanager.yml`: `route` (`receiver`, `group_by`, `group_wait`, `group_interval`, `repeat_interval`, `matchers`, `match`, `match_re`, `continue`, nested routes), `receivers` (only `webhook_configs` deliver), `inhibit_rules`; grouping and repeats checked every 15 seconds; silences and their states; reload on SIGHUP or `POST /-/reload`; API v2 (`/api/v2/alerts`, `/api/v2/silences` GET and POST, `/api/v2/silence/ID` DELETE, `/api/v2/status`); `amtool alert query` (`--silenced`, `--inhibited`, `-o extended`/`json`), `silence add` (`--duration`, `--start`, `--end`, `--comment`, `--author`), `silence query` (`--expired`, `-q`), `silence expire`, `check-config`, `config`, `config routes [test]` (`--config.file`, `--verify.receivers`) | email and chat integrations, templates, clustering, time intervals, retries |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
+| `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
+| The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction, Traefik's TLS (port 443 answers like 80) |
+| `base64` | GNU coreutils' encoding and `-d`, `-w`; `echo -n` before it in a pipe leaves out the newline | `-i` without effect, no `--help` beyond the manual |
 | `sleep` | returns at once; in a story where time matters (The Bike Share), that much time passes for the whole story (at most a day) | waits |
 | sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
 | `nmap -6`, `nc -4`/`-6` | from the vantage point: the story's server's ports in each family (its firewall, its sockets, neighbour discovery: a server that drops it "seems down"); an IPv6 literal needs `-6` (nmap's message) | real probes, `-6` with `-sU`, OS detection |
@@ -3511,6 +3514,95 @@ loaded; the file is the one running. Expected traps: a broken file, a
 silence too broad (`severity=page`), too short (`--duration=1h`),
 Prometheus stopped, the rule removed, no silence at all (the on-call phone
 rings at 10:02).
+
+## Story 36: The Pool (four chapters, two done)
+
+The town's swimming pool (Riverside Pool, "piscine des Berges" in French)
+moved its booking app to a single-node k3s cluster on `lane` (`couloir` in
+French, 192.0.2.62), a Debian server, a month before the story. Rui, the
+developer who set it up, keeps the manifests in `~/manifests` (namespace
+`swim`: the Deployment `booking`, the ConfigMap `booking-config`);
+Folake runs the pool's front office; Kemal works at the town's IT. The
+images come from the town's registry, `registry.pool.example/booking`
+(2.2.0, 2.3.0, 2.3.1); the database lives outside the cluster
+(`db.pool.internal`); the site is `booking.pool.example`, whose DNS points
+to lane. Engine: `src/engine/k8s.ts` (the objects and their schemas, the
+API server's defaults and validation, `kubectl apply`'s three-way merge,
+the Deployment and ReplicaSet controllers, the scheduler, the kubelet,
+probes, events, Endpoints and EndpointSlices, Traefik's routes and log,
+kube-system as k3s installs it), `commands/kubectl.ts`, `commands/k3s.ts`
+(`k3s`, `base64`); curl reaches Traefik, NodePorts, ClusterIPs and pod
+addresses through `state.metricsNet`. The cluster's past (k3s installed,
+2.2.0 deployed, what Rui or Kemal applied before the chapter) is replayed
+second by second when the chapter starts; then each command lets ten
+seconds pass (`sleep`, `kubectl rollout status`, `kubectl get -w` and
+`kubectl logs -f` let more pass). It opens after "Compose" (The Workshop)
+and "Blue/Green" (The Gazette), and extends the deployment path.
+
+### Chapter 1 — The Pod That Won't Start (done)
+
+Rui applied release 2.3.1 before leaving for his train; the new pod never
+started, the two old ones (2.2.0) still serve (a rolling update keeps
+them until new pods are available: `maxUnavailable` rounds down to 0).
+
+| Step | Command learnt |
+|---|---|
+| The pods | `kubectl get pods` (default namespace: nothing), `kubectl get pods -n swim`, `kubectl config set-context --current --namespace=swim` |
+| Why | `kubectl describe pod NAME -n swim`: the Events (`Failed to pull image …: not found`, `ErrImagePull`, `ImagePullBackOff`) |
+| The tag | `~/manifests/booking.yaml` (`image: …:2.3.1`), `kubectl apply -f ~/manifests/` (created, configured, unchanged) |
+| The crash | `CrashLoopBackOff`, `RESTARTS`, `kubectl logs POD --previous` (`DATABASE_HOST is not set`) |
+| The variable | `env` with `configMapKeyRef`: the variable's name changes, the key stays; `kubectl rollout status deployment/booking` |
+
+Goal checked on the state: the Deployment rolled out (2/2 updated and
+available) on 2.3.1 with `DATABASE_HOST` set from the ConfigMap, no pod
+nobody manages in the namespace, the files in `~/manifests` what runs
+(`kubectl apply` would change nothing). Expected traps: a pod deleted (its
+ReplicaSet makes another, with the same error), `kubectl run` (a lone pod
+to delete), a pod edited instead of its Deployment (and its env refused:
+a pod's spec is immutable but for its images), a fix made with `kubectl
+edit` or `kubectl set image` but not in the file, a ConfigMap key that
+doesn't exist (`CreateContainerConfigError`).
+
+### Chapter 2 — The Front Desk (done)
+
+A week later, the old server is gone: lane must serve
+`booking.pool.example` through Traefik. Kemal removed the Deployment on
+Friday and applied his manifests: a readiness probe, a Service, an
+Ingress; the address answers `404 page not found`.
+
+| Step | Command learnt |
+|---|---|
+| The front door | `curl -H 'Host: booking.pool.example' http://localhost/` (Traefik's 404) |
+| The Ingress | `kubectl describe ingress booking -n swim` (`booking:8080 ()`), `kubectl logs -n kube-system deploy/traefik` (`service port not found`); `port.number: 80` |
+| The Service | `kubectl get endpoints`, `kubectl get pods --show-labels`, `kubectl describe service` (`Selector: app=booking-web`); the selector fixed |
+| Ready or not | `kubectl get endpointslices` (the pods, not ready), `kubectl describe pod` (`Readiness probe failed: HTTP probe failed with statuscode: 404`), `curl http://POD_IP:8080/health`, `kubectl exec … -- wget -qO- …`; the probe's path |
+| The end | `kubectl rollout status`, the site through Traefik |
+
+Goal checked on the state: `http://booking.pool.example/` answers 200
+through Traefik, the Deployment rolled out with a readiness probe that
+passes, no NodePort or LoadBalancer Service in the namespace, the files in
+`~/manifests` what runs. Several solutions: the Ingress's port fixed, or
+the Service's port moved to 8080; an httpGet probe on `/health` or a
+tcpSocket probe. Expected traps: the pods' labels changed (the
+Deployment's selector is immutable), a NodePort (open to the internet,
+around Traefik), `kubectl port-forward` (it works, for you, while it runs),
+the readiness probe removed.
+
+### Chapter 3 — The Locker Room (planned)
+
+ConfigMaps and Secrets: a password put in a ConfigMap, a Secret committed
+in clear in Git (rotate it; base64 is not encryption: `kubectl get secret
+-o yaml`, `base64 -d`), `kubectl create secret generic --from-literal
+--dry-run=client -o yaml`, `envFrom` against a volume (a variable is read
+at start: `kubectl rollout restart`; a mounted file follows the Secret).
+
+### Chapter 4 — The Deep End (planned)
+
+Requests and limits: a memory leak under the evening's load, `kubectl top
+pod`, `OOMKilled` and exit code 137 (`kubectl describe pod`, Last State), a
+limit raised without measuring, a pod `Pending` after over-requesting
+(`FailedScheduling: Insufficient memory`, `kubectl describe node`),
+`kubectl rollout undo`.
 
 ## Ideas for later
 

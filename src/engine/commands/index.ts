@@ -77,6 +77,8 @@ import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
 import { PROMETHEUS_COMMANDS } from './prometheus';
 import { JQ } from './jq';
+import { KUBECTL } from './kubectl';
+import { K3S } from './k3s';
 
 export interface Context {
   args: string[];
@@ -195,6 +197,8 @@ function build(): Record<string, Command> {
     ...ENVIRONMENT,
     ...PROMETHEUS_COMMANDS,
     ...JQ,
+    ...KUBECTL,
+    ...K3S,
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

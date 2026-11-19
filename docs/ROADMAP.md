@@ -620,6 +620,10 @@ them safely.
   (`kubectl get`/`describe`/`logs`, an image or a probe failing), a
   Service and an Ingress, a ConfigMap and a Secret, resource limits and an
   OOMKilled pod. A big engine piece — scope it as several PRs.
+  Step 1 done: the engine (`k8s.ts`, `kubectl`, `k3s`) and "The Pool"
+  (story 36), chapters 1 and 2 (a pod that won't start; a Service, an
+  Ingress and a readiness probe). Still to do: chapter 3 (ConfigMaps and
+  Secrets) and chapter 4 (limits and OOMKilled).
 
 ### Other ideas
 

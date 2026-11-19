@@ -51,3 +51,4 @@ machine-lookout = lookout
 machine-gauge = gauge
 machine-saddle = saddle
 machine-hub = hub
+machine-lane = lane

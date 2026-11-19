@@ -265,7 +265,8 @@ export const FILES: Record<string, Command> = {
   },
 
   echo: {
-    launch: ({ args }) => args.join(' '),
+    // -n: no newline at the end (what follows in a pipe, base64 for one, sees the difference).
+    launch: ({ args }) => (args[0] === '-n' ? args.slice(1) : args).join(' '),
   },
 
   tee: {

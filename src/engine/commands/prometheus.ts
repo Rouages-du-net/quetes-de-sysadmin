@@ -52,6 +52,7 @@ export function metricsCurl(game: Shell, args: string[]): string {
   let output: string | null = null;
   let writeOut: string | null = null;
   const urls: string[] = [];
+  const reqHeaders: Record<string, string> = {};
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (VALUE.includes(a)) {
@@ -64,6 +65,10 @@ export function metricsCurl(game: Shell, args: string[]): string {
       } else if (a.startsWith('-d') || a.startsWith('--data')) data.push(v);
       else if (a === '-o' || a === '--output') output = v;
       else if (a === '-w' || a === '--write-out') writeOut = v;
+      else if (a === '-H' || a === '--header') {
+        const i = v.indexOf(':');
+        if (i > 0) reqHeaders[v.slice(0, i).trim().toLowerCase()] = v.slice(i + 1).trim();
+      }
       continue;
     }
     const eq = /^--(data-urlencode|data|request)=(.*)$/.exec(a);
@@ -129,7 +134,8 @@ export function metricsCurl(game: Shell, args: string[]): string {
   const address = net.resolve(game, host);
   if (!address) return err(6, `Could not resolve host: ${host}`);
   const all = { ...params(queryText), ...(body ? params(body) : {}) };
-  const reply: Reply = net.request(game, address, port, verb, path, all, body);
+  reqHeaders.host ??= port === (scheme === 'https' ? 443 : 80) ? host : `${host}:${port}`;
+  const reply: Reply = net.request(game, address, port, verb, path, all, body, reqHeaders);
   const log: string[] = [];
   if (verbose) log.push(`* Host ${host}:${port} was resolved.`, `* IPv4: ${address}`, `*   Trying ${address}:${port}...`);
   if (reply.kind === 'refused') return (verbose ? log.join('\n') + '\n' : '') + err(7, `Failed to connect to ${host} port ${port} after 0 ms: Couldn't connect to server`);
@@ -137,7 +143,7 @@ export function metricsCurl(game: Shell, args: string[]): string {
   const r = reply.kind === 'metrics' ? { code: 200, body: exposition(reply.families), type: 'text/plain; version=0.0.4; charset=utf-8' } : { code: reply.code, body: reply.body, type: reply.type ?? 'text/plain; charset=utf-8' };
   const date = new Date(clock(game)).toUTCString();
   const headers = [`HTTP/1.1 ${r.code} ${REASONS[r.code] ?? statusText(r.code)}`.trimEnd(), `Content-Type: ${r.type}`, `Date: ${date}`, `Content-Length: ${new TextEncoder().encode(r.body).length}`];
-  if (verbose) log.push(`* Connected to ${host} (${address}) port ${port}`, `> ${verb} ${path}${queryText ? `?${queryText}` : ''} HTTP/1.1`, `> Host: ${host}:${port}`, '> User-Agent: curl/8.14.1', '> Accept: */*', ...(body ? ['> Content-Type: application/x-www-form-urlencoded', `> Content-Length: ${body.length}`] : []), '> ', ...headers.map((h) => `< ${h}`), '< ');
+  if (verbose) log.push(`* Connected to ${host} (${address}) port ${port}`, `> ${verb} ${path}${queryText ? `?${queryText}` : ''} HTTP/1.1`, `> Host: ${reqHeaders.host}`, '> User-Agent: curl/8.14.1', '> Accept: */*', ...(body ? ['> Content-Type: application/x-www-form-urlencoded', `> Content-Length: ${body.length}`] : []), '> ', ...headers.map((h) => `< ${h}`), '< ');
   if (fail && r.code >= 400) return (verbose ? log.join('\n') + '\n' : '') + err(22, `The requested URL returned error: ${r.code}`);
   let shown = head ? headers.join('\n') : include ? `${headers.join('\n')}\n\n${r.body}` : r.body;
   if (output) {

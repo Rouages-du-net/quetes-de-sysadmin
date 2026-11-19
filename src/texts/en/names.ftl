@@ -461,3 +461,8 @@ name-note_from_lucia-txt = note_from_lucia.txt
 name-message_from_ngozi-txt = message_from_ngozi.txt
 name-note_from_tomas-txt = note_from_tomas.txt
 name-RELEASE-NOTES-txt = RELEASE-NOTES.txt
+
+## The Pool
+name-message_from_folake-txt = message_from_folake.txt
+name-note_from_rui-txt = note_from_rui.txt
+name-note_from_kemal-txt = note_from_kemal.txt

@@ -71,3 +71,5 @@ story-ferry = The Ferry
     .summary = An island's ferry cooperative runs its site, its bookings and its DNS zone on a small Debian server, and the island's internet has just gone IPv6. The same services now travel two roads: an address that moved with a new network card, a firewall that only guarded IPv4, and a site that only half answers in IPv6.
 story-bike-share = The Bike Share
     .summary = A neighbourhood bike share runs its rental app and its docking stations on two small Debian servers, and a third one, gauge, was supposed to watch them with Prometheus. Make it see everything, teach it when to raise the alarm, and make sure the right person hears about it, but not during the maintenance everybody knew about.
+story-pool = The Pool
+    .summary = The town's swimming pool moved its booking app to a small Kubernetes cluster, k3s on a single Debian server, and nobody quite knows how it works yet. A release that won't start, a site the cluster doesn't serve: learn to read pods, Deployments, Services and Ingresses, and to fix things in the manifests where they belong.

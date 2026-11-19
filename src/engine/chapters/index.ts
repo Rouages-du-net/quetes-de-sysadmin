@@ -132,6 +132,8 @@ import { bothWays } from './both-ways';
 import { blindSpot } from './blind-spot';
 import { threshold } from './threshold';
 import { quietHours } from './quiet-hours';
+import { wontStart } from './wont-start';
+import { frontDesk } from './front-desk';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -314,6 +316,11 @@ export const STORIES: Story[] = [
     id: 'bike-share',
     after: ['ssh-alerts'],
     chapters: [blindSpot, threshold, quietHours],
+  },
+  {
+    id: 'pool',
+    after: ['compose', 'blue-green'],
+    chapters: [wontStart, frontDesk],
   },
 ];
 

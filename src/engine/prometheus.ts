@@ -48,7 +48,7 @@ export type Reply =
 /** What a story provides: resolve a name, and answer a request from a machine to an address and port. */
 export interface MetricsNet {
   resolve(from: Game, host: string): string | null;
-  request(from: Game, address: string, port: number, method: string, path: string, query: Record<string, string>, body: string): Reply;
+  request(from: Game, address: string, port: number, method: string, path: string, query: Record<string, string>, body: string, headers?: Record<string, string>): Reply;
   // The address a machine is seen from.
   addressOf(from: Game): string;
 }

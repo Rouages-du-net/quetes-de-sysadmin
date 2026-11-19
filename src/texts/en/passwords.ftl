@@ -75,3 +75,5 @@ password-basket-orchard-copper-73 = basket-orchard-copper-73
 password-tide-2029 = tide-2029
 ## The Bike Share: sudo
 password-pedal-2029 = pedal-2029
+## The Pool: sudo
+password-splash-2029 = splash-2029

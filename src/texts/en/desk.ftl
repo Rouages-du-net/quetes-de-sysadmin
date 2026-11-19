@@ -84,3 +84,4 @@ machine-register-motd = The Card Catalogue — the libraries' domain controller,
 machine-crate-motd = The Pantry — the community grocery's Debian server (its files, its app, and the backup disk that leaves on Fridays).
 machine-quay-motd = The Ferry — the ferry cooperative's Debian server, in IPv4 and in IPv6 (its site, its booking app, its DNS zone ferry.example).
 machine-gauge-motd = The Bike Share — the cooperative's monitoring server (Prometheus, its node exporter, the Alertmanager); saddle and hub are behind it.
+machine-lane-motd = The Pool — the swimming pool's Debian server, a single-node k3s cluster (the booking app, namespace swim).

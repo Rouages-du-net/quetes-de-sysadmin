@@ -502,6 +502,28 @@ presents them for people.
   the metrics computed from the machines' files and the app's traffic;
   `passTime`; `trial()` tries a rule on made-up days); `blind-spot.ts`,
   `threshold.ts`, `quiet-hours.ts`. Tests: `tests/bike-share.test.ts`.
+- `src/engine/k8s.ts`: a single-node k3s cluster (`state.k8s`: the
+  objects, their schemas for kubectl's strict decoding, the API server's
+  defaults and validation, `plan`/`carryOut` for `kubectl apply` and
+  `inSync` (the files are what runs); the Deployment controller (rolling
+  update, revisions, progress deadline), the ReplicaSet controller, the
+  scheduler (requests, `FailedScheduling`), the kubelet (image pulls and
+  back-off, `CreateContainerConfigError`, restarts and `CrashLoopBackOff`,
+  `OOMKilled` from `limits.memory`, httpGet/tcpSocket/exec probes), events,
+  Endpoints and EndpointSlices, Traefik's routes from the Ingresses and its
+  log, `request()` for curl and pods, `containerExec` (BusyBox's applets),
+  `bootstrap` for kube-system as k3s installs it; `tick()` is one second,
+  `advance()` lets time pass). The images' apps are declared by the story
+  (`K8sApp`: ports, start, http, memory, cpu, files). `kubectl` in
+  `commands/kubectl.ts` (get with its printers and Go's tabwriter, describe,
+  logs, apply, create, delete, edit, rollout, scale, set image, exec,
+  port-forward, run, expose, top, explain, config, jsonpath), `k3s` and
+  `base64` in `commands/k3s.ts`; curl reaches the cluster through
+  `state.metricsNet` (the Host header). `chapters/pool.ts`: what the
+  chapters of "The Pool" share (`lane`, the pool's server: its cluster's
+  past replayed by `initialiseLane`, the booking app of each release,
+  `~/manifests`, ten seconds per command in `passTime`); `wont-start.ts`,
+  `front-desk.ts`. Tests: `tests/pool.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
