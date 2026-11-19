@@ -553,6 +553,19 @@ them safely.
       `Get-ADUser`), the natural sequel to "The Directory" (OpenLDAP); the
       firewall (`Get-NetFirewallRule`); functions and loops in the
       PowerShell engine (`function`, `while`, `for`, `switch`).
+      Engine step done: PowerShell functions (`param()`, advanced
+      functions, begin/process/end, dot-sourcing, `Import-Module`) and
+      loops (`while`, `do`, `for`, `switch`, `break`, `continue`); Windows
+      Defender Firewall (profiles, rules, block wins, the NetSecurity
+      cmdlets, `netsh advfirewall`; ssh, SMB and Test-NetConnection go
+      through it); Active Directory (`domainController()`, member servers,
+      users, groups and nesting, OUs, the lockout with events 4740/4625,
+      domain groups in NTFS and share permissions, the ActiveDirectory
+      module with `-Filter` and `-LDAPFilter`, `net user /domain`) and
+      Group Policy (links, enforcement, blocked inheritance, security
+      filtering, `gpupdate`, `gpresult`, the GroupPolicy module), tested on
+      the HARBOUR fixture (see the "Windows engine" rows of
+      `docs/SCENARIOS.md`). Next: the story.
 
 ## More ideas
 

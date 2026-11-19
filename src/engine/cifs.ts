@@ -18,6 +18,8 @@ import type { Shell } from './shell';
 import type { Directory, Node } from './world';
 import { serverFor } from './nfs';
 import { isWindows, volumeUsed, windows } from './windows';
+import { reaches, shellAddress } from './windows-firewall';
+import { domainLogon } from './windows-accounts';
 import { shareAccess } from './windows-acl';
 
 export interface CifsMount {
@@ -181,10 +183,16 @@ export function mountCifs(client: Shell, r: CifsRequest): string | { ask: string
   if (!found) return `mount error: could not resolve address for ${host}: Unknown error`;
   const server = found.shell;
   if (!isWindows(server)) return error(115, 'Operation now in progress');
+  // Port 445 dropped by the server's firewall: the connection never completes.
+  if (!reaches(client, server, 445)) return error(115, 'Operation now in progress');
   const w = windows(server);
   // SMB1 is off on the server: it drops the connection at the first request.
   if (vers === '1.0' && !w.smb1) return error(112, 'Host is down');
-  if (flags.has('guest') || w.passwords[user] === undefined || w.passwords[user] !== password) return error(13, 'Permission denied');
+  // domain=SCHOOL: a domain account, checked by the domain controller (a wrong password counts towards its lockout).
+  const dom = values.domain ?? values.dom ?? values.workgroup;
+  const account = dom && !/^workgroup$/i.test(dom) && dom.toUpperCase() !== w.computer.toUpperCase() ? `${dom}\\${user}` : user;
+  const viaDomain = flags.has('guest') ? false : domainLogon(server, account, password, { address: shellAddress(client), caller: client.host.toUpperCase(), type: 3 });
+  if (flags.has('guest') || (viaDomain === null ? w.passwords[user] === undefined || w.passwords[user] !== password : !viaDomain)) return error(13, 'Permission denied');
   const share = w.shares.find((s) => s.name.toLowerCase() === shareName.toLowerCase());
   if (!share || !share.path) return error(2, 'No such file or directory');
   if (share.special && !(server.groupsFor(user).includes('Administrators'))) return error(13, 'Permission denied');
@@ -206,7 +214,7 @@ export function mountCifs(client: Shell, r: CifsRequest): string | { ask: string
       address: found.address,
       share: share.name,
       path: internal,
-      user,
+      user: viaDomain ? account : user,
       owner,
       group,
       fileMode: values.file_mode ?? '0755',
@@ -217,7 +225,7 @@ export function mountCifs(client: Shell, r: CifsRequest): string | { ask: string
     } satisfies CifsMount,
   });
   parent.children[name] = target;
-  (server.state.smbSessions ??= []).push({ user, share: share.name });
+  (server.state.smbSessions ??= []).push({ user: viaDomain ? account : user, share: share.name });
   return '';
 }
 

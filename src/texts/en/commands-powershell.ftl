@@ -14,6 +14,11 @@ powershell-help-description = DESCRIPTION
 powershell-help-parameters = PARAMETERS
 powershell-help-related = RELATED LINKS
 powershell-help-remarks = REMARKS
+powershell-help-aliases = ALIASES
+# A function without comment-based help (Get-Help's "None").
+powershell-help-none = None
+# A line whose loops ran too many times: the game stops it. { $count }: the limit.
+powershell-loop-limit = The game stopped this line: its loops ran more than { $count } times (a condition that never becomes false?). On a real Windows, Ctrl+C stops an endless loop.
 # { $number }: the example's number.
 powershell-help-example = EXAMPLE { $number }
 # { $name }: the cmdlet.
@@ -152,3 +157,9 @@ wevtutil-usage =
     sl | set-log            Modify configuration of a log.
 ping-windows-usage =
     Usage: ping [-t] [-a] [-n count] [-l size] [-f] [-i TTL] [-v TOS] [-r count] [-s count] [[-j host-list] | [-k host-list]] [-w timeout] [-R] [-S srcaddr] [-c compartment] [-p] [-4] [-6] target_name
+# netsh advfirewall firewall add rule without its required values (name=, dir=, action=).
+netsh-add-rule-usage =
+    Usage: add rule name=<string> dir=in|out action=allow|block|bypass
+          {"["}protocol=0-255|icmpv4|tcp|udp|any] [localport=0-65535|any] [remoteip=any|localsubnet|<address>]
+          {"["}profile=public|private|domain|any] [enable=yes|no]
+    (The game's short form of netsh's help.)

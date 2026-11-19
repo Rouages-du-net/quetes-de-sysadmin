@@ -15,6 +15,8 @@
 import type { Shell } from '../shell';
 import { volumeUsed, windows, type ShareAce, type ShareRight, type WinShare } from '../windows';
 import { canonical, principal, shareAces } from '../windows-acl';
+import { isWindows } from '../windows';
+import { machineAt, reaches, storyAddress } from '../windows-firewall';
 import { PSDate, arr, str, wildcard, storageSize, type Cmdlet, type Native, type PSObject, type Run, type View } from '../powershell';
 
 const GB = 1024 ** 3;
@@ -163,8 +165,8 @@ function getComputerInfo(r: Run): unknown[] {
     WindowsProductName: 'Windows Server 2022 Standard',
     WindowsVersion: '2009',
     CsName: w.computer,
-    CsDomain: 'WORKGROUP',
-    CsPartOfDomain: false,
+    CsDomain: w.domain?.dns ?? 'WORKGROUP',
+    CsPartOfDomain: !!w.domain,
     OsName: 'Microsoft Windows Server 2022 Standard',
     OsVersion: '10.0.20348',
     OsBuildNumber: '20348',
@@ -196,11 +198,27 @@ function resolveHost(game: Shell, host: string): string | null {
     const [addr, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
     if (names.some((x) => x.toLowerCase() === host.toLowerCase())) return addr;
   }
-  return null;
+  // The story's other machines (the domain's DNS knows them: dc01, dc01.school.internal).
+  return storyAddress(game, host);
 }
-/** Does an address answer? Itself, its gateway, the addresses of its hosts file. */
-function answers(game: Shell, address: string): boolean {
+
+// The ports a Windows machine listens on, by the service that opens them.
+const LISTENERS: Record<number, string> = { 22: 'sshd', 445: 'LanmanServer', 139: 'LanmanServer', 5985: 'WinRM', 3389: 'TermService', 88: 'Kdc', 389: 'NTDS', 636: 'NTDS', 3268: 'NTDS', 53: 'DNS' };
+
+/** Does a machine of the story listen on this TCP port (its service running)? */
+function listens(server: Shell, port: number): boolean {
+  const name = LISTENERS[port];
+  if (!name || !isWindows(server)) return false;
+  if (['Kdc', 'NTDS', 'DNS'].includes(name)) return !!server.state.ad;
+  return windows(server).services.some((s) => s.name.toLowerCase() === name.toLowerCase() && s.status === 'Running');
+}
+
+/** Does an address answer a ping (or a TCP port)? Itself, its gateway, its hosts file; another Windows machine of the story through its firewall. */
+function answers(game: Shell, address: string, port: number | null = null): boolean {
   const n = net(game);
+  const peer = address === n.address ? null : machineAt(game, address);
+  if (peer && isWindows(peer)) return reaches(game, peer, port) && (port === null || listens(peer, port));
+  if (peer) return true;
   if ([n.address, n.gateway, '127.0.0.1'].includes(address)) return true;
   return (game.read('/C/Windows/System32/drivers/etc/hosts') ?? '').split('\n').some((l) => l.replace(/#.*/, '').trim().split(/\s+/)[0] === address);
 }
@@ -213,7 +231,7 @@ function testNetConnection(r: Run): unknown[] {
     r.host(`WARNING: Name resolution of ${host} failed`);
     return [{ type: 'TestNetConnectionResult', props: { ComputerName: host, RemoteAddress: '', InterfaceAlias: 'Ethernet', SourceAddress: net(r.game).address, PingSucceeded: false } }];
   }
-  const ok = answers(r.game, address);
+  const ok = answers(r.game, address, port);
   if (port !== null) {
     if (!ok) r.host(`WARNING: TCP connect to (${address} : ${port}) failed`);
     return [{ type: 'TestNetConnectionResult', props: { ComputerName: host, RemoteAddress: address, RemotePort: port, InterfaceAlias: 'Ethernet', SourceAddress: net(r.game).address, TcpTestSucceeded: ok } }];

@@ -141,6 +141,10 @@ export interface Run {
   read: (prompt: string, secret: boolean) => string;
   // Runs a script block with $_ (Where-Object, ForEach-Object, calculated properties).
   invoke: (block: PSScriptBlock, item?: unknown) => unknown[];
+  // A variable of the caller's scope (the ActiveDirectory module reads -Filter's $variables).
+  variable: (name: string) => unknown;
+  // Runs a script's text in the session's scope (Import-Module of a .psm1 or .ps1).
+  source: (code: string, file: string) => unknown[];
 }
 
 /** A native program (hostname.exe, icacls.exe…): its output, its errors, its exit code; a shell it starts. */
@@ -169,6 +173,9 @@ export interface Cmdlet {
   rest?: string;
   // It changes something: -WhatIf and -Confirm apply; refused on a read-only machine (story 30).
   writes?: boolean;
+  // Where its module is installed (ActiveDirectory, GroupPolicy: on a domain controller or with
+  // the management tools); elsewhere the name is not recognized.
+  available?: (game: Shell) => boolean;
   run: (r: Run) => unknown[] | null;
 }
 

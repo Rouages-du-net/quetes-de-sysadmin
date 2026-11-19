@@ -220,8 +220,20 @@ export interface Principal {
   name: string;
   sid: string;
   kind: 'User' | 'Group' | 'WellKnown';
-  source: 'Local' | 'Unknown';
+  source: 'Local' | 'Unknown' | 'ActiveDirectory';
 }
+
+/**
+ * The domain's part (set by windows-ad.ts): a domain account or group by
+ * name (SCHOOL\alice, alice@school.internal, or a bare name the machine
+ * doesn't know locally), the domain groups a principal reaches (nested), and
+ * every domain principal (a SID lookup).
+ */
+export const DOMAIN_HOOKS: {
+  principal?: (game: Game, domain: string, name: string) => Principal | null;
+  groups?: (game: Game, principal: string) => string[];
+  all?: (game: Game) => Principal[];
+} = {};
 
 interface Accountish {
   rid: number;
@@ -261,6 +273,9 @@ export function principal(game: Game, typed: string): Principal | null {
   const low = t.toLowerCase();
   const wk = WELL_KNOWN.find((x) => x.name.toLowerCase() === low || x.short.includes(low));
   if (wk) return { name: wk.name, sid: wk.sid, kind: 'WellKnown', source: 'Unknown' };
+  // A user principal name (alice@school.internal): the domain's.
+  const upn = /^([^@\\]+)@(.+)$/.exec(t);
+  if (upn) return DOMAIN_HOOKS.principal?.(game, upn[2], upn[1]) ?? null;
   let domain = '';
   if (t.includes('\\')) {
     [domain, t] = t.split('\\', 2) as [string, string];
@@ -279,6 +294,8 @@ export function principal(game: Game, typed: string): Principal | null {
     const g = Object.values(groupsOf(game)).find((x) => !x.builtin && x.name.toLowerCase() === name);
     if (g) return { name: `${w.computer}\\${g.name}`, sid: `${machineSid(game)}-${g.rid}`, kind: 'Group', source: 'Local' };
   }
+  // Not a local account: the domain's (SCHOOL\Teachers, or a bare name on a member server).
+  if (domain !== '.' && domain !== w.computer.toLowerCase()) return DOMAIN_HOOKS.principal?.(game, domain, t) ?? null;
   return null;
 }
 
@@ -287,6 +304,7 @@ export function allPrincipals(game: Game): Principal[] {
   const out: Principal[] = WELL_KNOWN.map((x) => ({ name: x.name, sid: x.sid, kind: 'WellKnown' as const, source: 'Unknown' as const }));
   for (const u of Object.values(usersOf(game))) out.push(principal(game, `.\\${u.name}`)!);
   for (const g of Object.values(groupsOf(game))) out.push(principal(game, g.builtin ? `BUILTIN\\${g.name}` : `.\\${g.name}`)!);
+  out.push(...(DOMAIN_HOOKS.all?.(game) ?? []));
   return out.filter(Boolean);
 }
 
@@ -314,6 +332,8 @@ export function token(game: Game, user: string, network = false): Set<string> {
   if (!p) return ids;
   ids.add(p.name);
   if (p.name === 'NT AUTHORITY\\SYSTEM') ids.add('BUILTIN\\Administrators');
+  // A domain account: the domain groups it reaches through nested groups (Domain Users included).
+  if ('source' in p && p.source === 'ActiveDirectory') for (const g of DOMAIN_HOOKS.groups?.(game, p.name) ?? []) ids.add(g);
   ids.add('NT AUTHORITY\\Authenticated Users');
   if (network) ids.add('NT AUTHORITY\\NETWORK');
   else ids.add('NT AUTHORITY\\INTERACTIVE');

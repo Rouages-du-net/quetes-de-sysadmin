@@ -376,6 +376,34 @@ presents them for people.
   `-ErrorVariable` in `commands/powershell.ts`; `Register-ScheduledTask`
   and `New-ScheduledTask*` in `commands/windows-tasks.ts`; `compact`
   (NTFS compression, `File.onDisk`) in `commands/windows-files.ts`.
+  PowerShell's functions (`function`, `param()`, `[CmdletBinding()]`,
+  `[Parameter()]`, `[ValidateSet()]`, begin/process/end, `return`,
+  `$args`, dot-sourcing, `Import-Module` of a `.psm1`) and loops (`while`,
+  `do`, `for`, `switch`, `break`, `continue`; a guard stops endless loops)
+  in `powershell-parse.ts` and `commands/powershell.ts`; a cmdlet's module
+  may exist only on some machines (`Cmdlet.available`). Windows Defender
+  Firewall (`state.windows.firewall`: profiles, rules, the decision
+  `firewallAllows`, `reaches` used by ssh, smbclient, mount.cifs,
+  Test-NetConnection and ping towards a Windows machine of the story,
+  `machineAt`) in `src/engine/windows-firewall.ts`, its cmdlets
+  (`*-NetFirewallRule`, `Get-NetFirewall*Filter`, `*-NetFirewallProfile`,
+  `*-NetConnectionProfile`) and `netsh advfirewall` in
+  `commands/windows-firewall.ts`. Active Directory (`state.ad` on the
+  domain controller, `state.windows.domain` on a member: objects, DNs,
+  SIDs, users, groups and nesting, OUs, computers, the password and lockout
+  policy, `adLogon` with badPwdCount, lockout and events 4740/4625, the
+  `-Filter` language and LDAP filters, domain principals in tokens through
+  `DOMAIN_HOOKS` of `windows-acl.ts` and logons through `domainLogon` of
+  `windows-accounts.ts`, `buildDomain`) in `src/engine/windows-ad.ts`, the
+  ActiveDirectory module and `net user /domain` in `commands/windows-ad.ts`;
+  Group Policy (GPOs in `state.ad.gpos`, links, blocked inheritance,
+  enforcement, security filtering, the resulting policy `resultant`,
+  `applyPolicy` at logon and by gpupdate: firewall rules, drive maps) in
+  `src/engine/windows-gpo.ts`, the GroupPolicy module, `gpupdate`,
+  `gpresult` and `net use` in `commands/windows-gpo.ts`; `domainController()`
+  and `windowsMachine({ domain })` (a member server) in `windows-world.ts`.
+  Tests: `tests/ad.test.ts` (fixture HARBOUR, `tests/ad-fixture.ts`),
+  `tests/windows-firewall.test.ts`, `tests/powershell-language.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

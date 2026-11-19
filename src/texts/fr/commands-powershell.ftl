@@ -14,6 +14,11 @@ powershell-help-description = DESCRIPTION
 powershell-help-parameters = PARAMÈTRES
 powershell-help-related = LIENS CONNEXES
 powershell-help-remarks = REMARQUES
+powershell-help-aliases = ALIAS
+# Une fonction sans aide en commentaire (« None » de Get-Help).
+powershell-help-none = Aucun
+# Une ligne dont les boucles ont tourné trop de fois : le jeu l'arrête. { $count } : la limite.
+powershell-loop-limit = Le jeu a arrêté cette ligne : ses boucles ont tourné plus de { $count } fois (une condition qui ne devient jamais fausse ?). Sur un vrai Windows, Ctrl+C arrête une boucle sans fin.
 # { $number } : le numéro de l'exemple.
 powershell-help-example = EXEMPLE { $number }
 # { $name } : la cmdlet.
@@ -152,3 +157,9 @@ wevtutil-usage =
     sl | set-log            Modify configuration of a log.
 ping-windows-usage =
     Usage: ping [-t] [-a] [-n count] [-l size] [-f] [-i TTL] [-v TOS] [-r count] [-s count] [[-j host-list] | [-k host-list]] [-w timeout] [-R] [-S srcaddr] [-c compartment] [-p] [-4] [-6] target_name
+# netsh advfirewall firewall add rule without its required values (name=, dir=, action=).
+netsh-add-rule-usage =
+    Usage: add rule name=<string> dir=in|out action=allow|block|bypass
+          {"["}protocol=0-255|icmpv4|tcp|udp|any] [localport=0-65535|any] [remoteip=any|localsubnet|<address>]
+          {"["}profile=public|private|domain|any] [enable=yes|no]
+    (La forme courte, dans le jeu, de l'aide de netsh.)

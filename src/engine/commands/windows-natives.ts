@@ -19,6 +19,8 @@ import { EVENT_NATIVES } from './windows-events';
 import { TASK_NATIVES } from './windows-tasks';
 import { SYSTEM_NATIVES } from './windows-system';
 import { SHELL_HOOKS } from './windows-shells';
+import { FIREWALL_NATIVES } from './windows-firewall';
+import { GPO_NATIVES } from './windows-gpo';
 
 const SHELLS: Native[] = [
   {
@@ -57,7 +59,7 @@ const SHELLS: Native[] = [
   },
 ];
 
-export const NATIVES: Native[] = [...SHELLS, ...FILE_NATIVES, ...ACL_NATIVES, ...ACCOUNT_NATIVES, ...SERVICE_NATIVES, ...EVENT_NATIVES, ...TASK_NATIVES, ...SYSTEM_NATIVES];
+export const NATIVES: Native[] = [...SHELLS, ...FILE_NATIVES, ...ACL_NATIVES, ...ACCOUNT_NATIVES, ...SERVICE_NATIVES, ...EVENT_NATIVES, ...TASK_NATIVES, ...SYSTEM_NATIVES, ...FIREWALL_NATIVES, ...GPO_NATIVES];
 
 /** A native program by its name (icacls, ICACLS.EXE, C:\Windows\System32\icacls.exe). */
 export function nativeNamed(typed: string): Native | undefined {

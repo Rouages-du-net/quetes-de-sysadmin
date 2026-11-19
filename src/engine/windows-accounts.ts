@@ -161,6 +161,35 @@ export function logonError(game: Game, account: string, password: string | undef
   return null;
 }
 
+/** Where a logon comes from (event 4625's address, 4740's caller computer, the logon type). */
+export interface LogonOrigin {
+  address: string | null;
+  caller: string;
+  type?: number;
+}
+
+/** The domain's part of a logon (set by windows-ad.ts): accepted, refused, or null when not a domain account. */
+export const LOGON_HOOKS: {
+  domain?: (game: Game, account: string, password: string | undefined, from?: LogonOrigin) => boolean | null;
+  // After a session opens (windows-gpo.ts: the domain's policy is applied at logon).
+  afterLogin?: (game: Game) => void;
+} = {};
+
+/**
+ * A logon with a domain account on this machine (OpenSSH, SMB): true when
+ * accepted, false when refused (a wrong password counts towards the
+ * lockout), null when the account is a local one (DOMAIN\user, user@domain,
+ * or a bare name the machine doesn't have locally). Without a password:
+ * only whether the account may log on.
+ */
+export function domainLogon(game: Game, account: string, password: string | undefined, from?: LogonOrigin): boolean | null {
+  const w = windows(game);
+  const qualified = /^([^\\]+)\\(.+)$/.exec(account);
+  if (qualified && (qualified[1] === '.' || qualified[1].toLowerCase() === w.computer.toLowerCase())) return null;
+  if (!qualified && !account.includes('@') && findUser(game, account)) return null;
+  return LOGON_HOOKS.domain?.(game, account, password, from) ?? null;
+}
+
 /** Keeps the game's accounts in step (ssh, administrators' keys, groupsFor). */
 export function syncAccounts(game: Game): void {
   const w = windows(game);
@@ -207,5 +236,6 @@ export function windowsLogin(game: Shell): string {
   game.cwd = game.home;
   const u = findUser(game, game.player);
   if (u) u.lastLogon = w.clock;
+  LOGON_HOOKS.afterLogin?.(game);
   return shell === 'powershell' ? POWERSHELL_BANNER : CMD_BANNER;
 }
