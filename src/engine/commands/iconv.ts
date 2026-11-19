@@ -150,8 +150,9 @@ export const ICONV: Record<string, Command> = {
         if (omit) continue;
         // What was converted before the failure is written all the same.
         const done = kept.join('');
-        game.outputCharset = dst === 'ascii' && isBinary(done) ? 'binary' : null;
-        if (u.c !== null && dst === 'latin1') return game.error('iconv: cannot convert', 1);
+        game.outputCharset = dst === 'ascii' && isBinary(done) ? 'binary' : dst === 'latin1' ? 'latin1' : null;
+        // glibc 2.39 (checked): a character the target can't hold stops it the
+        // same way as an invalid byte, with its position; -c drops both, exit code 0.
         game.error(`iconv: illegal input sequence at position ${u.at}`, 1);
         return dst === 'ebcdic-us' || dst === 'ibm037' ? '' : done;
       }

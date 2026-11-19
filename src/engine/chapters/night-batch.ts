@@ -285,7 +285,8 @@ export function contribCob(fixed: boolean): string {
       '     ACCEPT WS-OUT-NAME FROM ARGUMENT-VALUE',
       '     OPEN INPUT CONTRIB-IN',
       '     IF WS-IN-STATUS NOT = "00"',
-      '         DISPLAY "CONTRIB: CANNOT OPEN INPUT, STATUS " WS-IN-STATUS',
+      // Within column 72: real cobc ignores what follows (checked with GnuCOBOL 3.1.2).
+      '         DISPLAY "CONTRIB: INPUT NOT OPENED, STATUS " WS-IN-STATUS',
       '         MOVE 12 TO RETURN-CODE',
       '         STOP RUN',
       '     END-IF',

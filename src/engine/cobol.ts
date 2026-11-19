@@ -53,8 +53,15 @@ function read(game: Shell, file: string, text: string, free: boolean, dirs: stri
     if (free) {
       code = raw.replace(/\*>.*$/, '');
       // Free format has no sequence area: a sequence number, or a lone * (a fixed-format comment), is a syntax error.
-      if (!errors.length && /^\s*\d{6}/.test(code)) errors.push(`${file}:${number}: error: syntax error, unexpected Literal`);
-      else if (!errors.length && /^\s*\*(?!>)/.test(code)) errors.push(`${file}:${number}: error: syntax error, unexpected *`);
+      // GnuCOBOL 3.1.2 (checked) first reports the headers not seen yet, on that line;
+      // it then goes on with more errors, where the game stops.
+      const unexpected = /^\s*\d{6}/.test(code) ? 'Literal' : /^\s*\*(?!>)/.test(code) ? '*' : null;
+      if (!errors.length && unexpected) {
+        const before = lines.map((l) => l.code.toUpperCase()).join('\n');
+        if (!/PROGRAM-ID/.test(before)) errors.push(`${file}:${number}: error: PROGRAM-ID header missing`);
+        if (!/PROCEDURE\s+DIVISION/.test(before)) errors.push(`${file}:${number}: error: PROCEDURE DIVISION header missing`);
+        errors.push(`${file}:${number}: error: syntax error, unexpected ${unexpected}`);
+      }
     } else {
       if (raw.length < 7) return;
       const indicator = raw[6];
@@ -92,7 +99,16 @@ export function compile(game: Shell, file: string, text: string, o: { free: bool
   const code = lines.map((l) => l.code.toUpperCase());
   const all = code.join('\n');
   const id = /PROGRAM-ID\.\s*["']?([A-Z0-9][A-Z0-9-]*)/.exec(all)?.[1];
-  if (!id) return { errors: [`${name}:1: error: PROGRAM-ID header missing`] };
+  if (!id) {
+    // GnuCOBOL 3.1.2 (checked): after IDENTIFICATION DIVISION, the parser expected
+    // PROGRAM-ID; without that division, the header is missing where the program starts.
+    const division = code.findIndex((l) => /\b(IDENTIFICATION|ID)\s+DIVISION\b/.test(l));
+    const next = division < 0 ? -1 : code.findIndex((l, i) => i > division && /^\s*[A-Z]/.test(l));
+    const word = next < 0 ? null : /^\s*([A-Z][A-Z0-9-]*)/.exec(code[next])![1];
+    if (word) return { errors: [`${lines[next].file}:${lines[next].number}: error: syntax error, unexpected ${word}, expecting FUNCTION-ID or PROGRAM-ID`] };
+    const first = lines.find((l) => l.code.trim());
+    return { errors: [`${first?.file ?? name}:${first?.number ?? 1}: error: PROGRAM-ID header missing`] };
+  }
   // PERFORM of a paragraph that doesn't exist (commented out, misspelt).
   const start = code.findIndex((l) => /PROCEDURE\s+DIVISION/.test(l));
   const paragraphs = new Set(code.slice(start + 1).flatMap((l) => /^\s*([A-Z0-9][A-Z0-9-]*)\.\s*$/.exec(l)?.[1] ?? []));
@@ -198,7 +214,7 @@ function contrib(game: Shell, program: Program, args: string[], record: (r: Omit
   const [input, report] = args;
   if (!input || !report) return { output: ['CONTRIB: USAGE: contrib INPUT-FILE REPORT-FILE'], rc: 16 };
   const opened = openInput(game, input);
-  if ('status' in opened) return { output: [`CONTRIB: CANNOT OPEN INPUT, STATUS ${opened.status}`], rc: 12 };
+  if ('status' in opened) return { output: [`CONTRIB: INPUT NOT OPENED, STATUS ${opened.status}`], rc: 12 };
   // LINE SEQUENTIAL: a record ends at a newline; a longer line is cut at the record's length.
   const records = opened.text.split('\n').filter((l) => l !== '').map((l) => l.slice(0, 43));
   const out: string[] = [];

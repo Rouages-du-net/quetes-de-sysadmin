@@ -33,6 +33,25 @@ describe('Bytes', () => {
     expect(s.execute('xxd -l 12 /tmp/s.bin')).toBe('00000000: 4865 6c6c 6f2c 2077 6f72 6c64            Hello, world');
     expect(s.execute('hexdump -C -n 12 /tmp/s.bin')).toBe('00000000  48 65 6c 6c 6f 2c 20 77  6f 72 6c 64              |Hello, world|\n0000000c');
   });
+  it("the tools' refusals, checked against the real ones", () => {
+    const s = shell();
+    // xxd 2022-01-14 (vim 9.0.1378's xxd.c): the whole summary, exit code 1.
+    const xxd = s.execute('xxd -Z /tmp/s.bin');
+    expect(xxd).toMatch(/^Usage:\n {7}xxd \[options\] \[infile \[outfile\]\]\n {4}or\n/);
+    expect(xxd).toContain('    -s [+][-]seek  start at <seek> bytes abs. (or +: rel.) infile offset.');
+    expect(xxd).not.toContain('Try');
+    expect(s.lastStatus).toBe(1);
+    // util-linux: errtryhelp().
+    expect(s.execute('hexdump -Z /tmp/s.bin')).toBe("hexdump: invalid option -- 'Z'\nTry 'hexdump --help' for more information.");
+    // glibc 2.39: a character LATIN1 can't hold stops it like an invalid byte; -c drops it, exit code 0.
+    s.execute('echo a€b > /tmp/euro.txt');
+    const latin1 = s.execute('iconv -f UTF-8 -t LATIN1 /tmp/euro.txt');
+    expect(latin1).toContain('iconv: illegal input sequence at position 1');
+    expect(latin1).toMatch(/^a$/m);
+    expect(s.lastStatus).toBe(1);
+    expect(s.execute('iconv -c -f UTF-8 -t LATIN1 /tmp/euro.txt')).toBe('ab');
+    expect(s.lastStatus).toBe(0);
+  });
   it('wc counts raw bytes; dd conv=ebcdic and the packed decimals', () => {
     const s = shell();
     expect(s.execute('wc -c /tmp/s.bin')).toBe('65 /tmp/s.bin');

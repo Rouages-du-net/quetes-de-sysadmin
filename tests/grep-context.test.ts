@@ -228,7 +228,8 @@ describe('grep: context on the other Unixes', () => {
     expect(s.last.errors.join('\n')).toBe('grep: illegal option -- A\nUsage: grep -hblcnsviw pattern file . . .');
     expect(status(s)).toBe('2');
     s.execute('/usr/xpg4/bin/grep -C 2 match f');
-    expect(s.last.errors.join('\n')).toMatch(/^grep: illegal option -- C\nUsage:\tgrep \[-E\|-F\]/);
+    // OpenSolaris's grep_xpg4 usage(): six lines, -E and -F on their own.
+    expect(s.last.errors.join('\n')).toMatch(/^grep: illegal option -- C\nUsage:\tgrep \[-c\|-l\|-q\] \[-bhinsvwx\] pattern_list \[file \.\.\.\]\n(\tgrep .*\n){4}\tgrep -F \[-c\|-l\|-q\] \[-bhinsvx\] \[-e pattern_list\]\.\.\. \[-f pattern_file\]\.\.\. \[file\.\.\.\]$/);
     expect(status(s)).toBe('2');
     expect(s.execute('/usr/xpg4/bin/grep -c match f')).toBe('3');
   });

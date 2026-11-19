@@ -652,7 +652,8 @@ function dspsavf(game: Shell, p: Record<string, string>): string {
   const key = `${q.library}/${q.name}`;
   if (!(key in s.savf)) return failed(game, 'CPF9812', `File ${q.name} in library ${q.library} not found.`);
   const saved = s.savf[key];
-  if (!saved) return failed(game, 'CPF3781', `Save file ${q.name} in ${q.library} contains no data.`);
+  // CPF3707's text from RSTLIB's page (IBM i 7.5 documentation).
+  if (!saved) return failed(game, 'CPF3707', `Save file ${q.name} in ${q.library} contains no data.`);
   return [
     '                             Display Saved Objects',
     left(`System:   ${s.system}`, W),
@@ -672,7 +673,7 @@ function savlib(game: Shell, p: Record<string, string>, interactive: boolean): s
   const dev = v(p, 'DEV');
   if (dev !== '*SAVF') return failed(game, 'CPF9814', `Device ${dev} not found.`);
   if (!('SAVF' in p)) return failed(game, 'CPD0071', 'Parameter SAVF required.');
-  if (libs.length > 1) return failed(game, 'CPF3812', 'Only one library can be saved to a save file.');
+  if (libs.length > 1) return failed(game, 'CPF3789', 'Only one library allowed with specified parameters.') // SAVLIB's page;
   const lib = libs[0];
   if (!s.libraries[lib]) return failed(game, 'CPF3781', `Library ${lib} not found.`);
   const q = resolveObject(game, p.SAVF, '*FILE');
@@ -698,7 +699,12 @@ function savlib(game: Shell, p: Record<string, string>, interactive: boolean): s
   };
   if (s.savf[key] && !['*ALL', '*REPLACE', '*AFTER'].includes(clear)) {
     // The save file holds a save: an inquiry, C (cancel) or G (clear it and go on).
-    if (!interactive) return failed(game, 'CPF3794', `Save or restore operation ended unsuccessfully: save file ${q.name} in ${q.library} contains data (default reply C to CPA4067).`);
+    // CPF3794's text as SAVLIB's page lists it (IBM i 7.5 documentation); in batch the
+    // inquiry takes its default reply, C, and the job log keeps it.
+    if (!interactive) {
+      game.error(`CPA4067: Save file ${q.name} in ${q.library} contains data. (C G)  Reply . . . : C`);
+      return failed(game, 'CPF3794', 'Save or restore operation ended unsuccessfully.');
+    }
     game.ask(`CPA4067: Save file ${q.name} in ${q.library} contains data. (C G)  Reply . . . :`, (r) => {
       const reply = r.trim().toUpperCase();
       const out = reply === 'G' ? doSave() : `CPF3794: Save or restore operation ended unsuccessfully.`;

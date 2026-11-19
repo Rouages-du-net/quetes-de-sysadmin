@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Shell } from '../src/engine/shell';
 import { ledger } from './windows-fixture';
-import { harbour, BRIDGE_ADDRESS } from './ad-fixture';
+import { harbour, BRIDGE_ADDRESS, FILES_ADDRESS } from './ad-fixture';
 import { firewall, firewallAllows, addressMatches, portMatches } from '../src/engine/windows-firewall';
 import { windowsLogin } from '../src/engine/windows-accounts';
 
@@ -134,6 +134,11 @@ describe('Windows Defender Firewall on the network of a domain', () => {
     const files = host('files');
     run(files, `New-NetFirewallRule -DisplayName "No SMB from bridge" -Protocol TCP -LocalPort 445 -RemoteAddress ${BRIDGE_ADDRESS} -Action Block`);
     expect(run(bridge, "smbclient //files/Docs -U 'HARBOUR\\alice%Alice-2029-pw' -c ls")).toBe('do_connect: Connection to files failed (Error NT_STATUS_IO_TIMEOUT)');
+    // cifs-utils 7.0's mount.cifs.c: EINPROGRESS, no other address to try.
+    bridge.who = 'root';
+    expect(run(bridge, "mount -t cifs //files/Docs /tmp -o 'username=alice,domain=HARBOUR,password=Alice-2029-pw'")).toBe(`mount error(115): could not connect to ${FILES_ADDRESS}Unable to find suitable address.`);
+    expect(bridge.lastStatus).toBe(32);
+    bridge.who = 'you';
     run(files, 'Remove-NetFirewallRule -DisplayName "No SMB from bridge"');
     expect(run(bridge, "smbclient //files/Docs -U 'HARBOUR\\alice%Alice-2029-pw' -c ls")).toContain('tides.txt');
   });

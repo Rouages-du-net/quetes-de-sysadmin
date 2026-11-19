@@ -62,6 +62,9 @@ for (const language of LANGUAGES)
       expect(play(['cat -A nightly-copy.sh'])).toContain('#!/bin/bash^M$');
       expect(flag('crlf')).toBe(true);
       expect(first(play(['dos2unix -i nightly-copy.sh']))).toBe('       6       0       0  no_bom    text    nightly-copy.sh');
+      // dos2unix 7.5 (checked): an unknown option prints only the usage, exit code 1.
+      expect(play(['dos2unix -Z nightly-copy.sh'])).toMatch(fr ? /^Utilisation : dos2unix / : /^Usage: dos2unix \[options\] \[file \.\.\.\] \[-n infile outfile \.\.\.\]\n/);
+      expect(c.shell.lastStatus).toBe(1);
       expect(first(play(['dos2unix nightly-copy.sh']))).toBe('dos2unix: converting file nightly-copy.sh to Unix format...');
       expect(first(play(['file nightly-copy.sh']))).toBe('nightly-copy.sh: Bourne-Again shell script, ASCII text executable');
       expect(first(play(['./nightly-copy.sh']))).toBe('Backup finished');
@@ -102,9 +105,16 @@ for (const language of LANGUAGES)
       play(['sudo mount -t cifs //cabinet/plans /mnt/plans', fr ? 'calque-2029' : 'drafting-2029']);
       expect(flag('helper-missing')).toBe(true);
       play(['sudo apt install cifs-utils', 'Y']);
-      expect(play(['sudo mount -t cifs //cabinet/plans /mnt/plans -o username=compass-svc,vers=1.0', 'Ruler-2029-cab'])).toContain('mount error(112): Host is down');
+      // cifs-utils 7.0's mount.cifs.c: EHOSTDOWN is explained first, then the error and exit code 32.
+      expect(play(['sudo mount -t cifs //cabinet/plans /mnt/plans -o username=compass-svc,vers=1.0', 'Ruler-2029-cab'])).toContain(
+        'mount error: Server abruptly closed the connection.\nThis can happen if the server does not support the SMB version you are trying to use.\nThe default SMB version recently changed from SMB1 to SMB2.1 and above. Try mounting with vers=1.0.\nmount error(112): Host is down\nRefer to the mount.cifs(8) manual page',
+      );
+      expect(c.shell.lastStatus).toBe(32);
+      expect(play(['sudo mount -t cifs cabinet/plans /mnt/plans'])).toMatch(/^mount.cifs: bad UNC \(\w+\/plans\)$/);
+      expect(c.shell.lastStatus).toBe(1);
       expect(play(['sudo mount -t cifs //cabinet/plans /mnt/plans -o username=compass-svc', 'nope'])).toContain('mount error(13): Permission denied');
       expect(play([`sudo mount -t cifs //cabinet/plans /mnt/plans -o credentials=${CREDS}`])).toBe(`error 2 (No such file or directory) opening credential file ${CREDS}`);
+      expect(c.shell.lastStatus).toBe(2);
       play([`echo username=compass-svc | sudo tee ${CREDS}`, `echo password=Ruler-2029-cab | sudo tee -a ${CREDS}`]);
       expect(flag('world-readable')).toBe(true);
       play([`sudo chmod 600 ${CREDS}`]);
