@@ -134,6 +134,8 @@ import { threshold } from './threshold';
 import { quietHours } from './quiet-hours';
 import { wontStart } from './wont-start';
 import { frontDesk } from './front-desk';
+import { lockerRoom } from './locker-room';
+import { deepEnd } from './deep-end';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -320,7 +322,7 @@ export const STORIES: Story[] = [
   {
     id: 'pool',
     after: ['compose', 'blue-green'],
-    chapters: [wontStart, frontDesk],
+    chapters: [wontStart, frontDesk, lockerRoom, deepEnd],
   },
 ];
 

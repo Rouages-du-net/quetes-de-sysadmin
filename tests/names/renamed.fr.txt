@@ -1280,6 +1280,36 @@ front-desk
   /home/you/.kube → /home/vous/.kube
   /home/you/.kube/config → /home/vous/.kube/config
 
+locker-room
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_kemal.txt → /home/vous/mot_de_kemal.txt
+  /home/you/new_db_password.txt → /home/vous/nouveau_mdp_bdd.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/.git → /home/vous/manifests/.git
+  /home/you/manifests/.git/HEAD → /home/vous/manifests/.git/HEAD
+  /home/you/manifests/.git/config → /home/vous/manifests/.git/config
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/vous/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/vous/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
+deep-end
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_rui.txt → /home/vous/mot_de_rui.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/vous/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/vous/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -522,8 +522,14 @@ presents them for people.
   `state.metricsNet` (the Host header). `chapters/pool.ts`: what the
   chapters of "The Pool" share (`lane`, the pool's server: its cluster's
   past replayed by `initialiseLane`, the booking app of each release,
-  `~/manifests`, ten seconds per command in `passTime`); `wont-start.ts`,
-  `front-desk.ts`. Tests: `tests/pool.test.ts`.
+  `~/manifests`, ten seconds per command in `passTime`; `k.story`: the
+  outside database's password, the swim meet's hours and the memory that
+  follows them, 2.4.0's leak; chapter 3's git repository and its shared
+  bare one, `manifestsHistory`); `wont-start.ts`, `front-desk.ts`,
+  `locker-room.ts` (a password from a ConfigMap and git to a Secret,
+  checked on the pods' environment and both repositories' last commit),
+  `deep-end.ts` (OOMKilled, `kubectl top`, requests and limits, a rollback).
+  `git log -p` in `commands/git.ts`. Tests: `tests/pool.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

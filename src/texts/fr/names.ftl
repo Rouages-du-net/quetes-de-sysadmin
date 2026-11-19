@@ -469,3 +469,4 @@ name-RELEASE-NOTES-txt = NOTES-DE-VERSION.txt
 name-message_from_folake-txt = message_de_folake.txt
 name-note_from_rui-txt = mot_de_rui.txt
 name-note_from_kemal-txt = mot_de_kemal.txt
+name-new_db_password-txt = nouveau_mdp_bdd.txt

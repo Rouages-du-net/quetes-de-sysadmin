@@ -1366,7 +1366,12 @@ function rollout(ctx: Ctx): string {
       delete tpl.metadata.labels['pod-template-hash'];
       const body = clone(d.body);
       body.spec.template = tpl;
-      update(k, d, body);
+      // kubectl's undo also brings back the revision's change-cause (getDeploymentPatch).
+      const annotations = { ...d.metadata.annotations };
+      const cause = target.metadata.annotations['kubernetes.io/change-cause'];
+      if (cause !== undefined) annotations['kubernetes.io/change-cause'] = cause;
+      else delete annotations['kubernetes.io/change-cause'];
+      update(k, d, body, d.metadata.labels, annotations);
       k.journal.push({ t: k.now, what: 'undo', detail: `${ns(d)}/${d.metadata.name}` });
       return `deployment.apps/${d.metadata.name} rolled back`;
     }

@@ -13,6 +13,7 @@ import { age, decode, readManifests, tabwrite, templateHash, toYaml, quantity, v
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { COMMANDS } from '../src/engine/commands';
+import { name, password } from '../src/engine/world';
 
 const MDP = 'splash-2029';
 
@@ -294,5 +295,195 @@ for (const language of LANGUAGES)
       edit('nano manifests/booking.yaml', (x) => x.replace('              key: database_host\n', '              key: database_host\n          readinessProbe:\n            httpGet:\n              path: /health\n              port: 8080\n'));
       all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
       expect(done('front-desk')).toBe(true);
+    });
+
+    // ——— Chapter 3: "The Locker Room" ———
+
+    const C2 = ['wont-start', 'front-desk'];
+    const OLD = password(t, 'lane4-butterfly-17');
+    const NEW = 'Tq8vR3mKx2Lw9pHz';
+    const toSecret = (x: string, name = 'booking-db', key = 'password') =>
+      x.replace('configMapKeyRef:\n                  name: booking-config\n                  key: database_password', `secretKeyRef:\n                  name: ${name}\n                  key: ${key}`);
+    const noPassword = (x: string) => x.replace(`  database_password: ${OLD}\n`, '');
+
+    it('chapter 3 — solution: a Secret from a literal, secretKeyRef, the ConfigMap cleaned, the commit pushed', () => {
+      const { c, play, edit, flag, done } = part(C2);
+      let all = play(['cat new_db_password.txt', 'cat manifests/config.yaml']);
+      expect(all).toContain(NEW);
+      expect(all).toContain(`database_password: ${OLD}`);
+      expect(flag('config-read')).toBe(true);
+      contains(all, 'un mot de passe va dans un Secret');
+      all = play(['cd manifests', 'git status', 'git log -p']);
+      expect(all).toContain(fr ? 'rien à valider' : 'nothing to commit, working tree clean');
+      expect(all).toContain(`+  database_password: ${OLD}`);
+      expect(flag('history-seen')).toBe(true);
+      all = play([`kubectl create secret generic booking-db -n swim --from-literal=password=${NEW}`, 'kubectl get secret booking-db -n swim -o yaml']);
+      expect(all).toContain('secret/booking-db created');
+      expect(all).toContain('password: VHE4dlIzbUt4Mkx3OXBIeg==');
+      expect(all).not.toContain(NEW);
+      expect(flag('secret-created')).toBe(true);
+      all = play(["kubectl get secret booking-db -n swim -o jsonpath='{.data.password}' | base64 -d"]);
+      expect(all).toContain(NEW);
+      expect(flag('decoded')).toBe(true);
+      contains(all, "base64 est un encodage, pas un chiffrement");
+      edit('nano config.yaml', noPassword);
+      edit('nano booking.yaml', (x) => toSecret(x));
+      all = play(['kubectl apply -f .', 'kubectl rollout status deployment/booking -n swim', 'kubectl get pods -n swim']);
+      expect(all).toContain('configmap/booking-config configured');
+      expect(all).toContain('deployment "booking" successfully rolled out');
+      expect(flag('referenced') && flag('config-cleaned') && flag('restarted')).toBe(true);
+      expect(done('locker-room')).toBe(false);
+      all = play(['git commit -am "Database password in a Secret"']);
+      expect(flag('committed')).toBe(true);
+      expect(done('locker-room')).toBe(false);
+      all = play(['git push']);
+      expect(all).toContain('main -> main');
+      expect(done('locker-room')).toBe(true);
+      contains(all, 'Vous avez terminé Le Vestiaire');
+      expect(c.execute("curl -s -H 'Host: booking.pool.example' http://localhost/")).toContain('booking 2.3.1');
+    });
+
+    it('chapter 3 — another solution: a Secret manifest kept outside the repository, envFrom', () => {
+      const { play, edit, done } = part(C2);
+      edit('nano db-secret.yaml', () => `apiVersion: v1\nkind: Secret\nmetadata:\n  name: booking-credentials\n  namespace: swim\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: ${NEW}\n`);
+      edit('nano manifests/config.yaml', noPassword);
+      edit('nano manifests/booking.yaml', (x) =>
+        x.replace(/ {12}- name: DATABASE_PASSWORD\n(.*\n){4}/, '').replace('          ports:\n', '          envFrom:\n            - secretRef:\n                name: booking-credentials\n          ports:\n'),
+      );
+      let all = play(['kubectl apply -f db-secret.yaml', 'kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(all).toContain('secret/booking-credentials created');
+      all = play(['cd manifests', 'git add config.yaml booking.yaml', 'git commit -m "Password out of the files"', 'git push origin main']);
+      expect(done('locker-room')).toBe(true);
+    });
+
+    it('chapter 3 — false leads: the old password, base64 in the ConfigMap, the ConfigMap deleted, no restart, a Secret in the repository, no push', () => {
+      const { play, edit, flag, done } = part(C2);
+      let all = play([`kubectl create secret generic booking-db -n swim --from-literal=password=${OLD}`]);
+      expect(flag('old-secret')).toBe(true);
+      edit('nano manifests/booking.yaml', (x) => toSecret(x));
+      all = play(['kubectl apply -f manifests/booking.yaml', 'sleep 20', 'kubectl get pods -n swim']);
+      expect(all).toMatch(/0\/1 +(Error|CrashLoopBackOff)/);
+      expect(all.match(/1\/1 +Running/g)).toHaveLength(2);
+      const crashed = play(['kubectl get pods -n swim']).split('\n').find((l) => /Error|CrashLoopBackOff/.test(l))!.split(/\s+/)[0];
+      all = play([`kubectl logs ${crashed} -n swim --previous`]);
+      expect(all).toContain('error: password authentication failed for user "booking"');
+      expect(flag('auth-failed')).toBe(true);
+      // The file of Kemal ends with a newline: --from-file keeps it.
+      play(['kubectl delete secret booking-db -n swim', `kubectl create secret generic booking-db -n swim --from-file=password=${name(t, 'new_db_password.txt')}`]);
+      expect(flag('newline')).toBe(true);
+      play(['kubectl delete secret booking-db -n swim']);
+      // The password in base64 in the ConfigMap.
+      edit('nano manifests/booking.yaml', (x) => x.replace('secretKeyRef:\n                  name: booking-db\n                  key: password', 'configMapKeyRef:\n                  name: booking-config\n                  key: database_password'));
+      edit('nano manifests/config.yaml', (x) => x.replace(`database_password: ${OLD}`, `database_password: ${btoa(OLD)}`));
+      all = play(['kubectl apply -f manifests/']);
+      expect(flag('base64-config')).toBe(true);
+      contains(all, "c'est toujours le mot de passe");
+      // The ConfigMap deleted.
+      all = play(['kubectl delete configmap booking-config -n swim']);
+      expect(flag('config-deleted')).toBe(true);
+      // The new password in the ConfigMap, applied: the running pods keep the old one.
+      edit('nano manifests/config.yaml', (x) => x.replace(`database_password: ${btoa(OLD)}`, `database_password: ${NEW}`));
+      all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(flag('stale-env')).toBe(true);
+      contains(all, 'une fois, à son démarrage');
+      all = play(['kubectl rollout restart deployment/booking -n swim', 'kubectl rollout status deployment/booking -n swim']);
+      expect(all).toContain('deployment.apps/booking restarted');
+      expect(flag('restarted')).toBe(false);
+      // Now a Secret, but its manifest in the repository.
+      edit('nano manifests/secret.yaml', () => `apiVersion: v1\nkind: Secret\nmetadata:\n  name: booking-db\n  namespace: swim\ndata:\n  password: ${btoa(NEW)}\n`);
+      edit('nano manifests/config.yaml', (x) => x.replace(`  database_password: ${NEW}\n`, ''));
+      edit('nano manifests/booking.yaml', (x) => toSecret(x));
+      all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(flag('secret-file')).toBe(true);
+      expect(flag('restarted')).toBe(true);
+      expect(done('locker-room')).toBe(false);
+      play(['rm manifests/secret.yaml', 'cd manifests', 'git commit -am "Password in a Secret"']);
+      expect(flag('committed')).toBe(true);
+      expect(done('locker-room')).toBe(false);
+      play(['git push']);
+      expect(done('locker-room')).toBe(true);
+    });
+
+    // ——— Chapter 4: "The Deep End" ———
+
+    const C3 = ['wont-start', 'front-desk', 'locker-room'];
+    const resources = (requests: string, limits: string) => (x: string) => x.replace('memory: 64Mi', `memory: ${requests}`).replace('memory: 128Mi', `memory: ${limits}`);
+
+    it('chapter 4 — solution: OOMKilled, kubectl top, the history, back to 2.3.1, requests and limits from the measure', () => {
+      const { play, edit, pods, flag, done } = part(C3);
+      let all = play(['kubectl get pods -n swim']);
+      expect(all).toMatch(/booking-\w+-\w{5} +0\/1 +CrashLoopBackOff +\d+ \(\S+ ago\) +15h/);
+      expect(play(["curl -s -H 'Host: booking.pool.example' http://localhost/"])).toContain('404 page not found');
+      all = play([`kubectl describe ${pods()[0]} -n swim`]);
+      expect(all).toMatch(/Last State: +Terminated\n +Reason: +OOMKilled\n +Exit Code: +137/);
+      expect(all).toMatch(/Limits:\n +memory: +128Mi\n +Requests:\n +memory: +64Mi/);
+      expect(flag('oom')).toBe(true);
+      contains(all, 'tué par SIGKILL');
+      all = play(['kubectl top node', 'kubectl rollout history deployment/booking -n swim']);
+      expect(all).toMatch(/lane|couloir/);
+      expect(all).toMatch(/4 +2\.4\.0: results cache \(faster timetable\)/);
+      expect(flag('history')).toBe(true);
+      all = play(['kubectl rollout history deployment/booking -n swim --revision=3']);
+      expect(all).toContain('registry.pool.example/booking:2.3.1');
+      all = play(['kubectl rollout undo deployment/booking -n swim --to-revision=3', 'kubectl rollout status deployment/booking -n swim', 'kubectl top pod -n swim']);
+      expect(all).toContain('deployment.apps/booking rolled back');
+      expect(flag('rolled-back') && flag('top')).toBe(true);
+      expect(flag('no-limits')).toBe(true);
+      expect(all).toMatch(/booking-\w+-\w{5} +140m +(19\d|2[0-3]\d)Mi/);
+      edit('nano manifests/booking.yaml', (x) => resources('256Mi', '320Mi')(x).replace('booking:2.4.0', 'booking:2.3.1'));
+      all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(all).toContain('deployment.apps/booking configured');
+      expect(flag('limit-raised') && flag('requests')).toBe(true);
+      expect(done('deep-end')).toBe(true);
+      contains(all, 'Vous avez terminé Le Grand Bain');
+      all = play(['sleep 600', 'kubectl get pods -n swim', 'kubectl apply -f manifests/']);
+      expect(all.match(/1\/1 +Running +0 /g)).toHaveLength(2);
+      expect(all).toContain('deployment.apps/booking unchanged');
+    });
+
+    it('chapter 4 — another solution: the image and the resources changed in the file only', () => {
+      const { play, edit, done } = part(C3);
+      edit('nano manifests/booking.yaml', (x) => resources('192Mi', '384Mi')(x).replace('booking:2.4.0', 'booking:2.3.1'));
+      const all = play(['kubectl apply -f manifests/', 'sleep 60', 'kubectl describe node']);
+      expect(all).toMatch(/Allocated resources:/);
+      expect(done('deep-end')).toBe(true);
+    });
+
+    it('chapter 4 — false leads: a limit raised on 2.4.0, undo to it, pods deleted, the whole node, no limits, below the peak', () => {
+      const { play, edit, pods, flag, done } = part(C3);
+      edit('nano manifests/booking.yaml', resources('64Mi', '512Mi'));
+      let all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim', 'kubectl top pod -n swim']);
+      expect(all).toContain('deployment "booking" successfully rolled out');
+      expect(flag('limit-raised')).toBe(true);
+      all = play(['sleep 90', 'kubectl logs deploy/booking -n swim --tail=2']);
+      expect(all).toMatch(/booking 2\.4\.0: results cache: \d+ entries, heap used: \d+ MiB/);
+      expect(flag('leak')).toBe(true);
+      play(['sleep 1200']);
+      expect(flag('leak-fills')).toBe(true);
+      all = play(['kubectl rollout undo deployment/booking -n swim']);
+      expect(all).toContain('deployment.apps/booking rolled back');
+      expect(flag('undo-leaky')).toBe(true);
+      contains(all, "celle d'avant l'actuelle est encore la 2.4.0");
+      const [first, second] = pods();
+      play([`kubectl delete ${first} -n swim`, `kubectl delete ${second} -n swim`]);
+      expect(flag('pods-deleted')).toBe(true);
+      edit('nano manifests/booking.yaml', (x) => x.replace('booking:2.4.0', 'booking:2.3.1').replace('memory: 64Mi', 'memory: 4Gi').replace('memory: 512Mi', 'memory: 4Gi'));
+      all = play(['kubectl apply -f manifests/', 'sleep 30', 'kubectl get pods -n swim']);
+      expect(flag('whole-node')).toBe(true);
+      expect(all).toMatch(/0\/1 +Pending/);
+      const pending = play(['kubectl get pods -n swim']).split('\n').find((l) => /Pending/.test(l))!.split(/\s+/)[0];
+      all = play([`kubectl describe pod ${pending} -n swim`]);
+      expect(all).toContain('0/1 nodes are available: 1 Insufficient memory.');
+      expect(flag('pending')).toBe(true);
+      edit('nano manifests/booking.yaml', (x) => x.replace(/ {10}resources:\n(.*\n){4}/, ''));
+      play(['kubectl apply -f manifests/']);
+      expect(flag('no-limits')).toBe(true);
+      edit('nano manifests/booking.yaml', (x) => x.replace('            periodSeconds: 10\n', '            periodSeconds: 10\n          resources:\n            requests:\n              memory: 128Mi\n            limits:\n              memory: 200Mi\n'));
+      play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(flag('below-peak')).toBe(true);
+      expect(done('deep-end')).toBe(false);
+      edit('nano manifests/booking.yaml', (x) => x.replace('memory: 200Mi', 'memory: 300Mi'));
+      play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(done('deep-end')).toBe(true);
     });
   });

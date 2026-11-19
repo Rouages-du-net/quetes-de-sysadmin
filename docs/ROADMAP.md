@@ -615,15 +615,16 @@ them safely.
   through the story's network and its firewalls, the HTTP APIs answering
   curl, rules with `for:` tried on made-up days, routing, repeat interval
   and silences; `promtool`, `amtool`, `jq`, `sleep`).
-- [ ] **Containers in production, step 2** (a light Kubernetes, k3s):
+- [x] **Containers in production, step 2** (a light Kubernetes, k3s):
   after Docker and Compose, one node. A Pod that won't start
   (`kubectl get`/`describe`/`logs`, an image or a probe failing), a
   Service and an Ingress, a ConfigMap and a Secret, resource limits and an
-  OOMKilled pod. A big engine piece — scope it as several PRs.
-  Step 1 done: the engine (`k8s.ts`, `kubectl`, `k3s`) and "The Pool"
-  (story 36), chapters 1 and 2 (a pod that won't start; a Service, an
-  Ingress and a readiness probe). Still to do: chapter 3 (ConfigMaps and
-  Secrets) and chapter 4 (limits and OOMKilled).
+  OOMKilled pod. Done: the engine (`k8s.ts`, `kubectl`, `k3s`) and "The
+  Pool" (story 36): a pod that won't start; a Service, an Ingress and a
+  readiness probe; a database password moved from a ConfigMap and a git
+  repository to a Secret (base64, `rollout restart`, rotation, `git log
+  -p`); memory requests and limits under a swim meet's load (OOMKilled,
+  `kubectl top`, a leaky release rolled back, `FailedScheduling`).
 
 ### Other ideas
 

@@ -87,6 +87,8 @@ export const CODE_ORDER = [
   'quiet-hours',
   'wont-start',
   'front-desk',
+  'locker-room',
+  'deep-end',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

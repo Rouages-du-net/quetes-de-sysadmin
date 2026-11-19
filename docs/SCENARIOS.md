@@ -142,7 +142,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
 | `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | computed size (text compressed to a third, media to 98 %); if there isn't room, nothing is written | real compression; a partial archive may remain |
-| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
+| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; `log` with `--oneline` and `-p`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
 | scripts (`sh`, hooks) | a reduced `/bin/sh` (`script.ts`): one command per line, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]`; no `if`, `for`, `while`, `case` nor functions; a command succeeds if it wrote no error | the full language |
 | `diff` | normal format, `-u` (three lines of context), `-r`, `-q`; the time in the `-u` header is the machine's | every option |
 | `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]` in a script): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, numeric comparisons; `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath` |
@@ -242,8 +242,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | node exporter, the app's `/metrics` | a few families each: CPU, load, memory, file systems (computed from the machine's files, like `df`), network; the app's requests by route and status, a histogram, a gauge per station, computed from its traffic since its process started (a restart resets the counters) | every collector |
 | Alertmanager and `amtool` | `alertmanager.yml`: `route` (`receiver`, `group_by`, `group_wait`, `group_interval`, `repeat_interval`, `matchers`, `match`, `match_re`, `continue`, nested routes), `receivers` (only `webhook_configs` deliver), `inhibit_rules`; grouping and repeats checked every 15 seconds; silences and their states; reload on SIGHUP or `POST /-/reload`; API v2 (`/api/v2/alerts`, `/api/v2/silences` GET and POST, `/api/v2/silence/ID` DELETE, `/api/v2/status`); `amtool alert query` (`--silenced`, `--inhibited`, `-o extended`/`json`), `silence add` (`--duration`, `--start`, `--end`, `--comment`, `--author`), `silence query` (`--expired`, `-q`), `silence expire`, `check-config`, `config`, `config routes [test]` (`--config.file`, `--verify.receivers`) | email and chat integrations, templates, clustering, time intervals, retries |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
+| An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
 | `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
-| The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction, Traefik's TLS (port 443 answers like 80) |
+| The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; environment variables and mounted files from ConfigMaps and Secrets read when the container starts; a Deployment's `kubernetes.io/change-cause` copied to its new ReplicaSet (and back by `rollout undo`); `kubectl top` from the apps' declared memory and CPU; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction (a node's memory is never short: only limits kill), the kubelet doesn't refresh a running pod's mounted ConfigMaps and Secrets, Secrets stored in clear in the simulated etcd (no `--secrets-encryption`), Traefik's TLS (port 443 answers like 80) |
 | `base64` | GNU coreutils' encoding and `-d`, `-w`; `echo -n` before it in a pipe leaves out the newline | `-i` without effect, no `--help` beyond the manual |
 | `sleep` | returns at once; in a story where time matters (The Bike Share), that much time passes for the whole story (at most a day) | waits |
 | sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
@@ -3515,7 +3516,7 @@ silence too broad (`severity=page`), too short (`--duration=1h`),
 Prometheus stopped, the rule removed, no silence at all (the on-call phone
 rings at 10:02).
 
-## Story 36: The Pool (four chapters, two done)
+## Story 36: The Pool (four chapters)
 
 The town's swimming pool (Riverside Pool, "piscine des Berges" in French)
 moved its booking app to a single-node k3s cluster on `lane` (`couloir` in
@@ -3524,8 +3525,9 @@ developer who set it up, keeps the manifests in `~/manifests` (namespace
 `swim`: the Deployment `booking`, the ConfigMap `booking-config`);
 Folake runs the pool's front office; Kemal works at the town's IT. The
 images come from the town's registry, `registry.pool.example/booking`
-(2.2.0, 2.3.0, 2.3.1); the database lives outside the cluster
-(`db.pool.internal`); the site is `booking.pool.example`, whose DNS points
+(2.2.0, 2.3.0, 2.3.1, 2.4.0); the database lives outside the cluster
+(`db.pool.internal`; from 12 June it asks for a password, which the app
+reads from `DATABASE_PASSWORD` when it starts); the site is `booking.pool.example`, whose DNS points
 to lane. Engine: `src/engine/k8s.ts` (the objects and their schemas, the
 API server's defaults and validation, `kubectl apply`'s three-way merge,
 the Deployment and ReplicaSet controllers, the scheduler, the kubelet,
@@ -3588,21 +3590,67 @@ Deployment's selector is immutable), a NodePort (open to the internet,
 around Traefik), `kubectl port-forward` (it works, for you, while it runs),
 the readiness probe removed.
 
-### Chapter 3 — The Locker Room (planned)
+### Chapter 3 — The Locker Room (done)
 
-ConfigMaps and Secrets: a password put in a ConfigMap, a Secret committed
-in clear in Git (rotate it; base64 is not encryption: `kubectl get secret
--o yaml`, `base64 -d`), `kubectl create secret generic --from-literal
---dry-run=client -o yaml`, `envFrom` against a volume (a variable is read
-at start: `kubectl rollout restart`; a mounted file follows the Secret).
+On 12 June the town's IT turned on the database's password, and Rui put
+it in the ConfigMap, so in `~/manifests/config.yaml`, a git repository
+pushed to `/srv/git/pool-manifests.git`, which the town's IT reads.
+Kemal saw it and changed the password on the database at 9:00 (the new
+one in `~/new_db_password.txt`): the running pods keep their open
+connections, a new start fails (`password authentication failed`).
 
-### Chapter 4 — The Deep End (planned)
+| Step | Command learnt |
+|---|---|
+| Where it is | `cat ~/manifests/config.yaml`, `kubectl get configmap booking-config -n swim -o yaml`; `git log -p` (the history keeps it) |
+| The Secret | `kubectl create secret generic booking-db -n swim --from-literal=password=…` (`--dry-run=client -o yaml`), or a manifest with `stringData` kept out of the repository |
+| Not hidden | `kubectl get secret … -o yaml`, `-o jsonpath='{.data.password}' \| base64 -d` |
+| The reference | `env` with `valueFrom.secretKeyRef` (or `envFrom` with `secretRef`); `database_password` out of the ConfigMap, which keeps `database_host` |
+| The pods | a variable is read at start: the template's change, or `kubectl rollout restart deployment/booking` |
+| The repository | `git status`, `git commit -am`, `git push` |
 
-Requests and limits: a memory leak under the evening's load, `kubectl top
-pod`, `OOMKilled` and exit code 137 (`kubectl describe pod`, Last State), a
-limit raised without measuring, a pod `Pending` after over-requesting
-(`FailedScheduling: Insufficient memory`, `kubectl describe node`),
-`kubectl rollout undo`.
+Goal checked on the state: a Secret holds the new password; the
+Deployment's template takes `DATABASE_PASSWORD` from it (no ConfigMap holds
+a password, in clear or in base64, and none is written in the
+Deployment); the rollout done and every running pod started with the new
+password; the site answers; the files in `~/manifests` are what runs and
+hold no password; the last commit, local and in the shared repository,
+holds none. Several solutions: `--from-literal` or a manifest outside the
+repository, `secretKeyRef` or `envFrom`. Expected traps: the old password
+copied into the Secret (the new pods can't log in), `--from-file` with the
+file's newline, the password base64-encoded in the ConfigMap, the
+ConfigMap deleted (it still gives `database_host`), the new password put
+in the ConfigMap without a restart (the running pods keep their
+environment), a Secret's manifest left in the repository, a commit not
+pushed. The debrief explains rotation (the history keeps the old
+password), RBAC and etcd encryption.
+
+### Chapter 4 — The Deep End (done)
+
+Saturday 23 June, the regional swim meet. Friday evening Rui applied
+2.4.0 (a results cache) with limits copied from a tutorial (requests
+64Mi, limits 128Mi). Under the meet's load the app needs 190 to 230 MiB:
+each container is OOMKilled as it starts, the site is down. And 2.4.0's
+cache never forgets: with more room, its memory keeps growing (3 MiB
+every 10 seconds under load, and a line in its log each minute).
+
+| Step | Command learnt |
+|---|---|
+| Killed | `kubectl get pods` (restarts, `CrashLoopBackOff`), `kubectl describe pod` (`Last State: Terminated`, `Reason: OOMKilled`, `Exit Code: 137`, `Limits`) |
+| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources); Rui's note: 230Mi at the last meet's peak |
+| What changed | `kubectl rollout history deployment/booking` (CHANGE-CAUSE), `--revision=N`; `kubectl logs` (the cache) |
+| Back | `kubectl rollout undo deployment/booking --to-revision=3` or the image in the file |
+| Room | `resources.requests.memory` and `resources.limits.memory` in `booking.yaml`, `kubectl apply -f`, `kubectl rollout status` |
+
+Goal checked on the state: the Deployment rolled out on 2.3.1 and the site
+answering through Traefik under the meet's load; a memory limit above
+230Mi and at most 1Gi; requests of at least 128Mi; the files in
+`~/manifests` what runs. Several solutions: `rollout undo` then the file,
+or the file alone; any limit and requests within those bounds. Expected
+traps: a limit raised on 2.4.0 (it fills it, OOMKilled again), `kubectl
+rollout undo` after that change (it goes back one revision: 2.4.0 again),
+deleting the pods, a limit as big as the node and requests the node can't
+hold (`Pending`, `FailedScheduling: 0/1 nodes are available: 1
+Insufficient memory`), the limits removed, a limit below the peak.
 
 ## Ideas for later
 

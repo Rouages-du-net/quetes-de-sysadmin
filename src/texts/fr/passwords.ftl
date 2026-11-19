@@ -77,3 +77,6 @@ password-tide-2029 = maree-2029
 password-pedal-2029 = pedale-2029
 ## La Piscine : sudo
 password-splash-2029 = plouf-2029
+## La Piscine : le mot de passe de la base de réservation, l'ancien (dans le dépôt) et le nouveau (celui de Kemal)
+password-lane4-butterfly-17 = couloir4-papillon-17
+password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz

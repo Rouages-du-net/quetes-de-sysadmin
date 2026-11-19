@@ -135,3 +135,5 @@ threshold
 quiet-hours
 wont-start
 front-desk
+locker-room
+deep-end

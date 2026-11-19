@@ -216,6 +216,8 @@ export interface K8s {
   rr: number;
   // What was asked of the cluster (for the chapters): kubectl run, port-forward, deleted pods…
   journal: { t: number; what: string; detail: string }[];
+  // What the story keeps for its apps (a database's password, the day's load).
+  story?: Record<string, unknown>;
 }
 
 export const k8s = (game: Game): K8s | undefined => ((game as unknown as { principal?: Game }).principal ?? game).state.k8s;
@@ -1445,7 +1447,18 @@ const bareTemplate = (template: J) => {
   }
   return t;
 };
-export const newReplicaSet = (k: K8s, d: Obj) => rsOf(k, d).find((rs) => same(bareTemplate(rs.body.spec.template), d.body.spec.template));
+// A template's stable form, kept per object (bodies are replaced, not changed in place, by update()): the controllers compare them every second.
+const stableCache = new WeakMap<object, string>();
+const stableOf = (template: J, bare: boolean): string => {
+  if (!template || typeof template !== 'object') return stable(bare ? bareTemplate(template) : template);
+  let s = stableCache.get(template);
+  if (s === undefined) stableCache.set(template, (s = stable(bare ? bareTemplate(template) : template)));
+  return s;
+};
+export const newReplicaSet = (k: K8s, d: Obj) => {
+  const want = stableOf(d.body.spec.template, false);
+  return rsOf(k, d).find((rs) => stableOf(rs.body.spec.template, true) === want);
+};
 
 function syncReplicaSet(k: K8s, rs: Obj) {
   const want = rs.body.spec.replicas ?? 1;
@@ -1514,6 +1527,9 @@ function syncDeployment(k: K8s, d: Obj) {
       { name: `${d.metadata.name}-${hash}`, labels: template.metadata.labels, annotations: { 'deployment.kubernetes.io/desired-replicas': String(want), 'deployment.kubernetes.io/max-replicas': String(want + percentOr(spec.strategy?.rollingUpdate?.maxSurge, want, true)), 'deployment.kubernetes.io/revision': String(maxRevision + 1) } },
       d,
     );
+    // Like the controller's setNewReplicaSetAnnotations: the Deployment's change-cause goes to its new ReplicaSet (rollout history).
+    const cause = d.metadata.annotations['kubernetes.io/change-cause'];
+    if (cause !== undefined) fresh.metadata.annotations['kubernetes.io/change-cause'] = cause;
     d.deploy!.progressAt = k.now;
     d.deploy!.reason = 'NewReplicaSetCreated';
   } else if (revisionOf(fresh) < maxRevision) {
