@@ -32,7 +32,7 @@ import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
 
 export { split, applyMode } from './tools';
-import { applyMode, compareNames, content, split, wildcard, modeWithMask, sizeFor, type Word } from './tools';
+import { applyMode, compareNames, content, listRuns, split, splitList, wildcard, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
 import { read as readSudoers, sudoersFile } from './sudoers';
 
@@ -134,6 +134,14 @@ export class Shell implements Game {
   private authenticated = false;
   private doneLecture = false;
   waiting: { line: string; attempts: number } | null = null;
+  // A command list (a && b; c) whose run stopped at a question (sudo's
+  // password, a yes/no, nano): the rest runs once it is answered.
+  private pendingList: { items: ListItem[]; line: string; commands: string[][] } | null = null;
+  // The items still to come in the list being run (see listContinues).
+  private listAfter: ListItem[] = [];
+  // The last line typed, when it was a list: every command it ran (the notebook
+  // records them; `last` stays the last command's, as the events saw it).
+  listRun: { line: string; commands: string[][] } | null = null;
   // Current question (ssh: "Are you sure you want to continue connecting?").
   // secret: the answer is not displayed (a password asked by ssh).
   question: { prompt: string; answer: (response: string) => string; secret?: boolean } | null = null;
@@ -694,11 +702,13 @@ export class Shell implements Game {
   // Runs a line; returns the text to display, or null for "clear".
   // If sudo is waiting for a password, the line is that password.
   execute(line: string): string | null {
+    this.listRun = null;
     if (this.waiting) return this.password(line);
     if (this.question) {
       const { answer } = this.question;
       this.question = null;
-      return this.conclude(answer(line.trim()), true);
+      const answered = this.conclude(answer(line.trim()), true);
+      return this.resumeList(answered, this.status ?? 0);
     }
     // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
     if (isWindows(this)) {
@@ -753,8 +763,80 @@ export class Shell implements Game {
     return { line: output };
   }
 
-  // The line, once history is expanded.
+  // The line, once history is expanded: a command list (a && b || c; d),
+  // like bash (man bash, "Lists"). Each command runs as if typed alone (the
+  // story's events, afterCommand, $?); the history keeps the whole line.
   private runLine(line: string): string | null {
+    // A new line: a list left paused (a question abandoned) is over.
+    this.pendingList = null;
+    const list = splitList(line);
+    if ('error' in list) {
+      this.typedCommands++;
+      this.commandsInError++;
+      // bash: a syntax error is exit code 2.
+      this.status = 2;
+      this.lastStatus = 2;
+      return list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end');
+    }
+    if (list.items.length <= 1) return this.runCommand(list.items[0]?.command ?? line);
+    return this.runList(list.items, line, [], []);
+  }
+
+  /**
+   * Runs the items of a list, from the first: "a && b" runs b only if a
+   * succeeded, "a || b" only if it failed (a skipped command leaves $? as
+   * it was), ";" always. A command that leaves the session (exit, ssh,
+   * reboot, a cut network, tail -f) ends the list there: the rest is
+   * dropped (bash would run it after, on this machine). A question (sudo's
+   * password, a confirmation, nano) pauses it until it is answered.
+   */
+  private runList(items: ListItem[], line: string, outputs: string[], commands: string[][]): string | null {
+    let cleared = false;
+    for (let k = 0; k < items.length; k++) {
+      const item = items[k];
+      if (!listRuns(item.before, this.lastStatus)) continue;
+      this.listAfter = items.slice(k + 1);
+      const lastBefore = this.last;
+      let output: string | null;
+      try {
+        output = this.runCommand(item.command.trim());
+      } finally {
+        this.listAfter = [];
+      }
+      if (this.last !== lastBefore) commands.push(...this.last.commands);
+      // clear in a list: what came before is wiped.
+      if (output === null) {
+        outputs = [];
+        cleared = true;
+      } else outputs.push(output);
+      if (this.waiting || this.question || this.edition) {
+        this.pendingList = { items: items.slice(k + 1), line, commands };
+        break;
+      }
+      if (this.output || this.cut || this.reboot || this.connectionRequest || this.sessionRequest || this.follow) break;
+    }
+    // For the notebook: every command the line ran, under the whole line.
+    if (!this.pendingList) this.listRun = { line: line.trim(), commands };
+    const text = outputs.filter(Boolean).join('\n');
+    return cleared && !text ? null : text;
+  }
+
+  /** After a question is answered: the rest of the list it paused, if any. */
+  private resumeList(output: string | null, status: number): string | null {
+    const pending = this.pendingList;
+    if (!pending || this.waiting || this.question || this.edition) return output;
+    this.pendingList = null;
+    this.lastStatus = status;
+    return this.runList(pending.items, pending.line, output === null ? [] : [output], pending.commands);
+  }
+
+  /** Whether another command of the list being run will run right after this one (a chapter's afterCommand may wait for it). */
+  get listContinues(): boolean {
+    return this.listAfter.some((i) => listRuns(i.before, this.lastStatus));
+  }
+
+  // One command of the line (a pipeline, with its redirection).
+  private runCommand(line: string): string | null {
     // $? (outside single quotes): the exit code of the previous line.
     // $NAME and ${NAME}, for the session's variables (an unknown one stays as typed).
     line = line.replace(/'[^']*'|\$\?|\$\{\?\}|\$\{([A-Za-z_]\w*)\}|\$([A-Za-z_]\w*)/g, (m, a?: string, b?: string) =>
@@ -824,19 +906,21 @@ export class Shell implements Game {
     return m && password(this.t, m);
   }
 
-  private password(input: string): string {
+  private password(input: string): string | null {
     const waiting = this.waiting!;
     if (input === this.playerPassword()) {
       this.waiting = null;
       this.authenticated = true;
       this.chapter.beforeCommand?.(this);
       if (this.chapter.activity) live(this, this.chapter.activity.not);
-      return this.conclude(this.countLine(this.tube(waiting.line, split(waiting.line))), true);
+      const output = this.conclude(this.countLine(this.tube(waiting.line, split(waiting.line))), true);
+      return this.resumeList(output, this.lastStatus);
     }
     waiting.attempts++;
     if (waiting.attempts < 3) return this.t('sudo-bad-password');
     this.waiting = null;
-    return this.t('sudo-three-failures');
+    // Three wrong passwords: sudo fails (code 1), and the list goes on from there.
+    return this.resumeList(this.t('sudo-three-failures'), 1);
   }
 
   /**
@@ -848,7 +932,7 @@ export class Shell implements Game {
     const cwd = this.cwd;
     this.cwd = this.home;
     try {
-      return this.tube(line, split(line));
+      return this.tubeList(line).output;
     } finally {
       this.cwd = cwd;
     }
@@ -864,14 +948,38 @@ export class Shell implements Game {
     const before = { cwd: this.cwd, errors: this.errors, last: this.last };
     this.cwd = cwd;
     try {
-      const output = this.tube(line, split(line));
-      const code = this.status ?? (this.errors.length ? 1 : 0);
+      const { output, code } = this.tubeList(line);
       return { output, ok: code === 0, code, cwd: this.cwd };
     } finally {
       this.cwd = before.cwd;
       this.errors = before.errors;
       this.last = before.last;
     }
+  }
+
+  // A line run by cron or a script (sh -c): a command list too, without the story's events.
+  private tubeList(line: string): { output: string; code: number } {
+    const list = splitList(line);
+    if ('error' in list) {
+      this.errors = [];
+      this.status = 2;
+      return { output: list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end'), code: 2 };
+    }
+    const code = () => this.status ?? (this.errors.length ? 1 : 0);
+    if (list.items.length <= 1) {
+      const one = list.items[0]?.command ?? line;
+      const output = this.tube(one, split(one));
+      return { output, code: code() };
+    }
+    let status = 0;
+    const outputs: string[] = [];
+    for (const item of list.items) {
+      if (!listRuns(item.before, status)) continue;
+      outputs.push(this.tube(item.command, split(item.command)));
+      status = code();
+    }
+    this.status = status;
+    return { output: outputs.filter(Boolean).join('\n'), code: status };
   }
 
   /** Checks the story's events outside a command (e.g. on reconnection). */
@@ -1157,6 +1265,8 @@ export class Shell implements Game {
     const next = after || conclude ? this.conclude('', true) : '';
     const messages = [after, ...this.inWaiting, next].filter(Boolean).join('\n\n');
     this.inWaiting = [];
+    // nano in a list (nano f && cat f): the rest runs once it is closed.
+    if (this.pendingList) return [messages, this.resumeList('', this.lastStatus)].filter(Boolean).join('\n\n');
     return messages;
   }
 

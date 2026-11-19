@@ -2172,7 +2172,7 @@ function parseErrorText(ctx: Ctx, e: ParseError): string {
   return [
     ctx.file ? `At ${ctx.file}:${lineNo} char:${col + 1}` : `At line:${lineNo} char:${col + 1}`,
     `+ ${lineText}`,
-    `+ ${' '.repeat(col)}~`,
+    `+ ${' '.repeat(col)}${'~'.repeat(e.length)}`,
     e.message,
     '    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException',
     `    + FullyQualifiedErrorId : ${e.id}`,

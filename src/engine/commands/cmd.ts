@@ -7,6 +7,9 @@
 // (https://learn.microsoft.com/windows-server/administration/windows-commands/windows-commands),
 // dir, cd, type, set, ver; "OpenSSH Server configuration for Windows"
 // (DefaultShell).
+// Command lists: "a & b" runs both, "a && b" runs b if a succeeded,
+// "a || b" if it failed (Microsoft Learn, "cmd": "Using multiple commands
+// and conditional processing symbols"); "^" escapes, double quotes protect.
 // Differences (docs/SCENARIOS.md): no batch files, no pipes or redirections
 // in cmd (use PowerShell), %VAR% expanded from the environment only.
 
@@ -70,8 +73,74 @@ const expandVars = (game: Shell, line: string) =>
 /** Splits a cmd line into words (double quotes group). */
 const words = (line: string) => [...line.matchAll(/"([^"]*)"|(\S+)/g)].map((m) => m[1] ?? m[2]);
 
+/** A cmd line split at &, && and || (outside double quotes, not escaped by ^). */
+function cmdList(line: string): { command: string; before: '&' | '&&' | '||' | null }[] {
+  const items: { command: string; before: '&' | '&&' | '||' | null }[] = [];
+  let active = '';
+  let before: '&' | '&&' | '||' | null = null;
+  let quote = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') quote = !quote;
+    if (!quote && c === '^' && i + 1 < line.length) {
+      active += line[++i];
+      continue;
+    }
+    const op = quote ? null : line.startsWith('&&', i) ? '&&' : line.startsWith('||', i) ? '||' : c === '&' ? '&' : null;
+    if (!op) {
+      active += c;
+      continue;
+    }
+    items.push({ command: active, before });
+    before = op;
+    active = '';
+    i += op.length - 1;
+  }
+  items.push({ command: active, before });
+  return items;
+}
+
 /** One line at cmd.exe's prompt: its output (null for cls). */
 export function runCmd(game: Shell, raw: string): string | null {
+  const items = cmdList(raw);
+  if (items.length === 1) return runOne(game, items[0].command);
+  const w = windows(game);
+  const shells = (w.shells ?? ['cmd']).length;
+  const outputs: string[] = [];
+  const commands: string[][] = [];
+  let code = 0;
+  let cleared = false;
+  // cmd reads the whole line first: a missing command stops it before anything runs.
+  if (!items.at(-1)!.command.trim() && items.at(-1)!.before === '&') items.pop();
+  const empty = items.findIndex((i) => !i.command.trim());
+  if (empty >= 0) {
+    game.typedCommands++;
+    game.status = 255;
+    const at = empty === items.length - 1 ? null : items[empty + 1].before;
+    const message = at ? `${at} was unexpected at this time.` : 'The syntax of the command is incorrect.';
+    game.error(message);
+    game.last = { line: raw.trim(), commands: [], output: '', errors: [message], redirection: null };
+    return message;
+  }
+  for (const item of items) {
+    if ((item.before === '&&' && code !== 0) || (item.before === '||' && code === 0)) continue;
+    const out = runOne(game, item.command);
+    code = game.status ?? 0;
+    commands.push(...game.last.commands);
+    if (out === null) {
+      outputs.length = 0;
+      cleared = true;
+    } else outputs.push(out);
+    // exit, or powershell started: the rest of the line is not run here.
+    if (game.output || (w.shells ?? ['cmd']).length !== shells || game.question) break;
+  }
+  game.status = code;
+  const text = outputs.filter(Boolean).join('\n');
+  game.listRun = { line: raw.trim(), commands };
+  return cleared && !text ? null : text;
+}
+
+function runOne(game: Shell, raw: string): string | null {
   game.recoverErrors();
   game.status = null;
   const line = expandVars(game, raw.trim());

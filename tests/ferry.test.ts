@@ -165,6 +165,23 @@ for (const language of LANGUAGES)
       expect(done('new-card')).toBe(true);
     });
 
+    it('chapter 1 — another solution: ifdown eth0 && ifup eth0 on one line keeps the session', () => {
+      const { c, play, edit, flag } = part();
+      edit('sudo nano /etc/network/interfaces', (x) => stanza(x));
+      expect(flag('static-now')).toBe(false);
+      const all = play(['sudo ifdown eth0 && sudo ifup eth0']);
+      // The server's shell runs ifup right after ifdown: ssh never notices.
+      expect(all).not.toContain('client_loop: send disconnect: Broken pipe');
+      expect(flag('cut')).toBe(false);
+      expect(flag('static-now')).toBe(true);
+      expect(c.shell.hostName).toBe(Q);
+      expect(play(['ip -6 addr show dev eth0'])).toContain(`inet6 ${STATIC}/64 scope global`);
+      // ifdown alone, then a command that doesn't bring it back: the session goes.
+      expect(play(['sudo ifdown eth0; ls'])).toContain('client_loop: send disconnect: Broken pipe');
+      play(['ssh quay']);
+      expect(flag('cut')).toBe(true);
+    });
+
     it('chapter 1 — false leads: ifdown over ssh, the same serial, the SLAAC address in the zone, accept_ra 0 without a gateway, another prefix', () => {
       const { play, edit, flag, done } = part();
       let all = play(['sudo ifdown eth0']);

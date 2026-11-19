@@ -60,6 +60,93 @@ export function split(line: string): Word[] {
   return words;
 }
 
+// A command list, like bash's (man bash, "Lists"): pipelines separated by
+// ";", "&&" or "||". "&&" and "||" have equal precedence and group from the
+// left; ";" only separates. Each item keeps the operator written before it.
+export type ListOperator = ';' | '&&' | '||';
+export interface ListItem {
+  command: string;
+  // The operator before this item (null for the first one).
+  before: ListOperator | null;
+}
+
+/**
+ * Splits a line into a command list, at the ";", "&&" and "||" that are
+ * outside quotes, not escaped by a backslash, nor inside $(…) or `…`. A
+ * missing command gives bash's syntax error: `token` is the unexpected
+ * operator, or null for a line that ends on "&&" or "||" (bash would wait
+ * for the rest on a continuation line).
+ */
+export function splitList(line: string): { items: ListItem[] } | { error: true; token: string | null } {
+  const items: ListItem[] = [];
+  let active = '';
+  let before: ListOperator | null = null;
+  let quote = '';
+  // Depth of $( … ) and whether we are inside `…`.
+  let depth = 0;
+  let backtick = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote === "'") {
+      if (c === "'") quote = '';
+      active += c;
+      continue;
+    }
+    if (c === '\\' && i + 1 < line.length) {
+      active += c + line[i + 1];
+      i++;
+      continue;
+    }
+    if (quote === '"') {
+      if (c === '"') quote = '';
+      else if (c === '$' && line[i + 1] === '(') {
+        depth++;
+        active += '$(';
+        i++;
+        continue;
+      }
+      active += c;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      quote = c;
+      active += c;
+      continue;
+    }
+    if (c === '`') backtick = !backtick;
+    else if (c === '$' && line[i + 1] === '(') {
+      depth++;
+      active += '$(';
+      i++;
+      continue;
+    } else if (c === ')' && depth > 0) depth--;
+    if (depth > 0 || backtick) {
+      active += c;
+      continue;
+    }
+    const two = line.slice(i, i + 2);
+    const op: ListOperator | null = two === '&&' || two === '||' ? two : c === ';' ? ';' : null;
+    if (!op) {
+      active += c;
+      continue;
+    }
+    // ";;" is case's terminator: an error outside case.
+    if (two === ';;') return { error: true, token: ';;' };
+    if (!active.trim()) return { error: true, token: op };
+    items.push({ command: active, before });
+    before = op;
+    active = '';
+    i += op.length - 1;
+  }
+  if (active.trim()) items.push({ command: active, before });
+  // "a &&" with nothing after: bash waits for the rest of the list.
+  else if (before === '&&' || before === '||') return { error: true, token: null };
+  return { items };
+}
+
+/** Whether an item of a list runs, given the exit code of the last command that ran. */
+export const listRuns = (before: ListOperator | null, status: number) => (before === '&&' ? status === 0 : before === '||' ? status !== 0 : true);
+
 // "755", "2775" or "u+x", "o-w", "go=r", "g+s", "+t"… → new
 // rwxrwxrwx mode, where special bits take the place of the x, like ls -l:
 // s/S (setuid, setgid: x present or not), t/T (sticky).

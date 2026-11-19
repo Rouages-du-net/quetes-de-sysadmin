@@ -24,7 +24,8 @@ const MANUAL = ['man', 'apropos', 'whatis'];
 /** After a line typed in this shell: the commands run for the first time join the notebook. Returns the new ones. */
 export function note(notebook: Notebook, sh: Shell): string[] {
   const fresh: string[] = [];
-  const { line, commands } = sh.last;
+  // A list (a && b; c): every command it ran, under the whole line.
+  const { line, commands } = sh.listRun ?? sh.last;
   for (const args of commands) {
     const name = (args[0] ?? '').split('/').at(-1)!;
     const known = MANUAL.includes(name) || (sh.known().includes(name) && !!COMMANDS[name] && COMMANDS[name].section !== 5);

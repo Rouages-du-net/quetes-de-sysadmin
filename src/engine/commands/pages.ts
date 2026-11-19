@@ -539,7 +539,7 @@ export const PAGES: Record<string, Page> = {
   readlink: { long: { 'canonicalize': 'f' }, options: ['f'], examples: ['readlink /srv/site/current', 'readlink -f /srv/site/current'], see: ['ln', 'ls'] },
   rm: { examples: ['rm barricade'], see: ['mv', 'cp'] },
   sh: { examples: ['sh tests.sh', './deployer.sh', 'chmod +x deployer.sh'], see: ['bash', 'test', 'chmod'] },
-  bash: { examples: ['bash tests.sh'], see: ['sh'] },
+  bash: { examples: ['bash tests.sh', 'sudo nginx -t && sudo systemctl reload nginx', 'grep -q backup /etc/crontab || echo missing', 'cd /var/log; ls'], see: ['sh', 'history'] },
   sort: { long: { 'numeric-sort': 'n', 'reverse': 'r' }, options: ['n', 'r'], examples: ['sort -n sizes.txt'], see: ['uniq', 'wc'] },
   ssh: {
     options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],

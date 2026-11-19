@@ -108,9 +108,11 @@ export const newCard: Chapter = {
       'email_from_rangi.txt': f(t('new-card-email-rangi', { prefix: PREFIX, address: STATIC })),
     }),
   // ifdown eth0 over ssh: the session goes with it; Amaru, at the office, brings it back up from the file.
+  // Not when the same line goes on (ifdown eth0 && ifup eth0): the server's shell runs ifup right
+  // away, before ssh notices anything, and the session survives.
   afterCommand: (j) => {
     const l = lan(j);
-    if (l && !l.interfaces.eth0?.up) {
+    if (l && !l.interfaces.eth0?.up && !(j as Shell).listContinues) {
       startNetwork(j);
       (j as Shell).cut = true;
       j.state.ferryCut = true;

@@ -108,6 +108,14 @@ presents them for people.
   mounted directories); the apps of the images are declared by the chapters
   (`APPS`); the command in `commands/docker.ts`. Docker Compose
   (`compose.yaml`, `.env`, the project's network) in `src/engine/compose.ts`.
+- Command lists on the interactive line (`a && b || c; d`): `splitList`
+  and `listRuns` in `src/engine/tools.ts`, run by `Shell.runLine`/`runList`
+  in `shell.ts` (each command as if typed alone: events, `afterCommand`;
+  paused by sudo's password, a question or nano, `Shell.pendingList`;
+  `Shell.listContinues` tells a chapter another command follows, as
+  `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
+  `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
+  `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in

@@ -34,6 +34,8 @@ sudo-cd =
 # { $operator } : > ou >>
 syntax-redirection = erreur de syntaxe : il manque un nom de fichier après { $operator }
 syntax-pipe = erreur de syntaxe près du symbole « | »
+syntax-token = erreur de syntaxe près du symbole inattendu « { $token } »
+syntax-end = erreur de syntaxe : fin de fichier prématurée
 redirection-is-one-directory = { $target } : est un dossier
 redirection-permission = { $target } : Permission non accordée
 redirection-sudo = (La redirection > est faite par ton propre shell, pas par sudo. Astuce : envoie le texte dans « sudo tee -a fichier », qui écrit en tant que root.)
