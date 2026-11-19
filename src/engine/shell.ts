@@ -32,7 +32,7 @@ import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
 
 export { split, applyMode } from './tools';
-import { applyMode, compareNames, content, listRuns, split, splitList, wildcard, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
+import { applyMode, compareNames, content, listRuns, split, splitList, takesTarget, wildcard, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
 import { read as readSudoers, sudoersFile } from './sudoers';
 
@@ -1004,18 +1004,53 @@ export class Shell implements Game {
     this.errors = [];
     this.status = null;
     const segments: Word[][] = [[]];
-    let redirection: { file: string; addition: boolean } | null = null;
+    // Each command's redirections, read from left to right like bash (man bash,
+    // "REDIRECTION"): where its output goes (a file, or "err" with >&2), where
+    // its errors go (a file, "out": wherever the output goes, with 2>&1), its input.
+    type Target = { file: string; addition: boolean };
+    type Routes = { out?: Target; err?: Target | 'out' | 'screen'; outToErr?: boolean; input?: { file: string } | { text: string } };
+    const routes: Routes[] = [{}];
     for (let i = 0; i < words.length; i++) {
       const m = words[i];
-      if (m.op === '|') segments.push([]);
-      else if (m.op === '>' || m.op === '>>') {
-        const target = words[i + 1];
-        if (!target || target.op) return this.t('syntax-redirection', { operator: m.op });
-        redirection = { file: target.text, addition: m.op === '>>' };
-        i++;
-      } else segments.at(-1)!.push(m);
+      if (m.op === '|') {
+        segments.push([]);
+        routes.push({});
+        continue;
+      }
+      if (!m.op) {
+        segments.at(-1)!.push(m);
+        continue;
+      }
+      const r = routes.at(-1)!;
+      if (!takesTarget(m.op)) {
+        // 2>&1: the errors go where the output goes now (>f 2>&1: the file; 2>&1 >f: the screen).
+        if (m.op === '2>&1') r.err = r.out ?? 'out';
+        else r.outToErr = true;
+        continue;
+      }
+      const target = words[i + 1];
+      if (!target || target.op) return this.t('syntax-redirection', { operator: m.op });
+      i++;
+      const t = { file: target.text, addition: m.op.endsWith('>>') };
+      if (m.op === '<') r.input = { file: target.text };
+      // A here-string: the word, with a newline.
+      else if (m.op === '<<<') r.input = { text: target.text };
+      else if (m.op === '2>' || m.op === '2>>') r.err = t;
+      else {
+        r.out = t;
+        r.outToErr = false;
+        if (m.op.startsWith('&')) r.err = t;
+      }
     }
     if (segments.some((s) => !s.length)) return this.t('syntax-pipe');
+    // The last command's output redirection (the file that events and commands see).
+    const redirection = routes.at(-1)!.out ?? null;
+    // The errors not shown on screen (redirected elsewhere: they still make the command fail),
+    // and the outputs sent with the errors (>&2).
+    const hidden = new Set<number>();
+    const toErrors: string[] = [];
+    // What the last command wrote, even into a file (events read it).
+    let written: string | null = null;
 
     let input: string | null = null;
     const commands: string[][] = [];
@@ -1062,43 +1097,84 @@ export class Shell implements Game {
       const exportedEnv = Object.fromEntries([...this.exported].filter((n) => n in this.vars).map((n) => [n, this.vars[n]]));
       this.environment = root && !keepEnv ? assigned : { ...exportedEnv, ...assigned };
       commands.push(args);
-      const last = i === segments.length - 1 && !redirection;
+      const r = routes[i];
+      const final = i === segments.length - 1;
+      const last = final && !r.out && !r.outToErr;
       this.as = as;
-      this.outputTo = i === segments.length - 1 && redirection ? this.resolve(redirection.file) : null;
-      input = this.launch(args, input, root, last);
+      const before = this.errors.length;
+      // < file: bash opens it before running the command; if it can't, the command doesn't run.
+      if (r.input && 'file' in r.input) {
+        const text = this.resolve(r.input.file) === '/dev/null' ? '' : this.readFor('bash', r.input.file);
+        if (text === null) {
+          this.status = 1;
+          input = '';
+          return;
+        }
+        input = text;
+      } else if (r.input) input = r.input.text;
+      this.outputTo = r.out && this.resolve(r.out.file) !== '/dev/null' ? this.resolve(r.out.file) : null;
+      let produced = this.launch(args, input, root, last);
       this.outputTo = null;
+      // This command's errors, sent where its redirections say.
+      const errors = this.errors.slice(before);
+      const err = r.err ?? 'screen';
+      const hide = () => errors.forEach((_, k) => hidden.add(before + k));
+      // 2>&1 in a pipe: the errors go down the pipe with the output.
+      if (err === 'out' && !final) {
+        hide();
+        produced = [...errors, produced].filter(Boolean).join('\n');
+      }
+      if (r.outToErr) {
+        if (produced) toErrors.push(produced);
+        produced = '';
+      }
+      if (final) written = produced;
+      if (r.out) {
+        // With &> or >f 2>&1, the errors go into the same file, before the output.
+        if (err === r.out) hide();
+        const text = err === r.out ? [...errors, produced].filter(Boolean).join('\n') : produced;
+        // The redirection is done by YOUR shell, before sudo: even with sudo in
+        // front of the command, it is "you" who writes to the file.
+        const error = this.redirect(r.out.file, text, r.out.addition);
+        if (error) {
+          this.error(error);
+          if (/(^|\|)\s*sudo\s/.test(line)) this.error(this.t('redirection-sudo'));
+        } else this.keepCharset(r.out);
+        produced = '';
+      }
+      if (typeof err === 'object' && err !== r.out) {
+        hide();
+        const error = this.redirect(err.file, errors.join('\n'), err.addition);
+        if (error) this.error(error);
+      }
+      input = produced;
     });
     let output: string = input ?? '';
     const charset = this.outputCharset;
     this.outputCharset = null;
     // On screen, LATIN1 bytes show as � on the UTF-8 terminal.
-    if (charset === 'latin1' && !redirection) output = onUtf8Terminal(output);
+    if (charset === 'latin1') output = onUtf8Terminal(output);
     // Raw bytes on the terminal: � above 0x7F, control bytes unseen.
-    if (charset === 'binary' && !redirection) output = binaryOnTerminal(output);
+    if (charset === 'binary') output = binaryOnTerminal(output);
     // Events read the output as the player reads it, without colour codes.
-    this.last = { line, commands, output: withoutColours(output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
+    this.last = { line, commands, output: withoutColours(redirection ? (written ?? '') : output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
+    return [...this.errors.filter((_, k) => !hidden.has(k)), ...toErrors, output].filter(Boolean).join('\n');
+  }
 
-    if (redirection) {
-      // The redirection is done by YOUR shell, before sudo: even with sudo in
-      // front of the command, it is "you" who writes to the file.
-      const error = this.redirect(redirection.file, output, redirection.addition);
-      // A command that wrote LATIN1 (pg_dump of a LATIN1 database): the file keeps those bytes.
-      const written = this.find(redirection.file);
-      if (!error && written?.type === 'file') {
-        if (charset === 'latin1') written.charset = 'latin1';
-        else if (charset === 'binary' && isBinary(output)) written.charset = 'binary';
-        else if (!redirection.addition) delete written.charset;
-      }
-      if (error) {
-        this.error(error);
-        if (/(^|\|)\s*sudo\s/.test(line)) this.error(this.t('redirection-sudo'));
-      }
-      output = '';
-    }
-    return [...this.errors, output].filter(Boolean).join('\n');
+  // A command that wrote LATIN1 (pg_dump of a LATIN1 database) into a file: the file keeps those bytes.
+  private keepCharset(target: { file: string; addition: boolean }): void {
+    const charset = this.outputCharset;
+    const written = this.find(target.file);
+    if (written?.type !== 'file') return;
+    if (charset === 'latin1') written.charset = 'latin1';
+    else if (charset === 'binary' && isBinary(content(written, this))) written.charset = 'binary';
+    else if (!target.addition) delete written.charset;
+    this.outputCharset = null;
   }
 
   private redirect(file: string, text: string, addition: boolean): string | null {
+    // /dev/null swallows everything (the world doesn't need to have a /dev).
+    if (this.resolve(file) === '/dev/null') return null;
     const n = this.find(file);
     if (n?.type === 'directory') return this.t('redirection-is-one-directory', { target: file });
     if (n) {

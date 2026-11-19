@@ -5,8 +5,8 @@ https://sysadmin.rouages.net and embeddable in other sites (see
 [EMBEDDING.md](EMBEDDING.md)). The engine is in `src/engine/`:
 
 - `shell.ts`: a machine's engine (paths, permissions, pipes `|`,
-  redirections `>` and `>>`, command lists `;`, `&&`, `||`, `sudo`,
-  events);
+  redirections `>`, `>>`, `2>`, `2>>`, `&>`, `2>&1`, `>&2`, `<`, `<<<`,
+  command lists `;`, `&&`, `||`, `sudo`, events);
 - `console.ts`, `machines.ts`, `workstation.ts`: the simulated network (the
   starting workstation, one machine per story, `ssh` and `exit` to go from
   one to another);
@@ -118,6 +118,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Command | In the game | On Linux |
 |---|---|---|
 | `less` | shows everything, like `cat` | shows page by page (`q` to quit) |
+| redirections | `>`, `>>`, `2>`, `2>>`, `&>`, `&>>`, `2>&1` and `>&2` read from left to right (`>f 2>&1` is not `2>&1 >f`), `/dev/null` (even without a `/dev` in the world), `< file`, the here-string `<<<`; a redirection that can't write doesn't stop the command from running | other descriptors (`3>`, `<&`, `exec`), here-documents (`<<EOF`), `>|`, process substitution `<(…)` |
 | `mv` | only moves objects (files) | also moves directories |
 | `rm -r`, `cp -r` | refused | delete / copy whole directories |
 | `grep` with no result | "(no line contains …)" | shows nothing |

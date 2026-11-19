@@ -14,16 +14,37 @@ export function wildcard(pattern: string): RegExp {
   return new RegExp('^' + pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$');
 }
 
+// A redirection (man bash, "REDIRECTION"): > and >> (standard output, also
+// written 1> and 1>>), 2> and 2>> (errors), &> and &>> (both), 2>&1 (errors
+// where the output goes), >&2 (the output with the errors), < (a file as
+// input) and <<< (a here-string).
+export type Redirection = '>' | '>>' | '2>' | '2>>' | '&>' | '&>>' | '2>&1' | '>&2' | '<' | '<<<';
+export const REDIRECTIONS: readonly string[] = ['>', '>>', '2>', '2>>', '&>', '&>>', '2>&1', '>&2', '<', '<<<'];
+// The redirections followed by a file name (or, for <<<, a word).
+export const takesTarget = (op: string) => op !== '2>&1' && op !== '>&2' && op !== '|';
+
 export interface Word {
   text: string;
   // Inside quotes: no wildcards, no operators.
   city: boolean;
   // Shell operator: pipe or redirection.
-  op?: '|' | '>' | '>>';
+  op?: '|' | Redirection;
+}
+
+/** The redirection operator that starts at position i of the line (outside quotes), if any. */
+export function redirectionAt(line: string, i: number, wordStart: boolean): Redirection | null {
+  const rest = line.slice(i);
+  // A file descriptor's number only counts at the start of a word (a2>b is a word, then >b).
+  if (wordStart) {
+    const m = /^(?:2>&1|1>&2|2>>|2>|1>>|1>|&>>|&>)/.exec(rest);
+    if (m) return (m[0] === '1>&2' ? '>&2' : m[0].replace(/^1/, '')) as Redirection;
+  }
+  const m = /^(?:>&2|>>|>|<<<|<)/.exec(rest);
+  return m ? (m[0] as Redirection) : null;
 }
 
 // Splits a line into words, like the shell: spaces separate words,
-// except inside quotes ("…" or '…'); | > and >> are operators.
+// except inside quotes ("…" or '…'); | and the redirections are operators.
 export function split(line: string): Word[] {
   const words: Word[] = [];
   let active: Word | null = null;
@@ -46,11 +67,12 @@ export function split(line: string): Word[] {
     } else if (c === '|') {
       finish();
       words.push({ text: '|', city: false, op: '|' });
-    } else if (c === '>') {
+    } else if ((c === '>' || c === '<' || ((c === '2' || c === '1' || c === '&') && !active)) && redirectionAt(line, i, !active)) {
+      const op = redirectionAt(line, i, !active)!;
       finish();
-      const double = line[i + 1] === '>';
-      if (double) i++;
-      words.push({ text: double ? '>>' : '>', city: false, op: double ? '>>' : '>' });
+      // 1>&2 is written >&2, 1> is >: the length typed is skipped.
+      i += /^(1>&2|1>>|1>)/.test(line.slice(i)) && !op.startsWith('1') ? op.length : op.length - 1;
+      words.push({ text: op, city: false, op });
     } else {
       active ??= { text: '', city: false };
       active.text += c;

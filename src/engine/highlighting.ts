@@ -2,7 +2,7 @@
 // command in green if it exists, in red otherwise (you see the typo before
 // pressing Enter), the options, the quoted strings, the operators, and the
 // existing paths underlined. It follows the game's shell (split() in
-// tools.ts): pipes and redirections (|, >, >>), command lists (;, &&, ||:
+// tools.ts): pipes and redirections (|, >, >>, 2>, &>, 2>&1, <, <<<), command lists (;, &&, ||:
 // each command of the list is a command), quotes, wildcards, sudo; nothing
 // that shell doesn't understand (no $VARIABLE) is highlighted. The split line joins back exactly (spaces included), so the
 // interface can draw it under the input field.
@@ -10,6 +10,7 @@
 import type { Shell } from './shell';
 import { COMMANDS } from './commands';
 import { currentShell, isWindows } from './windows';
+import { redirectionAt, type Redirection } from './tools';
 
 export type Kind = 'command' | 'unknown' | 'option' | 'string' | 'operator' | 'path' | 'glob' | 'text';
 
@@ -23,7 +24,7 @@ interface Word {
   chunks: { text: string; city: boolean }[];
   // The word as the shell will read it (without the quotes).
   value: string;
-  op?: '|' | '>' | '>>' | ';' | '&&' | '||';
+  op?: '|' | Redirection | ';' | '&&' | '||';
 }
 
 /** The line in pieces: words, operators and spaces, in order. */
@@ -61,9 +62,16 @@ function lexer(line: string): (Word | string)[] {
       add(c + line[i + 1], false);
       word!.value += c + line[i + 1];
       i++;
-    } else if (c === '|' || c === '>' || c === ';' || (c === '&' && line[i + 1] === '&')) {
+    } else if ((c === '>' || c === '<' || ((c === '1' || c === '2' || c === '&') && !word)) && redirectionAt(line, i, !word)) {
+      // A redirection (2>, &>, 2>&1, <, <<<…), written as typed (1> stays 1>).
+      const op = redirectionAt(line, i, !word)!;
+      const typed = /^(1>&2|1>>|1>)/.exec(line.slice(i))?.[0] ?? op;
       finish();
-      const double = (c === '>' || c === '|' || c === '&') && line[i + 1] === c;
+      i += typed.length - 1;
+      output.push({ chunks: [{ text: typed, city: false }], value: typed, op });
+    } else if (c === '|' || c === ';' || (c === '&' && line[i + 1] === '&')) {
+      finish();
+      const double = (c === '|' || c === '&') && line[i + 1] === c;
       if (double) i++;
       const op = (double ? c + c : c) as NonNullable<Word['op']>;
       output.push({ chunks: [{ text: op, city: false }], value: op, op });
@@ -128,7 +136,7 @@ export function colourise(sh: Shell, line: string): Token[] {
     if (x.op) {
       push(x.value, 'operator');
       // After a redirection comes a file; after a pipe or a list operator, a command.
-      expected = x.op === '>' || x.op === '>>' ? 'target' : 'command';
+      expected = x.op === '2>&1' || x.op === '>&2' ? expected : x.op === '|' || x.op === ';' || x.op === '&&' || x.op === '||' ? 'command' : 'target';
       continue;
     }
     let kind: Kind;
