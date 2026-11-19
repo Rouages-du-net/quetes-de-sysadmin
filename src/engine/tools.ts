@@ -23,6 +23,81 @@ export const REDIRECTIONS: readonly string[] = ['>', '>>', '2>', '2>>', '&>', '&
 // The redirections followed by a file name (or, for <<<, a word).
 export const takesTarget = (op: string) => op !== '2>&1' && op !== '>&2' && op !== '|';
 
+/**
+ * A shell pattern (man bash, "Pattern Matching") → regular expression: *, ?,
+ * and bracket expressions [abc], [a-z], [!abc] or [^abc]. An unclosed [ is
+ * an ordinary character.
+ */
+export function glob(pattern: string): RegExp {
+  let re = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '*') re += '.*';
+    else if (c === '?') re += '.';
+    else if (c === '[') {
+      // The closing ], which may come first in the set ([]a] matches ] or a).
+      let j = i + 1;
+      if (pattern[j] === '!' || pattern[j] === '^') j++;
+      if (pattern[j] === ']') j++;
+      while (j < pattern.length && pattern[j] !== ']') j++;
+      if (j >= pattern.length) {
+        re += '\\[';
+        continue;
+      }
+      let set = pattern.slice(i + 1, j);
+      const negated = set.startsWith('!') || set.startsWith('^');
+      if (negated) set = set.slice(1);
+      re += `[${negated ? '^' : ''}${set.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\[/g, '\\[')}]`;
+      i = j;
+    } else re += c.replace(/[.+^${}()|\\]/g, '\\$&');
+  }
+  return new RegExp(`^${re}$`);
+}
+
+/** Whether a word holds a pattern the shell would expand. */
+export const hasGlob = (word: string) => /[*?]/.test(word) || /\[[^\]]+\]/.test(word);
+
+/**
+ * Brace expansion (man bash, "Brace Expansion"): a{b,c}d → abd acd,
+ * {1..3} → 1 2 3, {a..c}, nested braces; a brace with neither a comma nor a
+ * range ({}, {x}) stays as typed.
+ */
+export function braces(word: string): string[] {
+  for (let i = 0; i < word.length; i++) {
+    if (word[i] !== '{' || word[i - 1] === '$') continue;
+    let depth = 0;
+    const commas: number[] = [];
+    let j = i;
+    for (; j < word.length; j++) {
+      if (word[j] === '{') depth++;
+      else if (word[j] === '}' && --depth === 0) break;
+      else if (word[j] === ',' && depth === 1) commas.push(j);
+    }
+    if (j >= word.length) return [word];
+    const before = word.slice(0, i);
+    const after = word.slice(j + 1);
+    const inside = word.slice(i + 1, j);
+    let parts: string[] | null = null;
+    if (commas.length) parts = [...commas, j].map((c, k) => word.slice(k === 0 ? i + 1 : commas[k - 1] + 1, c));
+    else {
+      const range = /^(-?\d+)\.\.(-?\d+)(?:\.\.(-?\d+))?$/.exec(inside) ?? /^([a-zA-Z])\.\.([a-zA-Z])(?:\.\.(-?\d+))?$/.exec(inside);
+      if (range) {
+        const letters = !/\d/.test(range[1]);
+        const a = letters ? range[1].charCodeAt(0) : Number(range[1]);
+        const b = letters ? range[2].charCodeAt(0) : Number(range[2]);
+        const step = Math.abs(Number(range[3] ?? 1)) || 1;
+        // {01..10}: the numbers keep the width of the widest bound.
+        const width = !letters && /^-?0\d/.test(range[1] + ' ' + range[2]) ? Math.max(range[1].length, range[2].length) : 0;
+        parts = [];
+        for (let v = a; a <= b ? v <= b : v >= b; v += a <= b ? step : -step) parts.push(letters ? String.fromCharCode(v) : String(v).padStart(width, '0'));
+      }
+    }
+    if (!parts) continue;
+    return parts.flatMap((p) => braces(before + p + after));
+  }
+  return [word];
+}
+
 export interface Word {
   text: string;
   // Inside quotes: no wildcards, no operators.

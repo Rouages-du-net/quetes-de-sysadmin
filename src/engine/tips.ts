@@ -8,6 +8,7 @@
 // remembers which tips were shown, with the progress.
 
 import type { Shell } from './shell';
+import { split } from './tools';
 
 export const TIPS = ['silence', 'up-twice', 'cd-back', 'cd-home', 'tab'] as const;
 export type Tip = (typeof TIPS)[number];
@@ -62,7 +63,8 @@ export function newTips(l: TipLine, memory: TipMemory, shown: readonly string[])
   add('silence', ok && SILENT.includes(words[0]) && !l.said && !sh.last.redirection);
 
   if (words[0] === 'cd' && ok) {
-    const target = words[1] ?? '';
+    // The target as typed (~ is expanded before cd sees it).
+    const target = split(sh.last.line)[1]?.text ?? words[1] ?? '';
     // cd .. twice in a row.
     add('up-twice', target.replace(/\/$/, '') === '..' && previous?.words[0] === 'cd' && (previous.words[1] ?? '').replace(/\/$/, '') === '..');
     // Home by a long path, when ~ (or cd alone) would do.

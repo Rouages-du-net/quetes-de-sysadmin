@@ -108,6 +108,15 @@ presents them for people.
   mounted directories); the apps of the images are declared by the chapters
   (`APPS`); the command in `commands/docker.ts`. Docker Compose
   (`compose.yaml`, `.env`, the project's network) in `src/engine/compose.ts`.
+- The interactive line's redirections (`2>`, `&>`, `2>&1`, `>&2`, `<`,
+  `<<<`, `/dev/null`: `split`/`redirectionAt` in `tools.ts`, routed per
+  command by `Shell.tube`), expansions (`Shell.expandLine`: variables a
+  login sets, `Shell.defaults()`, `$(…)` and backticks run by `capture`;
+  `braces()`, `Shell.tilde`, `glob()` in every part of a path,
+  `Shell.expand`), history's `!$`/`!^`/`!*`; bash's builtins `true`,
+  `false`, `type`, `command`, `printf` in `commands/builtins.ts` (`[ … ]`
+  becomes `test` in `tube`); `ALWAYS_THERE` and `COMPANIONS` in `shell.ts`:
+  what every chapter knows, and the companions a chapter's command brings.
 - Command lists on the interactive line (`a && b || c; d`): `splitList`
   and `listRuns` in `src/engine/tools.ts`, run by `Shell.runLine`/`runList`
   in `shell.ts` (each command as if typed alone: events, `afterCommand`;

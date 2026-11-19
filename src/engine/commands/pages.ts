@@ -52,6 +52,12 @@ export const PAGES: Record<string, Page> = {
     see: ['dpkg', 'systemctl', 'nginx', 'tmux'],
   },
   dpkg: { examples: ['sudo dpkg --configure -a'], see: ['apt'] },
+  echo: { options: ['n', 'e', 'E'], examples: ['echo "hello" > note.txt', 'echo -e "first\\tline\\nsecond"'], see: ['printf', 'tee', 'cat'] },
+  printf: { examples: ["printf '%s\\n' alpha beta", "printf '%-10s %5d\\n' nginx 80 sshd 22", "printf '%.2f\\n' 3.14159"], see: ['echo'] },
+  true: { examples: ['true'], see: ['false', 'test'] },
+  false: { examples: ['false || echo failed'], see: ['true', 'test'] },
+  type: { options: ['t', 'p', 'a'], examples: ['type ls cd', 'type -t ls'], see: ['command', 'which', 'man'] },
+  command: { options: ['v', 'V'], examples: ['command -v rsync', 'command ls'], see: ['type', 'which'] },
   iostat: {
     options: ['c', 'd', 'x', 'k', 'm', 'y', 'z', 'h'],
     examples: ['iostat', 'iostat -x 1 3', 'iostat -dm'],
@@ -359,7 +365,7 @@ export const PAGES: Record<string, Page> = {
     ],
     see: ['sftp', 'scp', 'rsync'],
   },
-  id: { examples: ['id', 'id malo'], see: ['groups', 'whoami', 'usermod'] },
+  id: { options: ['u', 'g', 'G', 'n'], long: { user: 'u', group: 'g', groups: 'G', name: 'n' }, examples: ['id', 'id malo', 'id -un', 'id -Gn'], see: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e', 'f'],
     examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M'], see: ['systemctl', 'dmesg', 'journald.conf'] },

@@ -10,9 +10,10 @@ import { applyMode, compareNames, content, wildcard, readable, modeWithMask, opt
 import { ghostPlace } from '../open-files';
 import { colourise, lsColour, visibleWidth, readColour, invalidColourMessage, sgr } from '../colours';
 import { COMMANDS, type Command, type Context } from './index';
+import { escape } from './builtins';
 
 // Shell builtins: which doesn't find them.
-const BUILT_IN = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test', 'history'];
+const BUILT_IN = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test', 'history', 'type', 'command'];
 
 // A file's inode number (ls -i): one per node, given on the first
 // request. Two names for the same node (hard link) have the same number.
@@ -266,7 +267,29 @@ export const FILES: Record<string, Command> = {
 
   echo: {
     // -n: no newline at the end (what follows in a pipe, base64 for one, sees the difference).
-    launch: ({ args }) => (args[0] === '-n' ? args.slice(1) : args).join(' '),
+    // -e: backslash escapes (\n, \t…; \c stops the output), -E: none (the default). Like bash,
+    // only leading words made of n, e and E are options.
+    ownOptions: true,
+    launch: ({ args }) => {
+      let k = 0;
+      let escapes = false;
+      for (; k < args.length && /^-[neE]+$/.test(args[k]); k++) for (const l of args[k].slice(1)) if (l !== 'n') escapes = l === 'e';
+      const text = args.slice(k).join(' ');
+      if (!escapes) return text;
+      let out = '';
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] !== '\\') {
+          out += text[i];
+          continue;
+        }
+        if (text[i + 1] === 'c') break;
+        // echo -e reads \0NNN (octal with a leading 0) and \xHH.
+        const e = /^0[0-7]{0,3}/.test(text.slice(i + 1)) || !/[0-7]/.test(text[i + 1] ?? '') ? escape(text, i) : { text: '\\', end: i };
+        out += e.text;
+        i = e.end;
+      }
+      return out;
+    },
   },
 
   tee: {

@@ -38,10 +38,19 @@ function change(game: Shell, command: string, targets: string[], recursive: bool
 export const ACCOUNTS: Record<string, Command> = {
   id: {
     launch: ({ args, game }) => {
-      const name = args[0] ?? game.who;
+      // -u, -g, -G: only the uid, the main gid, every gid; -n: their names instead.
+      const { letters, rest } = options(args);
+      const name = rest[0] ?? game.who;
       const u = game.accounts.users[name];
       if (!u) return game.error(game.t('id-missing', { user: name }));
       const gid = (g: string) => game.accounts.groups[g]?.gid;
+      const only = ['u', 'g', 'G'].filter((l) => letters.has(l));
+      if (only.length > 1) return game.error('id: cannot print "only" of more than one choice');
+      if (!only.length && letters.has('n')) return game.error('id: cannot print only names or real IDs in default format');
+      const names = letters.has('n');
+      if (only[0] === 'u') return names ? name : String(u.uid);
+      if (only[0] === 'g') return names ? u.group : String(gid(u.group) ?? u.group);
+      if (only[0] === 'G') return game.groupsFor(name).map((g) => (names ? g : String(gid(g) ?? g))).join(' ');
       return game.t('id-line', {
         uid: withNumber(name, u.uid),
         gid: withNumber(u.group, gid(u.group)),

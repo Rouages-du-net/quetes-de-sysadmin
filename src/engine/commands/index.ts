@@ -40,6 +40,7 @@ import { DOCKER } from './docker';
 import { NC } from './nc';
 import { DIFF } from './diff';
 import { SCRIPTS } from './scripts';
+import { BUILTINS } from './builtins';
 import { DISKS } from './disks';
 import { RSNAPSHOT } from './rsnapshot';
 import { POSTGRES } from './postgres';
@@ -160,6 +161,7 @@ function build(): Record<string, Command> {
     ...NC,
     ...DIFF,
     ...SCRIPTS,
+    ...BUILTINS,
     ...DISKS,
     ...STOCKAGE,
     ...LVM,
