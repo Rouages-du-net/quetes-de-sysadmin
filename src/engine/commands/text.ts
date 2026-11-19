@@ -2,7 +2,7 @@
 // are given no file. That is Unix's strength: small tools that do one
 // thing, and that are chained together.
 
-import { options } from '../tools';
+import { options, wildcard, compareNames } from '../tools';
 import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
 import type { Command, Context } from './index';
 import { isBsd } from '../freebsd';
@@ -50,7 +50,7 @@ function head(cmd: 'head' | 'tail') {
 }
 
 // GNU grep's options, read like getopt_long (grep 3.11's messages).
-// Source: https://www.gnu.org/software/grep/manual/grep.html#Context-Line-Control
+// Source: https://www.gnu.org/software/grep/manual/grep.html
 const GREP_TRY = "Usage: grep [OPTION]... PATTERNS [FILE]...\nTry 'grep --help' for more information.";
 const GREP_LONG: Record<string, string> = {
   'ignore-case': 'i',
@@ -65,13 +65,44 @@ const GREP_LONG: Record<string, string> = {
   'with-filename': 'H',
   'line-number': 'n',
   'only-matching': 'o',
+  recursive: 'r',
+  'dereference-recursive': 'R',
+  'files-with-matches': 'l',
+  'files-without-match': 'L',
+  'word-regexp': 'w',
+  'line-regexp': 'x',
+  'no-messages': 's',
   'no-group-separator': '',
 };
 // The long options that take a value (--after-context=3 or --after-context 3).
-const GREP_LONG_VALUE: Record<string, string> = { 'after-context': 'A', 'before-context': 'B', context: 'C', 'max-count': 'm', 'group-separator': '' };
-const GREP_LETTERS = 'ivcqEPFhHno';
+const GREP_LONG_VALUE: Record<string, string> = {
+  'after-context': 'A',
+  'before-context': 'B',
+  context: 'C',
+  'max-count': 'm',
+  regexp: 'e',
+  file: 'f',
+  'group-separator': '',
+  include: '',
+  exclude: '',
+  'exclude-dir': '',
+};
+const GREP_LETTERS = 'ivcqEPFhHnorRlLwxs';
 
-type GrepOptions = { letters: Set<string>; rest: string[]; after?: number; before?: number; context?: number; max: number; separator: string | null };
+type GrepOptions = {
+  letters: Set<string>;
+  rest: string[];
+  after?: number;
+  before?: number;
+  context?: number;
+  max: number;
+  separator: string | null;
+  // -e PATTERN (repeatable) and -f FILE, in their order; null: the pattern is the first operand.
+  patterns: { text?: string; file?: string }[] | null;
+  include: string[];
+  exclude: string[];
+  excludeDir: string[];
+};
 
 /**
  * The options of GNU grep, or its error message (exit code 2). `lenient`: on
@@ -79,10 +110,14 @@ type GrepOptions = { letters: Set<string>; rest: string[]; after?: number; befor
  * letters that only that grep knows are ignored.
  */
 export function grepOptions(args: string[], lenient = false): GrepOptions | string {
-  const o: GrepOptions = { letters: new Set(), rest: [], max: -1, separator: '--' };
+  const o: GrepOptions = { letters: new Set(), rest: [], max: -1, separator: '--', patterns: null, include: [], exclude: [], excludeDir: [] };
   // A context length: a decimal number, with spaces or + before it (strtoimax).
   const length = (v: string): number | string => (/^\s*\+?\d+$/.test(v) ? Math.min(Number(v.trim()), Number.MAX_SAFE_INTEGER) : `grep: ${v}: invalid context length argument`);
   const valued = (letter: string, v: string): string | null => {
+    if (letter === 'e' || letter === 'f') {
+      (o.patterns ??= []).push(letter === 'e' ? { text: v } : { file: v });
+      return null;
+    }
     if (letter === 'm') {
       if (!/^\s*[+-]?\d+$/.test(v)) return 'grep: invalid max count';
       const n = Number(v.trim());
@@ -113,6 +148,9 @@ export function grepOptions(args: string[], lenient = false): GrepOptions | stri
         const given = v ?? args[++i];
         if (given === undefined) return `grep: option '--${name}' requires an argument\n${GREP_TRY}`;
         if (name === 'group-separator') o.separator = given;
+        else if (name === 'include') o.include.push(given);
+        else if (name === 'exclude') o.exclude.push(given);
+        else if (name === 'exclude-dir') o.excludeDir.push(given);
         else {
           const error = valued(GREP_LONG_VALUE[name], given);
           if (error) return error;
@@ -131,7 +169,7 @@ export function grepOptions(args: string[], lenient = false): GrepOptions | stri
       if (/\d/.test(l)) {
         digits += l;
         o.context = Math.min(Number(digits), Number.MAX_SAFE_INTEGER);
-      } else if ('ABCm'.includes(l)) {
+      } else if ('ABCmef'.includes(l)) {
         const v = j < a.length - 1 ? a.slice(j + 1) : args[++i];
         if (v === undefined) return `grep: option requires an argument -- '${l}'\n${GREP_TRY}`;
         const error = valued(l, v);
@@ -144,64 +182,153 @@ export function grepOptions(args: string[], lenient = false): GrepOptions | stri
   return o;
 }
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export const TEXT: Record<string, Command> = {
   less: {
     launch: (c) => texts('less', c, c.args.slice(0, 1)).map((t) => t.text).join('\n'),
   },
 
   grep: {
-    // GNU grep reads its options itself (getopt_long): -A3, -nC2, -2, --context 3…
+    // GNU grep reads its options itself (getopt_long): -A3, -nC2, -2, --context 3, -rn…
     ownOptions: true,
     launch: (raw) => {
       // --color: like the alias "grep --color=auto" of Debian's ~/.bashrc.
       const colour = readColour(raw.args, 'auto', 'auto');
       if (colour.invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'grep', colour.invalid));
       const c = { ...raw, args: colour.args };
+      const game = c.game;
       const inColour = colourise(c, colour.when);
       // On FreeBSD and Solaris, the BSD or Solaris check already refused what that grep lacks.
-      const parsed = grepOptions(c.args, isBsd(c.game) || isSolaris(c.game));
-      if (typeof parsed === 'string') return c.game.error(parsed, 2);
-      const { letters, rest, max, separator } = parsed;
+      const parsed = grepOptions(c.args, isBsd(game) || isSolaris(game));
+      if (typeof parsed === 'string') return game.error(parsed, 2);
+      const { letters, max, separator } = parsed;
       // -A and -B override -C (and -NUM) whatever their order; -1 means "not asked".
       const after = parsed.after ?? parsed.context ?? -1;
       const before = parsed.before ?? parsed.context ?? -1;
       const withContext = after >= 0 || before >= 0;
-      const [pattern, ...files] = rest;
-      if (pattern === undefined) return c.game.error(c.game.t('grep-usage'));
+      // Without -e nor -f, the pattern is the first operand; a pattern with newlines is several patterns.
+      let patterns: string[];
+      let files: string[];
+      if (parsed.patterns) {
+        patterns = [];
+        for (const p of parsed.patterns) {
+          if (p.text !== undefined) patterns.push(...p.text.split('\n'));
+          else {
+            const text = game.readFor('grep', p.file!);
+            if (text === null) {
+              game.status = 2;
+              return '';
+            }
+            patterns.push(...linesFor(text));
+          }
+        }
+        files = parsed.rest;
+      } else {
+        if (parsed.rest[0] === undefined) return game.error(game.t('grep-usage'));
+        patterns = parsed.rest[0].split('\n');
+        files = parsed.rest.slice(1);
+      }
+      const pattern = patterns.join('\n');
       const broken = letters.has('i');
       const invert = letters.has('v');
-      // The pattern: a basic regular expression (BRE), extended with -E, plain text with -F.
+      const recursive = letters.has('r') || letters.has('R');
+      // The patterns: basic regular expressions (BRE), extended with -E, plain text with -F;
+      // -w: not inside a word (letters, digits, _), -x: the whole line.
       let re: RegExp | null = null;
-      if (!letters.has('F'))
-        try {
-          // -P (GNU): Perl-compatible expressions, close to JavaScript's (\d, \w, lookarounds).
-          re = new RegExp(letters.has('E') || letters.has('P') ? pattern : toBasicRegex(pattern), broken ? 'i' : '');
-        } catch {
-          c.game.status = 2;
-          return c.game.error(/\[/.test(pattern) && !/\]/.test(pattern) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression');
+      if (patterns.length) {
+        const sources: string[] = [];
+        for (const p of patterns) {
+          let s = letters.has('F') ? escapeRegex(p) : letters.has('E') || letters.has('P') ? p : toBasicRegex(p);
+          try {
+            // -P (GNU): Perl-compatible expressions, close to JavaScript's (\d, \w, lookarounds).
+            new RegExp(s);
+          } catch {
+            return game.error(/\[/.test(p) && !/\]/.test(p) ? 'grep: Unmatched [, [^, [:, [., or [=' : 'grep: Invalid regular expression', 2);
+          }
+          if (letters.has('x')) s = `^(?:${s})$`;
+          else if (letters.has('w')) s = `(?<![A-Za-z0-9_])(?:${s})(?![A-Za-z0-9_])`;
+          sources.push(`(?:${s})`);
         }
-      const searches = broken ? pattern.toLowerCase() : pattern;
-      const correspond = (l: string) => (re ? re.test(l) : (broken ? l.toLowerCase() : l).includes(searches));
-      const ts = texts('grep', c, files);
-      // The matching parts of a line (for the colours and -o).
+        re = new RegExp(sources.join('|'), broken ? 'i' : '');
+      }
       const global = re ? new RegExp(re.source, re.flags + 'g') : null;
+      const correspond = (l: string) => (re ? re.test(l) : false);
+      // The matching parts of a line (for the colours and -o).
       const parts = (l: string): [number, number][] => {
         const found: [number, number][] = [];
-        if (global) {
-          global.lastIndex = 0;
-          for (let m = global.exec(l); m; m = global.exec(l)) {
-            if (m[0] === '') {
-              global.lastIndex++;
-              continue;
-            }
-            found.push([m.index, m.index + m[0].length]);
+        if (!global) return found;
+        global.lastIndex = 0;
+        for (let m = global.exec(l); m; m = global.exec(l)) {
+          if (m[0] === '') {
+            global.lastIndex++;
+            continue;
           }
-        } else if (searches) {
-          const inside = broken ? l.toLowerCase() : l;
-          for (let k = inside.indexOf(searches); k >= 0; k = inside.indexOf(searches, k + searches.length)) found.push([k, k + searches.length]);
+          found.push([m.index, m.index + m[0].length]);
         }
         return found;
       };
+
+      // ——— What to read: the operands, the trees of -r, or the pipe ———
+      const quiet = letters.has('s');
+      let troubles = false;
+      const complain = (key: string, target: string) => {
+        troubles = true;
+        if (!quiet) game.error(game.t(key, { command: 'grep', target }));
+      };
+      // --include, --exclude: on a file's name; --exclude-dir: on a directory's name.
+      const globs = (list: string[], name: string) => list.some((g) => wildcard(g).test(name) || wildcard(g).test(name.split('/').filter(Boolean).at(-1) ?? name));
+      const skipFile = (name: string) => (parsed.include.length > 0 && !globs(parsed.include, name)) || globs(parsed.exclude, name);
+      const sources: { name: string; text: string }[] = [];
+      const readFile = (path: string) => {
+        const text = game.readFor('grep', path);
+        if (text === null) troubles = true;
+        else sources.push({ name: path, text });
+      };
+      // -r walks the directories in the game's usual order (GNU's is the directory's own order);
+      // it skips the symbolic links it meets, -R follows them.
+      const walk = (path: string, shown: string) => {
+        const n = game.find(path)!;
+        if (n.type !== 'directory') return;
+        if (!game.traverses(path) || !game.can(n, 'r') || !game.can(n, 'x')) return complain('error-permission', shown || '.');
+        for (const name of Object.keys(n.children).sort(compareNames)) {
+          const child = n.children[name];
+          const childPath = path === '/' ? `/${name}` : `${path.replace(/\/$/, '')}/${name}`;
+          const childShown = shown ? `${shown.replace(/\/$/, '')}/${name}` : name;
+          if (child.type === 'file' && child.link !== undefined && !letters.has('R')) continue;
+          const target = game.find(childPath);
+          if (!target) continue;
+          if (target.type === 'directory') {
+            if (!globs(parsed.excludeDir, name)) walk(childPath, childShown);
+          } else if (!skipFile(name)) {
+            if (!game.can(target, 'r')) complain('error-permission', childShown);
+            else {
+              const text = game.readFor('grep', childPath);
+              if (text === null) troubles = true;
+              else sources.push({ name: childShown, text });
+            }
+          }
+        }
+      };
+      let someDirectory = false;
+      if (recursive && !files.length) {
+        // -r without a file: the current directory, names shown without "./".
+        someDirectory = true;
+        walk('.', '');
+      } else if (!files.length) sources.push(...texts('grep', c, []));
+      for (const file of files) {
+        const n = game.find(file);
+        if (!n) complain('error-missing', file);
+        else if (n.type === 'directory') {
+          someDirectory = true;
+          if (!recursive) complain('error-is-one-directory', file);
+          else if (!globs(parsed.excludeDir, file)) walk(file, file);
+        } else if (skipFile(file)) continue;
+        else if (!game.traverses(file) || !game.can(n, 'r')) complain('error-permission', file);
+        else readFile(file);
+      }
+
+      // ——— The output ———
       // In colour (default GREP_COLORS): matches in bold red (ms, and mc in the
       // context lines of -v), the file name in magenta, the line number in green,
       // the separators (":", "-", "--") in cyan.
@@ -216,24 +343,27 @@ export const TEXT: Record<string, Command> = {
         return output + l.slice(i);
       };
       const paint = (code: string, text: string) => (inColour ? sgr(code, text) : text);
-      // -h: never the file name; -H: always (by default, only with several files).
-      const named = letters.has('h') ? false : letters.has('H') || ts.length > 1;
+      // -h: never the file name; -H: always; by default, with several files or a directory searched by -r.
+      const named = letters.has('h') ? false : letters.has('H') || files.length > 1 || (recursive && someDirectory);
       const numbered = letters.has('n');
+      const fileName = (name: string) => paint('35', name || '(standard input)');
       // A selected line's prefix ends with ":", a context line's with "-" (FILE-12-text, FILE:13:text).
-      const prefix = (name: string, n: number, sep: ':' | '-') =>
-        (named ? paint('35', name || '(standard input)') + paint('36', sep) : '') + (numbered ? paint('32', String(n + 1)) + paint('36', sep) : '');
+      const prefix = (name: string, n: number, sep: ':' | '-') => (named ? fileName(name) + paint('36', sep) : '') + (numbered ? paint('32', String(n + 1)) + paint('36', sep) : '');
+      const listing = letters.has('l') || letters.has('L');
       const outputs: string[] = [];
       let found = 0;
       // Something already printed (the separator also goes between two files).
       let used = false;
-      for (const { name, text } of ts) {
+      for (const { name, text } of sources) {
         const lines = linesFor(text);
         const selected = (l: string) => correspond(l) !== invert;
-        if (letters.has('c')) {
+        // -l, -L: only the names of the files (with, without a selected line); they win over -c.
+        if (listing || letters.has('c')) {
           let n = 0;
-          for (const l of lines) if (n !== max && selected(l)) n++;
+          for (const l of lines) if (n !== max && selected(l) && !(listing && n)) n++;
           found += n;
-          outputs.push(named ? `${paint('35', name || '(standard input)')}${paint('36', ':')}${n}` : String(n));
+          if (letters.has('l') ? n > 0 : letters.has('L') ? n === 0 : false) outputs.push(fileName(name));
+          else if (!listing) outputs.push(named ? `${fileName(name)}${paint('36', ':')}${n}` : String(n));
           continue;
         }
         // GNU grep's algorithm (prtext): the lines before a selected line, the
@@ -241,41 +371,43 @@ export const TEXT: Record<string, Command> = {
         let last = -1;
         let pending = 0;
         let n = 0;
-        const context = (i: number) => {
-          // -o prints no context line, but the groups (and their separators) stay the same.
-          if (!letters.has('o')) outputs.push(prefix(name, i, '-') + (invert ? highlight(lines[i]) : lines[i]));
+        // -o prints the matching parts of each line it would print: none for a
+        // context line, except with -v, where the context lines are those that match.
+        const print = (i: number, sep: ':' | '-') => {
+          if (letters.has('o')) for (const [a, b] of parts(lines[i])) outputs.push(prefix(name, i, sep) + paint('01;31', lines[i].slice(a, b)));
+          else outputs.push(prefix(name, i, sep) + (invert === (sep === '-') ? highlight(lines[i]) : lines[i]));
           last = i;
         };
         for (let i = 0; i < lines.length && n !== max; i++) {
           if (!selected(lines[i])) {
             if (pending > 0) {
-              context(i);
+              print(i, '-');
               pending--;
             }
             continue;
           }
           const from = Math.max(last + 1, i - Math.max(before, 0));
           if (withContext && used && separator !== null && (last < 0 || from > last + 1)) outputs.push(paint('36', separator));
-          for (let k = from; k < i; k++) context(k);
-          if (letters.has('o')) {
-            if (!invert) for (const [a, b] of parts(lines[i])) outputs.push(prefix(name, i, ':') + paint('01;31', lines[i].slice(a, b)));
-          } else outputs.push(prefix(name, i, ':') + (invert ? lines[i] : highlight(lines[i])));
-          last = i;
+          for (let k = from; k < i; k++) print(k, '-');
+          print(i, ':');
           used = true;
           pending = Math.max(after, 0);
           n++;
           // -m: once NUM lines are selected, grep still prints the trailing context, matching or not.
-          if (n === max) for (let k = i + 1; k < lines.length && pending > 0; k++, pending--) context(k);
+          if (n === max) for (let k = i + 1; k < lines.length && pending > 0; k++, pending--) print(k, '-');
         }
         found += n;
       }
+      // -q: nothing on screen; only the exit code counts (0 as soon as a line is selected).
+      if (letters.has('q')) {
+        game.status = found ? 0 : troubles ? 2 : 1;
+        return '';
+      }
+      // Like grep: code 1 when nothing matches (useful in a script), 2 after an error.
+      game.status = troubles ? 2 : found ? 0 : 1;
       // Deliberate difference: the real grep says nothing when it finds nothing;
       // here, the game says so (only on screen, never in a pipe).
-      // -q: nothing on screen; only the exit code counts (failure if nothing found).
-      if (letters.has('q')) return found ? '' : c.game.error('');
-      // Like grep: code 1 when nothing matches (useful in a script).
-      c.game.status = found ? 0 : 1;
-      if (!found && !letters.has('c') && c.last && ts.length) c.game.error(c.game.t('grep-nothing', { pattern: pattern }));
+      if (!found && !troubles && !letters.has('c') && !listing && c.last && sources.length) game.error(game.t('grep-nothing', { pattern: pattern }));
       return outputs.join('\n');
     },
   },

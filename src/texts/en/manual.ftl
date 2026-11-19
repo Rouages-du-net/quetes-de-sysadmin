@@ -520,8 +520,8 @@ man-git =
     On screen, status, diff, log and show are in colour (color.ui=auto): what goes in red, what comes in green; --no-color turns them off.
     A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
     .synopsis = git [--git-dir=repository] [--work-tree=place] command
-man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off. -n numbers the lines, -o prints only what matches, -m NUM stops after NUM lines. Around each line found, -A NUM also prints the NUM lines after it, -B NUM those before, -C NUM (or -NUM) both: these context lines have a "-" after the name and the number (file-12-text) where the lines found have a ":" (file:13:text), and "--" separates groups that don't follow each other (--group-separator=SEP changes it, --no-group-separator removes it). -c ignores the context.
-    .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--color[=WHEN]] pattern [file...]
+man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off. -n numbers the lines, -o prints only what matches, -m NUM stops after NUM lines. Around each line found, -A NUM also prints the NUM lines after it, -B NUM those before, -C NUM (or -NUM) both: these context lines have a "-" after the name and the number (file-12-text) where the lines found have a ":" (file:13:text), and "--" separates groups that don't follow each other (--group-separator=SEP changes it, --no-group-separator removes it). -c ignores the context. -r searches a whole tree (the current directory without a file; --include=GLOB, --exclude=GLOB and --exclude-dir=GLOB choose the files), -l lists only the names of the files that match, -L those that don't. -w wants whole words, -x whole lines; -e gives a pattern (several -e: any of them), -f reads the patterns from a file. -s hides the messages about missing or unreadable files. The exit code is 0 if a line is found, 1 if none, 2 after an error.
+    .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-w|-x] [-l|-L] [-r|-R] [-s] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--include=GLOB] [--exclude=GLOB] [--exclude-dir=GLOB] [--color[=WHEN]] {"{"}pattern | -e pattern... | -f file{"}"} [file...]
     .option-i = ignores the difference between uppercase and lowercase.
     .option-v = inverts the search: keeps the lines that do NOT contain the pattern.
     .option-c = counts the matching lines instead of printing them.
@@ -532,6 +532,15 @@ man-grep = prints the lines that contain the pattern. The pattern is a regular e
     .option-h = never prints the file name before the lines (by default, it does with several files).
     .option-H = always prints the file name before the lines, even with a single file.
     .option-n = prints each line's number before it (--line-number).
+    .option-e = PATTERN: the pattern to search for (--regexp); repeat it to search for several, a pattern starting with - too.
+    .option-f = FILE: reads the patterns from the file, one per line (--file).
+    .option-w = only matches whole words: not inside a longer word (--word-regexp).
+    .option-x = only matches whole lines (--line-regexp).
+    .option-l = prints only the names of the files that contain a matching line (--files-with-matches).
+    .option-L = prints only the names of the files that contain none (--files-without-match).
+    .option-r = searches every file of the directories, recursively; without a file, the current directory (--recursive). Skips symbolic links met on the way.
+    .option-R = like -r, but follows symbolic links (--dereference-recursive).
+    .option-s = no message about missing or unreadable files (--no-messages); the exit code still says 2.
     .option-o = prints only the parts that match, one per line (--only-matching).
     .option-m = NUM: stops after NUM lines found (--max-count); the trailing context still follows.
     .option-A = NUM: also prints the NUM lines after each line found (--after-context).
@@ -544,6 +553,8 @@ man-grep = prints the lines that contain the pattern. The pattern is a regular e
     .example-5 = the GET or POST requests to the till app
     .example-6 = each error with its line number and the two lines around it
     .example-7 = the first failure and the three lines that follow it
+    .example-8 = every .conf file under /etc that grants sudo without a password, with the line number
+    .example-9 = the lines that contain the word root or admin
     .command-1 = grep Eraser chronicle.txt
     .command-2 = grep -i eraser *
     .command-3 = grep "my password" journal.txt

@@ -1,6 +1,7 @@
 // grep's context (-A, -B, -C, -NUM), its separators and the options it goes
-// with (-n, -H, -v, -m, -c, -o). Every expected output was produced by GNU
-// grep 3.11 on the same files.
+// with (-n, -H, -v, -m, -c, -o), and its other options (-r, -l, -L, -w, -x,
+// -e, -f, -s, --include…). Every expected output was produced by GNU grep 3.11
+// on the same files (for -r, in the game's order: see the table of differences).
 
 import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
@@ -9,16 +10,31 @@ import { ESC } from '../src/engine/colours';
 
 const F = ['a1', 'b2', 'match3', 'c4', 'd5', 'e6', 'f7', 'match8', 'match9', 'g10', 'h11'].join('\n');
 const H = ['x', 'match', 'y'].join('\n');
+const W = ['root', 'rooter', 'the root user', 'root_x', 'Root', 'ab'].join('\n');
+const mine = { owner: 'you' };
+const ETC = d(
+  {
+    'a.conf': f('root ALL\nbob NOPASSWD', { lines: true, ...mine }),
+    'b.txt': f('nothing', { lines: true, ...mine }),
+    locked: f('secret NOPASSWD', { lines: true, owner: 'root', mode: 'rw-------' }),
+    closed: d({ 'e.conf': f('NOPASSWD', { lines: true, owner: 'root' }) }, undefined, { owner: 'root', mode: 'rwx------' }),
+    link: f('', { link: '../w', ...mine }),
+    skip: d({ 'd.conf': f('NOPASSWD', { lines: true, ...mine }) }, undefined, mine),
+    sub: d({ 'c.conf': f('x NOPASSWD y', { lines: true, ...mine }) }, undefined, mine),
+  },
+  undefined,
+  mine,
+);
 
 const chapter: Chapter = {
   id: 'attempt-grep-context',
   number: 1,
-  commands: ['grep', 'cat', 'echo'],
+  commands: ['grep', 'cat', 'echo', 'cd'],
   home: '/home/you',
   welcome: 'f',
   final: '',
   events: [],
-  createWorld: () => d({ home: d({ you: d({ f: f(F, { lines: true }), h: f(H, { lines: true }) }) }) }),
+  createWorld: () => d({ home: d({ you: d({ f: f(F, { lines: true }), h: f(H, { lines: true }), w: f(W, { lines: true }), pats: f('root\nab', { lines: true }), etc: ETC }) }) }),
 };
 
 function shell(os?: 'freebsd' | 'solaris') {
@@ -63,8 +79,38 @@ const GNU: [string, number, string][] = [
   ["grep -A1 nomatch f", 1, ""],
 ];
 
+// The other options, as GNU grep 3.11 gives them.
+const OTHERS: [string, number, string][] = [
+  ["grep -w root w", 0, "root\nthe root user"],
+  ["grep -x root w", 0, "root"],
+  ["grep -wi root w", 0, "root\nthe root user\nRoot"],
+  ["grep -e root -e ab w", 0, "root\nrooter\nthe root user\nroot_x\nab"],
+  ["grep -e ab w -e user", 0, "the root user\nab"],
+  ["grep -c -e root -e ab w", 0, "5"],
+  ["grep -f pats w", 0, "root\nrooter\nthe root user\nroot_x\nab"],
+  ["grep -x -f pats w", 0, "root\nab"],
+  ["grep -o -e oo -e ab w", 0, "oo\noo\noo\noo\noo\nab"],
+  ["grep -o -v root w", 0, ""],
+  ["grep -wo ro w", 1, ""],
+  ["grep -w -o root w", 0, "root\nroot"],
+  ["grep -l root w pats", 0, "w\npats"],
+  ["grep -lc root w", 0, "w"],
+  ["grep -L root w pats", 0, ""],
+  ["grep -lv root w pats", 0, "w\npats"],
+  ["grep -F -e r. w", 1, ""],
+  ["grep -w 'ro*t' w", 0, "root\nthe root user"],
+  ["grep -E -w 'root|ab' w", 0, "root\nthe root user\nab"],
+  ["grep -n -o -C1 -v match f", 0, "3-match\n8-match\n9-match"],
+  ["grep -r NOPASSWD etc/a.conf", 0, "bob NOPASSWD"],
+  ["grep -L NOPASSWD etc/b.txt", 1, "etc/b.txt"],
+  ["grep --include=*.txt NOPASSWD etc/a.conf", 1, ""],
+  ["grep -rh NOPASSWD etc/sub", 0, "x NOPASSWD y"],
+  ["grep -rc NOPASSWD etc/sub", 0, "etc/sub/c.conf:1"],
+  ["grep -r --exclude-dir=sub NOPASSWD etc/sub", 1, ""],
+];
+
 describe('grep: context lines, like GNU grep', () => {
-  for (const [command, code, output] of GNU)
+  for (const [command, code, output] of [...GNU, ...OTHERS])
     it(command, () => {
       const s = shell();
       // The game adds a message on screen when nothing matches (a deliberate difference): not in a pipe.
@@ -116,6 +162,57 @@ describe('grep: context lines, like GNU grep', () => {
     const s = shell();
     expect(s.execute('grep --help')).toContain('-A');
     expect(s.execute('man grep')).toContain('--group-separator');
+  });
+});
+
+describe('grep -r and the errors on files', () => {
+  const run = (s: Shell, command: string) => {
+    // On screen, the errors come with the output: keep them apart.
+    const screen = s.execute(command) ?? '';
+    const errors = s.last.errors.join('\n');
+    const output = screen.split('\n').filter((l) => !s.last.errors.includes(l)).join('\n');
+    return { output, errors, status: status(s) };
+  };
+
+  it('-r: a tree in the game order, names shown, unreadable files and directories refused, links skipped', () => {
+    const s = shell();
+    expect(run(s, 'grep -r NOPASSWD etc')).toEqual({
+      output: 'etc/a.conf:bob NOPASSWD\netc/skip/d.conf:NOPASSWD\netc/sub/c.conf:x NOPASSWD y',
+      errors: 'grep: etc/closed: Permission denied\ngrep: etc/locked: Permission denied',
+      status: '2',
+    });
+    // -s: the same lines, no message, still exit code 2.
+    expect(run(s, 'grep -rsn NOPASSWD etc')).toEqual({ output: 'etc/a.conf:2:bob NOPASSWD\netc/skip/d.conf:1:NOPASSWD\netc/sub/c.conf:1:x NOPASSWD y', errors: '', status: '2' });
+    expect(run(s, 'grep -rl NOPASSWD etc/sub etc/skip').output).toBe('etc/sub/c.conf\netc/skip/d.conf');
+    expect(run(s, 'grep -rL NOPASSWD etc').output).toBe('etc/b.txt');
+    expect(run(s, 'grep -r --include=*.conf --exclude-dir=skip NOPASSWD etc').output).toBe('etc/a.conf:bob NOPASSWD\netc/sub/c.conf:x NOPASSWD y');
+    expect(run(s, 'grep -r --exclude=*.conf NOPASSWD etc').output).toBe('');
+    // -r skips the symbolic links it meets in the tree, -R follows them.
+    expect(run(s, 'grep -r rooter etc').status).toBe('2');
+    expect(run(s, 'grep -Rs rooter etc').output).toBe('etc/link:rooter');
+    // Without a file, -r searches the current directory, without "./".
+    s.execute('cd etc');
+    expect(run(s, 'grep -rs NOPASSWD').output).toBe('a.conf:bob NOPASSWD\nskip/d.conf:NOPASSWD\nsub/c.conf:x NOPASSWD y');
+  });
+
+  it('as root, -r reads everything (sudo grep -r NOPASSWD /etc/sudoers.d, from the hints)', () => {
+    const s = shell();
+    s.who = 'root';
+    expect(run(s, 'grep -r NOPASSWD etc')).toEqual({
+      output: 'etc/a.conf:bob NOPASSWD\netc/closed/e.conf:NOPASSWD\netc/locked:secret NOPASSWD\netc/skip/d.conf:NOPASSWD\netc/sub/c.conf:x NOPASSWD y',
+      errors: '',
+      status: '0',
+    });
+  });
+
+  it('a directory without -r, a missing file, an unreadable one; -q succeeds if a line is selected', () => {
+    const s = shell();
+    expect(run(s, 'grep NOPASSWD etc')).toEqual({ output: '', errors: 'grep: etc: Is a directory', status: '2' });
+    expect(run(s, 'grep -s NOPASSWD etc')).toEqual({ output: '', errors: '', status: '2' });
+    expect(run(s, 'grep NOPASSWD etc/nope')).toEqual({ output: '', errors: 'grep: etc/nope: No such file or directory', status: '2' });
+    expect(run(s, 'grep NOPASSWD etc/locked etc/a.conf')).toEqual({ output: 'etc/a.conf:bob NOPASSWD', errors: 'grep: etc/locked: Permission denied', status: '2' });
+    expect(run(s, 'grep -q NOPASSWD etc/locked etc/a.conf').status).toBe('0');
+    expect(run(s, 'grep -f nofile w')).toEqual({ output: '', errors: 'grep: nofile: No such file or directory', status: '2' });
   });
 });
 

@@ -213,9 +213,11 @@ export const PAGES: Record<string, Page> = {
     long: {
       'color': '', 'colour': '', 'ignore-case': 'i', 'invert-match': 'v', 'count': 'c', 'quiet': 'q', 'silent': 'q', 'extended-regexp': 'E', 'perl-regexp': 'P', 'fixed-strings': 'F', 'no-filename': 'h', 'with-filename': 'H',
       'line-number': 'n', 'only-matching': 'o', 'max-count': 'm', 'after-context': 'A', 'before-context': 'B', 'context': 'C', 'group-separator': '', 'no-group-separator': '',
+      'recursive': 'r', 'dereference-recursive': 'R', 'files-with-matches': 'l', 'files-without-match': 'L', 'word-regexp': 'w', 'line-regexp': 'x', 'regexp': 'e', 'file': 'f', 'no-messages': 's',
+      'include': '', 'exclude': '', 'exclude-dir': '',
     },
-    options: ['i', 'v', 'c', 'q', 'E', 'P', 'F', 'h', 'H', 'n', 'o', 'm', 'A', 'B', 'C'],
-    examples: ['grep Eraser chronicle.txt', 'grep -i eraser *', 'grep "my password" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /till' access.log", 'grep -n -C 2 error /var/log/syslog', 'grep -A 3 -m 1 Failed /var/log/auth.log'],
+    options: ['i', 'v', 'c', 'q', 'E', 'P', 'F', 'e', 'f', 'w', 'x', 'h', 'H', 'n', 'o', 'l', 'L', 'r', 'R', 's', 'm', 'A', 'B', 'C'],
+    examples: ['grep Eraser chronicle.txt', 'grep -i eraser *', 'grep "my password" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /till' access.log", 'grep -n -C 2 error /var/log/syslog', 'grep -A 3 -m 1 Failed /var/log/auth.log', 'grep -rn --include=*.conf NOPASSWD /etc', 'grep -w -e root -e admin /etc/group'],
     see: ['cat', 'find'],
   },
   groups: { examples: ['groups', 'groups malo'], see: ['id', 'usermod'] },
