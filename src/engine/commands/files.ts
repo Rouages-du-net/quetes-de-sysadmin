@@ -60,13 +60,39 @@ function destination(game: Shell, source: string, dest: string): string {
   return target?.type === 'directory' ? `${game.resolve(dest)}/${game.name(source)}`.replace('//', '/') : game.resolve(dest);
 }
 
-const copy = (n: Node, owner: string): Node =>
-  n.type === 'file'
-    ? { ...n, owner, group: undefined, read: undefined, isProtected: undefined }
-    : { type: 'directory', owner, mode: n.mode, children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner)])) };
+// A copy: yours (or, keeping the owner, the original's), with a new date unless `dates`.
+const copy = (n: Node, owner: string, keepOwner = false, dates = true): Node => {
+  const who = keepOwner ? { owner: n.owner, group: n.group } : { owner, group: undefined };
+  if (n.type === 'file') {
+    const c: File = { ...n, ...who, read: undefined, isProtected: undefined };
+    if (!dates) delete c.mtime;
+    return c;
+  }
+  return { type: 'directory', ...who, mode: n.mode, children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner, keepOwner, dates)])) };
+};
+
+// The order of ls's entries (GNU ls): by name, or -S by size (largest
+// first), -t by modification time (newest first; a file without a date is
+// recent), -X by extension, -U as they are stored; ties by name; -r reverses.
+function sortEntries(game: Shell, entries: [string, Node][], letters: Set<string>): [string, Node][] {
+  const size = (n: Node) => (n.type === 'directory' ? 4096 : sizeFor(n, game));
+  const time = (n: Node) => (n.type === 'file' && n.mtime !== undefined ? n.mtime : Infinity);
+  const extension = (name: string) => (/\.[^./]*$/.exec(name.replace(/^\./, ''))?.[0] ?? '');
+  const by = letters.has('U')
+    ? null
+    : letters.has('S')
+      ? (a: [string, Node], b: [string, Node]) => size(b[1]) - size(a[1]) || compareNames(a[0], b[0])
+      : letters.has('t')
+        ? (a: [string, Node], b: [string, Node]) => (time(b[1]) === time(a[1]) ? compareNames(a[0], b[0]) : time(b[1]) > time(a[1]) ? 1 : -1)
+        : letters.has('X')
+          ? (a: [string, Node], b: [string, Node]) => compareNames(extension(a[0]), extension(b[0])) || compareNames(a[0], b[0])
+          : (a: [string, Node], b: [string, Node]) => compareNames(a[0], b[0]);
+  const sorted = by ? [...entries].sort(by) : [...entries];
+  return letters.has('r') ? sorted.reverse() : sorted;
+}
 
 // ls of a single place (or file).
-function list({ args, game, last }: Context, paint: Paint = withoutPainting): string {
+function list({ args, game, last }: Context, paint: Paint = withoutPainting, one = false): string {
   const { letters, rest } = options(args);
   const target = rest[0] ?? '.';
   // ls -l of a link shows the link itself; without -l, ls enters the target place.
@@ -83,18 +109,34 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting): st
   // -d: the place itself, not its contents.
   if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
   if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { target: target }));
-  const inputs: [string, Node][] = Object.entries(n.children)
-    .filter(([name]) => letters.has('a') || !name.startsWith('.'))
-    .sort(([a], [b]) => compareNames(a, b));
+  // -a: every name, . and .. included; -A: every name but . and ..
+  let inputs: [string, Node][] = Object.entries(n.children).filter(([name]) => letters.has('a') || letters.has('A') || !name.startsWith('.'));
   if (letters.has('a')) inputs.unshift(['.', n], ['..', game.find(target + '/..') ?? n]);
+  inputs = sortEntries(game, inputs, letters);
   if (long) return inputs.map(([name, e]) => ino(e, longLine(game, name, e, letters.has('h'), letters.has('n'), paint))).join('\n');
   // The / added to places stays outside the colour (like ls -F): colour is never the only sign.
   const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : '');
-  if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last ? '    ' : '\n');
+  if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last && !one ? '    ' : '\n');
   // Like the real ls: in columns on screen, one name per line in a
-  // pipe or a file (and without the / added to places).
+  // pipe or a file (and without the / added to places), or with -1.
   if (!last) return inputs.map(([name, e]) => paint(name, e)).join('\n');
+  if (one) return inputs.map(([name, e]) => shows(name, e)).join('\n');
   return inColumns(inputs.map(([name, e]) => shows(name, e)), game.columns);
+}
+
+// ls -R: a place, then each of its sub-places, each under its name.
+function recursive(ctx: Context, target: string, list_: (c: Context) => string, letters: string[], first: boolean): string[] {
+  const { game } = ctx;
+  const block = list_({ ...ctx, args: [...letters, target] });
+  const blocks = [`${target}:${block ? `\n${block}` : ''}`];
+  const n = game.find(target);
+  if (n?.type !== 'directory' || !game.can(n, 'r') || game.block(target)) return first && !blocks[0] ? [] : blocks;
+  const all = letters.some((l) => /a|A/.test(l));
+  const names = Object.keys(n.children)
+    .filter((name) => (all || !name.startsWith('.')) && n.children[name].type === 'directory')
+    .sort(compareNames);
+  for (const name of names) blocks.push(...recursive(ctx, target === '/' ? `/${name}` : `${target.replace(/\/$/, '')}/${name}`, list_, letters, false));
+  return blocks;
 }
 
 /**
@@ -122,6 +164,79 @@ export function inColumns(names: string[], screenWidth: number): string {
   }
   return names.join('\n');
 }
+
+// A yes to coreutils' questions: y, or the language's own (o for oui, like rpmatch in French).
+const yes = (game: Shell, answer: string) => /^y/i.test(answer.trim()) || (game.t.language === 'fr' && /^o/i.test(answer.trim()));
+
+// One move or copy of mv and cp: returns an error, or what -v prints.
+type One = (game: Shell, source: string, dest: string, letters: Set<string>) => string | null;
+
+// The sources one after the other; -i asks before replacing a file (the
+// next ones wait for the answer), -n never replaces one.
+function overwriting(game: Shell, sources: string[], dest: string, letters: Set<string>, command: 'cp' | 'mv', one: One): string {
+  const said: string[] = [];
+  const go = (rest: string[]): string => {
+    for (let k = 0; k < rest.length; k++) {
+      const source = rest[k];
+      const target = game.find(source) ? destination(game, source, dest) : null;
+      const exists = target !== null && game.find(target)?.type === 'file' && game.resolve(source) !== target;
+      if (exists && letters.has('n')) continue;
+      if (exists && letters.has('i') && !(command === 'mv' && letters.has('f'))) {
+        const shown = game.find(dest)?.type === 'directory' ? `${dest.replace(/\/$/, '')}/${game.name(source)}` : dest;
+        // The question ends with a space (Fluent trims it from the text).
+        game.ask(`${game.t(`${command}-overwrite`, { target: shown })} `, (answer) => {
+          if (yes(game, answer)) {
+            const r = one(game, source, dest, letters);
+            if (r) said.push(r);
+          }
+          return [said.splice(0).join('\n'), go(rest.slice(k + 1))].filter(Boolean).join('\n');
+        });
+        return said.splice(0).join('\n');
+      }
+      const r = one(game, source, dest, letters);
+      if (r) said.push(r);
+    }
+    return said.splice(0).join('\n');
+  };
+  return go(sources);
+}
+
+// What -v shows of a destination: the place joined with the name, or the name given.
+const shownDestination = (game: Shell, source: string, dest: string) =>
+  game.find(dest)?.type === 'directory' ? `${dest.replace(/\/$/, '')}/${game.name(source)}` : dest;
+
+const moveOne: One = (game, source, dest, letters) => {
+  const n = game.find(source);
+  if (!n) return game.error(game.t('mv-missing', { target: source })) || null;
+  // Game simplification: objects are moved, never places.
+  if (n.type === 'directory') return game.error(game.t('mv-place', { target: source })) || null;
+  if (n.isProtected?.mv) return game.error(n.isProtected.mv) || null;
+  const target = destination(game, source, dest);
+  const reason = game.block(source) ?? game.block(target + '/..');
+  if (reason) return game.error(reason) || null;
+  if (game.resolve(source) === target) return null;
+  if (!game.writtenIn(source)) return game.error(game.t('mv-permission', { target: source })) || null;
+  const error = game.place('mv', target, n);
+  if (error) return game.error(error) || null;
+  game.erase(source);
+  return letters.has('v') ? game.t('mv-renamed', { source, destination: shownDestination(game, source, dest) }) : null;
+};
+
+const copyOne: One = (game, source, dest, letters) => {
+  const n = game.find(source);
+  if (!n) return game.error(game.t('cp-missing', { target: source })) || null;
+  if (n.type === 'directory' && !letters.has('r')) return game.error(game.t('cp-directory', { target: source })) || null;
+  const target = destination(game, source, dest);
+  const reason = game.block(source) ?? game.block(target + '/..');
+  if (reason) return game.error(reason) || null;
+  if (game.resolve(source) === target) return game.error(game.t('cp-same-file', { source, destination: dest })) || null;
+  if (!game.traverses(source) || !game.can(n, 'r')) return game.error(game.t('cp-read-permission', { target: source })) || null;
+  // -p (and -a): the date stays, and root keeps the owner; otherwise the copy is new, and yours.
+  const keep = letters.has('p');
+  const error = game.place('cp', target, copy(n, game.who, keep && game.who === 'root', keep));
+  if (error) return game.error(error) || null;
+  return letters.has('v') ? `'${source}' -> '${shownDestination(game, source, dest)}'` : null;
+};
 
 export const FILES: Record<string, Command> = {
   pwd: {
@@ -197,16 +312,50 @@ export const FILES: Record<string, Command> = {
         bsd && !raw.args.some((a) => /^-[A-Za-z1,]*G/.test(a) && !a.startsWith('--')) ? 'never' : 'auto',
       );
       if (invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'ls', invalid));
-      const c = { ...raw, args };
+      // -1 (one name per line) and --sort=WORD become letters the listing reads.
+      const sorts: Record<string, string> = { none: 'U', time: 't', size: 'S', extension: 'X', name: '' };
+      const own: string[] = [];
+      for (const a of args) {
+        const sort = /^--sort=(.*)$/.exec(a);
+        if (sort) {
+          if (!(sort[1] in sorts)) {
+            raw.game.status = 2;
+            return raw.game.error(`ls: invalid argument '${sort[1]}' for '--sort'\nValid arguments are:\n  - 'none'\n  - 'time'\n  - 'size'\n  - 'extension'\n  - 'version'\n  - 'width'\nTry 'ls --help' for more information.`);
+          }
+          if (sorts[sort[1]]) own.push(`-${sorts[sort[1]]}`);
+        } else own.push(a);
+      }
+      // -1 is read here (the letters of options() are only letters).
+      const one = own.some((a) => /^-[A-Za-z1]*1[A-Za-z1]*$/.test(a));
+      const c = { ...raw, args: own.map((a) => (/^-[A-Za-z1]+$/.test(a) ? a.replace(/1/g, '') : a)).filter((a) => a !== '-' || !own.includes('-1')) };
       const paint = painting(colourise(c, when));
-      const list_ = (ctx: Context) => list(ctx, paint);
-      const { rest } = options(c.args);
+      const list_ = (ctx: Context) => list(ctx, paint, one);
+      const { letters: set, rest } = options(c.args);
+      const letters = c.args.filter((a) => /^-[A-Za-z]+$/.test(a));
+      // -R: the place and every place below it.
+      if (set.has('R') && !set.has('d')) {
+        const targets = rest.length ? rest : ['.'];
+        const files = targets.filter((r) => c.game.find(r)?.type !== 'directory');
+        const blocks: string[] = files.map((f) => list_({ ...c, args: [...letters, f] })).filter(Boolean);
+        for (const t of targets.filter((r) => c.game.find(r)?.type === 'directory')) blocks.push(...recursive(c, t, list_, letters, true));
+        return blocks.join('\n\n');
+      }
       if (rest.length <= 1) return list_(c);
-      // Several targets: files first, then one block per place, with its name (like ls).
-      const letters = c.args.filter((a) => a.startsWith('-'));
-      const files = rest.filter((r) => c.game.find(r)?.type !== 'directory');
-      const places = rest.filter((r) => c.game.find(r)?.type === 'directory');
-      const blocks = files.map((f) => list_({ ...c, args: [...letters, f] })).filter(Boolean);
+      // Several targets: the files together (in columns, like the names of a place;
+      // with -d, places too), then one block per place, with its name (like GNU ls).
+      const isPlace = (r: string) => c.game.find(r)?.type === 'directory' && !set.has('d');
+      const sortedTargets = (targets: string[]) =>
+        sortEntries(
+          c.game,
+          targets.map((r) => [r, c.game.find(r, false) ?? ({ type: 'file', content: '' } as Node)] as [string, Node]),
+          set,
+        ).map(([r]) => r);
+      const files = sortedTargets(rest.filter((r) => !isPlace(r)));
+      const places = sortedTargets(rest.filter(isPlace));
+      const shown = files.map((f) => list_({ ...c, args: [...letters, f], last: false })).filter(Boolean);
+      const long = set.has('l') || set.has('n');
+      const blocks: string[] = [];
+      if (shown.length) blocks.push(long || one || !c.last ? shown.join('\n') : inColumns(shown, c.game.columns));
       for (const l of places) blocks.push(`${l}:\n${list_({ ...c, args: [...letters, l] })}`);
       return blocks.join('\n\n');
     },
@@ -316,61 +465,109 @@ export const FILES: Record<string, Command> = {
     },
   },
 
+  // mv [-i|-n|-f] [-v] source… destination: several sources go into a place.
   mv: {
     launch: ({ args, game }) => {
-      const [source, dest] = args;
-      if (!source || !dest) return game.error(game.t('mv-usage'));
-      const n = game.find(source);
-      if (!n) return game.error(game.t('mv-missing', { target: source }));
-      // Game simplification: objects are moved, never places.
-      if (n.type === 'directory') return game.error(game.t('mv-place', { target: source }));
-      if (n.isProtected?.mv) return game.error(n.isProtected.mv);
-      const target = destination(game, source, dest);
-      const reason = game.block(source) ?? game.block(target + '/..');
-      if (reason) return game.error(reason);
-      if (game.resolve(source) === target) return '';
-      if (!game.writtenIn(source)) return game.error(game.t('mv-permission', { target: source }));
-      const error = game.place('mv', target, n);
-      if (error) return game.error(error);
-      game.erase(source);
-      return '';
+      const { letters, rest } = options(args);
+      if (rest.length < 2) return game.error(game.t('mv-usage'));
+      const dest = rest.at(-1)!;
+      const sources = rest.slice(0, -1);
+      if (sources.length > 1 && game.find(dest)?.type !== 'directory') return game.error(game.t(game.find(dest) ? 'target-not-directory' : 'target-missing', { command: 'mv', target: dest }));
+      return overwriting(game, sources, dest, letters, 'mv', moveOne);
     },
   },
 
+  // cp [-r|-R|-a] [-p] [-i|-n] [-v] source… destination.
   cp: {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
-      const [source, dest] = rest;
-      if (!source || !dest) return game.error(game.t('cp-usage'));
-      const n = game.find(source);
-      if (!n) return game.error(game.t('cp-missing', { target: source }));
-      if (n.type === 'directory' && !letters.has('r')) return game.error(game.t('cp-directory', { target: source }));
-      const target = destination(game, source, dest);
-      const reason = game.block(source) ?? game.block(target + '/..');
-      if (reason) return game.error(reason);
-      if (game.resolve(source) === target) return game.error(game.t('cp-same-file', { source, destination: dest }));
-      if (!game.traverses(source) || !game.can(n, 'r')) return game.error(game.t('cp-read-permission', { target: source }));
-      const error = game.place('cp', target, copy(n, game.who));
-      return error ? game.error(error) : '';
+      // -a (archive): recursive, and keeps the rights, the dates (and the owner, for root).
+      if (letters.has('a')) ['r', 'p'].forEach((l) => letters.add(l));
+      if (letters.has('R')) letters.add('r');
+      if (rest.length < 2) return game.error(game.t('cp-usage'));
+      const dest = rest.at(-1)!;
+      const sources = rest.slice(0, -1);
+      if (sources.length > 1 && game.find(dest)?.type !== 'directory') return game.error(game.t(game.find(dest) ? 'target-not-directory' : 'target-missing', { command: 'cp', target: dest }));
+      return overwriting(game, sources, dest, letters, 'cp', copyOne);
     },
   },
 
+  // rm [-f] [-i] [-v] file…: -f says nothing of what is missing and never asks.
   rm: {
     launch: ({ args, game }) => {
-      if (!args.length) return game.error(game.t('rm-usage'));
-      for (const target of args.filter((a) => !a.startsWith('-'))) {
-        // rm deletes the link itself, never its target.
+      const { letters, rest } = options(args);
+      if (!rest.length) return letters.has('f') ? '' : game.error(game.t('rm-usage'));
+      const done: string[] = [];
+      const remove = (targets: string[]): string => {
+        for (let k = 0; k < targets.length; k++) {
+          const target = targets[k];
+          // rm deletes the link itself, never its target.
+          const n = game.find(target, false);
+          if (!n) {
+            if (!letters.has('f')) game.error(game.t('rm-missing', { target: target }));
+          } else if (n.type === 'directory') {
+            // -d: an empty place, like rmdir.
+            if (letters.has('d') && !Object.keys(n.children).length && !letters.has('r') && !letters.has('R')) {
+              if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
+              else {
+                game.erase(target);
+                if (letters.has('v')) done.push(game.t('rm-removed-directory', { target: target }));
+              }
+            } else game.error(game.t('rm-directory', { target: target }));
+          } else if (n.isProtected?.rm) game.error(n.isProtected.rm);
+          else if (game.block(target)) game.error(game.block(target)!);
+          // Deleting a file means changing the place that holds it: it takes
+          // write permission on that place, not on the file.
+          else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
+          else if (letters.has('i') && !letters.has('f')) {
+            const empty = n.type === 'file' && n.link === undefined && sizeFor(n, game) === 0;
+            const key = n.type === 'file' && n.link !== undefined ? 'rm-ask-link' : empty ? 'rm-ask-empty' : 'rm-ask';
+            game.ask(`${game.t(key, { target: target })} `, (answer) => {
+              if (yes(game, answer)) {
+                game.erase(target);
+                if (letters.has('v')) done.push(game.t('rm-removed', { target: target }));
+              }
+              return [done.splice(0).join('\n'), remove(targets.slice(k + 1))].filter(Boolean).join('\n');
+            });
+            return done.splice(0).join('\n');
+          } else {
+            game.erase(target);
+            if (letters.has('v')) done.push(game.t('rm-removed', { target: target }));
+          }
+        }
+        return done.splice(0).join('\n');
+      };
+      return remove(rest);
+    },
+  },
+
+  // rmdir [-p] [-v] place…: removes empty places only.
+  rmdir: {
+    launch: ({ args, game }) => {
+      const { letters, rest } = options(args.filter((a) => a !== '--ignore-fail-on-non-empty'));
+      const ignore = args.includes('--ignore-fail-on-non-empty');
+      if (!rest.length) return game.error(game.t('rmdir-usage'));
+      const out: string[] = [];
+      const one = (target: string): boolean => {
         const n = game.find(target, false);
-        if (!n) game.error(game.t('rm-missing', { target: target }));
-        else if (n.type === 'directory') game.error(game.t('rm-directory', { target: target }));
-        else if (n.isProtected?.rm) game.error(n.isProtected.rm);
-        else if (game.block(target)) game.error(game.block(target)!);
-        // Deleting a file means changing the place that holds it: it takes
-        // write permission on that place, not on the file.
-        else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
-        else game.erase(target);
+        const fail = (reason: string) => (game.error(game.t('rmdir-failed', { target: target, reason: game.t(reason) })), false);
+        if (letters.has('v')) out.push(game.t('rmdir-removing', { target: target }));
+        if (!n) return fail('rmdir-missing');
+        if (n.type !== 'directory') return fail('rmdir-not-directory');
+        if (Object.keys(n.children).length) return ignore ? false : fail('rmdir-not-empty');
+        const reason = game.block(target);
+        if (reason) return (game.error(reason), false);
+        if (!game.writtenIn(target)) return fail('rmdir-permission');
+        game.erase(target);
+        return true;
+      };
+      for (const target of rest) {
+        if (!one(target) || !letters.has('p')) continue;
+        // -p: then each parent named in the path, as long as it is empty.
+        const parts = target.replace(/\/+$/, '').split('/');
+        for (let k = parts.length - 1; k > 0; k--) if (!one(parts.slice(0, k).join('/') || '/')) break;
       }
-      return '';
+      return out.join('\n');
     },
   },
 

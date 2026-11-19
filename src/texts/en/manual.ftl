@@ -404,11 +404,20 @@ man-chage = shows and changes an account's dates (change age): -l shows them, -E
     .example-3 = the account no longer expires
 man-clear = clears the screen.
     .synopsis = clear
-man-cp = copies a file (copy). The original stays in place. -r copies a whole place with all its content.
-    .synopsis = cp [-r] source destination
+man-cp = copies a file (copy). The original stays in place. -r copies a whole place with all its content; -a too, keeping the rights and dates (the right reflex before editing a configuration: cp -a /etc/nginx /etc/nginx.bak). With several sources, the destination is a place. -i asks before replacing a file, -n never replaces one, -v says what it copies.
+    .synopsis = cp [-r|-a] [-p] [-i|-n] [-v] source… destination
     .option-r = copies a whole place, with everything it contains (recursive).
+    .option-R = the same as -r.
+    .option-a = archive: like -r -p (everything, the rights and dates kept).
+    .option-p = keeps the rights and the dates (preserve); root also keeps the owner.
+    .option-i = asks before replacing an existing file (interactive): y to replace.
+    .option-n = never replaces an existing file (no clobber).
+    .option-v = says what is copied (verbose).
+    .option-f = replaces without asking (force).
     .example-1 = make a copy next to it
     .example-2 = copy a file from elsewhere to here (.)
+    .example-3 = save nginx's configuration before touching it
+    .example-4 = copy, asking before replacing, and say it
 man-curl = fetches a web page, like a browser but without displaying it nicely. It also talks to HTTP APIs: -s keeps it quiet (no progress, no error message unless -S), -G sends the data given with -d or --data-urlencode in the URL's query string rather than in a POST, --data-urlencode NAME=VALUE encodes the value (spaces, braces, quotes of a PromQL query), -X chooses the method (POST…), -f fails with error 22 on an HTTP error. Braces and brackets in a URL are curl's patterns: quote the URL and add -g (--globoff), or pass the query with --data-urlencode. -I only asks for the response header (the status code, for example 200 = OK). Over HTTPS (https://…), curl checks the server's certificate like a browser: validity dates, site name, trusted authority; if there is a problem, it stops with error 60. -4 and -6 choose the address family (IPv4, IPv6); without them, curl tries IPv6 first, then IPv4 (happy eyeballs): a site broken in IPv6 can still show. An IPv6 address goes in brackets: http://[2001:db8::80]/. -v (verbose) shows each attempt ("Trying [addr]:80...", "Connection refused"), the request sent (>) and the headers received (<).
     .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X METHOD] [-d DATA] [--data-urlencode NAME=VALUE] address
     .option-4 = IPv4 only.
@@ -602,18 +611,29 @@ man-ln = creates a link (link). With -s, a symbolic link: a small file that hold
     .example-1 = enable an nginx site, the Debian way
     .example-2 = see the links and what they point to
     .example-3 = switch the current link to another version, in one go
-man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the owner and the size; -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names. On screen, names are in colour (--color=auto, like the alias in Debian's ~/.bashrc): places in blue, links in cyan, programs in green; --color=never turns colours off, --color=always keeps them even in a pipe.
-    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [--color[=WHEN]] [place]
+man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the owner and the size; -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names. Names come in alphabetical order: -t sorts by date (the most recent first: ls -ltr puts the last modified file at the bottom), -S by size (the largest first), -r reverses the order; -R also lists every place below. On screen, names are in colour (--color=auto, like the alias in Debian's ~/.bashrc): places in blue, links in cyan, programs in green; --color=never turns colours off, --color=always keeps them even in a pipe.
+    .synopsis = ls [-aAlhndi1] [-t|-S|-U|-X] [-r] [-R] [--sort=WORD] [--color[=WHEN]] [place…]
     .option-a = shows everything (all), including hidden files, whose name starts with a dot, and the places . and ..
+    .option-A = like -a, without . and .. (almost all).
     .option-l = long format: type, permissions, owner, group, size and name, one entry per line.
     .option-h = with -l, writes sizes in a readable way (human-readable): 1.2K, 34M, 5G.
     .option-n = like -l, but with the numbers of the owner (uid) and the group (gid) instead of their names (numeric).
     .option-i = shows the inode number of each file: two names with the same number are the same file (a hard link).
     .option-d = shows the place itself, not what it contains (directory): with -l, its own permissions.
+    .option-t = sorts by modification time, the most recent first (--sort=time).
+    .option-r = reverses the order (reverse).
+    .option-S = sorts by size, the largest first (--sort=size).
+    .option-R = also lists the places below, each under its name (recursive).
+    .option-U = does not sort: the order the place keeps them in (--sort=none).
+    .option-X = sorts by extension (--sort=extension).
+    .option-1 = one name per line, even on screen.
     .example-1 = what is here
     .example-2 = everything, even what is hidden
     .example-3 = the permissions of the place memories
     .example-4 = the permissions of the /srv/till directory itself
+    .example-5 = the logs, the most recently written at the bottom
+    .example-6 = the largest logs first
+    .example-7 = nginx's configuration, every level
     .command-3 = ls -l ~/memories
 man-mail = sends mail (mailx): the text comes through a pipe (echo … | mail -s subject recipient). -s gives the subject; -E sends nothing if the text is empty (handy after a command that stays silent when all is well). On a server, local mail goes to /var/mail/account; /etc/aliases can forward it elsewhere (root: zoe). With no recipient, mail lists the messages received.
     .synopsis = mail [-E] [-s subject] recipient… ; mail
@@ -633,11 +653,16 @@ man-mkdir = creates a new place, that is, a directory (make directory). -p also 
     .option-p = also creates the parent places (parents), with no error if they exist.
     .example-1 = create a place
     .example-2 = create a place and all its parents at once
-man-mv = moves a file into a place (move), or renames it if the destination is a new name.
-    .synopsis = mv source destination
+man-mv = moves a file into a place (move), or renames it if the destination is a new name. With several sources, the destination is a place. -i asks before replacing a file, -n never replaces one, -v says what it moves.
+    .synopsis = mv [-i|-n|-f] [-v] source… destination
+    .option-i = asks before replacing an existing file (interactive): y to replace.
+    .option-n = never replaces an existing file (no clobber).
+    .option-v = says what is moved (verbose).
+    .option-f = replaces without asking (force).
     .example-1 = move crab into the place Bucket
     .example-2 = rename
     .example-3 = move and rename at once
+    .example-4 = move the logs into old/, asking before replacing
     .command-1 = mv crab Bucket
     .command-2 = mv draft.txt letter.txt
     .command-3 = mv draft.txt ~/Harbour/letter.txt
@@ -718,9 +743,17 @@ man-rndc = controls the running DNS server named (BIND). rndc reload rereads the
     .synopsis = rndc reload [zone] ; rndc status
     .example-1 = reload a zone after editing it (and increasing its serial)
     .example-2 = the server's status
-man-rm = deletes a file (remove). Beware: rm goes through no bin, it's permanent. (The trash of graphical desktops, ~/.local/share/Trash, is just a folder: a file goes there with gio trash, never with rm.)
-    .synopsis = rm file
+man-rm = deletes a file (remove). Beware: rm goes through no bin, it's permanent. (The trash of graphical desktops, ~/.local/share/Trash, is just a folder: a file goes there with gio trash, never with rm.) -i asks for each file, -f says nothing of a missing file and never asks, -v says what it deletes, -d deletes an empty place (like rmdir).
+    .synopsis = rm [-f|-i] [-v] [-d] file…
+    .option-f = no error for a missing file, no question (force).
+    .option-i = asks before each deletion: y to delete.
+    .option-v = says what is deleted (verbose).
+    .option-r = deletes whole places, everything they contain (recursive): refused in this game.
+    .option-R = the same as -r.
+    .option-d = deletes an empty place (dir).
     .example-1 = delete a file, forever
+    .example-2 = delete the .tmp files, one question each
+    .example-3 = no error if it is not there
 man-rsnapshot = keeps snapshots of one or more directories: the full state of the moment, at regular intervals. Files that haven't changed from one snapshot to the next are not copied again but linked (hard links: the same file under two names, see ls -i); each snapshot looks complete, but only the changes take up space. Everything is set in /etc/rsnapshot.conf, with TABS between the items (never spaces): snapshot_root (where to store the snapshots, with a trailing slash), retain name count (a level, from most frequent to rarest, and how many to keep: retain daily 7, then retain weekly 4), backup source destination (backup /srv/share/ localhost/). rsnapshot configtest checks the file. rsnapshot daily rotates the daily level: daily.0 is the most recent, the oldest is deleted; a rarer level (weekly) takes over the oldest daily. -t shows what would be done, without doing anything. rsnapshot du measures the real space used. You run it with cron: the rarest level a little before the most frequent.
     .synopsis = rsnapshot [-t] [-v] [-c file] configtest | du | level
     .example-1 = check the configuration
@@ -3589,3 +3622,9 @@ man-command = command -v name prints what the shell would run: a program's path,
     .option-V = the same, in a sentence (like type).
     .example-1 = is rsync installed?
     .example-2 = ls without its colour alias
+man-rmdir = removes an empty place (remove directory): a place that still holds something stays ("Directory not empty"). -p also removes the parents named in the path, as long as they become empty.
+    .synopsis = rmdir [-p] [-v] place…
+    .option-p = also removes each parent of the path, if empty (parents).
+    .option-v = says each place removed (verbose).
+    .example-1 = remove the empty place old
+    .example-2 = remove tmp, then 1, then releases, if they are empty

@@ -90,3 +90,27 @@ tar-truncated =
     tar: Error is not recoverable: exiting now
 tar-place-missing = tar: { $target }: Cannot chdir: No such file or directory
 tar-option-missing = tar: You must specify one of the '-Acdtrux', '--delete' or '--test-label' options
+
+## cp, mv, rm and rmdir: options (coreutils 9.4's messages)
+
+target-not-directory = { $command }: target '{ $target }': Not a directory
+target-missing = { $command }: target '{ $target }': No such file or directory
+# -i: the question (the code adds the space after it); y (or yes) replaces the file.
+cp-overwrite = cp: overwrite '{ $target }'? 
+mv-overwrite = mv: overwrite '{ $target }'? 
+# mv -v
+mv-renamed = renamed '{ $source }' -> '{ $destination }'
+rm-ask = rm: remove regular file '{ $target }'? 
+rm-ask-empty = rm: remove regular empty file '{ $target }'? 
+rm-ask-link = rm: remove symbolic link '{ $target }'? 
+rm-removed = removed '{ $target }'
+rm-removed-directory = removed directory '{ $target }'
+rmdir-usage =
+    rmdir: missing operand
+    Try 'rmdir --help' for more information.
+rmdir-failed = rmdir: failed to remove '{ $target }': { $reason }
+rmdir-missing = No such file or directory
+rmdir-not-directory = Not a directory
+rmdir-not-empty = Directory not empty
+rmdir-permission = Permission denied
+rmdir-removing = rmdir: removing directory, '{ $target }'

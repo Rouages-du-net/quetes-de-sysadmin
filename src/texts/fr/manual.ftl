@@ -408,12 +408,21 @@ man-chage = montre et change les dates d'un compte (change age) : -l les affiche
     .example-3 = le compte n'expire plus
 man-clear = efface l’écran.
     .synopsis = clear
-man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu entier avec tout son contenu.
+man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu entier avec tout son contenu ; -a aussi, en gardant les droits et les dates (le bon réflexe avant de modifier une configuration : cp -a /etc/nginx /etc/nginx.bak). Avec plusieurs sources, la destination est un lieu. -i demande avant de remplacer un fichier, -n n'en remplace jamais, -v dit ce qu'il copie.
     .command-1 = cp levain levain_2
-    .synopsis = cp [-r] source destination
+    .synopsis = cp [-r|-a] [-p] [-i|-n] [-v] source… destination
     .option-r = copie un lieu entier, avec tout ce qu’il contient (récursif).
+    .option-R = la même chose que -r.
+    .option-a = archive : comme -r -p (tout, droits et dates gardés).
+    .option-p = garde les droits et les dates (preserve) ; root garde aussi le propriétaire.
+    .option-i = demande avant de remplacer un fichier existant (interactive) : o pour remplacer.
+    .option-n = ne remplace jamais un fichier existant (no clobber).
+    .option-v = dit ce qui est copié (verbose).
+    .option-f = remplace sans demander (force).
     .example-1 = faire une copie à côté
     .example-2 = copier ici (.) un fichier d’ailleurs
+    .example-3 = mettre de côté la configuration de nginx avant d'y toucher
+    .example-4 = copier, en demandant avant de remplacer, et le dire
 man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. Il parle aussi aux API HTTP : -s le rend silencieux (pas de progression, pas de message d’erreur sans -S), -G envoie les données de -d ou --data-urlencode dans l’URL plutôt que dans un POST, --data-urlencode NOM=VALEUR encode la valeur (espaces, accolades, guillemets d’une requête PromQL), -X choisit la méthode (POST…), -f échoue avec l’erreur 22 sur une erreur HTTP. Les accolades et crochets d’une URL sont des motifs de curl : mettez l’URL entre guillemets et ajoutez -g (--globoff), ou passez la requête avec --data-urlencode. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<).
     .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X MÉTHODE] [-d DONNÉES] [--data-urlencode NOM=VALEUR] adresse
     .option-4 = IPv4 seulement.
@@ -616,18 +625,29 @@ man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qu
     .example-1 = activer un site nginx, à la façon de Debian
     .example-2 = voir les liens et ce qu'ils visent
     .example-3 = basculer le lien current vers une autre version, d'un coup
-man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms. À l'écran, les noms sont en couleur (--color=auto, comme l'alias du ~/.bashrc de Debian) : les lieux en bleu, les liens en cyan, les programmes en vert ; --color=never coupe les couleurs, --color=always les garde même dans un tube.
-    .synopsis = ls [-a] [-l] [-d] [-h] [-n] [--color[=QUAND]] [lieu]
+man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms. Les noms viennent par ordre alphabétique : -t trie par date (le plus récent d'abord : ls -ltr met le dernier fichier modifié en bas), -S par taille (le plus gros d'abord), -r inverse l'ordre ; -R liste aussi chaque lieu en dessous. À l'écran, les noms sont en couleur (--color=auto, comme l'alias du ~/.bashrc de Debian) : les lieux en bleu, les liens en cyan, les programmes en vert ; --color=never coupe les couleurs, --color=always les garde même dans un tube.
+    .synopsis = ls [-aAlhndi1] [-t|-S|-U|-X] [-r] [-R] [--sort=MOT] [--color[=QUAND]] [lieu…]
     .option-a = montre tout (all), y compris les fichiers cachés, dont le nom commence par un point, et les lieux . et ..
+    .option-A = comme -a, sans . ni .. (almost all).
     .option-l = format long : type, permissions, propriétaire, groupe, taille et nom, une entrée par ligne.
     .option-h = avec -l, écrit les tailles de façon lisible (human-readable) : 1,2K, 34M, 5G.
     .option-n = comme -l, mais avec les numéros du propriétaire (uid) et du groupe (gid) au lieu de leurs noms (numeric).
     .option-i = montre le numéro d'inode de chaque fichier : deux noms avec le même numéro sont le même fichier (un lien physique).
     .option-d = montre le lieu lui-même, pas ce qu'il contient (directory) : avec -l, ses propres droits.
+    .option-t = trie par date de modification, la plus récente d'abord (--sort=time).
+    .option-r = inverse l'ordre (reverse).
+    .option-S = trie par taille, la plus grosse d'abord (--sort=size).
+    .option-R = liste aussi les lieux en dessous, chacun sous son nom (récursif).
+    .option-U = ne trie pas : l'ordre où le lieu les garde (--sort=none).
+    .option-X = trie par extension (--sort=extension).
+    .option-1 = un nom par ligne, même à l'écran.
     .example-1 = ce qu’il y a ici
     .example-2 = tout, même ce qui est caché
     .example-3 = les permissions du lieu souvenirs
     .example-4 = les droits du dossier /srv/till lui-même
+    .example-5 = les journaux, le dernier écrit en bas
+    .example-6 = les plus gros journaux d'abord
+    .example-7 = la configuration de nginx, tous les niveaux
 man-mail = envoie un courrier (mailx) : le texte arrive par un tube (echo … | mail -s sujet destinataire). -s donne le sujet ; -E n'envoie rien si le texte est vide (pratique derrière une commande qui ne dit rien quand tout va bien). Sur un serveur, le courrier local va dans /var/mail/compte ; /etc/aliases peut le renvoyer ailleurs (root: zoe). Sans destinataire, mail liste les courriers reçus.
     .synopsis = mail [-E] [-s sujet] destinataire… ; mail
     .example-1 = envoyer une ligne à zoe
@@ -644,11 +664,16 @@ man-mkdir = crée un nouveau lieu, c’est-à-dire un dossier (make directory). 
     .option-p = crée aussi les lieux parents (parents), sans erreur s'ils existent.
     .example-1 = créer un lieu
     .example-2 = créer un lieu et tous ses parents d'un coup
-man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destination est un nouveau nom.
-    .synopsis = mv source destination
+man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destination est un nouveau nom. Avec plusieurs sources, la destination est un lieu. -i demande avant de remplacer un fichier, -n n'en remplace jamais, -v dit ce qu'il déplace.
+    .synopsis = mv [-i|-n|-f] [-v] source… destination
+    .option-i = demande avant de remplacer un fichier existant (interactive) : o pour remplacer.
+    .option-n = ne remplace jamais un fichier existant (no clobber).
+    .option-v = dit ce qui est déplacé (verbose).
+    .option-f = remplace sans demander (force).
     .example-1 = déplacer crabe dans le lieu Seau
     .example-2 = renommer
     .example-3 = déplacer et renommer d’un coup
+    .example-4 = ranger les journaux dans old/, en demandant avant de remplacer
 man-nc = netcat, le couteau suisse du réseau. Ici, pour tester si un port TCP d'une machine répond, comme le ferait n'importe qui sur internet : -z teste sans rien envoyer, -v dit le résultat. « succeeded » : le port est ouvert ; « Connection refused » : personne n'écoute (ou le pare-feu refuse) ; « timed out » : le pare-feu jette les paquets. Tester depuis une AUTRE machine montre ce que voit le monde ; depuis la machine elle-même, le pare-feu n'intervient pas. -4 et -6 choisissent la famille d'adresses (par défaut, l'IPv6 d'abord quand le nom en a une).
     .synopsis = nc -zv [-4|-6] machine port[-port]
     .example-1 = le port 22 (SSH) de la machine fabrique répond-il ?
@@ -727,9 +752,17 @@ man-rndc = pilote le serveur DNS named (BIND) qui tourne. rndc reload relit les 
     .synopsis = rndc reload [zone] ; rndc status
     .example-1 = recharger une zone après l'avoir modifiée (et son serial augmenté)
     .example-2 = l'état du serveur
-man-rm = efface un fichier (remove). Attention : rm ne passe par aucune corbeille, c’est définitif. (La corbeille des bureaux graphiques, ~/.local/share/Trash, n’est qu’un dossier : on y envoie un fichier avec gio trash, jamais avec rm.)
-    .synopsis = rm fichier
+man-rm = efface un fichier (remove). Attention : rm ne passe par aucune corbeille, c’est définitif. (La corbeille des bureaux graphiques, ~/.local/share/Trash, n’est qu’un dossier : on y envoie un fichier avec gio trash, jamais avec rm.) -i demande pour chaque fichier, -f ne dit rien d'un fichier absent et ne demande jamais, -v dit ce qu'il efface, -d efface un lieu vide (comme rmdir).
+    .synopsis = rm [-f|-i] [-v] [-d] fichier…
+    .option-f = pas d'erreur pour un fichier absent, pas de question (force).
+    .option-i = demande avant chaque effacement : o pour effacer.
+    .option-v = dit ce qui est effacé (verbose).
+    .option-r = efface des lieux entiers, tout ce qu'ils contiennent (récursif) : refusé dans ce jeu.
+    .option-R = la même chose que -r.
+    .option-d = efface un lieu vide (dir).
     .example-1 = effacer un fichier, pour toujours
+    .example-2 = effacer les fichiers .tmp, une question pour chacun
+    .example-3 = pas d'erreur s'il n'est pas là
 man-rsnapshot = garde des instantanés d'un ou plusieurs dossiers (snapshots) : l'état complet du moment, à intervalles réguliers. Les fichiers qui n'ont pas changé d'un instantané à l'autre ne sont pas recopiés mais liés (liens physiques : le même fichier sous deux noms, voir ls -i) ; chaque instantané paraît complet, mais seuls les changements prennent de la place. Tout se règle dans /etc/rsnapshot.conf, avec des TABULATIONS entre les éléments (jamais d'espaces) : snapshot_root (où ranger les instantanés, avec une barre finale), retain nom nombre (un niveau, du plus fréquent au plus rare, et combien en garder : retain daily 7, puis retain weekly 4), backup source destination (backup /srv/partage/ localhost/). rsnapshot configtest vérifie le fichier. rsnapshot daily fait tourner le niveau daily : daily.0 est le plus récent, le plus vieux est supprimé ; un niveau plus rare (weekly) reprend le plus vieux daily. -t montre ce qui serait fait, sans rien faire. rsnapshot du mesure la place réelle. On le lance avec cron : le niveau le plus rare un peu avant le plus fréquent.
     .synopsis = rsnapshot [-t] [-v] [-c fichier] configtest | du | niveau
     .example-1 = vérifier la configuration
@@ -3612,3 +3645,9 @@ man-command = command -v nom affiche ce que le shell lancerait : le chemin d'un 
     .option-V = la même chose, en une phrase (comme type).
     .example-1 = rsync est-il installé ?
     .example-2 = ls sans son alias de couleur
+man-rmdir = supprime un lieu vide (remove directory) : un lieu qui contient encore quelque chose reste (« Le dossier n'est pas vide »). -p supprime aussi les parents nommés dans le chemin, tant qu'ils deviennent vides.
+    .synopsis = rmdir [-p] [-v] lieu…
+    .option-p = supprime aussi chaque parent du chemin, s'il est vide (parents).
+    .option-v = dit chaque lieu supprimé (verbose).
+    .example-1 = supprimer le lieu vide old
+    .example-2 = supprimer tmp, puis 1, puis releases, s'ils sont vides

@@ -90,3 +90,27 @@ tar-truncated =
     tar: Erreur non récupérable : arrêt immédiat
 tar-place-missing = tar : { $target } : chdir impossible : aucun fichier ou dossier de ce nom
 tar-option-missing = tar : il faut une de ces options : -c, -t ou -x
+
+## cp, mv, rm et rmdir : options (messages de coreutils 9.4 en français)
+
+target-not-directory = { $command } : cible '{ $target }' : n'est pas un répertoire
+target-missing = { $command } : cible '{ $target }' : aucun fichier ou dossier de ce nom
+# -i : la question ; o (ou y) remplace le fichier.
+cp-overwrite = cp : voulez-vous écraser '{ $target }' ? 
+mv-overwrite = mv : voulez-vous écraser '{ $target }' ? 
+# mv -v
+mv-renamed = '{ $source }' renommé en '{ $destination }'
+rm-ask = rm : supprimer '{ $target }' du type fichier ? 
+rm-ask-empty = rm : supprimer '{ $target }' du type fichier vide ? 
+rm-ask-link = rm : supprimer '{ $target }' du type lien symbolique ? 
+rm-removed = '{ $target }' supprimé
+rm-removed-directory = répertoire '{ $target }' supprimé
+rmdir-usage =
+    rmdir : opérande manquant
+    Saisissez « rmdir --help » pour plus d'informations.
+rmdir-failed = rmdir : impossible de supprimer '{ $target }' : { $reason }
+rmdir-missing = aucun fichier ou dossier de ce nom
+rmdir-not-directory = n'est pas un répertoire
+rmdir-not-empty = Le dossier n'est pas vide
+rmdir-permission = Permission non accordée
+rmdir-removing = rmdir : suppression du répertoire, '{ $target }'
