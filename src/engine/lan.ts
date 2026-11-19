@@ -11,12 +11,16 @@
 //     rebuilds from the file (the "auto" interfaces);
 //   - ping: a device answers if it is in the VLAN of the interface whose
 //     network contains its address, and that interface is up.
-// Differences: IPv4 only, no visible ARP, no MTU or bonding; the switch is
+//   - IPv6 (see ipv6.ts): "iface … inet6 static|auto|manual" stanzas
+//     (address with its prefix length, gateway, accept_ra, autoconf),
+//     the router's advertisements (Lan.ra) and SLAAC.
+// Differences: no visible ARP, no MTU or bonding; the switch is
 // described by the chapter (ports already configured).
 
 import type { Game } from './shell';
 import type { Flux } from './nftables';
 import type { Remote } from './wireguard';
+import { cidr6, write6, type RouterAdvert } from './ipv6';
 
 export interface Interface {
   name: string;
@@ -29,6 +33,8 @@ export interface Interface {
   wireguard?: boolean;
   // The networks reached through this interface besides its own (the routes wg-quick adds).
   routes?: string[];
+  // IPv6 addresses given by hand or by ifupdown (CIDR, canonical); link-local and SLAAC ones are computed (ipv6.ts).
+  addresses6?: string[];
 }
 
 export interface Device {
@@ -56,6 +62,10 @@ export interface Lan {
   flux?: Flux[];
   // The devices that connect from the internet through WireGuard (see wireguard.ts).
   remotes?: Remote[];
+  // IPv6: the router advertising a prefix on the link (the machine then speaks IPv6, see ipv6.ts).
+  ra?: RouterAdvert;
+  // An IPv6 default gateway given by hand (ip -6 route add default) or by ifupdown (gateway in an inet6 stanza).
+  gateway6?: { via: string; dev: string } | null;
 }
 
 export const INTERFACES = '/etc/network/interfaces';
@@ -118,11 +128,23 @@ export const inService = (l: Lan, i: Interface) => i.up && (!i.vlan || !!l.inter
 
 export interface Strophe {
   name: string;
+  // The inet method; "none" when the interface only has an inet6 stanza.
   method: string;
   auto: boolean;
   address?: string;
   gateway?: string;
   vlan?: { parent: string; id: number };
+  v6?: Strophe6;
+}
+
+// An "iface … inet6" stanza (https://manpages.debian.org/trixie/ifupdown/interfaces.5.en.html, INET6 ADDRESS FAMILY).
+export interface Strophe6 {
+  method: string;
+  address?: string;
+  netmask?: string;
+  gateway?: string;
+  acceptRa?: string;
+  autoconf?: string;
 }
 
 /** Reads /etc/network/interfaces (and its "source" lines); errors in ifup's format. */
@@ -134,8 +156,11 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
     const text = j.read(file);
     if (text === null) return;
     let current: Strophe | null = null;
+    let current6: Strophe6 | null = null;
     let mask: string | undefined;
     const finish = () => {
+      if (current6 && current6.address && !current6.address.includes('/') && current6.netmask) current6.address = `${current6.address}/${current6.netmask}`;
+      current6 = null;
       if (current && mask && current.address && !current.address.includes('/')) {
         const l = maskLength(mask);
         if (l === null) errors.push(`${file}: invalid netmask ${mask}`);
@@ -168,9 +193,18 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
       if (word === 'iface') {
         finish();
         const [name, family, method] = rest;
+        if (family === 'inet6') {
+          if (!['static', 'auto', 'manual', 'dhcp', 'loopback', 'v4tunnel', '6to4'].includes(method ?? '')) errors.push(`${file}:${i + 1}: unknown or no method and no address family`);
+          current = stanzas[name] ?? { name, method: 'none', auto: false };
+          current6 = current.v6 = { method: method ?? '' };
+          const v = /^(.+)\.(\d+)$/.exec(name);
+          if (v && !current.vlan) current.vlan = { parent: v[1], id: Number(v[2]) };
+          stanzas[name] = current;
+          return;
+        }
         if (family !== 'inet' || !['static', 'manual', 'loopback', 'dhcp'].includes(method ?? ''))
           errors.push(`${file}:${i + 1}: unknown or no method and no address family`);
-        current = { name, method: method ?? '', auto: false };
+        current = { name, method: method ?? '', auto: false, ...(stanzas[name]?.v6 ? { v6: stanzas[name].v6 } : {}) };
         const v = /^(.+)\.(\d+)$/.exec(name);
         if (v) current.vlan = { parent: v[1], id: Number(v[2]) };
         stanzas[name] = current;
@@ -181,6 +215,14 @@ export function readInterfaces(j: Game): { stanzas: Record<string, Strophe>; err
         return;
       }
       const value = rest.join(' ');
+      if (current6) {
+        if (word === 'address') current6.address = value;
+        else if (word === 'netmask') current6.netmask = value;
+        else if (word === 'gateway') current6.gateway = value;
+        else if (word === 'accept_ra') current6.acceptRa = value;
+        else if (word === 'autoconf') current6.autoconf = value;
+        return;
+      }
       if (word === 'address') {
         if (!cidr(value.split('/')[0])) errors.push(`${file}:${i + 1}: invalid address ${value}`);
         else current.address = value;
@@ -222,7 +264,7 @@ export function remove(l: Lan, name: string) {
 }
 
 /** ifup: brings up an interface from its stanza; returns ifup's error message, or null. */
-export function mount(j: Game, l: Lan, s: Strophe): string | null {
+export function mount(j: Game, l: Lan, s: Strophe, writes = true): string | null {
   if (s.method === 'loopback') return null;
   let i = l.interfaces[s.name];
   if (!i) {
@@ -230,12 +272,32 @@ export function mount(j: Game, l: Lan, s: Strophe): string | null {
     if (!l.interfaces[s.vlan.parent]) return `Cannot find device "${s.vlan.parent}"`;
     i = create(l, s.name, s.vlan);
   }
+  // An inet6 stanza: the address must be one (ifupdown hands it to ip, which refuses it).
+  const v6 = s.v6 && l.ra ? s.v6 : null;
+  if (v6?.method === 'static') {
+    if (!v6.address) return `Error: inet6 prefix is expected rather than "".`;
+    if (!cidr6(v6.address)) return `Error: inet6 prefix is expected rather than "${v6.address}".`;
+  }
   // Bringing up a VLAN also brings up its parent interface (as ifupdown does with the vlan package).
   if (i.vlan) l.interfaces[i.vlan.parent].up = true;
   i.up = true;
   if (s.method === 'static' && s.address) {
     if (!i.addresses.includes(s.address)) i.addresses.push(s.address);
     if (s.gateway) l.gateway = { via: s.gateway, dev: s.name };
+  }
+  if (v6) {
+    // ifupdown writes the kernel's settings (/proc/sys/net/ipv6/conf/IFACE/…), then adds the address and the route.
+    if (v6.method === 'static') {
+      const c = cidr6(v6.address!)!;
+      const a = `${c.ip}/${v6.address!.includes('/') ? c.length : 128}`;
+      i.addresses6 = [...(i.addresses6 ?? []).filter((x) => x !== a), a];
+      if (writes) write6(j, s.name, 'autoconf', v6.autoconf ?? '0');
+      if (writes && v6.acceptRa !== undefined) write6(j, s.name, 'accept_ra', v6.acceptRa);
+      if (v6.gateway) l.gateway6 = { via: v6.gateway.split('%')[0], dev: s.name };
+    } else if (v6.method === 'auto') {
+      if (writes) write6(j, s.name, 'accept_ra', v6.acceptRa ?? '2');
+      if (writes) write6(j, s.name, 'autoconf', '1');
+    }
   }
   return null;
 }
@@ -245,7 +307,9 @@ export function unmount(l: Lan, s: Strophe) {
   if (!i) return;
   i.up = false;
   i.addresses = [];
+  i.addresses6 = [];
   if (l.gateway?.dev === s.name) l.gateway = null;
+  if (l.gateway6?.dev === s.name) l.gateway6 = null;
   // ifdown on a VLAN deletes it.
   if (i.vlan) delete l.interfaces[s.name];
 }
@@ -264,22 +328,23 @@ export function networkToBoot(j: Game): Lan | null {
   if (!l) return null;
   const copyOf = structuredClone(l);
   for (const [name, i] of Object.entries(copyOf.interfaces)) if (i.wireguard) delete copyOf.interfaces[name];
-  goUp(j, copyOf);
+  goUp(j, copyOf, false);
   return copyOf;
 }
 
-function goUp(j: Game, l: Lan): string[] {
+function goUp(j: Game, l: Lan, writes = true): string[] {
   for (const [name, i] of Object.entries(l.interfaces)) {
     // WireGuard interfaces are not in this file: wg-quick manages them.
     if (i.wireguard) continue;
     if (i.vlan) delete l.interfaces[name];
-    else Object.assign(i, { up: name === 'lo', addresses: name === 'lo' ? ['127.0.0.1/8'] : [] });
+    else Object.assign(i, { up: name === 'lo', addresses: name === 'lo' ? ['127.0.0.1/8'] : [], addresses6: [] });
   }
   l.gateway = null;
+  l.gateway6 = null;
   const { stanzas } = readInterfaces(j);
   const mounted: string[] = [];
   for (const s of [...Object.values(stanzas).filter((x) => !x.vlan), ...Object.values(stanzas).filter((x) => x.vlan)])
-    if (s.auto && !mount(j, l, s)) mounted.push(s.name);
+    if (s.auto && !mount(j, l, s, writes)) mounted.push(s.name);
   return mounted;
 }
 

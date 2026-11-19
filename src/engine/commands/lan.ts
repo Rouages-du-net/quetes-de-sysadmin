@@ -9,6 +9,8 @@ import { cidr, create, unmount, inService, lan, readInterfaces, mount, networkFo
 import { readDnsmasq } from '../dnsmasq';
 import type { Command, Context } from './index';
 import { colourise, sgr, type When } from '../colours';
+import { addresses6, cidr6, defaultRoute6, disabled6, routes6, sync6 } from '../ipv6';
+import type { Game } from '../shell';
 
 const NOT_ALLOWED = 'RTNETLINK answers: Operation not permitted';
 
@@ -39,17 +41,30 @@ function linkLines(l: Lan, i: Interface, details: boolean): string[] {
   return lines;
 }
 
-function addressesLines(l: Lan, i: Interface): string[] {
+// The inet6 lines of an interface (iproute2: scope, dynamic for SLAAC, lifetimes).
+function inet6Lines(game: Game, l: Lan, i: Interface): string[] {
+  return addresses6(game, l, i).flatMap((a) => [
+    `    inet6 ${a.cidr} scope ${a.scope}${a.dynamic ? ' dynamic' : ''}${i.name === 'lo' ? ' noprefixroute' : ''}`,
+    a.dynamic ? '       valid_lft 86391sec preferred_lft 14391sec' : '       valid_lft forever preferred_lft forever',
+  ]);
+}
+
+function addressesLines(game: Game, l: Lan, i: Interface, family: 4 | 6 | null): string[] {
   const [first, ...rest] = linkLines(l, i, false);
-  return [
-    first.replace(' mode DEFAULT', ''),
-    ...rest,
-    ...i.addresses.flatMap((a) => {
-      const c = cidr(a)!;
-      const brd = i.name === 'lo' || i.wireguard ? '' : ` brd ${toIp(c.broadcast)}`;
-      return [`    inet ${a}${brd} scope ${i.name === 'lo' ? 'host' : 'global'} ${i.name}`, '       valid_lft forever preferred_lft forever'];
-    }),
-  ];
+  const inet = i.addresses.flatMap((a) => {
+    const c = cidr(a)!;
+    const brd = i.name === 'lo' || i.wireguard ? '' : ` brd ${toIp(c.broadcast)}`;
+    return [`    inet ${a}${brd} scope ${i.name === 'lo' ? 'host' : 'global'} ${i.name}`, '       valid_lft forever preferred_lft forever'];
+  });
+  const inet6 = inet6Lines(game, l, i);
+  // With -4 or -6, ip shows only the interfaces with an address of that family, without the link line.
+  if (family) {
+    const lines = family === 4 ? inet : inet6;
+    if (!lines.length) return [];
+    const short = first.replace(' mode DEFAULT', '').replace(/ qdisc \S+/, '').replace(' group default', '');
+    return [short, ...lines];
+  }
+  return [first.replace(' mode DEFAULT', ''), ...rest, ...inet, ...inet6];
 }
 
 const short = (l: Lan, i: Interface, what: string) => {
@@ -112,7 +127,9 @@ const after = (words: string[], word: string) => (words.includes(word) ? words[w
 function ip(game: Shell, args: string[]): string {
   const l = lan(game);
   if (!l) return game.error('Cannot open netlink socket: Operation not permitted', 1);
+  sync6(game);
   const options = args.filter((a) => a.startsWith('-'));
+  const family: 4 | 6 | null = options.includes('-6') ? 6 : options.includes('-4') ? 4 : null;
   const [object = '', action = 'show', ...rest] = args.filter((a) => !a.startsWith('-'));
   const brief = options.some((o) => o === '-br' || o === '-brief');
   const details = options.some((o) => o === '-d' || o === '-details');
@@ -127,13 +144,38 @@ function ip(game: Shell, args: string[]): string {
       const dev = after(rest, 'dev') ?? rest.find((r) => r !== 'dev');
       if (dev && !interfaceFor(dev)) return missing(dev);
       return listing(dev)
-        .flatMap((i) => (brief ? [short(l, i, i.addresses.join(' '))] : addressesLines(l, i)))
+        .flatMap((i) => {
+          if (!brief) return addressesLines(game, l, i, family);
+          const v6 = addresses6(game, l, i).map((a) => a.cidr);
+          const all = family === 4 ? i.addresses : family === 6 ? v6 : [...i.addresses, ...v6];
+          return family && !all.length ? [] : [short(l, i, all.join(' '))];
+        })
         .join('\n');
     }
     if (['add', 'del', 'delete'].includes(action)) {
       const address = rest[0];
       const dev = after(rest, 'dev');
       if (!address || !dev) return game.error('Not enough information: "dev" argument is required.', 1);
+      // An IPv6 address (with -6, or written with colons).
+      if (family === 6 || (family === null && address.includes(':'))) {
+        const c = cidr6(address);
+        if (!c) return game.error(`Error: inet6 prefix is expected rather than "${address}".`, 1);
+        const i = interfaceFor(dev);
+        if (!i) return missing(dev);
+        if (!root) return game.error(NOT_ALLOWED, 2);
+        const complete = `${c.ip}/${c.length}`;
+        const have = i.addresses6 ?? [];
+        if (action === 'add') {
+          if (have.includes(complete) || addresses6(game, l, i).some((a) => a.cidr === complete)) return game.error('RTNETLINK answers: File exists', 2);
+          if (disabled6(game, dev)) return game.error('RTNETLINK answers: Permission denied', 2);
+          i.addresses6 = [...have, complete];
+        } else {
+          if (!have.includes(complete)) return game.error('RTNETLINK answers: Cannot assign requested address', 2);
+          i.addresses6 = have.filter((a) => a !== complete);
+        }
+        return '';
+      }
+      if (family === 4 && address.includes(':')) return game.error(`Error: inet prefix is expected rather than "${address}".`, 1);
       if (!cidr(address)) return game.error(`Error: any valid prefix is expected rather than "${address}".`, 1);
       const i = interfaceFor(dev);
       if (!i) return missing(dev);
@@ -152,7 +194,8 @@ function ip(game: Shell, args: string[]): string {
       const i = interfaceFor(after(rest, 'dev') ?? rest[0]);
       if (!i) return missing(after(rest, 'dev') ?? rest[0] ?? '');
       if (!root) return game.error(NOT_ALLOWED, 2);
-      i.addresses = [];
+      if (family !== 6) i.addresses = [];
+      if (family !== 4) i.addresses6 = [];
       return '';
     }
   }
@@ -202,6 +245,37 @@ function ip(game: Shell, args: string[]): string {
     }
   }
 
+  if (['r', 'ro', 'route'].includes(object) && family === 6) {
+    if (['show', 'list', 'sh', 'ls'].includes(action)) return routes6(game, l).join('\n');
+    if (['add', 'replace'].includes(action) && rest[0] === 'default') {
+      const via = after(rest, 'via');
+      if (!via || !cidr6(via)) return game.error('Error: either "to" is duplicate, or "via" is a garbage.', 1);
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      const dev = after(rest, 'dev');
+      // A link-local gateway only means something on one link: the interface must be given.
+      if (!dev) return game.error('Error: Nexthop has invalid gateway.', 2);
+      if (!interfaceFor(dev)) return missing(dev);
+      if (action === 'add' && (l.gateway6 || defaultRoute6(game, l)?.proto === 'static')) return game.error('RTNETLINK answers: File exists', 2);
+      l.gateway6 = { via: cidr6(via)!.ip, dev };
+      return '';
+    }
+    if (['del', 'delete'].includes(action) && rest[0] === 'default') {
+      if (!root) return game.error(NOT_ALLOWED, 2);
+      if (!l.gateway6) return game.error('RTNETLINK answers: No such process', 2);
+      l.gateway6 = null;
+      return '';
+    }
+  }
+
+  if (['n', 'neigh', 'neighbour', 'neighbor'].includes(object) && ['show', 'list', 'sh', 'ls'].includes(action)) {
+    // The neighbour table: the link's router, as the kernel learnt it (ARP for IPv4, neighbour discovery for IPv6).
+    const lines: string[] = [];
+    const ra = l.ra;
+    if (family !== 6 && l.gateway && ra && l.gateway.dev === ra.dev) lines.push(`${l.gateway.via} dev ${l.gateway.dev} lladdr ${ra.mac} REACHABLE`);
+    if (family !== 4 && ra && !disabled6(game, ra.dev) && l.interfaces[ra.dev]?.up) lines.push(`${ra.router} dev ${ra.dev} lladdr ${ra.mac} router REACHABLE`);
+    return lines.join('\n');
+  }
+
   if (['r', 'ro', 'route'].includes(object)) {
     if (['show', 'list', 'sh', 'ls'].includes(action)) return routes(l).join('\n');
     if (['add', 'replace'].includes(action) && rest[0] === 'default') {
@@ -222,7 +296,7 @@ function ip(game: Shell, args: string[]): string {
     }
   }
   if (!object) return game.error(game.t('ip-usage'), 255);
-  if (!['a', 'addr', 'address', 'l', 'link', 'r', 'ro', 'route'].includes(object))
+  if (!['a', 'addr', 'address', 'l', 'link', 'r', 'ro', 'route', 'n', 'neigh', 'neighbour', 'neighbor'].includes(object))
     return game.error(`Object "${object}" is unknown, try "ip help".`, 255);
   return game.error(`Command "${action}" is unknown, try "ip ${object} help".`, 255);
 }

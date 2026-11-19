@@ -3,8 +3,15 @@
 // rules; the FIRST matching rule decides, otherwise the default
 // policy. Inactive firewall: everything goes through. Already established connections
 // (like the current ssh session) are never cut.
-// Differences: IPv4 and IPv6 merged (the "(v6)" lines are shown for
-// form's sake), no routing, logging or outgoing rules.
+// IPv6: /etc/default/ufw's IPV6 setting (read when ufw starts or reloads,
+// and when a rule is added) decides whether ufw also writes ip6tables
+// rules; with IPV6=no it leaves IPv6 alone, so everything goes through in
+// IPv6. A rule added while IPV6=no exists for IPv4 only (no "(v6)" twin),
+// even once IPV6=yes: it must be added again.
+// Source: https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html (IPV6, /etc/default/ufw).
+// Differences: no routing, logging or outgoing rules.
+
+import { inPrefix6 } from './ipv6';
 
 export type Action = 'allow' | 'deny' | 'reject' | 'limit';
 export type Policy = 'allow' | 'deny' | 'reject';
@@ -16,6 +23,8 @@ export interface Rule {
   ports: number[];
   // Source address, or null for "anywhere".
   forEachOf: string | null;
+  // Written for IPv6 too (its "(v6)" twin); absent: yes.
+  v6?: boolean;
 }
 
 export interface Firewall {
@@ -26,6 +35,8 @@ export interface Firewall {
   // Number of ssh connections at activation time (to check
   // that a new connection still gets through).
   activationAlConnections?: number;
+  // IPV6=yes in /etc/default/ufw when ufw was last started; absent: yes.
+  ipv6?: boolean;
 }
 
 export const newFirewall = (): Firewall => ({ enabled: false, incoming: 'deny', outgoing: 'allow', rules: [] });
@@ -64,7 +75,14 @@ export function inNetwork(address: string, network: string): boolean {
 
 export function verdict(pf: Firewall, port: number, source: string): Verdict {
   if (!pf.enabled) return 'accepted';
-  const r = pf.rules.find((r) => (r.ports.includes(port) || r.ports.length === 0) && (r.forEachOf === null || inNetwork(source, r.forEachOf)));
+  const v6 = source.includes(':');
+  // IPV6=no: ufw writes no IPv6 rule at all, and the kernel's IPv6 policy stays ACCEPT.
+  if (v6 && pf.ipv6 === false) return 'accepted';
+  const r = pf.rules.find(
+    (r) =>
+      (r.ports.includes(port) || r.ports.length === 0) &&
+      (v6 ? r.v6 !== false && (r.forEachOf === null || (r.forEachOf.includes(':') && inPrefix6(source, r.forEachOf))) : r.forEachOf === null || (!r.forEachOf.includes(':') && inNetwork(source, r.forEachOf))),
+  );
   const action = r?.action ?? pf.incoming;
   return action === 'allow' || action === 'limit' ? 'accepted' : action === 'reject' ? 'refused' : 'blocked';
 }

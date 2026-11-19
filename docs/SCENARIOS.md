@@ -137,6 +137,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | mounts at boot (The Canteen) | the fstab lines on a simple device become `.mount` units with the device's delay; `nofail` mounts are waited for only by `RequiresMountsFor=`, the others by every service; no `x-systemd.*` options, no `mount --bind` | `local-fs.target`, `x-systemd.automount`, `x-systemd.device-timeout=`… |
 | `systemd-analyze`, `networkctl` | `calendar`, `time`, `blame`, `critical-chain`, `verify` (unknown sections and keys, required units that don't exist); `networkctl list`, `status`, `reload` | every verb (`plot`, `dot`, `security`…), every option |
 | `ping` | 4 pings by default | goes on until Ctrl+C |
+| `ping -6`, `ping6` | on a machine speaking IPv6 or looking at one from outside: iputils' IPv6 output, a link-local address refused without `%interface` (or `-I`), the router's "Address unreachable" for an address of its prefix that nobody has; the times are computed | every option, flood, `-s`, `-t` |
 | `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
 | `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | computed size (text compressed to a third, media to 98 %); if there isn't room, nothing is written | real compression; a partial archive may remain |
@@ -205,7 +206,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `sockstat` | the listening sockets with their account, program and PID (`-4`, `-6`, `-l`) | connected sockets, `-c`, Unix sockets, jails |
 | `pfctl`, `pf.conf` | `-nf` (check), `-f` (load), `-e`/`-d`, `-sr`, `-si`, `-F rules`; `service pf start` with `pf_enable`; rules `pass`/`block` (`drop`, `return`), `in`/`out`, `quick`, `proto`, `from`, `to`, `port` (numbers, names, lists `{ }`), `all`, macros, `set skip`; the LAST matching rule decides unless `quick`; an incoming TCP connection is decided this way (ssh and the port scanners see it); the connections already open are kept | NAT and `rdr`, tables, anchors, `scrub` (accepted, ignored), state options, `max-src-conn-rate`, logging (`pflog`) |
 | `iptables`, `iptables-save` | the host firewall's **filter** table: the built-in chains INPUT/OUTPUT/FORWARD, their policy, user chains; matches `-p`, `--dport`/`--sport`, `-s`/`-d`, `-i`/`-o`, `-m state`/`conntrack --state`/`--ctstate`; targets ACCEPT, DROP, REJECT, LOG, RETURN, a jump to a user chain; `-L` (`-n`, `-v`, `--line-numbers`), `-S`, `-A`/`-I`/`-D`/`-R`, `-P`, `-F`, `-N`/`-X`; `iptables-save`. The INPUT chain decides an incoming TCP connection (ssh and the port scanners see it, like ufw); it arrives on `eth0`, a connection from the machine itself on `lo`. The OUTPUT chain decides a program's outgoing connection (The Bastion's miner). Root only | the nat table's packet rewriting (a router's NAT is in `nft`), mangle/raw, counters, `-m` beyond state/conntrack, `ip6tables`, `iptables-restore`, the web of rule extensions |
-| `ufw` | IPv4 and IPv6 rules merged ("(v6)" lines for show); no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
+| `ufw` | IPv4 and IPv6: `/etc/default/ufw`'s `IPV6=` read on `enable` and `reload` and when a rule is added (with `IPV6=no`, no "(v6)" twin and IPv6 unfiltered; a rule added then stays IPv4 only until added again); `from` an IPv6 network; no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
 | `ss`, `netstat` | the sockets described by the chapter, the current ssh session (on the port you came in through), and the chapter's other connections while their process lives; `netstat` is the net-tools counterpart of `ss` (`-t`, `-u`, `-l`, `-a`, `-n`, `-p`) | every socket of the system; Unix domain sockets; `netstat -r`/`-i` |
 | fail2ban | `sshd`, `nginx-limit-req` and `recidive` jails (others load, without a filter; an enabled jail without a log prevents starting); a jail's `port` limits the ban; `findtime` not applied (every failure in the log counts); filter reduced to "Failed password", "Invalid user", "Failed publickey"; the banned workstation keeps its open session | several jails; `findtime` window; full filters; the ban also cuts the current session |
 | `rsync` | `-a`, `-v`, `-n`, `--delete`; local, or remote over ssh (`machine:path`, in either direction, with the same keys and jumps as `ssh`); a file changes if its contents change; "sent/received" figures approximate | compares size and date, every option, rsync daemon |
@@ -216,9 +217,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `crontab`, cron | the editor is always `nano`; no environment variables nor `%`; the game "lets the night pass" when the crontab changes | cron runs continuously; `select-editor` on the first `crontab -e` |
 | `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v`; `Origins-Pattern` (keys `o`, `n`, `l`, `a`, `site`, wildcards), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time`; `apt-daily-upgrade.service` only runs the pass if `APT::Periodic::Unattended-Upgrade` asks for it; `apt.conf.d` read like apt (last value wins, lists that grow, `;` required); `apt-config dump [prefix]`; package origins described by the chapter; the scheduled reboot isn't played | autoremove, `MinimalSteps`, battery, `#include`/`#clear`, full `--debug` output, `apt-cache policy` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` and `full-upgrade` (the updates described by the chapter); a small catalogue, approximate versions and sizes; a package that fails to start isn't left "half-configured"; an interrupted upgrade leaves its packages unpacked (`dpkg --configure -a`); `/var/run/reboot-required` for a kernel or the libc | the whole Debian catalogue, `remove`, `search`, `show`, `apt-get`…; dpkg keeps each package's state |
-| local network (`ip`, `ifup`, `ifdown`) | IPv4 only; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), 802.1Q VLAN interfaces; `/etc/network/interfaces` read like ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`); the switch and its ports are described by the chapter; no visible ARP, MTU, bonding nor systemd-networkd | all of iproute2, ifupdown2, NetworkManager, systemd-networkd |
+| local network (`ip`, `ifup`, `ifdown`) | `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), `-4`/`-6`, `ip neigh` (the link's router only); IPv6 on a machine whose link has a router (ipv6.ts): link-local and SLAAC addresses computed from the MAC (modified EUI-64), `ip -6 addr add/del`, `ip -6 route` (proto ra, a gateway by hand), `/proc/sys/net/ipv6/conf/*/` (`accept_ra`, `autoconf`, `disable_ipv6`, whose static addresses don't come back); a SLAAC address appears and disappears at once with the settings (no lifetimes, DAD, privacy or stable-privacy addresses); 802.1Q VLAN interfaces; `/etc/network/interfaces` read like ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`; `iface … inet6 static|auto|manual` with `address`, `netmask`, `gateway`, `accept_ra`, `autoconf`); the switch and its ports are described by the chapter; no visible ARP, MTU, bonding nor systemd-networkd | all of iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP only (DNS options are accepted and ignored); `interface` (with `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option`; devices ask for an address each time the service starts; the address is derived from the MAC address; no lease renewal | DNS, TFTP, PXE, DHCPv6, renewal |
-| `nft` (nftables) | IPv4; `ip`, `inet` tables (`ip6` read, with no effect); base `filter` and `nat` chains (hooks, priorities, policy), regular chains (`jump`, `goto`); matches `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services known to the game), `ct state`, `!=` negation, anonymous sets; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (in `postrouting`), `dnat` (in `prerouting`, to an address and port); `define`, `include`; `-f`, `-c`, `-a`; `add`, `insert`, `delete`, `flush`, `list`; the traffic is that of the devices described by the chapter (and visitors from the internet), and counters count one pass per exchange; error messages close to nft's; the `input` chain doesn't cut the game's ssh session | named sets, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, rules on packet contents |
+| `nft` (nftables) | `ip`, `ip6` and `inet` tables (an IPv4 packet crosses ip and inet, an IPv6 one ip6 and inet); IPv6 only for the packets that reach a machine speaking IPv6 (`input`: TCP, echo, neighbour discovery), the routers' local networks staying IPv4; matches `ip6 saddr`/`daddr` (prefixes), `ip6 nexthdr`, `meta nfproto`, `icmp type` and `icmpv6 type` by name or number (unknown names refused); base `filter` and `nat` chains (hooks, priorities, policy), regular chains (`jump`, `goto`); matches `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services known to the game), `ct state`, `!=` negation, anonymous sets; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (in `postrouting`), `dnat` (in `prerouting`, to an address and port); `define`, `include`; `-f`, `-c`, `-a`; `add`, `insert`, `delete`, `flush`, `list`; the traffic is that of the devices described by the chapter (and visitors from the internet), and counters count one pass per exchange; error messages close to nft's; the `input` chain doesn't cut the game's ssh session | named sets, maps, `limit`, `quota`, IPv6 forwarding and NAT66, `bridge`, `netdev`, `nft monitor`, rules on packet contents |
 | `nft` under ufw and fail2ban | on machines without hand-written nftables rules: `list ruleset`, `list tables`, `list table`, read-only; `ip filter` table (chains `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), `inet f2b-table` table of fail2ban's nftables action; counters at zero; a multi-port profile as a `{ 80, 443 }` set | the `ip6 filter` table, ufw's logging and routing chains, real counters; you could write to it (and ufw would overwrite it) |
 | `sysctl`, `conntrack` | `sysctl`: read, `-w`, `key=value`, `-p`, `--system`, `-a`, `-n` on a few keys (`/proc/sys` is a real directory of the game); `/etc/sysctl.d/*.conf` then `/etc/sysctl.conf` at boot; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F`: the current exchanges, including the ssh session | every kernel key; `conntrack -E`, `-D`, detailed UDP and ICMP states |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf`; `wg-quick up`, `down`, `strip`; the `wg-quick@wg0` service; the public key isn't computed with Curve25519 (a fingerprint stands in for it, in the right format); peers are described by the chapter (Malik's laptop, another site's router and its network); `wg-quick` adds a route per `AllowedIPs` outside the interface's network; a peer behind a home router (NAT) is only reachable with `PersistentKeepalive` (no simulated delay); no `wg set`, `PostUp`, checked `PresharedKey`, IPv6, nor all traffic through the tunnel on the router side; `wg-quick` without sudo refuses instead of re-running sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
@@ -229,9 +230,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Lynis (`lynis audit system`) | some sixty lines instead of 300; reads `sshd_config`, pending apt updates, `UMASK` in `/etc/login.defs`, `/etc/issue` and ufw; the index is computed with fixed penalties (not Lynis's weighting); `/var/log/lynis-report.dat` is written (`hardening_index=`, `warning[]=`, `suggestion[]=`); only `audit system`, `show version`; without root, the audit is refused (Lynis would run in restricted mode) | the 200 tests, profiles, `show details`, `--pentest`, compliance modules |
 | `ping` on a local network | a device answers if it is in the VLAN of the interface whose network contains its address; a private address sent to the home router is lost; a device name is recognised without DNS | ARP, local DNS, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, one window per session; no key bindings (`tmux detach` for Ctrl+b d); attach replays the last lines; the session's name shows before the prompt (the status bar); `uname -r/-a`; `dpkg --configure -a` | windows, panes, key bindings, `screen`; every dpkg option |
-| `nginx` | `-t`, `-T`, `-v`; some of the directives; the site is chosen by `server_name` then `default_server`; `location` by prefix, `=`, `^~`, or regular expression (`~`, `~*`, JavaScript syntax rather than PCRE), chosen in nginx's order; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` to a simulated app or an `upstream` (`weight`, `backup`, `down`, weighted round robin, next server if one doesn't answer; `max_fails`/`fail_timeout` not applied); `try_files` read but not applied | every directive and module |
+| `nginx` | `-t`, `-T`, `-v`; some of the directives; `listen [::]:80` (IPv6 only) and `ipv6only=off` (both families; next to `listen 80`, the reload fails on `bind() … Address already in use`, which `nginx -t` doesn't see); on a machine speaking IPv6, `proxy_pass http://localhost:…` tries `[::1]` then `127.0.0.1`; the site is chosen by `server_name` then `default_server`; `location` by prefix, `=`, `^~`, or regular expression (`~`, `~*`, JavaScript syntax rather than PCRE), chosen in nginx's order; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` to a simulated app or an `upstream` (`weight`, `backup`, `down`, weighted round robin, next server if one doesn't answer; `max_fails`/`fail_timeout` not applied); `try_files` read but not applied | every directive and module |
 | Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (even without root); `start`, `stop`, `restart`, `graceful` go through systemd; some of the directives (others are refused like those of a missing module: "Invalid command"); virtual host chosen by address and port, then `ServerName`/`ServerAlias`, otherwise the first; `<Directory>` without wildcards; `.htaccess` reread on each request, with `AllowOverride` by category; `mod_rewrite`: `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), in the server or per directory, at most 10 internal redirects; no PHP, CGI, compression nor access log; without an argument, `a2ensite` & co. list the choices without asking | every directive and module, interactive `apache2ctl` without an argument |
 | `curl` on the site's machine | only reaches the machine itself (localhost, its name, its address), or an `ssh -L` tunnel opened on the workstation | the whole network |
+| `curl -4`, `-6`, `-v` (IPv6) | on a machine speaking IPv6 (and from a vantage point on the internet, `lookout`): names resolved through `/etc/hosts` and the story's DNS (the zone's public servers from outside), IPv6 first then IPv4 (happy eyeballs, a refusal moves on at once), `[addr]` URLs; `-v` shows curl 8's lines (resolution, tries, request, headers); a filtered port answers at once with its timeout's message (error 28); only nginx and the apps of the story's server answer | every option, real timings, proxies, HTTP/2 |
+| sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
+| `nmap -6`, `nc -4`/`-6` | from the vantage point: the story's server's ports in each family (its firewall, its sockets, neighbour discovery: a server that drops it "seems down"); an IPv6 literal needs `-6` (nmap's message) | real probes, `-6` with `-sU`, OS detection |
 | `tar` | `-C`; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, multi-volume archives… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart | every key type, conversion, certificates… |
 | `certbot` | a single certificate, the chapter's; `certificates`, `renew`, `certonly`, `reconfigure`; simulated authority (the HTTP-01 challenge goes through the simulated nginx); the files in `live/` are rewritten (no links to `archive/`); the nginx plugin doesn't change the configuration | several certificates, a real ACME authority, symbolic links, DNS challenges |
@@ -247,7 +251,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `dd if=/dev/urandom` | `count=` is required (the device never ends); the "random" bytes are derived from the target and a counter, the same in every game | `/dev/zero`, `/dev/random` blocking, `iflag=fullblock` |
 | symbolic links | `ln -s` (`-f`, `-n`), followed to read, write and enter; `ls -l` shows them; `readlink` | also `realpath`, `find -L`… |
 | `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, or a forwarded header), `-X`, `-d` (only the method); only reaches the machine you are on (nginx, Caddy, an app on its port, a container) | every option, the whole network |
-| DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones | all of it |
+| DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones (no `ip6.arpa`, no `dig -x`); seen from outside (a vantage point), names are resolved on the secondary, without a resolver cache | all of it |
 | Postfix | `main.cf` read like `postconf` (some of the parameters; an unknown name: "unused parameter"), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d`; the queue (reasons, identifiers) and `/var/log/mail.log`; no real SMTP: the servers on the other side (declared by the story) check SPF, DKIM, DMARC with the simulated DNS, without a cache; Postfix doesn't retry by itself (`postqueue -f`); the chroot is only simulated for the milter's socket | a full MTA, automatic retries, TLS, `master.cf` |
 | OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`); refuses an unreadable key or one readable by others; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`); no real cryptography (the public key is computed from the private file), no `KeyTable`/`SigningTable` nor DNSSEC | real RSA signing, key tables, several domains |
 | Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), INI inventory (groups, `:vars`, `:children`), a subset of YAML; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell`; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers`; ssh connection without questions (BatchMode); no real fact gathering, Jinja variables, roles, loops nor Python on the targets | Jinja templates, roles, collections, `ansible-vault`, facts |
@@ -3308,6 +3312,101 @@ line includes `/var/backups`. Expected traps: trusting "backup
 completed", crate's key file or password copied to spare (the drill
 proves nothing), `restic check` without `--read-data`, a restore over
 `/`, `sha256sum -c` from the wrong directory or on a modified file.
+
+## Story 34: The Ferry (three chapters)
+
+An island's ferry cooperative (Le Bac in French) runs its timetable site,
+its booking app (Node.js, behind nginx) and its own DNS zone
+(`ferry.example`, BIND, with a secondary at the island's fibre cooperative,
+islenet) on `quay` (`quai` in French, 192.0.2.52), a small Debian server
+at the harbour office. islenet turned IPv6 on a month ago: its router
+advertises the prefix `2001:db8:4e1:20::/64` (RFC 3849). Amaru coordinates;
+Rangi works at islenet; Tevita, who set the server up, has moved to the
+mainland; Lucía writes the booking app. `lookout` (`vigie`, 198.51.100.61
+and `2001:db8:c0:61::10`), islenet's monitoring box on the internet, is an
+internal host reached with ssh from quay: the outside view, in both
+families. Engine: `src/engine/ipv6.ts` (addresses, RFC 5952 form, prefixes,
+modified EUI-64, link-local and SLAAC, `/proc/sys/net/ipv6/conf`, the IPv6
+default route, `boot6`, resolution, and what the outside sees: neighbour
+discovery, the firewall's verdict, who listens); `ip -6`, `ip neigh`,
+`inet6` stanzas in `lan.ts` and `commands/lan.ts`; `curl`, `ping`/`ping6`
+and `nc` in both families in `commands/ipv6.ts`; nftables families in
+`nftables.ts`; `listen [::]`, `ipv6only`, localhost's two addresses in
+`nginx.ts`; `nmap -6`; `ss -4`/`-6`; ufw's `IPV6=` and `ufw reload`. The
+story's machine is built in `chapters/ferry.ts`. It opens after "VLANs"
+(The Hive: `ip`, `/etc/network/interfaces`) and "Works on my machine"
+(The Neighbourhood Letters: BIND), and extends the network path.
+
+### Chapter 1 — The New Card (done)
+
+The network card was replaced last week: quay's SLAAC address followed the
+new MAC address; the AAAA records Tevita wrote still name the old one.
+IPv6 visitors knock on an address nobody has.
+
+| Step | Command learnt |
+|---|---|
+| Addresses | `ip -6 addr` (scope link, scope global dynamic), `ip link` (the MAC, EUI-64) |
+| Routes | `ip -6 route` (`default via fe80::… dev eth0 proto ra`), `ip -6 neigh` |
+| The router | `ping -6 fe80::200:5eff:fe00:5301` (refused), then `…%eth0` |
+| The DNS | `dig www.ferry.example AAAA`: the old address |
+| A fixed address | `sudo ip -6 addr add 2001:db8:4e1:20::80/64 dev eth0`; `/etc/network/interfaces`: `iface eth0 inet6 static`, `address`, `gateway` |
+| Publish | the zone's AAAA records, a higher serial, `named-checkzone`, `rndc reload`; `dig @ns2.islenet.example …` |
+| Check | from lookout, `ping6 www.ferry.example` |
+
+Goal checked on the state: a static address of the prefix on eth0 now and
+in what the next boot would bring up, an IPv6 default route now and at
+boot, and the zone's secondary giving that address for `ferry.example`,
+`www` and `quay`. Expected traps: a link-local address without its
+interface, `ifdown eth0` over ssh (the session drops; Amaru brings it back
+up), `ifup eth0` on a configured interface, an address outside the
+prefix, `accept_ra 0` without a gateway (no route at boot), the serial
+unchanged (the secondary keeps the old address), the new SLAAC address in
+the zone (it will move again).
+
+### Chapter 2 — The Other Door (done)
+
+islenet's monthly scan, now in IPv6 too, finds PostgreSQL (5432) and the
+admin pages (8080) open on quay. Tevita's firewall is a `table ip filter`:
+IPv6 never crosses it.
+
+| Step | Command learnt |
+|---|---|
+| Outside | from lookout, `nmap -6 quay.ferry.example`, then `nmap` (IPv4), `nc -zv -6`/`-4` |
+| Sockets | `sudo ss -tlnp`: `0.0.0.0:5432` and `[::]:5432`, `*:8080`; `ss -tln6` |
+| Rules | `sudo nft list ruleset`: `table ip filter` |
+| One policy | `/etc/nftables.conf`: `table inet filter`, `icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert, … } accept`; `nft -c -f`, `systemctl reload nftables` |
+
+Goal checked on the state, with the ruleset loaded and the one the file
+gives at boot: from the internet, in IPv4 and IPv6, ssh, DNS and the site
+pass, 5432 and 8080 aren't reachable; neighbour discovery passes; the
+harbour office (198.51.100.40) still reads the database; the workstation
+still reaches ssh; IPv6 is on now and at boot. Expected traps: turning
+IPv6 off (`disable_ipv6`: the AAAA records lead nowhere, and the static
+address doesn't come back), a table inet without ICMPv6 (quay vanishes in
+IPv6: "Address unreachable", nmap's "Host seems down"), a hand-copied
+`ip6` table missing a rule, the office's rule lost, rules typed with `nft`
+and not saved.
+
+### Chapter 3 — Both Ways (done)
+
+The season's first Saturday. nginx only listens in IPv4 (`listen 80;`),
+and Lucía's update made the app listen on `localhost`, which Node.js 17+
+turns into `::1`, while nginx's `proxy_pass` asks `127.0.0.1`: 502 for
+everyone.
+
+| Step | Command learnt |
+|---|---|
+| Outside | from lookout, `curl -6 -v http://www.ferry.example/` (refused), `curl -v …/booking/` (falls back to IPv4, 502) |
+| Sockets | `sudo ss -tlnp`: `0.0.0.0:80`, `[::1]:3000` |
+| The log | `sudo tail /var/log/nginx/error.log`: `connect() failed (111: Connection refused) … upstream: "http://127.0.0.1:3000/"` |
+| nginx | `listen [::]:80 default_server;`, `nginx -t`, `systemctl reload nginx` |
+| The app | `/etc/default/booking`: `HOST=127.0.0.1`, `systemctl restart booking` (or `proxy_pass http://[::1]:3000/;`) |
+
+Goal checked on the state: from the internet, in IPv4 and in IPv6, `/`
+and `/booking/` answer 200. Expected traps: the file changed without a
+reload, `listen [::]:80 ipv6only=off` next to `listen 80` (the reload
+fails on `bind()`, `nginx -t` doesn't see it), the app on every address
+(only the firewall hides it).
 
 ## Ideas for later
 

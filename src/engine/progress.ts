@@ -79,6 +79,9 @@ export const CODE_ORDER = [
   'lost-disk',
   'spare-key',
   'restore-drill',
+  'new-card',
+  'other-door',
+  'both-ways',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

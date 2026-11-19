@@ -82,3 +82,4 @@ machine-compass-motd = Les voisins Windows — le serveur Linux de l'Atelier. So
 machine-stave-motd = L'École de musique — le serveur de fichiers de l'école, un Windows Server 2022 (OpenSSH arrive dans cmd.exe).
 machine-register-motd = Le Catalogue — le contrôleur de domaine des bibliothèques, un Windows Server 2022 (Active Directory, lending.internal).
 machine-crate-motd = L'Épicerie solidaire — le serveur Debian de l'épicerie (ses fichiers, son appli, et le disque de sauvegarde qui part le vendredi).
+machine-quay-motd = Le Bac — le serveur Debian de la coopérative du bac, en IPv4 et en IPv6 (son site, son appli de réservation, sa zone DNS ferry.example).

@@ -126,6 +126,9 @@ import { dormantAccounts } from './dormant-accounts';
 import { lostDisk } from './lost-disk';
 import { spareKey } from './spare-key';
 import { restoreDrill } from './restore-drill';
+import { newCard } from './new-card';
+import { otherDoor } from './other-door';
+import { bothWays } from './both-ways';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -298,6 +301,11 @@ export const STORIES: Story[] = [
     id: 'pantry',
     after: ['snapshots', 'stuck-boot'],
     chapters: [lostDisk, spareKey, restoreDrill],
+  },
+  {
+    id: 'ferry',
+    after: ['vlan', 'works-for-me'],
+    chapters: [newCard, otherDoor, bothWays],
   },
 ];
 

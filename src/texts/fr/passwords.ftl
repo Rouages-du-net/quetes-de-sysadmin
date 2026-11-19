@@ -71,3 +71,5 @@ password-drafting-2029 = calque-2029
 password-shelf-2029 = etagere-2029
 password-tram-lemon-harbour-58 = tram-citron-port-58
 password-basket-orchard-copper-73 = panier-verger-cuivre-73
+## Le Bac : sudo
+password-tide-2029 = maree-2029

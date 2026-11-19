@@ -3,7 +3,9 @@
 // tool. Options understood: -sV -sT -sS -sn -Pn -n -F -p -oN --open -T0..5 -v;
 // the others give nmap's message.
 
-import { scan, VERSION_NMAP, type Options } from '../scan';
+import { scan, VERSION_NMAP, type Options, type ScanHost } from '../scan';
+import { isIp6, machineAt, resolve, tcpState, vantage, type Family } from '../ipv6';
+import type { Shell } from '../shell';
 import type { Command } from './index';
 import { help } from './manual';
 
@@ -36,7 +38,9 @@ export const NMAP: Record<string, Command> = {
       const targets: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
-        if (a === '-sV') o.versions = true;
+        if (a === '-6') o.family = 6;
+        else if (a === '-4') o.family = 4;
+        else if (a === '-sV') o.versions = true;
         else if (a === '-sT') continue;
         else if (a === '-sS') {
           if (game.who !== 'root') return game.error("You requested a scan type which requires root privileges.\nQUITTING!", 1);
@@ -62,6 +66,11 @@ export const NMAP: Record<string, Command> = {
         else targets.push(a);
       }
       if (!targets.length) return game.error(game.t('nmap-none-target'), 1);
+      // An IPv6 address needs -6 (nmap doesn't switch family on its own).
+      const v6Literal = targets.find((t) => isIp6(t));
+      if (v6Literal && o.family !== 6)
+        return game.error(`Starting Nmap ${VERSION_NMAP} ( https://nmap.org )\n${v6Literal} looks like an IPv6 target specification -- you have to use the -6 option.\nWARNING: No targets were specified, so 0 hosts scanned.\nNmap done: 0 IP addresses (0 hosts up) scanned in 0.03 seconds`, 1);
+      if (vantage(game)) targets.splice(0, targets.length, ...vantageTargets(game, targets, o.family ?? 4));
       const r = scan(game, targets, o, `nmap ${args.join(' ')}`);
       if ('error' in r) return game.error(r.error, 1);
       let note = '';
@@ -73,3 +82,39 @@ export const NMAP: Record<string, Command> = {
     },
   },
 };
+
+// What nmap -sV recognises on the story's server.
+const PRODUCTS: Record<number, [string, string]> = {
+  22: ['ssh', 'OpenSSH 10.0p2 Debian 7 (protocol 2.0)'],
+  53: ['domain', 'ISC BIND 9.20.9 (Debian Linux)'],
+  80: ['http', 'nginx 1.26.3'],
+  443: ['https', 'nginx 1.26.3'],
+  3000: ['http', 'Node.js Express framework'],
+  5432: ['postgresql', 'PostgreSQL DB 15.0 - 15.x'],
+  8080: ['http', 'Node.js Express framework'],
+};
+
+/** From a vantage point on the internet: the targets resolved in the scan's family, and the story's server as a host whose ports follow its state. */
+function vantageTargets(game: Shell, targets: string[], family: Family): string[] {
+  const v = vantage(game)!;
+  const hosts: ScanHost[] = [];
+  const out = targets.map((t) => {
+    const found = resolve(game, t, family);
+    if (!found.length) return t;
+    const address = found[0];
+    const server = machineAt(game, address, family);
+    if (server && !hosts.some((h) => h.address === address)) {
+      const literal = isIp6(t) || /^\d+\.\d+\.\d+\.\d+$/.test(t);
+      const probe = (_: unknown, port: number) => {
+        const s = tcpState(server, family, family === 6 ? v.v6 : v.v4, address, port);
+        return s === 'open' ? 'open' : s === 'refused' ? 'closed' : 'filtered';
+      };
+      // A server whose IPv6 is cut off (neighbour discovery dropped) doesn't even answer the ping probe.
+      if (tcpState(server, family, family === 6 ? v.v6 : v.v4, address, 22) !== 'unreachable')
+        hosts.push({ address, names: literal ? [] : [t], latency: 0.018, probe, services: Object.entries(PRODUCTS).map(([p, [service, product]]) => ({ port: Number(p), service, product })) });
+    }
+    return address;
+  });
+  game.state.scan = { hosts, scope: hosts.map((h) => h.address) };
+  return out;
+}

@@ -12,13 +12,20 @@
 // of type nat. A private address (RFC 1918) going out to the internet
 // without translation never gets a reply. Nothing goes through without
 // net.ipv4.ip_forward = 1 (/proc/sys, see sysctl).
-// Differences: IPv4 only; no named sets, maps, limit, nor rules on the
+// Families: an IPv4 packet goes through the tables ip and inet, an IPv6
+// packet through ip6 and inet ("inet" holds the rules of both: ip saddr
+// only matches IPv4, ip6 saddr only IPv6, icmp type only ICMP, icmpv6
+// type only ICMPv6). The router's local network is IPv4; a machine that
+// speaks IPv6 (ipv6.ts) checks the packets that reach it from outside at
+// the input hook, neighbour discovery included.
+// Differences: no named sets, maps, limit, nor rules on the
 // packets' content; the counters count the simulated traffic (one pass of
 // each flow); the input chain does not cut the game's ssh session.
 
 import type { Game } from './shell';
 import { addressFor, inside, inService, isIp, vlanInterface, interfaceFor, reach, lan, isPrivate, networkFor, toCount, type Lan } from './lan';
 import { writeLog, systemd } from './systemd';
+import { cidr6, inPrefix6, normalise6 } from './ipv6';
 
 export const CONF = '/etc/nftables.conf';
 export const FAMILIES = ['ip', 'ip6', 'inet', 'arp', 'bridge', 'netdev'];
@@ -454,6 +461,31 @@ const ipValid = (v: string) => {
   return isIp(ip) && (lg === undefined || (/^\d+$/.test(lg) && Number(lg) <= 32));
 };
 const portValid = (v: string) => v in SERVICES || /^\d+(-\d+)?$/.test(v);
+const ip6Valid = (v: string) => !!cidr6(v);
+// meta l4proto, ip6 nexthdr: the protocol names of /etc/protocols the game knows.
+const L4 = ['tcp', 'udp', 'icmp', 'icmpv6', 'ipv6-icmp'];
+// The ICMP and ICMPv6 types nft knows by name (nft describe icmpv6 type).
+const ICMP_TYPES = ['echo-reply', 'destination-unreachable', 'source-quench', 'redirect', 'echo-request', 'router-advertisement', 'router-solicitation', 'time-exceeded', 'parameter-problem', 'timestamp-request', 'timestamp-reply'];
+export const ICMPV6_TYPES = [
+  'destination-unreachable',
+  'packet-too-big',
+  'time-exceeded',
+  'parameter-problem',
+  'echo-request',
+  'echo-reply',
+  'mld-listener-query',
+  'mld-listener-report',
+  'mld-listener-done',
+  'nd-router-solicit',
+  'nd-router-advert',
+  'nd-neighbor-solicit',
+  'nd-neighbor-advert',
+  'nd-redirect',
+  'mld2-listener-report',
+];
+// Their numbers, for a rule written with them (icmpv6 type 135).
+const ICMPV6_NUMBERS: Record<string, number> = { 'destination-unreachable': 1, 'packet-too-big': 2, 'time-exceeded': 3, 'parameter-problem': 4, 'echo-request': 128, 'echo-reply': 129, 'nd-router-solicit': 133, 'nd-router-advert': 134, 'nd-neighbor-solicit': 135, 'nd-neighbor-advert': 136 };
+const ICMP_NUMBERS: Record<string, number> = { 'echo-reply': 0, 'destination-unreachable': 3, 'echo-request': 8, 'time-exceeded': 11 };
 
 function readRule(l: Reader, t: Table, c?: String): Rule {
   const rule: Rule = { conditions: [], instructions: [], handshake: 0 };
@@ -476,26 +508,28 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
     else if (m === 'meta') {
       const k = l.word();
       if (['iifname', 'oifname'].includes(k.t)) condition(k.t);
-      else if (k.t === 'l4proto') condition('l4proto', (v) => ['tcp', 'udp', 'icmp'].includes(v));
+      else if (k.t === 'l4proto') condition('l4proto', (v) => L4.includes(v));
       else if (k.t === 'nfproto') condition('nfproto', (v) => ['ipv4', 'ipv6'].includes(v));
       else throw unexpected(k);
     } else if (m === 'ip') {
       const k = l.word();
       if (k.t === 'saddr' || k.t === 'daddr') condition(`ip ${k.t}`, ipValid, (v) => `Could not resolve hostname: Name or service not known (${v})`);
-      else if (k.t === 'protocol') condition('l4proto', (v) => ['tcp', 'udp', 'icmp'].includes(v));
+      else if (k.t === 'protocol') condition('ip protocol', (v) => ['tcp', 'udp', 'icmp'].includes(v));
       else throw unexpected(k);
     } else if (m === 'ip6') {
       // An IPv6 rule: it never sees the game's IPv4 packets.
       const k = l.word();
-      if (!['saddr', 'daddr', 'nexthdr'].includes(k.t)) throw unexpected(k);
-      condition(`ip6 ${k.t}`);
+      if (k.t === 'saddr' || k.t === 'daddr') condition(`ip6 ${k.t}`, ip6Valid, (v) => `Could not resolve hostname: Name or service not known (${v})`);
+      else if (k.t === 'nexthdr') condition('ip6 nexthdr', (v) => L4.includes(v));
+      else throw unexpected(k);
     } else if (m === 'tcp' || m === 'udp') {
       const k = l.word();
       if (k.t !== 'dport' && k.t !== 'sport') throw unexpected(k);
       condition(`${m} ${k.t}`, portValid, (v) => `Could not resolve service: Servname not supported for ai_socktype (${v})`);
     } else if (m === 'icmp' || m === 'icmpv6') {
       l.wait('type');
-      condition(`${m} type`);
+      const known = m === 'icmp' ? ICMP_TYPES : ICMPV6_TYPES;
+      condition(`${m} type`, (v) => known.includes(v) || /^\d+$/.test(v), (v) => `Error: Could not parse ${m === 'icmp' ? 'ICMP' : 'ICMPv6'} type\n(${v})`);
     } else if (m === 'ct') {
       l.wait('state');
       condition(
@@ -597,11 +631,15 @@ export function show(r: Ruleset, listing: List, handshakes: boolean): string {
 // ——— A packet's path ———
 
 export interface Package {
+  // ip (IPv4, the default) or ip6.
+  family?: 'ip' | 'ip6';
   iif: string;
   oif: string;
   saddr: string;
   daddr: string;
-  proto: 'tcp' | 'udp' | 'icmp';
+  proto: 'tcp' | 'udp' | 'icmp' | 'icmpv6';
+  // For ICMP and ICMPv6: the message's type (echo-request, nd-neighbor-solicit…).
+  icmpType?: string;
   sport: number;
   dport: number;
   ct: 'new' | 'established';
@@ -609,6 +647,9 @@ export interface Package {
 }
 
 const nameCorrespond = (pattern: string, name: string) => (pattern.endsWith('*') ? name.startsWith(pattern.slice(0, -1)) : pattern === name);
+const correspondIp6 = (pattern: string, ip: string) => (pattern.includes('/') ? inPrefix6(ip, pattern) : normalise6(pattern) === normalise6(ip));
+const sameType = (v: string, type: string | undefined, numbers: Record<string, number>) =>
+  type === undefined || v === type || (/^\d+$/.test(v) && numbers[type] === Number(v));
 const correspondIp = (pattern: string, ip: string) => {
   if (pattern.includes('-')) {
     const [a, b] = pattern.split('-').map(toCount);
@@ -623,6 +664,7 @@ const correspondPort = (pattern: string, port: number) => {
 };
 
 function correspond(c: Condition, p: Package): boolean {
+  const v6 = p.family === 'ip6';
   const one = (v: string): boolean => {
     switch (c.field) {
       case 'iifname':
@@ -633,10 +675,16 @@ function correspond(c: Condition, p: Package): boolean {
         return correspondIp(v, p.saddr);
       case 'ip daddr':
         return correspondIp(v, p.daddr);
+      case 'ip6 saddr':
+        return correspondIp6(v, p.saddr);
+      case 'ip6 daddr':
+        return correspondIp6(v, p.daddr);
       case 'l4proto':
-        return v === p.proto;
+      case 'ip protocol':
+      case 'ip6 nexthdr':
+        return v === p.proto || (v === 'ipv6-icmp' && p.proto === 'icmpv6');
       case 'nfproto':
-        return v === 'ipv4';
+        return v === (v6 ? 'ipv6' : 'ipv4');
       case 'ct state':
         return v === p.ct;
       case 'tcp dport':
@@ -646,14 +694,19 @@ function correspond(c: Condition, p: Package): boolean {
       case 'udp sport':
         return c.field.startsWith(p.proto) && correspondPort(v, p.sport);
       case 'icmp type':
-        return p.proto === 'icmp';
+        return p.proto === 'icmp' && sameType(v, p.icmpType, ICMP_NUMBERS);
+      case 'icmpv6 type':
+        return p.proto === 'icmpv6' && sameType(v, p.icmpType, ICMPV6_NUMBERS);
       default:
-        return false; // ip6, icmpv6: never for an IPv4 packet
+        return false;
     }
   };
-  // A protocol field only applies to its protocol, even negated.
+  // A protocol field only applies to its protocol, even negated; an address
+  // or a protocol of one family never matches a packet of the other (in an inet table).
   if (/^(tcp|udp) /.test(c.field) && !c.field.startsWith(p.proto)) return false;
-  if (c.field.startsWith('ip6') || c.field === 'icmpv6 type') return false;
+  if (c.field === 'icmp type' && p.proto !== 'icmp') return false;
+  if (c.field === 'icmpv6 type' && p.proto !== 'icmpv6') return false;
+  if ((c.field.startsWith('ip ') && v6) || (c.field.startsWith('ip6 ') && !v6)) return false;
   const yes = c.values.some(one);
   return c.negation ? !yes : yes;
 }
@@ -666,6 +719,7 @@ export interface Trace {
 
 type End = {
   verdict: 'accept' | 'drop' | 'return' | null;
+  rejected?: boolean;
   nat?: { what: 'masquerade' | 'snat' | 'dnat'; to?: string };
   rule: Rule | null;
   logs: string[];
@@ -683,7 +737,7 @@ function walk(t: Table, c: String, p: Package, count: boolean, depth = 0): End {
         }
       } else if (i.what === 'log') logs.push(i.prefix ?? '');
       else if (i.what === 'accept' || i.what === 'drop') return { verdict: i.what, rule: r, logs };
-      else if (i.what === 'reject') return { verdict: 'drop', rule: r, logs };
+      else if (i.what === 'reject') return { verdict: 'drop', rejected: true, rule: r, logs };
       else if (i.what === 'return') return { verdict: 'return', rule: r, logs };
       else if (i.what === 'masquerade' || i.what === 'snat' || i.what === 'dnat')
         return { verdict: 'accept', nat: { what: i.what, ...('to' in i ? { to: i.to } : {}) }, rule: r, logs };
@@ -711,9 +765,10 @@ export function traverse(
   type: string,
   p: Package,
   count = false,
-): { pass: boolean; nat: End['nat'] | null; logs: string[]; trace: Trace[] } {
+): { pass: boolean; rejected?: boolean; nat: End['nat'] | null; logs: string[]; trace: Trace[] } {
+  const family = p.family ?? 'ip';
   const strings = r.tables
-    .filter((t) => t.family === 'ip' || t.family === 'inet')
+    .filter((t) => t.family === family || t.family === 'inet')
     .flatMap((t) => t.strings.filter((c) => c.base?.hook === hook && c.base.type === type).map((c) => ({ t, c })))
     .sort((a, b) => a.c.base!.priority - b.c.base!.priority);
   let nat: End['nat'] | null = null;
@@ -725,7 +780,7 @@ export function traverse(
     const verdict = f.verdict === 'accept' || f.verdict === 'drop' ? f.verdict : c.base!.policy;
     trace.push({ string: `${t.family} ${t.name} ${c.name}`, rule: f.verdict === 'accept' || f.verdict === 'drop' ? f.rule : null, verdict });
     if (f.nat && !nat) nat = f.nat;
-    if (verdict === 'drop') return { pass: false, nat, logs, trace };
+    if (verdict === 'drop') return { pass: false, rejected: !!f.rejected, nat, logs, trace };
   }
   return { pass: true, nat, logs, trace };
 }

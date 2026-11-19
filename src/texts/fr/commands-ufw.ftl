@@ -5,6 +5,7 @@
 ufw-usage =
     Usage : ufw COMMANDE (voir man ufw)
       enable | disable                 activer ou désactiver le pare-feu
+      reload                           relire /etc/default/ufw et les règles
       default allow|deny|reject        politique par défaut (entrant)
       allow|deny|reject|limit RÈGLE    ajouter une règle (ex. : ufw allow 22/tcp)
       delete RÈGLE|NUMÉRO              supprimer une règle
@@ -45,4 +46,6 @@ ufw-existing = Règle existante ignorée
 ufw-rule-deleted = Règle supprimée
 ufw-nonexistent = Impossible de supprimer une règle inexistante
 ufw-number = ERREUR : Impossible de trouver la règle numéro « { $number } »
+ufw-reloaded = Pare-feu rechargé
+ufw-reload-skipped = Pare-feu non activé (rechargement ignoré)
 ufw-applications = Applications disponibles :

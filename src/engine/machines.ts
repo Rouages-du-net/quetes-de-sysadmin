@@ -86,6 +86,8 @@ export const MACHINES: Machine[] = [
   { ...machine('register', '192.0.2.46', 'card-catalogue'), os: 'windows' },
   // The Pantry: the community grocery's Debian server; spare, a borrowed laptop for the restore drill, is an internal host.
   machine('crate', '192.0.2.48', 'pantry'),
+  // The Ferry: the ferry cooperative's Debian server, in IPv4 and IPv6; lookout, islenet's monitoring box on the internet, is an internal host.
+  machine('quay', '192.0.2.52', 'ferry'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

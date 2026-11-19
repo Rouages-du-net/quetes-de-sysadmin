@@ -453,3 +453,9 @@ name-pantry = epicerie
 name-families-csv = familles.csv
 name-volunteers-csv = benevoles.csv
 name-last-sync-txt = derniere-synchro.txt
+
+## Le Bac
+name-message_from_amaru-txt = message_d_amaru.txt
+name-email_from_rangi-txt = courriel_de_rangi.txt
+name-scan_report-txt = rapport_de_scan.txt
+name-note_from_lucia-txt = mot_de_lucia.txt

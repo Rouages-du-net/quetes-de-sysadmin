@@ -46,3 +46,5 @@ machine-register = register
 machine-stacks = stacks
 machine-crate = crate
 machine-spare = spare
+machine-quay = quay
+machine-lookout = lookout

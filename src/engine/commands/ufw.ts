@@ -7,8 +7,13 @@
 import type { Shell } from '../shell';
 import { APPLICATIONS, SERVICES, type Action, type Firewall, type Policy, type Rule } from '../firewall';
 import type { Command } from './index';
+import { cidr6 } from '../ipv6';
 
 const ACTIONS = ['allow', 'deny', 'reject', 'limit'];
+
+/** IPV6= in /etc/default/ufw (yes if the file doesn't say). */
+export const ipv6Setting = (game: Shell) => !/^\s*IPV6\s*=\s*no\s*$/im.test(game.read('/etc/default/ufw') ?? '');
+const twin = (pf: Firewall, r: Rule) => !r.forEachOf && r.v6 !== false && pf.ipv6 !== false;
 
 // "22", "22/tcp", "ssh", "OpenSSH", or "from X [to any port N] [proto P]".
 function readRule(game: Shell, action: Action, words: string[]): Rule | null {
@@ -34,7 +39,7 @@ function readRule(game: Shell, action: Action, words: string[]): Rule | null {
     else return null;
   }
   if (app && (port || proto)) return null;
-  if (forEachOf !== null && !/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(forEachOf)) return null;
+  if (forEachOf !== null && !/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(forEachOf) && !cidr6(forEachOf)) return null;
   if (app) return { action, to: app, ports: APPLICATIONS[app], forEachOf };
   const to = port ? (proto ? `${port}/${proto}` : port) : game.t('ufw-everywhere');
   return { action, to, ports: port ? [Number(port)] : [], forEachOf };
@@ -51,7 +56,7 @@ function grid(game: Shell, pf: Firewall, sens: string, numbers: boolean): string
   for (const r of pf.rules) {
     const action = r.action.toUpperCase() + sens;
     lines.push([r.to, action, r.forEachOf ?? everywhere]);
-    if (!r.forEachOf) lines.push([r.to === everywhere ? r.to : `${r.to} (v6)`, action, `${everywhere} (v6)`]);
+    if (twin(pf, r)) lines.push([r.to === everywhere ? r.to : `${r.to} (v6)`, action, `${everywhere} (v6)`]);
   }
   const header = (numbers ? '     ' : '') + `${game.t('ufw-to').padEnd(27)}${game.t('ufw-action').padEnd(12)}${game.t('ufw')}`;
   const traits = (numbers ? '     ' : '') + `${'-'.repeat(game.t('ufw-to').length).padEnd(27)}${'-'.repeat(game.t('ufw-action').length).padEnd(12)}${'-'.repeat(game.t('ufw').length)}`;
@@ -86,10 +91,16 @@ export const UFW: Record<string, Command> = {
         game.ask(game.t('ufw-question'), (r) => {
           if (!/^(y|yes|o|oui)$/i.test(r)) return game.t('ufw-abandon');
           pf.enabled = true;
+          pf.ipv6 = ipv6Setting(game);
           pf.activationAlConnections = game.state.connections ?? 1;
           return game.t('ufw-active');
         });
         return '';
+      }
+      if (action === 'reload') {
+        if (!pf.enabled) return game.t('ufw-reload-skipped');
+        pf.ipv6 = ipv6Setting(game);
+        return game.t('ufw-reloaded');
       }
       if (action === 'disable') {
         pf.enabled = false;
@@ -106,13 +117,13 @@ export const UFW: Record<string, Command> = {
       if (action === 'delete') {
         if (rest.length === 1 && /^\d+$/.test(rest[0])) {
           // The numbering of ufw status numbered also counts the (v6) lines.
-          const lines = pf.rules.flatMap((r) => (r.forEachOf ? [r] : [r, r]));
+          const lines = pf.rules.flatMap((r) => (twin(pf, r) ? [r, r] : [r]));
           const r = lines[Number(rest[0]) - 1];
           if (!r) return game.error(game.t('ufw-number', { number: rest[0] }));
           game.ask(game.t('ufw-question-deletion', { rule: ruleText(r) }), (rep) => {
             if (!/^(y|yes|o|oui)$/i.test(rep)) return game.t('ufw-abandon');
             pf.rules = pf.rules.filter((q) => q !== r);
-            return r.forEachOf ? game.t('ufw-rule-deleted') : v6('ufw-rule-deleted');
+            return twin(pf, r) ? v6('ufw-rule-deleted') : game.t('ufw-rule-deleted');
           });
           return '';
         }
@@ -121,14 +132,24 @@ export const UFW: Record<string, Command> = {
         const existing = pf.rules.find((q) => sameRule(q, r));
         if (!existing) return game.error(game.t('ufw-nonexistent'));
         pf.rules = pf.rules.filter((q) => q !== existing);
-        return r.forEachOf ? game.t('ufw-rule-deleted') : v6('ufw-rule-deleted');
+        return twin(pf, existing) ? v6('ufw-rule-deleted') : game.t('ufw-rule-deleted');
       }
       if (ACTIONS.includes(action)) {
         const r = readRule(game, action as Action, rest);
         if (!r) return game.error(game.t('ufw-syntax'));
-        if (pf.rules.some((q) => sameRule(q, r))) return r.forEachOf ? game.t('ufw-existing') : v6('ufw-existing');
+        const ipv6 = ipv6Setting(game);
+        const existing = pf.rules.find((q) => sameRule(q, r));
+        if (existing) {
+          // Added before while IPV6=no: the IPv6 twin is written now.
+          if (!existing.forEachOf && existing.v6 === false && ipv6) {
+            existing.v6 = true;
+            return `${game.t('ufw-existing')}\n${game.t('ufw-rules-updates')} (v6)`;
+          }
+          return twin(pf, existing) ? v6('ufw-existing') : game.t('ufw-existing');
+        }
+        if (!ipv6) r.v6 = false;
         pf.rules.push(r);
-        return r.forEachOf ? game.t('ufw-rules-updates') : v6('ufw-rules-updates');
+        return !r.forEachOf && ipv6 ? v6('ufw-rules-updates') : game.t('ufw-rules-updates');
       }
       return game.error(game.t('ufw-syntax'));
     },

@@ -71,3 +71,5 @@ password-drafting-2029 = drafting-2029
 password-shelf-2029 = shelf-2029
 password-tram-lemon-harbour-58 = tram-lemon-harbour-58
 password-basket-orchard-copper-73 = basket-orchard-copper-73
+## The Ferry: sudo
+password-tide-2029 = tide-2029

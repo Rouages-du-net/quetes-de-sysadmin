@@ -82,3 +82,4 @@ machine-compass-motd = Next Door Windows — the Drawing Office's Linux server. 
 machine-stave-motd = The Music School — the school's file server, a Windows Server 2022 (OpenSSH lands in cmd.exe).
 machine-register-motd = The Card Catalogue — the libraries' domain controller, a Windows Server 2022 (Active Directory, lending.internal).
 machine-crate-motd = The Pantry — the community grocery's Debian server (its files, its app, and the backup disk that leaves on Fridays).
+machine-quay-motd = The Ferry — the ferry cooperative's Debian server, in IPv4 and in IPv6 (its site, its booking app, its DNS zone ferry.example).

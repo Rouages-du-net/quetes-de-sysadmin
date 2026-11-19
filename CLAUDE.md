@@ -212,8 +212,8 @@ presents them for people.
   `src/engine/apt-conf.ts`.
 - `src/engine/lan.ts`: a router's local network (`state.lan`: interfaces,
   802.1Q VLANs on a trunk, the switch's devices, `/etc/network/interfaces`
-  read like ifupdown); `ip`, `ifup`, `ifdown`, `dnsmasq --test` in
-  `commands/lan.ts`; DHCP (`dnsmasq.ts`: configuration, leases, log);
+  read like ifupdown, `inet6` stanzas included); `ip`, `ifup`, `ifdown`,
+  `dnsmasq --test` in `commands/lan.ts`; DHCP (`dnsmasq.ts`: configuration, leases, log);
   `ping` goes through this model when the machine has one.
 - `src/engine/nftables.ts`: a router's nftables firewall (`state.nft`:
   tables, chains, rules read like `nft`, a packet's path, NAT, the devices'
@@ -456,6 +456,25 @@ presents them for people.
   `spareHost()`; `filesOf` finds a secret wherever it was written);
   `lost-disk.ts`, `spare-key.ts`, `restore-drill.ts`. Tests:
   `tests/pantry.test.ts`.
+- `src/engine/ipv6.ts`: IPv6 on a machine whose link has a router
+  (`Lan.ra`): addresses (`parse6`, `format6`, prefixes), link-local and
+  SLAAC addresses from the MAC (modified EUI-64), static ones
+  (`Interface.addresses6`), `/proc/sys/net/ipv6/conf/*/` (`accept_ra`,
+  `autoconf`, `disable_ipv6`), the IPv6 default route (`Lan.gateway6`),
+  `boot6` (what the next boot brings up), `resolve` (`/etc/hosts`, then the
+  story's DNS), and the outside view (`state.vantage`: neighbour discovery,
+  the firewall's verdict over nftables families and ufw's `IPV6=`, who
+  listens: `0.0.0.0`, `[::]`, `*`); `ip -6`, `ip neigh` and `inet6`
+  stanzas in `lan.ts` and `commands/lan.ts`; `curl` (`-4`, `-6`, `-v`),
+  `ping`/`ping6` (`%eth0`) and `nc` in both families in
+  `commands/ipv6.ts`; `nmap -6` (`ScanHost.probe`); nginx's `listen [::]`,
+  `ipv6only=off` and `nginxSockets`. `chapters/ferry.ts`: what the chapters
+  of "The Ferry" share (`quay`, the ferry cooperative's server: its link,
+  its zone `ferry.example`, nginx and the booking app whose sockets follow
+  their configuration, `syncSockets`; `lookout`, islenet's box on the
+  internet, an internal host; `audit` checks a ruleset in both families);
+  `new-card.ts`, `other-door.ts`, `both-ways.ts`. Tests:
+  `tests/ferry.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

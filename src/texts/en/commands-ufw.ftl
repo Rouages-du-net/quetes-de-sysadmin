@@ -5,6 +5,7 @@
 ufw-usage =
     Usage: ufw COMMAND (see man ufw)
       enable | disable                 turn the firewall on or off
+      reload                           reread /etc/default/ufw and the rules
       default allow|deny|reject        default policy (incoming)
       allow|deny|reject|limit RULE     add a rule (e.g. ufw allow 22/tcp)
       delete RULE|NUMBER               delete a rule
@@ -45,4 +46,6 @@ ufw-existing = Skipping adding existing rule
 ufw-rule-deleted = Rule deleted
 ufw-nonexistent = Could not delete non-existent rule
 ufw-number = ERROR: Could not find rule '{ $number }'
+ufw-reloaded = Firewall reloaded
+ufw-reload-skipped = Firewall not enabled (skipping reload)
 ufw-applications = Available applications:

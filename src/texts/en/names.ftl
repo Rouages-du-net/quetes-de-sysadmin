@@ -450,3 +450,9 @@ name-pantry = pantry
 name-families-csv = families.csv
 name-volunteers-csv = volunteers.csv
 name-last-sync-txt = last-sync.txt
+
+## The Ferry
+name-message_from_amaru-txt = message_from_amaru.txt
+name-email_from_rangi-txt = email_from_rangi.txt
+name-scan_report-txt = scan_report.txt
+name-note_from_lucia-txt = note_from_lucia.txt

@@ -596,11 +596,16 @@ them safely.
   `init`, `key`, its environment variables, `check --read-data`;
   `sha256sum`; shell variables and `sudo -E`; a restore drill on an
   internal host with only escrowed secrets).
-- [ ] **IPv6**: the same services, two address families. SLAAC vs a static
+- [x] **IPv6**: the same services, two address families. SLAAC vs a static
   address, `ip -6`, a firewall that only covered IPv4 (ufw and nftables
   rules duplicated for v6, the classic "closed on v4, open on v6" hole),
   AAAA records in BIND, `ping6`/`curl -6`. Builds on the network engine
-  (`src/engine/lan.ts`, `nftables.ts`, `dns.ts`).
+  (`src/engine/lan.ts`, `nftables.ts`, `dns.ts`). Done: story 34, "The
+  Ferry" (`ipv6.ts`: SLAAC and EUI-64, link-local, `inet6` stanzas,
+  `ip -6`, `ping6` and `%eth0`, AAAA records and the serial; a `table ip`
+  firewall turned `inet` with ICMPv6; `nmap -6`, `nc -6`, `ss -6`;
+  nginx's `listen [::]:80` and `ipv6only`, `curl -4`/`-6 -v`, localhost
+  as `::1`; ufw's `IPV6=`).
 - [ ] **Metrics and alerting** (Prometheus/Alertmanager): reading a
   service the way "The Huts" reads logs. A node exporter and an app's
   `/metrics`, a scrape config, a PromQL threshold, an alert rule that

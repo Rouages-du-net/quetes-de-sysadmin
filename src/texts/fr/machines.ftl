@@ -46,3 +46,5 @@ machine-register = registre
 machine-stacks = rayons
 machine-crate = cagette
 machine-spare = secours
+machine-quay = quai
+machine-lookout = vigie
