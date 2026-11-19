@@ -5,6 +5,8 @@
 import { options } from '../tools';
 import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
 import type { Command, Context } from './index';
+import { isBsd } from '../freebsd';
+import { isSolaris } from '../solaris';
 
 // The lines to process: those of the given files, else the pipe's input.
 function texts(cmd: string, { input, game }: Context, files: string[]): { name: string; text: string }[] {
@@ -47,22 +49,127 @@ function head(cmd: 'head' | 'tail') {
   };
 }
 
+// GNU grep's options, read like getopt_long (grep 3.11's messages).
+// Source: https://www.gnu.org/software/grep/manual/grep.html#Context-Line-Control
+const GREP_TRY = "Usage: grep [OPTION]... PATTERNS [FILE]...\nTry 'grep --help' for more information.";
+const GREP_LONG: Record<string, string> = {
+  'ignore-case': 'i',
+  'invert-match': 'v',
+  count: 'c',
+  quiet: 'q',
+  silent: 'q',
+  'extended-regexp': 'E',
+  'perl-regexp': 'P',
+  'fixed-strings': 'F',
+  'no-filename': 'h',
+  'with-filename': 'H',
+  'line-number': 'n',
+  'only-matching': 'o',
+  'no-group-separator': '',
+};
+// The long options that take a value (--after-context=3 or --after-context 3).
+const GREP_LONG_VALUE: Record<string, string> = { 'after-context': 'A', 'before-context': 'B', context: 'C', 'max-count': 'm', 'group-separator': '' };
+const GREP_LETTERS = 'ivcqEPFhHno';
+
+type GrepOptions = { letters: Set<string>; rest: string[]; after?: number; before?: number; context?: number; max: number; separator: string | null };
+
+/**
+ * The options of GNU grep, or its error message (exit code 2). `lenient`: on
+ * FreeBSD and Solaris, whose own check has already accepted the arguments,
+ * letters that only that grep knows are ignored.
+ */
+export function grepOptions(args: string[], lenient = false): GrepOptions | string {
+  const o: GrepOptions = { letters: new Set(), rest: [], max: -1, separator: '--' };
+  // A context length: a decimal number, with spaces or + before it (strtoimax).
+  const length = (v: string): number | string => (/^\s*\+?\d+$/.test(v) ? Math.min(Number(v.trim()), Number.MAX_SAFE_INTEGER) : `grep: ${v}: invalid context length argument`);
+  const valued = (letter: string, v: string): string | null => {
+    if (letter === 'm') {
+      if (!/^\s*[+-]?\d+$/.test(v)) return 'grep: invalid max count';
+      const n = Number(v.trim());
+      o.max = n < 0 ? -1 : n;
+      return null;
+    }
+    const n = length(v);
+    if (typeof n === 'string') return n;
+    if (letter === 'A') o.after = n;
+    else if (letter === 'B') o.before = n;
+    else o.context = n;
+    return null;
+  };
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--') {
+      o.rest.push(...args.slice(i + 1));
+      break;
+    }
+    if (a.startsWith('--')) {
+      const [name, ...value] = a.slice(2).split('=');
+      const v = value.length ? value.join('=') : undefined;
+      if (name in GREP_LONG) {
+        if (v !== undefined) return `grep: option '--${name}' doesn't allow an argument\n${GREP_TRY}`;
+        if (name === 'no-group-separator') o.separator = null;
+        else o.letters.add(GREP_LONG[name]);
+      } else if (name in GREP_LONG_VALUE) {
+        const given = v ?? args[++i];
+        if (given === undefined) return `grep: option '--${name}' requires an argument\n${GREP_TRY}`;
+        if (name === 'group-separator') o.separator = given;
+        else {
+          const error = valued(GREP_LONG_VALUE[name], given);
+          if (error) return error;
+        }
+      } else if (!lenient) return `grep: unrecognized option '--${name}'\n${GREP_TRY}`;
+      continue;
+    }
+    if (!a.startsWith('-') || a === '-') {
+      o.rest.push(a);
+      continue;
+    }
+    // -NUM is -C NUM: the digits of one word make one number (-12), a new word starts again.
+    let digits = '';
+    for (let j = 1; j < a.length; j++) {
+      const l = a[j];
+      if (/\d/.test(l)) {
+        digits += l;
+        o.context = Math.min(Number(digits), Number.MAX_SAFE_INTEGER);
+      } else if ('ABCm'.includes(l)) {
+        const v = j < a.length - 1 ? a.slice(j + 1) : args[++i];
+        if (v === undefined) return `grep: option requires an argument -- '${l}'\n${GREP_TRY}`;
+        const error = valued(l, v);
+        if (error) return error;
+        break;
+      } else if (GREP_LETTERS.includes(l)) o.letters.add(l);
+      else if (!lenient) return `grep: invalid option -- '${l}'\n${GREP_TRY}`;
+    }
+  }
+  return o;
+}
+
 export const TEXT: Record<string, Command> = {
   less: {
     launch: (c) => texts('less', c, c.args.slice(0, 1)).map((t) => t.text).join('\n'),
   },
 
   grep: {
+    // GNU grep reads its options itself (getopt_long): -A3, -nC2, -2, --context 3…
+    ownOptions: true,
     launch: (raw) => {
       // --color: like the alias "grep --color=auto" of Debian's ~/.bashrc.
       const colour = readColour(raw.args, 'auto', 'auto');
       if (colour.invalid !== undefined) return raw.game.error(invalidColourMessage(raw, 'grep', colour.invalid));
       const c = { ...raw, args: colour.args };
       const inColour = colourise(c, colour.when);
-      const { letters, rest } = options(c.args);
+      // On FreeBSD and Solaris, the BSD or Solaris check already refused what that grep lacks.
+      const parsed = grepOptions(c.args, isBsd(c.game) || isSolaris(c.game));
+      if (typeof parsed === 'string') return c.game.error(parsed, 2);
+      const { letters, rest, max, separator } = parsed;
+      // -A and -B override -C (and -NUM) whatever their order; -1 means "not asked".
+      const after = parsed.after ?? parsed.context ?? -1;
+      const before = parsed.before ?? parsed.context ?? -1;
+      const withContext = after >= 0 || before >= 0;
       const [pattern, ...files] = rest;
       if (pattern === undefined) return c.game.error(c.game.t('grep-usage'));
       const broken = letters.has('i');
+      const invert = letters.has('v');
       // The pattern: a basic regular expression (BRE), extended with -E, plain text with -F.
       let re: RegExp | null = null;
       if (!letters.has('F'))
@@ -76,37 +183,99 @@ export const TEXT: Record<string, Command> = {
       const searches = broken ? pattern.toLowerCase() : pattern;
       const correspond = (l: string) => (re ? re.test(l) : (broken ? l.toLowerCase() : l).includes(searches));
       const ts = texts('grep', c, files);
-      // In colour (default GREP_COLORS): matches in bold red, the file name in magenta, the ":" in cyan.
+      // The matching parts of a line (for the colours and -o).
       const global = re ? new RegExp(re.source, re.flags + 'g') : null;
+      const parts = (l: string): [number, number][] => {
+        const found: [number, number][] = [];
+        if (global) {
+          global.lastIndex = 0;
+          for (let m = global.exec(l); m; m = global.exec(l)) {
+            if (m[0] === '') {
+              global.lastIndex++;
+              continue;
+            }
+            found.push([m.index, m.index + m[0].length]);
+          }
+        } else if (searches) {
+          const inside = broken ? l.toLowerCase() : l;
+          for (let k = inside.indexOf(searches); k >= 0; k = inside.indexOf(searches, k + searches.length)) found.push([k, k + searches.length]);
+        }
+        return found;
+      };
+      // In colour (default GREP_COLORS): matches in bold red (ms, and mc in the
+      // context lines of -v), the file name in magenta, the line number in green,
+      // the separators (":", "-", "--") in cyan.
       const highlight = (l: string) => {
-        if (!inColour || letters.has('v')) return l;
-        if (global) return l.replace(global, (m) => sgr('01;31', m));
-        if (!searches) return l;
+        if (!inColour) return l;
         let output = '';
         let i = 0;
-        const inside = broken ? l.toLowerCase() : l;
-        for (let k = inside.indexOf(searches); k >= 0; k = inside.indexOf(searches, i)) {
-          output += l.slice(i, k) + sgr('01;31', l.slice(k, k + searches.length));
-          i = k + searches.length;
+        for (const [from, to] of parts(l)) {
+          output += l.slice(i, from) + sgr('01;31', l.slice(from, to));
+          i = to;
         }
         return output + l.slice(i);
       };
-      const prefix = (name: string) => (inColour ? `${sgr('35', name)}${sgr('36', ':')}` : `${name}:`);
+      const paint = (code: string, text: string) => (inColour ? sgr(code, text) : text);
+      // -h: never the file name; -H: always (by default, only with several files).
+      const named = letters.has('h') ? false : letters.has('H') || ts.length > 1;
+      const numbered = letters.has('n');
+      // A selected line's prefix ends with ":", a context line's with "-" (FILE-12-text, FILE:13:text).
+      const prefix = (name: string, n: number, sep: ':' | '-') =>
+        (named ? paint('35', name || '(standard input)') + paint('36', sep) : '') + (numbered ? paint('32', String(n + 1)) + paint('36', sep) : '');
       const outputs: string[] = [];
+      let found = 0;
+      // Something already printed (the separator also goes between two files).
+      let used = false;
       for (const { name, text } of ts) {
-        const kept = linesFor(text).filter((l) => correspond(l) !== letters.has('v'));
-        // -h: never the file name; -H: always (by default, only with several files).
-        const named = letters.has('h') ? false : letters.has('H') || ts.length > 1;
-        if (letters.has('c')) outputs.push(named ? `${prefix(name)}${kept.length}` : String(kept.length));
-        else outputs.push(...kept.map((l) => (named ? `${prefix(name)}${highlight(l)}` : highlight(l))));
+        const lines = linesFor(text);
+        const selected = (l: string) => correspond(l) !== invert;
+        if (letters.has('c')) {
+          let n = 0;
+          for (const l of lines) if (n !== max && selected(l)) n++;
+          found += n;
+          outputs.push(named ? `${paint('35', name || '(standard input)')}${paint('36', ':')}${n}` : String(n));
+          continue;
+        }
+        // GNU grep's algorithm (prtext): the lines before a selected line, the
+        // line, then the following ones; "--" when a group does not follow the last line printed.
+        let last = -1;
+        let pending = 0;
+        let n = 0;
+        const context = (i: number) => {
+          // -o prints no context line, but the groups (and their separators) stay the same.
+          if (!letters.has('o')) outputs.push(prefix(name, i, '-') + (invert ? highlight(lines[i]) : lines[i]));
+          last = i;
+        };
+        for (let i = 0; i < lines.length && n !== max; i++) {
+          if (!selected(lines[i])) {
+            if (pending > 0) {
+              context(i);
+              pending--;
+            }
+            continue;
+          }
+          const from = Math.max(last + 1, i - Math.max(before, 0));
+          if (withContext && used && separator !== null && (last < 0 || from > last + 1)) outputs.push(paint('36', separator));
+          for (let k = from; k < i; k++) context(k);
+          if (letters.has('o')) {
+            if (!invert) for (const [a, b] of parts(lines[i])) outputs.push(prefix(name, i, ':') + paint('01;31', lines[i].slice(a, b)));
+          } else outputs.push(prefix(name, i, ':') + (invert ? lines[i] : highlight(lines[i])));
+          last = i;
+          used = true;
+          pending = Math.max(after, 0);
+          n++;
+          // -m: once NUM lines are selected, grep still prints the trailing context, matching or not.
+          if (n === max) for (let k = i + 1; k < lines.length && pending > 0; k++, pending--) context(k);
+        }
+        found += n;
       }
       // Deliberate difference: the real grep says nothing when it finds nothing;
       // here, the game says so (only on screen, never in a pipe).
       // -q: nothing on screen; only the exit code counts (failure if nothing found).
-      if (letters.has('q')) return outputs.length ? '' : c.game.error('');
+      if (letters.has('q')) return found ? '' : c.game.error('');
       // Like grep: code 1 when nothing matches (useful in a script).
-      c.game.status = outputs.length ? 0 : 1;
-      if (!outputs.length && c.last && ts.length) c.game.error(c.game.t('grep-nothing', { pattern: pattern }));
+      c.game.status = found ? 0 : 1;
+      if (!found && !letters.has('c') && c.last && ts.length) c.game.error(c.game.t('grep-nothing', { pattern: pattern }));
       return outputs.join('\n');
     },
   },

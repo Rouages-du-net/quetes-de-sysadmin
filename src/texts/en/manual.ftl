@@ -520,8 +520,8 @@ man-git =
     On screen, status, diff, log and show are in colour (color.ui=auto): what goes in red, what comes in green; --no-color turns them off.
     A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
     .synopsis = git [--git-dir=repository] [--work-tree=place] command
-man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off.
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=WHEN]] pattern [file...]
+man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off. -n numbers the lines, -o prints only what matches, -m NUM stops after NUM lines. Around each line found, -A NUM also prints the NUM lines after it, -B NUM those before, -C NUM (or -NUM) both: these context lines have a "-" after the name and the number (file-12-text) where the lines found have a ":" (file:13:text), and "--" separates groups that don't follow each other (--group-separator=SEP changes it, --no-group-separator removes it). -c ignores the context.
+    .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--color[=WHEN]] pattern [file...]
     .option-i = ignores the difference between uppercase and lowercase.
     .option-v = inverts the search: keeps the lines that do NOT contain the pattern.
     .option-c = counts the matching lines instead of printing them.
@@ -531,11 +531,19 @@ man-grep = prints the lines that contain the pattern. The pattern is a regular e
     .option-F = searches for the pattern as is, without regular expressions (fixed strings).
     .option-h = never prints the file name before the lines (by default, it does with several files).
     .option-H = always prints the file name before the lines, even with a single file.
+    .option-n = prints each line's number before it (--line-number).
+    .option-o = prints only the parts that match, one per line (--only-matching).
+    .option-m = NUM: stops after NUM lines found (--max-count); the trailing context still follows.
+    .option-A = NUM: also prints the NUM lines after each line found (--after-context).
+    .option-B = NUM: also prints the NUM lines before each line found (--before-context).
+    .option-C = NUM: the NUM lines before and after (--context); -NUM is the same.
     .example-1 = the lines that mention the Eraser
     .example-2 = in all the files here, uppercase or not
     .example-3 = a pattern with spaces, in quotes
     .example-4 = the lines that contain ".env" (the dot escaped)
     .example-5 = the GET or POST requests to the till app
+    .example-6 = each error with its line number and the two lines around it
+    .example-7 = the first failure and the three lines that follow it
     .command-1 = grep Eraser chronicle.txt
     .command-2 = grep -i eraser *
     .command-3 = grep "my password" journal.txt

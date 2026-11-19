@@ -535,10 +535,10 @@ man-git =
     À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe. -n numérote les lignes, -o n'affiche que ce qui correspond, -m NUM s'arrête après NUM lignes. Autour de chaque ligne trouvée, -A NUM affiche aussi les NUM lignes d'après, -B NUM celles d'avant, -C NUM (ou -NUM) les deux : ces lignes de contexte ont un « - » après le nom et le numéro (fichier-12-texte) là où les lignes trouvées ont un « : » (fichier:13:texte), et « -- » sépare les groupes qui ne se suivent pas (--group-separator=SEP le change, --no-group-separator l'enlève). -c ignore le contexte.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=QUAND]] motif [fichier...]
+    .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--color[=QUAND]] motif [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
@@ -548,11 +548,19 @@ man-grep = affiche les lignes qui contiennent le motif. Le motif est une express
     .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
     .option-h = n’affiche jamais le nom du fichier devant les lignes (par défaut, il l’affiche s’il y a plusieurs fichiers).
     .option-H = affiche toujours le nom du fichier devant les lignes, même avec un seul fichier.
+    .option-n = affiche le numéro de chaque ligne devant elle (--line-number).
+    .option-o = n'affiche que les parties qui correspondent, une par ligne (--only-matching).
+    .option-m = NUM : s'arrête après NUM lignes trouvées (--max-count) ; le contexte d'après suit quand même.
+    .option-A = NUM : affiche aussi les NUM lignes qui suivent chaque ligne trouvée (--after-context).
+    .option-B = NUM : affiche aussi les NUM lignes qui précèdent chaque ligne trouvée (--before-context).
+    .option-C = NUM : les NUM lignes d'avant et d'après (--context) ; -NUM revient au même.
     .example-1 = les lignes qui parlent de l’Effaceur
     .example-2 = dans tous les fichiers d’ici, majuscule ou pas
     .example-3 = un motif avec des espaces, entre guillemets
     .example-4 = les lignes qui contiennent « .env » (le point protégé)
     .example-5 = les requêtes GET ou POST vers la caisse
+    .example-6 = chaque erreur avec son numéro de ligne et les deux lignes autour
+    .example-7 = le premier échec et les trois lignes qui le suivent
 man-gpg = chiffre, déchiffre, signe et vérifie des fichiers (GnuPG). Deux gestes de tous les jours pour un·e sysadmin : chiffrer une sauvegarde, et vérifier qu'un fichier téléchargé vient bien de qui il prétend. --list-keys (-k) montre le trousseau, --list-secret-keys (-K) les clés avec lesquelles tu peux signer et déchiffrer, --import une clé qu'on t'a envoyée. gpg -c fichier le chiffre avec une phrase de passe (symétrique) en fichier.gpg ; gpg -e -r nom fichier le chiffre vers la clé publique d'une personne ; gpg -d fichier.gpg (ou juste gpg fichier.gpg) le déchiffre. gpg -b fichier crée une signature détachée fichier.sig (ou .asc avec -a), gpg --clearsign enrobe un texte lisible avec sa signature ; gpg --verify fichier.asc fichier vérifie une signature et dit « Good signature » ou « BAD signature », ou prévient quand la clé n'est pas dans ton trousseau. -o choisit le fichier de sortie, -a écrit en ASCII (.asc) plutôt qu'en binaire, -u choisit quelle clé signe. Dans le jeu, la cryptographie est simulée : elle apprend les gestes, elle ne cache rien pour de vrai.
     .synopsis = gpg -k | -K ; gpg --import cle.asc ; gpg [-a] -c|-e -r nom fichier ; gpg -d fichier.gpg ; gpg [-a] -b|--clearsign fichier ; gpg --verify fichier.asc [fichier]
     .option-k = lister les clés publiques du trousseau.

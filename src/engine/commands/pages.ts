@@ -209,7 +209,15 @@ export const PAGES: Record<string, Page> = {
     examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
     see: ['ls', 'grep', 'du', 'rm', 'crontab'],
   },
-  grep: { long: { 'color': '', 'colour': '', 'ignore-case': 'i', 'invert-match': 'v', 'count': 'c', 'quiet': 'q', 'silent': 'q', 'extended-regexp': 'E', 'perl-regexp': 'P', 'fixed-strings': 'F', 'no-filename': 'h', 'with-filename': 'H' }, options: ['i', 'v', 'c', 'q', 'E', 'P', 'F', 'h', 'H'], examples: ['grep Eraser chronicle.txt', 'grep -i eraser *', 'grep "my password" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /till' access.log"], see: ['cat', 'find'] },
+  grep: {
+    long: {
+      'color': '', 'colour': '', 'ignore-case': 'i', 'invert-match': 'v', 'count': 'c', 'quiet': 'q', 'silent': 'q', 'extended-regexp': 'E', 'perl-regexp': 'P', 'fixed-strings': 'F', 'no-filename': 'h', 'with-filename': 'H',
+      'line-number': 'n', 'only-matching': 'o', 'max-count': 'm', 'after-context': 'A', 'before-context': 'B', 'context': 'C', 'group-separator': '', 'no-group-separator': '',
+    },
+    options: ['i', 'v', 'c', 'q', 'E', 'P', 'F', 'h', 'H', 'n', 'o', 'm', 'A', 'B', 'C'],
+    examples: ['grep Eraser chronicle.txt', 'grep -i eraser *', 'grep "my password" journal.txt', "grep '\\.env' access.log", "grep -E '(GET|POST) /till' access.log", 'grep -n -C 2 error /var/log/syslog', 'grep -A 3 -m 1 Failed /var/log/auth.log'],
+    see: ['cat', 'find'],
+  },
   groups: { examples: ['groups', 'groups malo'], see: ['id', 'usermod'] },
   head: { long: {  }, options: ['n'], see: ['tail', 'cat'] },
   host: { examples: ['host cafe.example', 'host cafe.example ns2.registry.example'], see: ['dig'] },

@@ -14,7 +14,7 @@ import { binaryOnTerminal, isBinary } from './ebcdic';
 import { runProgram } from './cobol';
 import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
-import { SOLARIS_CHECKS, OTHER_BINS } from './commands/solaris-tools';
+import { SOLARIS_CHECKS, XPG4_CHECKS, OTHER_BINS } from './commands/solaris-tools';
 import { isSolaris, NOT_ON_SOLARIS } from './solaris';
 import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
@@ -1201,7 +1201,7 @@ export class Shell implements Game {
     }
     // Self-help reflexes: --help and unknown options.
     // On FreeBSD, the tools whose BSD version takes other options check them first, BSD's way.
-    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : isSolaris(this) && !otherBin ? SOLARIS_CHECKS[cmd] : undefined;
+    const bsdCheck = isBsd(this) ? BSD_CHECKS[cmd] : isSolaris(this) && !otherBin ? SOLARIS_CHECKS[cmd] : otherBin && raw.startsWith('/usr/xpg4/bin/') ? XPG4_CHECKS[cmd] : undefined;
     if (bsdCheck) {
       const refused = bsdCheck(rest);
       if (refused) {
