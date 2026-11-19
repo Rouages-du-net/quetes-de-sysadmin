@@ -120,6 +120,8 @@ export interface LimitZone {
 export interface Server {
   // Listening addresses ("0.0.0.0:80", "[::]:80"); those where it is the default server.
   listening: string[];
+  // The [::] addresses with ipv6only=off, which also take IPv4.
+  dual?: string[];
   byDefault: string[];
   names: string[];
   root: string;
@@ -292,7 +294,8 @@ function readLimit(d: Directive, zones: Record<string, LimitZone>): Limit {
 }
 
 // "80", "[::]:80", "192.0.2.11:80" → address:port.
-const address = (value: string) => (/^\d+$/.test(value) ? `0.0.0.0:${value}` : value.includes(':') ? value : `${value}:80`);
+const address = (value: string) =>
+  /^\d+$/.test(value) ? `0.0.0.0:${value}` : /^\[[^\]]*\]$/.test(value) ? `${value}:80` : value.includes(':') ? value : `${value}:80`;
 
 /** Reads and checks the whole configuration; throws an error in nginx's format. */
 function build(game: Game, read: string[] = []): Configuration {
@@ -311,9 +314,14 @@ function build(game: Game, read: string[] = []): Configuration {
       const listening: string[] = [];
       const byDefault: string[] = [];
       const ssl: string[] = [];
+      const dual: string[] = [];
       for (const l of children.filter((d) => d.name === 'listen')) {
         const a = address(l.args[0]);
         listening.push(a);
+        // ipv6only=off: the [::] socket also takes IPv4 (https://nginx.org/en/docs/http/ngx_http_core_module.html#listen).
+        const only = l.args.find((x) => x.startsWith('ipv6only='));
+        if (only && !['ipv6only=on', 'ipv6only=off'].includes(only)) failure(`invalid ipv6only flags "${only.slice(9)}"`, l.file, l.line);
+        if (only === 'ipv6only=off' && a.startsWith('[::]:')) dual.push(a);
         if (l.args.includes('ssl')) ssl.push(a);
         if (l.args.includes('default_server')) {
           if (bySeenDefault[a]) failure(`a duplicate default server for ${a}`, l.file, l.line);
@@ -379,6 +387,7 @@ function build(game: Game, read: string[] = []): Configuration {
         locations,
         back: children.find((d) => d.name === 'return')?.args,
         listening: listening.length ? listening : ['0.0.0.0:80'],
+        dual,
         byDefault,
         names,
         root: values(children, 'root')[0] ?? values(http, 'root')[0] ?? '/usr/share/nginx/html',
@@ -562,6 +571,19 @@ function errorLog(game: Game, level: string, message: string) {
   n.content = n.content ? `${n.content}\n${line}` : line;
 }
 
+/** The sockets the loaded configuration listens on, as ss shows them: 0.0.0.0, [::] (IPv6 only), or * (ipv6only=off). */
+export function nginxSockets(config: Configuration): { address: string; port: number }[] {
+  const out = new Map<string, { address: string; port: number }>();
+  for (const s of config.servers)
+    for (const l of s.listening) {
+      const m = /^(.*):(\d+)$/.exec(l);
+      if (!m) continue;
+      const address = s.dual?.includes(l) ? '*' : m[1];
+      out.set(`${address}:${m[2]}`, { address, port: Number(m[2]) });
+    }
+  return [...out.values()];
+}
+
 /** The location block that handles this path, like nginx: = exact, the longest prefix (^~ stops there), the regular expressions in order, otherwise that prefix. */
 export function chooseLocation(server: Server, path: string): Location | null {
   const exact = server.locations.find((l) => l.exact && l.path === path);
@@ -627,12 +649,17 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   const sd = systemd(game);
   const config: Configuration | null = game.state.nginx?.load ?? null;
   if (!config || sd?.services.nginx?.state !== 'active') return null;
-  const a = /^\[|:/.test(host) ? `[::]:${port}` : `0.0.0.0:${port}`;
-  const candidates = config.servers.filter((s) => s.listening.includes(a));
-  const server = candidates.find((s) => s.names.includes(host.toLowerCase())) ?? candidates.find((s) => s.byDefault.includes(a)) ?? candidates[0];
+  // The family the request arrived in: the client's address (::1, 2001:db8::…), or a literal [::1] host.
+  const v6 = client.address.includes(':') || /^\[|:/.test(host);
+  const dualAt = `[::]:${port}`;
+  const a = v6 ? `[::]:${port}` : `0.0.0.0:${port}`;
+  const takes = (s: Server) => s.listening.includes(a) || (!v6 && !!s.dual?.includes(dualAt));
+  const candidates = config.servers.filter(takes);
+  const at = (s: Server) => (s.listening.includes(a) ? a : dualAt);
+  const server = candidates.find((s) => s.names.includes(host.toLowerCase())) ?? candidates.find((s) => s.byDefault.includes(at(s))) ?? candidates[0];
   if (!server) return null;
   // An HTTPS port doesn't answer in plain text (and vice versa): only the right case is simulated.
-  if (server.ssl.includes(a) !== (port === 443)) return null;
+  if (server.ssl.includes(at(server)) !== (port === 443)) return null;
   const response = (code: number, body: string, more: string[] = []): Response => ({
     code,
     body,
@@ -686,7 +713,11 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   if (loc?.back) return back(loc.back);
   if (loc?.proxy) {
     const m = /^https?:\/\/([^/]+)(\/.*)?$/.exec(loc.proxy);
+    // localhost: on a machine that speaks IPv6 with "::1 localhost" in /etc/hosts, nginx resolves both
+    // addresses at load time and tries ::1 first, then 127.0.0.1 (proxy_next_upstream error).
+    const both = /^localhost(?=:|$)/.test(m?.[1] ?? '') && !!game.state.lan?.ra && /^\s*::1\s+(.*\s)?localhost(\s|$)/m.test(game.read('/etc/hosts') ?? '');
     const upstreamHost = (m?.[1] ?? '').replace(/^localhost(?=:|$)/, '127.0.0.1');
+    const portOf = /:(\d+)$/.exec(upstreamHost)?.[1] ?? '80';
     // With a path part in proxy_pass, it replaces the location's prefix.
     const upstream = m?.[2] !== undefined ? m[2] + path.slice(loc.path.length) : path;
     const group = config.upstreams?.[upstreamHost];
@@ -717,6 +748,14 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
         errorLog(game, 'error', connection(chosen));
         tried.push(chosen);
       }
+    } else if (both) {
+      for (const candidate of [`[::1]:${portOf}`, `127.0.0.1:${portOf}`]) {
+        address = candidate;
+        app = reach(candidate);
+        if (app) break;
+        errorLog(game, 'error', connection(candidate));
+      }
+      if (!app) return response(502, page(502));
     } else {
       app = reach(address);
       if (!app) {

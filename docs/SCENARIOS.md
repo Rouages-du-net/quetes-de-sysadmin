@@ -5,7 +5,8 @@ https://sysadmin.rouages.net and embeddable in other sites (see
 [EMBEDDING.md](EMBEDDING.md)). The engine is in `src/engine/`:
 
 - `shell.ts`: a machine's engine (paths, permissions, pipes `|`,
-  redirections `>` and `>>`, `sudo`, events);
+  redirections `>` and `>>`, command lists `;`, `&&`, `||`, `sudo`,
+  events);
 - `console.ts`, `machines.ts`, `workstation.ts`: the simulated network (the
   starting workstation, one machine per story, `ssh` and `exit` to go from
   one to another);
@@ -118,7 +119,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `mv` | only moves objects (files) | also moves directories |
 | `rm -r`, `cp -r` | refused | delete / copy whole directories |
 | `grep` with no result | "(no line contains …)" | shows nothing |
-| `grep` | basic (default), extended (`-E`) or fixed-string (`-F`) regular expressions, translated into JavaScript expressions; no `[[:alpha:]]` classes nor `\1` back-references | full POSIX |
+| `grep` | basic (default), extended (`-E`) or fixed-string (`-F`) regular expressions, translated into JavaScript expressions; no `[[:alpha:]]` classes nor `\1` back-references; context (`-A`, `-B`, `-C`, `-NUM`, `--group-separator`, `--no-group-separator`) with `-n`, `-H`, `-v`, `-m`, `-c` and `-o` as GNU grep 3.11 prints them; `-e`, `-f`, `-w` and `-x` (turned into JavaScript lookarounds and anchors), `-l`, `-L`, `-s`; `-r`/`-R` walk a directory in the game's usual order (sorted names, like `ls`), where GNU follows the directory's own unsorted order, with `--include`, `--exclude`, `--exclude-dir` (`*` and `?` only) | full POSIX, `-b`, `-z`, `-a`, `--label`, `--binary-files`, `--devices`, `-d ACTION`, abbreviated long options, `[...]` in `--include` globs |
 | colours (`ls`, `grep`, `diff --color`, `systemctl`, `journalctl`, `ip -c`, `git`) | `ls` and `grep` colour on screen by default, like the `--color=auto` aliases of Debian's `~/.bashrc` (without an `alias` command); `ls` keeps the `/` after places even in colour; only the default colours of common types (places, links, programs, archives, images); the interface's "Colours" button plays the part of a terminal without colours | `LS_COLORS`/`dircolors`, `GREP_COLORS`, `diff --palette`, `SYSTEMD_COLORS`; the alias is read from `~/.bashrc` |
 | `man` | shows the page at once, in a few sections | opens a full-screen page (arrows, `/word` to search, `q` to quit), much longer |
 | `ls -l` | type and rights, owner, group (= owner), size, name | adds the link count and the date |
@@ -137,10 +138,11 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | mounts at boot (The Canteen) | the fstab lines on a simple device become `.mount` units with the device's delay; `nofail` mounts are waited for only by `RequiresMountsFor=`, the others by every service; no `x-systemd.*` options, no `mount --bind` | `local-fs.target`, `x-systemd.automount`, `x-systemd.device-timeout=`… |
 | `systemd-analyze`, `networkctl` | `calendar`, `time`, `blame`, `critical-chain`, `verify` (unknown sections and keys, required units that don't exist); `networkctl list`, `status`, `reload` | every verb (`plot`, `dot`, `security`…), every option |
 | `ping` | 4 pings by default | goes on until Ctrl+C |
+| `ping -6`, `ping6` | on a machine speaking IPv6 or looking at one from outside: iputils' IPv6 output, a link-local address refused without `%interface` (or `-I`), the router's "Address unreachable" for an address of its prefix that nobody has; the times are computed | every option, flood, `-s`, `-t` |
 | `traceroute` | stops 3 hops after the last one that answers | goes on up to 30 hops |
 | `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | computed size (text compressed to a third, media to 98 %); if there isn't room, nothing is written | real compression; a partial archive may remain |
-| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
+| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; `log` with `--oneline` and `-p`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
 | scripts (`sh`, hooks) | a reduced `/bin/sh` (`script.ts`): one command per line, `#`, `set -e`, `exit`, variables, `$(…)`, `read`, `&&`, `\|\|`, `[ … ]`; no `if`, `for`, `while`, `case` nor functions; a command succeeds if it wrote no error | the full language |
 | `diff` | normal format, `-u` (three lines of context), `-r`, `-q`; the time in the `-u` header is the machine's | every option |
 | `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]` in a script): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=`, numeric comparisons; `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath` |
@@ -159,7 +161,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `stat` | GNU's `-c FORMAT` (`%s`, `%n`, `%U`, `%G`, `%a`, `%A`, `%y`, `%Y`, `%F`) and `-f` (file system); BSD's `-f FORMAT` (`%z`, `%N`, `%Su`, `%Sg`, `%Lp`, `%Sp`, `%Sm`, `%m`) on FreeBSD; each refuses the other's option | the other format sequences, `-L`, `-t`, inodes and devices |
 | `date` | `+FORMAT`; on Linux, GNU's `-d` (`yesterday`, `tomorrow`, `N days ago`, `+N weeks`, an ISO date, `@seconds`) and `-s` (root); on FreeBSD, BSD's `-v` (adjust or set a field: `y m w d H M S`), `-j`, `-u`; each refuses the other's options | GNU's full date grammar ("next Friday"), BSD's `-f` input format, `-r` |
 | FreeBSD (`state.os`) | a machine of the story "The Other Unix": its login banner and `uname`, `freebsd-version`; Debian's commands are "not found" (`systemctl`, `journalctl`, `apt`, `ss`, `ip`, `ufw`, `iptables`…), `bash` too until `pkg install bash`; a script's `#!` line names an interpreter that must exist ("./script: not found"); sudo reads `/usr/local/etc/sudoers`; `man` shows the BSD page of `date`, `sed`, `stat`, `ps`, `ls`, `grep`, `find`, `du` (and SEE ALSO leaves out Debian-only commands) | the other tools' BSD versions (`cp`, `tar`, `xargs`… behave as on Linux), `csh`/`tcsh`, `pw`, jails, ZFS, ports |
-| Solaris 10 (`state.os`) | a machine of the story "The Old Sun": its login banner, `uname` (SunOS, sun4u sparc) and `isainfo`; Debian's and FreeBSD's commands are "not found" (`systemctl`, `top`, `free`, `stat`, `ss`, `ip`…); the old `/usr/bin` tools refuse modern options with Solaris's messages (`grep` without `-q`/`-E`/`-r`, `sed` without `-i`, `tar` without `z`, `find` without `-maxdepth`/`-delete`, `du` without `-b`, `date` without `-d`, `ps aux` without a dash), while `/usr/xpg4/bin/…` and `/usr/ucb/ps` behave like their POSIX and BSD versions; `man` shows the Solaris page of `grep` and `ps`; sudo (from sunfreeware) reads `/usr/local/etc/sudoers` | a single global zone, Solaris's `ls -l` and `df` formats, `pfexec` and RBAC, `/usr/xpg4/bin` for other tools than those named |
+| Solaris 10 (`state.os`) | a machine of the story "The Old Sun": its login banner, `uname` (SunOS, sun4u sparc) and `isainfo`; Debian's and FreeBSD's commands are "not found" (`systemctl`, `top`, `free`, `stat`, `ss`, `ip`…); the old `/usr/bin` tools refuse modern options with Solaris's messages (`grep` without `-q`/`-E`/`-r`, and no context `-A`/`-B`/`-C` in `/usr/xpg4/bin/grep` either, `sed` without `-i`, `tar` without `z`, `find` without `-maxdepth`/`-delete`, `du` without `-b`, `date` without `-d`, `ps aux` without a dash), while `/usr/xpg4/bin/…` and `/usr/ucb/ps` behave like their POSIX and BSD versions; `man` shows the Solaris page of `grep` and `ps`; sudo (from sunfreeware) reads `/usr/local/etc/sudoers` | a single global zone, Solaris's `ls -l` and `df` formats, `pfexec` and RBAC, `/usr/xpg4/bin` for other tools than those named |
 | `svcs`, `svcadm`, `svcprop` | SMF services by FMRI (or the end of it), their state (online, disabled, maintenance, legacy_run), `svcs -a`, `-x` (why a service is in maintenance), `-l`, `-p`, `-H`; `svcadm enable`/`disable` (`-t`), `restart`, `refresh`, `clear` (root); `svcprop -p` | milestones, dependencies between services, `svccfg` and manifests, `svcs -d`/`-D`, `-o` |
 | `zfs`, `zpool` | `zfs list` (`-t snapshot`), `zfs snapshot` (root), `zfs destroy` of a snapshot, `zfs get`; `zpool list`, `zpool status` | `zfs rollback`, `send`/`receive`, clones, properties beyond a few, sizes that follow the files |
 | `prstat`, `pkginfo`, `isainfo`, `zoneadm`, `zonename` | one snapshot of the processes (`prstat`); the SVR4 packages (`pkginfo`, `-l`); the instruction sets; the global zone | `prstat`'s refresh and sorting options, `pkgadd`/`pkgrm`, non-global zones |
@@ -167,7 +169,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | EBCDIC and binary files | a file may hold raw bytes (`File.charset = 'binary'`): `cat`, `head`… show � above 0x7F and drop control bytes; `wc -c` counts its bytes; `file` says data; `iconv` knows EBCDIC-US (glibc's gaps), IBM037/CP037 and ASCII, stops at the first byte or character it can't convert with its position, `-c` drops them (exit code 0, like glibc 2.39), `-o`; a redirection keeps raw bytes | other EBCDIC code pages (1047, 500…), `//TRANSLIT`, `iconv`'s partial output buffering |
 | `od`, `xxd`, `hexdump`, `dd` | `od` with `-A`, `-t` (c, x, o, u, d on 1, 2 or 4 bytes), `-c`, `-b`, `-x`, `-N`, `-j`, `-v`, repeated lines as `*`; `xxd` with `-s`, `-l`, `-c`, `-g`, `-p`, `-u`; `hexdump` default and `-C`, `-n`, `-s`, `-v`; `dd` with `if`, `of` (`/dev/null` included), `bs`, `ibs`, `obs`, `cbs`, `count`, `skip`, `conv=ascii,ebcdic,ibm,block,unblock,lcase,ucase`, `status=none`, GNU's translation tables; its statistics always show the same duration | `od -w`, `-a`, floating types; `xxd -r`, `-b`, `-i`; `hexdump -e`; `dd`'s `seek`, `iflag`/`oflag` effects, devices |
 | `cobc` and COBOL programs | GnuCOBOL 3.1.2: fixed (reference) format checked for its column-7 indicator, `-free` refusing sequence numbers, COPY looked up in the current directory, `-I` and `/usr/share/gnucobol/copy`, PERFORM of a missing paragraph, PROGRAM-ID; `-x`, `-m` (default, `NAME.so`, a segmentation fault if executed), `-c`, `-o`, `--version`; a program's RETURN-CODE is its exit code; the story's programs (EBC2ASC, CONTRIB) are recognised by their PROGRAM-ID and run in TypeScript from their files, another program only prints its DISPLAY literals | a real compiler: no other syntax or semantic checks, no listing, `cobcrun`, `-j`, environment-variable file mapping (the programs take their files as arguments) |
-| `$?` | the interactive shell expands `$?` (outside single quotes) to the previous line's exit code | `;`, `&&` and `\|\|` on the interactive line (they work in scripts) |
+| `$?` and command lists (`;`, `&&`, `\|\|`) | the interactive shell expands `$?` (outside single quotes) to the previous command's exit code; a line can be a list (`splitList` in `tools.ts`), split outside quotes, `\` escapes and `$(…)`: `&&` and `\|\|` with equal precedence from the left, `;`; each command runs as if typed alone (the story's events, `afterCommand`, the summary), the history keeps the whole line; sudo's password, a question or nano pauses the list until answered; a command that leaves the session (`exit`, `ssh`, `reboot`, a cut network, `tail -f`) ends the line there; bash's syntax errors (`syntax error near unexpected token`, exit code 2); cron lines and `underCommand` run lists too | what follows `ssh host`/`exit` runs on the original machine once it ends; `&` (background), `( … )` and `{ …; }` groups, `!`, a continuation line after a trailing `&&`/`\|\|` (the game reports the end of input) |
 | IBM i (`state.os = 'ibmi'`) and PASE | a machine of the story "The Order Book": `ssh` lands in PASE (bash and Unix utilities: `ls`, `cat`, `grep`, `file`, `iconv`, `od`, `scp`, `ssh`; `uname` says OS400), Linux's administration tools are "command not found"; the IFS shows `/QSYS.LIB/ORDERS.LIB/…` (ORDHDR's member as fixed EBCDIC records); PASE resolves names through `/etc/hosts`; the profile is the player's account in capitals (YOU) | the IFS's case-insensitive root, CCSID tags on every stream file (only CPYTOIMPF's files have one), QShell (`qsh`), `/QOpenSys` and the IBM i host table (`CFGTCP`) |
 | `tn5250` and the 5250 session | `tn5250 HOST` from the workstation: the sign-on display (user, then a hidden password; CPF1120, CPF1107), a short main menu (90 signs off), then the `===>` command line where each line is a CL command, until `SIGNOFF`; no rescue snapshot during such a session | a real 5250 screen: 24×80 fields, function keys (F3, F4 prompting, F1 help: replaced by `CMD ?` and `?` at a reply prompt), the menus (only typed commands), subfile options in list panels (replaced by the equivalent commands), paging (long lists show their first and last lines and how many were left out), `tn5250`'s options and keyboard maps |
 | CL commands (`src/engine/cl.ts`, `commands/ibmi.ts`) | 27 commands: `SIGNOFF`, `WRKACTJOB`, `WRKSBS`, `WRKJOBQ`, `WRKSYSSTS`, `DSPMSG`, `WRKMSGQ`, `DSPJOBLOG`, `WRKOBJLCK`, `DSPRCDLCK`, `ENDJOB`, `SBMJOB`, `CALL`, `ENDSBS`, `STRSBS`, `WRKOUTQ`, `WRKSPLF`, `DLTSPLF`, `CLROUTQ`, `DSPDTAARA`, `CHGDTAARA`, `DSPLIB`, `DSPLOG`, `CRTSAVF`, `DSPSAVF`, `SAVLIB`, `CPYTOIMPF`, with their key parameters, keywords or positional values (up to their positional limit), quoted strings, special values and lists; the analyser's errors CPD0030 (unknown command, then CPF0006), CPD0043, CPD0065, CPD0071, CPD0040, CPD0013, CPD0018 (then CPF0001); every message is shown with its ID in front (`CPF3771: …`), the way PASE's `system` prints them; their manual pages (`man WRKACTJOB`, `man wrkactjob`, `CMD ?`) list parameters | prompting, continuation lines, variables and expressions, `*LIBL` searches through a real library list, authority checking (the profile acts as if it had *JOBCTL, *SPLCTL and *SAVSYS), the other parameters and their validity checks, message files (texts written in the game, from IBM's), a few message IDs written from memory (CPD2420 for an invalid reply, CPF3794) |
@@ -181,7 +183,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | PowerShell (`src/engine/powershell.ts`, `commands/powershell.ts`) | 21 read-only cmdlets (`Get-ChildItem`, `Get-Content`, `Set-Location`, `Get-Location`, `Get-Service`, `Get-PSDrive`, `Get-Volume`, `Get-WinEvent`, `Get-EventLog`, `Get-SmbShare`, `Where-Object`, `Sort-Object`, `Select-Object`, `Format-Table`, `Format-List`, `Measure-Object`, `Write-Output`, `Clear-Host`, `Get-Help`, `Get-Command`, `Get-Alias`), their 5.1 aliases (`ls`, `dir`, `cat`, `cd`, `pwd`, `sort`, `select`, `where`, `?`, `ft`, `fl`, `help`, `man`…), `cd..`, `hostname`, `whoami`; a pipeline of objects with typed properties; parameters by name, by unambiguous prefix (any case) or by position, `-Name:value`, `-?`, `-ErrorAction SilentlyContinue`; numbers with `KB`/`MB`/`GB`/`TB`; Where-Object's simple form (`Where-Object Length -gt 1GB`) and a script block with one comparison on `$_`; Out-Default's tables (grouped by directory or provider, as the format files do) and lists (five properties or more); errors in 5.1's layout (`CommandNotFoundException`, `NamedParameterNotFound`, `AmbiguousParameter`, `MissingArgument`, `PositionalParameterNotFound`, `PathNotFound`…); `Get-Help` shows the game's manual page in PowerShell's layout, `man Get-ChildItem` on Linux the same page (section PS) | superseded by the Windows engine's rows below (on cabinet the cmdlets that change something still answer with a note of the game) |
 | `mount -t cifs`, `mount.cifs` (`src/engine/cifs.ts`) | the share's directory grafted at the mount point (like NFS); `cifs-utils` needed (util-linux's "helper program" message); options `credentials=` (username, password, domain), `username=`, `password=`, `domain=`, `uid=`/`gid=` (names or numbers), `file_mode=`, `dir_mode=`, `vers=` (1.0 refused by a server with SMB1 off: error 112), `ro`, `_netdev`, `nofail`, `noauto`, `x-systemd.*`, `guest`; the password prompt; errors 13, 2, 22, 16 and mount.cifs's own (bad UNC, credential file, bad user name, chdir); the files show the mount's owner, group and modes, chown and chmod change nothing visible; writes need the account's right on the share; `df` shows the server's volume; `mount`'s line like `/proc/mounts`; `mount -a` and `findmnt --verify` with network lines (no source check) | Kerberos (`sec=krb5`), `multiuser`, `cifsacl`, `noperm`, the cache options, reconnection, a second mount on the same point (refused with error 16), the server's ACLs (a share says who may change it), smbclient's dates on directories |
 | `smbclient` and a Windows server | `-L` (host or `//host`) lists the shares with the administrative ones (`ADMIN$`, `C$`, `D$`, `IPC$`) and "SMB1 disabled"; a session's `-c` commands on the share (writes if the account may change it); `-U user` without `%password` prompts | an interactive session, NetBIOS browsing |
-| **Windows engine:** the language (`powershell-parse.ts`, `commands/powershell.ts`) | Windows PowerShell 5.1's parser in its two modes (argument and expression): statements (`;`, new lines), `if`/`elseif`/`else`, `foreach`, `try`/`catch [Type]`/`finally` (`$_` an error record with `.Exception.Message`; a non-terminating error isn't caught), `exit`, `throw`; script-terminating errors (`throw`, `-ErrorAction Stop`, `$ErrorActionPreference = 'Stop'`) end the line or the script, statement-terminating ones only their statement; a script's own variable scope (`.\script.ps1` reads the session's, a task's `powershell.exe -File` starts empty), `exit N` in `.\script.ps1` ends the script and sets `$LASTEXITCODE`; assignments (`=`, `+=`, `-=`, `$env:X =`, `$x.Prop =`, `$h['k'] =`); pipelines whose first element may be an expression; redirections `>`, `>>`, `2>$null`, `2>&1`, `*>`; numbers (`0x1F`, `1.5GB`), `'single'` and `"double"` strings (`$var`, `${var}`, `$env:X`, `$(…)`, backtick escapes, `""`), arrays (`1,2,3`, `@()`, ranges `1..5`), hashtables `@{}`, script blocks with `$_`/`$PSItem`, casts and type literals (`[int]`, `[datetime]`, `[math]::Round()`, `[string]::IsNullOrEmpty()`), member access, method calls (strings, dates, hashtables, arrays, ACL objects), member enumeration (`(Get-Service).Name`), indexes; operators with 5.1's precedence: comparisons with `c`/`i` forms (`-eq`…`-notin`, `-like`, `-match` and `$Matches`, `-replace`, `-split`, `-join`, `-is`, `-as`), `-and`/`-or`/`-xor`/`-not`/`!`, arithmetic, `-f` with .NET formats (`N2`, `F1`, `D4`, `X`, dates `yyyy-MM-dd`); automatic variables (`$true`, `$false`, `$null`, `$Error`, `$LASTEXITCODE`, `$?`, `$PSVersionTable`, `$HOME`, `$PWD`, `$Matches`); parse errors in 5.1's layout (`TerminatorExpectedAtEndOfString`, `MissingEndCurlyBrace`, `ExpectedValueExpression`, `EmptyPipeElement`, `UnexpectedToken`); runtime errors (`InvokeMethodOnNull`, `MethodNotFound`, `TypeNotFound`, `InvalidCastFromStringToInteger`); unquoted `user:(OI)(CI)(M)` runs `(OI)` as a command, as in PowerShell | `trap`, here-strings, splatting, classes, loop labels, `switch -File`, `filter`, the pipeline running a function's process block item by item while the next command waits (the game runs each command to its end before the next), a mandatory parameter's prompt without `!?` help, a call depth stopped at 100 (Windows PowerShell's limit is higher), endless loops stopped by the game after 10,000 iterations on a line (real PowerShell runs until Ctrl+C), `Get-Module` lists every module of the machine as if imported, `-OutVariable` (accepted, ignored), scopes beyond the session's and a script's own (no `$script:`/`$global:`), a catch's type matched by its name only (no .NET hierarchy beyond `Exception`), `$OFS` and culture, type accelerators beyond a short list, a binding error names the alias typed (`ls : …`, story 30's wording; real 5.1 may name the cmdlet) |
+| **Windows engine:** the language (`powershell-parse.ts`, `commands/powershell.ts`) | Windows PowerShell 5.1's parser in its two modes (argument and expression): statements (`;`, new lines), `if`/`elseif`/`else`, `foreach`, `try`/`catch [Type]`/`finally` (`$_` an error record with `.Exception.Message`; a non-terminating error isn't caught), `exit`, `throw`; script-terminating errors (`throw`, `-ErrorAction Stop`, `$ErrorActionPreference = 'Stop'`) end the line or the script, statement-terminating ones only their statement; a script's own variable scope (`.\script.ps1` reads the session's, a task's `powershell.exe -File` starts empty), `exit N` in `.\script.ps1` ends the script and sets `$LASTEXITCODE`; assignments (`=`, `+=`, `-=`, `$env:X =`, `$x.Prop =`, `$h['k'] =`); pipelines whose first element may be an expression; redirections `>`, `>>`, `2>$null`, `2>&1`, `*>`; numbers (`0x1F`, `1.5GB`), `'single'` and `"double"` strings (`$var`, `${var}`, `$env:X`, `$(…)`, backtick escapes, `""`), arrays (`1,2,3`, `@()`, ranges `1..5`), hashtables `@{}`, script blocks with `$_`/`$PSItem`, casts and type literals (`[int]`, `[datetime]`, `[math]::Round()`, `[string]::IsNullOrEmpty()`), member access, method calls (strings, dates, hashtables, arrays, ACL objects), member enumeration (`(Get-Service).Name`), indexes; operators with 5.1's precedence: comparisons with `c`/`i` forms (`-eq`…`-notin`, `-like`, `-match` and `$Matches`, `-replace`, `-split`, `-join`, `-is`, `-as`), `-and`/`-or`/`-xor`/`-not`/`!`, arithmetic, `-f` with .NET formats (`N2`, `F1`, `D4`, `X`, dates `yyyy-MM-dd`); automatic variables (`$true`, `$false`, `$null`, `$Error`, `$LASTEXITCODE`, `$?`, `$PSVersionTable`, `$HOME`, `$PWD`, `$Matches`); parse errors in 5.1's layout (`&&` and `\|\|`, PowerShell 7's pipeline chain operators: `InvalidEndOfLine`, `TerminatorExpectedAtEndOfString`, `MissingEndCurlyBrace`, `ExpectedValueExpression`, `EmptyPipeElement`, `UnexpectedToken`); runtime errors (`InvokeMethodOnNull`, `MethodNotFound`, `TypeNotFound`, `InvalidCastFromStringToInteger`); unquoted `user:(OI)(CI)(M)` runs `(OI)` as a command, as in PowerShell | `trap`, here-strings, splatting, classes, loop labels, `switch -File`, `filter`, the pipeline running a function's process block item by item while the next command waits (the game runs each command to its end before the next), a mandatory parameter's prompt without `!?` help, a call depth stopped at 100 (Windows PowerShell's limit is higher), endless loops stopped by the game after 10,000 iterations on a line (real PowerShell runs until Ctrl+C), `Get-Module` lists every module of the machine as if imported, `-OutVariable` (accepted, ignored), scopes beyond the session's and a script's own (no `$script:`/`$global:`), a catch's type matched by its name only (no .NET hierarchy beyond `Exception`), `$OFS` and culture, type accelerators beyond a short list, a binding error names the alias typed (`ls : …`, story 30's wording; real 5.1 may name the cmdlet) |
 | **Windows engine:** commands and the pipeline | cmdlets found by name or alias (5.1's aliases, `sc` is `Set-Content`, `%`, `?`), native programs with or without `.exe`, `.\script.ps1` (local scripts run, RemoteSigned; `script.ps1` without `.\` gives the "Suggestion [3,General]" line); parameters by name, unambiguous prefix or position, with type conversion (a `SecureString` parameter refuses a string, `Int32` refuses text, `ScriptBlock`, `Hashtable`, `DateTime`); common parameters (`-ErrorAction` Stop/SilentlyContinue/Ignore, `-ErrorVariable` (`+name` adds), `$?` after each statement of a script too, `-WhatIf` with the real "What if: Performing the operation …" text, `-Confirm`, high-impact cmdlets asking unless `-Force`); questions (`Read-Host [-AsSecureString]`, confirmations `[Y] Yes [A] Yes to All…`) answered on the next line, the statement then run again in full; Where-Object (both forms), ForEach-Object (`-Begin`/`-End`, `-MemberName`), Sort-Object (several properties, calculated ones), Select-Object (`-First`, `-Last`, `-Skip`, `-Index`, `-Unique`, `-ExpandProperty`, calculated `@{Name=;Expression=}`), Group-Object, Measure-Object, Format-Table/Format-List (the type's list view), Out-String, Out-Null, Write-Host/Warning/Error, Get-Member, Get-Date, New-Object, Select-String, Get-Variable, Get-History; Out-Default's views per type (directory and hive groups, registry `Property` cells on several lines, MatchInfo as lines, dates in their long form); Tab: cmdlet names, parameters, Windows paths | a statement interrupted by a question loses what it wrote before it (it runs again from its start, so an earlier item of the same statement may be done twice), streaming (a pipeline's errors come before its formatted output), PSReadLine's cycling completion (Tab completes the common part, the second Tab lists), `Format-Table -AutoSize`/`-Wrap` (tables are sized to their content), Get-Member lists only properties and a few methods |
 | **Windows engine:** files and the registry (`commands/windows-files.ts`, `windows-registry.ts`) | FileSystem, Registry (`HKLM:\`, `HKCU:\`, `Registry::HKEY_…`) and `Env:` providers; Get-ChildItem (`-Recurse`, `-Depth`, `-Filter`, `-Include`, `-Exclude`, `-File`, `-Directory`, `-Force`, `-Name`), Get-Item, Get-Content (`-Tail`, `-TotalCount`, `-Raw`), Set-Content, Add-Content, Out-File and `>`/`>>`, New-Item (files, folders, missing parents with `-Force`, keys), Remove-Item (the "has children and the Recurse parameter was not specified" question, hidden items need `-Force`), Copy-Item (a folder without `-Recurse` copied empty; with `-Recurse` what can be read is copied, merged into an existing folder, and each unreadable file or folder is a non-terminating error of its own), a file a running service holds open (`WinService.opens`) can't be removed nor moved ("being used by another process", `RemoveFileSystemItemIOError`), `compact` (`/c`, `/u`, `/s[:DIR]`, `/i`, `/q`, listing: NTFS compression, a text file about 6.7 to 1, the volume's free space follows, an open file `[ERR]`), Move-Item, Rename-Item, Test-Path (`-PathType`), Set-Location into the registry (prompt `PS HKLM:\SOFTWARE>`), Push/Pop-Location, Get-ItemProperty, Get-ItemPropertyValue, Set-ItemProperty, New-ItemProperty ("The property already exists." without `-Force`), Remove-ItemProperty; NTFS checks for each read, write, create and delete, the volume's free space ("There is not enough space on the disk."); services' keys under `HKLM:\SYSTEM\CurrentControlSet\Services` built from the services (`Start`, `ObjectName` change them); `reg query` (`/v`, `/s`), `reg add`, `reg delete` | file attributes but hidden (read-only, system), alternate data streams, symbolic links and junctions, `Compress-Archive`, Out-File writes text (5.1 writes UTF-16 LE with a BOM), `Get-Content -Wait`, registry permissions, HKCR/HKU, `reg add` overwrites without asking, `reg export`/`import`, compression ratios fixed by kind (text, other), `compact /f`/`/a` accepted and ignored, `Compress-Archive` |
 | **Windows engine:** NTFS permissions (`windows-acl.ts`, `commands/windows-acl.ts`) | a security descriptor per file or folder (owner, explicit entries; inherited entries computed from the parents with (OI), (CI), (IO), (NP), CREATOR OWNER becoming the owner, generic rights mapped), the access check in canonical order (explicit Deny, explicit Allow, then inherited, nearest first; an explicit Allow beats an inherited Deny), the owner's implicit right to read and change permissions; FileSystemRights named like .NET (`Modify, Synchronize`); Get-Acl (table and list with `Access` on several lines, `Sddl`, `.Access` as rule objects), Set-Acl with SetAccessRule/AddAccessRule/RemoveAccessRule/RemoveAccessRuleAll/PurgeAccessRules/SetAccessRuleProtection/SetOwner, New-Object FileSystemAccessRule and NTAccount; icacls display ("Successfully processed 1 files; Failed processing 0 files"), `/grant[:r]`, `/deny`, `/remove[:g\|:d]`, `/inheritance:e\|d\|r`, `/setowner`, `/reset`, `/T`, `/C`, `/Q`; takeown (`/F`, `/A`, `/R`); new items owned by their creator (the Administrators group for an administrator); access through a share = share permissions AND NTFS, used by `mount -t cifs` and `smbclient` | inherited entries are computed, not copied (a moved file takes its new parent's at once, where Windows keeps the old copies until reapplied), no SACL (`Audit` empty), no integrity labels, no privileges (backup, restore) beyond an administrator's right to take ownership, icacls' exit code for an unknown account (1332) uncertain, `/save`, `/restore`, `/setintegritylevel` |
@@ -190,11 +192,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | **Windows engine:** event logs (`commands/windows-events.ts`) | System, Application, Security, Setup, Windows PowerShell, Microsoft-Windows-TaskScheduler/Operational (disabled by default, as on Windows Server); record numbers; Get-WinEvent (`-LogName` with wildcards, `-MaxEvents`, `-ProviderName`, `-FilterHashtable` with LogName, Id, Level, ProviderName, StartTime, EndTime; `-ListLog`; `-Oldest`; its table grouped by provider and its list view), Get-EventLog (`-Newest`, `-EntryType` including FailureAudit, `-Source`, `-InstanceId`, `-After`, `-Before`, `-List`), `wevtutil el`, `gl`, `sl /e:` | `-FilterXPath`, `-FilterXml`, message templates and languages, `Clear-EventLog`, `Write-EventLog`, log sizes and retention |
 | **Windows engine:** scheduled tasks (`windows-tasks.ts`, `commands/windows-tasks.ts`) | tasks with a principal (SYSTEM, or a local user and the stored password), actions, daily, weekly and once triggers; Get-ScheduledTask (its table and list), Get-ScheduledTaskInfo (LastTaskResult in decimal: 0, 267011, 267009, 2147943726, 2147943731, 2147943730, 2147942402), Start/Stop/Enable/Disable-ScheduledTask, Set-ScheduledTask `-User`/`-Password` (checked when set: "The user name or password is incorrect."), Unregister-ScheduledTask; New-ScheduledTaskAction (`-Execute`, `-Argument`, `-WorkingDirectory`), New-ScheduledTaskTrigger (`-Daily` `-DaysInterval`, `-Weekly` `-DaysOfWeek`, `-Once`, `-AtStartup`, `-AtLogOn`, `-At 3am`; one kind only, or "Parameter set cannot be resolved"), New-ScheduledTaskPrincipal, Register-ScheduledTask (`-User`/`-Password` checked, `-Principal`, `-RunLevel`, `-Description`, a taken name refused unless `-Force`, event 106; LastTaskResult 267011 until it runs); a run: the logon (events 104 and 101, 4625), then the action as that account (powershell.exe `-File` runs the script through the game's PowerShell: non-terminating errors leave the exit code at 0, `exit N` and `throw` set it), events 107/110, 100, 200, 201, 102, 203/103; `advanceWindows` lets the clock run minute by minute; `schtasks /query` (`/fo LIST`, `/v`), `/run`, `/end`, `/change` (`/ru`, `/rp`, `/enable`, `/disable`), `/delete` | New-ScheduledTaskSettingsSet, a task registered without a password runs at night as if its user were logged on, several actions, conditions and settings (idle, AC power, "run as soon as possible after a missed start"), repetition within a day, schtasks /v shows a subset of its fields |
 | **Windows engine:** the machine, its shares and network (`commands/windows-system.ts`, `windows-world.ts`) | `windowsMachine()`: a Windows Server 2022 with C:\ (Windows, Program Files, ProgramData, Users and profiles) and its default ACLs, data volumes, the default services, the registry's usual keys, local accounts, logs, OpenSSH with password logon; Get-Volume, Get-PSDrive (the registry's current location too), Get-SmbShare, Get-SmbShareAccess, Grant/Revoke/Block/Unblock-SmbShareAccess (asking unless `-Force`), New-SmbShare (`-FullAccess`, `-ChangeAccess`, `-ReadAccess`, `-NoAccess`), Remove-SmbShare, Get-ComputerInfo, Get-NetIPAddress, Test-NetConnection (`-Port`), `hostname`, `ipconfig` (`/all`), `ping` (the addresses of the machine's hosts file, itself, its gateway) | one network adapter, no firewall (`Get-NetFirewallRule` is a later step), no DNS client, no WinRM, made-up figures for memory and CPU |
-| **Windows engine:** reaching it, cmd.exe (`commands/cmd.ts`, `console.ts`) | a story's main machine with `os: 'windows'` reached by `ssh` from the workstation (keys from `administrators_authorized_keys` for administrators, or a password; a disabled account refused), an internal host the same way; OpenSSH lands in PowerShell when `HKLM:\SOFTWARE\OpenSSH` has DefaultShell, otherwise in cmd.exe (prompt `user@HOST C:\…>`); `powershell` and `cmd` start one shell inside the other, `exit` comes back, then closes ("Connection to … closed." without "logout"); cmd's `dir` (its header and totals), `cd`, `type`, `echo`, `set`, `ver`, `mkdir`, `cls`, `exit`, `%VAR%`, and the programs; `powershell -Command`, `-File`, `cmd /c` | batch files, cmd's pipes and redirections, `for`, `if`, `start`, `copy`/`del`/`move` in cmd, the exact case of the computer name in cmd's prompt (`user@COMPUTER`), PowerShell 7, the console's colours |
+| **Windows engine:** reaching it, cmd.exe (`commands/cmd.ts`, `console.ts`) | a story's main machine with `os: 'windows'` reached by `ssh` from the workstation (keys from `administrators_authorized_keys` for administrators, or a password; a disabled account refused), an internal host the same way; OpenSSH lands in PowerShell when `HKLM:\SOFTWARE\OpenSSH` has DefaultShell, otherwise in cmd.exe (prompt `user@HOST C:\…>`); `powershell` and `cmd` start one shell inside the other, `exit` comes back, then closes ("Connection to … closed." without "logout"); cmd's `dir` (its header and totals), `cd`, `type`, `echo`, `set`, `ver`, `mkdir`, `cls`, `exit`, `%VAR%`, and the programs; `powershell -Command`, `-File`, `cmd /c` | batch files, cmd's pipes and redirections (its lists `&`, `&&`, `\|\|` and `^` escapes do work; `echo` drops a trailing space), `for`, `if`, `start`, `copy`/`del`/`move` in cmd, the exact case of the computer name in cmd's prompt (`user@COMPUTER`), PowerShell 7, the console's colours |
 | **Windows engine:** the language, step 2 (`powershell-parse.ts`, `commands/powershell.ts`) | functions: `function Name { param(…) … }` and `function Name($a, $b) { … }`, typed parameters (`[string]`, `[int]`, `[switch]`, arrays) with defaults, binding by name, unambiguous prefix and position (declaration order, or `Position=`), a simple function's extra values in `$args`, `$input`, `$PSBoundParameters`; advanced functions (`[CmdletBinding()]`, `[Parameter(Mandatory, Position, ValueFromPipeline, ValueFromPipelineByPropertyName)]`, `[ValidateSet()]`, `[Alias()]`): strict binding with the real errors, a missing mandatory parameter asked for ("cmdlet X at command pipeline position 1 / Supply values for the following parameters:"); `begin`/`process`/`end`; `return`; a function's own scope (dynamic: it reads the caller's variables, its assignments stay its own), `$global:`, `$script:`; `while`, `do { } while/until`, `for (init; cond; step)`, `$i++`, `$i--`, `*=`, `/=`; `switch` (values compared like `-eq`, several clauses can match, `default`, `-Wildcard`, `-Regex` with `$Matches`, `-CaseSensitive`, script-block conditions, arrays item by item, `break`, `continue`); `break`/`continue` in loops (and out of a ForEach-Object script block, as in PowerShell); `<# block comments #>` and comment-based help (`.SYNOPSIS`, `.DESCRIPTION`); dot-sourcing (`. .\lib.ps1`), `Import-Module` of a `.psm1`/`.ps1` or of a module of the machine (an absent one: `Modules_ModuleNotFound`), `Get-Module`; Get-Command and Get-Help show a function (its syntax line as Get-Help writes it), Tab completes it | see the language's first row (`trap`, splatting, labels…) |
 | **Windows engine:** Windows Defender Firewall (`windows-firewall.ts`, `commands/windows-firewall.ts`) | profiles Domain, Private, Public (on by default, `NotConfigured` defaults: inbound blocked, outbound allowed), the adapter's category (DomainAuthenticated on a domain's machine, Private otherwise); rules with name, display name, group, direction, action, profiles, protocol, local and remote ports, remote addresses (Any, an address, a range, a CIDR or mask, LocalSubnet, DefaultGateway, DNS); the decision: a matching block rule wins, then a matching allow rule, otherwise the profile's default; a profile turned off lets everything in; Windows Server 2022's defaults for what the game models (OpenSSH SSH Server (sshd) on, File and Printer Sharing (SMB-In) on, Echo Request off, Remote Desktop off, WinRM HTTP-In with its Public rule limited to LocalSubnet; on a domain controller the AD DS, Kerberos and DNS rules); Get-NetFirewallRule (its list view with PolicyStoreSource, `-Name`, `-DisplayName`, `-DisplayGroup`, `-Enabled`, `-Direction`, `-Action`, `-PolicyStore`, `CmdletizationQuery_NotFound_*`), Get-NetFirewallPortFilter and Get-NetFirewallAddressFilter in both directions of the pipeline, New-NetFirewallRule (GUID name without `-Name`, `-PolicyStore "domain\GPO"`), Set-, Enable-, Disable-, Remove-NetFirewallRule, Get-/Set-NetFirewallProfile, Get-/Set-NetConnectionProfile; `netsh advfirewall firewall show/add/delete/set rule`, `netsh advfirewall show/set allprofiles state`; ssh (`Connection timed out`), smbclient (`NT_STATUS_IO_TIMEOUT`), `mount -t cifs` (`mount error(115)`), Test-NetConnection (`TcpTestSucceeded`, the port's service must run) and `ping` from a Windows machine go through the target's firewall | IPsec and connection security rules, program and service conditions, edge traversal, the firewall's log file, outbound filtering of the game's own connections, `ping` from Linux (it ignores the Windows firewall), the exact wording of New-NetFirewallRule's errors for a port without TCP/UDP and for an invalid address (uncertain), `RemoteDynamicKeywordAddresses` shown on every rule (uncertain on Server 2022), the default File and Printer Sharing (SMB-In) rule on with profile Any (Windows enables it when a share is created; uncertain) |
-| **Windows engine:** Active Directory (`windows-ad.ts`, `commands/windows-ad.ts`) | a domain on its domain controller (`state.ad`, built by `domainController()`), members joined with `windowsMachine({ domain })` (local Administrators hold Domain Admins, Users hold Domain Users; the player is a domain account); objects with DN, objectGUID and SID (the domain's SID and RID, deterministic), the default containers (CN=Users, CN=Computers, CN=Builtin, OU=Domain Controllers) and groups (Domain Admins 512, Domain Users 513, Domain Computers 515…; Builtin Administrators, Users…), OUs protected from accidental deletion, users (enabled, the password and when it was set, must change at next logon, never expires, the account's expiry, badPwdCount, lockout, last logon, Department, Title, Office, Manager…), groups (Global, DomainLocal, Universal; Security, Distribution; nesting; the primary group), computers; the domain's policy (7 characters, complexity, 42 days, 24 remembered, no lockout by default); a logon with `DOMAIN\user` or `user@domain` on a member (ssh: Logon Type 8; smbclient `-U DOMAIN\user` or `-W`, `mount -t cifs` with `domain=`: Logon Type 3): a wrong password counts, resets after the observation window, locks at the threshold (4740 on the domain controller with the Caller Computer Name: the member for ssh, the client for SMB), 4625 with its status and sub-status on the member, 4624 on success; a locked, disabled, expired or must-change account refused; domain groups (nested) in the tokens of NTFS and share permissions, icacls and Grant-SmbShareAccess take them; Get-ADUser, Get-ADComputer, Get-ADGroup, Get-ADOrganizationalUnit, Get-ADObject (`-Identity` as DN, GUID, SID or sAMAccountName, a missing one terminating even with `-ErrorAction SilentlyContinue`; `-Filter` with `-eq -ne -like -notlike -gt -ge -lt -le -and -or -not`, `*`, `$variables` and dates; `-LDAPFilter` with the bitwise matching rules; `-SearchBase`, `-SearchScope`; `-Properties` list or `*`, the default property sets sorted by name; "One or more properties are invalid"), New-ADUser (created disabled, a refused password leaves it created and disabled), Set-ADUser (`-Replace`, `-Clear`, `-Add`), Remove-ADUser (asks), Enable-/Disable-/Unlock-ADAccount, Set-ADAccountPassword (`-Reset`, `-OldPassword`; complexity: three kinds, not the sAMAccountName nor a part of the name; a reset doesn't unlock), Search-ADAccount (`-LockedOut`, `-AccountDisabled`, `-AccountInactive` 15 days or `-TimeSpan`/`-DateTime`, never used counting, `-AccountExpired`, `-AccountExpiring`, `-PasswordExpired`, `-PasswordNeverExpires`, `-UsersOnly`, `-ComputersOnly`), New-/Set-/Remove-ADGroup, Get-ADGroupMember (`-Recursive`, lower-case property names), Add-/Remove-ADGroupMember, Get-ADPrincipalGroupMembership, New-/Set-/Remove-ADOrganizationalUnit (`Access is denied` while protected, leaf only without `-Recursive`), Move-ADObject, Get-ADDomain, Get-ADDomainController, Get-/Set-ADDefaultDomainPasswordPolicy; the module only on the domain controller or a member with the tools (`domain.tools`); `net user /domain`, `whoami` and `whoami /groups` with the domain | one domain and one domain controller (no replication, sites, trusts, FSMO transfers), no Kerberos (a logon is checked at once, no tickets, no 4768/4771), no fine-grained password policies, no password history, no ACLs on directory objects nor delegation, no recycle bin, `-Server`/`-Credential` accepted and ignored, a few properties (`-Properties *` lists the game's), the order of results (creation order), New-ADUser's sAMAccountName defaulting to `-Name` (uncertain), OpenSSH's logon type for a password (8, uncertain), Search-ADAccount `-AccountInactive` counting accounts never used (as documented by observation, uncertain) |
-| **Windows engine:** Group Policy (`windows-gpo.ts`, `commands/windows-gpo.ts`) | GPOs (`state.ad.gpos`: name, id, status, versions, owner, settings for the computer or the user: a firewall rule, a firewall profile, a drive map, a logon script, a user right, the account policies, a registry value; permissions with GpoApply for security filtering, Authenticated Users by default), the Default Domain Policy and Default Domain Controllers Policy with their real ids, links on the domain and OUs (enabled, enforced, link order), inheritance blocked on an OU; the resulting policy (LSDOU without L and S: the domain then each OU down, link order 1 last in its container, a blocked OU dropping what comes from above unless enforced, enforced links winning over those below) with each GPO applied or filtered out (`Disabled (Link)`, `Disabled (GPO)`, `Denied (Security)`, `Not Applied (Empty)`); its application at logon (`windowsLogin`) and by `gpupdate` (`/force`, `/target:`) or Invoke-GPUpdate (`-Computer` a machine of the story): GPO firewall rules replace the previous ones (PolicyStoreSource the GPO's name, PolicyStoreSourceType GroupPolicy), drive maps (`net use`); `gpresult /r` (its layout: RSOP data, COMPUTER and USER SETTINGS, applied GPOs highest precedence first, filtered GPOs with their reason, the security groups; `/scope:`, `/h` a file); Get-GPO, New-GPO, Remove-GPO, New-GPLink (`-Order`), Set-GPLink (`-LinkEnabled`, `-Enforced`, `-Order`), Remove-GPLink, Get-GPInheritance (lower-case Name and Path, GpoLinks, InheritedGpoLinks in precedence order), Set-GPInheritance, Get-GPPermission, Set-GPPermission (`-Replace` to lower a permission), Get-GPOReport (XML or HTML) | no sites nor local policy (Local Group Policy always "Not Applied (Empty)"), no WMI filters, loopback processing, slow-link detection or background refresh every 90 minutes, a small set of settings (no Set-GPRegistryValue; settings are declared by the story or by New-NetFirewallRule `-PolicyStore`), Get-GPOReport's content in the game's short form, user rights and logon scripts recorded (gpresult, `appliedSettings`) but not enforced at logon, the computer's token shown with INTERACTIVE, the texts of Get-GPO's "not found", New-/Set-GPLink's link errors and Set-GPPermission's refusal (uncertain), gpresult's copyright line without its year |
+| **Windows engine:** Active Directory (`windows-ad.ts`, `commands/windows-ad.ts`) | a domain on its domain controller (`state.ad`, built by `domainController()`), members joined with `windowsMachine({ domain })` (local Administrators hold Domain Admins, Users hold Domain Users; the player is a domain account); objects with DN, objectGUID and SID (the domain's SID and RID, deterministic), the default containers (CN=Users, CN=Computers, CN=Builtin, OU=Domain Controllers) and groups (Domain Admins 512, Domain Users 513, Domain Computers 515…; Builtin Administrators, Users…), OUs protected from accidental deletion, users (enabled, the password and when it was set, must change at next logon, never expires, the account's expiry, badPwdCount, lockout, last logon, Department, Title, Office, Manager…), groups (Global, DomainLocal, Universal; Security, Distribution; nesting; the primary group), computers; the domain's policy (7 characters, complexity, 42 days, 24 remembered, no lockout by default); a logon with `DOMAIN\user` or `user@domain` on a member (ssh: Logon Type 8; smbclient `-U DOMAIN\user` or `-W`, `mount -t cifs` with `domain=`: Logon Type 3): a wrong password counts, resets after the observation window, locks at the threshold (4740 on the domain controller with the Caller Computer Name: the member for ssh, the client for SMB), 4625 with its status and sub-status on the member, 4624 on success; a locked, disabled, expired or must-change account refused; domain groups (nested) in the tokens of NTFS and share permissions, icacls and Grant-SmbShareAccess take them; Get-ADUser, Get-ADComputer, Get-ADGroup, Get-ADOrganizationalUnit, Get-ADObject (`-Identity` as DN, GUID, SID or sAMAccountName, a missing one terminating even with `-ErrorAction SilentlyContinue`; `-Filter` with `-eq -ne -like -notlike -gt -ge -lt -le -and -or -not`, `*`, `$variables` and dates; `-LDAPFilter` with the bitwise matching rules; `-SearchBase`, `-SearchScope`; `-Properties` list or `*`, the default property sets sorted by name; "One or more properties are invalid"), New-ADUser (created disabled, a refused password leaves it created and disabled), Set-ADUser (`-Replace`, `-Clear`, `-Add`), Remove-ADUser (asks), Enable-/Disable-/Unlock-ADAccount, Set-ADAccountPassword (`-Reset`, `-OldPassword`; complexity: three kinds, not the sAMAccountName nor a part of the name; a reset doesn't unlock), Search-ADAccount (`-LockedOut`, `-AccountDisabled`, `-AccountInactive` 15 days or `-TimeSpan`/`-DateTime`, never used counting, `-AccountExpired`, `-AccountExpiring`, `-PasswordExpired`, `-PasswordNeverExpires`, `-UsersOnly`, `-ComputersOnly`), New-/Set-/Remove-ADGroup, Get-ADGroupMember (`-Recursive`, lower-case property names), Add-/Remove-ADGroupMember, Get-ADPrincipalGroupMembership, New-/Set-/Remove-ADOrganizationalUnit (`Access is denied` while protected, leaf only without `-Recursive`), Move-ADObject, Get-ADDomain, Get-ADDomainController, Get-/Set-ADDefaultDomainPasswordPolicy; the AD Recycle Bin (`ad.recycleBin`: a deleted object goes to CN=Deleted Objects with a `\0ADEL:` DN, Deleted, LastKnownParent; Get-ADObject `-IncludeDeletedObjects`, Restore-ADObject back to its parent with its SID, password and groups, its parent required, Get-ADOptionalFeature); the module only on the domain controller or a member with the tools (`domain.tools`); `net user /domain`, `whoami` and `whoami /groups` with the domain | one domain and one domain controller (no replication, sites, trusts, FSMO transfers), no Kerberos (a logon is checked at once, no tickets, no 4768/4771), no fine-grained password policies, no password history, no ACLs on directory objects nor delegation, no Enable-ADOptionalFeature (a story declares the Recycle Bin on; its deleted objects keep every attribute and link, no tombstone after 180 days), `-Server`/`-Credential` accepted and ignored, a few properties (`-Properties *` lists the game's), the order of results (creation order), New-ADUser's sAMAccountName defaulting to `-Name` (uncertain), OpenSSH's logon type for a password (8, uncertain), Search-ADAccount `-AccountInactive` counting accounts never used (as documented by observation, uncertain) |
+| **Windows engine:** Group Policy (`windows-gpo.ts`, `commands/windows-gpo.ts`) | GPOs (`state.ad.gpos`: name, id, status, versions, owner, settings for the computer or the user: a firewall rule, a firewall profile, a drive map, a logon script, a user right, the account policies, a registry value; permissions with GpoApply for security filtering, Authenticated Users by default), the Default Domain Policy and Default Domain Controllers Policy with their real ids, links on the domain and OUs (enabled, enforced, link order), inheritance blocked on an OU; the resulting policy (LSDOU without L and S: the domain then each OU down, link order 1 last in its container, a blocked OU dropping what comes from above unless enforced, enforced links winning over those below) with each GPO applied or filtered out (`Disabled (Link)`, `Disabled (GPO)`, `Denied (Security)`, `Not Applied (Empty)`); its application at logon (`windowsLogin`) and by `gpupdate` (`/force`, `/target:`) or Invoke-GPUpdate (`-Computer` a machine of the story): GPO firewall rules replace the previous ones (PolicyStoreSource the GPO's name, PolicyStoreSourceType GroupPolicy), drive maps (`net use`); `gpresult /r` (its layout: RSOP data, COMPUTER and USER SETTINGS, applied GPOs highest precedence first, filtered GPOs with their reason, the security groups; `/scope:`, `/h` a file, `/s` another computer and `/user` someone with RSoP data there, otherwise "does not have RSoP data", "The RPC server is unavailable" for an unknown computer); the domain's workstations as RSoP sources (`ad.clients`: who is logged on where, the policy computed at their logon and by Invoke-GPUpdate `-Computer`), Get-GPResultantSetOfPolicy (`-Computer`, `-User`, `-ReportType`, `-Path`); a GPO linked twice on a path processed once; Get-GPO, New-GPO, Remove-GPO, New-GPLink (`-Order`), Set-GPLink (`-LinkEnabled`, `-Enforced`, `-Order`), Remove-GPLink, Get-GPInheritance (lower-case Name and Path, GpoLinks, InheritedGpoLinks in precedence order), Set-GPInheritance, Get-GPPermission, Set-GPPermission (`-Replace` to lower a permission), Get-GPOReport (XML or HTML) | no sites nor local policy (Local Group Policy always "Not Applied (Empty)"), no WMI filters, loopback processing, slow-link detection or background refresh every 90 minutes, a small set of settings (no Set-GPRegistryValue; settings are declared by the story or by New-NetFirewallRule `-PolicyStore`), Get-GPOReport's and Get-GPResultantSetOfPolicy's content in the game's short form, workstations that aren't machines of the game (no firewall nor logon of their own, Invoke-GPUpdate applies at once, without its random delay), user rights and logon scripts recorded (gpresult, `appliedSettings`) but not enforced at logon, the computer's token shown with INTERACTIVE, the texts of Get-GPO's "not found", New-/Set-GPLink's link errors and Set-GPPermission's refusal (uncertain), gpresult's copyright line without its year |
+| **Windows engine:** CSV (`commands/windows-files.ts`) | Export-Csv (`#TYPE` line unless `-NoTypeInformation`, the first object's properties as header, values in double quotes, doubled quotes inside, a null left empty, arrays as `System.Object[]`, `-Delimiter`, `-Append` without a second header, `-NoClobber`), ConvertTo-Csv, Import-Csv (the `#TYPE` line skipped, `-Header`, `-Delimiter`, every value as text; "Could not find file") | `-Encoding` accepted and ignored (the game's files are text), `-UseCulture` is a comma (en-US), `-QuoteFields`/`-UseQuotes` (PowerShell 7) refused, ConvertFrom-Csv |
 | **Windows engine:** domain accounts on members, Windows' OpenSSH client (`windows-tasks.ts`, `commands/windows-tasks.ts`, `commands/windows-system.ts`, `commands/windows-ad.ts`, `ldap.ts`) | a scheduled task under a domain account (`LENDING\rsilva`): the domain controller checks its stored password at each run like any logon (Logon Type 4: a wrong one counts towards the lockout, 4740 names the member as the caller, 4625 on the member), LastTaskResult 0x8007052E, 0x80070775 when locked, 0x80070533/0x80070532/0x80070701/0x80070773 for disabled, password expired, account expired, must change; Set-ScheduledTask, Register-ScheduledTask and `schtasks /change /ru /rp` take a domain account (its password checked, a wrong one counting too; "No mapping between account names and security IDs was done" for an unknown one); Principal.UserId and schtasks' Run As User show `DOMAIN\user`; a trigger's repetition (every N minutes for a duration, or until the next start), shown in Triggers' Repetition (Interval PT5M, Duration PT12H) and by `schtasks /query /v` (Repeat: Every, Until: Duration); `ssh` (ssh.exe, installed by default on Windows Server 2019 and later) from a Windows machine to the story's other machines: the game's ssh, keys in `%USERPROFILE%\.ssh`, names resolved by the hosts file then the domain's DNS (the story's machines, in the language); Add-/Remove-ADPrincipalGroupMembership (`-MemberOf`, removing asks), the primary group refused ("The user cannot be removed from a group because the group is currently the user's primary group"); LDAP filters' ordering matches `>=` and `<=` (numbers compared as numbers, text without case), in Get-AD* `-LDAPFilter` and `ldapsearch` | services under a domain account (still local only), New-ScheduledTaskTrigger's `-RepetitionInterval`/`-RepetitionDuration`, the task's random delay and "stop at duration end", `cmdkey` and saved credentials, Enter-PSSession, Invoke-Command and `-CimSession` (remoting goes through ssh), ssh.exe's Windows-only options, an ordering match on an attribute without an ordering rule (accepted, uncertain) |
 | The Music School (story 31) | `stave` as the story's main machine, built with `windowsMachine()`; its users, groups, shares with their own permissions, NTFS permissions on the shares' folders, the Agenda service under `.\svc_agenda`, a nightly task, System events of an update restart (1074, 6006, 6005, 6013) and the service's logon failure at boot (7038, 7000, 4625); a chapter's goal checked through `shareAccess` (what each teacher could do over SMB) and on the service's stored password; the Agenda's log (open while it runs: `opens`) and its level read from `agenda.ini` when it starts (`onStart`); 189 daily logs of a few GB filling D: (the volume's base computed for 180 MB free); the backup nights replayed at the start of chapter 4 with `advanceWindows` (the real script, as `svc_backup`: silent successes that skip Bank, then the expired password), each script run of a task recorded (`psScriptRuns`: exit code, errors met) | the Agenda's log doesn't grow while you play, nor does the app write anything at the debug or info level; the teachers' and the office's own attempts are told by the story (Samir's messages), not made over SMB; the password manager is an exported text entry; no Effective Access tab nor `Get-NTFSAccess`; `Set-Service -Credential` doesn't exist in 5.1, so `sc.exe config` (or the Services console, not simulated) is the way; `sc.exe config` doesn't check the password, as on Windows (the next start does) |
 | PostgreSQL across versions | a database's encoding (`\l`, `createdb -E`), an 8.4 server on Solaris (its connection messages, `/tmp` socket, `SELECT version()`), `pg_dump` writing in the database's encoding (`SET client_encoding`, `-E`), `psql -f` decoding a script by its `SET client_encoding` (an error for LATIN1 bytes declared UTF8, mojibake for UTF-8 bytes declared LATIN1); `ALTER DATABASE … SET default_transaction_read_only`; `pg_ctl -D DIR start` (in `/usr/lib/postgresql/16/bin`) refusing a data directory of another version | byte order itself (a data directory of the same version but another architecture would also fail: told in the story, not simulated), `pg_upgrade`, `listen_addresses`/`pg_hba.conf` between machines (set by the story) |
@@ -204,7 +207,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `sockstat` | the listening sockets with their account, program and PID (`-4`, `-6`, `-l`) | connected sockets, `-c`, Unix sockets, jails |
 | `pfctl`, `pf.conf` | `-nf` (check), `-f` (load), `-e`/`-d`, `-sr`, `-si`, `-F rules`; `service pf start` with `pf_enable`; rules `pass`/`block` (`drop`, `return`), `in`/`out`, `quick`, `proto`, `from`, `to`, `port` (numbers, names, lists `{ }`), `all`, macros, `set skip`; the LAST matching rule decides unless `quick`; an incoming TCP connection is decided this way (ssh and the port scanners see it); the connections already open are kept | NAT and `rdr`, tables, anchors, `scrub` (accepted, ignored), state options, `max-src-conn-rate`, logging (`pflog`) |
 | `iptables`, `iptables-save` | the host firewall's **filter** table: the built-in chains INPUT/OUTPUT/FORWARD, their policy, user chains; matches `-p`, `--dport`/`--sport`, `-s`/`-d`, `-i`/`-o`, `-m state`/`conntrack --state`/`--ctstate`; targets ACCEPT, DROP, REJECT, LOG, RETURN, a jump to a user chain; `-L` (`-n`, `-v`, `--line-numbers`), `-S`, `-A`/`-I`/`-D`/`-R`, `-P`, `-F`, `-N`/`-X`; `iptables-save`. The INPUT chain decides an incoming TCP connection (ssh and the port scanners see it, like ufw); it arrives on `eth0`, a connection from the machine itself on `lo`. The OUTPUT chain decides a program's outgoing connection (The Bastion's miner). Root only | the nat table's packet rewriting (a router's NAT is in `nft`), mangle/raw, counters, `-m` beyond state/conntrack, `ip6tables`, `iptables-restore`, the web of rule extensions |
-| `ufw` | IPv4 and IPv6 rules merged ("(v6)" lines for show); no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
+| `ufw` | IPv4 and IPv6: `/etc/default/ufw`'s `IPV6=` read on `enable` and `reload` and when a rule is added (with `IPV6=no`, no "(v6)" twin and IPv6 unfiltered; a rule added then stays IPv4 only until added again); `from` an IPv6 network; no outgoing rules, routing, logging, `insert` nor `reset`; messages in the game's language, close to ufw's own | all of it |
 | `ss`, `netstat` | the sockets described by the chapter, the current ssh session (on the port you came in through), and the chapter's other connections while their process lives; `netstat` is the net-tools counterpart of `ss` (`-t`, `-u`, `-l`, `-a`, `-n`, `-p`) | every socket of the system; Unix domain sockets; `netstat -r`/`-i` |
 | fail2ban | `sshd`, `nginx-limit-req` and `recidive` jails (others load, without a filter; an enabled jail without a log prevents starting); a jail's `port` limits the ban; `findtime` not applied (every failure in the log counts); filter reduced to "Failed password", "Invalid user", "Failed publickey"; the banned workstation keeps its open session | several jails; `findtime` window; full filters; the ban also cuts the current session |
 | `rsync` | `-a`, `-v`, `-n`, `--delete`; local, or remote over ssh (`machine:path`, in either direction, with the same keys and jumps as `ssh`); a file changes if its contents change; "sent/received" figures approximate | compares size and date, every option, rsync daemon |
@@ -215,9 +218,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `crontab`, cron | the editor is always `nano`; no environment variables nor `%`; the game "lets the night pass" when the crontab changes | cron runs continuously; `select-editor` on the first `crontab -e` |
 | `unattended-upgrade`, `apt-config` | `--dry-run`, `-d`, `-v`; `Origins-Pattern` (keys `o`, `n`, `l`, `a`, `site`, wildcards), `Package-Blacklist`, `Mail`, `MailReport`, `Automatic-Reboot`, `Automatic-Reboot-Time`; `apt-daily-upgrade.service` only runs the pass if `APT::Periodic::Unattended-Upgrade` asks for it; `apt.conf.d` read like apt (last value wins, lists that grow, `;` required); `apt-config dump [prefix]`; package origins described by the chapter; the scheduled reboot isn't played | autoremove, `MinimalSteps`, battery, `#include`/`#clear`, full `--debug` output, `apt-cache policy` |
 | `apt` | `update`, `install [-y]`, `list --installed`, `list --upgradable`, `upgrade` and `full-upgrade` (the updates described by the chapter); a small catalogue, approximate versions and sizes; a package that fails to start isn't left "half-configured"; an interrupted upgrade leaves its packages unpacked (`dpkg --configure -a`); `/var/run/reboot-required` for a kernel or the libc | the whole Debian catalogue, `remove`, `search`, `show`, `apt-get`…; dpkg keeps each package's state |
-| local network (`ip`, `ifup`, `ifdown`) | IPv4 only; `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), 802.1Q VLAN interfaces; `/etc/network/interfaces` read like ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`); the switch and its ports are described by the chapter; no visible ARP, MTU, bonding nor systemd-networkd | all of iproute2, ifupdown2, NetworkManager, systemd-networkd |
+| local network (`ip`, `ifup`, `ifdown`) | `ip addr`, `ip link`, `ip route` (show, add, del, set, `-br`, `-d`), `-4`/`-6`, `ip neigh` (the link's router only); IPv6 on a machine whose link has a router (ipv6.ts): link-local and SLAAC addresses computed from the MAC (modified EUI-64), `ip -6 addr add/del`, `ip -6 route` (proto ra, a gateway by hand), `/proc/sys/net/ipv6/conf/*/` (`accept_ra`, `autoconf`, `disable_ipv6`, whose static addresses don't come back); a SLAAC address appears and disappears at once with the settings (no lifetimes, DAD, privacy or stable-privacy addresses); 802.1Q VLAN interfaces; `/etc/network/interfaces` read like ifupdown (`auto`, `iface … inet static`, `manual`, `loopback`, `address`, `netmask`, `gateway`, `vlan-raw-device`, `source`; `iface … inet6 static|auto|manual` with `address`, `netmask`, `gateway`, `accept_ra`, `autoconf`); the switch and its ports are described by the chapter; no visible ARP, MTU, bonding nor systemd-networkd | all of iproute2, ifupdown2, NetworkManager, systemd-networkd |
 | `dnsmasq` | DHCP only (DNS options are accepted and ignored); `interface` (with `*`), `except-interface`, `dhcp-range`, `dhcp-host`, `dhcp-option`; devices ask for an address each time the service starts; the address is derived from the MAC address; no lease renewal | DNS, TFTP, PXE, DHCPv6, renewal |
-| `nft` (nftables) | IPv4; `ip`, `inet` tables (`ip6` read, with no effect); base `filter` and `nat` chains (hooks, priorities, policy), regular chains (`jump`, `goto`); matches `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services known to the game), `ct state`, `!=` negation, anonymous sets; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (in `postrouting`), `dnat` (in `prerouting`, to an address and port); `define`, `include`; `-f`, `-c`, `-a`; `add`, `insert`, `delete`, `flush`, `list`; the traffic is that of the devices described by the chapter (and visitors from the internet), and counters count one pass per exchange; error messages close to nft's; the `input` chain doesn't cut the game's ssh session | named sets, maps, `limit`, `quota`, IPv6, `bridge`, `netdev`, `nft monitor`, rules on packet contents |
+| `nft` (nftables) | `ip`, `ip6` and `inet` tables (an IPv4 packet crosses ip and inet, an IPv6 one ip6 and inet); IPv6 only for the packets that reach a machine speaking IPv6 (`input`: TCP, echo, neighbour discovery), the routers' local networks staying IPv4; matches `ip6 saddr`/`daddr` (prefixes), `ip6 nexthdr`, `meta nfproto`, `icmp type` and `icmpv6 type` by name or number (unknown names refused); base `filter` and `nat` chains (hooks, priorities, policy), regular chains (`jump`, `goto`); matches `iifname`, `oifname`, `ip saddr`, `ip daddr`, `ip protocol`, `meta l4proto`, `tcp`/`udp` `dport`/`sport` (services known to the game), `ct state`, `!=` negation, anonymous sets; actions `counter`, `log`, `accept`, `drop`, `reject`, `masquerade`, `snat` (in `postrouting`), `dnat` (in `prerouting`, to an address and port); `define`, `include`; `-f`, `-c`, `-a`; `add`, `insert`, `delete`, `flush`, `list`; the traffic is that of the devices described by the chapter (and visitors from the internet), and counters count one pass per exchange; error messages close to nft's; the `input` chain doesn't cut the game's ssh session | named sets, maps, `limit`, `quota`, IPv6 forwarding and NAT66, `bridge`, `netdev`, `nft monitor`, rules on packet contents |
 | `nft` under ufw and fail2ban | on machines without hand-written nftables rules: `list ruleset`, `list tables`, `list table`, read-only; `ip filter` table (chains `INPUT`, `OUTPUT`, `ufw-before-input`, `ufw-user-input`, `ufw-after-input`), `inet f2b-table` table of fail2ban's nftables action; counters at zero; a multi-port profile as a `{ 80, 443 }` set | the `ip6 filter` table, ufw's logging and routing chains, real counters; you could write to it (and ufw would overwrite it) |
 | `sysctl`, `conntrack` | `sysctl`: read, `-w`, `key=value`, `-p`, `--system`, `-a`, `-n` on a few keys (`/proc/sys` is a real directory of the game); `/etc/sysctl.d/*.conf` then `/etc/sysctl.conf` at boot; `conntrack -L` (`-p`, `-s`, `-d`), `-C`, `-F`: the current exchanges, including the ssh session | every kernel key; `conntrack -E`, `-D`, detailed UDP and ICMP states |
 | `wg`, `wg-quick` (WireGuard) | `genkey`, `genpsk`, `pubkey`, `show`, `showconf`; `wg-quick up`, `down`, `strip`; the `wg-quick@wg0` service; the public key isn't computed with Curve25519 (a fingerprint stands in for it, in the right format); peers are described by the chapter (Malik's laptop, another site's router and its network); `wg-quick` adds a route per `AllowedIPs` outside the interface's network; a peer behind a home router (NAT) is only reachable with `PersistentKeepalive` (no simulated delay); no `wg set`, `PostUp`, checked `PresharedKey`, IPv6, nor all traffic through the tunnel on the router side; `wg-quick` without sudo refuses instead of re-running sudo | Curve25519, `wg set`, `syncconf`, `PostUp`/`PostDown`, IPv6, `wg-quick save` |
@@ -228,19 +231,40 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Lynis (`lynis audit system`) | some sixty lines instead of 300; reads `sshd_config`, pending apt updates, `UMASK` in `/etc/login.defs`, `/etc/issue` and ufw; the index is computed with fixed penalties (not Lynis's weighting); `/var/log/lynis-report.dat` is written (`hardening_index=`, `warning[]=`, `suggestion[]=`); only `audit system`, `show version`; without root, the audit is refused (Lynis would run in restricted mode) | the 200 tests, profiles, `show details`, `--pentest`, compliance modules |
 | `ping` on a local network | a device answers if it is in the VLAN of the interface whose network contains its address; a private address sent to the home router is lost; a device name is recognised without DNS | ARP, local DNS, `/etc/hosts` |
 | `tmux`, `uname`, `dpkg` | `tmux new [-s]`, `ls`, `attach [-t]`, `detach`, `kill-session`, one window per session; no key bindings (`tmux detach` for Ctrl+b d); attach replays the last lines; the session's name shows before the prompt (the status bar); `uname -r/-a`; `dpkg --configure -a` | windows, panes, key bindings, `screen`; every dpkg option |
-| `nginx` | `-t`, `-T`, `-v`; some of the directives; the site is chosen by `server_name` then `default_server`; `location` by prefix, `=`, `^~`, or regular expression (`~`, `~*`, JavaScript syntax rather than PCRE), chosen in nginx's order; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` to a simulated app or an `upstream` (`weight`, `backup`, `down`, weighted round robin, next server if one doesn't answer; `max_fails`/`fail_timeout` not applied); `try_files` read but not applied | every directive and module |
+| `nginx` | `-t`, `-T`, `-v`; some of the directives; `listen [::]:80` (IPv6 only) and `ipv6only=off` (both families; next to `listen 80`, the reload fails on `bind() … Address already in use`, which `nginx -t` doesn't see); on a machine speaking IPv6, `proxy_pass http://localhost:…` tries `[::1]` then `127.0.0.1`; the site is chosen by `server_name` then `default_server`; `location` by prefix, `=`, `^~`, or regular expression (`~`, `~*`, JavaScript syntax rather than PCRE), chosen in nginx's order; `proxy_set_header` (variables `$remote_addr`, `$proxy_add_x_forwarded_for`, `$http_…`, `$host`, `$scheme`), `root`, `alias`, `index`, `return`, `proxy_pass` to a simulated app or an `upstream` (`weight`, `backup`, `down`, weighted round robin, next server if one doesn't answer; `max_fails`/`fail_timeout` not applied); `try_files` read but not applied | every directive and module |
 | Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (even without root); `start`, `stop`, `restart`, `graceful` go through systemd; some of the directives (others are refused like those of a missing module: "Invalid command"); virtual host chosen by address and port, then `ServerName`/`ServerAlias`, otherwise the first; `<Directory>` without wildcards; `.htaccess` reread on each request, with `AllowOverride` by category; `mod_rewrite`: `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), in the server or per directory, at most 10 internal redirects; no PHP, CGI, compression nor access log; without an argument, `a2ensite` & co. list the choices without asking | every directive and module, interactive `apache2ctl` without an argument |
 | `curl` on the site's machine | only reaches the machine itself (localhost, its name, its address), or an `ssh -L` tunnel opened on the workstation | the whole network |
+| `curl -4`, `-6`, `-v` (IPv6) | on a machine speaking IPv6 (and from a vantage point on the internet, `lookout`): names resolved through `/etc/hosts` and the story's DNS (the zone's public servers from outside), IPv6 first then IPv4 (happy eyeballs, a refusal moves on at once), `[addr]` URLs; `-v` shows curl 8's lines (resolution, tries, request, headers); a filtered port answers at once with its timeout's message (error 28); only nginx and the apps of the story's server answer | every option, real timings, proxies, HTTP/2 |
+| `curl` on a machine with metrics (The Bike Share) | the story's network (`state.metricsNet`): names from `/etc/hosts`, each machine's ufw (a dropped port answers at once with error 28), what listens on each port (Prometheus's and the Alertmanager's APIs, exporters, the app, a relay); `-s`, `-S`, `-f`, `-i`, `-I`, `-v` (short), `-X`, `-d`, `--data-urlencode`, `-G`, `-g`, `-H` (the Host header reaches a k3s cluster's Traefik: The Pool) and curl's URL patterns (`{…}` in an unquoted URL), `-o`, `-w '%{http_code}'` | every option, real timings |
+| Prometheus (`prometheus.ts`, `promql.ts`) | `prometheus.yml`: `global`, `rule_files` (globs), `scrape_configs` with `static_configs` (targets, labels), `alerting`; go-yaml's "field … not found" messages; scrapes every `scrape_interval` through the story's network (`up`, `scrape_duration_seconds`, `scrape_samples_scraped`, staleness markers), errors as Prometheus words them (context deadline exceeded, connection refused, no such host, HTTP status); a time series database kept 3 hours; recording and alerting rules (`for`, `labels`, `annotations` with `$labels`, `$value`, `humanize`, `humanizePercentage`, `printf`), alerts inactive, pending, firing, resolved, `ALERTS`, sent to the Alertmanager every minute; reload on SIGHUP or `POST /-/reload` (with `--web.enable-lifecycle` in `ARGS`), the old configuration kept on an error; the API: `/api/v1/query` (GET or POST, `time`), `/api/v1/targets`, `/api/v1/alerts`, `/api/v1/rules`, `/api/v1/status/config` (the file as written), `/api/v1/label/…/values`, `/-/healthy`, `/-/ready`, JSON as Go writes it (`<` as `\u003c`) | service discovery, relabelling, HTTPS and authentication, `query_range`, the web interface, remote write, native histograms, the rule's query printed back canonically |
+| PromQL | selectors and matchers (`=`, `!=`, `=~`, `!~`), range vectors, `offset`; `rate`, `irate`, `increase`, `delta` (Prometheus's extrapolation, counter resets), `deriv`, `predict_linear`, `*_over_time`, `abs`, `absent`, `clamp_min`, `clamp_max`, `round`, `time`, `vector`, `scalar`; `sum`, `avg`, `min`, `max`, `count` with `by`/`without`; arithmetic, comparisons (filter or `bool`), `and`, `or`, `unless`, one-to-one matching with `on`/`ignoring`; the "metric might not be a counter" info; Prometheus's parse errors | subqueries, `group_left`/`group_right`, `topk`, `quantile`, `histogram_quantile`, `@`, string functions |
+| `promtool` | `check config` (and the rule files it names), `check rules`, `check metrics` (two lint checks), `query instant` (`--time`); `test rules` not simulated (the story tries rules on made-up days itself) | `test rules`, `query range`, `tsdb`, `push` |
+| node exporter, the app's `/metrics` | a few families each: CPU, load, memory, file systems (computed from the machine's files, like `df`), network; the app's requests by route and status, a histogram, a gauge per station, computed from its traffic since its process started (a restart resets the counters) | every collector |
+| Alertmanager and `amtool` | `alertmanager.yml`: `route` (`receiver`, `group_by`, `group_wait`, `group_interval`, `repeat_interval`, `matchers`, `match`, `match_re`, `continue`, nested routes), `receivers` (only `webhook_configs` deliver), `inhibit_rules`; grouping and repeats checked every 15 seconds; silences and their states; reload on SIGHUP or `POST /-/reload`; API v2 (`/api/v2/alerts`, `/api/v2/silences` GET and POST, `/api/v2/silence/ID` DELETE, `/api/v2/status`); `amtool alert query` (`--silenced`, `--inhibited`, `-o extended`/`json`), `silence add` (`--duration`, `--start`, `--end`, `--comment`, `--author`), `silence query` (`--expired`, `-q`), `silence expire`, `check-config`, `config`, `config routes [test]` (`--config.file`, `--verify.receivers`) | email and chat integrations, templates, clustering, time intervals, retries |
+| `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
+| An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
+| `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
+| The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; environment variables and mounted files from ConfigMaps and Secrets read when the container starts; a Deployment's `kubernetes.io/change-cause` copied to its new ReplicaSet (and back by `rollout undo`); `kubectl top` from the apps' declared memory and CPU; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction (a node's memory is never short: only limits kill), the kubelet doesn't refresh a running pod's mounted ConfigMaps and Secrets, Secrets stored in clear in the simulated etcd (no `--secrets-encryption`), Traefik's TLS (port 443 answers like 80) |
+| `base64` | GNU coreutils' encoding and `-d`, `-w`; `echo -n` before it in a pipe leaves out the newline | `-i` without effect, no `--help` beyond the manual |
+| `sleep` | returns at once; in a story where time matters (The Bike Share), that much time passes for the whole story (at most a day) | waits |
+| sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
+| `nmap -6`, `nc -4`/`-6` | from the vantage point: the story's server's ports in each family (its firewall, its sockets, neighbour discovery: a server that drops it "seems down"); an IPv6 literal needs `-6` (nmap's message) | real probes, `-6` with `-sU`, OS detection |
 | `tar` | `-C`; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, multi-volume archives… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart | every key type, conversion, certificates… |
 | `certbot` | a single certificate, the chapter's; `certificates`, `renew`, `certonly`, `reconfigure`; simulated authority (the HTTP-01 challenge goes through the simulated nginx); the files in `live/` are rewritten (no links to `archive/`); the nginx plugin doesn't change the configuration | several certificates, a real ACME authority, symbolic links, DNS challenges |
 | `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) and `s_client -connect` (returns at once); the PEM contents are specific to the game | hundreds of subcommands; real X.509; `s_client` waits for input |
 | `curl https://` | checks the dates and names of the presented certificate (error 60), `-k` to skip | also checks the full chain of trust, OCSP… |
 | clock | Paris time: CET in winter, CEST in summer (unless the chapter sets a time zone) | the machine's time zone |
-| `restic` | `-r` and `--password-file` required (no environment variables); `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check`, `stats`; no `init`; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `key`, `tag`, remote repositories (sftp, S3, rest-server) |
+| `restic` | `-r` and `--password-file`/`-p`, or the environment (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RESTIC_PASSWORD`), or the password typed; `init`, `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check` (`--read-data`), `stats`, `key list/add/remove/passwd` (`--new-password-file`, `--user`, `--host`); each key's password opens the repository, the current key can't be removed; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `tag`, `--repository-file`, `--password-command`, remote repositories (sftp, S3, rest-server) |
+| `cryptsetup` | LUKS2 only (one cipher, aes-xts-plain64, argon2id): `luksFormat` (the real YES question, the existing signature's warning, a passphrase twice or a key file, `-q`), `open`/`luksOpen` (three tries, `--key-file`), `close`/`luksClose`, `status`, `luksDump`, `luksAddKey`, `luksRemoveKey`, `luksKillSlot`, `isLuks`, `luksUUID`, `luksHeaderBackup`; the real refusals (a device in use, a mounted mapping, a wrong key) and exit codes; no real encryption: the clear file system is kept in the header while closed; salts and digests derived from the UUID | plain, LUKS1, BitLocker and TrueCrypt modes, `--header`, tokens, `reencrypt`, `luksHeaderRestore`, `benchmark`, `resize`, `refresh`, `erase` |
+| `/etc/crypttab`, `cryptdisks_start`, `cryptdisks_stop` | crypttab read by Debian's scripts (name, `UUID=` or `/dev/…` source, key file or `none`, options); the key file's rights checked (Debian's warning); outputs close to Debian's LSB messages; crypttab isn't read at boot (no simulated reboot here) | `systemd-cryptsetup@.service`, the initramfs, `keyscript=`, `tries=`, `discard` applied |
+| `mkfs.ext4` | `-L`, `-F`, `-q`; mke2fs 1.47's report (blocks, inodes, superblock backups computed from the size); refuses a mounted device or one in use (a LUKS device open, a RAID member); asks before writing over a file system | `-b`, `-i`, `-m`, `-O`, `-E`, other file systems (`mkfs` alone) |
+| `sha256sum` | a real SHA-256 (FIPS 180-4) of the file's bytes, ending newline included; `-c` (`--quiet`, `--status`), OK / FAILED / FAILED open or read and GNU's warnings; a file the game describes only by its size is hashed on its description | `-b`, `--tag`, `-z`, `--strict`, `--ignore-missing` |
+| shell variables (`export`, `unset`, `NAME=value command`) | `$NAME`/`${NAME}` replaced for the variables set in the session (an unset one stays as typed); exported variables form a program's environment; sudo resets it (env_reset) except `sudo NAME=value command` and `sudo -E` | `PATH`, `HOME` and the other usual variables, `env`, `set`, arrays, `${NAME:-default}` and other expansions |
+| `dd if=/dev/urandom` | `count=` is required (the device never ends); the "random" bytes are derived from the target and a counter, the same in every game | `/dev/zero`, `/dev/random` blocking, `iflag=fullblock` |
 | symbolic links | `ln -s` (`-f`, `-n`), followed to read, write and enter; `ls -l` shows them; `readlink` | also `realpath`, `find -L`… |
 | `curl` | `-I`, `-i`, `-k`, `-L`, `-H` (Host, or a forwarded header), `-X`, `-d` (only the method); only reaches the machine you are on (nginx, Caddy, an app on its port, a container) | every option, the whole network |
-| DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones | all of it |
+| DNS (BIND) | A, AAAA, CNAME, MX, NS, TXT, SOA zones; a primary (`named`), a secondary that copies when the serial increases (at once), a public resolver with a cache, or the machine's server as a recursive resolver (`recursif`); a `;` inside quotes isn't a comment, a TXT's strings are joined; `dig` (`@server`, type, `+short`, `+noall +answer`), `host`, `named-checkzone`, `named-checkconf` (braces and files), `rndc reload`/`status`; no AUTHORITY section, DNSSEC nor reverse zones (no `ip6.arpa`, no `dig -x`); seen from outside (a vantage point), names are resolved on the secondary, without a resolver cache | all of it |
 | Postfix | `main.cf` read like `postconf` (some of the parameters; an unknown name: "unused parameter"), `postconf` (`-n`, `-d`, `-x`, `-e`, `-h`), `postfix check/reload/start/stop/status/flush`, `postqueue -p/-f`, `mailq`, `postsuper -d`; the queue (reasons, identifiers) and `/var/log/mail.log`; no real SMTP: the servers on the other side (declared by the story) check SPF, DKIM, DMARC with the simulated DNS, without a cache; Postfix doesn't retry by itself (`postqueue -f`); the chroot is only simulated for the milter's socket | a full MTA, automatic retries, TLS, `master.cf` |
 | OpenDKIM | `opendkim.conf` (`Domain`, `Selector`, `KeyFile`, `Socket`, `Mode`, `RequireSafeKeys`); refuses an unreadable key or one readable by others; `opendkim-genkey` (`-b`, `-d`, `-D`, `-s`, `-v`), `opendkim-testkey` (`-d`, `-s`, `-k`, `-v`); no real cryptography (the public key is computed from the private file), no `KeyTable`/`SigningTable` nor DNSSEC | real RSA signing, key tables, several domains |
 | Ansible | `ansible.cfg` (`./`, `~/.ansible.cfg`, `/etc/ansible`), INI inventory (groups, `:vars`, `:children`), a subset of YAML; modules `ping`, `debug`, `apt`, `copy`, `file`, `lineinfile`, `user`, `service`/`systemd`, `command`, `shell`; `become`, `--check`, `--diff`, handlers, `--limit`, `--force-handlers`; ssh connection without questions (BatchMode); no real fact gathering, Jinja variables, roles, loops nor Python on the targets | Jinja templates, roles, collections, `ansible-vault`, facts |
@@ -253,7 +277,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Docker and the firewall | a port published on 0.0.0.0 answers from outside whatever the ufw rules (like Docker's iptables rules); `nc -zv` from another machine; `system df`, `image prune` (`-a`), `container prune`, `volume prune` (`-a`), `system prune` (`-a`, `--volumes`), `rmi` | the DOCKER-USER chain, ufw-docker, `iptables -L` |
 | A container's user | `--user`/`-u` and `user:` (a name from the image or `uid[:gid]`, an uid unknown to the image gets gid 0), `docker exec -u`; the container's uid is the machine's (no userns-remap): Unix rights applied by number on bind mounts, files created as that uid, processes visible in `ps aux`; `--read-only` prevents writing outside volumes; `--cap-drop` and `--security-opt` are kept (and shown by `inspect`) with no other effect; a fallen container is restarted on each command (no doubling delay) | userns-remap, rootless mode, real capabilities, seccomp, AppArmor, rights on named volumes |
 | `nc` | `-z`, `-v`, a port range; without `-z`, returns | full netcat (listen, send, proxy) |
-| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, The Lab), `lsblk` shows disks, partitions and RAID arrays, with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
+| disks (`lsblk`, `mount`, `umount`) | devices described by the chapter; `mount` without an argument, `-o ro`; a read-only medium refuses any creation (an existing file's contents can still be changed by a redirection); on a machine with described storage (`storage.ts`, The Lab), `lsblk` shows disks, partitions, RAID arrays and open LUKS mappings (`crypt`), with `-d` and `-o` (NAME, MAJ:MIN, RM, SIZE, RO, TYPE, MOUNTPOINT(S), MODEL, SERIAL, FSTYPE, UUID) | every option, real file systems; RM and RO always 0 |
 | `smartctl` | `-a`, `-x`, `-H`, `-i`, `-A`, `-l error`, `-l selftest`, `-t short/long` (the test is logged at once, without waiting); an ATA disk's attributes, values derived from the chapter's counts; exit code as a bit mask (64, 128) | NVMe, SCSI, `-d`, `-s`, `-X`, the drive database, every attribute |
 | `mdadm` | RAID 1 only: `--detail` (`-D`), `--detail --scan`, "manage" mode (`--fail`, `--remove` including `failed`, `--add`, `--re-add`, several in a row); the real kernel's refusals (removing an active member, failing the last up-to-date member, a partition already in use); one array rebuilt at a time, half an hour per command; a whole disk in an array erases its table | `--assemble`, `--grow`, `--examine`, `--zero-superblock`, `--monitor`, other RAID levels, a real bitmap (`--re-add` catches up faster) |
 | `mdadm --create` | RAID 1 only (`--level`, `--raid-devices`, `--run`, `missing`), on free disks or partitions; the real "Continue creating array?" question; the initial sync progresses with the commands | other levels, `--chunk`, `--bitmap`, `--name`, `--homehost` |
@@ -3096,8 +3120,10 @@ directly (AGDLP), Domain Admins, a password with the person's name
 (refused: the account is then created disabled, "The password does not
 meet the length, complexity, or history requirement of the domain."), the
 account left in CN=Users, another account name than the conventions',
-no "change at logon", deleting Mateo (his SID; no AD Recycle Bin: the
-chapter must be restarted).
+no "change at logon", deleting Mateo (his SID; the AD Recycle Bin is on:
+`Get-ADObject -Filter 'SamAccountName -eq "mrossi"' -IncludeDeletedObjects |
+Restore-ADObject` brings him back with his SID and his group, then the
+conventions' way).
 
 ### Chapter 2 — The Stale Password (done)
 
@@ -3125,20 +3151,506 @@ doesn't unlock), the task as SYSTEM, under a person's account or simply
 disabled (the scans stop arriving), a wrong password for svc_scans
 (refused, and it counts).
 
-### Chapter 3 — The Policy That Doesn't Apply (planned)
+### Chapter 3 — The Policy That Doesn't Apply (done)
 
-The children's staff of Riverside and Hilltop have no E: drive: the GPO
-"Events Drive" is linked to OU=Central only (where Tomas tested it), or
-security filtering leaves them out. `gpresult /r`, `Get-GPInheritance`,
-`Get-GPOReport`, `New-GPLink` on OU=Branches (and `Remove-GPLink` from
-Central), `gpupdate /force`.
+Monday 14 January: the Events drive (E:) is missing at Riverside and
+Hilltop, and for Nandini at Central. The GPO "Events Drive" is linked to
+OU=Central only (where Tomas tested it) and filtered to GG_Children only
+(the managers forgotten): two layers, two symptoms in gpresult. The
+domain's workstations (CENTRAL-DESK1/2, RIVER-DESK1, HILL-DESK1/2) aren't
+machines of the game: who is logged on where is declared by the chapter,
+their policy computed at that logon (`logonClients`).
 
-### Chapter 4 — Doors and Dormant Accounts (planned)
+| Step | Command learnt |
+|---|---|
+| No data here | `gpresult /r /user LENDING\jbaptiste` on register: "does not have RSoP data" |
+| Josephine | `gpresult /s HILL-DESK1 /user LENDING\jbaptiste /r` (or `Get-GPResultantSetOfPolicy -Computer HILL-DESK1 -User LENDING\jbaptiste -ReportType Html -Path …`): Events Drive neither applied nor filtered out |
+| Where it is linked | `Get-GPInheritance -Target 'OU=Hilltop,OU=Branches,DC=lending,DC=internal'`, `Get-GPOReport 'Events Drive' -ReportType Xml` (LinksTo Central) |
+| The link | `New-GPLink 'Events Drive' -Target 'OU=Branches,DC=lending,DC=internal'` (and `Remove-GPLink` from Central), or a link per branch OU |
+| Nandini | `gpresult /s CENTRAL-DESK1 /user LENDING\nmukherjee /r`: Filtering: Denied (Security) |
+| Who may apply it | `Get-GPPermission 'Events Drive' -All`: GpoApply for GG_Children only; `Get-ADGroupMember DL_Events_RW` |
+| The filtering | `Set-GPPermission 'Events Drive' -TargetName GG_Management -TargetType Group -PermissionLevel GpoApply` (or DL_Events_RW) |
+| Check | `Invoke-GPUpdate -Computer HILL-DESK1 -Target User`, `gpresult /s …` again |
 
-A firewall rule opening Remote Desktop to Any on stacks, narrowed with
-`Set-NetFirewallRule -RemoteAddress`; an audit function with a loop:
-`Search-ADAccount -AccountInactive`, disable and move to OU=Leavers, a CSV
-report (`Export-Csv`); the old leaver still in groups (`oadeyemi`).
+Goal checked on the state: for every enabled account of OU=Branches in
+GG_Children or GG_Management (nested included), the resulting user
+policy maps E:; for every other account of the domain (lending, local
+history, leavers, service accounts, built-in accounts), it doesn't; no
+link of Events Drive on the domain's root, none enforced; a workstation
+of Josephine, Kofi or Nandini refreshed and has E:. Expected traps:
+`gpupdate /force` on register (it refreshes register), a link on the
+root, Enforced (it doesn't reach a sister OU nor pass the filtering),
+GpoApply for Authenticated Users (the lending staff and the service
+accounts get E:).
+
+### Chapter 4 — Doors and Dormant Accounts (done)
+
+Monday 28 January: the city's yearly audit (Documents\city-it-audit.txt).
+stacks has a local rule "Remote Desktop - Any" (TCP 3389, Any, every
+profile; the router forwards the port), and the audit wants the accounts
+of people with no logon for 90 days disabled, in Leavers, out of their
+groups, and listed in a CSV file. `Search-ADAccount -AccountInactive`
+finds Guest and krbtgt (built-in), ychen and pmorel (the people),
+oadeyemi (a leaver of May still in GG_Lending and DL_Staff_RW) and
+svc_backup: its offsite copy task on stacks runs on 1 October and 1
+April (a Daily trigger every 182 days), so its last logon is from
+October. Leila (lhassan) is on leave since 17 December: a `-TimeSpan`
+of 30 days catches her.
+
+| Step | Command learnt |
+|---|---|
+| The door | `ssh stacks`; `Get-NetFirewallPortFilter \| Where-Object LocalPort -eq 3389 \| Get-NetFirewallRule`, `Get-NetFirewallAddressFilter` |
+| Closed | `Disable-NetFirewallRule -DisplayName 'Remote Desktop - Any'`, or `Set-NetFirewallRule … -RemoteAddress 192.0.2.2` |
+| The dormant accounts | `Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly` |
+| The service account | `Get-ADUser svc_backup -Properties Description`; on stacks `Get-ScheduledTask` (Offsite Copy as LENDING\svc_backup) |
+| Closing them | `$old = Search-ADAccount … -SearchBase 'OU=Branches,DC=lending,DC=internal'`; `foreach ($a in $old) { Disable-ADAccount $a; …Remove-ADGroupMember…; Move-ADObject $a -TargetPath 'OU=Leavers,…' }`, or a function with `process {}` dot-sourced from a `.ps1` |
+| The old leaver | `Remove-ADPrincipalGroupMembership oadeyemi -MemberOf GG_Lending, DL_Staff_RW` |
+| The report | `$old \| Select-Object SamAccountName, Name, LastLogonDate \| Export-Csv Documents\dormant-accounts.csv -NoTypeInformation`, `Import-Csv` |
+
+Goal checked on the state: from a public address (198.51.100.77) and a
+kiosk (192.0.2.210), stacks refuses TCP 3389; register still reaches
+stacks on 22; every profile on; ychen and pmorel disabled, in
+OU=Leavers, in no group but Domain Users; oadeyemi in no group; every
+other account as it was at the start (DN, enabled, groups), none
+deleted; a CSV file on register's C: with a row for ychen and one for
+pmorel (by sAMAccountName, name, UPN or DN) and none for an active
+person. Expected traps: a firewall profile off, the rule narrowed to
+LocalSubnet or the /24 (the kiosks), your own ssh rule disabled or
+narrowed away (a warning; once out, a rule added to the servers' GPO
+"Server Firewall" lets you in at the next background refresh), a
+`-TimeSpan` too short (Leila), svc_backup disabled, built-in accounts
+moved, accounts deleted (the Recycle Bin restores them).
+
+## Story 33: The Pantry (three chapters)
+
+A neighbourhood community grocery (L'Épicerie solidaire in French) keeps
+its files on `crate` (`cagette` in French, 192.0.2.48), a small Debian
+server: the households it helps (`/srv/pantry/families.csv`, sensitive
+data, households as codes), the stock, the volunteers, and the app's
+PostgreSQL database, dumped every night to `/var/backups/pantry.sql`. A USB
+disk takes a copy home every Friday (Joaquín) and comes back on Monday.
+Fatou coordinates; Mei, the treasurer, keeps the password manager and a
+sealed envelope at the bank; Noor writes the nightly job. Engine: LUKS in
+`luks.ts` (header, key slots, mappings, `/etc/crypttab`), `cryptsetup`,
+`cryptdisks_start`/`cryptdisks_stop` in `commands/cryptsetup.ts`;
+`mkfs.ext4` in `commands/disks.ts`; `sha256sum` (a real SHA-256) in
+`commands/checksums.ts`; shell variables (`export`, `unset`,
+`NAME=value command`, `$NAME`, `sudo -E`) in `shell.ts` and
+`commands/environment.ts`; restic's `init`, `key`, environment variables
+and `check --read-data`; `dd if=/dev/urandom`. The story's machine and the
+restore drill's laptop, `spare` (`secours`, 192.0.2.49, an internal host),
+are built in `chapters/pantry.ts`. It opens after "Snapshots" (The Game
+Library: restic, then rsnapshot) and "The stuck reboot" (The Lab: fstab),
+and extends the backups path (lost-disk is also in the security path).
+
+### Chapter 1 — The Lost Disk (done)
+
+| Step | Command learnt |
+|---|---|
+| The disk | `lsblk`, `lsblk -f`: sdb1, removable, ext4 OFFSITE, mounted on /mnt/offsite |
+| Free | `sudo umount /mnt/offsite` |
+| LUKS | `sudo cryptsetup luksFormat /dev/sdb1` (YES, Mei's passphrase twice), `cryptsetup luksDump` |
+| Open, file system | `sudo cryptsetup open /dev/sdb1 offsite`, `sudo mkfs.ext4 /dev/mapper/offsite` |
+| Key file | `sudo dd if=/dev/urandom of=/root/offsite.key bs=512 count=8`, `chmod 400`, `sudo cryptsetup luksAddKey /dev/sdb1 /root/offsite.key` |
+| crypttab | `cryptsetup luksUUID` or `blkid`; `offsite UUID=… /root/offsite.key luks,noauto` |
+| fstab | `/dev/mapper/offsite /mnt/offsite ext4 noauto,nofail 0 2` (the old `LABEL=OFFSITE` line gone) |
+| Copy, close | `cryptdisks_start offsite`, `mount /mnt/offsite`, `rsync -a /srv/pantry /mnt/offsite/`, `umount`, `cryptsetup close` (or `cryptdisks_stop`) |
+| The note | `rm note_from_mei.txt` |
+
+Goal checked on the state: sdb1 (or the whole sdb) is LUKS with an ext4
+inside, a slot opens with Mei's passphrase and one with a file of the
+server that only root reads (not on the disk); crypttab names the LUKS
+UUID (UUID= or by-uuid), that key file, `luks` and `noauto` or `nofail`;
+fstab mounts `/dev/mapper/NAME` with `noauto` or `nofail`, no
+`LABEL=OFFSITE` line; the pantry's files (today's families list) are on
+the encrypted file system; nothing open nor mounted from the disk; no file
+of the server holds the passphrase. Expected traps: luksFormat on sda1
+("Device /dev/sda1 is in use. Can not proceed with format operation.")
+or on the mounted sdb1, "yes" in lowercase ("Operation aborted."),
+mounting the LUKS device itself (unknown filesystem type
+'crypto_LUKS'), `mkfs.ext4` on the encrypted partition (the header is
+wiped), a key file readable by others (cryptdisks_start's warning), a
+passphrase nobody else knows, `/dev/sdb1` in crypttab, the note deleted
+before its passphrase is in a slot (Mei sends it again).
+
+### Chapter 2 — The Spare Key (done)
+
+| Step | Command learnt |
+|---|---|
+| Open | `sudo cryptdisks_start offsite`, `sudo mount /mnt/offsite` |
+| The job | `sudo cat /usr/local/sbin/nightly-backup`: `RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE=/root/.restic-pass` |
+| Snapshots | `export RESTIC_REPOSITORY=… RESTIC_PASSWORD_FILE=…` then `sudo -E restic snapshots` (or `sudo restic -r … -p … snapshots`) |
+| The keys | `restic key list`: one key, its password on crate only |
+| The spare key | `restic key add` (Mei's password twice) |
+| Check | `restic check` |
+| Close | `rm note_from_mei.txt`, `umount`, `cryptdisks_stop offsite` |
+
+Goal checked on the state: the repository has a key with Mei's password
+and, a different one, a key with the content of `/root/.restic-pass` (the
+job still works); `restic check` ran after Mei's key was added; no file
+on crate holds Mei's password; the disk is unmounted and closed. Expected
+traps: `sudo restic` with exported variables (env_reset: "Please specify
+repository location"), Mei's password before her key ("wrong password or
+no key found"), `restic init` ("config file already exists"),
+`restic key passwd` (the job's key replaced: put it back with
+`key add --new-password-file /root/.restic-pass`), removing the current
+key (refused), Mei's password written to a file.
+
+### Chapter 3 — The Restore Drill (done)
+
+Saturday: crate's loss staged on `spare`, a borrowed laptop with a fresh
+Debian, the USB disk plugged in, no key file, no crypttab: only the two
+secrets of Mei's envelope (in Fatou's message). The job only backs up
+`/srv/pantry`; the nightly dump is never in a snapshot.
+
+| Step | Command learnt |
+|---|---|
+| The log | `sudo cat /var/log/nightly-backup.log`: "backup completed" every night |
+| On spare | `ssh spare`, `lsblk -f`: sdb1 crypto_LUKS |
+| Open | `sudo cryptsetup open /dev/sdb1 offsite` (the passphrase), `sudo mkdir /mnt/offsite`, `sudo mount /dev/mapper/offsite /mnt/offsite` |
+| The repository | `sudo restic -r /mnt/offsite/restic snapshots` (the recovery password) |
+| Check it all | `restic check --read-data` |
+| Restore beside | `restic restore latest --target /srv/restore` |
+| Prove it | `cd /srv/restore/srv/pantry`, `sha256sum -c SHA256SUMS` |
+| The database | `restic find pantry.sql`: nothing |
+| Fix the job | on crate, `sudo nano /usr/local/sbin/nightly-backup`: `restic backup /srv/pantry /var/backups/pantry.sql` |
+| Close | on spare, `umount`, `cryptsetup close offsite` |
+
+Goal checked on the state: on spare, the disk was opened with a
+passphrase and the repository with Mei's key, `check --read-data` ran,
+the latest families list restored outside the disk, `sha256sum -c`
+passed for the three files, no secret of crate (the key file, the job's
+password) on spare, the disk closed; on crate, the job's `restic backup`
+line includes `/var/backups`. Expected traps: trusting "backup
+completed", crate's key file or password copied to spare (the drill
+proves nothing), `restic check` without `--read-data`, a restore over
+`/`, `sha256sum -c` from the wrong directory or on a modified file.
+
+## Story 34: The Ferry (three chapters)
+
+An island's ferry cooperative (Le Bac in French) runs its timetable site,
+its booking app (Node.js, behind nginx) and its own DNS zone
+(`ferry.example`, BIND, with a secondary at the island's fibre cooperative,
+islenet) on `quay` (`quai` in French, 192.0.2.52), a small Debian server
+at the harbour office. islenet turned IPv6 on a month ago: its router
+advertises the prefix `2001:db8:4e1:20::/64` (RFC 3849). Amaru coordinates;
+Rangi works at islenet; Tevita, who set the server up, has moved to the
+mainland; Lucía writes the booking app. `lookout` (`vigie`, 198.51.100.61
+and `2001:db8:c0:61::10`), islenet's monitoring box on the internet, is an
+internal host reached with ssh from quay: the outside view, in both
+families. Engine: `src/engine/ipv6.ts` (addresses, RFC 5952 form, prefixes,
+modified EUI-64, link-local and SLAAC, `/proc/sys/net/ipv6/conf`, the IPv6
+default route, `boot6`, resolution, and what the outside sees: neighbour
+discovery, the firewall's verdict, who listens); `ip -6`, `ip neigh`,
+`inet6` stanzas in `lan.ts` and `commands/lan.ts`; `curl`, `ping`/`ping6`
+and `nc` in both families in `commands/ipv6.ts`; nftables families in
+`nftables.ts`; `listen [::]`, `ipv6only`, localhost's two addresses in
+`nginx.ts`; `nmap -6`; `ss -4`/`-6`; ufw's `IPV6=` and `ufw reload`. The
+story's machine is built in `chapters/ferry.ts`. It opens after "VLANs"
+(The Hive: `ip`, `/etc/network/interfaces`) and "Works on my machine"
+(The Neighbourhood Letters: BIND), and extends the network path.
+
+### Chapter 1 — The New Card (done)
+
+The network card was replaced last week: quay's SLAAC address followed the
+new MAC address; the AAAA records Tevita wrote still name the old one.
+IPv6 visitors knock on an address nobody has.
+
+| Step | Command learnt |
+|---|---|
+| Addresses | `ip -6 addr` (scope link, scope global dynamic), `ip link` (the MAC, EUI-64) |
+| Routes | `ip -6 route` (`default via fe80::… dev eth0 proto ra`), `ip -6 neigh` |
+| The router | `ping -6 fe80::200:5eff:fe00:5301` (refused), then `…%eth0` |
+| The DNS | `dig www.ferry.example AAAA`: the old address |
+| A fixed address | `sudo ip -6 addr add 2001:db8:4e1:20::80/64 dev eth0`; `/etc/network/interfaces`: `iface eth0 inet6 static`, `address`, `gateway` |
+| Publish | the zone's AAAA records, a higher serial, `named-checkzone`, `rndc reload`; `dig @ns2.islenet.example …` |
+| Check | from lookout, `ping6 www.ferry.example` |
+
+Goal checked on the state: a static address of the prefix on eth0 now and
+in what the next boot would bring up, an IPv6 default route now and at
+boot, and the zone's secondary giving that address for `ferry.example`,
+`www` and `quay`. Expected traps: a link-local address without its
+interface, `ifdown eth0` over ssh (the session drops; Amaru brings it back
+up), `ifup eth0` on a configured interface, an address outside the
+prefix, `accept_ra 0` without a gateway (no route at boot), the serial
+unchanged (the secondary keeps the old address), the new SLAAC address in
+the zone (it will move again).
+
+### Chapter 2 — The Other Door (done)
+
+islenet's monthly scan, now in IPv6 too, finds PostgreSQL (5432) and the
+admin pages (8080) open on quay. Tevita's firewall is a `table ip filter`:
+IPv6 never crosses it.
+
+| Step | Command learnt |
+|---|---|
+| Outside | from lookout, `nmap -6 quay.ferry.example`, then `nmap` (IPv4), `nc -zv -6`/`-4` |
+| Sockets | `sudo ss -tlnp`: `0.0.0.0:5432` and `[::]:5432`, `*:8080`; `ss -tln6` |
+| Rules | `sudo nft list ruleset`: `table ip filter` |
+| One policy | `/etc/nftables.conf`: `table inet filter`, `icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert, … } accept`; `nft -c -f`, `systemctl reload nftables` |
+
+Goal checked on the state, with the ruleset loaded and the one the file
+gives at boot: from the internet, in IPv4 and IPv6, ssh, DNS and the site
+pass, 5432 and 8080 aren't reachable; neighbour discovery passes; the
+harbour office (198.51.100.40) still reads the database; the workstation
+still reaches ssh; IPv6 is on now and at boot. Expected traps: turning
+IPv6 off (`disable_ipv6`: the AAAA records lead nowhere, and the static
+address doesn't come back), a table inet without ICMPv6 (quay vanishes in
+IPv6: "Address unreachable", nmap's "Host seems down"), a hand-copied
+`ip6` table missing a rule, the office's rule lost, rules typed with `nft`
+and not saved.
+
+### Chapter 3 — Both Ways (done)
+
+The season's first Saturday. nginx only listens in IPv4 (`listen 80;`),
+and Lucía's update made the app listen on `localhost`, which Node.js 17+
+turns into `::1`, while nginx's `proxy_pass` asks `127.0.0.1`: 502 for
+everyone.
+
+| Step | Command learnt |
+|---|---|
+| Outside | from lookout, `curl -6 -v http://www.ferry.example/` (refused), `curl -v …/booking/` (falls back to IPv4, 502) |
+| Sockets | `sudo ss -tlnp`: `0.0.0.0:80`, `[::1]:3000` |
+| The log | `sudo tail /var/log/nginx/error.log`: `connect() failed (111: Connection refused) … upstream: "http://127.0.0.1:3000/"` |
+| nginx | `listen [::]:80 default_server;`, `nginx -t`, `systemctl reload nginx` |
+| The app | `/etc/default/booking`: `HOST=127.0.0.1`, `systemctl restart booking` (or `proxy_pass http://[::1]:3000/;`) |
+
+Goal checked on the state: from the internet, in IPv4 and in IPv6, `/`
+and `/booking/` answer 200. Expected traps: the file changed without a
+reload, `listen [::]:80 ipv6only=off` next to `listen 80` (the reload
+fails on `bind()`, `nginx -t` doesn't see it), the app on every address
+(only the firewall hides it).
+
+## Story 35: The Bike Share (three chapters)
+
+A neighbourhood bike share cooperative (four stations, some sixty bikes)
+runs its rental app on `saddle` (`selle` in French, 192.0.2.55) and the
+docking stations' gateway on `hub` (`moyeu`, 192.0.2.56); `gauge`
+(`jauge`, 192.0.2.54), the story's machine, is the monitoring server Aroha
+set up before moving away: Prometheus, a node exporter, the Alertmanager,
+and a small relay that posts the Alertmanager's webhooks to the volunteers'
+chat (`#team`, `#on-call`, `/var/log/alert-relay/relay.log`). Ngozi
+coordinates; Tomás writes the rental app. `saddle` and `hub` are internal
+hosts reached with ssh from gauge, each with its ufw and its node exporter.
+Engine: `src/engine/promql.ts` (PromQL), `src/engine/prometheus.ts`
+(configuration, scrapes, the time series, rules and alerts, the API),
+`src/engine/alertmanager.ts` (routes, groups, notifications, silences,
+inhibition), `commands/prometheus.ts` (`promtool`, `amtool`, the daemons'
+`--version`, the Alertmanager's API, curl on the story's network, `sleep`),
+`commands/jq.ts`. The metrics are computed from the machines' state and
+the clock (file systems from their files, the app's counters from its
+traffic since its process started: a baseline, two-minute bursts of errors
+every quarter of an hour, an incident in chapter 2); each command, a
+minute passes (`sleep` lets more pass), and Prometheus scrapes and
+evaluates every 15 seconds of it. The story's machine is built in
+`chapters/bike-share.ts`. It opens after "SSH Alerts" (The Huts: reading a
+service through its logs) and extends the production path.
+
+### Chapter 1 — The Blind Spot (done)
+
+The docking stations' gateway stopped last Saturday and nobody knew, yet
+Prometheus was installed. Two targets fail in silence and a machine is
+missing.
+
+| Step | Command learnt |
+|---|---|
+| The targets | `curl -s localhost:9090/api/v1/targets \| jq …`, `promtool query instant http://localhost:9090 up` |
+| A timeout | `context deadline exceeded`: on saddle, `curl localhost:9100/metrics`, `sudo ufw status`, `sudo ufw allow from 192.0.2.54 to any port 9100 proto tcp` |
+| A refusal | `connection refused` on `127.0.0.1:3000`: the app moved to saddle |
+| The exposition format | `curl localhost:3000/metrics`: `# HELP`, `# TYPE`, counters, a histogram, gauges |
+| The configuration | `scrape_configs`, `static_configs`, `targets`, `labels`; `promtool check config`; `systemctl reload prometheus` (SIGHUP), `POST /-/reload` refused without `--web.enable-lifecycle` |
+
+Goal checked on the state: the five targets (Prometheus, the three node
+exporters, the app) up in the running configuration, no target down,
+the file the same as what runs, saddle's 9100 open to gauge and closed to
+the internet. Expected traps: 9100 opened to everyone, `POST /-/reload`
+(403), a broken file reloaded (the old configuration kept, the error in
+the journal), a file changed but not reloaded.
+
+### Chapter 2 — The Threshold (done)
+
+Two alerts: a disk under 10 % free (hub has 7 % since an old backup) and
+the rental app answering errors to more than 5 % of its requests (since
+this morning's release, about one return in two fails).
+
+| Step | Command learnt |
+|---|---|
+| A gauge | `node_filesystem_avail_bytes / node_filesystem_size_bytes` |
+| A rate | `sum by (job) (rate(http_requests_total{status=~"5.."}[5m])) / sum by (job) (rate(http_requests_total[5m]))` |
+| The rules | `/etc/prometheus/rules/*.yml`: `alert`, `expr`, `for`, `labels` (`severity`), `annotations` (`summary`); `promtool check rules`; reload |
+| The states | `/api/v1/alerts`: pending, firing; `sleep` |
+| The fixes | on hub, `rm` the old backup; on saddle, `systemctl restart rental` (the fixed release); resolved |
+
+Goal checked on the state: both rules loaded and tried on made-up days
+(the disk rule fires for any machine at 7 % free, not at 12 % nor for
+`/run`; the error rule fires during a lasting incident within 30 minutes,
+and stays quiet through 90 minutes of a normal day and its bursts), each
+with a `severity` label and a `summary`; the disk alert fired and
+resolved; the app restarted and no error alert firing; the files on disk
+loaded. Expected traps: `rate()` on a gauge (Prometheus's info), a
+counter's raw value, each series divided by itself (no `sum`),
+`status!="200"` (201 and 404), no `for:` (the bursts page), labels
+missing, the stations' photos deleted (Ngozi puts them back), the app
+restarted before its alert fired.
+
+### Chapter 3 — Quiet Hours (done)
+
+The alerts reach the chat, badly: the only route matches
+`severity="critical"`, a value no rule sets, so pages land in `#team`, and
+`repeat_interval: 1m` repeats them at every `group_interval`. At 10:00,
+hub goes down for a planned disk replacement until 11:30.
+
+| Step | Command learnt |
+|---|---|
+| The chat | `tail /var/log/alert-relay/relay.log`, `amtool alert query` |
+| The routing | `amtool config routes`, `amtool config routes test severity=page alertname=NodeDown` |
+| The fix | `matchers: [severity="page"]`, `repeat_interval: 4h`, `amtool check-config`, `systemctl reload prometheus-alertmanager` |
+| The maintenance | `amtool silence add instance="hub.internal:9100" --duration=2h --comment=…`, `amtool silence query`, `amtool alert query --silenced`, `amtool silence expire` |
+
+Goal checked on the state: in the running configuration a page goes to
+`on-call` and a warning to `team`, neither repeated more often than every
+hour; a silence covers hub's NodeDown from 10:00 to 11:30 and nothing of
+saddle's or gauge's; Prometheus and the Alertmanager run; NodeDown is still
+loaded; the file is the one running. Expected traps: a broken file, a
+silence too broad (`severity=page`), too short (`--duration=1h`),
+Prometheus stopped, the rule removed, no silence at all (the on-call phone
+rings at 10:02).
+
+## Story 36: The Pool (four chapters)
+
+The town's swimming pool (Riverside Pool, "piscine des Berges" in French)
+moved its booking app to a single-node k3s cluster on `lane` (`couloir` in
+French, 192.0.2.62), a Debian server, a month before the story. Rui, the
+developer who set it up, keeps the manifests in `~/manifests` (namespace
+`swim`: the Deployment `booking`, the ConfigMap `booking-config`);
+Folake runs the pool's front office; Kemal works at the town's IT. The
+images come from the town's registry, `registry.pool.example/booking`
+(2.2.0, 2.3.0, 2.3.1, 2.4.0); the database lives outside the cluster
+(`db.pool.internal`; from 12 June it asks for a password, which the app
+reads from `DATABASE_PASSWORD` when it starts); the site is `booking.pool.example`, whose DNS points
+to lane. Engine: `src/engine/k8s.ts` (the objects and their schemas, the
+API server's defaults and validation, `kubectl apply`'s three-way merge,
+the Deployment and ReplicaSet controllers, the scheduler, the kubelet,
+probes, events, Endpoints and EndpointSlices, Traefik's routes and log,
+kube-system as k3s installs it), `commands/kubectl.ts`, `commands/k3s.ts`
+(`k3s`, `base64`); curl reaches Traefik, NodePorts, ClusterIPs and pod
+addresses through `state.metricsNet`. The cluster's past (k3s installed,
+2.2.0 deployed, what Rui or Kemal applied before the chapter) is replayed
+second by second when the chapter starts; then each command lets ten
+seconds pass (`sleep`, `kubectl rollout status`, `kubectl get -w` and
+`kubectl logs -f` let more pass). It opens after "Compose" (The Workshop)
+and "Blue/Green" (The Gazette), and extends the deployment path.
+
+### Chapter 1 — The Pod That Won't Start (done)
+
+Rui applied release 2.3.1 before leaving for his train; the new pod never
+started, the two old ones (2.2.0) still serve (a rolling update keeps
+them until new pods are available: `maxUnavailable` rounds down to 0).
+
+| Step | Command learnt |
+|---|---|
+| The pods | `kubectl get pods` (default namespace: nothing), `kubectl get pods -n swim`, `kubectl config set-context --current --namespace=swim` |
+| Why | `kubectl describe pod NAME -n swim`: the Events (`Failed to pull image …: not found`, `ErrImagePull`, `ImagePullBackOff`) |
+| The tag | `~/manifests/booking.yaml` (`image: …:2.3.1`), `kubectl apply -f ~/manifests/` (created, configured, unchanged) |
+| The crash | `CrashLoopBackOff`, `RESTARTS`, `kubectl logs POD --previous` (`DATABASE_HOST is not set`) |
+| The variable | `env` with `configMapKeyRef`: the variable's name changes, the key stays; `kubectl rollout status deployment/booking` |
+
+Goal checked on the state: the Deployment rolled out (2/2 updated and
+available) on 2.3.1 with `DATABASE_HOST` set from the ConfigMap, no pod
+nobody manages in the namespace, the files in `~/manifests` what runs
+(`kubectl apply` would change nothing). Expected traps: a pod deleted (its
+ReplicaSet makes another, with the same error), `kubectl run` (a lone pod
+to delete), a pod edited instead of its Deployment (and its env refused:
+a pod's spec is immutable but for its images), a fix made with `kubectl
+edit` or `kubectl set image` but not in the file, a ConfigMap key that
+doesn't exist (`CreateContainerConfigError`).
+
+### Chapter 2 — The Front Desk (done)
+
+A week later, the old server is gone: lane must serve
+`booking.pool.example` through Traefik. Kemal removed the Deployment on
+Friday and applied his manifests: a readiness probe, a Service, an
+Ingress; the address answers `404 page not found`.
+
+| Step | Command learnt |
+|---|---|
+| The front door | `curl -H 'Host: booking.pool.example' http://localhost/` (Traefik's 404) |
+| The Ingress | `kubectl describe ingress booking -n swim` (`booking:8080 ()`), `kubectl logs -n kube-system deploy/traefik` (`service port not found`); `port.number: 80` |
+| The Service | `kubectl get endpoints`, `kubectl get pods --show-labels`, `kubectl describe service` (`Selector: app=booking-web`); the selector fixed |
+| Ready or not | `kubectl get endpointslices` (the pods, not ready), `kubectl describe pod` (`Readiness probe failed: HTTP probe failed with statuscode: 404`), `curl http://POD_IP:8080/health`, `kubectl exec … -- wget -qO- …`; the probe's path |
+| The end | `kubectl rollout status`, the site through Traefik |
+
+Goal checked on the state: `http://booking.pool.example/` answers 200
+through Traefik, the Deployment rolled out with a readiness probe that
+passes, no NodePort or LoadBalancer Service in the namespace, the files in
+`~/manifests` what runs. Several solutions: the Ingress's port fixed, or
+the Service's port moved to 8080; an httpGet probe on `/health` or a
+tcpSocket probe. Expected traps: the pods' labels changed (the
+Deployment's selector is immutable), a NodePort (open to the internet,
+around Traefik), `kubectl port-forward` (it works, for you, while it runs),
+the readiness probe removed.
+
+### Chapter 3 — The Locker Room (done)
+
+On 12 June the town's IT turned on the database's password, and Rui put
+it in the ConfigMap, so in `~/manifests/config.yaml`, a git repository
+pushed to `/srv/git/pool-manifests.git`, which the town's IT reads.
+Kemal saw it and changed the password on the database at 9:00 (the new
+one in `~/new_db_password.txt`): the running pods keep their open
+connections, a new start fails (`password authentication failed`).
+
+| Step | Command learnt |
+|---|---|
+| Where it is | `cat ~/manifests/config.yaml`, `kubectl get configmap booking-config -n swim -o yaml`; `git log -p` (the history keeps it) |
+| The Secret | `kubectl create secret generic booking-db -n swim --from-literal=password=…` (`--dry-run=client -o yaml`), or a manifest with `stringData` kept out of the repository |
+| Not hidden | `kubectl get secret … -o yaml`, `-o jsonpath='{.data.password}' \| base64 -d` |
+| The reference | `env` with `valueFrom.secretKeyRef` (or `envFrom` with `secretRef`); `database_password` out of the ConfigMap, which keeps `database_host` |
+| The pods | a variable is read at start: the template's change, or `kubectl rollout restart deployment/booking` |
+| The repository | `git status`, `git commit -am`, `git push` |
+
+Goal checked on the state: a Secret holds the new password; the
+Deployment's template takes `DATABASE_PASSWORD` from it (no ConfigMap holds
+a password, in clear or in base64, and none is written in the
+Deployment); the rollout done and every running pod started with the new
+password; the site answers; the files in `~/manifests` are what runs and
+hold no password; the last commit, local and in the shared repository,
+holds none. Several solutions: `--from-literal` or a manifest outside the
+repository, `secretKeyRef` or `envFrom`. Expected traps: the old password
+copied into the Secret (the new pods can't log in), `--from-file` with the
+file's newline, the password base64-encoded in the ConfigMap, the
+ConfigMap deleted (it still gives `database_host`), the new password put
+in the ConfigMap without a restart (the running pods keep their
+environment), a Secret's manifest left in the repository, a commit not
+pushed. The debrief explains rotation (the history keeps the old
+password), RBAC and etcd encryption.
+
+### Chapter 4 — The Deep End (done)
+
+Saturday 23 June, the regional swim meet. Friday evening Rui applied
+2.4.0 (a results cache) with limits copied from a tutorial (requests
+64Mi, limits 128Mi). Under the meet's load the app needs 190 to 230 MiB:
+each container is OOMKilled as it starts, the site is down. And 2.4.0's
+cache never forgets: with more room, its memory keeps growing (3 MiB
+every 10 seconds under load, and a line in its log each minute).
+
+| Step | Command learnt |
+|---|---|
+| Killed | `kubectl get pods` (restarts, `CrashLoopBackOff`), `kubectl describe pod` (`Last State: Terminated`, `Reason: OOMKilled`, `Exit Code: 137`, `Limits`) |
+| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources); Rui's note: 230Mi at the last meet's peak |
+| What changed | `kubectl rollout history deployment/booking` (CHANGE-CAUSE), `--revision=N`; `kubectl logs` (the cache) |
+| Back | `kubectl rollout undo deployment/booking --to-revision=3` or the image in the file |
+| Room | `resources.requests.memory` and `resources.limits.memory` in `booking.yaml`, `kubectl apply -f`, `kubectl rollout status` |
+
+Goal checked on the state: the Deployment rolled out on 2.3.1 and the site
+answering through Traefik under the meet's load; a memory limit above
+230Mi and at most 1Gi; requests of at least 128Mi; the files in
+`~/manifests` what runs. Several solutions: `rollout undo` then the file,
+or the file alone; any limit and requests within those bounds. Expected
+traps: a limit raised on 2.4.0 (it fills it, OOMKilled again), `kubectl
+rollout undo` after that change (it goes back one revision: 2.4.0 again),
+deleting the pods, a limit as big as the node and requests the node can't
+hold (`Pending`, `FailedScheduling: 0/1 nodes are available: 1
+Insufficient memory`), the limits removed, a limit below the peak.
 
 ## Ideas for later
 

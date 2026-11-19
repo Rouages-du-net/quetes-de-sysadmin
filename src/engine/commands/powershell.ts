@@ -1759,7 +1759,7 @@ function selectObject(r: Run): unknown[] {
       const v = propertyOf(r, x, s);
       out[label] = v === undefined ? null : v;
     }
-    return { type: `Selected.${isObject(x) ? x.type : typeName(x)}`, props: out, fullType: 'System.Management.Automation.PSCustomObject' } satisfies PSObject;
+    return { type: `Selected.${isObject(x) ? (x.fullType ?? x.type) : typeName(x)}`, props: out, fullType: 'System.Management.Automation.PSCustomObject' } satisfies PSObject;
   });
 }
 
@@ -2172,7 +2172,7 @@ function parseErrorText(ctx: Ctx, e: ParseError): string {
   return [
     ctx.file ? `At ${ctx.file}:${lineNo} char:${col + 1}` : `At line:${lineNo} char:${col + 1}`,
     `+ ${lineText}`,
-    `+ ${' '.repeat(col)}~`,
+    `+ ${' '.repeat(col)}${'~'.repeat(e.length)}`,
     e.message,
     '    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException',
     `    + FullyQualifiedErrorId : ${e.id}`,

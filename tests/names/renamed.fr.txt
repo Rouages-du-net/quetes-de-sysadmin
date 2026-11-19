@@ -1116,6 +1116,200 @@ stale-password
   /C/Users/vous/Documents/vault-svc_scans.txt → /C/Users/vous/Documents/coffre-svc_scans.txt
   /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
 
+unapplied-policy
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
+dormant-accounts
+  /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
+  /C/Users/vous/Documents/city-it-audit.txt → /C/Users/vous/Documents/audit-informatique-ville.txt
+  /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
+
+lost-disk
+  /home/you → /home/vous
+  /home/you/message_from_fatou.txt → /home/vous/message_de_fatou.txt
+  /home/you/note_from_mei.txt → /home/vous/mot_de_mei.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+spare-key
+  /home/you → /home/vous
+  /home/you/message_from_fatou.txt → /home/vous/message_de_fatou.txt
+  /home/you/note_from_mei.txt → /home/vous/mot_de_mei.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+restore-drill
+  /home/you → /home/vous
+  /home/you/message_from_fatou.txt → /home/vous/message_de_fatou.txt
+  /home/you/drill.txt → /home/vous/exercice.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+restore-drill:spare
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+new-card
+  /home/you → /home/vous
+  /home/you/message_from_amaru.txt → /home/vous/message_d_amaru.txt
+  /home/you/email_from_rangi.txt → /home/vous/courriel_de_rangi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+new-card:lookout
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+other-door
+  /home/you → /home/vous
+  /home/you/message_from_amaru.txt → /home/vous/message_d_amaru.txt
+  /home/you/scan_report.txt → /home/vous/rapport_de_scan.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+other-door:lookout
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+both-ways
+  /home/you → /home/vous
+  /home/you/message_from_amaru.txt → /home/vous/message_d_amaru.txt
+  /home/you/note_from_lucia.txt → /home/vous/mot_de_lucia.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+both-ways:lookout
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+blind-spot
+  /home/you → /home/vous
+  /home/you/message_from_ngozi.txt → /home/vous/message_de_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/vous/mot_de_tomas.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+blind-spot:saddle
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+blind-spot:hub
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+threshold
+  /home/you → /home/vous
+  /home/you/message_from_ngozi.txt → /home/vous/message_de_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/vous/mot_de_tomas.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+threshold:saddle
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/rental/RELEASE-NOTES.txt → /srv/rental/NOTES-DE-VERSION.txt
+
+threshold:hub
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+quiet-hours
+  /home/you → /home/vous
+  /home/you/message_from_ngozi.txt → /home/vous/message_de_ngozi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+quiet-hours:saddle
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+quiet-hours:hub
+  /home/you → /home/vous
+  /home/you/README.txt → /home/vous/LISEZMOI.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wont-start
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_rui.txt → /home/vous/mot_de_rui.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
+front-desk
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_kemal.txt → /home/vous/mot_de_kemal.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/manifests/service.yaml → /home/vous/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/vous/manifests/ingress.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
+locker-room
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_kemal.txt → /home/vous/mot_de_kemal.txt
+  /home/you/new_db_password.txt → /home/vous/nouveau_mdp_bdd.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/.git → /home/vous/manifests/.git
+  /home/you/manifests/.git/HEAD → /home/vous/manifests/.git/HEAD
+  /home/you/manifests/.git/config → /home/vous/manifests/.git/config
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/vous/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/vous/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
+deep-end
+  /home/you → /home/vous
+  /home/you/message_from_folake.txt → /home/vous/message_de_folake.txt
+  /home/you/note_from_rui.txt → /home/vous/mot_de_rui.txt
+  /home/you/manifests → /home/vous/manifests
+  /home/you/manifests/namespace.yaml → /home/vous/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/vous/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/vous/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/vous/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/vous/manifests/booking.yaml
+  /home/you/.kube → /home/vous/.kube
+  /home/you/.kube/config → /home/vous/.kube/config
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

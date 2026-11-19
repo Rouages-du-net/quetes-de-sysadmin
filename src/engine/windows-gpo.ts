@@ -27,13 +27,16 @@
 // Simplifications (docs/SCENARIOS.md): no sites, no local policy, no WMI
 // filters, no loopback processing, no slow-link detection, a small set of
 // settings; a policy is applied at once (no background refresh every 90
-// minutes: gpupdate, logon).
+// minutes: gpupdate, logon). The domain's workstations aren't machines of
+// the game: a story declares who is logged on where (ad.clients), their
+// policy is computed at logon and by Invoke-GPUpdate -Computer, and
+// gpresult /s and Get-GPResultantSetOfPolicy read it.
 
 import type { Game, Shell } from './shell';
 import { windows } from './windows';
 import { token } from './windows-acl';
 import { LOGON_HOOKS } from './windows-accounts';
-import { accountName, byDn, below, computerObject, domainDn, domainOf, findAccount, parentDn, settingSide, type AdObject, type Domain, type Gpo, type GpLink, type GpoSetting } from './windows-ad';
+import { accountName, byDn, below, computerObject, domainDn, domainOf, findAccount, findIdentity, parentDn, settingSide, type AdObject, type ClientSession, type Domain, type Gpo, type GpLink, type GpoSetting } from './windows-ad';
 import { firewall, PROFILES, type FwRule } from './windows-firewall';
 
 export type Side = 'user' | 'computer';
@@ -103,7 +106,9 @@ export function linksInOrder(ad: Domain, dn: string, includeSelf = false): GpEnt
     }
     enforced.push(here);
   }
-  return [...normal, ...enforced.reverse().flat()];
+  // A GPO linked at two levels of the path is processed once, where it has the highest precedence.
+  const all = [...normal, ...enforced.reverse().flat()];
+  return all.filter((e, i) => !all.slice(i + 1).some((x) => x.gpo === e.gpo && x.link.enabled === e.link.enabled));
 }
 
 /** Does this token get Apply Group Policy on the GPO (security filtering)? */
@@ -131,6 +136,17 @@ export function resultant(game: Game, ad: Domain, dn: string, side: Side, ids: S
 /** The machine's applied policy (gpresult reads it). */
 export const appliedPolicy = (game: Game): AppliedPolicy => (windows(game).gp ??= {}) as AppliedPolicy;
 
+/** One side's resulting policy for an object (its DN) and a principal, as gpresult keeps it. */
+function sideResult(game: Game, ad: Domain, dn: string, side: Side, principal: string, now: number) {
+  const ids = token(game, principal, false);
+  const r = resultant(game, ad, dn, side, ids);
+  const res: GpResult = { applied: r.applied.map((e) => e.gpo.name).reverse(), filtered: r.filtered, dn, at: now, from: `${ad.dc.toLowerCase()}.${ad.dns}`, groups: [...ids].filter((x) => x !== principal) };
+  return { r, res };
+}
+
+const drivesOf = (r: { applied: GpEntry[] }) =>
+  r.applied.flatMap((e) => e.gpo.settings.filter((s): s is Extract<GpoSetting, { kind: 'driveMap' }> => s.kind === 'driveMap').map((s) => ({ letter: s.letter.toUpperCase().replace(/:$/, ''), path: s.path, label: s.label, gpo: e.gpo.name })));
+
 /**
  * Applies the domain's policy on this machine (gpupdate, a logon): the
  * computer's side from its computer object, the user's from the session's
@@ -142,16 +158,13 @@ export function applyPolicy(game: Game, target: 'both' | Side = 'both', user = (
   if (!d) return false;
   const { ad } = d;
   const now = windows(game).clock;
-  const from = `${ad.dc.toLowerCase()}.${ad.dns}`;
   const gp = appliedPolicy(game);
   const settings = (gp.settings ??= []);
   const result = (dn: string, side: Side, principal: string) => {
-    const ids = token(game, principal, false);
-    const r = resultant(game, ad, dn, side, ids);
+    const out = sideResult(game, ad, dn, side, principal, now);
     settings.splice(0, settings.length, ...settings.filter((s) => s.side !== side));
-    for (const e of r.applied) for (const s of e.gpo.settings.filter((x) => settingSide(x) === side)) settings.push({ side, gpo: e.gpo.name, setting: s });
-    const res: GpResult = { applied: r.applied.map((e) => e.gpo.name).reverse(), filtered: r.filtered, dn, at: now, from, groups: [...ids].filter((x) => x !== principal) };
-    return { r, res };
+    for (const e of out.r.applied) for (const s of e.gpo.settings.filter((x) => settingSide(x) === side)) settings.push({ side, gpo: e.gpo.name, setting: s });
+    return out;
   };
   if (target !== 'user') {
     const me = computerObject(game);
@@ -176,10 +189,44 @@ export function applyPolicy(game: Game, target: 'both' | Side = 'both', user = (
     if (account && account.cls === 'user') {
       const { r, res } = result(account.dn, 'user', accountName(ad, account));
       gp.user = res;
-      gp.drives = r.applied.flatMap((e) => e.gpo.settings.filter((s): s is Extract<GpoSetting, { kind: 'driveMap' }> => s.kind === 'driveMap').map((s) => ({ letter: s.letter.toUpperCase().replace(/:$/, ''), path: s.path, label: s.label, gpo: e.gpo.name })));
+      gp.drives = drivesOf(r);
     }
   }
   return true;
+}
+
+// ——— The domain's workstations (not machines of the game) ———
+
+/** A workstation of the domain where someone is logged on (HILL-DESK1, hill-desk1.lending.internal). */
+export function clientNamed(ad: Domain, name: string): ClientSession | undefined {
+  const n = name.toLowerCase().split('.')[0];
+  return (ad.clients ?? []).find((c) => c.computer.toLowerCase() === n);
+}
+
+/**
+ * Refreshes a workstation's policy, as its logon or a remote gpupdate
+ * (Invoke-GPUpdate -Computer) would: its computer object's side, and the
+ * logged-on user's (drives included). `game` is a session of the domain
+ * (the domain controller): the tokens are read from the directory.
+ */
+export function refreshClient(game: Game, client: ClientSession, target: 'both' | Side = 'both', now = windows(game).clock): AppliedPolicy {
+  const ad = domainOf(game)!.ad;
+  const gp = ((client.gp as AppliedPolicy | undefined) ??= {});
+  const computer = findIdentity(ad, `${client.computer}$`, ['computer']);
+  if (target !== 'user' && computer) gp.computer = sideResult(game, ad, computer.dn, 'computer', accountName(ad, computer), now).res;
+  const user = findIdentity(ad, client.user, ['user']);
+  if (target !== 'computer' && user) {
+    const { r, res } = sideResult(game, ad, user.dn, 'user', accountName(ad, user), now);
+    gp.user = res;
+    gp.drives = drivesOf(r);
+  }
+  return gp;
+}
+
+/** Every workstation's policy as it was applied at its user's logon (a story calls it when it starts). */
+export function logonClients(game: Game): void {
+  const d = domainOf(game);
+  for (const c of d?.ad.clients ?? []) refreshClient(game, c, 'both', c.logon);
 }
 
 /** The settings of a kind applied on the machine (a story reads them: user rights, logon scripts). */

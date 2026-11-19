@@ -384,14 +384,23 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     if (!here) return game.error(game.t('git-not-repo'));
     if (!here.repo.commits.length) return game.error(game.t('git-none-commit-branch'));
     const short = args.includes('--oneline');
+    // -p (--patch): each commit's changes after its message, as git show prints them.
+    const patch = args.includes('-p') || args.includes('-u') || args.includes('--patch');
+    const changes = (c: Commit) => {
+      const parent = c.parent ? here.repo.commits.find((p) => p.id === c.parent)!.files : {};
+      return [...new Set([...Object.keys(parent), ...Object.keys(c.files)])]
+        .sort()
+        .map((n) => diff(n, parent[n] ?? null, c.files[n] ?? null))
+        .filter(Boolean)
+        .join('\n');
+    };
     return [...here.repo.commits]
       .reverse()
       .map((c, i) =>
-        short
-          ? `${c.id.slice(0, 7)} ${i === 0 ? '(HEAD -> main) ' : ''}${c.message}`
-          : `commit ${c.id}${i === 0 ? ' (HEAD -> main)' : ''}\nAuthor: ${c.author}\nDate:   ${c.date}\n\n    ${c.message}`,
+        (short ? `${c.id.slice(0, 7)} ${i === 0 ? '(HEAD -> main) ' : ''}${c.message}` : `commit ${c.id}${i === 0 ? ' (HEAD -> main)' : ''}\nAuthor: ${c.author}\nDate:   ${c.date}\n\n    ${c.message}`) +
+        (patch ? `\n${short ? '' : '\n'}${changes(c)}` : ''),
       )
-      .join(short ? '\n' : '\n\n');
+      .join(short && !patch ? '\n' : '\n\n');
   },
 
   diff: (game, args) => {

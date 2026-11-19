@@ -79,6 +79,17 @@ card-catalogue-conventions =
       - Le dernier jour : désactivé, déplacé dans OU=Leavers, retiré de
         ses groupes. La description dit quand la personne est partie.
 
+    STRATÉGIES DE GROUPE
+      - Une GPO est liée à l'OU de ce à quoi elle sert : OU=Branches
+        pour le personnel, OU=Servers pour les serveurs. La racine du
+        domaine ne porte que la Default Domain Policy.
+      - Qui la reçoit : un filtrage de sécurité avec les mêmes groupes
+        que le partage dont elle parle (des GG_, ou le DL_ du partage).
+
+    COMPTES DE SERVICE
+      - svc_*, dans OU=Service Accounts : un par tâche, jamais le compte
+        d'une personne. Certains ne servent que quelques fois par an.
+
 ## Fichiers
 
 comings-and-goings-email-nandini =
@@ -205,9 +216,17 @@ comings-and-goings-event-deleted =
     possède sur rayons affichent maintenant un propriétaire inconnu
     S-1-5-21-…, la question des auditeur·rices « qui avait accès en
     décembre ? » n'a plus de réponse, et un nouveau compte du même nom
-    serait quelqu'un d'autre. (La corbeille AD n'est pas activée dans ce
-    domaine.) Recommencez le chapitre depuis le menu, et cette fois,
-    désactivez le compte.
+    serait quelqu'un d'autre, avec un autre SID. Heureusement, Tomas a
+    activé la corbeille AD (Get-ADOptionalFeature 'Recycle Bin Feature') :
+    le compte attend dans CN=Deleted Objects, entier. Trouvez-le avec
+    Get-ADObject -IncludeDeletedObjects, ramenez-le avec Restore-ADObject
+    (Get-Help Restore-ADObject -Examples), puis fermez-le comme le disent
+    les conventions.
+comings-and-goings-event-restored =
+    Mateo est revenu là où il était, avec le même SID, ses attributs et
+    même ses groupes : la corbeille garde les valeurs de liens. C'est pour
+    ça que son groupe est revenu. Maintenant : désactivé, hors de ses
+    groupes, dans Leavers.
 comings-and-goings-event-leaver-disabled =
     Le compte de Mateo est désactivé : plus personne ne peut s'y
     connecter, et il existe toujours, avec son SID. Maintenant : de quoi
@@ -260,7 +279,9 @@ comings-and-goings-event-end =
       connexion (-ChangePasswordAtLogon $true), remis en main propre.
     - Un départ est désactivé, pas supprimé : le SID possède des
       fichiers, les journaux le nomment, et un compte supprimé ne
-      revient pas sans la corbeille AD.
+      revient pas sans la corbeille AD (ici, elle est active :
+      Restore-ADObject vous a sauvé, mais elle ne garde un objet supprimé
+      que 180 jours).
     - Hors des groupes, avec une description qui dit quand et pourquoi.
 
     DOCUMENTATION

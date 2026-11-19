@@ -121,7 +121,17 @@ export function mountAll(game: Shell): string {
 export function brancher(game: Shell, source: string, point: string, options: string): string {
   const absolute = game.resolve(point);
   const p = devices(game)[source] ? { ...devices(game)[source], name: source } : periphStockage(game, source);
-  if (!p) return `mount: ${absolute}: special device ${source} does not exist.${DMESG}`;
+  if (!p) {
+    const st = storageOf(game);
+    const dev = st ? resolveSource(st, source) : null;
+    // A LUKS device is not mounted itself: it is opened (cryptsetup open), and its mapping mounted.
+    if (st && dev && systemFor(st, dev)?.type === 'crypto_LUKS') return `mount: ${absolute}: unknown filesystem type 'crypto_LUKS'.${DMESG}`;
+    // An open mapping without a file system yet (mkfs first).
+    const mapping = /^\/dev\/mapper\/(.+)$/.exec(source);
+    if (st && mapping && st.crypt?.[mapping[1]])
+      return `mount: ${absolute}: wrong fs type, bad option, bad superblock on ${source}, missing codepage or helper program, or other error.${DMESG}`;
+    return `mount: ${absolute}: special device ${source} does not exist.${DMESG}`;
+  }
   const place = game.find(absolute);
   if (place?.type !== 'directory') return `mount: ${absolute}: mount point does not exist.${DMESG}`;
   const already = mounts(game).find((m) => m.name === p.name);

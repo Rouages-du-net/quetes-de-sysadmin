@@ -17,8 +17,8 @@
 import type { Shell } from '../shell';
 import { longDate, resolveWindows, toWindows, windows } from '../windows';
 import { principal } from '../windows-acl';
-import { adClock, byDn, canonicalName, defaultGpoPermissions, domainOf, newGuid, rdnValue, sameDn, settingSide, type AdObject, type Domain, type Gpo, type GpoSetting } from '../windows-ad';
-import { appliedPolicy, applyPolicy, gpoById, gpoByName, linksInOrder } from '../windows-gpo';
+import { adClock, byDn, canonicalName, defaultGpoPermissions, domainOf, findAccount, newGuid, rdnValue, sameDn, settingSide, type AdObject, type ClientSession, type Domain, type Gpo, type GpoSetting } from '../windows-ad';
+import { appliedPolicy, applyPolicy, clientNamed, gpoById, gpoByName, linksInOrder, refreshClient, type AppliedPolicy, type GpResult } from '../windows-gpo';
 import { FIREWALL_HOOKS } from './windows-firewall';
 import { NET_HOOKS } from './windows-services';
 import { adAvailable } from './windows-ad';
@@ -359,6 +359,13 @@ function removeGpo(r: Run): unknown[] {
   return [];
 }
 
+const c0 = (r: Run) => domainOf(r.game);
+/** Invoke-GPUpdate on a workstation: a gpupdate run there for the logged-on user (at once here: no random delay). */
+function applyClient(r: Run, client: ClientSession) {
+  const side = str(r.p.Target).toLowerCase();
+  refreshClient(r.game, client, side === 'user' ? 'user' : side === 'computer' ? 'computer' : 'both');
+}
+
 /** Invoke-GPUpdate: this machine, or a machine of the domain (-Computer). */
 function invokeUpdate(r: Run): unknown[] {
   const name = str(r.p.Computer);
@@ -366,6 +373,12 @@ function invokeUpdate(r: Run): unknown[] {
   if (name && name.toLowerCase() !== windows(r.game).computer.toLowerCase() && name !== 'localhost') {
     const p = r.game.principal;
     target = [p, ...Object.keys(p.chapter.hosts ?? {}).map((h) => p.internal(h))].find((s): s is Shell => !!s && !!s.state.windows && windows(s).computer.toLowerCase() === name.split('.')[0].toLowerCase()) ?? null;
+    const d0 = c0(r);
+    const client = !target && d0 ? clientNamed(d0.ad, name) : undefined;
+    if (client) {
+      applyClient(r, client);
+      return [];
+    }
     if (!target) {
       r.fail({ message: `Computer "${name}" is not responding. The target computer is either turned off or Remote Scheduled Tasks Management Firewall rules are disabled.`, category: 'OperationTimeout', target: ':', exception: 'COMException', id: fqid('Invoke-GPUpdate', 'COMException') });
       return [];
@@ -428,10 +441,11 @@ export const GPO_CMDLETS: Cmdlet[] = [
   base('Get-GPPermission', getPermission, [...NAME, { name: 'TargetName', type: 'System.String' }, { name: 'TargetType', type: 'System.String' }, { name: 'All', switch: true }], { positional: ['Name'] }),
   base('Set-GPPermission', setPermission, [...NAME, { name: 'TargetName', type: 'System.String' }, { name: 'TargetType', type: 'System.String' }, { name: 'PermissionLevel', type: 'System.String' }, { name: 'Replace', switch: true }], { positional: ['Name'], writes: true }),
   base('Get-GPOReport', getReport, [...NAME, { name: 'ReportType', type: 'System.String' }, { name: 'Path', type: 'System.String' }, { name: 'All', switch: true }], { positional: ['Name', 'ReportType', 'Path'] }),
+  base('Get-GPResultantSetOfPolicy', rsopCmdlet, [{ name: 'Computer', type: 'System.String' }, { name: 'User', type: 'System.String' }, { name: 'ReportType', type: 'System.String' }, { name: 'Path', type: 'System.String' }], { writes: true }),
   base('Invoke-GPUpdate', invokeUpdate, [{ name: 'Computer', type: 'System.String' }, { name: 'Force', switch: true }, { name: 'Target', type: 'System.String' }, { name: 'RandomDelayInMinutes', type: 'System.Int32' }], { writes: true }),
 ];
 
-export const GPO_VIEWS: Record<string, View> = Object.fromEntries(['Gpo', 'GpoLink', 'Som', 'GPPermission'].map((t) => [t, { columns: [], list: true }]));
+export const GPO_VIEWS: Record<string, View> = Object.fromEntries(['Gpo', 'GpoLink', 'Som', 'GPPermission', 'GPRsop'].map((t) => [t, { columns: [], list: true }]));
 
 // ——— gpupdate and gpresult ———
 
@@ -449,17 +463,30 @@ function gpupdate(game: Shell, args: string[]) {
 /** "11/20/2029 at 9:00:00 AM": gpresult's dates. */
 const at = (ms: number) => longDate(ms).replace(' ', ' at ');
 
-function gpresult(game: Shell, args: string[]) {
-  const low = args.map((a) => a.toLowerCase());
-  const html = low.indexOf('/h');
-  if (!args.length || (!low.includes('/r') && !low.includes('/v') && !low.includes('/z') && html < 0)) return { out: '', err: 'ERROR: Invalid Syntax.\nType "GPRESULT /?" for usage.\n', code: 1 };
+/** The machine gpresult /s or Get-GPResultantSetOfPolicy -Computer names: this one, a machine of the story, a workstation of the domain; null if it doesn't answer. */
+function rsopSource(game: Shell, name: string | undefined): { gp: AppliedPolicy; computer: string; os: string; profile: (user: string) => string } | null {
   const d = domainOf(game);
   const w = windows(game);
-  const gp = appliedPolicy(game);
-  if (!d || (!gp.computer && !gp.user)) return { out: '', err: `\nINFO: The user "${w.computer.toLowerCase()}\\${game.who}" does not have RSoP data.\n`, code: 1 };
-  const scope = low.map((a) => /^\/scope:(user|computer)$/.exec(a)?.[1]).find(Boolean);
-  const userName = gp.user ? `${d.ad.netbios}\\${d.ad.objects.find((o) => sameDn(o.dn, gp.user!.dn))?.sam ?? game.who}` : `${w.computer}\\${game.who}`;
-  const block = (title: string, r: { dn: string; at: number; from: string; applied: string[]; filtered: { name: string; reason: string }[]; groups: string[] }, who: string) => [
+  const local = (sh: Shell) => ({ gp: appliedPolicy(sh), computer: windows(sh).computer, os: sh.state.ad ? 'Primary Domain Controller' : 'Member Server', profile: (u: string) => `C:\\Users\\${u}` });
+  if (!name || ['localhost', '.', w.computer.toLowerCase()].includes(name.toLowerCase().split('.')[0])) return local(game);
+  const p = game.principal;
+  const machine = [p, ...Object.keys(p.chapter.hosts ?? {}).map((h) => p.internal(h))].find((s): s is Shell => !!s && !!s.state.windows && windows(s).computer.toLowerCase() === name.toLowerCase().split('.')[0]);
+  if (machine) return local(machine);
+  const client = d && clientNamed(d.ad, name);
+  if (client) return { gp: (client.gp ?? {}) as AppliedPolicy, computer: client.computer, os: 'Member Workstation', profile: (u: string) => `C:\\Users\\${u}` };
+  return null;
+}
+
+/** gpresult's text for a user's (and the computer's) resulting set of policy. */
+function rsopText(game: Shell, src: NonNullable<ReturnType<typeof rsopSource>>, who: string, scope: string | undefined): string | null {
+  const d = domainOf(game)!;
+  const gp = src.gp;
+  // The user asked for: their RSoP data on that machine (the user part), or none.
+  const wanted = findAccount(d.ad, who) ?? findAccount(d.ad, `${d.ad.netbios}\\${who}`);
+  const userPart = gp.user && wanted && sameDn(gp.user.dn, wanted.dn) ? gp.user : undefined;
+  if (!userPart && (scope !== 'computer' || !gp.computer)) return null;
+  const userName = wanted ? `${d.ad.netbios}\\${wanted.sam}` : who;
+  const block = (title: string, r: GpResult, kind: string) => [
     title,
     '-'.repeat(title.length),
     `    ${r.dn}`,
@@ -476,43 +503,101 @@ function gpresult(game: Shell, args: string[]) {
     '    The following GPOs were not applied because they were filtered out',
     '    -------------------------------------------------------------------',
     ...r.filtered.flatMap((f) => [`        ${f.name}`, `            Filtering:  ${f.reason}`, '']),
-    `    The ${who} is a part of the following security groups`,
-    '    ' + '-'.repeat(`The ${who} is a part of the following security groups`.length),
+    `    The ${kind} is a part of the following security groups`,
+    '    ' + '-'.repeat(`The ${kind} is a part of the following security groups`.length),
     ...r.groups.map((g) => `        ${g.replace(new RegExp(`^${d.ad.netbios}\\\\`, 'i'), '')}`),
     '',
   ];
-  const lines = [
+  const title = `RSOP data for ${userName} on ${src.computer} : Logging Mode`;
+  return [
     '',
     'Microsoft (R) Windows (R) Operating System Group Policy Result tool v2.0',
     '© Microsoft Corporation. All rights reserved.',
     '',
-    `Created on ${at(w.clock)}`,
+    `Created on ${at(windows(game).clock)}`,
     '',
     '',
-    `RSOP data for ${userName} on ${w.computer} : Logging Mode`,
-    '-'.repeat(`RSOP data for ${userName} on ${w.computer} : Logging Mode`.length),
+    title,
+    '-'.repeat(title.length),
     '',
-    `OS Configuration:            ${game.state.ad ? 'Primary Domain Controller' : 'Member Server'}`,
-    'OS version:                  10.0.20348',
+    `OS Configuration:            ${src.os}`,
+    `OS version:                  ${src.os === 'Member Workstation' ? '10.0.22631' : '10.0.20348'}`,
     'Site Name:                   Default-First-Site-Name',
     'Roaming Profile:             N/A',
-    `Local Profile:               C:\\Users\\${game.who}`,
+    `Local Profile:               ${src.profile(wanted?.sam ?? who)}`,
     'Connected over a slow link?: No',
     '',
     '',
     ...(scope !== 'user' && gp.computer ? block('COMPUTER SETTINGS', gp.computer, 'computer') : []),
-    ...(scope !== 'computer' && gp.user ? block('USER SETTINGS', gp.user, 'user') : []),
-  ];
-  const text = lines.join('\n');
+    ...(scope !== 'computer' && userPart ? block('USER SETTINGS', userPart, 'user') : []),
+  ].join('\n');
+}
+
+function gpresult(game: Shell, args: string[]) {
+  const low = args.map((a) => a.toLowerCase());
+  const valueOf = (flag: string) => {
+    const i = low.indexOf(flag);
+    return i < 0 ? undefined : (args[i + 1] ?? '');
+  };
+  for (const flag of ['/s', '/u', '/p', '/user', '/h']) if (low.includes(flag) && !valueOf(flag)) return { out: '', err: `ERROR: Invalid Syntax. Value expected for '${flag}'.\nType "GPRESULT /?" for usage.\n`, code: 1 };
+  const html = low.indexOf('/h');
+  if (!args.length || (!low.includes('/r') && !low.includes('/v') && !low.includes('/z') && html < 0)) return { out: '', err: 'ERROR: Invalid Syntax.\nType "GPRESULT /?" for usage.\n', code: 1 };
+  const d = domainOf(game);
+  const w = windows(game);
+  const scope = low.map((a) => /^\/scope:(user|computer)$/.exec(a)?.[1]).find(Boolean);
+  const src = rsopSource(game, valueOf('/s'));
+  if (!src) return { out: '', err: '\nERROR: The RPC server is unavailable.\n', code: 1 };
+  // Whose data: /user, or the one running gpresult.
+  // (Here, without /s: the user whose policy this machine last applied.)
+  const last = !valueOf('/s') && d && src.gp.user ? d.ad.objects.find((o) => sameDn(o.dn, src.gp.user!.dn))?.sam : undefined;
+  const who = valueOf('/user') ?? (d ? `${d.ad.netbios}\\${last ?? game.who}` : game.who);
+  const text = d && (src.gp.computer || src.gp.user) ? rsopText(game, src, who, scope) : null;
+  if (text === null) {
+    const shown = /\\/.test(who) ? who : `${(d?.ad.netbios ?? w.computer).toLowerCase()}\\${who}`;
+    return { out: '', err: `\nINFO: The user "${shown}" does not have RSoP data.\n`, code: 1 };
+  }
   if (html >= 0) {
     const file = args[html + 1];
-    if (!file) return { out: '', err: 'ERROR: Invalid Syntax. Value expected for \'/h\'.\nType "GPRESULT /?" for usage.\n', code: 1 };
     const where = resolveWindows(game, file);
     if (where.exists && !low.includes('/f')) return { out: '', err: `ERROR: The file "${file}" already exists.`, code: 1 };
     game.place('ssh', where.path, { type: 'file', content: `<html><body><pre>${xmlEscape(text)}</pre></body></html>`, lines: true });
     return { out: '', code: 0 };
   }
   return { out: text, code: 0 };
+}
+
+/** Get-GPResultantSetOfPolicy: the same data as gpresult, written to a report (-Path, Html or Xml), and its summary object. */
+function rsopCmdlet(r: Run): unknown[] {
+  const c = need(r, 'Get-GPResultantSetOfPolicy');
+  if (!c) return [];
+  const kind = str(r.p.ReportType).toLowerCase();
+  if (kind !== 'xml' && kind !== 'html') {
+    r.fail({ message: `Cannot bind parameter 'ReportType'. Cannot convert value "${str(r.p.ReportType)}" to type "Microsoft.GroupPolicy.ReportType". Error: "Unable to match the identifier name ${str(r.p.ReportType)} to a valid enumerator name. Specify one of the following enumerator names and try again:\nXml, Html"`, category: 'InvalidArgument', target: ':', exception: 'ParameterBindingException', id: fqid('Get-GPResultantSetOfPolicy', 'CannotConvertArgumentNoMessage') });
+    return [];
+  }
+  const path = r.p.Path !== undefined ? str(r.p.Path) : r.read('Path: ', false);
+  const computer = r.p.Computer !== undefined ? str(r.p.Computer) : undefined;
+  const src = rsopSource(r.game, computer);
+  if (!src) {
+    r.fail({ message: 'The RPC server is unavailable. (Exception from HRESULT: 0x800706BA)', category: 'NotSpecified', target: ':', exception: 'COMException', id: fqid('Get-GPResultantSetOfPolicy', 'System.Runtime.InteropServices.COMException') });
+    return [];
+  }
+  const who = r.p.User !== undefined ? str(r.p.User) : `${c.ad.netbios}\\${r.game.who}`;
+  const text = rsopText(r.game, src, who, undefined);
+  if (text === null) {
+    r.fail({ message: `The user "${who}" does not have RSOP data.`, category: 'InvalidOperation', target: ':', exception: 'InvalidOperationException', id: fqid('Get-GPResultantSetOfPolicy', 'System.InvalidOperationException') });
+    return [];
+  }
+  const where = resolveWindows(r.game, path);
+  const parent = r.game.find(where.path.replace(/\/[^/]+$/, ''));
+  if (parent?.type !== 'directory') {
+    r.fail({ message: `Could not find a part of the path '${toWindows(where.path)}'.`, category: 'NotSpecified', target: ':', exception: 'DirectoryNotFoundException', id: fqid('Get-GPResultantSetOfPolicy', 'System.IO.DirectoryNotFoundException') });
+    return [];
+  }
+  const body = kind === 'html' ? `<html><body><pre>${xmlEscape(text)}</pre></body></html>` : `<?xml version="1.0" encoding="utf-16"?>\r\n<Rsop xmlns="http://www.microsoft.com/GroupPolicy/Rsop"><![CDATA[${text}]]></Rsop>`;
+  r.game.place('ssh', where.path, { type: 'file', content: body, lines: true });
+  const user = findAccount(c.ad, who) ?? findAccount(c.ad, `${c.ad.netbios}\\${who}`);
+  return [{ type: 'GPRsop', fullType: 'Microsoft.GroupPolicy.GPRsop', props: { RsopMode: 'Logging', Namespace: '\\\\' + src.computer + '\\Root\\Rsop\\NS' + String(c.now % 100000), LoggingComputer: src.computer, LoggingUser: user ? `${c.ad.netbios}\\${user.sam}` : who, LoggingMode: 'UserAndComputer' } } satisfies PSObject];
 }
 
 export const GPO_NATIVES: Native[] = [

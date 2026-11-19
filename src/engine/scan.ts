@@ -17,6 +17,7 @@
 import type { Game } from './shell';
 import { portState } from './ports';
 import type { Firewall } from './firewall';
+import { isIp6, normalise6 } from './ipv6';
 
 export const VERSION_NMAP = '7.95';
 // The scan's point of view: any address on the internet (RFC 5737).
@@ -40,6 +41,8 @@ export interface ScanHost {
   services: ServiceScan[];
   // Displayed latency (seconds).
   latency?: number;
+  // From a vantage point (ipv6.ts): each port's state comes from the story's server, in the scan's family.
+  probe?: (game: Game, port: number) => 'open' | 'closed' | 'filtered';
 }
 
 export interface ScanState {
@@ -70,6 +73,8 @@ export interface Options {
   // null: the 1000 common ports; otherwise the list, or "all".
   ports: number[] | 'all' | 'fast' | null;
   file?: string;
+  // -6: IPv6 scanning.
+  family?: 4 | 6;
 }
 
 // /etc/services, for the SERVICE column without -sV.
@@ -96,6 +101,7 @@ export function expand(game: Game, target: string): { addresses: string[]; name?
   if (range && validAddress(`${range[1]}${range[2]}`) && Number(range[3]) <= 255 && Number(range[2]) <= Number(range[3]))
     return { addresses: Array.from({ length: Number(range[3]) - Number(range[2]) + 1 }, (_, i) => `${range[1]}${Number(range[2]) + i}`) };
   if (validAddress(target)) return { addresses: [target] };
+  if (isIp6(target)) return { addresses: [normalise6(target)!], ...(e?.hosts.find((h) => h.address === normalise6(target))?.names[0] ? { name: e!.hosts.find((h) => h.address === normalise6(target))!.names[0] } : {}) };
   if (target === 'localhost') {
     const here = e?.hosts.find((h) => h.local);
     return here ? { addresses: ['127.0.0.1'], name: 'localhost' } : null;
@@ -108,6 +114,7 @@ type LineState = 'open' | 'closed' | 'filtered';
 
 // The state of one of this host's ports, seen from the internet (or from the inside for 127.0.0.1).
 function state(game: Game, h: ScanHost, port: number, inside: boolean): LineState {
+  if (h.probe) return h.probe(game, port);
   const declare = h.services.some((s) => s.port === port);
   if (!h.local) return declare ? 'open' : 'closed';
   const e = portState(game, port, inside, INTERNET);

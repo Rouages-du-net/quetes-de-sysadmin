@@ -67,3 +67,16 @@ password-ledger-2029 = registre-2029
 password-millstone-2029 = meule-2029
 
 password-drafting-2029 = calque-2029
+## L'Épicerie solidaire : sudo, la phrase de passe de Mei pour le disque, le mot de passe de secours de restic
+password-shelf-2029 = etagere-2029
+password-tram-lemon-harbour-58 = tram-citron-port-58
+password-basket-orchard-copper-73 = panier-verger-cuivre-73
+## Le Bac : sudo
+password-tide-2029 = maree-2029
+## Les Vélos partagés : sudo
+password-pedal-2029 = pedale-2029
+## La Piscine : sudo
+password-splash-2029 = plouf-2029
+## La Piscine : le mot de passe de la base de réservation, l'ancien (dans le dépôt) et le nouveau (celui de Kemal)
+password-lane4-butterfly-17 = couloir4-papillon-17
+password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz

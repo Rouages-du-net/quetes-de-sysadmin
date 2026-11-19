@@ -15,6 +15,7 @@
 // always the same.
 
 import type { Command } from './index';
+import { hex as hexOf } from './restic';
 import type { Shell } from '../shell';
 import { bytesOf, byteString, isBinary, DD_ASCII, DD_EBCDIC } from '../ebcdic';
 import { systemd } from '../systemd';
@@ -304,7 +305,17 @@ function dd(game: Shell, args: string[], input: string | null): string {
   if (op.status && !['none', 'noxfer', 'progress'].includes(op.status)) return game.error(`dd: invalid status level: '${op.status}'\nTry 'dd --help' for more information.`, 1);
   const ibs = numbers.bs ?? numbers.ibs ?? 512;
   const obs = numbers.bs ?? numbers.obs ?? 512;
-  const read = readBytes(game, 'dd', op.if, input);
+  // /dev/urandom never ends: count says how much to take. The game's random
+  // bytes are derived from the target and a counter (the engine stays deterministic).
+  const random = op.if === '/dev/urandom' || op.if === '/dev/random';
+  if (random && numbers.count === undefined) return game.error(game.t('dd-random-endless', { file: op.if }), 1);
+  let read: number[] | null;
+  if (random) {
+    const draws = (game.state.randomDraws ?? 0) as number;
+    game.state.randomDraws = draws + 1;
+    const wanted = (numbers.skip ?? 0) * ibs + numbers.count! * ibs;
+    read = (hexOf(`urandom-${op.of ?? ''}-${draws}`, Math.min(wanted, 1 << 20) * 2).match(/../g) ?? []).map((x) => parseInt(x, 16));
+  } else read = readBytes(game, 'dd', op.if, input);
   if (read === null) return '';
   let data = read.slice((numbers.skip ?? 0) * ibs);
   if (numbers.count !== undefined) data = data.slice(0, numbers.count * ibs);

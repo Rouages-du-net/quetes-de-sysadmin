@@ -119,6 +119,8 @@ export interface InternalHost {
   accounts?: () => Accounts;
   state?: (t: Translate) => Record<string, unknown>;
   initialise?: (game: Game) => void;
+  // Called after each command typed on it (e.g. time passing for the whole story).
+  afterCommand?: (game: Game) => string | void;
   // Known commands (by default, the chapter's).
   commands?: string[];
   // The account's home (by default /home/you; C:\Users\you is /C/Users/you on Windows).
@@ -248,8 +250,8 @@ export const path = (t: Translate, english: string) =>
 
 // Real system directories whose name is also a translated name of the world
 // (/usr/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and the
-// Lab's /srv/scans, a mount point fstab names: they keep their name.
-const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans'];
+// Lab's /srv/scans, a mount point fstab names, and Prometheus's rules/: they keep their name.
+const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans', '/etc/prometheus/rules'];
 export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || p.endsWith('/.local/share');
 
 // The accounts that are translated: the player's

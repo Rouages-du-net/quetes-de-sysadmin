@@ -71,5 +71,17 @@ export const SOLARIS_CHECKS: Record<string, (args: string[]) => string | null> =
   },
 };
 
+// /usr/xpg4/bin's POSIX versions: more options, but still not GNU's.
+// The usage follows the synopsis of Solaris 10's grep(1).
+const XPG4_GREP_USAGE =
+  'Usage:\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] -e pattern_list...\n\t[-f pattern_file]... [file...]\n\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] [-e pattern_list...]\n\t-f pattern_file... [file...]\n\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] pattern [file...]';
+export const XPG4_CHECKS: Record<string, (args: string[]) => string | null> = {
+  // No context (-A, -B, -C), no -o, no -m: GNU additions.
+  grep: (args) => {
+    const bad = illegal(args, 'EFclqbhinsvwxef', 'ef');
+    return bad ? `grep: illegal option -- ${bad}\n${XPG4_GREP_USAGE}` : null;
+  },
+};
+
 // The paths of the POSIX, BSD and add-on versions, which skip these checks.
 export const OTHER_BINS = /^\/usr\/(xpg4\/bin|xpg6\/bin|ucb|sfw\/bin|postgres\/8\.4\/bin|local\/bin)\/([\w.-]+)$/;

@@ -24,6 +24,8 @@ import { covers, read } from '../tls';
 import { systemd, toUtc } from '../systemd';
 import { addressFor, interfaceFor, reach, lan } from '../lan';
 import { pingTunnel } from './wireguard';
+import { curl6, ping6, speaks6 } from './ipv6';
+import { metricsCurl } from './prometheus';
 
 // What curl adds when certificate verification fails (curl 8).
 const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
@@ -148,6 +150,8 @@ function pingLan(game: Shell, host: string, n: number): string {
 export const NETWORK: Record<string, Command> = {
   ping: {
     launch: ({ args, game }) => {
+      // A machine that speaks IPv6 (or looks at one from outside): both families (ipv6.ts).
+      if (speaks6(game)) return ping6(game, args, null);
       let n = 4;
       const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
@@ -184,6 +188,11 @@ export const NETWORK: Record<string, Command> = {
       }
       return lines.join('\n');
     },
+  },
+
+  // iputils' ping6 is ping -6 (a link to ping on Debian).
+  ping6: {
+    launch: ({ args, game }) => (speaks6(game) ? ping6(game, args, 6) : game.error('ping: connect: Network is unreachable', 2)),
   },
 
   dig: {
@@ -250,6 +259,9 @@ export const NETWORK: Record<string, Command> = {
     // curl has many options (-s, -L, -v…): the ones not simulated are ignored.
     ownOptions: true,
     launch: ({ args, game }) => {
+      // A story that models its network for metrics (Prometheus, exporters): its own curl.
+      if (game.state.metricsHere) return metricsCurl(game, args);
+      if (speaks6(game)) return curl6(game, args);
       // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];
       let requestHost: string | null = null;

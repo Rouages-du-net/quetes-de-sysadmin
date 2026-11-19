@@ -142,6 +142,8 @@ export class ParseError {
     public message: string,
     public pos: number,
     public id: string,
+    // How many characters the error underlines (~), when more than one.
+    public length = 1,
   ) {}
 }
 
@@ -175,8 +177,16 @@ export class Parser {
   private at(text: string) {
     return this.s.startsWith(text, this.i);
   }
-  private fail(message: string, id: string, pos = this.i): never {
-    throw new ParseError(message, pos, id);
+  private fail(message: string, id: string, pos = this.i, length = 1): never {
+    throw new ParseError(message, pos, id, length);
+  }
+  /**
+   * && and || here: pipeline chain operators came with PowerShell 7;
+   * Windows PowerShell 5.1's parser refuses them (InvalidEndOfLine).
+   * https://learn.microsoft.com/powershell/module/microsoft.powershell.core/about/about_pipeline_chain_operators
+   */
+  private chainOperator(): void {
+    if (this.at('&&') || this.at('||')) this.fail(`The token '${this.s.slice(this.i, this.i + 2)}' is not a valid statement separator in this version.`, 'InvalidEndOfLine', this.i, 2);
   }
   /** Spaces and tabs (a backtick at the end of a line continues it). */
   private ws() {
@@ -222,6 +232,7 @@ export class Parser {
       if (this.ch() === ')' || this.ch() === '}') return out;
       out.push(this.statement());
       this.ws();
+      this.chainOperator();
       if (this.i < this.s.length && !';\n\r'.includes(this.ch()) && this.ch() !== close && this.ch() !== ')' && this.ch() !== '}')
         this.fail(`Unexpected token '${this.s.slice(this.i).split(/[\s;]/)[0]}' in expression or statement.`, 'UnexpectedToken');
     }
@@ -645,6 +656,7 @@ export class Parser {
     let name: string | undefined;
     let call: Expr | undefined;
     const dot = this.ch() === '.';
+    this.chainOperator();
     if (this.ch() === '&' || (this.ch() === '.' && /\s/.test(this.s[this.i + 1] ?? ''))) {
       this.i++;
       this.ws();
@@ -661,6 +673,7 @@ export class Parser {
       this.ws();
       if (this.i >= this.s.length || '|;\n\r)}'.includes(this.ch())) break;
       if (/^[12*]?>/.test(this.s.slice(this.i))) break;
+      if (this.at('&&')) break;
       const at = this.i;
       const p = /^-([A-Za-z_?][\w?]*)(:?)/.exec(this.s.slice(this.i));
       if (p && !/^-\d/.test(this.s.slice(this.i))) {

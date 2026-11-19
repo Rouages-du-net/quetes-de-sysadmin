@@ -22,6 +22,9 @@ import { lsblkStockage } from './storage';
 import { mountLine, mountNfs, unmountNfs, type NfsMount } from '../nfs';
 import { brancher, deviceFor, devices, mountAll, mounts, DMESG, type Mount } from '../devices';
 import { cifsLine, mountCifs, unmountCifs, type CifsMount } from '../cifs';
+import { cryptOf, deviceFor as luksDevice, luksOf, mappedBytes, mappingOf } from '../luks';
+import { sizeFor } from '../lvm';
+import { hex } from './restic';
 
 // Re-exported for the chapters (see devices.ts).
 export { brancher, detachDevices, deviceFor, mountToBoot, type Device, type Mount } from '../devices';
@@ -252,7 +255,110 @@ function unmount(game: Shell, args: string[]): string {
   return '';
 }
 
+// mkfs.ext4 (e2fsprogs 1.47, mke2fs(8): https://man7.org/linux/man-pages/man8/mke2fs.8.html):
+// a new, empty ext4 file system on a partition, a disk or an open LUKS
+// mapping. What the device held is gone (a LUKS header too).
+// Differences: ext4 only; no -b, -i, -m, -O; the superblock backups and
+// counts follow the size, but the timings are instant.
+function mkfs(game: Shell, args: string[]): string {
+  let label: string | undefined;
+  let force = false;
+  let quiet = false;
+  let type = 'ext4';
+  const positional: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '-L') label = args[++i];
+    else if (a === '-t') type = args[++i] ?? '';
+    else if (a === '-F') force = true;
+    else if (a === '-q') quiet = true;
+    else if (a.startsWith('-')) return game.error(`mkfs.ext4: invalid option -- '${a.replace(/^-+/, '')[0] ?? ''}'\nUsage: mkfs.ext4 [-c|-l filename] [-b block-size] [-C cluster-size]\n\t[-i bytes-per-inode] [-I inode-size] [-J journal-options]\n\t[-G flex-group-size] [-N number-of-inodes] [-d root-directory]\n\t[-m reserved-blocks-percentage] [-o creator-os]\n\t[-g blocks-per-group] [-L volume-label] [-M last-mounted-directory]\n\t[-O feature[,...]] [-r fs-revision] [-E extended-option[,...]]\n\t[-t fs-type] [-T usage-type ] [-U UUID] [-e errors_behavior][-z undo_file]\n\t[-jnqvDFSV] device [blocks-count]`, 1);
+    else positional.push(a);
+  }
+  const banner = 'mke2fs 1.47.2 (1-Jan-2025)';
+  if (type !== 'ext4') return game.error(`${banner}\n${game.t('mkfs-only-ext4')}`, 1);
+  const given = positional[0];
+  if (!given) return game.error('Usage: mkfs.ext4 [-L volume-label] [-F] device', 1);
+  const st = storageOf(game);
+  const mapping = /^\/dev\/mapper\/(.+)$/.exec(given);
+  const dev = st ? (mapping && cryptOf(st)[mapping[1]] ? given : luksDevice(st, given)) : null;
+  if (!st || !dev) return game.error(`${banner}\nThe file ${given} does not exist and no size was specified.`, 1);
+  if (game.who !== 'root') return game.error(`${banner}\nmkfs.ext4: Permission denied while trying to determine filesystem size`, 1);
+  const mounts = (game.state.mounts ?? []) as { name: string }[];
+  const n = dev.replace(/^\/dev\//, '');
+  const partsOf = st.disks[n]?.partitions.map((p) => `/dev/${n}${p.number}`) ?? [];
+  if ([dev, ...partsOf].some((x) => mounts.some((m) => m.name === x))) return game.error(`${banner}\n${given} is mounted; will not make a filesystem here!`, 1);
+  if (mappingOf(st, dev) || partsOf.some((x) => mappingOf(st, x)) || Object.values(st.arrays).some((g) => g.members.some((m) => m.part === n)))
+    return game.error(`${banner}\n${given} is apparently in use by the system; will not make a filesystem here!`, 1);
+  const bytes = mapping ? mappedBytes(st, cryptOf(st)[mapping[1]].device) : (sizeFor(st, n) ?? 0);
+  const make = () => {
+    const blocks = Math.floor(bytes / 4096);
+    const groups = Math.ceil(blocks / 32768);
+    const uuid = (() => {
+      const x = hex(`mkfs-${dev}-${game.state.mkfsCount ?? 0}`, 32);
+      return `${x.slice(0, 8)}-${x.slice(8, 12)}-4${x.slice(13, 16)}-8${x.slice(17, 20)}-${x.slice(20, 32)}`;
+    })();
+    game.state.mkfsCount = (game.state.mkfsCount ?? 0) + 1;
+    // What was there is gone: a LUKS header, a partition table.
+    delete luksOf(st)[dev];
+    if (st.disks[n]) {
+      for (const p of st.disks[n].partitions) delete st.fs?.[`/dev/${n}${p.number}`];
+      st.disks[n].partitions = [];
+      st.disks[n].table = null;
+    }
+    (st.fs ??= {})[dev] = {
+      type: 'ext4',
+      uuid,
+      ...(label ? { label } : {}),
+      bytes,
+      tree: { type: 'directory', children: { 'lost+found': { type: 'directory', children: {}, owner: 'root', mode: 'rwx------' } }, owner: 'root', group: 'root', mode: 'rwxr-xr-x' },
+    };
+    game.state.mkfsDone = [...((game.state.mkfsDone as string[] | undefined) ?? []), dev];
+    if (quiet) return '';
+    // The backup superblocks: groups 1 and the powers of 3, 5 and 7 (sparse_super).
+    const backups = [...new Set([1, ...[3, 5, 7].flatMap((b) => Array.from({ length: 20 }, (_, i) => b ** (i + 1)))])]
+      .filter((g) => g < groups)
+      .sort((a, b) => a - b)
+      .map((g) => g * 32768);
+    const lines: string[] = [];
+    for (let i = 0; i < backups.length; i += 9) lines.push(`\t${backups.slice(i, i + 9).join(', ')}${i + 9 < backups.length ? ', ' : ''}`);
+    return [
+      `Creating filesystem with ${blocks} 4k blocks and ${groups * 8192} inodes`,
+      `Filesystem UUID: ${uuid}`,
+      'Superblock backups stored on blocks: ',
+      ...lines,
+      '',
+      'Allocating group tables: done                            ',
+      'Writing inode tables: done                            ',
+      `Creating journal (${blocks > 1 << 25 ? 262144 : 65536} blocks): done`,
+      'Writing superblocks and filesystem accounting information: done   ',
+      '',
+    ].join('\n');
+  };
+  const old = st.fs?.[dev];
+  if (old && !force) {
+    const who = game.who;
+    game.ask(`${old.label ? `${given} contains a ${old.type} file system labelled '${old.label}'` : `${given} contains a ${old.type} file system`}\nProceed anyway? (y,N) `, (typed) => {
+      if (!/^y/i.test(typed)) {
+        game.status = 1;
+        return '';
+      }
+      const before = game.who;
+      game.who = who;
+      try {
+        return make();
+      } finally {
+        game.who = before;
+      }
+    });
+    return quiet ? '' : banner;
+  }
+  const out = make();
+  return quiet ? out : [banner, out].filter(Boolean).join('\n');
+}
+
 export const DISKS: Record<string, Command> = {
+  'mkfs.ext4': { section: 8, ownOptions: true, launch: ({ args, game }) => mkfs(game, args) },
   lsblk: { options: ['f'], launch: ({ args, game }) => lsblk(game, args) },
   mount: { section: 8, ownOptions: true, launch: ({ args, game }) => mount(game, args) },
   umount: { section: 8, ownOptions: true, launch: ({ args, game }) => unmount(game, args) },

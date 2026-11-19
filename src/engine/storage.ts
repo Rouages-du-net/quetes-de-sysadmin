@@ -22,6 +22,7 @@ import type { Game } from './shell';
 import type { Directory } from './world';
 import type { Lvm } from './lvm';
 import type { FilesSystem } from './fstab';
+import type { Header, Mapping } from './luks';
 
 export const SECTOR = 512;
 
@@ -114,6 +115,9 @@ export interface StorageState {
   lvm?: Lvm;
   // The file systems, by device (/dev/md0…), see fstab.ts.
   fs?: Record<string, FilesSystem>;
+  // LUKS: the encrypted devices and the open mappings (see luks.ts).
+  luks?: Record<string, Header>;
+  crypt?: Record<string, Mapping>;
 }
 
 // Rebuild speed (KiB/s), and simulated time per command.

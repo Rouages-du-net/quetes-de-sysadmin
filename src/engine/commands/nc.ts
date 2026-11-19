@@ -6,6 +6,7 @@
 import { machineDomain, machineByAddress, MACHINES, WORKSTATION } from '../machines';
 import { portState, type PortState } from '../ports';
 import type { Command } from './index';
+import { nc6, speaks6 } from './ipv6';
 
 const SERVICES: Record<number, string> = {
   22: 'ssh',
@@ -24,6 +25,7 @@ export const NC: Record<string, Command> = {
   nc: {
     ownOptions: true,
     launch: ({ args, game }) => {
+      if (speaks6(game)) return nc6(game, args);
       const verbose = args.some((a) => /^-[a-zA-Z]*v/.test(a));
       const positional = args.filter((a, i) => !a.startsWith('-') && args[i - 1] !== '-w');
       const [host, ports] = positional;

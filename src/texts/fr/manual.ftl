@@ -215,9 +215,12 @@ man-uname = donne des informations sur le système : -r la version du noyau qui 
     .option-a = tout : système, nom de la machine, noyau, architecture.
     .example-1 = la version du noyau qui tourne
     .example-2 = tout
-man-bash = le shell de ta session (Bourne-Again SHell) : il lit les commandes que tu tapes. bash script lance un script, comme sh.
-    .synopsis = bash script [argument...]
+man-bash = le shell de ta session (Bourne-Again SHell) : il lit les commandes que tu tapes. bash script lance un script, comme sh. Plusieurs commandes tiennent sur une ligne, en liste : « a ; b » lance a puis b ; « a && b » lance b seulement si a a réussi (code de sortie 0) ; « a || b » lance b seulement si a a échoué. && et || ont la même priorité et se lisent de gauche à droite. $? donne le code de sortie de la dernière commande. Entre guillemets, ; && et || sont du simple texte. Dans ce jeu, une commande qui quitte la session (exit, ssh, reboot) termine la ligne : ce qui la suit n'est pas lancé.
+    .synopsis = bash script [argument...] ; commande1 && commande2 ; commande1 || commande2
     .example-1 = lancer un script
+    .example-2 = recharger nginx seulement si sa configuration est valide
+    .example-3 = le signaler quand une ligne manque
+    .example-4 = aller quelque part, puis lister
 man-certbot = demande et renouvelle les certificats HTTPS gratuits de Let's Encrypt. Pour prouver qu'on tient le site, certbot dépose un fichier « défi » que l'autorité vient chercher en HTTP : avec --webroot, dans le dossier donné par -w, qui doit être celui que le serveur web sert pour ce nom ; avec --nginx (paquet python3-certbot-nginx), c'est nginx qui le sert. Chaque certificat vaut 90 jours ; un timer systemd lance certbot renew deux fois par jour, qui renouvelle ce qui expire dans moins de 30 jours. La façon de renouveler est notée dans /etc/letsencrypt/renewal/nom.conf (réécrit à chaque renouvellement réussi). Un deploy hook est une commande lancée après chaque renouvellement réussi, par exemple pour recharger nginx ; les scripts exécutables de /etc/letsencrypt/renewal-hooks/deploy/ aussi. Réservé à root.
     .synopsis = certbot certificates ; certbot renew [--dry-run] [--webroot -w dossier] [--deploy-hook commande] ; certbot certonly --webroot -w dossier -d nom [-d nom...] ; certbot reconfigure --cert-name nom [options]
     .example-1 = les certificats, leurs noms et leur date d'expiration
@@ -411,11 +414,23 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .option-r = copie un lieu entier, avec tout ce qu’il contient (récursif).
     .example-1 = faire une copie à côté
     .example-2 = copier ici (.) un fichier d’ailleurs
-man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60.
-    .synopsis = curl [-I] [-i] [-k] adresse
+man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. Il parle aussi aux API HTTP : -s le rend silencieux (pas de progression, pas de message d’erreur sans -S), -G envoie les données de -d ou --data-urlencode dans l’URL plutôt que dans un POST, --data-urlencode NOM=VALEUR encode la valeur (espaces, accolades, guillemets d’une requête PromQL), -X choisit la méthode (POST…), -f échoue avec l’erreur 22 sur une erreur HTTP. Les accolades et crochets d’une URL sont des motifs de curl : mettez l’URL entre guillemets et ajoutez -g (--globoff), ou passez la requête avec --data-urlencode. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<).
+    .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X MÉTHODE] [-d DONNÉES] [--data-urlencode NOM=VALEUR] adresse
+    .option-4 = IPv4 seulement.
+    .option-6 = IPv6 seulement.
+    .option-v = montre la connexion, la requête et les en-têtes de la réponse (verbose).
     .option-I = ne demande que l’en-tête de la réponse (HEAD).
     .option-i = montre l’en-tête de la réponse, puis la page (include).
     .option-k = ne vérifie pas le certificat (insecure) : à ne faire que pour un essai, jamais pour de vrai.
+    .option-s = silencieux : pas de barre de progression, ni de message d’erreur sans -S (le code de sortie le dit quand même).
+    .option-G = envoie les données de -d et --data-urlencode dans la chaîne de requête d’un GET (get).
+    .option-X = la méthode de la requête : -X POST, -X DELETE…
+    .example-1 = seulement l’en-tête du site local
+    .example-2 = le site en IPv6 seulement, étape par étape
+    .example-3 = la page de réservation en IPv4 seulement
+    .example-4 = le site local par la boucle locale IPv6
+    .example-5 = les cibles de Prometheus, indentées par jq
+    .example-6 = une requête PromQL, ses accolades et guillemets encodés par curl
 man-cut = découpe chaque ligne en champs selon le séparateur et garde le champ N (ou N,M). Ex. : cut -d " " -f 1 garde le premier mot.
     .synopsis = cut -d séparateur -f N [fichier]
 man-dmesg = affiche les messages du noyau (display message) : le matériel détecté au démarrage, les erreurs de disque… et l’OOM killer (« Out of memory: Killed process »), quand le noyau tue un processus faute de mémoire. Chaque ligne commence par le temps écoulé depuis le démarrage, en secondes ; -T le traduit en date et heure. Réservé à root sur Debian ; journalctl -k montre les mêmes messages.
@@ -506,7 +521,7 @@ man-git =
       git commit -m "message"     enregistre une photo de tous les fichiers préparés
       git commit -am "message"    la même chose, en préparant d'abord tous les fichiers suivis modifiés
       git rm fichier              efface un fichier et le retire du suivi
-      git log [--oneline]         l'historique des commits
+      git log [--oneline] [-p]    l'historique des commits (-p : avec les changements de chacun)
       git diff [ID] [fichier]     les différences (- avant, + après)
       git show [ID]               un commit et ses changements
       git restore --source=ID f   remet le fichier f tel qu'il était dans le commit ID
@@ -520,10 +535,10 @@ man-git =
     À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
     .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
-man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe.
+man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe. -n numérote les lignes, -o n'affiche que ce qui correspond, -m NUM s'arrête après NUM lignes. Autour de chaque ligne trouvée, -A NUM affiche aussi les NUM lignes d'après, -B NUM celles d'avant, -C NUM (ou -NUM) les deux : ces lignes de contexte ont un « - » après le nom et le numéro (fichier-12-texte) là où les lignes trouvées ont un « : » (fichier:13:texte), et « -- » sépare les groupes qui ne se suivent pas (--group-separator=SEP le change, --no-group-separator l'enlève). -c ignore le contexte. -r cherche dans toute une arborescence (le répertoire courant sans fichier ; --include=MOTIF, --exclude=MOTIF et --exclude-dir=MOTIF choisissent les fichiers), -l ne liste que les noms des fichiers qui correspondent, -L ceux qui ne correspondent pas. -w veut des mots entiers, -x des lignes entières ; -e donne un motif (plusieurs -e : n'importe lequel), -f lit les motifs dans un fichier. -s cache les messages sur les fichiers absents ou illisibles. Le code de retour vaut 0 si une ligne est trouvée, 1 sinon, 2 après une erreur.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
-    .synopsis = grep [-i] [-v] [-c] [-q] [-E|-F] [-h|-H] [--color[=QUAND]] motif [fichier...]
+    .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-w|-x] [-l|-L] [-r|-R] [-s] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--include=MOTIF] [--exclude=MOTIF] [--exclude-dir=MOTIF] [--color[=QUAND]] {"{"}motif | -e motif... | -f fichier{"}"} [fichier...]
     .option-i = ignore la différence entre majuscules et minuscules.
     .option-v = inverse la recherche : garde les lignes qui ne contiennent PAS le motif.
     .option-c = compte les lignes trouvées au lieu de les afficher.
@@ -533,11 +548,30 @@ man-grep = affiche les lignes qui contiennent le motif. Le motif est une express
     .option-F = cherche le motif tel quel, sans expression régulière (fixed strings).
     .option-h = n’affiche jamais le nom du fichier devant les lignes (par défaut, il l’affiche s’il y a plusieurs fichiers).
     .option-H = affiche toujours le nom du fichier devant les lignes, même avec un seul fichier.
+    .option-n = affiche le numéro de chaque ligne devant elle (--line-number).
+    .option-e = MOTIF : le motif à chercher (--regexp) ; à répéter pour en chercher plusieurs, ou pour un motif qui commence par -.
+    .option-f = FICHIER : lit les motifs dans le fichier, un par ligne (--file).
+    .option-w = ne trouve que des mots entiers : pas à l'intérieur d'un mot plus long (--word-regexp).
+    .option-x = ne trouve que des lignes entières (--line-regexp).
+    .option-l = n'affiche que les noms des fichiers qui contiennent une ligne trouvée (--files-with-matches).
+    .option-L = n'affiche que les noms des fichiers qui n'en contiennent aucune (--files-without-match).
+    .option-r = cherche dans tous les fichiers des répertoires, récursivement ; sans fichier, le répertoire courant (--recursive). Saute les liens symboliques rencontrés en chemin.
+    .option-R = comme -r, mais suit les liens symboliques (--dereference-recursive).
+    .option-s = aucun message sur les fichiers absents ou illisibles (--no-messages) ; le code de retour vaut quand même 2.
+    .option-o = n'affiche que les parties qui correspondent, une par ligne (--only-matching).
+    .option-m = NUM : s'arrête après NUM lignes trouvées (--max-count) ; le contexte d'après suit quand même.
+    .option-A = NUM : affiche aussi les NUM lignes qui suivent chaque ligne trouvée (--after-context).
+    .option-B = NUM : affiche aussi les NUM lignes qui précèdent chaque ligne trouvée (--before-context).
+    .option-C = NUM : les NUM lignes d'avant et d'après (--context) ; -NUM revient au même.
     .example-1 = les lignes qui parlent de l’Effaceur
     .example-2 = dans tous les fichiers d’ici, majuscule ou pas
     .example-3 = un motif avec des espaces, entre guillemets
     .example-4 = les lignes qui contiennent « .env » (le point protégé)
     .example-5 = les requêtes GET ou POST vers la caisse
+    .example-6 = chaque erreur avec son numéro de ligne et les deux lignes autour
+    .example-7 = le premier échec et les trois lignes qui le suivent
+    .example-8 = chaque fichier .conf sous /etc qui donne sudo sans mot de passe, avec le numéro de ligne
+    .example-9 = les lignes qui contiennent le mot root ou admin
 man-gpg = chiffre, déchiffre, signe et vérifie des fichiers (GnuPG). Deux gestes de tous les jours pour un·e sysadmin : chiffrer une sauvegarde, et vérifier qu'un fichier téléchargé vient bien de qui il prétend. --list-keys (-k) montre le trousseau, --list-secret-keys (-K) les clés avec lesquelles tu peux signer et déchiffrer, --import une clé qu'on t'a envoyée. gpg -c fichier le chiffre avec une phrase de passe (symétrique) en fichier.gpg ; gpg -e -r nom fichier le chiffre vers la clé publique d'une personne ; gpg -d fichier.gpg (ou juste gpg fichier.gpg) le déchiffre. gpg -b fichier crée une signature détachée fichier.sig (ou .asc avec -a), gpg --clearsign enrobe un texte lisible avec sa signature ; gpg --verify fichier.asc fichier vérifie une signature et dit « Good signature » ou « BAD signature », ou prévient quand la clé n'est pas dans ton trousseau. -o choisit le fichier de sortie, -a écrit en ASCII (.asc) plutôt qu'en binaire, -u choisit quelle clé signe. Dans le jeu, la cryptographie est simulée : elle apprend les gestes, elle ne cache rien pour de vrai.
     .synopsis = gpg -k | -K ; gpg --import cle.asc ; gpg [-a] -c|-e -r nom fichier ; gpg -d fichier.gpg ; gpg [-a] -b|--clearsign fichier ; gpg --verify fichier.asc [fichier]
     .option-k = lister les clés publiques du trousseau.
@@ -610,11 +644,12 @@ man-mv = déplace un fichier dans un lieu (move), ou le renomme si la destinatio
     .example-1 = déplacer crabe dans le lieu Seau
     .example-2 = renommer
     .example-3 = déplacer et renommer d’un coup
-man-nc = netcat, le couteau suisse du réseau. Ici, pour tester si un port TCP d'une machine répond, comme le ferait n'importe qui sur internet : -z teste sans rien envoyer, -v dit le résultat. « succeeded » : le port est ouvert ; « Connection refused » : personne n'écoute (ou le pare-feu refuse) ; « timed out » : le pare-feu jette les paquets. Tester depuis une AUTRE machine montre ce que voit le monde ; depuis la machine elle-même, le pare-feu n'intervient pas.
-    .synopsis = nc -zv machine port[-port]
+man-nc = netcat, le couteau suisse du réseau. Ici, pour tester si un port TCP d'une machine répond, comme le ferait n'importe qui sur internet : -z teste sans rien envoyer, -v dit le résultat. « succeeded » : le port est ouvert ; « Connection refused » : personne n'écoute (ou le pare-feu refuse) ; « timed out » : le pare-feu jette les paquets. Tester depuis une AUTRE machine montre ce que voit le monde ; depuis la machine elle-même, le pare-feu n'intervient pas. -4 et -6 choisissent la famille d'adresses (par défaut, l'IPv6 d'abord quand le nom en a une).
+    .synopsis = nc -zv [-4|-6] machine port[-port]
     .example-1 = le port 22 (SSH) de la machine fabrique répond-il ?
     .example-2 = les ports de 5430 à 5435
-man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403). Répartir entre plusieurs exemplaires d'une appli : un bloc upstream nom {"{"} server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; {"}"} dans le bloc http (un fichier de sites-enabled y est inclus), puis proxy_pass http://nom/; weight donne la part de chacun (ici 9 visites sur 10 pour le premier), down le met de côté, backup ne sert que si les autres ne répondent pas. Un serveur qui ne répond pas est sauté ; une page qui répond 500 arrive telle quelle au visiteur.
+    .example-3 = le port de la base de données, en IPv6
+man-nginx = le serveur web (et proxy). Ce n'est pas lui qu'on lance à la main : systemd s'en occupe (systemctl start, reload nginx). Sa configuration part de /etc/nginx/nginx.conf, qui inclut les sites de /etc/nginx/sites-enabled/ : un bloc server par site, avec listen (le port ; default_server pour le site qui répond quand aucun nom ne correspond, un seul par port), server_name (les noms du site), root (le lieu des pages) et index (la page d'accueil). Chaque directive finit par un point-virgule. Avant tout rechargement : sudo nginx -t, qui donne le fichier et la ligne de l'erreur. Plusieurs sites sur une machine (hôtes virtuels) : un bloc server par site, chacun avec son server_name. Dans un bloc location (le préfixe d'un chemin), proxy_pass passe la visite à un autre programme (reverse proxy) : avec une adresse qui finit par une barre (http://127.0.0.1:3000/), le préfixe de la location est remplacé par /, sinon le chemin est transmis tel quel. return 301 https://$host$request_uri; renvoie ailleurs. Les erreurs de service vont dans /var/log/nginx/error.log. Limiter le débit : limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s; (dans le bloc http, une clé par adresse, 2 requêtes par seconde) puis limit_req zone=nom burst=10 nodelay; là où on veut limiter : au-delà du débit, une rafale de 10 requêtes est encore servie ; au-delà, refus (503, ou le code de limit_req_status, par exemple 429). deny adresse; refuse une adresse (403). Répartir entre plusieurs exemplaires d'une appli : un bloc upstream nom {"{"} server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; {"}"} dans le bloc http (un fichier de sites-enabled y est inclus), puis proxy_pass http://nom/; weight donne la part de chacun (ici 9 visites sur 10 pour le premier), down le met de côté, backup ne sert que si les autres ne répondent pas. Un serveur qui ne répond pas est sauté ; une page qui répond 500 arrive telle quelle au visiteur. IPv6 : listen [::]:80; écoute en IPv6 seulement (ipv6only=on par défaut), à côté de listen 80; pour l'IPv4 ; listen [::]:80 ipv6only=off; prend les deux, et ne doit alors pas côtoyer listen 80; (les sockets se heurtent quand nginx les ouvre, ce que nginx -t ne fait pas). proxy_pass http://localhost:3000/ essaie chaque adresse de localhost (::1, puis 127.0.0.1) ; écrivez celle où l'appli écoute.
     .synopsis = nginx -t ; nginx -T ; nginx -v
     .option-t = vérifie la configuration (test) et s'arrête.
     .option-T = vérifie, puis affiche toute la configuration lue, fichier par fichier.
@@ -636,8 +671,15 @@ man-pg_restore = restaure une archive écrite par pg_dump -Fc dans une base (-d)
     .command-2 = sudo -u postgres pg_restore -d ludo_test ludo.dump
     .example-3 = ne remettre que les lignes de la table prets
     .command-3 = sudo -u postgres pg_restore -d ludo --data-only -t prets ludo.dump
-man-ping = envoie de petits messages (ICMP « echo ») à une machine et mesure le temps de l’aller-retour. Ici, 4 envois par défaut (sous Linux, ping continue jusqu’à Ctrl+C). Attention : beaucoup de serveurs ne répondent pas au ping, sans être en panne pour autant.
-    .synopsis = ping [-c N] machine
+man-ping = envoie de petits messages (ICMP « echo ») à une machine et mesure le temps de l’aller-retour. Ici, 4 envois par défaut (sous Linux, ping continue jusqu’à Ctrl+C). Attention : beaucoup de serveurs ne répondent pas au ping, sans être en panne pour autant. IPv6 : -6 (ou ping6) passe en IPv6, -4 en IPv4 ; sans l’un ni l’autre, un nom qui a un enregistrement AAAA est joint en IPv6. En IPv6, la sortie dit « 56 data bytes ». Une adresse de lien local (fe80::…) existe sur tous les liens à la fois : donnez l’interface après un % (fe80::1%eth0) ou avec -I eth0, sinon ping refuse (« connect: Invalid argument »). « Destination unreachable: Address unreachable » vient d’un routeur qui n’a trouvé personne à cette adresse sur son lien.
+    .synopsis = ping [-4|-6] [-c N] [-I interface] machine ; ping6 machine
+    .example-1 = trois pings vers une adresse IPv4
+    .example-2 = trois pings en IPv6, vers un nom
+    .example-3 = l’adresse de lien local du routeur, sur eth0
+man-ping6 = ping en IPv6 : le même programme que ping -6 (sous Debian, un lien vers ping). Une adresse de lien local a besoin de son interface : ping6 fe80::1%eth0.
+    .synopsis = ping6 [-c N] [-I interface] machine
+    .example-1 = la boucle locale IPv6
+    .example-2 = l’adresse de lien local du routeur, sur eth0
 man-ps = liste les processus, c’est-à-dire les programmes en cours d’exécution (process status). Sans option : les tiens ; « ps -p PID » : celui-là seulement ; « ps aux » : ceux de tout le monde, avec la part de processeur (%CPU) et de mémoire (%MEM). « ps -ef » : tout le monde aussi, avec le parent de chaque processus (PPID), celui qui l’a lancé. « ps -u compte » : ceux d'un compte. -o choisit les colonnes (pid, ppid, user, ni : la valeur nice, %cpu, %mem, stat, comm : le nom du programme, args : la ligne de commande entière), --sort trie selon l'une d'elles (un signe moins devant : décroissant). Un processus marqué <defunct> est un zombie : terminé, mais son parent n’a pas encore lu son résultat.
     .synopsis = ps [aux] ; ps -ef ; ps -u compte ; ps -eo COLONNES [--sort=[-]COLONNE]
     .example-1 = les processus de tout le monde
@@ -661,9 +703,9 @@ man-readlink = affiche ce que vise un lien symbolique. -f donne le chemin comple
     .option-f = le chemin complet, tous les liens suivis (canonicalize).
     .example-1 = où pointe le lien
     .example-2 = le chemin complet, liens suivis
-man-restic = sauvegarde des dossiers dans un dépôt chiffré, en instantanés (snapshots) : chaque sauvegarde garde l'état complet du moment, mais seules les données nouvelles prennent de la place (déduplication). Il faut le dépôt (-r) et son mot de passe (--password-file, sinon il le demande) : sans mot de passe, rien n'est lisible, pas même la liste. snapshots liste les instantanés ; ls, find, diff et dump regardent dedans ; restore ID --target lieu recrée les fichiers (avec leur chemin complet) sous ce lieu, --include pour n'en prendre qu'une partie ; forget retire des instantanés selon une politique (--keep-daily 7…) ou par leur ID, sans libérer de place : c'est prune qui supprime les données devenues inutiles (ou forget --prune) ; check vérifie le dépôt.
+man-restic = sauvegarde des dossiers dans un dépôt chiffré, en instantanés (snapshots) : chaque sauvegarde garde l'état complet du moment, mais seules les données nouvelles prennent de la place (déduplication). Il faut le dépôt (-r, ou la variable RESTIC_REPOSITORY) et son mot de passe (--password-file ou -p, la variable RESTIC_PASSWORD_FILE ou RESTIC_PASSWORD, sinon il le demande) : sans mot de passe, rien n'est lisible, pas même la liste. init crée un nouveau dépôt ; snapshots liste les instantanés ; ls, find, diff et dump regardent dedans ; restore ID --target lieu recrée les fichiers (avec leur chemin complet) sous ce lieu (latest : le dernier instantané), --include pour n'en prendre qu'une partie ; forget retire des instantanés selon une politique (--keep-daily 7…) ou par leur ID, sans libérer de place : c'est prune qui supprime les données devenues inutiles (ou forget --prune) ; check vérifie la structure du dépôt, check --read-data relit en plus chaque octet des données. Les données sont chiffrées avec une clé maîtresse ; chaque clé (key list, key add, key remove ID, key passwd) la déverrouille avec son propre mot de passe : plusieurs personnes ou tâches peuvent avoir chacune la leur.
     .command-5 = restic -r /mnt/townhall/repo --password-file ~/.config/restic/password restore 1a2b3c4d --target /tmp/restauration --include /home/vous/collection/journal.txt
-    .synopsis = restic -r dépôt [--password-file fichier] snapshots|ls ID [lieu]|find motif|diff ID ID|dump ID fichier|restore ID --target lieu [--include chemin]|backup lieu|forget [--keep-daily N --keep-weekly N --keep-monthly N] [--prune] [--dry-run]|prune|check|stats
+    .synopsis = restic -r dépôt [--password-file fichier] init|snapshots|ls ID [lieu]|find motif|diff ID ID|dump ID fichier|restore ID --target lieu [--include chemin]|backup lieu…|forget [--keep-daily N --keep-weekly N --keep-monthly N] [--prune] [--dry-run]|prune|check [--read-data]|stats|key list|key add [--new-password-file fichier]|key remove ID|key passwd
     .example-1 = la liste des instantanés
     .example-2 = dans quels instantanés est ce fichier, avec sa taille et sa date
     .example-3 = ce qui a changé entre deux instantanés
@@ -671,6 +713,11 @@ man-restic = sauvegarde des dossiers dans un dépôt chiffré, en instantanés (
     .example-5 = restaurer un seul fichier, sous /tmp/restauration
     .example-6 = garder 7 jours, 4 semaines, 12 mois, et rendre la place (essayer d'abord avec --dry-run)
     .example-7 = vérifier le dépôt
+    .example-8 = créer un nouveau dépôt (le mot de passe est demandé deux fois)
+    .example-9 = les clés qui ouvrent le dépôt (* celle que vous utilisez)
+    .example-10 = ajouter une clé, avec un nouveau mot de passe (demandé deux fois)
+    .example-11 = vérifier le dépôt en relisant toutes ses données
+    .example-12 = restaurer le dernier instantané à côté, sous /srv/restore
 man-rndc = pilote le serveur DNS named (BIND) qui tourne. rndc reload relit les fichiers de zone (toutes, ou une seule) ; named prévient alors les serveurs secondaires (NOTIFY), qui ne recopient la zone que si son numéro de série (dans le SOA) a augmenté. Le journal de named (journalctl -u named) dit ce qui a été chargé. Réservé à root.
     .synopsis = rndc reload [zone] ; rndc status
     .example-1 = recharger une zone après l'avoir modifiée (et son serial augmenté)
@@ -913,8 +960,8 @@ man-host = la version courte de dig : les adresses et le courrier d'un nom, en p
     .synopsis = host nom [serveur]
     .example-1 = les adresses d'un nom
     .example-2 = la même question à un autre serveur
-man-ip = montre et change la configuration réseau (iproute2) : les interfaces (ip link), leurs adresses (ip addr, ou ip a), les routes (ip route). -br donne une ligne par interface ; -d ajoute les détails (pour un VLAN : son numéro 802.1Q). ip link add link eth1 name eth1.10 type vlan id 10 crée l'interface du VLAN 10 sur eth1 ; ip addr add lui donne une adresse ; ip link set … up la monte. Ces changements prennent effet tout de suite, mais disparaissent au redémarrage : pour qu'ils durent, on les écrit dans /etc/network/interfaces (man interfaces). Changer la configuration est réservé à root. -c (color) met des couleurs : noms des interfaces en cyan, état UP en vert et DOWN en rouge, adresses en magenta.
-    .synopsis = ip [-br] [-d] [-c] addr|link|route [show|add|del|set] …
+man-ip = montre et change la configuration réseau (iproute2) : les interfaces (ip link), leurs adresses (ip addr, ou ip a), les routes (ip route). -br donne une ligne par interface ; -d ajoute les détails (pour un VLAN : son numéro 802.1Q). ip link add link eth1 name eth1.10 type vlan id 10 crée l'interface du VLAN 10 sur eth1 ; ip addr add lui donne une adresse ; ip link set … up la monte. Ces changements prennent effet tout de suite, mais disparaissent au redémarrage : pour qu'ils durent, on les écrit dans /etc/network/interfaces (man interfaces). Changer la configuration est réservé à root. -c (color) met des couleurs : noms des interfaces en cyan, état UP en vert et DOWN en rouge, adresses en magenta. IPv6 : -6 garde la famille IPv6 (-4 la famille IPv4) : ip -6 addr montre les adresses inet6, scope link pour fe80:: (valable sur un seul lien), scope global, « dynamic » pour une adresse construite par SLAAC à partir des annonces du routeur ; ip -6 route montre les routes IPv6, souvent « default via fe80::… dev eth0 proto ra » ; ip -6 addr add 2001:db8::80/64 dev eth0 ajoute une adresse ; ip neigh montre les voisins (le routeur, sa MAC).
+    .synopsis = ip [-4|-6] [-br] [-d] [-c] addr|link|route|neigh [show|add|del|set] …
     .example-1 = les interfaces et leurs adresses
     .example-2 = la même chose, une ligne par interface
     .example-3 = les détails d'une interface (le numéro de VLAN)
@@ -922,6 +969,10 @@ man-ip = montre et change la configuration réseau (iproute2) : les interfaces (
     .example-5 = lui donner une adresse
     .example-6 = la monter
     .example-7 = les routes (dont la passerelle par défaut)
+    .example-8 = les adresses IPv6 seulement
+    .example-9 = les routes IPv6
+    .example-10 = ajouter une adresse IPv6 (jusqu'au prochain redémarrage)
+    .example-11 = les voisins : le routeur et son adresse MAC
 man-ifup = monte une interface d'après /etc/network/interfaces (ifupdown, sur Debian) : crée l'interface VLAN si besoin, lui donne son adresse, sa passerelle. -a monte toutes les interfaces marquées « auto » (comme au démarrage). Une interface déjà montée par ifup n'est pas remontée : ifdown d'abord. Réservé à root.
     .synopsis = ifup [-a] [interface...]
     .example-1 = monter tout ce qui est « auto »
@@ -929,7 +980,7 @@ man-ifup = monte une interface d'après /etc/network/interfaces (ifupdown, sur D
 man-ifdown = démonte une interface montée par ifup (et supprime une interface VLAN). Réservé à root.
     .synopsis = ifdown [-a] [interface...]
     .example-1 = démonter le VLAN 10
-man-interfaces = la configuration réseau persistante de Debian (/etc/network/interfaces), lue au démarrage et par ifup. « auto eth1.10 » : à monter au démarrage ; « iface eth1.10 inet static » ouvre la description d'une interface, suivie de ses options en retrait : address (10.10.10.1/24, ou address et netmask), gateway (la passerelle par défaut). Une interface nommée eth1.10 est le VLAN 10 de eth1 (paquet vlan) ; avec un autre nom, vlan-raw-device eth1 dit sur quelle interface. « inet manual » : l'interface est montée sans adresse (un trunk, par exemple). source lit d'autres fichiers (/etc/network/interfaces.d/*).
+man-interfaces = la configuration réseau persistante de Debian (/etc/network/interfaces), lue au démarrage et par ifup. « auto eth1.10 » : à monter au démarrage ; « iface eth1.10 inet static » ouvre la description d'une interface, suivie de ses options en retrait : address (10.10.10.1/24, ou address et netmask), gateway (la passerelle par défaut). Une interface nommée eth1.10 est le VLAN 10 de eth1 (paquet vlan) ; avec un autre nom, vlan-raw-device eth1 dit sur quelle interface. « inet manual » : l'interface est montée sans adresse (un trunk, par exemple). source lit d'autres fichiers (/etc/network/interfaces.d/*). L'IPv6 a ses propres strophes : « iface eth0 inet6 static » avec address 2001:db8::80/64 et gateway (souvent l'adresse de lien local du routeur) ; par défaut, elle coupe l'autoconfiguration sans état (autoconf 0), et accept_ra (0, 1, 2) dit si les annonces du routeur sont encore acceptées (elles donnent la route par défaut) ; « iface eth0 inet6 auto » laisse SLAAC donner l'adresse.
     .synopsis = /etc/network/interfaces
     .example-1 = la configuration actuelle
     .example-2 = la modifier
@@ -939,7 +990,7 @@ man-dnsmasq = un petit serveur DHCP (et DNS) pour un réseau local. Il lit /etc/
     .example-2 = la relire (redémarrer le service)
     .example-3 = les adresses données
     .example-4 = le journal des échanges
-man-nft = règle le pare-feu du noyau (nftables). Les règles vivent dans des tables (famille ip, ip6, ou inet pour les deux) ; une table contient des chaînes ; une chaîne « de base » s'accroche à une étape du trajet des paquets (hook input : vers la machine elle-même ; forward : à travers elle, d'un réseau à l'autre ; output : depuis elle ; postrouting : juste avant de sortir) et a une politique (policy accept ou drop) pour ce qu'aucune règle n'a tranché. Une règle se lit de gauche à droite : des conditions (iifname "eth1.10" : entré par cette interface ; oifname : sortira par celle-là ; ip saddr, ip daddr : adresses, ou réseaux 10.10.20.0/24 ; tcp dport 443 ; ct state established,related : une réponse à un échange déjà permis), puis des actions (counter compte, log écrit au journal du noyau, accept, drop, reject, jump vers une autre chaîne). Le NAT se fait dans une chaîne de type nat : masquerade (au hook postrouting) remplace l'adresse source par celle de l'interface de sortie ; dnat to 10.10.40.10 (au hook prerouting, priority dstnat) remplace la destination, avant le routage : la chaîne forward voit déjà la nouvelle adresse. Un ensemble s'écrit entre accolades : iifname « {"{"} "eth1.10", "eth1.20" {"}"} ». nft -f lit un fichier entier et l'applique d'un coup (rien ne change s'il y a une erreur) ; sur Debian, /etc/nftables.conf est chargé au démarrage par le service nftables s'il est activé (systemctl enable nftables). Ce qu'on tape avec nft add ne dure que jusqu'au redémarrage. Sur une machine tenue par ufw et fail2ban, nft list ruleset montre les règles qu'ils écrivent (table ip filter, chaînes ufw-* ; table inet f2b-table) : dans le jeu, on les y regarde sans y toucher. Réservé à root.
+man-nft = règle le pare-feu du noyau (nftables). Les règles vivent dans des tables (famille ip, ip6, ou inet pour les deux) ; une table contient des chaînes ; une chaîne « de base » s'accroche à une étape du trajet des paquets (hook input : vers la machine elle-même ; forward : à travers elle, d'un réseau à l'autre ; output : depuis elle ; postrouting : juste avant de sortir) et a une politique (policy accept ou drop) pour ce qu'aucune règle n'a tranché. Une règle se lit de gauche à droite : des conditions (iifname "eth1.10" : entré par cette interface ; oifname : sortira par celle-là ; ip saddr, ip daddr : adresses, ou réseaux 10.10.20.0/24 ; tcp dport 443 ; ct state established,related : une réponse à un échange déjà permis), puis des actions (counter compte, log écrit au journal du noyau, accept, drop, reject, jump vers une autre chaîne). Le NAT se fait dans une chaîne de type nat : masquerade (au hook postrouting) remplace l'adresse source par celle de l'interface de sortie ; dnat to 10.10.40.10 (au hook prerouting, priority dstnat) remplace la destination, avant le routage : la chaîne forward voit déjà la nouvelle adresse. Un ensemble s'écrit entre accolades : iifname « {"{"} "eth1.10", "eth1.20" {"}"} ». nft -f lit un fichier entier et l'applique d'un coup (rien ne change s'il y a une erreur) ; sur Debian, /etc/nftables.conf est chargé au démarrage par le service nftables s'il est activé (systemctl enable nftables). Ce qu'on tape avec nft add ne dure que jusqu'au redémarrage. Sur une machine tenue par ufw et fail2ban, nft list ruleset montre les règles qu'ils écrivent (table ip filter, chaînes ufw-* ; table inet f2b-table) : dans le jeu, on les y regarde sans y toucher. Réservé à root. Dans une table inet, ip saddr ne correspond qu'aux paquets IPv4 et ip6 saddr qu'aux IPv6 ; de même pour icmp type et icmpv6 type. L'IPv6 a besoin de l'ICMPv6 pour vivre (la découverte des voisins : icmpv6 type nd-neighbor-solicit, nd-neighbor-advert, nd-router-advert) : une chaîne input qui le jette coupe la machine en IPv6.
     .synopsis = nft [-c] [-a] -f fichier ; nft [-a] list ruleset|tables|table famille nom|chain famille table chaîne ; nft add|insert|delete … ; nft flush ruleset
     .option-f = lit les commandes dans ce fichier (file), et les applique toutes ensemble.
     .option-c = vérifie seulement, sans rien appliquer (check).
@@ -1229,8 +1280,8 @@ man-sshd_config = le fichier de configuration du serveur SSH : une option par li
     .example-1 = modifier la configuration
     .example-2 = les fichiers inclus, qui passent AVANT la suite du fichier principal
 
-man-ufw = gère le pare-feu de la machine (Uncomplicated Firewall) : quelles connexions ENTRANTES sont acceptées. On fixe une politique par défaut (le plus sûr : tout refuser en entrée), puis on autorise une à une les portes utiles, par numéro de port (22/tcp), par nom de service (ssh, http) ou par profil d'application (OpenSSH, « Nginx Full »). La première règle qui correspond décide. limit accepte mais freine les connexions trop rapprochées (contre la force brute). Avant enable, autoriser SSH : sinon, plus aucune nouvelle connexion. Réservé à root.
-    .synopsis = ufw status [verbose|numbered] ; ufw enable|disable ; ufw default allow|deny|reject [incoming|outgoing] ; ufw allow|deny|reject|limit RÈGLE ; ufw delete RÈGLE|NUMÉRO ; ufw app list
+man-ufw = gère le pare-feu de la machine (Uncomplicated Firewall) : quelles connexions ENTRANTES sont acceptées. On fixe une politique par défaut (le plus sûr : tout refuser en entrée), puis on autorise une à une les portes utiles, par numéro de port (22/tcp), par nom de service (ssh, http) ou par profil d'application (OpenSSH, « Nginx Full »). La première règle qui correspond décide. limit accepte mais freine les connexions trop rapprochées (contre la force brute). Avant enable, autoriser SSH : sinon, plus aucune nouvelle connexion. Réservé à root. IPv6 : avec IPV6=yes dans /etc/default/ufw, chaque règle existe aussi en IPv6 (les lignes « (v6) ») ; avec IPV6=no, ufw laisse l'IPv6 sans filtre. Ce fichier est lu au démarrage d'ufw (ufw reload, ou disable puis enable) ; une règle ajoutée quand IPV6=no n'existe qu'en IPv4 : ajoutez-la de nouveau.
+    .synopsis = ufw status [verbose|numbered] ; ufw enable|disable|reload ; ufw default allow|deny|reject [incoming|outgoing] ; ufw allow|deny|reject|limit RÈGLE ; ufw delete RÈGLE|NUMÉRO ; ufw app list
     .example-1 = l'état du pare-feu, les politiques par défaut et les règles
     .example-2 = autoriser SSH (profil d'application)
     .example-3 = autoriser SSH seulement depuis une adresse
@@ -1238,8 +1289,12 @@ man-ufw = gère le pare-feu de la machine (Uncomplicated Firewall) : quelles con
     .example-5 = activer le pare-feu (après avoir autorisé SSH !)
     .example-6 = supprimer une règle
     .example-7 = laisser le réseau du club atteindre Samba (un profil d'application, depuis un réseau)
-man-ss = affiche les « sockets » de la machine : les ports où un programme attend des connexions, et les connexions établies (socket statistics). -t TCP, -u UDP, -l seulement ce qui écoute, -a tout, -n les numéros de port plutôt que leurs noms, -p le programme (il faut être root pour voir ceux des autres comptes). Une adresse 0.0.0.0 veut dire « sur toutes les interfaces », donc joignable depuis le réseau ; 127.0.0.1, seulement depuis la machine elle-même.
-    .synopsis = ss [-t] [-u] [-l] [-a] [-n] [-p]
+    .example-8 = ufw filtre-t-il aussi l'IPv6 ?
+    .example-9 = relire /etc/default/ufw et les règles
+man-ss = affiche les « sockets » de la machine : les ports où un programme attend des connexions, et les connexions établies (socket statistics). -t TCP, -u UDP, -l seulement ce qui écoute, -a tout, -n les numéros de port plutôt que leurs noms, -p le programme (il faut être root pour voir ceux des autres comptes). Une adresse 0.0.0.0 veut dire « sur toutes les interfaces », donc joignable depuis le réseau ; 127.0.0.1, seulement depuis la machine elle-même. En IPv6, [::] veut dire toutes les adresses IPv6 (et [::1] la boucle locale IPv6) ; une adresse * est une socket IPv6 qui prend aussi l'IPv4 (IPV6_V6ONLY désactivé). -4 et -6 ne gardent qu'une famille.
+    .synopsis = ss [-t] [-u] [-l] [-a] [-n] [-p] [-4|-6]
+    .option-4 = les sockets IPv4 seulement.
+    .option-6 = les sockets IPv6 seulement (y compris les *).
     .option-t = sockets TCP.
     .option-u = sockets UDP.
     .option-l = seulement les sockets en écoute (listening).
@@ -1248,6 +1303,7 @@ man-ss = affiche les « sockets » de la machine : les ports où un programme at
     .option-p = le programme qui utilise chaque socket.
     .example-1 = qui écoute, sur quelle adresse et quel port ?
     .example-2 = les connexions TCP établies
+    .example-3 = les sockets TCP en écoute, IPv6 seulement, en numéros
 
 man-netstat = montre les sockets réseau de la machine, comme ss mais avec l'ancienne interface de net-tools : netstat -tlnp liste les ports TCP en écoute avec leur programme. -t TCP, -u UDP, -l seulement ce qui écoute, -a tout, -n les numéros plutôt que les noms de service, -p le programme (réservé à root pour les programmes des autres comptes). Une adresse 0.0.0.0 veut dire « sur toutes les interfaces », donc joignable depuis le réseau ; 127.0.0.1, seulement depuis la machine elle-même. Préfère ss sur un système récent ; netstat est ce qu'on trouve encore sur les anciens.
     .synopsis = netstat [-t] [-u] [-l] [-a] [-n] [-p]
@@ -1320,8 +1376,9 @@ manual-option-long-unknown =
     { $command } : option non reconnue « { $option } »
     Saisissez « { $command } --help » pour plus d'informations.
 
-man-nmap = l'explorateur de réseau : il envoie des paquets à une machine (ou à toute une plage d'adresses) et dit, pour chaque port TCP, s'il est ouvert (un programme répond), fermé (la machine répond « personne ici ») ou filtré (un pare-feu jette le paquet : aucune réponse). Les ports sont « vus d'internet » : c'est ce que voit un attaquant, ou une auditrice. -sV demande aussi la version du service qui répond (utile pour repérer un logiciel périmé) ; -p choisit les ports (-p 22,80 ; -p 1-1024 ; -p- pour tous) ; -sn ne fait que dire quelles machines répondent ; -Pn ne tient pas compte de l'absence de réponse au ping ; -oN garde le résultat dans un fichier (une preuve à joindre au rapport) ; -F ne regarde que les ports les plus courants ; -n ne cherche pas les noms. N'utilise nmap que sur ce qui est dans ta lettre de mission : sonder une machine qu'on n'a pas le droit de sonder est une faute, parfois une infraction. 127.0.0.1 désigne la machine elle-même, vue de l'intérieur (le pare-feu ne s'y applique pas).
+man-nmap = l'explorateur de réseau : il envoie des paquets à une machine (ou à toute une plage d'adresses) et dit, pour chaque port TCP, s'il est ouvert (un programme répond), fermé (la machine répond « personne ici ») ou filtré (un pare-feu jette le paquet : aucune réponse). Les ports sont « vus d'internet » : c'est ce que voit un attaquant, ou une auditrice. -sV demande aussi la version du service qui répond (utile pour repérer un logiciel périmé) ; -p choisit les ports (-p 22,80 ; -p 1-1024 ; -p- pour tous) ; -sn ne fait que dire quelles machines répondent ; -Pn ne tient pas compte de l'absence de réponse au ping ; -oN garde le résultat dans un fichier (une preuve à joindre au rapport) ; -F ne regarde que les ports les plus courants ; -n ne cherche pas les noms. N'utilise nmap que sur ce qui est dans ta lettre de mission : sonder une machine qu'on n'a pas le droit de sonder est une faute, parfois une infraction. 127.0.0.1 désigne la machine elle-même, vue de l'intérieur (le pare-feu ne s'y applique pas). -6 scanne en IPv6 (l'enregistrement AAAA d'un nom, ou une adresse IPv6, que nmap n'accepte qu'avec -6) : une machine peut être fermée en IPv4 et ouverte en IPv6.
     .synopsis = nmap [options] cible...  (un nom, une adresse, un réseau 192.0.2.0/29, une plage 192.0.2.20-25)
+    .option-6 = balayage en IPv6.
     .option-sV = la version du service qui écoute sur chaque port ouvert.
     .option-sn = seulement dire quelles machines répondent, sans balayer les ports.
     .option-Pn = ne pas tester d'abord si la machine répond (elle peut cacher sa réponse au ping).
@@ -1334,6 +1391,7 @@ man-nmap = l'explorateur de réseau : il envoie des paquets à une machine (ou �
     .example-3 = seulement SSH, http et https
     .example-4 = cette machine répond-elle ?
     .example-5 = tous les ports, pas seulement les plus courants
+    .example-6 = les mêmes ports, vus en IPv6
 man-lynis = l'outil d'audit de sécurité d'un serveur. « lynis audit system » examine la machine où il est lancé (avec sudo : il lit ce que seul root voit) et range ses remarques en avertissements (Warnings : à corriger d'abord) et suggestions (Suggestions : des pistes, de gravité inégale), chacune avec son identifiant de test (SSH-7408, PKGS-7392…) et une adresse qui l'explique. À la fin, l'indice de durcissement (Hardening index) résume l'ensemble sur 100 : il sert à comparer avant et après, pas à viser 100 à tout prix. Lynis ne change rien : c'est à toi de décider, suggestion par suggestion, ce qui vaut l'effort. Le détail de chaque audit est gardé dans /var/log/lynis-report.dat (hardening_index=, warning[]=, suggestion[]=), qui se lit avec grep.
     .synopsis = lynis audit system ; lynis show version
     .example-1 = l'audit complet de la machine
@@ -1769,12 +1827,13 @@ man-hexdump = montre les octets d'un fichier. -C est la forme canonique : la pos
     .option-v = montrer toutes les lignes, même celles identiques à la précédente.
     .example-1 = les premiers octets du fichier, en hexadécimal et en caractères
     .example-2 = seulement les deux premiers enregistrements (80 octets)
-man-dd = copie un fichier par blocs, et peut le convertir au passage. Il prend des opérandes plutôt que des options : if=FICHIER à lire (sinon le tube), of=FICHIER à écrire (sinon l'écran), bs=TAILLE la taille d'un bloc, count=N combien de blocs, skip=N combien de blocs sauter d'abord. conv=ascii traduit l'EBCDIC en ASCII octet par octet (avec cbs=TAILLE, chaque enregistrement de cette taille devient une ligne, sans ses espaces de fin), conv=ebcdic dans l'autre sens ; conv=ucase, lcase changent la casse. À la fin, dd dit combien de blocs sont entrés et sortis (complets+partiels) et combien d'octets il a copiés ; status=none le fait taire. Sa table de traduction change chaque octet, binaires compris : jamais sur un fichier qui contient des nombres condensés.
+man-dd = copie un fichier par blocs, et peut le convertir au passage. Il prend des opérandes plutôt que des options : if=FICHIER à lire (sinon le tube), of=FICHIER à écrire (sinon l'écran), bs=TAILLE la taille d'un bloc, count=N combien de blocs, skip=N combien de blocs sauter d'abord. conv=ascii traduit l'EBCDIC en ASCII octet par octet (avec cbs=TAILLE, chaque enregistrement de cette taille devient une ligne, sans ses espaces de fin), conv=ebcdic dans l'autre sens ; conv=ucase, lcase changent la casse. À la fin, dd dit combien de blocs sont entrés et sortis (complets+partiels) et combien d'octets il a copiés ; status=none le fait taire. Sa table de traduction change chaque octet, binaires compris : jamais sur un fichier qui contient des nombres condensés. if=/dev/urandom lit des octets aléatoires (avec count).
     .synopsis = dd [if=FICHIER] [of=FICHIER] [bs=TAILLE] [count=N] [skip=N] [cbs=TAILLE] [conv=CONVERSIONS] [status=none]
     .example-1 = le premier enregistrement de 40 octets, en hexadécimal
     .example-2 = copier seulement le 14e enregistrement (l'enregistrement de fin)
     .example-3 = un fichier texte EBCDIC d'enregistrements de 20 caractères en lignes de texte
     .example-4 = compter les enregistrements : « 14+0 records in » pour 560 octets
+    .example-5 = un fichier de clé de 4096 octets aléatoires (/dev/urandom ne s'arrête jamais : count est obligatoire)
 man-cobc = compile du COBOL (GnuCOBOL). Par défaut, le source est en format fixe (le format de référence) : les colonnes 1 à 6 pour un numéro de séquence, la colonne 7 pour l'indicateur (* un commentaire, - une suite, une espace pour du code), le texte du programme de la colonne 8 à la colonne 72 ; tout autre caractère en colonne 7 est un « invalid indicator ». COPY insère un copybook, cherché dans le répertoire courant et les répertoires de -I (avec .cpy, .cbl, .cob ou sans extension). -x fabrique un exécutable ; sans lui, un module (NOM.so) que cobcrun ou un autre programme charge. Le RETURN-CODE d'un programme devient son code de sortie ($?).
     .synopsis = cobc [-x | -m | -c] [-free | -fixed] [-I RÉPERTOIRE] [-o FICHIER] source.cob
     .option-x = fabriquer un programme exécutable.
@@ -2457,6 +2516,56 @@ man-Out-File = écrit dans un fichier ce que le tube afficherait (son tableau, s
     .option-Force = même sur un fichier en lecture seule.
     .example-1 = le tableau dans un fichier
     .example-2 = une ligne de plus
+man-Export-Csv = écrit des objets dans un fichier CSV, une ligne par objet : les propriétés du premier objet en en-tête, chaque valeur entre guillemets doubles (rien entre les virgules pour une valeur vide). Windows PowerShell 5.1 commence par une ligne #TYPE qui nomme le type des objets : -NoTypeInformation l’omet. Select-Object choisit d’abord les colonnes. Un rapport qu’un tableur, un ticket ou Import-Csv peuvent lire.
+    .synopsis = Export-Csv [[-Path] <String>] [-InputObject <PSObject>] [-NoTypeInformation] [-Delimiter <Char>] [-Append] [-NoClobber] [-Encoding <String>]
+    .option-Path = le fichier à écrire.
+    .option-InputObject = les objets (en général venus du pipeline).
+    .option-NoTypeInformation = pas de ligne #TYPE.
+    .option-Delimiter = un autre séparateur que la virgule.
+    .option-Append = ajouter les lignes à un fichier existant.
+    .option-NoClobber = refuser d’écraser un fichier.
+    .option-Encoding = l’encodage du fichier (ASCII par défaut en 5.1).
+    .example-1 = un rapport des comptes inactifs
+    .example-2 = le vérifier
+man-ConvertTo-Csv = transforme des objets en lignes CSV, comme Export-Csv mais à l’écran (ou dans le pipeline) plutôt que dans un fichier.
+    .synopsis = ConvertTo-Csv [-InputObject] <PSObject> [-NoTypeInformation] [-Delimiter <Char>]
+    .option-InputObject = les objets (en général venus du pipeline).
+    .option-NoTypeInformation = pas de ligne #TYPE.
+    .option-Delimiter = un autre séparateur que la virgule.
+    .example-1 = voir ce qu’Export-Csv écrirait
+man-Import-Csv = lit un fichier CSV comme des objets : un par ligne, une propriété par colonne de l’en-tête (les valeurs sont du texte). La ligne #TYPE, s’il y en a une, est ignorée.
+    .synopsis = Import-Csv [-Path] <String[]> [-Delimiter <Char>] [-Header <String[]>] [-Encoding <String>]
+    .option-Path = le fichier.
+    .option-LiteralPath = le fichier, tel qu’écrit.
+    .option-Delimiter = un autre séparateur que la virgule.
+    .option-Header = les noms des colonnes, pour un fichier sans ligne d’en-tête.
+    .option-Encoding = l’encodage du fichier.
+    .example-1 = relire un rapport
+    .example-2 = compter ses lignes
+man-Restore-ADObject = ramène un objet de la corbeille AD (Get-ADObject -IncludeDeletedObjects le trouve) : là où il était (son LastKnownParent) ou sous -TargetPath, avec son SID, ses attributs, son mot de passe et ses appartenances aux groupes (la corbeille garde les valeurs de liens). Son parent doit exister : restaurez une OU supprimée avant ce qu’elle contenait.
+    .synopsis = Restore-ADObject [-Identity] <ADObject> [-NewName <String>] [-TargetPath <String>] [-PassThru]
+    .option-Identity = l’objet supprimé : son GUID, son DN dans CN=Deleted Objects, ou un objet venu du pipeline.
+    .option-NewName = un autre nom (si l’ancien est pris).
+    .option-TargetPath = un autre conteneur que son dernier parent.
+    .option-Partition = la partition (celle du domaine, par défaut).
+    .option-PassThru = montrer l’objet restauré.
+    .example-1 = le trouver dans la corbeille
+    .example-2 = et le restaurer
+man-Get-ADOptionalFeature = obtient les fonctionnalités optionnelles de la forêt : la Recycle Bin Feature (EnabledScopes non vide : elle est active, et un objet supprimé peut être restauré entier) et Privileged Access Management.
+    .synopsis = Get-ADOptionalFeature [-Identity] <ADOptionalFeature> | -Filter <String>
+    .option-Identity = la fonctionnalité : son nom, son GUID ou son DN.
+    .option-Filter = un filtre dans le langage du module (* pour toutes).
+    .option-LDAPFilter = un filtre LDAP.
+    .option-Properties = plus de propriétés.
+    .example-1 = la corbeille est-elle active ?
+    .example-2 = toutes les fonctionnalités
+man-Get-GPResultantSetOfPolicy = écrit dans un rapport, HTML ou XML, le jeu de stratégie résultant d’une personne sur un ordinateur (mode journalisation : ce qui a été appliqué à sa dernière connexion ou actualisation), comme gpresult /h : les GPO appliquées, celles filtrées et pourquoi, les groupes. La personne doit s’être connectée à cet ordinateur.
+    .synopsis = Get-GPResultantSetOfPolicy [-Computer <String>] [-User <String>] -ReportType <Html|Xml> -Path <String>
+    .option-Computer = l’ordinateur (celui-ci par défaut).
+    .option-User = la personne (vous par défaut).
+    .option-ReportType = Html ou Xml.
+    .option-Path = le fichier du rapport.
+    .example-1 = une bibliothécaire sur son poste, en page web
 man-Get-Acl = obtient le descripteur de sécurité d'un fichier ou d'un dossier : son propriétaire (Owner) et sa liste d'accès (Access ; des entrées : identité, Allow ou Deny, droits comme FullControl, Modify, ReadAndExecute, héritée ou non, drapeaux d'héritage). Format-List montre Owner, Access et Sddl ; (Get-Acl X).Access liste les entrées comme des objets. Une entrée héritée d'au-dessus dit IsInherited True.
     .synopsis = Get-Acl [[-Path] <String[]>]
     .option-Path = les fichiers ou dossiers.
@@ -3012,15 +3121,17 @@ man-Get-ADOrganizationalUnit = obtient des unités d’organisation : leur DN, l
     .option-SearchScope = Base, OneLevel ou Subtree (par défaut).
     .option-Properties = plus de propriétés (* pour toutes).
     .example-1 = l’arbre des OU
-man-Get-ADObject = obtient n’importe quel objet de l’annuaire (comptes, groupes, ordinateurs, OU, conteneurs) : DistinguishedName, Name, ObjectClass, ObjectGUID.
-    .synopsis = Get-ADObject [-Identity] <Object> | -Filter <String> | -LDAPFilter <String> [-SearchBase <String>] [-SearchScope <Base|OneLevel|Subtree>] [-Properties <String[]>]
+man-Get-ADObject = obtient n’importe quel objet de l’annuaire (comptes, groupes, ordinateurs, OU, conteneurs) : DistinguishedName, Name, ObjectClass, ObjectGUID. Avec -IncludeDeletedObjects, aussi les objets de la corbeille AD (dans CN=Deleted Objects, Deleted True, avec leur LastKnownParent).
+    .synopsis = Get-ADObject [-Identity] <Object> | -Filter <String> | -LDAPFilter <String> [-SearchBase <String>] [-SearchScope <Base|OneLevel|Subtree>] [-Properties <String[]>] [-IncludeDeletedObjects]
     .option-Identity = l’objet : son DN, son GUID, son SID ou son sAMAccountName (ou des objets venus du pipeline).
     .option-Filter = un filtre dans le langage du module (* pour tous).
     .option-LDAPFilter = un filtre LDAP.
     .option-SearchBase = où chercher (un DN).
     .option-SearchScope = Base, OneLevel ou Subtree (par défaut).
     .option-Properties = plus de propriétés (* pour toutes).
+    .option-IncludeDeletedObjects = aussi les objets supprimés (la corbeille).
     .example-1 = ce qui est directement dans une OU
+    .example-2 = ce que contient la corbeille AD
 man-New-ADUser = crée un compte du domaine dans une OU (CN=Users par défaut), désactivé sauf avec -Enabled $true et un mot de passe que la politique du domaine accepte (longueur, complexité : trois sortes de caractères, pas le nom). Un mot de passe refusé laisse quand même le compte créé, désactivé.
     .synopsis = New-ADUser [-Name] <String> [-GivenName <String>] [-Surname <String>] [-SamAccountName <String>] [-UserPrincipalName <String>] [-Path <String>] [-AccountPassword <SecureString>] [-Enabled <Boolean>] [-ChangePasswordAtLogon <Boolean>] [-PassThru]
     .option-Name = son nom (le CN).
@@ -3291,12 +3402,13 @@ man-Get-GPOReport = écrit le rapport d’une GPO, en XML ou en HTML : ses liens
     .option-ReportType = Xml ou Html.
     .option-Path = le fichier à écrire.
     .example-1 = un rapport à garder
-man-Invoke-GPUpdate = rafraîchit la stratégie de groupe sur cet ordinateur ou sur une machine du domaine (-Computer), comme gpupdate.
+man-Invoke-GPUpdate = rafraîchit la stratégie de groupe sur cet ordinateur ou sur une machine du domaine (-Computer), comme gpupdate : sur un poste de travail, pour l’ordinateur et la personne qui y est connectée.
     .synopsis = Invoke-GPUpdate [[-Computer] <String>] [-Force] [-Target <User|Computer>]
     .option-Computer = la machine.
     .option-Force = tout réappliquer.
     .option-Target = User ou Computer seulement.
     .example-1 = le serveur de fichiers, depuis le contrôleur de domaine
+    .example-2 = le poste d’une bibliothécaire, la partie utilisateur·rice seulement
 man-netsh = le shell réseau, encore dans beaucoup de scripts ; son contexte advfirewall lit et modifie le pare-feu Windows Defender : show rule name= une règle (Enabled, Direction, Profiles, LocalPort, RemoteIP, Action), add rule, delete rule, set rule … new enable=yes, show allprofiles (l’état), set allprofiles state on|off. Les cmdlets NetSecurity (Get-NetFirewallRule…) font la même chose en PowerShell.
     .synopsis = netsh advfirewall firewall show|add|delete|set rule name=NAME [dir=in|out] [action=allow|block] [protocol=TCP|UDP] [localport=N] [remoteip=ADDR] [new enable=yes|no] | netsh advfirewall show|set allprofiles|currentprofile [state on|off]
     .option-show-rule = montrer des règles par nom (name=all : toutes).
@@ -3313,11 +3425,155 @@ man-gpupdate = rafraîchit maintenant la stratégie de groupe sur cette machine 
     .option-target-computer-user = seulement la partie ordinateur ou la partie utilisateur·rice.
     .example-1 = après avoir changé une GPO
     .example-2 = seulement l’ordinateur
-man-gpresult = montre le jeu de stratégie résultant : pour l’ordinateur et la personne connectée, leur place dans l’annuaire, les GPO appliquées (la plus prioritaire d’abord), celles filtrées et pourquoi (Filtering: Denied (Security), Disabled (Link), Not Applied (Empty)), les groupes de sécurité. /h l’écrit comme une page web.
-    .synopsis = gpresult /r [/scope:user|computer] | /h FILE [/f]
+man-gpresult = montre le jeu de stratégie résultant : pour l’ordinateur et la personne connectée, leur place dans l’annuaire, les GPO appliquées (la plus prioritaire d’abord), celles filtrées et pourquoi (Filtering: Denied (Security), Disabled (Link), Not Applied (Empty)), les groupes de sécurité. /h l’écrit comme une page web. /s le lit sur un autre ordinateur du domaine, /user pour une personne (qui doit s’y être connectée : sinon « does not have RSoP data »).
+    .synopsis = gpresult [/s COMPUTER [/u DOMAIN\USER] [/p PASSWORD]] [/user [DOMAIN\]USER] /r [/scope:user|computer] | /h FILE [/f]
     .option-r = le résumé.
+    .option-s = l’ordinateur distant.
+    .option-user = les données de qui (par défaut, les vôtres).
     .option-scope-user-computer = une seule partie.
     .option-h = un rapport HTML dans un fichier.
     .option-f = écraser le fichier.
     .example-1 = ce qui s’applique ici, et ce qui a été filtré
     .example-2 = l’ordinateur seulement
+    .example-3 = ce qu’une bibliothécaire reçoit sur son poste
+man-cryptsetup = met en place des périphériques chiffrés avec dm-crypt, en LUKS2 par défaut : tout le périphérique (un disque ou une partition) est chiffré, derrière un en-tête qui contient jusqu'à 32 emplacements de clé (key slots). Chaque emplacement l'ouvre avec son propre secret : une phrase de passe ou un fichier de clé. luksFormat PÉRIPHÉRIQUE [FICHIERCLÉ] écrit un nouvel en-tête : tout ce que contenait le périphérique est perdu, et cryptsetup demande de taper YES, en majuscules, puis deux fois une phrase de passe (sauf si un fichier de clé est donné). open PÉRIPHÉRIQUE NOM (ou luksOpen) demande une clé et crée le périphérique en clair /dev/mapper/NOM : c'est sur lui que va le système de fichiers (mkfs.ext4), jamais sur le périphérique chiffré. close NOM (luksClose) le retire, une fois que plus rien n'y est monté. status NOM décrit un périphérique ouvert ; luksDump PÉRIPHÉRIQUE montre l'en-tête et ses emplacements ; luksAddKey PÉRIPHÉRIQUE [NOUVEAUFICHIERCLÉ] ajoute une clé (une clé existante est demandée d'abord) ; luksRemoveKey PÉRIPHÉRIQUE retire l'emplacement d'une phrase de passe, luksKillSlot PÉRIPHÉRIQUE N un emplacement par son numéro ; luksUUID PÉRIPHÉRIQUE donne l'UUID à écrire dans /etc/crypttab ; isLuks PÉRIPHÉRIQUE répond par son code de sortie ; luksHeaderBackup PÉRIPHÉRIQUE --header-backup-file FICHIER sauvegarde l'en-tête, sans lequel aucune clé n'ouvre plus rien. Codes de sortie : 1 paramètres erronés, 2 pas la permission (mauvaise phrase de passe), 4 mauvais périphérique, 5 périphérique déjà existant ou occupé. Réservé à root.
+    .synopsis = cryptsetup [OPTIONS] luksFormat PÉRIPHÉRIQUE [FICHIERCLÉ] ; cryptsetup open PÉRIPHÉRIQUE NOM [--key-file FICHIER] ; cryptsetup close NOM ; cryptsetup status NOM ; cryptsetup luksDump PÉRIPHÉRIQUE ; cryptsetup luksAddKey PÉRIPHÉRIQUE [NOUVEAUFICHIERCLÉ] ; cryptsetup luksRemoveKey PÉRIPHÉRIQUE ; cryptsetup luksUUID PÉRIPHÉRIQUE
+    .example-1 = trouver le périphérique : son type, son UUID, s'il est monté
+    .example-2 = chiffrer une partition (taper YES, puis deux fois la phrase de passe)
+    .example-3 = l'ouvrir : /dev/mapper/offsite apparaît
+    .example-4 = créer le système de fichiers sur le périphérique ouvert
+    .example-5 = ajouter un fichier de clé dans un autre emplacement
+    .example-6 = l'en-tête et ses emplacements de clé
+    .example-7 = décrire le périphérique ouvert
+    .example-8 = le fermer (démonter d'abord)
+    .example-9 = sauvegarder l'en-tête, ailleurs que sur le disque
+man-crypttab = /etc/crypttab décrit les périphériques chiffrés à ouvrir, un par ligne : le nom du périphérique ouvert (il devient /dev/mapper/NOM), le périphérique (de préférence UUID=… de l'en-tête LUKS : cryptsetup luksUUID ou blkid), le fichier de clé (none, ou -, pour demander une phrase de passe) et des options séparées par des virgules : luks, noauto (pas ouvert au démarrage, seulement à la demande : cryptdisks_start NOM), nofail (le démarrage n'attend pas si le périphérique manque), discard… Un disque amovible prend noauto ou nofail, comme sa ligne de /etc/fstab, qui monte /dev/mapper/NOM. Le fichier de clé doit appartenir à root et n'être lisible par personne d'autre.
+    .synopsis = NOM  PÉRIPHÉRIQUE  FICHIERCLÉ  OPTIONS
+    .example-1 = le lire
+    .example-2 = l'UUID à écrire dans la deuxième colonne
+    .example-3 = ouvrir un périphérique qu'il décrit (sous Debian)
+man-cryptdisks_start = ouvre un périphérique chiffré décrit dans /etc/crypttab, sous son nom, avec son fichier de clé (ou en demandant sa phrase de passe si le fichier de clé est none), comme le ferait le démarrage ; il prévient si le fichier de clé est lisible par quelqu'un d'autre que root. Le script de Debian, du paquet cryptsetup. Réservé à root.
+    .synopsis = cryptdisks_start NOM…
+    .example-1 = ouvrir le périphérique nommé offsite dans /etc/crypttab
+    .example-2 = puis le monter, comme le décrit /etc/fstab
+man-cryptdisks_stop = ferme un périphérique chiffré décrit dans /etc/crypttab (comme cryptsetup close), sauf si quelque chose y est encore monté. Réservé à root.
+    .synopsis = cryptdisks_stop NOM…
+    .example-1 = démonter d'abord
+    .example-2 = puis le fermer
+man-mkfs_ext4 = crée un nouveau système de fichiers ext4 sur un périphérique (une partition, un disque, un périphérique LUKS ouvert /dev/mapper/NOM). Tout ce que contenait le périphérique est perdu : mkfs.ext4 refuse un périphérique monté, et demande avant d'écraser un autre système de fichiers (-F pour ne pas demander). Sur un disque chiffré, il va sur le périphérique ouvert, jamais sur la partition chiffrée elle-même (son en-tête LUKS serait effacé). Réservé à root.
+    .synopsis = mkfs.ext4 [-L ÉTIQUETTE] [-F] [-q] PÉRIPHÉRIQUE
+    .option-L = l'étiquette du système de fichiers (LABEL=, dans /etc/fstab).
+    .option-F = ne pas demander avant d'écraser un système de fichiers existant.
+    .option-q = silencieux : pas de compte rendu.
+    .example-1 = le système de fichiers à l'intérieur d'un disque chiffré
+    .example-2 = un système de fichiers avec une étiquette
+man-sha256sum = calcule l'empreinte SHA-256 de fichiers : 64 caractères hexadécimaux qui changent complètement si un seul octet change. sha256sum FICHIER… écrit une ligne par fichier (« EMPREINTE  NOM »), à garder dans un fichier ; -c FICHIER relit une telle liste et vérifie à nouveau chaque fichier : NOM: OK, ou FAILED (et un avertissement à la fin, code de sortie 1). Les noms de la liste sont lus depuis là où vous êtes : lancez-le depuis le même répertoire. Pour prouver qu'une restauration rend exactement ce qui avait été sauvegardé.
+    .synopsis = sha256sum FICHIER… ; sha256sum -c LISTE
+    .option-c = vérifier les fichiers d'une liste (--check) ; --quiet n'affiche que les échecs, --status n'affiche rien (seulement le code de sortie).
+    .example-1 = l'empreinte d'un fichier
+    .example-2 = garder les empreintes de plusieurs fichiers
+    .example-3 = les vérifier, depuis le même répertoire
+man-export = (intégré à bash) marque des variables pour qu'elles soient transmises aux programmes que lance le shell : leur environnement. export NOM=valeur la définit et l'exporte ; export seul liste les variables exportées. NOM=valeur écrit avant une commande la transmet à cette commande seulement. sudo lance sa commande avec un environnement vide (env_reset) : écrivez les variables après sudo (sudo NOM=valeur commande), ou utilisez sudo -E, qui les garde. $NOM est remplacé par sa valeur sur la ligne de commande.
+    .synopsis = export [NOM[=VALEUR]…] ; NOM=VALEUR commande
+    .example-1 = restic y trouvera son dépôt
+    .example-2 = les variables exportées
+    .example-3 = sudo garde votre environnement (-E)
+    .example-4 = une variable pour cette commande seulement, après sudo
+man-unset = (intégré à bash) oublie une variable : elle n'est plus transmise aux programmes.
+    .synopsis = unset NOM…
+    .example-1 = oublier une variable
+man-promtool = l’outil de Prometheus (paquet Debian prometheus) : il vérifie les fichiers de configuration et de règles, et pose des questions à un serveur. check config FICHIER lit un prometheus.yml (et les fichiers de règles qu’il cite) et répond SUCCESS ou FAILED avec la ligne fautive ; check rules FICHIER… vérifie des fichiers de règles (leur YAML, l’expression PromQL de chaque règle, les durées de for:) ; check metrics lit des métriques au format texte sur son entrée et les critique ; query instant SERVEUR EXPR lance une requête PromQL sur un serveur et affiche une ligne par série (étiquettes => valeur @[horodatage]). Code de sortie 1 en cas d’échec. Vérifiez avant chaque rechargement : un Prometheus qui relit un fichier cassé garde son ancienne configuration et ne le dit que dans son journal.
+    .synopsis = promtool check config FICHIER… ; promtool check rules FICHIER… ; promtool check metrics ; promtool query instant [--time=TEMPS] SERVEUR EXPR
+    .example-1 = vérifier prometheus.yml et les fichiers de règles qu’il cite
+    .example-2 = vérifier un fichier de règles
+    .example-3 = le up de chaque cible, à cet instant
+    .example-4 = la part du temps où un processeur était inactif, sur les 5 dernières minutes
+    .example-5 = critiquer les métriques d’un exporteur
+man-prometheus = le serveur de supervision Prometheus (paquet Debian prometheus, service prometheus). Il va chercher : à chaque scrape_interval, il interroge les cibles de /etc/prometheus/prometheus.yml (scrape_configs, chaque job avec ses static_configs : des cibles hôte:port, des étiquettes en plus), par un GET HTTP sur /metrics, et range chaque série (un nom de métrique et ses étiquettes : job, instance…) avec ses échantillons ; up vaut 1 quand l’interrogation a marché, 0 sinon. À chaque evaluation_interval, il évalue les règles de rule_files (règles d’enregistrement, et règles d’alerte : expr, for:, labels, annotations) et envoie les alertes qui sonnent aux Alertmanager de alerting:. Son API HTTP, port 9090 : /api/v1/query?query=EXPR (POST marche aussi), /api/v1/targets, /api/v1/alerts, /api/v1/rules, /api/v1/status/config, /-/healthy, /-/ready ; /-/reload seulement avec --web.enable-lifecycle (ARGS dans /etc/default/prometheus). Il relit sa configuration sur SIGHUP (systemctl reload prometheus) ; un fichier invalide est alors refusé et l’ancienne configuration gardée (prometheus_config_last_reload_successful vaut 0).
+    .synopsis = prometheus [--config.file=FICHIER] [--web.enable-lifecycle] [--version]
+    .example-1 = la version du serveur
+    .example-2 = sa configuration
+    .example-3 = lui faire relire sa configuration et ses règles (SIGHUP)
+    .example-4 = ce qu’il en dit
+    .example-5 = ses cibles, leur santé et leur dernière erreur
+man-prometheus-alertmanager = l’Alertmanager (paquet Debian prometheus-alertmanager, service prometheus-alertmanager, port 9093) : il reçoit les alertes que Prometheus déclenche, les regroupe, les aiguille vers des destinataires et envoie les notifications. Sa configuration, /etc/prometheus/alertmanager.yml : route (receiver, group_by, group_wait : combien de temps un nouveau groupe attend les autres, group_interval : à quelle fréquence les changements d’un groupe partent, repeat_interval : au bout de combien de temps une alerte qui sonne encore est renvoyée, 4h par défaut ; routes : des routes imbriquées avec des conditions comme severity="page", la première qui correspond gagne sauf continue: true), receivers (webhook_configs avec url, email_configs…), inhibit_rules (une alerte qui en fait taire d’autres). Un silence fait taire les alertes que ses conditions désignent, d’un début à une fin, avec un commentaire et un auteur (amtool silence add). Il relit sa configuration sur SIGHUP (systemctl reload prometheus-alertmanager) ou POST /-/reload ; un fichier invalide est refusé, l’ancien gardé. API : /api/v2/alerts, /api/v2/silences, /api/v2/status.
+    .synopsis = prometheus-alertmanager [--config.file=FICHIER] [--version]
+    .example-1 = sa configuration
+    .example-2 = la vérifier
+    .example-3 = la lui faire relire
+    .example-4 = les alertes qu’il tient, par son API
+man-prometheus-node-exporter = l’exporteur de métriques de machine de Prometheus (paquet Debian prometheus-node-exporter, port 9100) : processeur (node_cpu_seconds_total, par cpu et mode), charge (node_load1), mémoire (node_memory_MemAvailable_bytes), systèmes de fichiers (node_filesystem_avail_bytes, node_filesystem_size_bytes, par device, fstype et mountpoint), réseau (node_network_receive_bytes_total)… au format texte, sur /metrics. Prometheus doit joindre son port : ne l’ouvrez qu’au serveur Prometheus, il en dit long sur la machine.
+    .synopsis = prometheus-node-exporter [--version]
+    .example-1 = ce qu’il expose
+    .example-2 = tourne-t-il ?
+    .example-3 = sa version
+man-amtool = la ligne de commande de l’Alertmanager (paquet Debian prometheus-alertmanager). Il trouve l’Alertmanager avec --alertmanager.url, ou dans /etc/amtool/config.yml ou ~/.config/amtool/config.yml (alertmanager.url: …). alert query [CONDITIONS] liste les alertes actives (--silenced et --inhibited ajoutent celles-là) ; silence add CONDITIONS --duration=DURÉE (ou --start et --end, en RFC 3339 : 2029-05-19T10:00:00Z) --comment=TEXTE crée un silence et affiche son ID (un commentaire est obligatoire ; l’auteur est votre compte) ; silence query liste les silences en cours et à venir (--expired, -q pour les seuls ID) ; silence expire ID… met fin à des silences ; check-config FICHIER… vérifie des fichiers alertmanager.yml ; config montre la configuration en service ; config routes dessine l’arbre d’aiguillage, config routes test ÉTIQUETTE=VALEUR… affiche le destinataire qu’atteindrait une alerte avec ces étiquettes (--config.file : d’après un fichier plutôt que l’Alertmanager en service). Une condition s’écrit nom=valeur, nom!=valeur, nom=~regex ou nom!~regex ; un premier mot sans opérateur est l’alertname.
+    .synopsis = amtool alert query [CONDITIONS] ; amtool silence add CONDITIONS --duration=D --comment=TEXTE ; amtool silence query ; amtool silence expire ID… ; amtool check-config FICHIER… ; amtool config routes [test ÉTIQUETTES]
+    .example-1 = les alertes actives
+    .example-2 = aussi celles qu’un silence fait taire
+    .example-3 = l’arbre d’aiguillage de l’Alertmanager en service
+    .example-4 = où irait une page sur un nœud ?
+    .example-5 = vérifier une configuration avant de la recharger
+    .example-6 = faire taire les alertes d’une machine pendant trois heures
+    .command-6 = amtool silence add instance="moyeu.internal:9100" --duration=3h --comment="disque changé"
+    .example-7 = les silences en cours ou à venir
+    .example-8 = mettre fin à un silence avant l’heure
+man-jq = un processeur de JSON : il lit du JSON (sur son entrée ou dans des fichiers), lui applique un filtre et affiche les résultats, indentés. . est l’entrée elle-même ; .clé une clé d’un objet (."clé" si elle a des caractères inhabituels), .[N] un élément d’un tableau, .[] chaque élément ; | passe chaque résultat au filtre suivant ; , donne plusieurs résultats ; {"{"}nom: .x, y{"}"} et [ … ] construisent des objets et des tableaux ; "\(.x) \(.y)" construit une chaîne ; select(CONDITION) garde ce qui correspond (==, !=, <, >, and, or, not) ; length, keys, map(f), sort_by(f), to_entries, join(", "), test("regex"), startswith("…"). Code de sortie 2 ou 3 pour une entrée illisible ou un filtre fautif, 5 pour une erreur pendant l’exécution.
+    .synopsis = jq [-r] [-c] [-n] [-S] [-e] FILTRE [FICHIER…]
+    .option-r = chaînes brutes : affichées sans leurs guillemets.
+    .option-c = compact : chaque résultat sur une ligne.
+    .option-n = entrée nulle : rien n’est lu, le filtre tourne une fois sur null.
+    .option-S = trie les clés des objets.
+    .option-e = code de sortie 1 si le dernier résultat est false ou null.
+    .example-1 = la réponse de Prometheus, indentée
+    .example-2 = chaque cible, avec son job, sa santé et sa dernière erreur
+    .example-3 = une ligne par série : son instance et sa valeur
+    .example-4 = combien d’alertes dans une réponse enregistrée
+man-sleep = attend un moment : un nombre de secondes, ou avec une unité (s, m, h, d) ; plusieurs durées s’additionnent. Dans le jeu, sleep rend la main tout de suite, et les histoires où le temps compte (métriques, alertes) laissent passer ce temps-là.
+    .synopsis = sleep NOMBRE[SUFFIXE]…
+    .example-1 = attendre une minute
+    .example-2 = attendre cinq minutes
+    .example-3 = une heure et demie
+man-kubectl = la ligne de commande de Kubernetes (ici, celle de k3s) : elle parle au serveur d'API du cluster avec les identifiants d'un fichier kubeconfig (KUBECONFIG, sinon ~/.kube/config, sinon /etc/rancher/k3s/k3s.yaml, que seul root peut lire). Les objets vivent dans des namespaces (-n NOM ; -A : tous ; par défaut celui du contexte, kubectl config set-context --current --namespace=NOM). get TYPE [NOM] liste des objets (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, configmaps, secrets, events, nodes, namespaces, all ; -o wide, yaml, json, name ou jsonpath='{"{"}.spec…{"}"}' ; -l app=NOM choisit par étiquette ; --show-labels ; -w suit les changements) ; describe TYPE NOM montre un objet en détail, avec ses Events à la fin ; logs POD (ou deploy/NOM) affiche la sortie d'un conteneur (-c CONTENEUR, --previous : le conteneur d'avant le dernier redémarrage, --tail=N, -f pour suivre) ; apply -f FICHIER|DOSSIER crée ou modifie les objets pour qu'ils correspondent aux fichiers (created, configured, unchanged) ; delete TYPE NOM ou -f FICHIER ; edit TYPE NOM ouvre l'objet vivant dans l'éditeur ; rollout status|history|undo|restart deployment/NOM ; scale deployment/NOM --replicas=N ; set image deployment/NOM CONTENEUR=IMAGE ; exec POD -- COMMANDE lance une commande dans un conteneur (-it POD -- sh : un shell) ; port-forward TYPE/NOM LOCAL:DISTANT relaie un port de votre machine tant qu'elle tourne ; run NOM --image=IMAGE lance un pod isolé ; expose deployment NOM --port=N crée un Service ; create configmap|secret generic NOM --from-literal=CLÉ=VALEUR --from-file=CHEMIN (--dry-run=client -o yaml pour seulement l'afficher) ; top pod|node (metrics-server) ; explain TYPE.CHAMP ; cluster-info ; version ; config view|get-contexts. Un Deployment possède des ReplicaSets (un par version de son modèle de pod), qui possèdent les Pods : supprimez un pod et son ReplicaSet en refait un ; changez le Deployment, pas ses pods. Un conteneur prend une variable d'une ConfigMap ou d'un Secret (env: valueFrom: configMapKeyRef ou secretKeyRef, avec name et key ; envFrom: configMapRef ou secretRef), lue une seule fois à son démarrage : après un changement, kubectl rollout restart. Les données d'un Secret sont en base64, un encodage, pas un chiffrement. Les ressources d'un conteneur : requests (ce que l'ordonnanceur réserve sur le nœud ; un pod dont les requests ne tiennent pas reste Pending) et limits (au-delà de sa limite de mémoire, le noyau tue le conteneur : OOMKilled, code de sortie 137).
+    .synopsis = kubectl get|describe|logs|apply|delete|edit|rollout|scale|set|exec|port-forward|run|expose|create|top|explain|config [ARGUMENTS] [-n NAMESPACE] [-A] [-o FORMAT] [-l SÉLECTEUR] [-f FICHIER]
+    .option-n = le namespace (--namespace).
+    .option-A = tous les namespaces (--all-namespaces).
+    .option-o = format de sortie : wide, yaml, json, name, jsonpath=MODÈLE (--output).
+    .option-l = seulement les objets dont les étiquettes correspondent : app=booking, tier!=db, env in (a,b) (--selector).
+    .option-f = un fichier de manifeste, ou un dossier qui en contient (--filename) ; pour logs, suivre (--follow).
+    .option-w = après la liste, suivre les changements, jusqu'à Ctrl-C (--watch).
+    .option-c = le conteneur, pour un pod qui en a plusieurs (--container).
+    .option-p = logs : l'instance précédente du conteneur, celle qui a planté (--previous).
+    .option-i = exec : passer votre entrée au conteneur (--stdin) ; avec -t, un shell interactif.
+    .option-t = exec : un terminal pour le conteneur (--tty).
+    .example-1 = les pods du namespace swim, leur état et leurs redémarrages
+    .example-2 = tous les pods du cluster, avec leur adresse et leur nœud
+    .example-3 = un pod en détail : ses conteneurs, leur état, et ses Events
+    .example-4 = ce que le conteneur a écrit avant de planter
+    .example-5 = créer ou mettre à jour tout ce que décrit un dossier de manifestes
+    .example-6 = attendre la fin du déploiement d'un Deployment (ou son échec)
+    .example-7 = à quels pods un Service envoie le trafic
+    .example-8 = le journal de Traefik, le contrôleur d'Ingress de k3s
+    .example-9 = faire de swim le namespace du contexte courant
+    .example-10 = un Deployment tel que le serveur d'API le garde, statut compris
+    .example-11 = un shell dans l'un des conteneurs d'un Deployment
+    .example-12 = un Secret, affiché sans être créé (sans --dry-run, il est créé)
+    .example-13 = ce que contient un Secret : base64 est un encodage, pas un chiffrement
+    .example-14 = de nouveaux pods pour un Deployment, un à un (ils relisent leurs variables)
+    .example-15 = la mémoire et le CPU qu'utilise chaque pod en ce moment
+    .example-16 = le nœud : sa capacité, ce qu'il peut donner (Allocatable) et ce que demandent les pods
+    .example-17 = les révisions d'un Deployment et leur CHANGE-CAUSE
+    .example-18 = revenir à une révision d'un Deployment
+man-k3s = un Kubernetes léger en un seul binaire (https://docs.k3s.io/), lancé comme service k3s (systemctl status k3s, journalctl -u k3s). Il apporte containerd, le contrôleur d'Ingress Traefik (ports 80 et 443 du nœud, via ServiceLB), CoreDNS, le provisionneur local-path et metrics-server, dans le namespace kube-system ; les pods reçoivent des adresses en 10.42.0.0/16, les Services en 10.43.0.0/16. Son kubeconfig est /etc/rancher/k3s/k3s.yaml (lisible par root seulement) ; kubectl est un lien vers k3s. k3s kubectl lance le même kubectl ; k3s --version affiche sa version ; k3s check-config vérifie les options du noyau.
+    .synopsis = k3s kubectl ARGUMENTS… ; k3s --version ; k3s check-config
+    .example-1 = la version de k3s
+    .example-2 = kubectl, avec les identifiants du serveur lui-même
+    .example-3 = le service tourne-t-il ?
+    .example-4 = ce qu'il dit de lui-même
+man-base64 = encode son entrée (ou un fichier) en base64, ou la décode avec -d. Le base64 écrit n'importe quels octets avec 64 caractères imprimables : c'est un encodage, pas un chiffrement ; n'importe qui peut le décoder. Un Secret Kubernetes garde ses valeurs en base64 (data:). Attention : echo ajoute un retour à la ligne, encodé lui aussi (echo -n non).
+    .synopsis = base64 [-d] [-w COLONNES] [FICHIER]
+    .option-d = décoder (--decode).
+    .option-w = couper les lignes encodées après COLONNES caractères (76 par défaut ; 0 : sans coupure).
+    .example-1 = encoder un mot, sans le retour à la ligne qu'echo ajouterait
+    .example-2 = le décoder
+    .example-3 = encoder un fichier sur une seule ligne

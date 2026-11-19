@@ -6,6 +6,8 @@
 // The sockets come from state.listening; the current ssh session appears as
 // an established connection, and so do the chapter's other connections
 // (state.established), as long as their process lives. Output in English (neither tool is translated).
+// -4 and -6 keep one address family: 0.0.0.0 is IPv4 only, [::] IPv6 only,
+// * an IPv6 socket that also accepts IPv4 (IPV6_V6ONLY off).
 // Differences: Internet sockets only (no Unix domain sockets), and netstat's
 // -r (routing) and -i (interfaces) are not modelled.
 
@@ -20,6 +22,8 @@ export interface Listening {
   port: number;
   process: string;
   pid: number;
+  // A [::] socket that also accepts IPv4 (IPV6_V6ONLY off): ss shows it as *.
+  v6only?: boolean;
 }
 
 export interface Connection {
@@ -65,12 +69,16 @@ export function connections(game: Shell, o: { listening: boolean; established: b
 export const SS: Record<string, Command> = {
   ss: {
     launch: ({ args, game }) => {
-      const letters = new Set(args.filter((a) => /^-[a-z]+$/.test(a)).flatMap((a) => [...a.slice(1)]));
+      const letters = new Set(args.filter((a) => /^-[a-z46]+$/.test(a)).flatMap((a) => [...a.slice(1)]));
       const tcp = letters.has('t') || !letters.has('u');
       const udp = letters.has('u');
       const numeric = letters.has('n');
       const withProcess = letters.has('p') && game.who === 'root';
-      const rows = connections(game, { listening: letters.has('l') || letters.has('a'), established: !letters.has('l') || letters.has('a'), tcp, udp });
+      // -4: IPv4 sockets only; -6: IPv6 ones (a * socket is an IPv6 socket that also takes IPv4).
+      const six = (a: string) => a.includes(':') || a === '*';
+      const rows = connections(game, { listening: letters.has('l') || letters.has('a'), established: !letters.has('l') || letters.has('a'), tcp, udp }).filter(
+        (c) => (!letters.has('4') || !six(c.local.address)) && (!letters.has('6') || six(c.local.address)),
+      );
       const lines: string[][] = [['State', 'Recv-Q', 'Send-Q', 'Local Address:Port', 'Peer Address:Port', 'Process']];
       for (const c of rows)
         lines.push([

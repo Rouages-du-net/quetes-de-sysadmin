@@ -108,6 +108,14 @@ presents them for people.
   mounted directories); the apps of the images are declared by the chapters
   (`APPS`); the command in `commands/docker.ts`. Docker Compose
   (`compose.yaml`, `.env`, the project's network) in `src/engine/compose.ts`.
+- Command lists on the interactive line (`a && b || c; d`): `splitList`
+  and `listRuns` in `src/engine/tools.ts`, run by `Shell.runLine`/`runList`
+  in `shell.ts` (each command as if typed alone: events, `afterCommand`;
+  paused by sudo's password, a question or nano, `Shell.pendingList`;
+  `Shell.listContinues` tells a chapter another command follows, as
+  `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
+  `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
+  `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in
@@ -172,7 +180,7 @@ presents them for people.
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
   `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what The Lab's
   chapters share.
-- `commands/restic.ts`: restic repositories (snapshots, deduplication,
+- `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
   declares in `chapters/index.ts` (`after`) the chapters to finish before
@@ -212,8 +220,8 @@ presents them for people.
   `src/engine/apt-conf.ts`.
 - `src/engine/lan.ts`: a router's local network (`state.lan`: interfaces,
   802.1Q VLANs on a trunk, the switch's devices, `/etc/network/interfaces`
-  read like ifupdown); `ip`, `ifup`, `ifdown`, `dnsmasq --test` in
-  `commands/lan.ts`; DHCP (`dnsmasq.ts`: configuration, leases, log);
+  read like ifupdown, `inet6` stanzas included); `ip`, `ifup`, `ifdown`,
+  `dnsmasq --test` in `commands/lan.ts`; DHCP (`dnsmasq.ts`: configuration, leases, log);
   `ping` goes through this model when the machine has one.
 - `src/engine/nftables.ts`: a router's nftables firewall (`state.nft`:
   tables, chains, rules read like `nft`, a packet's path, NAT, the devices'
@@ -418,7 +426,110 @@ presents them for people.
   task; `passMinutes` lets the domain's time pass with stacks' tasks);
   `comings-and-goings.ts` (an arrival and a departure checked on the
   directory), `stale-password.ts` (a lockout from a task's stale password,
-  `afterCommand` lets half an hour pass after an unlock).
+  `afterCommand` lets half an hour pass after an unlock),
+  `unapplied-policy.ts` (a GPO's link and security filtering, checked
+  with `resultant()` for every account; the domain's workstations as RSoP
+  sources: `ad.clients`, `logonClients`, `refreshClient` of
+  `windows-gpo.ts`, `gpresult /s /user`, Get-GPResultantSetOfPolicy) and
+  `dormant-accounts.ts` (a local firewall rule of stacks,
+  `WindowsOptions.firewallRules`; dormant accounts compared with a
+  snapshot taken by `initialise`; the CSV report read with `csvObjects`).
+  The AD Recycle Bin (`ad.recycleBin`, `ad.deleted`, `removeObject`,
+  `restoreObject`; Get-ADObject `-IncludeDeletedObjects`,
+  Restore-ADObject, Get-ADOptionalFeature) in `windows-ad.ts` and
+  `commands/windows-ad.ts`; Export-Csv, ConvertTo-Csv and Import-Csv in
+  `commands/windows-files.ts`.
+- `src/engine/luks.ts`: LUKS2 on a machine's storage (`storage.luks`: the
+  header and its key slots, a passphrase or a key file's content;
+  `storage.crypt`: the open mappings, `/dev/mapper/NAME`, the clear file
+  system kept in the header while closed; `/etc/crypttab` read by
+  `readCrypttab`); `cryptsetup` (`luksFormat` with the real YES question,
+  `open`, `close`, `status`, `luksDump`, `luksAddKey`, `luksRemoveKey`,
+  `luksKillSlot`, `luksUUID`, `luksHeaderBackup`), `cryptdisks_start` and
+  `cryptdisks_stop` in `commands/cryptsetup.ts`; `lsblk` (`crypt`), `blkid`
+  (`crypto_LUKS`) and `mount` know them; `mkfs.ext4` in
+  `commands/disks.ts`; `sha256sum` (a real SHA-256, `-c`) in
+  `commands/checksums.ts`; `dd if=/dev/urandom` (deterministic bytes).
+  Shell variables: `Shell.vars`, `Shell.exported`, `Shell.environment`
+  (a command's environment: `NAME=value command`; sudo resets it, except
+  `sudo NAME=value` and `sudo -E`), `$NAME` expanded, `export` and `unset`
+  in `commands/environment.ts`. restic: `init`, `key list/add/remove/passwd`
+  (`Repo.keys`), `RESTIC_REPOSITORY`/`RESTIC_PASSWORD_FILE`/
+  `RESTIC_PASSWORD`, `check --read-data`, what was run in
+  `state.resticDone`. `chapters/pantry.ts`: what the chapters of "The
+  Pantry" share (`crate`, the community grocery's server: its files and
+  their SHA256SUMS, the USB disk in clear or encrypted, the restic
+  repository with Noor's key and Mei's, the nightly job and its log;
+  `spare`, the restore drill's laptop, an internal host built by
+  `spareHost()`; `filesOf` finds a secret wherever it was written);
+  `lost-disk.ts`, `spare-key.ts`, `restore-drill.ts`. Tests:
+  `tests/pantry.test.ts`.
+- `src/engine/ipv6.ts`: IPv6 on a machine whose link has a router
+  (`Lan.ra`): addresses (`parse6`, `format6`, prefixes), link-local and
+  SLAAC addresses from the MAC (modified EUI-64), static ones
+  (`Interface.addresses6`), `/proc/sys/net/ipv6/conf/*/` (`accept_ra`,
+  `autoconf`, `disable_ipv6`), the IPv6 default route (`Lan.gateway6`),
+  `boot6` (what the next boot brings up), `resolve` (`/etc/hosts`, then the
+  story's DNS), and the outside view (`state.vantage`: neighbour discovery,
+  the firewall's verdict over nftables families and ufw's `IPV6=`, who
+  listens: `0.0.0.0`, `[::]`, `*`); `ip -6`, `ip neigh` and `inet6`
+  stanzas in `lan.ts` and `commands/lan.ts`; `curl` (`-4`, `-6`, `-v`),
+  `ping`/`ping6` (`%eth0`) and `nc` in both families in
+  `commands/ipv6.ts`; `nmap -6` (`ScanHost.probe`); nginx's `listen [::]`,
+  `ipv6only=off` and `nginxSockets`. `chapters/ferry.ts`: what the chapters
+  of "The Ferry" share (`quay`, the ferry cooperative's server: its link,
+  its zone `ferry.example`, nginx and the booking app whose sockets follow
+  their configuration, `syncSockets`; `lookout`, islenet's box on the
+  internet, an internal host; `audit` checks a ruleset in both families);
+  `new-card.ts`, `other-door.ts`, `both-ways.ts`. Tests:
+  `tests/ferry.test.ts`.
+- `src/engine/promql.ts`: PromQL (parser with Prometheus's messages,
+  evaluator over a `Storage`: selectors, ranges, `rate` and its
+  extrapolation, aggregations, operators and one-to-one matching, values
+  written like Go); `src/engine/prometheus.ts`: a machine's Prometheus
+  (`state.prometheus`: `prometheus.yml` and rule files read like
+  Prometheus, targets scraped through the story's network
+  `state.metricsNet` (`MetricsNet`: names, firewalls, what each port
+  answers), the series, rules and alerts' states, `advance()` tick by tick,
+  the HTTP API `promHttp`); `src/engine/alertmanager.ts`
+  (`state.alertmanager`: routes, groups, webhooks, silences, inhibition);
+  `promtool`, `amtool`, the daemons' binaries, the Alertmanager's API, curl
+  on a machine with `state.metricsHere` and `sleep` (`state.slept`) in
+  `commands/prometheus.ts`; `jq` in `commands/jq.ts`. An internal host
+  may pass time too (`InternalHost.afterCommand`). `chapters/bike-share.ts`:
+  what the chapters of "The Bike Share" share (`gauge`, the monitoring
+  server; `saddle` and `hub`, internal hosts with their ufw and exporters;
+  the metrics computed from the machines' files and the app's traffic;
+  `passTime`; `trial()` tries a rule on made-up days); `blind-spot.ts`,
+  `threshold.ts`, `quiet-hours.ts`. Tests: `tests/bike-share.test.ts`.
+- `src/engine/k8s.ts`: a single-node k3s cluster (`state.k8s`: the
+  objects, their schemas for kubectl's strict decoding, the API server's
+  defaults and validation, `plan`/`carryOut` for `kubectl apply` and
+  `inSync` (the files are what runs); the Deployment controller (rolling
+  update, revisions, progress deadline), the ReplicaSet controller, the
+  scheduler (requests, `FailedScheduling`), the kubelet (image pulls and
+  back-off, `CreateContainerConfigError`, restarts and `CrashLoopBackOff`,
+  `OOMKilled` from `limits.memory`, httpGet/tcpSocket/exec probes), events,
+  Endpoints and EndpointSlices, Traefik's routes from the Ingresses and its
+  log, `request()` for curl and pods, `containerExec` (BusyBox's applets),
+  `bootstrap` for kube-system as k3s installs it; `tick()` is one second,
+  `advance()` lets time pass). The images' apps are declared by the story
+  (`K8sApp`: ports, start, http, memory, cpu, files). `kubectl` in
+  `commands/kubectl.ts` (get with its printers and Go's tabwriter, describe,
+  logs, apply, create, delete, edit, rollout, scale, set image, exec,
+  port-forward, run, expose, top, explain, config, jsonpath), `k3s` and
+  `base64` in `commands/k3s.ts`; curl reaches the cluster through
+  `state.metricsNet` (the Host header). `chapters/pool.ts`: what the
+  chapters of "The Pool" share (`lane`, the pool's server: its cluster's
+  past replayed by `initialiseLane`, the booking app of each release,
+  `~/manifests`, ten seconds per command in `passTime`; `k.story`: the
+  outside database's password, the swim meet's hours and the memory that
+  follows them, 2.4.0's leak; chapter 3's git repository and its shared
+  bare one, `manifestsHistory`); `wont-start.ts`, `front-desk.ts`,
+  `locker-room.ts` (a password from a ConfigMap and git to a Secret,
+  checked on the pods' environment and both repositories' last commit),
+  `deep-end.ts` (OOMKilled, `kubectl top`, requests and limits, a rollback).
+  `git log -p` in `commands/git.ts`. Tests: `tests/pool.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

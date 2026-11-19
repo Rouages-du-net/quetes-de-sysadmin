@@ -67,3 +67,16 @@ password-ledger-2029 = ledger-2029
 password-millstone-2029 = millstone-2029
 
 password-drafting-2029 = drafting-2029
+## The Pantry: sudo, Mei's passphrase for the disk, the restic recovery password
+password-shelf-2029 = shelf-2029
+password-tram-lemon-harbour-58 = tram-lemon-harbour-58
+password-basket-orchard-copper-73 = basket-orchard-copper-73
+## The Ferry: sudo
+password-tide-2029 = tide-2029
+## The Bike Share: sudo
+password-pedal-2029 = pedal-2029
+## The Pool: sudo
+password-splash-2029 = splash-2029
+## The Pool: the booking database's password, old (in the repository) and new (Kemal's)
+password-lane4-butterfly-17 = lane4-butterfly-17
+password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz

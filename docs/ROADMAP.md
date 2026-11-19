@@ -549,7 +549,7 @@ them safely.
       task that silently stopped (an expired password, then a script whose
       non-terminating errors left its exit code at 0: `try`/`catch`,
       `$ErrorActionPreference`, `-ErrorVariable` in the engine).
-- [ ] **Later on Windows: Active Directory basics** (users, groups, GPO,
+- [x] **Later on Windows: Active Directory basics** (users, groups, GPO,
       `Get-ADUser`), the natural sequel to "The Directory" (OpenLDAP); the
       firewall (`Get-NetFirewallRule`); functions and loops in the
       PowerShell engine (`function`, `while`, `for`, `switch`).
@@ -572,35 +572,59 @@ them safely.
       conventions (AGDLP, a leaver disabled and moved, not deleted), and a
       lockout whose source is a scheduled task holding an old password
       (tasks under domain accounts, a trigger's repetition, ssh.exe,
-      Add-/Remove-ADPrincipalGroupMembership in the engine). Next:
-      chapters 3 (a GPO linked to the wrong OU) and 4 (a firewall rule to
-      narrow, dormant accounts audited with a loop and a CSV).
+      Add-/Remove-ADPrincipalGroupMembership in the engine), and chapters
+      3-4 done: a GPO linked to the wrong OU and filtered one group short
+      (the domain's workstations and their RSoP: `gpresult /s /user`,
+      Get-GPResultantSetOfPolicy, Invoke-GPUpdate `-Computer`), a Remote
+      Desktop rule open to Any narrowed or disabled, dormant accounts
+      closed by a loop or a function with a CSV report (Export-Csv,
+      ConvertTo-Csv, Import-Csv); the AD Recycle Bin (Get-ADObject
+      `-IncludeDeletedObjects`, Restore-ADObject, Get-ADOptionalFeature)
+      makes chapter 1's deletion recoverable.
 
 ## More ideas
 
 ### New stories (defensive, within the charter)
 
-- [ ] **Encrypted backups**: a backup you can actually trust. LUKS on a
+- [x] **Encrypted backups**: a backup you can actually trust. LUKS on a
   backup disk (`cryptsetup luksFormat`/`luksOpen`, a keyfile vs a
   passphrase, `/etc/crypttab`), restic or borg to an encrypted repository
   already partly modelled (`commands/restic.ts`), a restore drill, and the
   key-management trap (a backup whose key is only on the machine it backs
-  up). Extends the backups path.
-- [ ] **IPv6**: the same services, two address families. SLAAC vs a static
+  up). Extends the backups path. Done: story 33, "The Pantry" (LUKS,
+  `cryptsetup`, crypttab and `cryptdisks_start`, `mkfs.ext4`; restic
+  `init`, `key`, its environment variables, `check --read-data`;
+  `sha256sum`; shell variables and `sudo -E`; a restore drill on an
+  internal host with only escrowed secrets).
+- [x] **IPv6**: the same services, two address families. SLAAC vs a static
   address, `ip -6`, a firewall that only covered IPv4 (ufw and nftables
   rules duplicated for v6, the classic "closed on v4, open on v6" hole),
   AAAA records in BIND, `ping6`/`curl -6`. Builds on the network engine
-  (`src/engine/lan.ts`, `nftables.ts`, `dns.ts`).
-- [ ] **Metrics and alerting** (Prometheus/Alertmanager): reading a
+  (`src/engine/lan.ts`, `nftables.ts`, `dns.ts`). Done: story 34, "The
+  Ferry" (`ipv6.ts`: SLAAC and EUI-64, link-local, `inet6` stanzas,
+  `ip -6`, `ping6` and `%eth0`, AAAA records and the serial; a `table ip`
+  firewall turned `inet` with ICMPv6; `nmap -6`, `nc -6`, `ss -6`;
+  nginx's `listen [::]:80` and `ipv6only`, `curl -4`/`-6 -v`, localhost
+  as `::1`; ufw's `IPV6=`).
+- [x] **Metrics and alerting** (Prometheus/Alertmanager): reading a
   service the way "The Huts" reads logs. A node exporter and an app's
   `/metrics`, a scrape config, a PromQL threshold, an alert rule that
   fires and resolves, and silencing during maintenance. All simulated and
-  deterministic, like the rest.
-- [ ] **Containers in production, step 2** (a light Kubernetes, k3s):
+  deterministic, like the rest. Done: story 35, "The Bike Share"
+  (`promql.ts`, `prometheus.ts`, `alertmanager.ts`: targets scraped
+  through the story's network and its firewalls, the HTTP APIs answering
+  curl, rules with `for:` tried on made-up days, routing, repeat interval
+  and silences; `promtool`, `amtool`, `jq`, `sleep`).
+- [x] **Containers in production, step 2** (a light Kubernetes, k3s):
   after Docker and Compose, one node. A Pod that won't start
   (`kubectl get`/`describe`/`logs`, an image or a probe failing), a
   Service and an Ingress, a ConfigMap and a Secret, resource limits and an
-  OOMKilled pod. A big engine piece — scope it as several PRs.
+  OOMKilled pod. Done: the engine (`k8s.ts`, `kubectl`, `k3s`) and "The
+  Pool" (story 36): a pod that won't start; a Service, an Ingress and a
+  readiness probe; a database password moved from a ConfigMap and a git
+  repository to a Secret (base64, `rollout restart`, rotation, `git log
+  -p`); memory requests and limits under a swim meet's load (OOMKilled,
+  `kubectl top`, a leaky release rolled back, `FailedScheduling`).
 
 ### Other ideas
 

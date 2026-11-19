@@ -440,3 +440,30 @@ name-hr-0112-arrival-txt = hr-0112-arrival.txt
 name-hr-0113-departure-txt = hr-0113-departure.txt
 name-conventions-txt = conventions.txt
 name-vault-svc_scans-txt = vault-svc_scans.txt
+name-city-it-audit-txt = city-it-audit.txt
+
+## The Pantry
+name-message_from_fatou-txt = message_from_fatou.txt
+name-note_from_mei-txt = note_from_mei.txt
+name-drill-txt = drill.txt
+name-pantry = pantry
+name-families-csv = families.csv
+name-volunteers-csv = volunteers.csv
+name-last-sync-txt = last-sync.txt
+
+## The Ferry
+name-message_from_amaru-txt = message_from_amaru.txt
+name-email_from_rangi-txt = email_from_rangi.txt
+name-scan_report-txt = scan_report.txt
+name-note_from_lucia-txt = note_from_lucia.txt
+
+## The Bike Share
+name-message_from_ngozi-txt = message_from_ngozi.txt
+name-note_from_tomas-txt = note_from_tomas.txt
+name-RELEASE-NOTES-txt = RELEASE-NOTES.txt
+
+## The Pool
+name-message_from_folake-txt = message_from_folake.txt
+name-note_from_rui-txt = note_from_rui.txt
+name-note_from_kemal-txt = note_from_kemal.txt
+name-new_db_password-txt = new_db_password.txt

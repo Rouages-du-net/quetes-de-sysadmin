@@ -121,6 +121,21 @@ import { logFlood } from './log-flood';
 import { silentBackup } from './silent-backup';
 import { comingsAndGoings } from './comings-and-goings';
 import { stalePassword } from './stale-password';
+import { unappliedPolicy } from './unapplied-policy';
+import { dormantAccounts } from './dormant-accounts';
+import { lostDisk } from './lost-disk';
+import { spareKey } from './spare-key';
+import { restoreDrill } from './restore-drill';
+import { newCard } from './new-card';
+import { otherDoor } from './other-door';
+import { bothWays } from './both-ways';
+import { blindSpot } from './blind-spot';
+import { threshold } from './threshold';
+import { quietHours } from './quiet-hours';
+import { wontStart } from './wont-start';
+import { frontDesk } from './front-desk';
+import { lockerRoom } from './locker-room';
+import { deepEnd } from './deep-end';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -287,7 +302,27 @@ export const STORIES: Story[] = [
   {
     id: 'card-catalogue',
     after: ['silent-backup', 'directory'],
-    chapters: [comingsAndGoings, stalePassword],
+    chapters: [comingsAndGoings, stalePassword, unappliedPolicy, dormantAccounts],
+  },
+  {
+    id: 'pantry',
+    after: ['snapshots', 'stuck-boot'],
+    chapters: [lostDisk, spareKey, restoreDrill],
+  },
+  {
+    id: 'ferry',
+    after: ['vlan', 'works-for-me'],
+    chapters: [newCard, otherDoor, bothWays],
+  },
+  {
+    id: 'bike-share',
+    after: ['ssh-alerts'],
+    chapters: [blindSpot, threshold, quietHours],
+  },
+  {
+    id: 'pool',
+    after: ['compose', 'blue-green'],
+    chapters: [wontStart, frontDesk, lockerRoom, deepEnd],
   },
 ];
 

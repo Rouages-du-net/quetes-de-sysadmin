@@ -74,6 +74,21 @@ export const CODE_ORDER = [
   'silent-backup',
   'comings-and-goings',
   'stale-password',
+  'unapplied-policy',
+  'dormant-accounts',
+  'lost-disk',
+  'spare-key',
+  'restore-drill',
+  'new-card',
+  'other-door',
+  'both-ways',
+  'blind-spot',
+  'threshold',
+  'quiet-hours',
+  'wont-start',
+  'front-desk',
+  'locker-room',
+  'deep-end',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

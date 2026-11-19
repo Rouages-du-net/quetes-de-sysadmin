@@ -15,8 +15,16 @@ crontab-retry = (The crontab was not installed. Run crontab -e again to fix it: 
 restic-usage =
     Usage:
       restic [command]
-    (Here: restic -r repository --password-file file snapshots|ls|find|diff|dump|restore|backup|forget|prune|check|stats; see man restic)
-restic-init = (Here, the repository already exists: you don't create a new one. See man restic.)
+    (Here: restic -r repository --password-file file init|snapshots|ls|find|diff|dump|restore|backup|forget|prune|check|stats|key; see man restic)
+
+## cryptsetup, mkfs.ext4, dd
+
+cryptsetup-usage =
+    Usage: cryptsetup [-?vyrqVDIMPTcsdhlwSbo] [OPTION...] <action> <action-specific>
+    (Here: cryptsetup luksFormat|open|close|status|luksDump|luksAddKey|luksRemoveKey|luksKillSlot|isLuks|luksUUID; see man cryptsetup)
+cryptsetup-only-luks2 = (The game only simulates LUKS2, cryptsetup's default type: leave out --type, or write --type luks2.)
+mkfs-only-ext4 = (The game only makes ext4 file systems: mkfs.ext4 DEVICE.)
+dd-random-endless = dd: { $file } never runs dry: give count= (and bs=) to say how much to read. (On a real system, dd would keep reading until you stop it with Ctrl-C.)
 
 ## rsnapshot
 

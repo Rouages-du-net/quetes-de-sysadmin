@@ -96,7 +96,7 @@ for (const width of [1000, 375]) {
   check(!recalled.includes('ssh royaume'), `${width} px: the up arrow ignores the workstation's history`);
   await input.fill('');
   // Every group of commands is in the bundle (a module loaded too early used to leave some out).
-  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat', 'svcs', 'zfs', 'iconv', 'file', 'cobc', 'dd', 'xxd', 'od', 'hexdump', 'tn5250', 'system', 'db2', 'DSPMSG', 'SAVLIB', 'dos2unix', 'tr', 'Get-Help']) {
+  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat', 'svcs', 'zfs', 'iconv', 'file', 'cobc', 'dd', 'xxd', 'od', 'hexdump', 'tn5250', 'system', 'db2', 'DSPMSG', 'SAVLIB', 'dos2unix', 'tr', 'Get-Help', 'promtool', 'amtool', 'jq', 'kubectl', 'k3s', 'base64']) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }
@@ -691,7 +691,7 @@ for (const width of [1000, 375]) {
   await game.locator('.view-choice button', { hasText: 'Parcours' }).click();
   await game.locator('.paths select').selectOption('security');
   const maps = game.locator('.paths-list button');
-  check((await maps.count()) === 25 && (await game.locator('.paths-progress').textContent()).includes('1 sur 25'), `paths ${width} px: the path and its progress`);
+  check((await maps.count()) === 27 && (await game.locator('.paths-progress').textContent()).includes('1 sur 27'), `paths ${width} px: the path and its progress`);
   const next = game.locator('.paths-list button[data-next]');
   check((await next.textContent()).includes('Le pare-feu') && (await game.locator('.paths-list button[data-state="locked"]').first().textContent()).includes('D\'abord'), `paths ${width} px: the next one, and what is waiting`);
   await next.click();

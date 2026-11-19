@@ -8,7 +8,9 @@
 // New-ADOrganizationalUnit, Set-ADOrganizationalUnit,
 // Remove-ADOrganizationalUnit, Move-ADObject, Get-ADObject, Get-ADComputer,
 // Get-ADDomain, Get-ADDomainController, Get-ADDefaultDomainPasswordPolicy,
-// Set-ADDefaultDomainPasswordPolicy; and `net user /domain`.
+// Set-ADDefaultDomainPasswordPolicy, the AD Recycle Bin (Get-ADObject
+// -IncludeDeletedObjects, Restore-ADObject, Get-ADOptionalFeature); and
+// `net user /domain`.
 // An object shows its default property set, sorted by name like the
 // module's (-Properties adds some, -Properties * every one the game models);
 // -Identity takes a DN, a GUID, a SID or a sAMAccountName, or objects from
@@ -19,7 +21,9 @@
 // set-adaccountpassword, search-adaccount, get-adgroupmember,
 // add-adgroupmember, get-adprincipalgroupmembership,
 // new-adorganizationalunit, move-adobject, get-addomain,
-// get-addefaultdomainpasswordpolicy; about_ActiveDirectory_Filter; net user
+// get-addefaultdomainpasswordpolicy, restore-adobject, get-adoptionalfeature;
+// "AD Recycle Bin" (https://learn.microsoft.com/windows-server/identity/ad-ds/get-started/adac/advanced-ad-ds-management-using-active-directory-administrative-center--level-200-#ad_recycle_bin);
+// about_ActiveDirectory_Filter; net user
 // (https://learn.microsoft.com/windows-server/administration/windows-commands/net-user).
 // Differences (docs/SCENARIOS.md): the properties the game models, no
 // -Server/-Credential (accepted, ignored), no -ResultPageSize paging.
@@ -27,7 +31,7 @@
 import type { Shell } from '../shell';
 import { windows } from '../windows';
 import {
-  COMPUTER_DEFAULT, GROUP_DEFAULT, OU_DEFAULT, USER_DEFAULT, AdFilterError, accountExpired, adClock, adProperties, addObject, below, byDn, directGroups, domainDn, domainOf, filterMatches, findIdentity, groupMembers, ldapAttributes, ldapMatch, lockedOut, moveObject, parentDn, parseAdFilter, passwordExpired, passwordExpiry, passwordRejected, removeObject, sameDn, setAdPassword,
+  COMPUTER_DEFAULT, GROUP_DEFAULT, OU_DEFAULT, USER_DEFAULT, AdFilterError, accountExpired, adClock, adProperties, addObject, below, byDn, directGroups, domainDn, domainOf, filterMatches, findIdentity, groupMembers, ldapAttributes, ldapMatch, lockedOut, moveObject, parentDn, parseAdFilter, passwordExpired, passwordExpiry, passwordRejected, removeObject, restoreObject, sameDn, setAdPassword, deletedObjectsContainer, findDeleted, formerDn,
   type AdClass, type AdObject, type Domain,
 } from '../windows-ad';
 import { PSDate, PSHashtable, PSScriptBlock, PSSecureString, arr, isObject, str, text, values, type Cmdlet, type Failure, type PSObject, type Run, type View } from '../powershell';
@@ -66,12 +70,15 @@ const DEFAULTS: Partial<Record<AdClass, string[]>> = { user: USER_DEFAULT, group
 
 /** An object as the module returns it: its default properties, the ones asked for, sorted by name. */
 export function adObject(c: Ctx, o: AdObject, wanted: string[] = [], as?: { type: string; keys: string[] }): PSObject {
+  return adObjectOf(c, o, wanted, as);
+}
+function adObjectOf(c: Ctx, o: AdObject, wanted: string[] = [], as?: { type: string; keys: string[] }): PSObject {
   const all = adProperties(c.ad, o, c.now);
   const find = (n: string) => Object.keys(all).find((k) => k.toLowerCase() === n.toLowerCase());
   let keys: string[];
   if (as) keys = as.keys;
   else if (wanted.includes('*')) keys = Object.keys(all);
-  else keys = [...(DEFAULTS[o.cls] ?? ['DistinguishedName', 'Name', 'ObjectClass', 'ObjectGUID']), ...wanted.map((w) => find(w) ?? w)];
+  else keys = [...(DEFAULTS[o.cls] ?? ['DistinguishedName', 'Name', 'ObjectClass', 'ObjectGUID']), ...(o.deleted ? ['Deleted'] : []), ...wanted.map((w) => find(w) ?? w)];
   const unique = keys.filter((k, i) => keys.findIndex((x) => x.toLowerCase() === k.toLowerCase()) === i).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   const props: Record<string, unknown> = {};
   for (const k of unique) {
@@ -86,7 +93,8 @@ export function adObject(c: Ctx, o: AdObject, wanted: string[] = [], as?: { type
 function wantedProperties(r: Run, c: Ctx, cmdlet: string, sample: AdObject | undefined): string[] | null {
   const wanted = arr(r.p.Properties).flatMap((x) => x.split(',')).map((x) => x.trim()).filter(Boolean);
   if (!sample || wanted.includes('*')) return wanted;
-  const known = Object.keys({ ...adProperties(c.ad, sample, c.now), ...ldapAttributes(c.ad, sample, c.now) }).map((k) => k.toLowerCase());
+  // The Recycle Bin's attributes exist on every object (empty when it isn't deleted).
+  const known = [...Object.keys({ ...adProperties(c.ad, sample, c.now), ...ldapAttributes(c.ad, sample, c.now) }), 'Deleted', 'isDeleted', 'LastKnownParent', 'msDS-LastKnownRDN'].map((k) => k.toLowerCase());
   const bad = wanted.find((w) => !known.includes(w.toLowerCase()));
   if (bad) {
     r.fail(systemFailure(cmdlet, `One or more properties are invalid.\nParameter name: ${bad}`, 'InvalidArgument', 'ArgumentException'));
@@ -127,12 +135,30 @@ function getObjects(r: Run, cmdlet: string, classes: AdClass[], label: string): 
   const c = need(r, cmdlet);
   if (!c) return [];
   const sample = c.ad.objects.find((o) => classes.includes(o.cls));
-  const wanted = wantedProperties(r, c, cmdlet, sample);
-  if (!wanted) return [];
-  if (r.p.Identity !== undefined || (r.input?.length && r.p.Filter === undefined && r.p.LDAPFilter === undefined)) return identities(r, c, cmdlet, classes, label).map((o) => adObject(c, o, wanted));
+  const found = wantedProperties(r, c, cmdlet, sample);
+  if (!found) return [];
+  const wanted = found;
+  // Get-ADObject returns ADObjects: their own default set, whatever the class (Deleted for a deleted one).
+  const generic = cmdlet === 'Get-ADObject';
+  const adObject = (c: Ctx, o: AdObject, w: string[]) => {
+    if (!generic || w.includes('*')) return adObjectOf(c, o, w);
+    const all = Object.keys(adProperties(c.ad, o, c.now));
+    const keys = ['DistinguishedName', 'Name', 'ObjectClass', 'ObjectGUID', ...(o.deleted ? ['Deleted'] : []), ...w.map((x) => all.find((k) => k.toLowerCase() === x.toLowerCase()) ?? x)];
+    return adObjectOf(c, o, [], { type: 'ADObject', keys });
+  };
+  // Get-ADObject -IncludeDeletedObjects: the Recycle Bin's objects too (and CN=Deleted Objects itself).
+  const bin = r.p.IncludeDeletedObjects && c.ad.recycleBin ? [deletedObjectsContainer(c.ad), ...(c.ad.deleted ?? [])] : [];
+  if (r.p.Identity !== undefined || (r.input?.length && r.p.Filter === undefined && r.p.LDAPFilter === undefined)) {
+    if (bin.length && r.p.Identity !== undefined) {
+      const typed = text(r.p.Identity);
+      const gone = bin.find((o) => o.guid.toLowerCase() === typed.replace(/[{}]/g, '').toLowerCase() || sameDn(o.dn, typed));
+      if (gone) return [adObject(c, gone, wanted)];
+    }
+    return identities(r, c, cmdlet, classes, label).map((o) => adObject(c, o, wanted));
+  }
   const scope = inScope(r, c, cmdlet);
   if (!scope) return [];
-  const pool = c.ad.objects.filter((o) => classes.includes(o.cls) && scope(o.dn));
+  const pool = [...c.ad.objects, ...bin].filter((o) => classes.includes(o.cls) && scope(o.dn));
   let match: (o: AdObject) => boolean;
   if (r.p.LDAPFilter !== undefined) {
     const f = ldapMatch(c.ad, str(r.p.LDAPFilter), c.now);
@@ -272,7 +298,7 @@ function removeObjects(r: Run, cmdlet: string, classes: AdClass[], label: string
       r.fail(adFailure(cmdlet, 'The directory service can perform the requested operation only on a leaf object', 'NotSpecified', 'ADException', `${o.dn}:${label}`));
       continue;
     }
-    removeObject(c.ad, o);
+    removeObject(c.ad, o, c.now);
   }
   return [];
 }
@@ -669,6 +695,80 @@ function setPasswordPolicy(r: Run): unknown[] {
 
 // ——— The cmdlets ———
 
+// ——— The AD Recycle Bin ———
+
+/** Restore-ADObject: a deleted object (from the pipeline, its GUID or its DN in CN=Deleted Objects) back where it was. */
+function restore(r: Run): unknown[] {
+  const c = need(r, 'Restore-ADObject');
+  if (!c) return [];
+  const raw = r.p.Identity !== undefined ? values(r.p.Identity) : (r.input ?? []);
+  const out: unknown[] = [];
+  for (const v of raw) {
+    const data = isObject(v) && v.data && typeof v.data === 'object' && 'cls' in (v.data as object) ? (v.data as AdObject) : null;
+    const typed = data ? data.guid : isObject(v) ? text(v.props.ObjectGUID ?? v.props.DistinguishedName ?? v) : text(v);
+    const o = (data && (c.ad.deleted ?? []).includes(data) ? data : null) ?? findDeleted(c.ad, typed);
+    if (!o) {
+      // A live object, or nothing: the module says it can't find it (it searches the deleted objects).
+      r.fail(adFailure('Restore-ADObject', `Cannot find an object with identity: '${typed}' under: '${domainDn(c.ad.dns)}'.`, 'ObjectNotFound', 'ADIdentityNotFoundException', `${typed}:ADObject`));
+      continue;
+    }
+    if (!r.should('Restore', formerDn(o))) continue;
+    const error = restoreObject(c.ad, o, c.now, r.p.TargetPath !== undefined ? str(r.p.TargetPath) : undefined, r.p.NewName !== undefined ? str(r.p.NewName) : undefined);
+    if (error) {
+      r.fail(adFailure('Restore-ADObject', error, 'NotSpecified', 'ADException', `${o.dn}:ADObject`));
+      continue;
+    }
+    if (r.p.PassThru) out.push(adObject(c, o));
+  }
+  return out;
+}
+
+const RECYCLE_BIN_GUID = '766ddcd8-acd0-445e-f3b9-a7f9b6744f2a';
+const PAM_GUID = 'ec43e873-cce8-4640-b4ab-07ffe4ab5bcd';
+
+/** Get-ADOptionalFeature: the Recycle Bin (enabled or not) and Privileged Access Management (not). */
+function optionalFeature(r: Run): unknown[] {
+  const c = need(r, 'Get-ADOptionalFeature');
+  if (!c) return [];
+  const base = domainDn(c.ad.dns);
+  const config = `CN=Optional Features,CN=Directory Service,CN=Windows NT,CN=Services,CN=Configuration,${base}`;
+  const feature = (name: string, guid: string, enabled: boolean, forestMode: string): PSObject => ({
+    type: 'ADOptionalFeature',
+    fullType: 'Microsoft.ActiveDirectory.Management.ADOptionalFeature',
+    text: `CN=${name},${config}`,
+    props: {
+      DistinguishedName: `CN=${name},${config}`,
+      EnabledScopes: enabled ? [`CN=Partitions,CN=Configuration,${base}`, `CN=NTDS Settings,CN=${c.ad.dc},CN=Servers,CN=Default-First-Site-Name,CN=Sites,CN=Configuration,${base}`] : [],
+      FeatureGUID: guid,
+      FeatureScope: ['ForestOrConfigurationSet'],
+      IsDisableable: false,
+      Name: name,
+      ObjectClass: 'msDS-OptionalFeature',
+      ObjectGUID: guid,
+      RequiredDomainMode: null,
+      RequiredForestMode: forestMode,
+    },
+  });
+  const all = [feature('Recycle Bin Feature', RECYCLE_BIN_GUID, !!c.ad.recycleBin, 'Windows2008R2Forest'), feature('Privileged Access Management Feature', PAM_GUID, false, 'Windows2016Forest')];
+  if (r.p.Identity !== undefined) {
+    const typed = text(r.p.Identity);
+    const one = all.find((f) => [f.props.Name, f.props.FeatureGUID, f.props.DistinguishedName].some((x) => text(x).toLowerCase() === typed.toLowerCase().replace(/[{}]/g, '')));
+    if (!one) r.stop(adFailure('Get-ADOptionalFeature', `Cannot find an object with identity: '${typed}' under: '${config}'.`, 'ObjectNotFound', 'ADIdentityNotFoundException', `${typed}:ADOptionalFeature`));
+    return [one];
+  }
+  if (r.p.Filter === undefined) r.stop({ message: 'Parameter set cannot be resolved using the specified named parameters.', category: 'InvalidArgument', target: ':', exception: 'ParameterBindingException', id: 'AmbiguousParameterSet,Microsoft.ActiveDirectory.Management.Commands.GetADOptionalFeature' });
+  const raw = r.p.Filter;
+  const source = raw instanceof PSScriptBlock ? raw.text : text(raw);
+  try {
+    const node = parseAdFilter(source, (n) => r.variable(n));
+    return all.filter((f) => filterMatches(node, f.props));
+  } catch (e) {
+    if (!(e instanceof AdFilterError)) throw e;
+    r.stop(adFailure('Get-ADOptionalFeature', `Error parsing query: '${source.trim()}' Error Message: '${e.message}' at position: '${e.position + 1}'.`, 'ParserError', 'ADFilterParsingException'));
+    return [];
+  }
+}
+
 const ID = { name: 'Identity', type: 'System.Object' };
 const COMMON_AD = [{ name: 'Server', type: 'System.String' }, { name: 'Credential', type: 'System.Object' }, { name: 'AuthType', type: 'System.String' }];
 const SEARCH = [ID, { name: 'Filter', type: 'System.Object' }, { name: 'LDAPFilter', type: 'System.String' }, { name: 'SearchBase', type: 'System.String' }, { name: 'SearchScope', type: 'System.String' }, { name: 'Properties', list: true, aliases: ['Property'] }, { name: 'ResultSetSize', type: 'System.Int32' }, ...COMMON_AD];
@@ -685,7 +785,9 @@ export const AD_CMDLETS: Cmdlet[] = [
   base('Get-ADComputer', (r) => getObjects(r, 'Get-ADComputer', ['computer'], 'ADComputer'), SEARCH.slice(0, -3), { positional: ['Identity'] }),
   base('Get-ADGroup', (r) => getObjects(r, 'Get-ADGroup', ['group'], 'ADGroup'), SEARCH.slice(0, -3), { positional: ['Identity'] }),
   base('Get-ADOrganizationalUnit', (r) => getObjects(r, 'Get-ADOrganizationalUnit', ['organizationalUnit'], 'ADOrganizationalUnit'), SEARCH.slice(0, -3), { positional: ['Identity'] }),
-  base('Get-ADObject', (r) => getObjects(r, 'Get-ADObject', ['user', 'group', 'computer', 'organizationalUnit', 'container', 'domainDNS', 'builtinDomain'], 'ADObject'), SEARCH.slice(0, -3), { positional: ['Identity'] }),
+  base('Get-ADObject', (r) => getObjects(r, 'Get-ADObject', ['user', 'group', 'computer', 'organizationalUnit', 'container', 'domainDNS', 'builtinDomain'], 'ADObject'), [...SEARCH.slice(0, -3), { name: 'IncludeDeletedObjects', switch: true }], { positional: ['Identity'] }),
+  base('Restore-ADObject', restore, [ID, { name: 'NewName', type: 'System.String' }, { name: 'TargetPath', type: 'System.String' }, { name: 'Partition', type: 'System.String' }, { name: 'PassThru', switch: true }], { positional: ['Identity'], writes: true }),
+  base('Get-ADOptionalFeature', optionalFeature, [ID, { name: 'Filter', type: 'System.Object' }, { name: 'LDAPFilter', type: 'System.String' }, { name: 'Properties', list: true, aliases: ['Property'] }], { positional: ['Identity'] }),
   base('New-ADUser', newUser, [{ name: 'Name', type: 'System.String' }, { name: 'Path', type: 'System.String' }, { name: 'AccountPassword', type: 'System.Security.SecureString' }, { name: 'PassThru', switch: true }, ...USER_PARAMS], { positional: ['Name'], writes: true }),
   base('Set-ADUser', (r) => setUser(r), [ID, ...USER_PARAMS, { name: 'Replace', type: 'System.Collections.Hashtable' }, { name: 'Add', type: 'System.Collections.Hashtable' }, { name: 'Clear', list: true }, { name: 'PassThru', switch: true }], { positional: ['Identity'], writes: true }),
   base('Remove-ADUser', (r) => removeObjects(r, 'Remove-ADUser', ['user'], 'ADUser'), [ID], { positional: ['Identity'], writes: true }),
@@ -720,7 +822,7 @@ export const AD_CMDLETS: Cmdlet[] = [
   ),
 ];
 
-export const AD_VIEWS: Record<string, View> = Object.fromEntries(['ADUser', 'ADGroup', 'ADComputer', 'ADOrganizationalUnit', 'ADObject', 'ADAccount', 'ADPrincipal', 'ADDomain', 'ADDomainController', 'ADDefaultDomainPasswordPolicy'].map((t) => [t, { columns: [], list: true }]));
+export const AD_VIEWS: Record<string, View> = Object.fromEntries(['ADUser', 'ADGroup', 'ADComputer', 'ADOrganizationalUnit', 'ADObject', 'ADAccount', 'ADPrincipal', 'ADDomain', 'ADDomainController', 'ADDefaultDomainPasswordPolicy', 'ADOptionalFeature'].map((t) => [t, { columns: [], list: true }]));
 
 // ——— net user /domain ———
 

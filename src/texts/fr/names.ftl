@@ -443,3 +443,30 @@ name-hr-0112-arrival-txt = rh-0112-arrivee.txt
 name-hr-0113-departure-txt = rh-0113-depart.txt
 name-conventions-txt = conventions.txt
 name-vault-svc_scans-txt = coffre-svc_scans.txt
+name-city-it-audit-txt = audit-informatique-ville.txt
+
+## L'Épicerie solidaire
+name-message_from_fatou-txt = message_de_fatou.txt
+name-note_from_mei-txt = mot_de_mei.txt
+name-drill-txt = exercice.txt
+name-pantry = epicerie
+name-families-csv = familles.csv
+name-volunteers-csv = benevoles.csv
+name-last-sync-txt = derniere-synchro.txt
+
+## Le Bac
+name-message_from_amaru-txt = message_d_amaru.txt
+name-email_from_rangi-txt = courriel_de_rangi.txt
+name-scan_report-txt = rapport_de_scan.txt
+name-note_from_lucia-txt = mot_de_lucia.txt
+
+## Les Vélos partagés
+name-message_from_ngozi-txt = message_de_ngozi.txt
+name-note_from_tomas-txt = mot_de_tomas.txt
+name-RELEASE-NOTES-txt = NOTES-DE-VERSION.txt
+
+## La Piscine
+name-message_from_folake-txt = message_de_folake.txt
+name-note_from_rui-txt = mot_de_rui.txt
+name-note_from_kemal-txt = mot_de_kemal.txt
+name-new_db_password-txt = nouveau_mdp_bdd.txt

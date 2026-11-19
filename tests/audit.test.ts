@@ -57,6 +57,8 @@ for (const language of LANGUAGES)
       let all = play(['cat audit_report.txt', 'sudo -l', 'ls -l /srv/orders']);
       contains(all, 'RAPPORT D\'AUDIT');
       expect(all).toContain('NOPASSWD');
+      // The hint's search: grep -r names the file that grants sudo without a password.
+      expect(play(['sudo grep -r NOPASSWD /etc/sudoers.d'])).toContain('/etc/sudoers.d/90-cloud-init-users:');
       // At the start, no finding is dealt with.
       for (const id of ['ssh', 'account', 'sudo', 'secret']) expect(c.shell.flags.has(id), id).toBe(false);
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('PermitRootLogin yes', 'PermitRootLogin no'));
