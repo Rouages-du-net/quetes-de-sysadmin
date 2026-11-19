@@ -47,6 +47,9 @@ export const COMPANIONS: Record<string, string[]> = {
   export: ['env', 'printenv'],
 };
 
+// Editors the game doesn't simulate: typing one points to nano.
+const OTHER_EDITORS = ['vi', 'vim', 'vim.tiny', 'vim.basic', 'nvim', 'view', 'emacs', 'micro', 'joe', 'mcedit', 'ed'];
+
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
 const BUILT_IN = ['cd', 'echo', 'pwd', 'test', 'printf', 'export', 'unset'];
@@ -1475,6 +1478,11 @@ export class Shell implements Game {
       const output = this.error(`-bash: ${cmd}: command not found`);
       this.status = 127;
       return output;
+    }
+    // Another editor (vim, vi, emacs…): the game's is nano, which it points to.
+    if (!command && OTHER_EDITORS.includes(cmd) && this.known().includes('nano')) {
+      this.status = 127;
+      return this.error(this.t('editor-only-nano', { command: cmd, file: rest.find((a) => !a.startsWith('-') && !a.startsWith('+')) ?? this.t('editor-file') }));
     }
     if (!this.known().includes(cmd) || !command)
       return this.error(this.t(command || cmd === 'sudo' ? 'command-not-still' : 'command-missing', { command: cmd }));

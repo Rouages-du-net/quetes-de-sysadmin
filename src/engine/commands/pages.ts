@@ -168,7 +168,7 @@ export const PAGES: Record<string, Page> = {
   cp: { long: { 'recursive': 'r', 'archive': 'a', 'interactive': 'i', 'no-clobber': 'n', 'verbose': 'v', 'force': 'f' }, options: ['r', 'R', 'a', 'p', 'i', 'n', 'v', 'f'], examples: ['cp sourdough sourdough_2', 'cp ~/Market/cheese .', 'cp -a /etc/nginx /etc/nginx.bak', 'cp -iv notes.txt backup/'], see: ['mv', 'rm', 'rsync'] },
   crontab: { examples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/memories/ /mnt/backup/memories/', 'sudo crontab -u malo -l'], see: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'i', 'k', '4', '6', 'v', 's', 'G', 'X'], examples: ['curl -I http://localhost/', 'curl -6 -v http://www.ferry.example/', 'curl -4 http://www.ferry.example/booking/', 'curl http://[::1]/', 'curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s -G --data-urlencode 'query=up{job=\"node\"}' http://localhost:9090/api/v1/query"], see: ['dig', 'nginx', 'openssl', 'ss', 'jq'] },
-  df: { long: { 'human-readable': 'h', 'inodes': 'i' }, options: ['h', 'i'], examples: ['df -h', 'df -i', 'df -ih /srv/radio'], see: ['du', 'find'] },
+  df: { long: { 'human-readable': 'h', 'inodes': 'i', 'print-type': 'T' }, options: ['h', 'i', 'T'], examples: ['df -h', 'df -i', 'df -ih /srv/radio', 'df -hT'], see: ['du', 'find'] },
   dmesg: { long: { 'ctime': 'T' }, section: 1, options: ['T'], examples: ['sudo dmesg', 'sudo dmesg -T', 'sudo dmesg | grep -i "out of memory"'], see: ['journalctl', 'free', 'top'] },
   free: { long: { 'human': 'h', 'mebi': 'm', 'bytes': 'b', 'kibi': 'k', 'gibi': 'g' }, options: ['h', 'm', 'b', 'k', 'g'], examples: ['free -h'], see: ['top', 'ps', 'df'] },
   top: { examples: ['top -o %MEM', 'top -b -n 1'], see: ['ps', 'free', 'kill', 'uptime', 'renice'] },
@@ -211,7 +211,7 @@ export const PAGES: Record<string, Page> = {
     examples: ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs webapp', 'sudo docker compose config', 'sudo docker compose down'],
     see: ['docker'],
   },
-  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b' }, options: ['h', 's', 'd', 'b'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
+  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b', 'all': 'a', 'total': 'c' }, options: ['h', 's', 'd', 'b', 'a', 'c'], values: ['d'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
   'fail2ban-client': { examples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client unban 198.51.100.40', 'sudo fail2ban-client get recidive bantime', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], see: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, examples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], see: ['fail2ban-client', 'nano', 'nft'] },
   find: {

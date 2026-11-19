@@ -75,6 +75,8 @@ missing = du: cannot access '{ $target }': No such file or directory
 # the columns (18, 6, 7, 6 and 4 characters).
 df-header = Filesystem           Size    Used  Avail Use% Mounted on
 df-header-inodes = Filesystem          Inodes   IUsed   IFree IUse% Mounted on
+# df -T: the title of the type column.
+df-type = Type
 depth = du: invalid maximum depth
 
 ## tar

@@ -75,6 +75,8 @@ missing = du : impossible d'accéder à '{ $target }' : aucun fichier ou dossier
 # les colonnes (18, 6, 7, 6 et 4 caractères).
 df-header = Sys. de fichiers   Taille Utilisé  Dispo Uti% Monté sur
 df-header-inodes = Sys. de fichiers    Inœuds  IUtil.  ILibre IUti% Monté sur
+# df -T : le titre de la colonne du type.
+df-type = Type
 depth = du: profondeur maximale non valable
 
 ## tar

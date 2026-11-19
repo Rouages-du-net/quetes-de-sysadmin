@@ -938,11 +938,15 @@ export const FILES: Record<string, Command> = {
       const lines: string[] = [];
       // Like du: a file with several names (hard links) is counted only once.
       const seen = new Set<Node>();
+      let grand = 0;
       const walk = (path: string, e: Node, level = 0): number => {
         if (e.type === 'file') {
           if (seen.has(e)) return 0;
           seen.add(e);
-          return inodes ? 1 : sizeFor(e, game);
+          const size = inodes ? 1 : sizeFor(e, game);
+          // -a: every file too, not only places.
+          if (letters.has('a') && !letters.has('s') && level > 0 && level <= depth) lines.push(`${fmt(size)}\t${path}`);
+          return size;
         }
         let total = inodes ? 1 : 0;
         for (const [k, child] of Object.entries(e.children)) total += walk(`${path.replace(/\/$/, '')}/${k}`, child, level + 1);
@@ -956,8 +960,11 @@ export const FILES: Record<string, Command> = {
           continue;
         }
         const total = walk(target, n);
+        grand += total;
         if (letters.has('s') || n.type === 'file') lines.push(`${fmt(total)}\t${target}`);
       }
+      // -c: a grand total at the end.
+      if (letters.has('c')) lines.push(`${fmt(grand)}\ttotal`);
       return lines.join('\n');
     },
   },
@@ -983,8 +990,10 @@ export const FILES: Record<string, Command> = {
         }
         return iLines.join('\n');
       }
-      const lines = [game.t('df-header')];
-      for (const m of chosen) {
+      // -T: the file system's type, after its name.
+      const typed = (line: string, type: string) => (letters.has('T') ? `${line.slice(0, 19)}${type.padEnd(7)} ${line.slice(19)}` : line);
+      const lines = [typed(game.t('df-header'), game.t('df-type'))];
+      for (const m of chosen as (typeof mounts[number] & { system?: string })[]) {
         const place = game.find(m.path);
         // Deleted files still held open by a process still take up their space.
         // Not counting the other media mounted inside (/srv/radio isn't on /).
@@ -996,7 +1005,7 @@ export const FILES: Record<string, Command> = {
         const inUse = remote ? Math.min(capacity, remote.used) : Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path));
         const pct = Math.round((100 * inUse) / capacity);
         lines.push(
-          `${(m.name ?? m.path).padEnd(18)} ${fmt(capacity).padStart(6)} ${fmt(inUse).padStart(7)} ${fmt(Math.max(0, capacity - inUse)).padStart(6)} ${String(pct).padStart(3)}% ${m.path}`,
+          typed(`${(m.name ?? m.path).padEnd(18)} ${fmt(capacity).padStart(6)} ${fmt(inUse).padStart(7)} ${fmt(Math.max(0, capacity - inUse)).padStart(6)} ${String(pct).padStart(3)}% ${m.path}`, remote ? 'cifs' : (m.system ?? 'ext4')),
         );
       }
       return lines.join('\n');
@@ -1004,7 +1013,10 @@ export const FILES: Record<string, Command> = {
   },
 
   tar: {
-    launch: ({ args, game }) => {
+    launch: ({ args: typed, game }) => {
+      // The old style (tar czf archive.tgz place, tar xvf archive.tar): a first word
+      // without a dash holds the letters (GNU tar, "Old Options").
+      const args = typed.length && /^[A-Za-z]+$/.test(typed[0]) && /[ctx]/.test(typed[0]) ? [`-${typed[0]}`, ...typed.slice(1)] : typed;
       // -C place (or --directory=place): move to that place before extracting.
       let cPlace = '';
       const withoutC: string[] = [];
@@ -1082,7 +1094,8 @@ export const FILES: Record<string, Command> = {
           if (error) game.error(error);
         }
         if (truncated !== undefined) cut();
-        return '';
+        // -v: each file, as it comes out.
+        return letters.has('v') ? inputs.map(([path]) => path).join('\n') : '';
       }
       return game.error(game.t('tar-option-missing'));
     },
