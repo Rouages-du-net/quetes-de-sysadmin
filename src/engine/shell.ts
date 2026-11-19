@@ -150,7 +150,8 @@ export class Shell implements Game {
   sessionRequest: { shell: Shell; domain: string; via?: string; address: string } | null = null;
   // The story's main machine, for an internal machine.
   parent: Shell | null = null;
-  private internals = new Map<string, Shell>();
+  // The story's internal machines created so far (see internal()).
+  readonly internals = new Map<string, Shell>();
   // exit typed: the console closes the session (see console.ts).
   output = false;
   // The machine has just rebooted (reboot): the console cuts the session.
@@ -573,6 +574,7 @@ export class Shell implements Game {
       accounts: def.accounts,
       state: def.state,
       initialise: def.initialise,
+      afterCommand: def.afterCommand,
     };
     const s = new Shell(chapter, this.t.language, name);
     s.parent = p;

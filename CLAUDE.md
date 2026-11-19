@@ -483,6 +483,25 @@ presents them for people.
   internet, an internal host; `audit` checks a ruleset in both families);
   `new-card.ts`, `other-door.ts`, `both-ways.ts`. Tests:
   `tests/ferry.test.ts`.
+- `src/engine/promql.ts`: PromQL (parser with Prometheus's messages,
+  evaluator over a `Storage`: selectors, ranges, `rate` and its
+  extrapolation, aggregations, operators and one-to-one matching, values
+  written like Go); `src/engine/prometheus.ts`: a machine's Prometheus
+  (`state.prometheus`: `prometheus.yml` and rule files read like
+  Prometheus, targets scraped through the story's network
+  `state.metricsNet` (`MetricsNet`: names, firewalls, what each port
+  answers), the series, rules and alerts' states, `advance()` tick by tick,
+  the HTTP API `promHttp`); `src/engine/alertmanager.ts`
+  (`state.alertmanager`: routes, groups, webhooks, silences, inhibition);
+  `promtool`, `amtool`, the daemons' binaries, the Alertmanager's API, curl
+  on a machine with `state.metricsHere` and `sleep` (`state.slept`) in
+  `commands/prometheus.ts`; `jq` in `commands/jq.ts`. An internal host
+  may pass time too (`InternalHost.afterCommand`). `chapters/bike-share.ts`:
+  what the chapters of "The Bike Share" share (`gauge`, the monitoring
+  server; `saddle` and `hub`, internal hosts with their ufw and exporters;
+  the metrics computed from the machines' files and the app's traffic;
+  `passTime`; `trial()` tries a rule on made-up days); `blind-spot.ts`,
+  `threshold.ts`, `quiet-hours.ts`. Tests: `tests/bike-share.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

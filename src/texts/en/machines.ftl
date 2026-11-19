@@ -48,3 +48,6 @@ machine-crate = crate
 machine-spare = spare
 machine-quay = quay
 machine-lookout = lookout
+machine-gauge = gauge
+machine-saddle = saddle
+machine-hub = hub

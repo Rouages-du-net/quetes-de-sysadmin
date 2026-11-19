@@ -48,3 +48,6 @@ machine-crate = cagette
 machine-spare = secours
 machine-quay = quai
 machine-lookout = vigie
+machine-gauge = jauge
+machine-saddle = selle
+machine-hub = moyeu

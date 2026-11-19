@@ -73,3 +73,5 @@ password-tram-lemon-harbour-58 = tram-citron-port-58
 password-basket-orchard-copper-73 = panier-verger-cuivre-73
 ## Le Bac : sudo
 password-tide-2029 = maree-2029
+## Les Vélos partagés : sudo
+password-pedal-2029 = pedale-2029

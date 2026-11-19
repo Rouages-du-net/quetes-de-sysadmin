@@ -82,6 +82,9 @@ export const CODE_ORDER = [
   'new-card',
   'other-door',
   'both-ways',
+  'blind-spot',
+  'threshold',
+  'quiet-hours',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

@@ -414,18 +414,23 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .option-r = copie un lieu entier, avec tout ce qu’il contient (récursif).
     .example-1 = faire une copie à côté
     .example-2 = copier ici (.) un fichier d’ailleurs
-man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<).
-    .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] adresse
+man-curl = va chercher une page web, comme un navigateur mais sans l’afficher joliment. Il parle aussi aux API HTTP : -s le rend silencieux (pas de progression, pas de message d’erreur sans -S), -G envoie les données de -d ou --data-urlencode dans l’URL plutôt que dans un POST, --data-urlencode NOM=VALEUR encode la valeur (espaces, accolades, guillemets d’une requête PromQL), -X choisit la méthode (POST…), -f échoue avec l’erreur 22 sur une erreur HTTP. Les accolades et crochets d’une URL sont des motifs de curl : mettez l’URL entre guillemets et ajoutez -g (--globoff), ou passez la requête avec --data-urlencode. -I ne demande que l’en-tête de la réponse (le code d’état, par exemple 200 = OK). En HTTPS (https://…), curl vérifie le certificat du serveur comme un navigateur : dates de validité, nom du site, autorité de confiance ; s’il y a un problème, il s’arrête avec une erreur 60. -4 et -6 choisissent la famille d’adresses (IPv4, IPv6) ; sans eux, curl essaie d’abord l’IPv6, puis l’IPv4 (happy eyeballs) : un site cassé en IPv6 peut quand même s’afficher. Une adresse IPv6 s’écrit entre crochets : http://[2001:db8::80]/. -v (verbose) montre chaque tentative (« Trying [adresse]:80... », « Connection refused »), la requête envoyée (>) et les en-têtes reçus (<).
+    .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X MÉTHODE] [-d DONNÉES] [--data-urlencode NOM=VALEUR] adresse
     .option-4 = IPv4 seulement.
     .option-6 = IPv6 seulement.
     .option-v = montre la connexion, la requête et les en-têtes de la réponse (verbose).
     .option-I = ne demande que l’en-tête de la réponse (HEAD).
     .option-i = montre l’en-tête de la réponse, puis la page (include).
     .option-k = ne vérifie pas le certificat (insecure) : à ne faire que pour un essai, jamais pour de vrai.
+    .option-s = silencieux : pas de barre de progression, ni de message d’erreur sans -S (le code de sortie le dit quand même).
+    .option-G = envoie les données de -d et --data-urlencode dans la chaîne de requête d’un GET (get).
+    .option-X = la méthode de la requête : -X POST, -X DELETE…
     .example-1 = seulement l’en-tête du site local
     .example-2 = le site en IPv6 seulement, étape par étape
     .example-3 = la page de réservation en IPv4 seulement
     .example-4 = le site local par la boucle locale IPv6
+    .example-5 = les cibles de Prometheus, indentées par jq
+    .example-6 = une requête PromQL, ses accolades et guillemets encodés par curl
 man-cut = découpe chaque ligne en champs selon le séparateur et garde le champ N (ou N,M). Ex. : cut -d " " -f 1 garde le premier mot.
     .synopsis = cut -d séparateur -f N [fichier]
 man-dmesg = affiche les messages du noyau (display message) : le matériel détecté au démarrage, les erreurs de disque… et l’OOM killer (« Out of memory: Killed process »), quand le noyau tue un processus faute de mémoire. Chaque ligne commence par le temps écoulé depuis le démarrage, en secondes ; -T le traduit en date et heure. Réservé à root sur Debian ; journalctl -k montre les mêmes messages.
@@ -3458,3 +3463,55 @@ man-export = (intégré à bash) marque des variables pour qu'elles soient trans
 man-unset = (intégré à bash) oublie une variable : elle n'est plus transmise aux programmes.
     .synopsis = unset NOM…
     .example-1 = oublier une variable
+man-promtool = l’outil de Prometheus (paquet Debian prometheus) : il vérifie les fichiers de configuration et de règles, et pose des questions à un serveur. check config FICHIER lit un prometheus.yml (et les fichiers de règles qu’il cite) et répond SUCCESS ou FAILED avec la ligne fautive ; check rules FICHIER… vérifie des fichiers de règles (leur YAML, l’expression PromQL de chaque règle, les durées de for:) ; check metrics lit des métriques au format texte sur son entrée et les critique ; query instant SERVEUR EXPR lance une requête PromQL sur un serveur et affiche une ligne par série (étiquettes => valeur @[horodatage]). Code de sortie 1 en cas d’échec. Vérifiez avant chaque rechargement : un Prometheus qui relit un fichier cassé garde son ancienne configuration et ne le dit que dans son journal.
+    .synopsis = promtool check config FICHIER… ; promtool check rules FICHIER… ; promtool check metrics ; promtool query instant [--time=TEMPS] SERVEUR EXPR
+    .example-1 = vérifier prometheus.yml et les fichiers de règles qu’il cite
+    .example-2 = vérifier un fichier de règles
+    .example-3 = le up de chaque cible, à cet instant
+    .example-4 = la part du temps où un processeur était inactif, sur les 5 dernières minutes
+    .example-5 = critiquer les métriques d’un exporteur
+man-prometheus = le serveur de supervision Prometheus (paquet Debian prometheus, service prometheus). Il va chercher : à chaque scrape_interval, il interroge les cibles de /etc/prometheus/prometheus.yml (scrape_configs, chaque job avec ses static_configs : des cibles hôte:port, des étiquettes en plus), par un GET HTTP sur /metrics, et range chaque série (un nom de métrique et ses étiquettes : job, instance…) avec ses échantillons ; up vaut 1 quand l’interrogation a marché, 0 sinon. À chaque evaluation_interval, il évalue les règles de rule_files (règles d’enregistrement, et règles d’alerte : expr, for:, labels, annotations) et envoie les alertes qui sonnent aux Alertmanager de alerting:. Son API HTTP, port 9090 : /api/v1/query?query=EXPR (POST marche aussi), /api/v1/targets, /api/v1/alerts, /api/v1/rules, /api/v1/status/config, /-/healthy, /-/ready ; /-/reload seulement avec --web.enable-lifecycle (ARGS dans /etc/default/prometheus). Il relit sa configuration sur SIGHUP (systemctl reload prometheus) ; un fichier invalide est alors refusé et l’ancienne configuration gardée (prometheus_config_last_reload_successful vaut 0).
+    .synopsis = prometheus [--config.file=FICHIER] [--web.enable-lifecycle] [--version]
+    .example-1 = la version du serveur
+    .example-2 = sa configuration
+    .example-3 = lui faire relire sa configuration et ses règles (SIGHUP)
+    .example-4 = ce qu’il en dit
+    .example-5 = ses cibles, leur santé et leur dernière erreur
+man-prometheus-alertmanager = l’Alertmanager (paquet Debian prometheus-alertmanager, service prometheus-alertmanager, port 9093) : il reçoit les alertes que Prometheus déclenche, les regroupe, les aiguille vers des destinataires et envoie les notifications. Sa configuration, /etc/prometheus/alertmanager.yml : route (receiver, group_by, group_wait : combien de temps un nouveau groupe attend les autres, group_interval : à quelle fréquence les changements d’un groupe partent, repeat_interval : au bout de combien de temps une alerte qui sonne encore est renvoyée, 4h par défaut ; routes : des routes imbriquées avec des conditions comme severity="page", la première qui correspond gagne sauf continue: true), receivers (webhook_configs avec url, email_configs…), inhibit_rules (une alerte qui en fait taire d’autres). Un silence fait taire les alertes que ses conditions désignent, d’un début à une fin, avec un commentaire et un auteur (amtool silence add). Il relit sa configuration sur SIGHUP (systemctl reload prometheus-alertmanager) ou POST /-/reload ; un fichier invalide est refusé, l’ancien gardé. API : /api/v2/alerts, /api/v2/silences, /api/v2/status.
+    .synopsis = prometheus-alertmanager [--config.file=FICHIER] [--version]
+    .example-1 = sa configuration
+    .example-2 = la vérifier
+    .example-3 = la lui faire relire
+    .example-4 = les alertes qu’il tient, par son API
+man-prometheus-node-exporter = l’exporteur de métriques de machine de Prometheus (paquet Debian prometheus-node-exporter, port 9100) : processeur (node_cpu_seconds_total, par cpu et mode), charge (node_load1), mémoire (node_memory_MemAvailable_bytes), systèmes de fichiers (node_filesystem_avail_bytes, node_filesystem_size_bytes, par device, fstype et mountpoint), réseau (node_network_receive_bytes_total)… au format texte, sur /metrics. Prometheus doit joindre son port : ne l’ouvrez qu’au serveur Prometheus, il en dit long sur la machine.
+    .synopsis = prometheus-node-exporter [--version]
+    .example-1 = ce qu’il expose
+    .example-2 = tourne-t-il ?
+    .example-3 = sa version
+man-amtool = la ligne de commande de l’Alertmanager (paquet Debian prometheus-alertmanager). Il trouve l’Alertmanager avec --alertmanager.url, ou dans /etc/amtool/config.yml ou ~/.config/amtool/config.yml (alertmanager.url: …). alert query [CONDITIONS] liste les alertes actives (--silenced et --inhibited ajoutent celles-là) ; silence add CONDITIONS --duration=DURÉE (ou --start et --end, en RFC 3339 : 2029-05-19T10:00:00Z) --comment=TEXTE crée un silence et affiche son ID (un commentaire est obligatoire ; l’auteur est votre compte) ; silence query liste les silences en cours et à venir (--expired, -q pour les seuls ID) ; silence expire ID… met fin à des silences ; check-config FICHIER… vérifie des fichiers alertmanager.yml ; config montre la configuration en service ; config routes dessine l’arbre d’aiguillage, config routes test ÉTIQUETTE=VALEUR… affiche le destinataire qu’atteindrait une alerte avec ces étiquettes (--config.file : d’après un fichier plutôt que l’Alertmanager en service). Une condition s’écrit nom=valeur, nom!=valeur, nom=~regex ou nom!~regex ; un premier mot sans opérateur est l’alertname.
+    .synopsis = amtool alert query [CONDITIONS] ; amtool silence add CONDITIONS --duration=D --comment=TEXTE ; amtool silence query ; amtool silence expire ID… ; amtool check-config FICHIER… ; amtool config routes [test ÉTIQUETTES]
+    .example-1 = les alertes actives
+    .example-2 = aussi celles qu’un silence fait taire
+    .example-3 = l’arbre d’aiguillage de l’Alertmanager en service
+    .example-4 = où irait une page sur un nœud ?
+    .example-5 = vérifier une configuration avant de la recharger
+    .example-6 = faire taire les alertes d’une machine pendant trois heures
+    .command-6 = amtool silence add instance="moyeu.internal:9100" --duration=3h --comment="disque changé"
+    .example-7 = les silences en cours ou à venir
+    .example-8 = mettre fin à un silence avant l’heure
+man-jq = un processeur de JSON : il lit du JSON (sur son entrée ou dans des fichiers), lui applique un filtre et affiche les résultats, indentés. . est l’entrée elle-même ; .clé une clé d’un objet (."clé" si elle a des caractères inhabituels), .[N] un élément d’un tableau, .[] chaque élément ; | passe chaque résultat au filtre suivant ; , donne plusieurs résultats ; {"{"}nom: .x, y{"}"} et [ … ] construisent des objets et des tableaux ; "\(.x) \(.y)" construit une chaîne ; select(CONDITION) garde ce qui correspond (==, !=, <, >, and, or, not) ; length, keys, map(f), sort_by(f), to_entries, join(", "), test("regex"), startswith("…"). Code de sortie 2 ou 3 pour une entrée illisible ou un filtre fautif, 5 pour une erreur pendant l’exécution.
+    .synopsis = jq [-r] [-c] [-n] [-S] [-e] FILTRE [FICHIER…]
+    .option-r = chaînes brutes : affichées sans leurs guillemets.
+    .option-c = compact : chaque résultat sur une ligne.
+    .option-n = entrée nulle : rien n’est lu, le filtre tourne une fois sur null.
+    .option-S = trie les clés des objets.
+    .option-e = code de sortie 1 si le dernier résultat est false ou null.
+    .example-1 = la réponse de Prometheus, indentée
+    .example-2 = chaque cible, avec son job, sa santé et sa dernière erreur
+    .example-3 = une ligne par série : son instance et sa valeur
+    .example-4 = combien d’alertes dans une réponse enregistrée
+man-sleep = attend un moment : un nombre de secondes, ou avec une unité (s, m, h, d) ; plusieurs durées s’additionnent. Dans le jeu, sleep rend la main tout de suite, et les histoires où le temps compte (métriques, alertes) laissent passer ce temps-là.
+    .synopsis = sleep NOMBRE[SUFFIXE]…
+    .example-1 = attendre une minute
+    .example-2 = attendre cinq minutes
+    .example-3 = une heure et demie

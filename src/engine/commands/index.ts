@@ -75,6 +75,8 @@ import { LINE_ENDINGS } from './line-endings';
 import { CRYPTSETUP } from './cryptsetup';
 import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
+import { PROMETHEUS_COMMANDS } from './prometheus';
+import { JQ } from './jq';
 
 export interface Context {
   args: string[];
@@ -191,6 +193,8 @@ function build(): Record<string, Command> {
     ...CRYPTSETUP,
     ...CHECKSUMS,
     ...ENVIRONMENT,
+    ...PROMETHEUS_COMMANDS,
+    ...JQ,
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

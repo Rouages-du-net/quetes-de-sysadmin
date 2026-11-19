@@ -409,18 +409,23 @@ man-cp = copies a file (copy). The original stays in place. -r copies a whole pl
     .option-r = copies a whole place, with everything it contains (recursive).
     .example-1 = make a copy next to it
     .example-2 = copy a file from elsewhere to here (.)
-man-curl = fetches a web page, like a browser but without displaying it nicely. -I only asks for the response header (the status code, for example 200 = OK). Over HTTPS (https://…), curl checks the server's certificate like a browser: validity dates, site name, trusted authority; if there is a problem, it stops with error 60. -4 and -6 choose the address family (IPv4, IPv6); without them, curl tries IPv6 first, then IPv4 (happy eyeballs): a site broken in IPv6 can still show. An IPv6 address goes in brackets: http://[2001:db8::80]/. -v (verbose) shows each attempt ("Trying [addr]:80...", "Connection refused"), the request sent (>) and the headers received (<).
-    .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] address
+man-curl = fetches a web page, like a browser but without displaying it nicely. It also talks to HTTP APIs: -s keeps it quiet (no progress, no error message unless -S), -G sends the data given with -d or --data-urlencode in the URL's query string rather than in a POST, --data-urlencode NAME=VALUE encodes the value (spaces, braces, quotes of a PromQL query), -X chooses the method (POST…), -f fails with error 22 on an HTTP error. Braces and brackets in a URL are curl's patterns: quote the URL and add -g (--globoff), or pass the query with --data-urlencode. -I only asks for the response header (the status code, for example 200 = OK). Over HTTPS (https://…), curl checks the server's certificate like a browser: validity dates, site name, trusted authority; if there is a problem, it stops with error 60. -4 and -6 choose the address family (IPv4, IPv6); without them, curl tries IPv6 first, then IPv4 (happy eyeballs): a site broken in IPv6 can still show. An IPv6 address goes in brackets: http://[2001:db8::80]/. -v (verbose) shows each attempt ("Trying [addr]:80...", "Connection refused"), the request sent (>) and the headers received (<).
+    .synopsis = curl [-4|-6] [-v] [-I] [-i] [-k] [-s] [-G] [-X METHOD] [-d DATA] [--data-urlencode NAME=VALUE] address
     .option-4 = IPv4 only.
     .option-6 = IPv6 only.
     .option-v = shows the connection, the request and the response headers (verbose).
     .option-I = only asks for the response header (HEAD).
     .option-i = shows the response header, then the page (include).
     .option-k = does not check the certificate (insecure): only for a test, never for real.
+    .option-s = silent: no progress meter, and no error message unless -S is given too (the exit code still tells).
+    .option-G = sends the data of -d and --data-urlencode in the query string of a GET (get).
+    .option-X = the request's method: -X POST, -X DELETE…
     .example-1 = only the header of the local site
     .example-2 = the site in IPv6 only, step by step
     .example-3 = the booking page in IPv4 only
     .example-4 = the local site through the IPv6 loopback
+    .example-5 = Prometheus's targets, indented by jq
+    .example-6 = a PromQL query, its braces and quotes encoded by curl
 man-cut = splits each line into fields according to the separator and keeps field N (or N,M). E.g.: cut -d " " -f 1 keeps the first word.
     .synopsis = cut -d separator -f N [file]
 man-dmesg = prints the kernel messages (display message): the hardware detected at boot, disk errors… and the OOM killer ("Out of memory: Killed process"), when the kernel kills a process for lack of memory. Each line starts with the time elapsed since boot, in seconds; -T turns it into a date and time. Reserved for root on Debian; journalctl -k shows the same messages.
@@ -3436,3 +3441,54 @@ man-export = (built into bash) marks variables to be passed to the programs the 
 man-unset = (built into bash) forgets a variable: it is no longer passed to programs.
     .synopsis = unset NAME…
     .example-1 = forget a variable
+man-promtool = the tool of Prometheus (Debian's prometheus package): it checks configuration and rule files and asks a server questions. check config FILE reads a prometheus.yml (and the rule files it names) and says SUCCESS or FAILED with the line at fault; check rules FILE… checks rule files (their YAML, each rule's PromQL expression, for: durations); check metrics reads metrics in the text format on its input and lints them; query instant SERVER EXPR runs a PromQL query on a server and prints one line per series (labels => value @[timestamp]). Exit code 1 on a failure. Check before every reload: a running Prometheus that rereads a broken file keeps its old configuration and only says so in its journal.
+    .synopsis = promtool check config FILE… ; promtool check rules FILE… ; promtool check metrics ; promtool query instant [--time=TIME] SERVER EXPR
+    .example-1 = check prometheus.yml and the rule files it names
+    .example-2 = check a rule file
+    .example-3 = every target's up, at this moment
+    .example-4 = the share of time a CPU was idle, over the last 5 minutes
+    .example-5 = lint an exporter's metrics
+man-prometheus = the Prometheus monitoring server (Debian's prometheus package, service prometheus). It pulls: every scrape_interval it scrapes the targets of /etc/prometheus/prometheus.yml (scrape_configs, each job with its static_configs: targets as host:port, extra labels), an HTTP GET on /metrics, and stores each series (a metric name and its labels: job, instance…) with its samples; up is 1 when a scrape worked, 0 otherwise. Every evaluation_interval it evaluates the rules of rule_files (recording rules, and alerting rules: expr, for:, labels, annotations) and sends the firing alerts to the Alertmanagers of alerting:. Its HTTP API, port 9090: /api/v1/query?query=EXPR (POST works too), /api/v1/targets, /api/v1/alerts, /api/v1/rules, /api/v1/status/config, /-/healthy, /-/ready; /-/reload only with --web.enable-lifecycle (ARGS in /etc/default/prometheus). It rereads its configuration on SIGHUP (systemctl reload prometheus); an invalid file is then refused and the old configuration kept (prometheus_config_last_reload_successful is 0).
+    .synopsis = prometheus [--config.file=FILE] [--web.enable-lifecycle] [--version]
+    .example-1 = the version of the server
+    .example-2 = its configuration
+    .example-3 = have it reread its configuration and rules (SIGHUP)
+    .example-4 = what it says about it
+    .example-5 = its targets, their health and their last error
+man-prometheus-alertmanager = the Alertmanager (Debian's prometheus-alertmanager package, service prometheus-alertmanager, port 9093): it receives the alerts Prometheus fires, groups them, routes them to receivers and sends notifications. Its configuration, /etc/prometheus/alertmanager.yml: route (receiver, group_by, group_wait: how long a new group waits for others, group_interval: how often a group's changes are sent, repeat_interval: after how long a still firing alert is sent again, 4h by default; routes: nested routes with matchers such as severity="page", the first match wins unless continue: true), receivers (webhook_configs with url, email_configs…), inhibit_rules (an alert that mutes others). A silence mutes the alerts its matchers select, from a start to an end, with a comment and an author (amtool silence add). It rereads its configuration on SIGHUP (systemctl reload prometheus-alertmanager) or POST /-/reload; an invalid file is refused, the old one kept. API: /api/v2/alerts, /api/v2/silences, /api/v2/status.
+    .synopsis = prometheus-alertmanager [--config.file=FILE] [--version]
+    .example-1 = its configuration
+    .example-2 = check it
+    .example-3 = have it reread it
+    .example-4 = the alerts it holds, through its API
+man-prometheus-node-exporter = Prometheus's exporter of machine metrics (Debian's prometheus-node-exporter package, port 9100): CPU (node_cpu_seconds_total, by cpu and mode), load (node_load1), memory (node_memory_MemAvailable_bytes), file systems (node_filesystem_avail_bytes, node_filesystem_size_bytes, by device, fstype and mountpoint), network (node_network_receive_bytes_total)… in the text format, at /metrics. Prometheus must reach its port: open it to the Prometheus server only, since it tells a lot about the machine.
+    .synopsis = prometheus-node-exporter [--version]
+    .example-1 = what it exposes
+    .example-2 = is it running?
+    .example-3 = its version
+man-amtool = the Alertmanager's command line (Debian's prometheus-alertmanager package). It finds the Alertmanager with --alertmanager.url, or in /etc/amtool/config.yml or ~/.config/amtool/config.yml (alertmanager.url: …). alert query [MATCHERS] lists the active alerts (--silenced and --inhibited add those); silence add MATCHERS --duration=DURATION (or --start and --end, in RFC 3339: 2029-05-19T10:00:00Z) --comment=TEXT creates a silence and prints its ID (a comment is required; the author is your account); silence query lists the active and pending silences (--expired, -q for the IDs only); silence expire ID… ends silences; check-config FILE… checks alertmanager.yml files; config shows the running configuration; config routes draws the routing tree, config routes test LABEL=VALUE… prints the receiver an alert with those labels would reach (--config.file: from a file rather than the running Alertmanager). A matcher is name=value, name!=value, name=~regex or name!~regex; a first word without an operator is the alertname.
+    .synopsis = amtool alert query [MATCHERS] ; amtool silence add MATCHERS --duration=D --comment=TEXT ; amtool silence query ; amtool silence expire ID… ; amtool check-config FILE… ; amtool config routes [test LABELS]
+    .example-1 = the active alerts
+    .example-2 = also those a silence mutes
+    .example-3 = the routing tree of the running Alertmanager
+    .example-4 = where would a page about a node go?
+    .example-5 = check a configuration before reloading it
+    .example-6 = silence a machine's alerts for three hours
+    .example-7 = the silences in force or to come
+    .example-8 = end a silence early
+man-jq = a JSON processor: it reads JSON (from its input or files), applies a filter to it and prints the results, indented. . is the input itself; .key a key of an object (."key" if it has unusual characters), .[N] an element of an array, .[] each element; | passes each result to the next filter; , gives several results; {"{"}name: .x, y{"}"} and [ … ] build objects and arrays; "\(.x) \(.y)" builds a string; select(CONDITION) keeps what matches (==, !=, <, >, and, or, not); length, keys, map(f), sort_by(f), to_entries, join(", "), test("regex"), startswith("…"). Exit code 2 or 3 for unreadable input or a filter error, 5 for an error while running.
+    .synopsis = jq [-r] [-c] [-n] [-S] [-e] FILTER [FILE…]
+    .option-r = raw strings: printed without their quotes.
+    .option-c = compact: each result on one line.
+    .option-n = null input: no input read, the filter runs once on null.
+    .option-S = sort the keys of objects.
+    .option-e = exit code 1 if the last result is false or null.
+    .example-1 = Prometheus's answer, indented
+    .example-2 = each target, with its job, its health and its last error
+    .example-3 = one line per series: its instance and its value
+    .example-4 = how many alerts in a saved answer
+man-sleep = waits for a while: a number of seconds, or with a unit (s, m, h, d); several durations add up. In the game, sleep returns at once, and the stories where time matters (metrics, alerts) let that much time go by.
+    .synopsis = sleep NUMBER[SUFFIX]…
+    .example-1 = wait a minute
+    .example-2 = wait five minutes
+    .example-3 = an hour and a half

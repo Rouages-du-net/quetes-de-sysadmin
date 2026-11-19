@@ -235,6 +235,14 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Apache (`apache2ctl`, `a2ensite`, `a2enmod`…) | `configtest`/`-t`, `-S`, `-M`, `-v` (even without root); `start`, `stop`, `restart`, `graceful` go through systemd; some of the directives (others are refused like those of a missing module: "Invalid command"); virtual host chosen by address and port, then `ServerName`/`ServerAlias`, otherwise the first; `<Directory>` without wildcards; `.htaccess` reread on each request, with `AllowOverride` by category; `mod_rewrite`: `RewriteEngine`, `RewriteCond` (`-f`, `-d`, `-s`, `=`, expressions, `[NC]`, `[OR]`), `RewriteRule` (`[L]`, `[END]`, `[R]`, `[F]`, `[G]`, `[QSA]`, `[NC]`), in the server or per directory, at most 10 internal redirects; no PHP, CGI, compression nor access log; without an argument, `a2ensite` & co. list the choices without asking | every directive and module, interactive `apache2ctl` without an argument |
 | `curl` on the site's machine | only reaches the machine itself (localhost, its name, its address), or an `ssh -L` tunnel opened on the workstation | the whole network |
 | `curl -4`, `-6`, `-v` (IPv6) | on a machine speaking IPv6 (and from a vantage point on the internet, `lookout`): names resolved through `/etc/hosts` and the story's DNS (the zone's public servers from outside), IPv6 first then IPv4 (happy eyeballs, a refusal moves on at once), `[addr]` URLs; `-v` shows curl 8's lines (resolution, tries, request, headers); a filtered port answers at once with its timeout's message (error 28); only nginx and the apps of the story's server answer | every option, real timings, proxies, HTTP/2 |
+| `curl` on a machine with metrics (The Bike Share) | the story's network (`state.metricsNet`): names from `/etc/hosts`, each machine's ufw (a dropped port answers at once with error 28), what listens on each port (Prometheus's and the Alertmanager's APIs, exporters, the app, a relay); `-s`, `-S`, `-f`, `-i`, `-I`, `-v` (short), `-X`, `-d`, `--data-urlencode`, `-G`, `-g` and curl's URL patterns (`{…}` in an unquoted URL), `-o`, `-w '%{http_code}'` | every option, real timings |
+| Prometheus (`prometheus.ts`, `promql.ts`) | `prometheus.yml`: `global`, `rule_files` (globs), `scrape_configs` with `static_configs` (targets, labels), `alerting`; go-yaml's "field … not found" messages; scrapes every `scrape_interval` through the story's network (`up`, `scrape_duration_seconds`, `scrape_samples_scraped`, staleness markers), errors as Prometheus words them (context deadline exceeded, connection refused, no such host, HTTP status); a time series database kept 3 hours; recording and alerting rules (`for`, `labels`, `annotations` with `$labels`, `$value`, `humanize`, `humanizePercentage`, `printf`), alerts inactive, pending, firing, resolved, `ALERTS`, sent to the Alertmanager every minute; reload on SIGHUP or `POST /-/reload` (with `--web.enable-lifecycle` in `ARGS`), the old configuration kept on an error; the API: `/api/v1/query` (GET or POST, `time`), `/api/v1/targets`, `/api/v1/alerts`, `/api/v1/rules`, `/api/v1/status/config` (the file as written), `/api/v1/label/…/values`, `/-/healthy`, `/-/ready`, JSON as Go writes it (`<` as `\u003c`) | service discovery, relabelling, HTTPS and authentication, `query_range`, the web interface, remote write, native histograms, the rule's query printed back canonically |
+| PromQL | selectors and matchers (`=`, `!=`, `=~`, `!~`), range vectors, `offset`; `rate`, `irate`, `increase`, `delta` (Prometheus's extrapolation, counter resets), `deriv`, `predict_linear`, `*_over_time`, `abs`, `absent`, `clamp_min`, `clamp_max`, `round`, `time`, `vector`, `scalar`; `sum`, `avg`, `min`, `max`, `count` with `by`/`without`; arithmetic, comparisons (filter or `bool`), `and`, `or`, `unless`, one-to-one matching with `on`/`ignoring`; the "metric might not be a counter" info; Prometheus's parse errors | subqueries, `group_left`/`group_right`, `topk`, `quantile`, `histogram_quantile`, `@`, string functions |
+| `promtool` | `check config` (and the rule files it names), `check rules`, `check metrics` (two lint checks), `query instant` (`--time`); `test rules` not simulated (the story tries rules on made-up days itself) | `test rules`, `query range`, `tsdb`, `push` |
+| node exporter, the app's `/metrics` | a few families each: CPU, load, memory, file systems (computed from the machine's files, like `df`), network; the app's requests by route and status, a histogram, a gauge per station, computed from its traffic since its process started (a restart resets the counters) | every collector |
+| Alertmanager and `amtool` | `alertmanager.yml`: `route` (`receiver`, `group_by`, `group_wait`, `group_interval`, `repeat_interval`, `matchers`, `match`, `match_re`, `continue`, nested routes), `receivers` (only `webhook_configs` deliver), `inhibit_rules`; grouping and repeats checked every 15 seconds; silences and their states; reload on SIGHUP or `POST /-/reload`; API v2 (`/api/v2/alerts`, `/api/v2/silences` GET and POST, `/api/v2/silence/ID` DELETE, `/api/v2/status`); `amtool alert query` (`--silenced`, `--inhibited`, `-o extended`/`json`), `silence add` (`--duration`, `--start`, `--end`, `--comment`, `--author`), `silence query` (`--expired`, `-q`), `silence expire`, `check-config`, `config`, `config routes [test]` (`--config.file`, `--verify.receivers`) | email and chat integrations, templates, clustering, time intervals, retries |
+| `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
+| `sleep` | returns at once; in a story where time matters (The Bike Share), that much time passes for the whole story (at most a day) | waits |
 | sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
 | `nmap -6`, `nc -4`/`-6` | from the vantage point: the story's server's ports in each family (its firewall, its sockets, neighbour discovery: a server that drops it "seems down"); an IPv6 literal needs `-6` (nmap's message) | real probes, `-6` with `-sU`, OS detection |
 | `tar` | `-C`; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, multi-volume archives… |
@@ -3408,6 +3416,101 @@ and `/booking/` answer 200. Expected traps: the file changed without a
 reload, `listen [::]:80 ipv6only=off` next to `listen 80` (the reload
 fails on `bind()`, `nginx -t` doesn't see it), the app on every address
 (only the firewall hides it).
+
+## Story 35: The Bike Share (three chapters)
+
+A neighbourhood bike share cooperative (four stations, some sixty bikes)
+runs its rental app on `saddle` (`selle` in French, 192.0.2.55) and the
+docking stations' gateway on `hub` (`moyeu`, 192.0.2.56); `gauge`
+(`jauge`, 192.0.2.54), the story's machine, is the monitoring server Aroha
+set up before moving away: Prometheus, a node exporter, the Alertmanager,
+and a small relay that posts the Alertmanager's webhooks to the volunteers'
+chat (`#team`, `#on-call`, `/var/log/alert-relay/relay.log`). Ngozi
+coordinates; Tomás writes the rental app. `saddle` and `hub` are internal
+hosts reached with ssh from gauge, each with its ufw and its node exporter.
+Engine: `src/engine/promql.ts` (PromQL), `src/engine/prometheus.ts`
+(configuration, scrapes, the time series, rules and alerts, the API),
+`src/engine/alertmanager.ts` (routes, groups, notifications, silences,
+inhibition), `commands/prometheus.ts` (`promtool`, `amtool`, the daemons'
+`--version`, the Alertmanager's API, curl on the story's network, `sleep`),
+`commands/jq.ts`. The metrics are computed from the machines' state and
+the clock (file systems from their files, the app's counters from its
+traffic since its process started: a baseline, two-minute bursts of errors
+every quarter of an hour, an incident in chapter 2); each command, a
+minute passes (`sleep` lets more pass), and Prometheus scrapes and
+evaluates every 15 seconds of it. The story's machine is built in
+`chapters/bike-share.ts`. It opens after "SSH Alerts" (The Huts: reading a
+service through its logs) and extends the production path.
+
+### Chapter 1 — The Blind Spot (done)
+
+The docking stations' gateway stopped last Saturday and nobody knew, yet
+Prometheus was installed. Two targets fail in silence and a machine is
+missing.
+
+| Step | Command learnt |
+|---|---|
+| The targets | `curl -s localhost:9090/api/v1/targets \| jq …`, `promtool query instant http://localhost:9090 up` |
+| A timeout | `context deadline exceeded`: on saddle, `curl localhost:9100/metrics`, `sudo ufw status`, `sudo ufw allow from 192.0.2.54 to any port 9100 proto tcp` |
+| A refusal | `connection refused` on `127.0.0.1:3000`: the app moved to saddle |
+| The exposition format | `curl localhost:3000/metrics`: `# HELP`, `# TYPE`, counters, a histogram, gauges |
+| The configuration | `scrape_configs`, `static_configs`, `targets`, `labels`; `promtool check config`; `systemctl reload prometheus` (SIGHUP), `POST /-/reload` refused without `--web.enable-lifecycle` |
+
+Goal checked on the state: the five targets (Prometheus, the three node
+exporters, the app) up in the running configuration, no target down,
+the file the same as what runs, saddle's 9100 open to gauge and closed to
+the internet. Expected traps: 9100 opened to everyone, `POST /-/reload`
+(403), a broken file reloaded (the old configuration kept, the error in
+the journal), a file changed but not reloaded.
+
+### Chapter 2 — The Threshold (done)
+
+Two alerts: a disk under 10 % free (hub has 7 % since an old backup) and
+the rental app answering errors to more than 5 % of its requests (since
+this morning's release, about one return in two fails).
+
+| Step | Command learnt |
+|---|---|
+| A gauge | `node_filesystem_avail_bytes / node_filesystem_size_bytes` |
+| A rate | `sum by (job) (rate(http_requests_total{status=~"5.."}[5m])) / sum by (job) (rate(http_requests_total[5m]))` |
+| The rules | `/etc/prometheus/rules/*.yml`: `alert`, `expr`, `for`, `labels` (`severity`), `annotations` (`summary`); `promtool check rules`; reload |
+| The states | `/api/v1/alerts`: pending, firing; `sleep` |
+| The fixes | on hub, `rm` the old backup; on saddle, `systemctl restart rental` (the fixed release); resolved |
+
+Goal checked on the state: both rules loaded and tried on made-up days
+(the disk rule fires for any machine at 7 % free, not at 12 % nor for
+`/run`; the error rule fires during a lasting incident within 30 minutes,
+and stays quiet through 90 minutes of a normal day and its bursts), each
+with a `severity` label and a `summary`; the disk alert fired and
+resolved; the app restarted and no error alert firing; the files on disk
+loaded. Expected traps: `rate()` on a gauge (Prometheus's info), a
+counter's raw value, each series divided by itself (no `sum`),
+`status!="200"` (201 and 404), no `for:` (the bursts page), labels
+missing, the stations' photos deleted (Ngozi puts them back), the app
+restarted before its alert fired.
+
+### Chapter 3 — Quiet Hours (done)
+
+The alerts reach the chat, badly: the only route matches
+`severity="critical"`, a value no rule sets, so pages land in `#team`, and
+`repeat_interval: 1m` repeats them at every `group_interval`. At 10:00,
+hub goes down for a planned disk replacement until 11:30.
+
+| Step | Command learnt |
+|---|---|
+| The chat | `tail /var/log/alert-relay/relay.log`, `amtool alert query` |
+| The routing | `amtool config routes`, `amtool config routes test severity=page alertname=NodeDown` |
+| The fix | `matchers: [severity="page"]`, `repeat_interval: 4h`, `amtool check-config`, `systemctl reload prometheus-alertmanager` |
+| The maintenance | `amtool silence add instance="hub.internal:9100" --duration=2h --comment=…`, `amtool silence query`, `amtool alert query --silenced`, `amtool silence expire` |
+
+Goal checked on the state: in the running configuration a page goes to
+`on-call` and a warning to `team`, neither repeated more often than every
+hour; a silence covers hub's NodeDown from 10:00 to 11:30 and nothing of
+saddle's or gauge's; Prometheus and the Alertmanager run; NodeDown is still
+loaded; the file is the one running. Expected traps: a broken file, a
+silence too broad (`severity=page`), too short (`--duration=1h`),
+Prometheus stopped, the rule removed, no silence at all (the on-call phone
+rings at 10:02).
 
 ## Ideas for later
 

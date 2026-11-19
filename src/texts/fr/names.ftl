@@ -459,3 +459,8 @@ name-message_from_amaru-txt = message_d_amaru.txt
 name-email_from_rangi-txt = courriel_de_rangi.txt
 name-scan_report-txt = rapport_de_scan.txt
 name-note_from_lucia-txt = mot_de_lucia.txt
+
+## Les Vélos partagés
+name-message_from_ngozi-txt = message_de_ngozi.txt
+name-note_from_tomas-txt = mot_de_tomas.txt
+name-RELEASE-NOTES-txt = NOTES-DE-VERSION.txt

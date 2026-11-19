@@ -25,6 +25,7 @@ import { systemd, toUtc } from '../systemd';
 import { addressFor, interfaceFor, reach, lan } from '../lan';
 import { pingTunnel } from './wireguard';
 import { curl6, ping6, speaks6 } from './ipv6';
+import { metricsCurl } from './prometheus';
 
 // What curl adds when certificate verification fails (curl 8).
 const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
@@ -258,6 +259,8 @@ export const NETWORK: Record<string, Command> = {
     // curl has many options (-s, -L, -v…): the ones not simulated are ignored.
     ownOptions: true,
     launch: ({ args, game }) => {
+      // A story that models its network for metrics (Prometheus, exporters): its own curl.
+      if (game.state.metricsHere) return metricsCurl(game, args);
       if (speaks6(game)) return curl6(game, args);
       // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];

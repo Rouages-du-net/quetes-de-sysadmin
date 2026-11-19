@@ -606,11 +606,15 @@ them safely.
   firewall turned `inet` with ICMPv6; `nmap -6`, `nc -6`, `ss -6`;
   nginx's `listen [::]:80` and `ipv6only`, `curl -4`/`-6 -v`, localhost
   as `::1`; ufw's `IPV6=`).
-- [ ] **Metrics and alerting** (Prometheus/Alertmanager): reading a
+- [x] **Metrics and alerting** (Prometheus/Alertmanager): reading a
   service the way "The Huts" reads logs. A node exporter and an app's
   `/metrics`, a scrape config, a PromQL threshold, an alert rule that
   fires and resolves, and silencing during maintenance. All simulated and
-  deterministic, like the rest.
+  deterministic, like the rest. Done: story 35, "The Bike Share"
+  (`promql.ts`, `prometheus.ts`, `alertmanager.ts`: targets scraped
+  through the story's network and its firewalls, the HTTP APIs answering
+  curl, rules with `for:` tried on made-up days, routing, repeat interval
+  and silences; `promtool`, `amtool`, `jq`, `sleep`).
 - [ ] **Containers in production, step 2** (a light Kubernetes, k3s):
   after Docker and Compose, one node. A Pod that won't start
   (`kubectl get`/`describe`/`logs`, an image or a probe failing), a

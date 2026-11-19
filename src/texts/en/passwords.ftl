@@ -73,3 +73,5 @@ password-tram-lemon-harbour-58 = tram-lemon-harbour-58
 password-basket-orchard-copper-73 = basket-orchard-copper-73
 ## The Ferry: sudo
 password-tide-2029 = tide-2029
+## The Bike Share: sudo
+password-pedal-2029 = pedal-2029

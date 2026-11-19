@@ -456,3 +456,8 @@ name-message_from_amaru-txt = message_from_amaru.txt
 name-email_from_rangi-txt = email_from_rangi.txt
 name-scan_report-txt = scan_report.txt
 name-note_from_lucia-txt = note_from_lucia.txt
+
+## The Bike Share
+name-message_from_ngozi-txt = message_from_ngozi.txt
+name-note_from_tomas-txt = note_from_tomas.txt
+name-RELEASE-NOTES-txt = RELEASE-NOTES.txt
