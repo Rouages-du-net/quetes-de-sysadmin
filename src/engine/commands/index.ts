@@ -97,6 +97,8 @@ export interface Command {
   // Short options accepted. If present, an unknown option gives the real
   // error message, which points to --help.
   options?: string[];
+  // The short options that take a value, glued or not (head -n5, cut -d: -f1): what follows them is no option.
+  values?: string[];
   // GNU long options the game understands: their short equivalent ("all" → "a"),
   // or '' for a long option read as is (--max-depth=1). The others:
   // "unrecognized option '--x'", like the real tools.

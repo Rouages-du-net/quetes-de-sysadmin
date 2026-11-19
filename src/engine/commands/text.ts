@@ -4,7 +4,7 @@
 
 import { options, wildcard, compareNames } from '../tools';
 import { colourise, readColour, invalidColourMessage, sgr } from '../colours';
-import type { Command, Context } from './index';
+import { COMMANDS, type Command, type Context } from './index';
 import { isBsd } from '../freebsd';
 import { isSolaris } from '../solaris';
 
@@ -21,32 +21,220 @@ function texts(cmd: string, { input, game }: Context, files: string[]): { name: 
 
 const linesFor = (t: string) => (t === '' ? [] : t.split('\n'));
 
-// -n 5, -n5 or -5 → 5.
-function count(args: string[], fallback: number): { n: number; rest: string[] } {
+// -n 5, -n5 or -5 → 5; tail's -n +N (from line N) and head's -n -N (all but the
+// last N) keep their sign; -c N counts bytes instead of lines.
+function count(args: string[], fallback: number): { n: number; sign: string; bytes: boolean; rest: string[]; bad?: string } {
   const rest: string[] = [];
-  let n = fallback;
+  let value = String(fallback);
+  let bytes = false;
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === '-n') n = Number(args[++i]);
-    else if (/^-n\d+$/.test(a)) n = Number(a.slice(2));
-    else if (/^-\d+$/.test(a)) n = Number(a.slice(1));
+    if (a === '-n' || a === '-c' || a === '--lines' || a === '--bytes') {
+      value = args[++i] ?? '';
+      bytes = a === '-c' || a === '--bytes';
+    } else if (/^-[nc].+$/.test(a)) {
+      value = a.slice(2);
+      bytes = a[1] === 'c';
+    } else if (/^--(lines|bytes)=/.test(a)) {
+      value = a.slice(a.indexOf('=') + 1);
+      bytes = a.startsWith('--bytes');
+    } else if (/^-\d+$/.test(a)) value = a.slice(1);
     else rest.push(a);
   }
-  return { n: Number.isFinite(n) ? n : fallback, rest };
+  const m = /^([+-]?)(\d+)$/.exec(value.trim());
+  if (!m) return { n: fallback, sign: '', bytes, rest, bad: value };
+  return { n: Number(m[2]), sign: m[1], bytes, rest };
 }
 
 function head(cmd: 'head' | 'tail') {
   return (c: Context) => {
-    const { n, rest } = count(c.args, 10);
+    const { n, sign, bytes, rest, bad } = count(c.args, 10);
+    if (bad !== undefined) return c.game.error(`${cmd}: invalid number of ${bytes ? 'bytes' : 'lines'}: \u2018${bad}\u2019`, 1);
     const ts = texts(cmd, c, rest);
     return ts
       .map(({ name, text }) => {
-        const l = linesFor(text);
-        const part = cmd === 'head' ? l.slice(0, n) : l.slice(Math.max(0, l.length - n));
-        return (ts.length > 1 ? `==> ${name} <==\n` : '') + part.join('\n');
+        let part: string;
+        if (bytes) {
+          // Bytes, the final newline included (the game's texts keep none).
+          const all = text === '' ? '' : `${text}\n`;
+          part = (cmd === 'head' ? (sign === '-' ? all.slice(0, Math.max(0, all.length - n)) : all.slice(0, n)) : sign === '+' ? all.slice(Math.max(0, n - 1)) : all.slice(Math.max(0, all.length - n))).replace(/\n$/, '');
+        } else {
+          const l = linesFor(text);
+          // head -n -N: all but the last N; tail -n +N: from line N on.
+          part = (cmd === 'head' ? (sign === '-' ? l.slice(0, Math.max(0, l.length - n)) : l.slice(0, n)) : sign === '+' ? l.slice(Math.max(0, n - 1)) : l.slice(Math.max(0, l.length - n))).join('\n');
+        }
+        return (ts.length > 1 ? `==> ${name} <==\n` : '') + part;
       })
       .join('\n\n');
   };
+}
+
+// ——— sort (GNU coreutils: https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) ———
+
+interface SortKey {
+  start: { field: number; char: number };
+  end: { field: number; char: number } | null;
+  flags: string;
+}
+
+// -k POS1[,POS2]: F[.C][flags].
+function sortKey(spec: string): SortKey | null {
+  const m = /^(\d+)(?:\.(\d+))?([bdfghiMnRrV]*)(?:,(\d+)(?:\.(\d+))?([bdfghiMnRrV]*))?$/.exec(spec);
+  if (!m || Number(m[1]) < 1) return null;
+  return {
+    start: { field: Number(m[1]), char: Number(m[2] ?? 1) },
+    end: m[4] ? { field: Number(m[4]), char: Number(m[5] ?? 0) } : null,
+    flags: (m[3] ?? '') + (m[6] ?? ''),
+  };
+}
+
+// The fields of a line: separated by the -t character, or by blanks (a field begins with its leading blanks).
+function fieldsOf(line: string, sep: string | null): { text: string; at: number }[] {
+  const out: { text: string; at: number }[] = [];
+  if (sep !== null) {
+    let at = 0;
+    for (const f of line.split(sep)) {
+      out.push({ text: f, at });
+      at += f.length + 1;
+    }
+    return out;
+  }
+  const re = /\s*\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line))) out.push({ text: m[0], at: m.index });
+  return out;
+}
+
+function keyText(line: string, k: SortKey, sep: string | null): string {
+  const fields = fieldsOf(line, sep);
+  const from = fields[k.start.field - 1];
+  if (!from) return '';
+  const start = from.at + k.start.char - 1;
+  if (!k.end) return line.slice(start);
+  const to = fields[k.end.field - 1];
+  const end = !to ? line.length : k.end.char === 0 ? to.at + to.text.length : to.at + k.end.char;
+  return line.slice(start, Math.max(start, end));
+}
+
+// -h: 2K, 1.5M, 3G… (a larger suffix is larger, whatever the number).
+const human = (t: string) => {
+  const m = /^\s*(-?\d+(?:[.,]\d+)?)\s*([KMGTPEZY]?)/i.exec(t);
+  if (!m) return 0;
+  return parseFloat(m[1].replace(',', '.')) * 1024 ** ' KMGTPEZY'.indexOf((m[2] || ' ').toUpperCase());
+};
+// -n: the number at the start (blanks skipped), 0 otherwise.
+const numeric = (t: string) => {
+  const m = /^\s*(-?\d+(?:\.\d+)?)/.exec(t);
+  return m ? parseFloat(m[1]) : 0;
+};
+// -V: version numbers compared piece by piece (1.10 after 1.9).
+const version = (a: string, b: string) => a.localeCompare(b, 'en', { numeric: true });
+
+function sortCompare(flags: string): (a: string, b: string) => number {
+  const fold = flags.includes('f');
+  const blanks = flags.includes('b');
+  const base = (a: string, b: string) => {
+    if (blanks) [a, b] = [a.trimStart(), b.trimStart()];
+    if (flags.includes('h')) return human(a) - human(b);
+    if (flags.includes('n') || flags.includes('g')) return numeric(a) - numeric(b);
+    if (flags.includes('V')) return version(a, b);
+    if (fold) return compareText(a.toLowerCase(), b.toLowerCase());
+    return compareText(a, b);
+  };
+  return flags.includes('r') ? (a, b) => base(b, a) : base;
+}
+
+const compareText = (a: string, b: string) => a.localeCompare(b, 'fr');
+
+function sort(c: Context): string {
+  const { game } = c;
+  let letters = '';
+  let sep: string | null = null;
+  let output: string | null = null;
+  const keys: SortKey[] = [];
+  const files: string[] = [];
+  const a = c.args;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    if (x === '--') {
+      files.push(...a.slice(i + 1));
+      break;
+    }
+    if (!x.startsWith('-') || x === '-') {
+      files.push(x);
+      continue;
+    }
+    // Grouped letters; -k, -t and -o take a value, glued or not.
+    for (let j = 1; j < x.length; j++) {
+      const o = x[j];
+      if (o === 'k' || o === 't' || o === 'o') {
+        const v = x.slice(j + 1) || a[++i];
+        if (v === undefined) return game.error(`sort: option requires an argument -- '${o}'\nTry 'sort --help' for more information.`, 2);
+        if (o === 't') {
+          if (v.length !== 1) return game.error(`sort: multi-character tab \u2018${v}\u2019`, 2);
+          sep = v;
+        } else if (o === 'o') output = v;
+        else {
+          const k = sortKey(v);
+          if (!k) return game.error(`sort: invalid number at field start: invalid count at start of \u2018${v}\u2019`, 2);
+          keys.push(k);
+        }
+        break;
+      }
+      letters += o;
+    }
+  }
+  const lines = texts('sort', c, files).flatMap((t) => linesFor(t.text));
+  // The options given alone apply to every key that has no flag of its own.
+  const global = letters.replace(/[uscm]/g, '');
+  const cmp = (x: string, y: string) => {
+    for (const k of keys) {
+      const r = sortCompare(k.flags.replace(/b/g, '') ? k.flags : global + k.flags)(keyText(x, k, sep), keyText(y, k, sep));
+      if (r) return r;
+    }
+    if (!keys.length) {
+      const r = sortCompare(global)(x, y);
+      if (r || letters.includes('u')) return r;
+    }
+    // Last resort: the whole line, byte against byte (not with -s or -u).
+    if (letters.includes('s') || letters.includes('u')) return 0;
+    const r = compareText(x, y);
+    return letters.includes('r') ? -r : r;
+  };
+  // -c: is it already sorted? The first line out of order, and exit code 1.
+  if (letters.includes('c')) {
+    for (let k = 1; k < lines.length; k++)
+      if (cmp(lines[k - 1], lines[k]) > 0) {
+        game.status = 1;
+        return game.error(`sort: ${files[0] ?? '-'}:${k + 1}: disorder: ${lines[k]}`, 1);
+      }
+    return '';
+  }
+  const sorted = [...lines].sort(cmp);
+  // -u: one line of each group of equal keys (the first).
+  const result = letters.includes('u') ? sorted.filter((l, k) => k === 0 || cmp(sorted[k - 1], l) !== 0) : sorted;
+  // -o FILE: written into the file (it may be one of the inputs: sort -o f f).
+  if (output !== null) {
+    COMMANDS.tee.launch({ args: [output], input: result.join('\n'), game, last: false });
+    return '';
+  }
+  return result.join('\n');
+}
+
+// cut's LIST: N, N-M, N-, -M, separated by commas; positions start at 1.
+function cutList(spec: string): ((n: number) => boolean) | string {
+  const parts = spec.split(',');
+  const ranges: [number, number][] = [];
+  for (const p of parts) {
+    const m = /^(\d*)(-?)(\d*)$/.exec(p);
+    if (!m || (!m[1] && !m[3])) return 'invalid';
+    const from = m[1] ? Number(m[1]) : 1;
+    const to = m[2] ? (m[3] ? Number(m[3]) : Infinity) : from;
+    if (from === 0 || to === 0) return 'zero';
+    if (to < from) return 'decreasing';
+    ranges.push([from, to]);
+  }
+  return (n: number) => ranges.some(([a, b]) => n >= a && n <= b);
 }
 
 // GNU grep's options, read like getopt_long (grep 3.11's messages).
@@ -464,50 +652,93 @@ export const TEXT: Record<string, Command> = {
     },
   },
 
-  sort: {
-    launch: (c) => {
-      const { letters, rest } = options(c.args);
-      const lines = texts('sort', c, rest).flatMap((t) => linesFor(t.text));
-      const num = (l: string) => parseFloat(l.trim()) || 0;
-      lines.sort(letters.has('n') ? (a, b) => num(a) - num(b) || a.localeCompare(b, 'fr') : (a, b) => a.localeCompare(b, 'fr'));
-      if (letters.has('r')) lines.reverse();
-      return lines.join('\n');
-    },
-  },
+  sort: { ownOptions: true, launch: sort },
 
+  // uniq: equal neighbouring lines once (sort first); -c counts them, -d only
+  // the repeated ones, -u only the others, -i ignores case, -f N skips N fields, -s N N characters.
   uniq: {
     launch: (c) => {
-      const { letters, rest } = options(c.args);
-      const groups: { line: string; n: number }[] = [];
-      for (const l of texts('uniq', c, rest).flatMap((t) => linesFor(t.text))) {
-        const last = groups.at(-1);
-        if (last && last.line === l) last.n++;
-        else groups.push({ line: l, n: 1 });
-      }
-      return groups.map((g) => (letters.has('c') ? `${String(g.n).padStart(7)} ${g.line}` : g.line)).join('\n');
-    },
-  },
-
-  cut: {
-    launch: (c) => {
-      let sep = '\t';
-      let fields: number[] = [];
+      const { game } = c;
+      const flags = new Set<string>();
+      let skipFields = 0;
+      let skipChars = 0;
       const files: string[] = [];
       for (let i = 0; i < c.args.length; i++) {
         const a = c.args[i];
-        if (a === '-d') sep = c.args[++i] ?? sep;
-        else if (a.startsWith('-d')) sep = a.slice(2);
-        else if (a === '-f') fields = (c.args[++i] ?? '').split(',').map(Number);
-        else if (a.startsWith('-f')) fields = a.slice(2).split(',').map(Number);
+        if (/^-[fs]/.test(a)) {
+          const v = a.slice(2) || c.args[++i] || '';
+          if (!/^\d+$/.test(v)) return game.error(`uniq: ${v}: invalid number of ${a[1] === 'f' ? 'fields' : 'bytes'} to skip`, 1);
+          if (a[1] === 'f') skipFields = Number(v);
+          else skipChars = Number(v);
+        } else if (/^-[a-zA-Z]+$/.test(a)) for (const l of a.slice(1)) flags.add(l);
         else files.push(a);
       }
-      if (!fields.length || fields.some((n) => !n)) return c.game.error(c.game.t('cut-fields'));
-      if (sep.length !== 1) return c.game.error(c.game.t('cut-separator'));
+      const keyOf = (l: string) => {
+        let k = l;
+        for (let f = 0; f < skipFields; f++) k = k.replace(/^\s*\S+/, '');
+        k = k.slice(skipChars);
+        return flags.has('i') ? k.toLowerCase() : k;
+      };
+      const groups: { line: string; key: string; n: number }[] = [];
+      for (const l of texts('uniq', c, files.slice(0, 1)).flatMap((t) => linesFor(t.text))) {
+        const last = groups.at(-1);
+        const key = keyOf(l);
+        if (last && last.key === key) last.n++;
+        else groups.push({ line: l, key, n: 1 });
+      }
+      return groups
+        .filter((g) => (!flags.has('d') || g.n > 1) && (!flags.has('u') || g.n === 1))
+        .map((g) => (flags.has('c') ? `${String(g.n).padStart(7)} ${g.line}` : g.line))
+        .join('\n');
+    },
+  },
+
+  // cut -f LIST [-d C] [-s] | -c LIST | -b LIST, --complement, --output-delimiter.
+  cut: {
+    launch: (c) => {
+      const { game } = c;
+      let sep = '\t';
+      let mode: 'f' | 'c' | null = null;
+      let list = '';
+      let complement = false;
+      let onlyDelimited = false;
+      let joiner: string | null = null;
+      const files: string[] = [];
+      const fail = (message: string) => game.error(`cut: ${message}\nTry 'cut --help' for more information.`, 1);
+      for (let i = 0; i < c.args.length; i++) {
+        const a = c.args[i];
+        if (a === '--complement') complement = true;
+        else if (a.startsWith('--output-delimiter=')) joiner = a.slice(19);
+        else if (a === '-s' || a === '--only-delimited') onlyDelimited = true;
+        else if (/^-[dfcb]/.test(a)) {
+          const v = a.length > 2 ? a.slice(2) : c.args[++i];
+          if (v === undefined) return fail(`option requires an argument -- '${a[1]}'`);
+          if (a[1] === 'd') sep = v;
+          else {
+            if (mode) return fail('only one type of list may be specified');
+            mode = a[1] === 'f' ? 'f' : 'c';
+            list = v;
+          }
+        } else files.push(a);
+      }
+      if (!mode) return game.error(game.t('cut-fields'));
+      if (sep.length !== 1) return game.error(game.t('cut-separator'));
+      const picked = cutList(list);
+      if (picked === 'zero') return fail(mode === 'f' ? 'fields are numbered from 1' : 'byte/character positions are numbered from 1');
+      if (picked === 'decreasing') return fail('invalid decreasing range');
+      if (typeof picked === 'string') return fail(`invalid field value \u2018${list}\u2019`);
+      const keep = (n: number) => picked(n) !== complement;
       return texts('cut', c, files)
         .flatMap((t) => linesFor(t.text))
-        .map((l) => {
+        .flatMap((l) => {
+          if (mode === 'c') {
+            const chars = [...l].filter((_, k) => keep(k + 1)).join('');
+            return [chars];
+          }
           const parts = l.split(sep);
-          return parts.length === 1 ? l : fields.map((n) => parts[n - 1]).filter((p) => p !== undefined).join(sep);
+          // A line without the delimiter: printed whole, unless -s.
+          if (parts.length === 1) return onlyDelimited ? [] : [l];
+          return [parts.filter((_, k) => keep(k + 1)).join(joiner ?? sep)];
         })
         .join('\n');
     },

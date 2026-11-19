@@ -6,7 +6,7 @@
 
 import type { Command } from './index';
 
-type Page = Pick<Command, 'options' | 'long' | 'examples' | 'see' | 'section'>;
+type Page = Pick<Command, 'options' | 'values' | 'long' | 'examples' | 'see' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
   ansible: { options: ['m', 'a', 'b', 'i', 'u', 'l', 'C', 'D'], examples: ['ansible centres -m ping', 'ansible centres -a "cat /etc/hostname"', 'ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible centres --list-hosts'], see: ['ansible-playbook', 'ansible-inventory', 'ansible-doc', 'ssh'] },
@@ -230,7 +230,8 @@ export const PAGES: Record<string, Page> = {
     see: ['cat', 'find'],
   },
   groups: { examples: ['groups', 'groups malo'], see: ['id', 'usermod'] },
-  head: { long: {  }, options: ['n'], see: ['tail', 'cat'] },
+  head: { long: { lines: '', bytes: '' }, options: ['n', 'c'], values: ['n', 'c'], examples: ['head -n 3 /etc/passwd', 'head -n -2 notes.txt', 'head -c 100 key.pem'], see: ['tail', 'cat'] },
+  cut: { long: { complement: '', 'only-delimited': 's', 'output-delimiter': '', delimiter: '', fields: '', characters: '', bytes: '' }, options: ['d', 'f', 'c', 'b', 's'], values: ['d', 'f', 'c', 'b'], examples: ['cut -d: -f1 /etc/passwd', 'cut -d: -f1,3,6 /etc/passwd', 'cut -c1-15 /var/log/syslog'], see: ['awk', 'sort', 'tr'] },
   host: { examples: ['host cafe.example', 'host cafe.example ns2.registry.example'], see: ['dig'] },
   ip: {
     section: 8,
@@ -608,7 +609,7 @@ export const PAGES: Record<string, Page> = {
   rmdir: { long: { 'parents': 'p', 'verbose': 'v', 'ignore-fail-on-non-empty': '' }, options: ['p', 'v'], examples: ['rmdir old', 'rmdir -p releases/1/tmp'], see: ['mkdir', 'rm'] },
   sh: { examples: ['sh tests.sh', './deployer.sh', 'chmod +x deployer.sh'], see: ['bash', 'test', 'chmod'] },
   bash: { examples: ['bash tests.sh', 'sudo nginx -t && sudo systemctl reload nginx', 'grep -q backup /etc/crontab || echo missing', 'cd /var/log; ls'], see: ['sh', 'history'] },
-  sort: { long: { 'numeric-sort': 'n', 'reverse': 'r' }, options: ['n', 'r'], examples: ['sort -n sizes.txt'], see: ['uniq', 'wc'] },
+  sort: { long: { 'numeric-sort': 'n', 'reverse': 'r', unique: 'u', 'human-numeric-sort': 'h', 'ignore-case': 'f', 'version-sort': 'V', check: 'c', stable: 's' }, options: ['n', 'r', 'u', 'k', 't', 'h', 'f', 'V', 'c', 's', 'b', 'o'], values: ['k', 't', 'o'], examples: ['sort -n sizes.txt', 'sort -t: -k3,3n /etc/passwd', 'du -sh /var/log/* | sort -h', 'sort -u visitors.txt', "awk '{print $1}' access.log | sort | uniq -c | sort -rn"], see: ['uniq', 'wc', 'cut'] },
   ssh: {
     options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],
     examples: ['ssh kingdom', 'ssh -i ~/.ssh/id_kingdom you@kingdom.internal', 'cat ~/.ssh/config', 'ssh -J community wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
@@ -665,12 +666,12 @@ export const PAGES: Record<string, Page> = {
     see: ['systemd.timer', 'systemd.unit', 'systemctl'],
   },
   'systemd.timer': { examples: ['sudo nano /etc/systemd/system/probe.timer', 'sudo systemctl enable --now probe.timer', 'systemctl list-timers'], see: ['systemctl', 'systemd-analyze', 'crontab', 'journalctl'] },
-  tail: { long: { follow: 'f' }, options: ['n', 'f', 'F'], examples: ['tail -n 5 /var/log/syslog', 'tail -f /var/log/nginx/access.log'], see: ['head', 'cat', 'journalctl'] },
+  tail: { long: { follow: 'f', lines: '', bytes: '' }, options: ['n', 'f', 'F', 'c'], values: ['n', 'c'], examples: ['tail -n 5 /var/log/syslog', 'tail -f /var/log/nginx/access.log', 'tail -n +2 report.csv'], see: ['head', 'cat', 'journalctl'] },
   tar: { long: { 'create': 'c', 'list': 't', 'extract': 'x', 'get': 'x', 'gzip': 'z', 'verbose': 'v', 'directory': '' }, options: ['c', 't', 'x', 'z', 'v', 'f', 'C'], examples: ['tar -czf backup.tar.gz Folder', 'tar -tzf backup.tar.gz', 'tar -xzf backup.tar.gz', 'sudo tar -xzf /mnt/backup/site.tar.gz -C /'], see: ['du', 'df', 'rsync', 'restic'] },
   tee: { long: { 'append': 'a' }, options: ['a'], see: ['echo'] },
   touch: { examples: ['touch gear'], see: ['mkdir'] },
   traceroute: { see: ['ping'] },
-  uniq: { long: { 'count': 'c' }, options: ['c'], examples: ['sort visits | uniq -c | sort -n'], see: ['sort'] },
+  uniq: { long: { 'count': 'c', 'repeated': 'd', 'unique': 'u', 'ignore-case': 'i' }, options: ['c', 'd', 'u', 'i', 'f', 's'], values: ['f', 's'], examples: ['sort visits | uniq -c | sort -n', 'sort visits | uniq -d'], see: ['sort'] },
   ufw: { section: 8, examples: ['sudo ufw status verbose', 'sudo ufw allow OpenSSH', 'sudo ufw allow from 192.0.2.2 to any port 22', 'sudo ufw default deny incoming', 'sudo ufw enable', 'sudo ufw delete allow 80', 'sudo ufw allow from 192.0.2.0/24 to any app Samba', 'grep IPV6 /etc/default/ufw', 'sudo ufw reload'], see: ['ss', 'ssh', 'systemctl'] },
   wc: { long: { 'lines': 'l', 'words': 'w', 'bytes': 'c' }, options: ['l', 'w', 'c'], examples: ['grep erreur journal | wc -l'], see: ['grep', 'sort'] },
   usermod: { long: { 'append': 'a', 'groups': 'G', 'lock': 'L', 'unlock': 'U', 'expiredate': 'e', 'shell': 's', 'uid': 'u' },

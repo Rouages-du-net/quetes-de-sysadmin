@@ -9,8 +9,9 @@
 //     GNU's -f means "file system status"; BSD has no -c.
 // Sources: GNU sed (https://www.gnu.org/software/sed/manual/sed.html),
 // FreeBSD sed(1) and stat(1) (https://man.freebsd.org/), GNU coreutils stat.
-// Simplifications: sed's commands s (flags g, p, I, N), d, p and q, with one
-// address (a line number, $, /regex/) and !; stat's common format sequences.
+// Simplifications: sed's commands s (flags g, p, I, N), d, p and q, with an
+// address (a line number, $, /regex/) or a range (addr1,addr2, addr1,+N) and !;
+// stat's common format sequences.
 
 import type { Shell } from '../shell';
 import type { Command, Context } from './index';
@@ -21,8 +22,13 @@ import { content, sizeFor } from '../tools';
 
 // ——— sed ———
 
+type SedAddress = { line?: number; last?: boolean; re?: RegExp; plus?: number };
 interface SedCommand {
-  address: { line?: number; last?: boolean; re?: RegExp } | null;
+  address: SedAddress | null;
+  // A range addr1,addr2 (addr2 may be +N): `active` while inside it.
+  end?: SedAddress;
+  active?: boolean;
+  until?: number;
   not: boolean;
   name: 's' | 'd' | 'p' | 'q';
   re?: RegExp;
@@ -75,19 +81,34 @@ function parseScript(script: string, extended: boolean, bsd: boolean): SedComman
   while (i < script.length) {
     while (i < script.length && /[\s;]/.test(script[i])) i++;
     if (i >= script.length) break;
-    let address: SedCommand['address'] = null;
-    if (/\d/.test(script[i])) {
-      const m = /^\d+/.exec(script.slice(i))!;
-      address = { line: Number(m[0]) };
-      i += m[0].length;
-    } else if (script[i] === '$') {
-      address = { last: true };
+    const readAddress = (second: boolean): SedAddress | null => {
+      if (second && script[i] === '+' && /\d/.test(script[i + 1] ?? '')) {
+        const m = /^\+(\d+)/.exec(script.slice(i))!;
+        i += m[0].length;
+        return { plus: Number(m[1]) };
+      }
+      if (/\d/.test(script[i])) {
+        const m = /^\d+/.exec(script.slice(i))!;
+        i += m[0].length;
+        return { line: Number(m[0]) };
+      }
+      if (script[i] === '$') {
+        i++;
+        return { last: true };
+      }
+      if (script[i] === '/') {
+        i++;
+        const r = until('/');
+        if (r === null) fail('unterminated address regex', 'unterminated regular expression');
+        return { re: regex(r!) };
+      }
+      return null;
+    };
+    const address: SedCommand['address'] = readAddress(false);
+    let end: SedAddress | undefined;
+    if (address && script[i] === ',') {
       i++;
-    } else if (script[i] === '/') {
-      i++;
-      const r = until('/');
-      if (r === null) fail('unterminated address regex', 'unterminated regular expression');
-      address = { re: regex(r!) };
+      end = readAddress(true) ?? fail('unexpected `,\'', 'expected context address');
     }
     let not = false;
     while (script[i] === ' ') i++;
@@ -117,8 +138,8 @@ function parseScript(script: string, extended: boolean, bsd: boolean): SedComman
         else nth = Number(f);
       }
       if (i < script.length && !/[\s;}]/.test(script[i])) fail(`unknown option to \`s'`, `bad flag in substitute command: '${script[i]}'`);
-      cmds.push({ address, not, name: 's', re: regex(pattern!, insensitive ? 'gi' : 'g'), replacement: replacement!, global, print, nth });
-    } else if (name === 'd' || name === 'p' || name === 'q') cmds.push({ address, not, name });
+      cmds.push({ address, end, not, name: 's', re: regex(pattern!, insensitive ? 'gi' : 'g'), replacement: replacement!, global, print, nth });
+    } else if (name === 'd' || name === 'p' || name === 'q') cmds.push({ address, end, not, name });
     else if (name === 'b' || name === 't') {
       // A branch: to a label (":label"), which the game's scripts never define.
       const label = /^\s*([^;\n]*)/.exec(script.slice(i))![1].trim();
@@ -146,10 +167,28 @@ function run(cmds: SedCommand[], text: string, quiet: boolean): string {
     let line = lines[n];
     let deleted = false;
     let stop = false;
+    const matches = (a: SedAddress) => {
+      const r = a.line !== undefined ? a.line === n + 1 : a.last ? n === lines.length - 1 : a.re!.test(line);
+      if (a.re) a.re.lastIndex = 0;
+      return r;
+    };
     for (const c of cmds) {
       const a = c.address;
-      let hit = !a || (a.line !== undefined ? a.line === n + 1 : a.last ? n === lines.length - 1 : a.re!.test(line));
-      if (a?.re) a.re.lastIndex = 0;
+      let hit: boolean;
+      if (!a) hit = true;
+      else if (!c.end) hit = matches(a);
+      else if (c.active) {
+        // Inside a range: this line is in it; the range ends on addr2 (a line number already passed ends it at once).
+        hit = true;
+        const e = c.end;
+        if (e.plus !== undefined ? n + 1 >= c.until! : e.line !== undefined ? n + 1 >= e.line : matches(e)) c.active = false;
+      } else if (matches(a)) {
+        hit = true;
+        const e = c.end;
+        c.until = e.plus !== undefined ? n + 1 + e.plus : undefined;
+        // GNU: addr2 is only looked for from the next line; a line number at or before this one ends the range here.
+        c.active = e.plus !== undefined ? e.plus > 0 : e.line !== undefined ? e.line > n + 1 : e.last ? n !== lines.length - 1 : true;
+      } else hit = false;
       if (c.not) hit = !hit;
       if (!hit) continue;
       if (c.name === 'd') {
