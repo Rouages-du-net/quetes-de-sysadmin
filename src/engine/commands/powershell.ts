@@ -1759,7 +1759,7 @@ function selectObject(r: Run): unknown[] {
       const v = propertyOf(r, x, s);
       out[label] = v === undefined ? null : v;
     }
-    return { type: `Selected.${isObject(x) ? x.type : typeName(x)}`, props: out, fullType: 'System.Management.Automation.PSCustomObject' } satisfies PSObject;
+    return { type: `Selected.${isObject(x) ? (x.fullType ?? x.type) : typeName(x)}`, props: out, fullType: 'System.Management.Automation.PSCustomObject' } satisfies PSObject;
   });
 }
 

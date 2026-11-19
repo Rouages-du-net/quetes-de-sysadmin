@@ -27,7 +27,7 @@ import { BUILTIN_GROUPS, BUILTIN_USERS, type WinGroup, type WinUser } from './wi
 import { FULL, MODIFY, READ_EXECUTE } from './windows-acl';
 import { dword, expand, key, sz, type Registry } from './windows-registry';
 import { buildDomain, type DomainSpec } from './windows-ad';
-import { newFirewall, type FwProfileName } from './windows-firewall';
+import { newFirewall, type FwProfileName, type FwRule } from './windows-firewall';
 
 const DAY = 86_400_000;
 const GR_GE = 0x80000000 + 0x20000000;
@@ -76,6 +76,8 @@ export interface WindowsOptions {
   domain?: { dns: string; netbios: string; dc: string; ou?: string; role?: 'dc' | 'member'; tools?: boolean };
   // The network's category for the firewall's profile, outside a domain (Private by default).
   network_category?: FwProfileName;
+  // Local firewall rules the story adds to the default ones (an admin's leftovers).
+  firewallRules?: FwRule[];
 }
 
 const ace = (id: string, mask: number, flags: Partial<NtfsAce> = {}): NtfsAce => ({ id, mask, ...flags });
@@ -287,7 +289,7 @@ export function windowsState(o: WindowsOptions): Record<string, unknown> {
     },
     network: o.network,
     shells: ['powershell'],
-    firewall: newFirewall({ dc, category: o.domain ? 'Domain' : (o.network_category ?? 'Private') }),
+    firewall: newFirewall({ dc, category: o.domain ? 'Domain' : (o.network_category ?? 'Private'), rules: o.firewallRules }),
     ...(o.domain ? { domain: { dns: o.domain.dns, netbios: nb!, dc: o.domain.dc, ou: o.domain.ou, tools: o.domain.tools } } : {}),
   };
   return { os: 'windows', windows, sshd: { load: { passwordauthentication: 'yes', pubkeyauthentication: 'yes' } }, realSsh: true };

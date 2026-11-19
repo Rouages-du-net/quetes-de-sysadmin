@@ -28,11 +28,13 @@
 // OU=Leavers, in no group but his primary one.
 // False leads: copying Amara's groups (GG_Management, DL_Finance_RW), a
 // DL_ group directly (AGDLP), Domain Admins, a password the domain refuses
-// (the account is then created disabled), deleting Mateo.
+// (the account is then created disabled), deleting Mateo (the AD Recycle
+// Bin is on: Restore-ADObject brings him back, SID and groups included).
 // Sources: https://learn.microsoft.com/powershell/module/activedirectory/new-aduser,
 // https://learn.microsoft.com/windows-server/identity/ad-ds/plan/security-best-practices/implementing-least-privilege-administrative-models,
 // https://learn.microsoft.com/windows-server/identity/ad-ds/manage/understand-security-groups,
-// https://learn.microsoft.com/windows-server/security/group-policy/password-must-meet-complexity-requirements
+// https://learn.microsoft.com/windows-server/security/group-policy/password-must-meet-complexity-requirements,
+// https://learn.microsoft.com/powershell/module/activedirectory/restore-adobject
 
 import { type Chapter } from '../world';
 import type { Game } from '../shell';
@@ -150,6 +152,8 @@ export const comingsAndGoings: Chapter = {
     { id: 'details', condition: (j) => inRiverside(j) && ready(j) && onlyChildren(j) && !details(j), message: (j) => j.t('comings-and-goings-event-details') },
     { id: 'arrival', condition: arrivalDone, message: (j) => j.t('comings-and-goings-event-arrival') },
     { id: 'deleted', condition: (j) => !mateo(j), message: (j) => j.t('comings-and-goings-event-deleted') },
+    // The AD Recycle Bin is on: Restore-ADObject brings him back with his SID and his groups.
+    { id: 'restored', condition: (j) => j.flags.has('deleted') && !!mateo(j), message: (j) => j.t('comings-and-goings-event-restored') },
     { id: 'leaver-disabled', condition: leaverDisabled, message: (j) => j.t('comings-and-goings-event-leaver-disabled') },
     { id: 'leaver-groups', condition: (j) => leaverDisabled(j) && leaverOut(j), message: (j) => j.t(leaverMoved(j) ? 'comings-and-goings-event-leaver-groups-moved' : 'comings-and-goings-event-leaver-groups') },
     { id: 'leaver-moved', condition: (j) => leaverMoved(j) && !leaverOut(j), message: (j) => j.t('comings-and-goings-event-leaver-moved') },

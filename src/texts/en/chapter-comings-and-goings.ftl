@@ -68,6 +68,17 @@ card-catalogue-conventions =
       - On the last day: disabled, moved to OU=Leavers, taken out of
         their groups. The description says when they left.
 
+    GROUP POLICY
+      - A GPO is linked to the OU of what it is for: OU=Branches for the
+        staff, OU=Servers for the servers. The domain's root carries the
+        Default Domain Policy only.
+      - Who gets it: security filtering with the same groups as the
+        share it is about (GG_ groups, or the share's DL_ group).
+
+    SERVICE ACCOUNTS
+      - svc_*, in OU=Service Accounts: one per job, never a person's
+        account. Some only run a few times a year.
+
 ## Files
 
 comings-and-goings-email-nandini =
@@ -189,9 +200,17 @@ comings-and-goings-event-deleted =
     Mateo's account is gone. With it went his SID: the files he owns on
     stacks now show an unknown S-1-5-21-… owner, the auditors' question
     "who had access in December?" has no answer, and a new account with
-    the same name would be someone else. (The AD Recycle Bin isn't
-    enabled in this domain.) Restart the chapter from the menu, and this
-    time disable the account.
+    the same name would be someone else, with another SID. Luckily, Tomas
+    turned the AD Recycle Bin on (Get-ADOptionalFeature 'Recycle Bin
+    Feature'): the account waits in CN=Deleted Objects, whole. Find it
+    with Get-ADObject -IncludeDeletedObjects, bring it back with
+    Restore-ADObject (Get-Help Restore-ADObject -Examples), then close it
+    the conventions' way.
+comings-and-goings-event-restored =
+    Mateo is back where he was, with the same SID, his attributes and
+    even his groups: the Recycle Bin keeps the link values. That is why
+    his group is there again. Now: disabled, out of his groups, in
+    Leavers.
 comings-and-goings-event-leaver-disabled =
     Mateo's account is disabled: nobody can log on with it any more, and
     it still exists, with its SID. Now, what does it still belong to?
@@ -242,7 +261,8 @@ comings-and-goings-event-end =
       (-ChangePasswordAtLogon $true), handed over in person.
     - A leaver is disabled, not deleted: the SID owns files, logs name
       it, and a deleted account can't be brought back without the AD
-      Recycle Bin.
+      Recycle Bin (here it is on: Restore-ADObject saved the day, but it
+      keeps a deleted object for 180 days only).
     - Out of the groups, with a description that says when and why.
 
     DOCUMENTATION

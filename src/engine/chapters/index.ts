@@ -121,6 +121,8 @@ import { logFlood } from './log-flood';
 import { silentBackup } from './silent-backup';
 import { comingsAndGoings } from './comings-and-goings';
 import { stalePassword } from './stale-password';
+import { unappliedPolicy } from './unapplied-policy';
+import { dormantAccounts } from './dormant-accounts';
 import { journalFull } from './journal-full';
 import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
@@ -287,7 +289,7 @@ export const STORIES: Story[] = [
   {
     id: 'card-catalogue',
     after: ['silent-backup', 'directory'],
-    chapters: [comingsAndGoings, stalePassword],
+    chapters: [comingsAndGoings, stalePassword, unappliedPolicy, dormantAccounts],
   },
 ];
 

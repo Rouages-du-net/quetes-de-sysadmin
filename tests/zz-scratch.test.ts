@@ -1,0 +1,20 @@
+import { it } from 'vitest';
+import { Console } from '../src/engine/console';
+import { prerequisites } from '../src/engine/unlocking';
+import type { Shell } from '../src/engine/shell';
+it('scratch', () => {
+  const c = new Console({ language: 'en', finished: [...prerequisites('card-catalogue'), 'comings-and-goings', 'stale-password', 'unapplied-policy'] });
+  const p = (l: string) => console.log('> ' + l + '\n' + (c.execute(l) ?? ''));
+  p('ssh register'); p('yes');
+  p('ssh stacks'); p('yes'); p("Set-NetFirewallRule -DisplayName 'Remote Desktop - Any' -RemoteAddress 192.0.2.2"); p('exit');
+  p("Set-Content Documents\\audit.ps1 -Value 'function Close-DormantAccount {', '  param([Parameter(ValueFromPipeline)] $Account)', '  process {', '    Disable-ADAccount $Account', \"    Get-ADPrincipalGroupMembership $Account | Where-Object Name -ne 'Domain Users' | ForEach-Object { Remove-ADPrincipalGroupMembership $Account -MemberOf $_ -Confirm:`$false }\", \"    Move-ADObject $Account -TargetPath 'OU=Leavers,DC=lending,DC=internal'\", '  }', '}'");
+  p('Get-Content Documents\\audit.ps1');
+  p('. .\\Documents\\audit.ps1');
+  p("Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly -SearchBase 'OU=Branches,DC=lending,DC=internal' | ConvertTo-Csv -NoTypeInformation | Out-File Documents\\inactive.csv");
+  p('Get-Content Documents\\inactive.csv');
+  p("Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly -SearchBase 'OU=Branches,DC=lending,DC=internal' | Close-DormantAccount");
+  p('Get-ADUser ychen');
+  p("Get-ADGroup -Filter \"Name -like 'GG_*' -or Name -like 'DL_*'\" | ForEach-Object { Remove-ADGroupMember $_ -Members oadeyemi -Confirm:$false -ErrorAction SilentlyContinue }");
+  p('ssh stacks'); p('Disable-NetFirewallRule -Name OpenSSH-Server-In-TCP'); p('exit'); p('ssh stacks');
+  console.log([...((c.shell as Shell).principal.flags)].join(' '));
+});

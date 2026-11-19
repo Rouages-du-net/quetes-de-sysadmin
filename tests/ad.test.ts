@@ -339,6 +339,64 @@ describe('Group Policy', () => {
   });
 });
 
+describe('The AD Recycle Bin, CSV reports, remote RSoP', () => {
+  it('without the Recycle Bin (HARBOUR), a deletion is final; Get-ADOptionalFeature says so', () => {
+    const { dc } = domain();
+    expect(run(dc, "Get-ADOptionalFeature 'Recycle Bin Feature' | Select-Object -ExpandProperty Name")).toBe('Recycle Bin Feature');
+    expect(run(dc, "(Get-ADOptionalFeature 'Recycle Bin Feature').EnabledScopes.Count")).toBe('0');
+    run(dc, 'Remove-ADUser dmitri -Confirm:$false');
+    expect(run(dc, "Get-ADObject -Filter 'isDeleted -eq $true' -IncludeDeletedObjects")).toBe('');
+    expect(run(dc, 'Restore-ADObject dmitri')).toContain("Restore-ADObject : Cannot find an object with identity: 'dmitri'");
+  });
+
+  it('with the Recycle Bin: the object waits in CN=Deleted Objects, comes back with its SID, password and groups; its parent must exist', () => {
+    const { dc } = domain();
+    const ad = domainOf(dc)!.ad;
+    ad.recycleBin = CLOCK;
+    const sid = run(dc, '(Get-ADUser alice).SID');
+    run(dc, 'Remove-ADUser alice -Confirm:$false');
+    expect(findIdentity(ad, 'alice')).toBeUndefined();
+    const listed = run(dc, "Get-ADObject -Filter 'SamAccountName -eq \"alice\"' -IncludeDeletedObjects -Properties LastKnownParent | Select-Object Deleted, LastKnownParent");
+    expect(listed).toMatch(/True +OU=Pilots,OU=Staff,DC=harbour,DC=internal/);
+    // Its parent deleted too: it can't come back first.
+    run(dc, "Set-ADOrganizationalUnit 'OU=Pilots,OU=Staff,DC=harbour,DC=internal' -ProtectedFromAccidentalDeletion $false", "Remove-ADOrganizationalUnit 'OU=Pilots,OU=Staff,DC=harbour,DC=internal' -Recursive -Confirm:$false");
+    expect(run(dc, "Get-ADObject -Filter 'SamAccountName -eq \"alice\"' -IncludeDeletedObjects | Restore-ADObject")).toContain("The operation could not be performed because the object's parent is either uninstantiated or deleted");
+    run(dc, "Get-ADObject -Filter 'Name -like \"Pilots*\" -and ObjectClass -eq \"organizationalUnit\"' -IncludeDeletedObjects | Restore-ADObject");
+    run(dc, "Get-ADObject -Filter 'SamAccountName -eq \"alice\"' -IncludeDeletedObjects | Restore-ADObject");
+    expect(run(dc, '(Get-ADUser alice).SID')).toBe(sid);
+    expect(ad.passwords[findIdentity(ad, 'alice')!.guid]).toBe('Alice-2029-pw');
+    expect(run(dc, 'Get-ADPrincipalGroupMembership alice | Select-Object -ExpandProperty name')).toContain('Pilots');
+  });
+
+  it('Export-Csv (the #TYPE line, -NoTypeInformation, quotes, -Append), ConvertTo-Csv, Import-Csv', () => {
+    const { dc } = domain();
+    run(dc, "Get-ADUser -Filter \"Department -eq 'Pilotage'\" | Select-Object SamAccountName, Enabled | Export-Csv C:\\pilots.csv");
+    expect(run(dc, 'Get-Content C:\\pilots.csv')).toBe('#TYPE Selected.Microsoft.ActiveDirectory.Management.ADUser\n"SamAccountName","Enabled"\n"alice","True"\n"carla","False"');
+    run(dc, "[pscustomobject]@{SamAccountName='eve \"the new\"'; Enabled=$null} | Export-Csv C:\\pilots.csv -Append");
+    expect(run(dc, 'Get-Content C:\\pilots.csv -Tail 1')).toBe('"eve ""the new""",');
+    expect(run(dc, "(Import-Csv C:\\pilots.csv | Where-Object Enabled -eq 'True').SamAccountName")).toBe('alice');
+    expect(run(dc, '(Import-Csv C:\\pilots.csv)[2].SamAccountName')).toBe('eve "the new"');
+    expect(run(dc, "Get-ADUser alice | Select-Object Name | ConvertTo-Csv -NoTypeInformation -Delimiter ';'")).toBe('"Name"\n"Alice Martin"');
+    expect(run(dc, 'Import-Csv C:\\nothing.csv')).toContain("Could not find file 'C:\\nothing.csv'.");
+  });
+
+  it('gpresult /s and /user, Get-GPResultantSetOfPolicy, Invoke-GPUpdate on a workstation', () => {
+    const { dc } = domain();
+    const ad = domainOf(dc)!.ad;
+    ad.clients = [{ computer: 'DESK7', user: 'alice', logon: CLOCK - 3_600_000 }];
+    expect(run(dc, 'gpresult /s DESK7 /user HARBOUR\\alice /r')).toContain('INFO: The user "HARBOUR\\alice" does not have RSoP data.');
+    expect(run(dc, 'gpresult /s NOWHERE /r')).toContain('ERROR: The RPC server is unavailable.');
+    run(dc, 'Invoke-GPUpdate -Computer DESK7 -Target User');
+    const r = run(dc, 'gpresult /s DESK7 /user HARBOUR\\alice /r');
+    expect(r).toContain('RSOP data for HARBOUR\\alice on DESK7 : Logging Mode');
+    expect(r).toContain('OS Configuration:            Member Workstation');
+    expect(r).toMatch(/Applied Group Policy Objects\n {4}-+\n {8}Pilots Drive/);
+    expect(run(dc, 'gpresult /s DESK7 /user HARBOUR\\bob /r')).toContain('does not have RSoP data');
+    expect(run(dc, 'Get-GPResultantSetOfPolicy -Computer DESK7 -User HARBOUR\\alice -ReportType Html -Path C:\\alice.html | Select-Object -ExpandProperty LoggingUser')).toBe('HARBOUR\\alice');
+    expect(run(dc, 'Get-Content C:\\alice.html')).toContain('RSOP data for HARBOUR\\alice on DESK7');
+  });
+});
+
 describe('The manual of the domain', () => {
   it('every cmdlet and program has its page, in every language (on the domain controller)', () => {
     for (const language of LANGUAGES) {

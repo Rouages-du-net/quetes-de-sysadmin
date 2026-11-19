@@ -864,6 +864,104 @@ function outFileCmdlet(r: Run): unknown[] {
   if (f) r.fail(f);
   return [];
 }
+// ——— CSV: Export-Csv, ConvertTo-Csv, Import-Csv (Windows PowerShell 5.1) ———
+// Sources: https://learn.microsoft.com/powershell/module/microsoft.powershell.utility/export-csv?view=powershell-5.1,
+// import-csv and convertto-csv (same module, 5.1): a #TYPE line unless
+// -NoTypeInformation, the first object's properties as the header, every
+// value in double quotes (a null one left empty), a comma by default.
+
+/** An object's CSV type name (#TYPE Selected.Microsoft.ActiveDirectory.Management.ADAccount). */
+const csvType = (x: unknown) => (isObject(x) ? (x.type.startsWith('Selected.') ? x.type : (x.fullType ?? x.type)) : typeof x === 'number' ? 'System.Int32' : 'System.String');
+
+/** The CSV lines of objects: the header from the first one, a value per column. */
+function csvLines(items: unknown[], delimiter: string, typeInfo: boolean): string[] {
+  if (!items.length) return [];
+  const first = items[0];
+  const columns = isObject(first) ? Object.keys(first.props) : typeof first === 'string' ? ['Length'] : [];
+  const cell = (v: unknown) => {
+    if (v === null || v === undefined) return '';
+    const t = Array.isArray(v) ? 'System.Object[]' : text(v);
+    return `"${t.replace(/"/g, '""')}"`;
+  };
+  const value = (x: unknown, k: string) => (isObject(x) ? x.props[Object.keys(x.props).find((p) => p.toLowerCase() === k.toLowerCase()) ?? k] : k === 'Length' && typeof x === 'string' ? x.length : undefined);
+  return [...(typeInfo ? [`#TYPE ${csvType(first)}`] : []), columns.map((c) => `"${c}"`).join(delimiter), ...items.map((x) => columns.map((c) => cell(value(x, c))).join(delimiter))];
+}
+
+/** -Delimiter, or a comma (-UseCulture: the en-US list separator, a comma too). */
+const delimiterOf = (r: Run) => (r.p.Delimiter !== undefined ? str(r.p.Delimiter).slice(0, 1) || ',' : ',');
+
+function exportCsv(r: Run): unknown[] {
+  const typed = r.p.Path !== undefined || r.p.LiteralPath !== undefined ? str(r.p.Path ?? r.p.LiteralPath) : r.read('Path: ', false);
+  const items = r.input ?? (r.p.InputObject !== undefined ? values(r.p.InputObject) : []);
+  const where = resolveWindows(r.game, typed);
+  if (r.p.NoClobber && where.exists && !r.p.Append) {
+    r.fail({ message: `The file '${toWindows(where.path)}' already exists.`, category: 'ResourceExists', target: `${toWindows(where.path)}:String`, exception: 'IOException', id: 'NoClobber,Microsoft.PowerShell.Commands.ExportCsvCommand' });
+    return [];
+  }
+  if (!r.should('Export-Csv', toWindows(where.path))) return [];
+  const appending = !!r.p.Append && where.exists && (r.game.read(where.path) ?? '').trim() !== '';
+  // -Append to a file that has its header: only the rows (the columns of the file's header).
+  let lines = csvLines(items, delimiterOf(r), !r.p.NoTypeInformation && !appending);
+  if (appending) lines = lines.filter((l) => !l.startsWith('#TYPE')).slice(1);
+  const f = writeFile(r.game, where.path, lines.join('\r\n') + (lines.length ? '\r\n' : ''), appending, 'ExportCsv');
+  if (f) r.fail(f);
+  return [];
+}
+
+/** Splits a CSV line (quotes, doubled quotes inside). */
+function csvSplit(line: string, delimiter: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === delimiter) {
+      out.push(cur);
+      cur = '';
+    } else cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+/** The objects a CSV's text describes (Import-Csv, ConvertFrom-Csv): strings, the #TYPE line read as the type's name. */
+export function csvObjects(content: string, delimiter = ','): PSObject[] {
+  const lines = content.split(/\r?\n/).filter((l) => l.trim() !== '');
+  if (lines[0]?.startsWith('#TYPE ')) lines.shift();
+  if (!lines.length) return [];
+  const header = csvSplit(lines.shift()!, delimiter).map((h, i) => h || `H${i + 1}`);
+  return lines.map((l) => {
+    const cells = csvSplit(l, delimiter);
+    return { type: 'PSCustomObject', fullType: 'System.Management.Automation.PSCustomObject', props: Object.fromEntries(header.map((h, i) => [h, cells[i] ?? null])) } satisfies PSObject;
+  });
+}
+
+function importCsv(r: Run): unknown[] {
+  const out: unknown[] = [];
+  for (const typed of arr(r.p.Path ?? r.p.LiteralPath)) {
+    const where = resolveWindows(r.game, typed);
+    const node = r.game.find(where.path);
+    if (node?.type !== 'file') {
+      r.fail({ message: `Could not find file '${toWindows(where.path)}'.`, category: 'OpenError', target: ':', exception: 'FileNotFoundException', id: 'FileOpenFailure,Microsoft.PowerShell.Commands.ImportCsvCommand' });
+      continue;
+    }
+    const objects = csvObjects(r.game.read(where.path) ?? '', delimiterOf(r));
+    if (r.p.Header !== undefined) {
+      const header = arr(r.p.Header);
+      const all = csvObjects([header.map((h) => `"${h}"`).join(delimiterOf(r)), ...(r.game.read(where.path) ?? '').split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#TYPE'))].join('\n'), delimiterOf(r));
+      out.push(...all);
+    } else out.push(...objects);
+  }
+  return out;
+}
+
 /** Out-Default's rendering (given by the interpreter). */
 export const RENDER: { fn: ((items: unknown[]) => string) | null } = { fn: null };
 
@@ -902,6 +1000,9 @@ export const FILE_CMDLETS: Cmdlet[] = [
   { name: 'Set-ItemProperty', module: MGMT, version: '3.1.0.0', writes: true, positional: ['Path', 'Name', 'Value'], params: [PATH, { name: 'Name', type: 'System.String' }, { name: 'Value', type: 'System.Object' }, { name: 'Type', type: 'Microsoft.Win32.RegistryValueKind' }, { name: 'PassThru', switch: true }, { name: 'Force', switch: true }], run: (r) => setItemProperty(r, false) },
   { name: 'New-ItemProperty', module: MGMT, version: '3.1.0.0', writes: true, positional: ['Path', 'Name'], params: [PATH, { name: 'Name', type: 'System.String' }, { name: 'Value', type: 'System.Object' }, { name: 'PropertyType', aliases: ['Type'], type: 'System.String' }, { name: 'Force', switch: true }], run: (r) => setItemProperty(r, true) },
   { name: 'Remove-ItemProperty', module: MGMT, version: '3.1.0.0', writes: true, positional: ['Path', 'Name'], params: [PATH, { name: 'Name', list: true }, { name: 'Force', switch: true }], run: removeItemProperty },
+  { name: 'Export-Csv', module: 'Microsoft.PowerShell.Utility', version: '3.1.0.0', writes: true, positional: ['Path', 'Delimiter'], params: [{ name: 'Path', type: 'System.String' }, { name: 'LiteralPath', type: 'System.String' }, { name: 'InputObject', type: 'System.Management.Automation.PSObject' }, { name: 'Delimiter', type: 'System.Char' }, { name: 'NoTypeInformation', switch: true, aliases: ['NTI'] }, { name: 'Append', switch: true }, { name: 'Force', switch: true }, { name: 'NoClobber', switch: true, aliases: ['NoOverwrite'] }, { name: 'Encoding', type: 'System.String' }, { name: 'UseCulture', switch: true }], run: exportCsv },
+  { name: 'ConvertTo-Csv', module: 'Microsoft.PowerShell.Utility', version: '3.1.0.0', positional: ['InputObject', 'Delimiter'], params: [{ name: 'InputObject', type: 'System.Management.Automation.PSObject' }, { name: 'Delimiter', type: 'System.Char' }, { name: 'NoTypeInformation', switch: true, aliases: ['NTI'] }, { name: 'UseCulture', switch: true }], run: (r) => csvLines(r.input ?? values(r.p.InputObject), delimiterOf(r), !r.p.NoTypeInformation) },
+  { name: 'Import-Csv', module: 'Microsoft.PowerShell.Utility', version: '3.1.0.0', positional: ['Path', 'Delimiter'], params: [{ name: 'Path', list: true, type: 'System.String[]' }, { name: 'LiteralPath', list: true, type: 'System.String[]' }, { name: 'Delimiter', type: 'System.Char' }, { name: 'Header', list: true, type: 'System.String[]' }, { name: 'Encoding', type: 'System.String' }, { name: 'UseCulture', switch: true }], run: importCsv },
   { name: 'Out-File', module: 'Microsoft.PowerShell.Utility', version: '3.1.0.0', writes: true, positional: ['FilePath'], params: [{ name: 'FilePath', type: 'System.String', aliases: ['Path'] }, { name: 'Append', switch: true }, { name: 'Encoding', type: 'System.String' }, { name: 'Force', switch: true }], run: outFileCmdlet },
 ];
 

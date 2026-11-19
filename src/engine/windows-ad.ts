@@ -105,6 +105,17 @@ export interface AdObject {
   // Group Policy: the GPOs linked here (first: link order 1), inheritance blocked.
   gpLinks?: GpLink[];
   blockInheritance?: boolean;
+  // In the AD Recycle Bin: where it was, when it was deleted, the groups it was in (link values kept).
+  deleted?: { parent: string; at: number; name: string; groups: string[] };
+}
+
+/** A workstation of the domain that isn't a machine of the game: who is logged on, the policy last applied there (gpresult /s). */
+export interface ClientSession {
+  computer: string;
+  user: string;
+  logon: number;
+  // The applied policy (windows-gpo.ts AppliedPolicy), computed at logon and by Invoke-GPUpdate.
+  gp?: unknown;
 }
 
 export interface GpLink {
@@ -182,6 +193,11 @@ export interface Domain {
   dcAddress?: string;
   serial: number;
   nextRid: number;
+  // The AD Recycle Bin: when it was enabled (null: not enabled), and the objects it holds.
+  recycleBin?: number | null;
+  deleted?: AdObject[];
+  // The domain's workstations with a user logged on (they aren't machines of the game).
+  clients?: ClientSession[];
 }
 
 /** The domain's distinguished name (DC=school,DC=internal). */
@@ -528,6 +544,7 @@ export function adProperties(ad: Domain, o: AdObject, now: number): Record<strin
     whenChanged: new PSDate(o.modified),
     whenCreated: new PSDate(o.created),
   };
+  if (o.deleted) Object.assign(common, { Deleted: true, isDeleted: true, LastKnownParent: o.deleted.parent, 'msDS-LastKnownRDN': o.deleted.name, ...(o.deleted.name === DELETED_OBJECTS ? {} : { Name: `${o.deleted.name}\nDEL:${o.guid}`, CN: `${o.deleted.name}\nDEL:${o.guid}` }) });
   const policyLinks = () => (o.gpLinks ?? []).map((l) => `cn={${l.gpo.toUpperCase()}},cn=policies,cn=system,${domainDn(ad.dns)}`);
   if (o.cls === 'organizationalUnit' || o.cls === 'container' || o.cls === 'domainDNS')
     return { ...common, City: null, Country: null, LinkedGroupPolicyObjects: policyLinks(), ManagedBy: null, PostalCode: null, State: null, StreetAddress: null };
@@ -597,6 +614,10 @@ export function ldapAttributes(ad: Domain, o: AdObject, now: number): Record<str
     builtinDomain: ['top', 'builtinDomain'],
   };
   put('objectClass', classes[o.cls]);
+  if (o.deleted) {
+    put('isDeleted', 'TRUE');
+    put('lastKnownParent', o.deleted.parent);
+  }
   put('objectCategory', o.cls === 'user' ? 'person' : o.cls);
   put('distinguishedName', o.dn);
   put(o.cls === 'organizationalUnit' ? 'ou' : 'cn', o.name);
@@ -622,6 +643,7 @@ export function ldapAttributes(ad: Domain, o: AdObject, now: number): Record<str
     put('userAccountControl', (o.cls === 'computer' ? 4096 : 512) + (o.enabled === false ? 2 : 0) + (o.neverExpires ? 65536 : 0));
     put('lockoutTime', lockedOut(ad, o, now) ? fileTime(o.lockoutTime) : 0);
     put('badPwdCount', o.badPwdCount ?? 0);
+    if (o.lastLogon) put('lastLogonTimestamp', fileTime(o.lastLogon));
   }
   return out;
 }
@@ -815,11 +837,73 @@ export function moveObject(ad: Domain, o: AdObject, target: string, now: number)
   o.modified = now;
 }
 
-/** Removes an object (and its members' references to it). */
-export function removeObject(ad: Domain, o: AdObject): void {
-  ad.objects = ad.objects.filter((x) => !below(x.dn, o.dn));
-  for (const x of ad.objects) if (x.members) x.members = x.members.filter((m) => !below(m, o.dn));
-  delete ad.passwords[o.guid];
+/**
+ * Removes an object and what is below it (and the references to them in
+ * groups). With the AD Recycle Bin enabled, each goes to CN=Deleted
+ * Objects with its attributes, its password and the groups it was in (the
+ * link values are kept): Restore-ADObject brings it back as it was.
+ */
+export function removeObject(ad: Domain, o: AdObject, now = o.modified): void {
+  const gone = ad.objects.filter((x) => below(x.dn, o.dn));
+  const old = gone.map((x) => x.dn);
+  if (ad.recycleBin) {
+    const bin = (ad.deleted ??= []);
+    for (const x of gone) {
+      const groups = ad.objects.filter((g) => g.cls === 'group' && (g.members ?? []).some((m) => sameDn(m, x.dn))).map((g) => g.dn);
+      x.deleted = { parent: parentDn(x.dn), at: now, name: x.name, groups };
+      x.dn = `${x.cls === 'organizationalUnit' ? 'OU' : 'CN'}=${x.name}\\0ADEL:${x.guid},CN=Deleted Objects,${domainDn(ad.dns)}`;
+      x.modified = now;
+      bin.push(x);
+    }
+  } else for (const x of gone) delete ad.passwords[x.guid];
+  ad.objects = ad.objects.filter((x) => !gone.includes(x));
+  for (const x of ad.objects) if (x.members) x.members = x.members.filter((m) => !old.some((d) => sameDn(m, d)));
+}
+
+export const DELETED_OBJECTS = 'Deleted Objects';
+
+/** CN=Deleted Objects (itself marked deleted): Get-ADObject -IncludeDeletedObjects finds it. */
+export function deletedObjectsContainer(ad: Domain): AdObject {
+  const base = domainDn(ad.dns);
+  const domain = byDn(ad, base)!;
+  return { dn: `CN=${DELETED_OBJECTS},${base}`, cls: 'container', name: DELETED_OBJECTS, guid: `${domain.guid.slice(0, 24)}d3e1ed0b1ec5`, created: domain.created, modified: domain.created, description: 'Default container for deleted objects', deleted: { parent: base, at: domain.created, name: DELETED_OBJECTS, groups: [] } };
+}
+
+/** The DN an object of the Recycle Bin had. */
+export const formerDn = (o: AdObject) => (o.deleted ? `${o.dn.split(',')[0].replace(/\\0ADEL:.*$/, '')},${o.deleted.parent}` : o.dn);
+
+/** A deleted object, by its GUID or its DN in CN=Deleted Objects (or its former DN). */
+export function findDeleted(ad: Domain, typed: string): AdObject | undefined {
+  const t = typed.trim().replace(/[{}]/g, '');
+  return (ad.deleted ?? []).find((o) => o.guid.toLowerCase() === t.toLowerCase() || sameDn(o.dn, t) || sameDn(formerDn(o), t) || o.sam?.toLowerCase() === t.toLowerCase());
+}
+
+/**
+ * Restore-ADObject: the object back where it was (or under `target`), with
+ * its SID, its password and its groups; an error's text if its parent is
+ * gone or the name is taken.
+ */
+export function restoreObject(ad: Domain, o: AdObject, now: number, target?: string, newName?: string): string | null {
+  if (!o.deleted) return 'Illegal modify operation. Some aspect of the modification is not permitted';
+  const parent = target ?? o.deleted.parent;
+  if (!byDn(ad, parent)) return "The operation could not be performed because the object's parent is either uninstantiated or deleted";
+  const name = newName ?? o.deleted.name;
+  const dn = `${o.cls === 'organizationalUnit' ? 'OU' : 'CN'}=${name},${parent}`;
+  if (byDn(ad, dn)) return 'An attempt was made to add an object to the directory with a name that is already in use';
+  if (o.sam && ad.objects.some((x) => x.sam?.toLowerCase() === o.sam!.toLowerCase())) return 'The specified account already exists';
+  const groups = o.deleted.groups;
+  ad.deleted = (ad.deleted ?? []).filter((x) => x !== o);
+  o.dn = dn;
+  o.name = name;
+  o.modified = now;
+  delete o.deleted;
+  ad.objects.push(o);
+  // The link values the Recycle Bin kept: back in the groups that still exist.
+  for (const g of groups) {
+    const group = byDn(ad, g);
+    if (group && !(group.members ?? []).some((m) => sameDn(m, dn))) (group.members ??= []).push(dn);
+  }
+  return null;
 }
 
 // ——— Building a domain (a story declares it) ———
@@ -883,6 +967,10 @@ export interface DomainSpec {
   policy?: Partial<DomainPolicy>;
   // The player's account in the domain (a Domain Admin) and its password.
   player?: { sam: string; password: string; given?: string; surname?: string; ou?: string };
+  // The AD Recycle Bin enabled (days before the clock).
+  recycleBin?: number;
+  // Workstations (computers of the spec) with a user logged on since `logon` (ms).
+  sessions?: { computer: string; user: string; logon: number }[];
 }
 
 /** An OU path ('Staff/Teachers') as a DN under the domain; a DN stays as it is; '' is the domain. */
@@ -909,7 +997,7 @@ export const defaultGpoPermissions = (netbios: string): GpoPermission[] => [
 export function buildDomain(spec: DomainSpec, clock: number): Domain {
   const base = domainDn(spec.dns);
   const created = clock - 400 * DAY;
-  const ad: Domain = { dns: spec.dns, netbios: spec.netbios.toUpperCase(), sid: domainSid(spec.netbios), objects: [], passwords: {}, policy: { ...DEFAULT_POLICY, ...spec.policy }, gpos: [], dc: spec.dc.toUpperCase(), dcAddress: spec.dcAddress, serial: 0, nextRid: 1103 };
+  const ad: Domain = { dns: spec.dns, netbios: spec.netbios.toUpperCase(), sid: domainSid(spec.netbios), objects: [], passwords: {}, policy: { ...DEFAULT_POLICY, ...spec.policy }, gpos: [], dc: spec.dc.toUpperCase(), dcAddress: spec.dcAddress, serial: 0, nextRid: 1103, recycleBin: spec.recycleBin !== undefined ? clock - spec.recycleBin * DAY : null, deleted: [], clients: (spec.sessions ?? []).map((x) => ({ computer: x.computer.toUpperCase(), user: x.user, logon: x.logon })) };
   const add = (o: Omit<AdObject, 'guid' | 'created' | 'modified'>) => addObject(ad, o, created);
   add({ dn: base, cls: 'domainDNS', name: spec.dns.split('.')[0] });
   add({ dn: `CN=Builtin,${base}`, cls: 'builtinDomain', name: 'Builtin' });

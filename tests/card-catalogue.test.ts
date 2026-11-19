@@ -14,6 +14,9 @@ import { domainOf, findIdentity, lockedOut } from '../src/engine/windows-ad';
 import { windows } from '../src/engine/windows';
 import { findTask } from '../src/engine/windows-tasks';
 import { SCANS_PASSWORD } from '../src/engine/chapters/card-catalogue';
+import { resultant } from '../src/engine/windows-gpo';
+import { token } from '../src/engine/windows-acl';
+import { firewallAllows } from '../src/engine/windows-firewall';
 
 const BEFORE = [...prerequisites('card-catalogue')];
 const RIVERSIDE = 'OU=Riverside,OU=Branches,DC=lending,DC=internal';
@@ -134,6 +137,31 @@ for (const language of LANGUAGES)
       expect(c.finished).not.toContain('comings-and-goings');
     });
 
+    it('chapter 1 — deleting Mateo, then the AD Recycle Bin: Restore-ADObject brings him back with his SID and his group', () => {
+      const { c, play, flag, user, groups } = part();
+      const sid = user('mrossi')!.rid;
+      play(['Remove-ADUser mrossi -Confirm:$false']);
+      expect(flag('deleted')).toBe(true);
+      expect(play(['Get-ADUser mrossi'])).toContain("Cannot find an object with identity: 'mrossi'");
+      expect(play(["Get-ADOptionalFeature 'Recycle Bin Feature' | Select-Object -ExpandProperty EnabledScopes"])).toContain('CN=Partitions,CN=Configuration,DC=lending,DC=internal');
+      const bin = play(["Get-ADObject -Filter 'isDeleted -eq $true -and Name -ne \"Deleted Objects\"' -IncludeDeletedObjects -Properties LastKnownParent | Format-List"]);
+      expect(bin).toMatch(/DistinguishedName +: CN=Mateo Rossi\\0ADEL:[0-9a-f-]+,CN=Deleted Objects,DC=lending,DC=internal/);
+      expect(bin).toContain('LastKnownParent   : OU=Hilltop,OU=Branches,DC=lending,DC=internal');
+      expect(bin).toContain('Deleted           : True');
+      const back = play(["Get-ADObject -Filter 'SamAccountName -eq \"mrossi\"' -IncludeDeletedObjects | Restore-ADObject"]);
+      contains(back, 'même SID');
+      expect(flag('restored')).toBe(true);
+      expect(user('mrossi')!.rid).toBe(sid);
+      expect(user('mrossi')!.dn).toBe('CN=Mateo Rossi,OU=Hilltop,OU=Branches,DC=lending,DC=internal');
+      expect(groups('mrossi')).toEqual(['GG_Lending']);
+      // Nothing left to restore.
+      expect(play(['Restore-ADObject mrossi'])).toContain("Cannot find an object with identity: 'mrossi'");
+      play([`${KOFI} -AccountPassword ${PASSWORD} -ChangePasswordAtLogon $true -Enabled $true`, 'Add-ADGroupMember GG_Children kmensah', 'Disable-ADAccount mrossi', 'Remove-ADGroupMember GG_Lending mrossi -Confirm:$false']);
+      const end = play([`Move-ADObject 'CN=Mateo Rossi,OU=Hilltop,OU=Branches,DC=lending,DC=internal' -TargetPath '${LEAVERS}'`]);
+      contains(end, 'Bravo');
+      expect(c.finished).toContain('comings-and-goings');
+    });
+
     it('chapter 1 — another name than the conventions', () => {
       const { play, flag } = part();
       play([`New-ADUser -Name 'Kofi Mensah' -GivenName Kofi -Surname Mensah -SamAccountName kofi.mensah -Path '${RIVERSIDE}'`]);
@@ -162,7 +190,7 @@ for (const language of LANGUAGES)
       expect(flag('on-stacks')).toBe(true);
       expect(play(["Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625} -MaxEvents 1 | Format-List Message"])).toMatch(/Logon Type:\t+4/);
       expect(flag('logon-type')).toBe(true);
-      expect(play(["Get-ScheduledTask | Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}"])).toMatch(/Scan Import LENDING\\rsilva/);
+      expect(play(["Get-ScheduledTask | Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}"])).toMatch(/Scan Import +LENDING\\rsilva/);
       expect(flag('task')).toBe(true);
       expect(play(["Get-ScheduledTaskInfo 'Scan Import' | Select-Object -ExpandProperty LastTaskResult"])).toBe('2147944309');
       const fixed = play([`Set-ScheduledTask 'Scan Import' -User 'LENDING\\svc_scans' -Password '${SCANS_PASSWORD}'`]);
@@ -203,5 +231,225 @@ for (const language of LANGUAGES)
       contains(end, 'Bravo');
       expect(c.finished).toContain('stale-password');
       expect(ad().policy.threshold).toBe(5);
+    });
+
+    // ——— Chapter 3: "The Policy That Doesn't Apply" ———
+    const AFTER_2 = ['comings-and-goings', 'stale-password'];
+    const BRANCHES = 'OU=Branches,DC=lending,DC=internal';
+    const CENTRAL = 'OU=Central,OU=Branches,DC=lending,DC=internal';
+    const hasE = (dc: Shell, sam: string) => {
+      const ad = domainOf(dc)!.ad;
+      const o = findIdentity(ad, sam)!;
+      return resultant(dc, ad, o.dn, 'user', token(dc, `LENDING\\${sam}`)).applied.some((e) => e.gpo.name === 'Events Drive');
+    };
+
+    it("chapter 3 — solution: gpresult on the workstations, the link, the filtering, Invoke-GPUpdate", () => {
+      const { c, play, flag, banner, dc } = part(AFTER_2);
+      contains(banner, "La stratégie qui ne s'applique pas");
+      // register knows only its own logons.
+      const none = play(['gpresult /r /user LENDING\\jbaptiste']);
+      expect(none).toContain('INFO: The user "LENDING\\jbaptiste" does not have RSoP data.');
+      expect(flag('no-rsop')).toBe(true);
+      const josephine = play(['gpresult /s HILL-DESK1 /user LENDING\\jbaptiste /r']);
+      expect(josephine).toContain('RSOP data for LENDING\\jbaptiste on HILL-DESK1 : Logging Mode');
+      expect(josephine).toMatch(/Applied Group Policy Objects\n {4}-+\n {8}Staff Drives\n/);
+      expect(josephine).toContain('        Archives Drive\n            Filtering:  Denied (Security)');
+      expect(josephine).not.toMatch(/ {8}Events Drive/);
+      contains(josephine, 'aucun lien');
+      expect(flag('josephine')).toBe(true);
+      expect(play([`Get-GPInheritance -Target 'OU=Hilltop,${BRANCHES}'`])).toContain('InheritedGpoLinks     : {Staff Drives, Archives Drive, Default Domain Policy}');
+      expect(flag('links')).toBe(true);
+      expect(play(["Get-GPOReport 'Events Drive' -ReportType Xml"])).toContain('<SOMPath>lending.internal/Branches/Central</SOMPath>');
+      play([`New-GPLink 'Events Drive' -Target '${BRANCHES}'`, `Remove-GPLink 'Events Drive' -Target '${CENTRAL}'`]);
+      expect(flag('linked')).toBe(true);
+      expect(hasE(dc(), 'jbaptiste')).toBe(true);
+      expect(hasE(dc(), 'nmukherjee')).toBe(false);
+      const nandini = play(['gpresult /s CENTRAL-DESK1 /user LENDING\\nmukherjee /r /scope:user']);
+      expect(nandini).toContain('        Events Drive\n            Filtering:  Denied (Security)');
+      expect(nandini).not.toContain('COMPUTER SETTINGS');
+      expect(flag('nandini')).toBe(true);
+      expect(play(["Get-GPPermission 'Events Drive' -All | Where-Object Permission -eq GpoApply | Select-Object -ExpandProperty Trustee"])).toMatch(/^GG_Children\n\n/);
+      expect(flag('filtering')).toBe(true);
+      const right = play(["Set-GPPermission 'Events Drive' -TargetName GG_Management -TargetType Group -PermissionLevel GpoApply"]);
+      contains(right, 'prochaine actualisation');
+      expect(flag('right')).toBe(true);
+      expect(hasE(dc(), 'nmukherjee')).toBe(true);
+      expect(hasE(dc(), 'tnguyen')).toBe(false);
+      expect(hasE(dc(), 'svc_scans')).toBe(false);
+      expect(c.finished).not.toContain('unapplied-policy');
+      const end = play(['Invoke-GPUpdate -Computer HILL-DESK1 -Target User -Force']);
+      contains(end, 'Bravo');
+      expect(end).toContain('https://learn.microsoft.com/windows-server/administration/windows-commands/gpresult');
+      expect(c.finished).toContain('unapplied-policy');
+      expect(play(['gpresult /s HILL-DESK1 /user LENDING\\jbaptiste /r /scope:user'])).toMatch(/Applied Group Policy Objects\n {4}-+\n {8}Staff Drives\n {8}Events Drive\n/);
+    });
+
+    it('chapter 3 — another way: a link per branch, the share’s DL_ group, Get-GPResultantSetOfPolicy, refreshing Kofi’s workstation', () => {
+      const { c, play, flag, dc } = part(AFTER_2);
+      const report = play(['Get-GPResultantSetOfPolicy -Computer RIVER-DESK1 -User LENDING\\kmensah -ReportType Html -Path Documents\\kofi.html']);
+      expect(report).toMatch(/RsopMode +: Logging/);
+      const read = play(['Get-Content Documents\\kofi.html']);
+      expect(read).toContain('RSOP data for LENDING\\kmensah on RIVER-DESK1');
+      expect(flag('josephine')).toBe(true);
+      play([`New-GPLink 'Events Drive' -Target 'OU=Riverside,${BRANCHES}'`, `New-GPLink 'Events Drive' -Target 'OU=Hilltop,${BRANCHES}'`]);
+      expect(flag('linked')).toBe(true);
+      // Nobody else asked: Bongani's workstation shows the same filtering.
+      expect(play(['gpresult /s HILL-DESK2 /user LENDING\\bdlamini /r /scope:user'])).toContain('Filtering:  Denied (Security)');
+      play(["Set-GPPermission -Name 'Events Drive' -TargetName DL_Events_RW -TargetType Group -PermissionLevel GpoApply"]);
+      expect(flag('filtered')).toBe(true);
+      expect(hasE(dc(), 'bdlamini')).toBe(true);
+      expect(hasE(dc(), 'lhassan')).toBe(false);
+      play(['Invoke-GPUpdate -Computer RIVER-DESK1']);
+      expect(c.finished).toContain('unapplied-policy');
+    });
+
+    it('chapter 3 — false leads: gpupdate on register, the domain root, Enforced, Authenticated Users', () => {
+      const { c, play, flag, dc } = part(AFTER_2);
+      const here = play(['gpupdate /force']);
+      expect(here).toContain('User Policy update has completed successfully.');
+      contains(here, 'registre lui-même');
+      expect(flag('gpupdate-here')).toBe(true);
+      // Enforced on Central: it reaches no other OU.
+      play([`Set-GPLink 'Events Drive' -Target '${CENTRAL}' -Enforced Yes`]);
+      expect(flag('enforced')).toBe(true);
+      expect(hasE(dc(), 'jbaptiste')).toBe(false);
+      play([`Set-GPLink 'Events Drive' -Target '${CENTRAL}' -Enforced No`]);
+      // The root, then everyone may apply it: the service accounts and the lending desk get E:.
+      const root = play(["New-GPLink 'Events Drive' -Target 'DC=lending,DC=internal'"]);
+      contains(root, 'racine');
+      expect(flag('root')).toBe(true);
+      const everyone = play(["Set-GPPermission 'Events Drive' -TargetName 'Authenticated Users' -TargetType Group -PermissionLevel GpoApply"]);
+      expect(flag('everyone')).toBe(true);
+      expect(everyone).toMatch(/tnguyen/);
+      expect(hasE(dc(), 'svc_scans')).toBe(true);
+      play(['Invoke-GPUpdate -Computer HILL-DESK1']);
+      expect(c.finished).not.toContain('unapplied-policy');
+      // Put right: GpoRead for Authenticated Users (-Replace lowers it), the managers, the link where the staff are.
+      play([
+        "Set-GPPermission 'Events Drive' -TargetName 'Authenticated Users' -TargetType Group -PermissionLevel GpoRead -Replace",
+        "Set-GPPermission 'Events Drive' -TargetName GG_Management -TargetType Group -PermissionLevel GpoApply",
+        "Remove-GPLink 'Events Drive' -Target 'DC=lending,DC=internal'",
+      ]);
+      expect(c.finished).not.toContain('unapplied-policy');
+      const end = play([`New-GPLink 'Events Drive' -Target '${BRANCHES}'`, 'Invoke-GPUpdate -Computer CENTRAL-DESK1 -Target User']);
+      contains(end, 'Bravo');
+      expect(c.finished).toContain('unapplied-policy');
+    });
+
+    // ——— Chapter 4: "Doors and Dormant Accounts" ———
+    const AFTER_3 = [...AFTER_2, 'unapplied-policy'];
+    const LEAVERS_OU = LEAVERS;
+    const SEARCH = `Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly -SearchBase '${BRANCHES}'`;
+    const rdp = (dc: Shell, from: string) => firewallAllows(dc.internal('stacks')!, { protocol: 'TCP', port: 3389, remote: from });
+
+    it('chapter 4 — solution: the RDP rule disabled; a foreach loop, Export-Csv, the old leaver', () => {
+      const { c, play, flag, banner, dc, user, groups } = part(AFTER_3);
+      contains(banner, 'Portes et comptes dormants');
+      expect(rdp(dc(), '198.51.100.77')).toBe(true);
+      expect(play([`Get-Content Documents\\${fr ? 'audit-informatique-ville.txt' : 'city-it-audit.txt'}`])).toContain('TCP 3389');
+      play(['ssh stacks', 'yes']);
+      const rule = play(['Get-NetFirewallPortFilter | Where-Object LocalPort -eq 3389 | Get-NetFirewallRule | Where-Object Enabled -eq True | Select-Object DisplayName, Profile']);
+      expect(rule).toMatch(/Remote Desktop - Any +Any/);
+      contains(rule, 'Bureau à distance');
+      expect(flag('rdp-found')).toBe(true);
+      expect(play(["Get-NetFirewallRule -DisplayName 'Remote Desktop - Any' | Get-NetFirewallAddressFilter"])).toContain('RemoteAddress : Any');
+      play(["Disable-NetFirewallRule -DisplayName 'Remote Desktop - Any'"]);
+      expect(flag('rdp-closed')).toBe(true);
+      expect(rdp(dc(), '198.51.100.77')).toBe(false);
+      expect(rdp(dc(), '192.0.2.210')).toBe(false);
+      expect(play(["Get-ScheduledTask | Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}"])).toMatch(/Offsite Copy +LENDING\\svc_backup/);
+      expect(flag('service-account')).toBe(true);
+      play(['exit']);
+      const all = play(['Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly | Select-Object -ExpandProperty SamAccountName']);
+      expect(all.split('\n').slice(0, 6)).toEqual(['Guest', 'krbtgt', 'ychen', 'pmorel', 'oadeyemi', 'svc_backup']);
+      expect(flag('inactive')).toBe(true);
+      play([`$old = ${SEARCH}`]);
+      expect(play(['$old | Select-Object -ExpandProperty SamAccountName'])).toBe('ychen\npmorel');
+      const report = play([`$old | Select-Object SamAccountName, Name, LastLogonDate | Export-Csv Documents\\dormant-accounts.csv -NoTypeInformation`]);
+      contains(report, 'tableur');
+      expect(flag('report')).toBe(true);
+      expect(play(['Get-Content Documents\\dormant-accounts.csv'])).toBe('"SamAccountName","Name","LastLogonDate"\n"ychen","Yan Chen","8/26/2029 4:40:00 PM"\n"pmorel","Pierre Morel","6/6/2029 11:15:00 AM"');
+      expect(play(['(Import-Csv Documents\\dormant-accounts.csv).Count'])).toBe('2');
+      play([`foreach ($a in $old) { Disable-ADAccount $a; Get-ADPrincipalGroupMembership $a | Where-Object Name -ne 'Domain Users' | ForEach-Object { Remove-ADGroupMember $_ $a -Confirm:$false }; Move-ADObject $a -TargetPath '${LEAVERS_OU}' }`]);
+      expect(flag('closed')).toBe(true);
+      expect(user('ychen')!.dn).toBe(`CN=Yan Chen,${LEAVERS_OU}`);
+      expect(groups('pmorel')).toEqual([]);
+      expect(c.finished).not.toContain('dormant-accounts');
+      expect(play(['Get-ADPrincipalGroupMembership oadeyemi | Select-Object -ExpandProperty name'])).toContain('Domain Users\nGG_Lending\nDL_Staff_RW');
+      expect(flag('leftover-seen')).toBe(true);
+      const end = play(['Remove-ADPrincipalGroupMembership oadeyemi -MemberOf GG_Lending, DL_Staff_RW -Confirm:$false']);
+      contains(end, 'Bravo');
+      expect(end).toContain('https://learn.microsoft.com/powershell/module/activedirectory/search-adaccount');
+      expect(c.finished).toContain('dormant-accounts');
+      // The others as they were.
+      expect(user('svc_backup')!.enabled).toBe(true);
+      expect(groups('lhassan')).toEqual(['GG_Lending']);
+    });
+
+    it('chapter 4 — another way: the rule narrowed to the IT workstation, a function dot-sourced from a script, a pipeline', () => {
+      const { c, play, flag, dc } = part(AFTER_3);
+      play(['ssh stacks', 'yes', "Set-NetFirewallRule -DisplayName 'Remote Desktop - Any' -RemoteAddress 192.0.2.2", 'exit']);
+      expect(flag('rdp-closed')).toBe(true);
+      expect(rdp(dc(), '192.0.2.2')).toBe(true);
+      expect(rdp(dc(), '192.0.2.210')).toBe(false);
+      play([
+        "Set-Content Documents\\audit.ps1 -Value 'function Close-DormantAccount {', '  param([Parameter(ValueFromPipeline)] $Account)', '  process {', '    Disable-ADAccount $Account', '    Get-ADPrincipalGroupMembership $Account | Where-Object Name -ne ''Domain Users'' | ForEach-Object { Remove-ADPrincipalGroupMembership $Account -MemberOf $_ -Confirm:$false }', '    Move-ADObject $Account -TargetPath ''OU=Leavers,DC=lending,DC=internal''', '  }', '}'",
+        '. .\\Documents\\audit.ps1',
+      ]);
+      play([`${SEARCH} | ConvertTo-Csv -NoTypeInformation | Out-File Documents\\inactive.csv`]);
+      expect(flag('report')).toBe(true);
+      play([`${SEARCH} | Close-DormantAccount`]);
+      expect(flag('closed')).toBe(true);
+      play(["Get-ADGroup -Filter \"Name -like 'GG_*' -or Name -like 'DL_*'\" | ForEach-Object { Remove-ADGroupMember $_ -Members oadeyemi -Confirm:$false -ErrorAction SilentlyContinue }"]);
+      expect(flag('leftover')).toBe(true);
+      expect(c.finished).toContain('dormant-accounts');
+    });
+
+    it('chapter 4 — false leads: a profile off, the whole network, your own ssh (back through the GPO), too short a TimeSpan, svc_backup, krbtgt, a deletion', () => {
+      const { c, play, flag, dc } = part(AFTER_3);
+      play(['ssh stacks', 'yes', 'Set-NetFirewallProfile -Profile Domain -Enabled False']);
+      expect(flag('profile-off')).toBe(true);
+      expect(rdp(dc(), '198.51.100.77')).toBe(true);
+      play(['Set-NetFirewallProfile -Profile Domain -Enabled True', "Set-NetFirewallRule -DisplayName 'Remote Desktop - Any' -RemoteAddress LocalSubnet"]);
+      expect(flag('lan-wide')).toBe(true);
+      expect(flag('rdp-closed')).toBe(false);
+      play(["Set-NetFirewallRule -DisplayName 'Remote Desktop - Any' -Enabled False"]);
+      expect(flag('rdp-closed')).toBe(true);
+      // Your own door: the session holds, the next one doesn't.
+      const cut = play(['Disable-NetFirewallRule -Name OpenSSH-Server-In-TCP']);
+      contains(cut, 'avant de sortir');
+      expect(flag('ssh-cut')).toBe(true);
+      play(['exit']);
+      expect(play(['ssh stacks'])).toMatch(/timed out/);
+      // The servers' firewall GPO opens it again at its next refresh.
+      const back = play(["New-NetFirewallRule -DisplayName 'Admin ssh from register' -Direction Inbound -Protocol TCP -LocalPort 22 -RemoteAddress 192.0.2.46 -Action Allow -PolicyStore 'lending.internal\\Server Firewall'"]);
+      contains(back, 'arrière-plan');
+      expect(play(['ssh stacks'])).toContain('Windows PowerShell');
+      play(['exit']);
+      // Too short: Leila, on leave since December.
+      const short = play(['Search-ADAccount -AccountInactive -TimeSpan 30.00:00:00 -UsersOnly | Select-Object -ExpandProperty SamAccountName']);
+      expect(short).toContain('lhassan');
+      expect(flag('too-short')).toBe(true);
+      play(['Disable-ADAccount lhassan']);
+      expect(flag('active-touched')).toBe(true);
+      play(['Enable-ADAccount lhassan']);
+      // Everything inactive, without looking: svc_backup and the built-in accounts with them.
+      play([`Search-ADAccount -AccountInactive -TimeSpan 90.00:00:00 -UsersOnly | Disable-ADAccount`]);
+      expect(flag('service-touched')).toBe(true);
+      play(['Enable-ADAccount svc_backup', `Get-ADUser krbtgt | Move-ADObject -TargetPath '${LEAVERS_OU}'`]);
+      expect(flag('builtin-touched')).toBe(true);
+      play([`Move-ADObject 'CN=krbtgt,${LEAVERS_OU}' -TargetPath 'CN=Users,DC=lending,DC=internal'`]);
+      // Deleting pmorel instead of closing him: the Recycle Bin brings him back.
+      const gone = play(['Remove-ADUser pmorel -Confirm:$false']);
+      contains(gone, 'corbeille');
+      expect(flag('deleted')).toBe(true);
+      play(["Get-ADObject -Filter 'SamAccountName -eq \"pmorel\"' -IncludeDeletedObjects | Restore-ADObject"]);
+      play([
+        `${SEARCH} | Select-Object SamAccountName, Name | Export-Csv Documents\\report.csv -NoTypeInformation`,
+        `${SEARCH} | ForEach-Object { Disable-ADAccount $_; Remove-ADPrincipalGroupMembership $_ -MemberOf (Get-ADPrincipalGroupMembership $_ | Where-Object Name -ne 'Domain Users') -Confirm:$false; Move-ADObject $_ -TargetPath '${LEAVERS_OU}' }`,
+        'Remove-ADPrincipalGroupMembership oadeyemi -MemberOf GG_Lending, DL_Staff_RW -Confirm:$false',
+      ]);
+      expect(flag('closed')).toBe(true);
+      expect(c.finished).toContain('dormant-accounts');
     });
   });

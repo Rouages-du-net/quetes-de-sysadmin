@@ -331,7 +331,9 @@ export const SYSTEM_NATIVES: Native[] = [
     run: (game, args) => {
       game.status = 0;
       const out = SSH.ssh.launch({ args, game, input: null, last: true });
-      return { out, code: game.status ?? 0 };
+      // Its errors (a refused or timed-out connection) on the console, as ssh.exe writes them to stderr.
+      const err = game.recoverErrors().join('\n');
+      return { out, ...(err ? { err } : {}), code: game.status ?? (err ? 255 : 0) };
     },
   },
 ];
