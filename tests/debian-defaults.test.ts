@@ -8,7 +8,7 @@ import { d, f, type Chapter } from '../src/engine/world';
 const chapter = (state?: () => Record<string, unknown>): Chapter => ({
   id: 'debian-test',
   number: 1,
-  commands: ['ls', 'cat', 'ps', 'df', 'mount', 'free', 'ip', 'hostname', 'top', 'findmnt', 'uname', 'sudo', 'kill', 'grep'],
+  commands: ['ls', 'cat', 'ps', 'df', 'mount', 'free', 'ip', 'hostname', 'top', 'findmnt', 'uname', 'sudo', 'kill', 'grep', 'apt'],
   home: '/home/you',
   welcome: 'notes',
   final: 'end',

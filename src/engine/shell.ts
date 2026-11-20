@@ -54,6 +54,8 @@ export const COMPANIONS: Record<string, string[]> = {
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
   hostname: ['hostnamectl'],
+  apt: ['apt-get', 'apt-cache', 'dpkg', 'lsb_release'],
+  dpkg: ['apt-cache'],
   uname: ['hostnamectl'],
 };
 

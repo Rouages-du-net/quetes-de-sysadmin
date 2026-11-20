@@ -653,9 +653,11 @@ them safely.
     itself, the chapter's running services), `free`, `top`, `ip a`, `ip r`,
     `hostname -I`, `/etc/os-release`, `hostnamectl`; `lsb_release` stays
     "command not found" (lsb-release isn't installed by default).
-  - [ ] **Package management**: `apt remove`/`purge`/`search`/`show`/
-    `policy`, `apt-get` and `apt-cache` (the scripts' forms), `dpkg -l`,
-    `-L`, `-S`, `-s`.
+  - [x] **Package management**: `apt remove`/`purge`/`autoremove`/
+    `search`/`show`/`policy`/`list`, `apt-get` and `apt-cache` (the
+    scripts' forms), `dpkg -l`, `-L`, `-S`, `-s`, on a base of about sixty
+    trixie packages (`src/engine/packages.ts`); `lsb_release` comes with
+    the lsb-release package. Left: `apt-mark`, `dpkg -i`.
   - [x] **Shell control flow on the line**: `for`, `if`, `while`/`until`
     (and `while read`), `case`, `break`/`continue`, `{ …; }` and `( … )`,
     here-documents, `$((…))` and `((…))`, `${VAR:-x}` and the other

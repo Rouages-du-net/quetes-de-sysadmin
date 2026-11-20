@@ -258,6 +258,14 @@ presents them for people.
   Express: `.env` read at start, `trust proxy`, locks per address); nginx
   passes `proxy_set_header` to the app (`Request`), and `grep` reads
   regular expressions (`toBasicRegex`).
+- `src/engine/packages.ts`: a Debian 13 machine's base packages (`BASE`:
+  version, section, description, files) and the archive's others
+  (`ARCHIVE`); `installedSet()` (base less `state.apt.removed`, plus
+  `state.apt.installed`), `packageInfo()`, `apt remove`/`purge`/
+  `autoremove` (`state.apt.configs`: dpkg's `rc`, `state.apt.auto`),
+  `search`, `show`, `policy`, `list`, `apt-get`, `apt-cache` and `dpkg -l`/
+  `-L`/`-S`/`-s` in `commands/apt.ts`; `lsb_release` in
+  `commands/hostnamectl.ts`.
 - `commands/tmux.ts`: a machine's tmux sessions (`state.tmux`,
   `Shell.tmux`; the console copies what is displayed) and `uname`;
   `apt upgrade` and `dpkg --configure -a` in `commands/apt.ts`

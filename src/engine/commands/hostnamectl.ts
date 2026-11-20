@@ -41,8 +41,34 @@ function status(game: Shell): string {
   return lines.map(([k, v]) => `${k.padStart(16)}: ${v}`).join('\n');
 }
 
+// lsb_release (lsb-release-minimal, https://manpages.debian.org/trixie/lsb-release/lsb_release.1.en.html):
+// only once the lsb-release package is installed (it isn't by default since Debian 12).
+function lsbRelease(game: Shell, args: string[]): string {
+  if (!game.find('/usr/bin/lsb_release')) {
+    game.status = 127;
+    return game.error(game.t('command-missing', { command: 'lsb_release' }));
+  }
+  const text = game.read('/etc/os-release') ?? '';
+  const field = (k: string) => new RegExp(`^${k}=(.*)$`, 'm').exec(text)?.[1].replace(/^"|"$/g, '') ?? '';
+  const flags = new Set(args.flatMap((a) => (a.startsWith('--') ? [{ all: 'a', id: 'i', description: 'd', release: 'r', codename: 'c', short: 's' }[a.slice(2)] ?? '?'] : a.slice(1).split(''))));
+  const bad = [...flags].find((f) => !'aidrcs'.includes(f));
+  if (bad) return game.error(`lsb_release: invalid option -- '${bad}'`, 1);
+  const all = flags.has('a');
+  const rows: [string, string, string][] = [
+    ['i', 'Distributor ID', field('ID') === 'debian' ? 'Debian' : field('NAME')],
+    ['d', 'Description', field('PRETTY_NAME')],
+    ['r', 'Release', field('VERSION_ID')],
+    ['c', 'Codename', field('VERSION_CODENAME')],
+  ];
+  const chosen = rows.filter(([k]) => all || flags.has(k));
+  if (!chosen.length) return '';
+  if (flags.has('s')) return chosen.map(([, , v]) => v).join(' ');
+  return chosen.map(([, label, v]) => `${label}:\t${v}`).join('\n');
+}
+
 export const HOSTNAMECTL: Record<string, Command> = {
   'os-release': { section: 5, launch: () => '' },
+  lsb_release: { ownOptions: true, launch: ({ args, game }) => lsbRelease(game, args) },
   hostnamectl: {
     ownOptions: true,
     launch: ({ args, game }) => {
