@@ -37,11 +37,13 @@ import { launchScript } from './commands/scripts';
 import { parse, plainList, unterminated, type ListEntry, type List } from './compound';
 import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
 import { arithmetic, ArithError, type ArithVars } from './arith';
+import { addJob, notices, type Job } from './jobs';
 import { inherited, inheritedHere } from './availability';
 import { permitted, read as readSudoers, sudoersFile } from './sudoers';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
-const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue'];
+// The job tools come with them (jobs.ts): nohup and watch too, there on every Debian.
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue', 'jobs', 'fg', 'bg', 'wait', 'disown', 'nohup', 'watch'];
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
@@ -111,7 +113,7 @@ export interface Game {
   connectionRequest: string | null;
   reboot: boolean;
   edition: Edition | null;
-  follow: { read: () => string } | null;
+  follow: { read: () => string; screen?: boolean } | null;
   history: string[];
 }
 
@@ -203,6 +205,12 @@ export class Shell implements Game {
   shells: { user: string; login: boolean; saved: { cwd: string; old: string | null; vars: Record<string, string>; exported: Set<string>; aliases: Record<string, string>; mask: string; who: string } }[] = [];
   // A shell to open once the current command is over (sudo -i, su).
   private opening: { user: string; login: boolean } | null = null;
+  // The jobs (cmd &, Ctrl-Z): see jobs.ts.
+  jobs: Job[] = [];
+  // A job brought back with fg: Ctrl-Z stops it again under its own name.
+  foreground: { text: string; pid: number } | null = null;
+  // The inputs typed so far: a job is reported after an input later than the one that started it.
+  inputCount = 0;
   // The PID of the last job put in the background ($!).
   lastBackground: number | null = null;
   // A command list (a && b; c) whose run stopped at a question (sudo's
@@ -232,7 +240,8 @@ export class Shell implements Game {
   edition: Edition | null = null;
   // A follow in progress (tail -f, journalctl -f): read() gives the lines
   // that arrived since last time. Ctrl-C stops it (Console.interrupt).
-  follow: { read: () => string } | null = null;
+  // screen: the whole screen is redrawn (watch), rather than lines added.
+  follow: { read: () => string; screen?: boolean } | null = null;
   // The commands typed on this machine (history, !!).
   history: string[] = [];
   // Story messages triggered while editing, shown on exit.
@@ -404,6 +413,26 @@ export class Shell implements Game {
   closeShells(): void {
     while (this.shells.length) this.leaveShell();
     this.opening = null;
+  }
+
+  /** A new process's PID, after the login shell's (the jobs). */
+  nextPid(): number {
+    const pid = (typeof this.state.nextPid === 'number' ? this.state.nextPid : this.shellPid + 100) as number;
+    this.state.nextPid = pid + 1;
+    return pid;
+  }
+
+  /** Ctrl-Z: the follow in the foreground (tail -f, watch) stops and becomes a job. */
+  suspend(): string {
+    if (!this.follow) return '';
+    const text = this.foreground?.text ?? this.commandLine;
+    const job = addJob(this, text, 'Stopped');
+    if (this.foreground) job.pid = this.foreground.pid;
+    job.follow = this.follow;
+    this.follow = null;
+    this.foreground = null;
+    this.lastStatus = 148;
+    return `^Z\n[${job.id}]+  ${'Stopped'.padEnd(24)}${text}`;
   }
 
   /** The player's account, under its name in the language (vous, you…). */
@@ -960,7 +989,15 @@ export class Shell implements Game {
 
   // Runs a line; returns the text to display, or null for "clear".
   // If sudo is waiting for a password, the line is that password.
+  // The jobs that ended since are reported after it, like bash before its prompt.
   execute(line: string): string | null {
+    this.inputCount++;
+    const output = this.executeLine(line);
+    if (output === null || this.continuation !== null || this.waiting || this.question || !this.jobs.length) return output;
+    return [output, notices(this)].filter(Boolean).join('\n');
+  }
+
+  private executeLine(line: string): string | null {
     this.listRun = null;
     if (this.waiting) return this.password(line);
     if (this.question) {
@@ -1077,9 +1114,23 @@ export class Shell implements Game {
 
   /** A job in the background (cmd &): see jobs. */
   *background(run: Run, entry: ListEntry, go: () => Steps): Steps {
-    void run;
-    void entry;
-    return yield* go();
+    const job = addJob(this, entry.text, 'Running');
+    show(run, `[${job.id}] ${job.pid}`);
+    const first = entry.node.kind === 'simple' ? split(entry.node.text).map((w) => w.text).find((w) => !/^[A-Za-z_]\w*=/.test(w) && w !== 'nohup') : '';
+    // sleep runs on: time only passes in the game while following.
+    if (first === 'sleep' && this.known().includes('sleep')) return 0;
+    const status = yield* go();
+    if (this.follow) {
+      // A follow (tail -f): it goes on in the background, out of sight.
+      job.follow = this.follow;
+      this.follow = null;
+      run.stopped = this.output || this.cut || this.reboot || !!this.connectionRequest || !!this.sessionRequest;
+    } else {
+      job.state = status === 0 ? 'Done' : 'Exit';
+      job.code = status;
+    }
+    this.lastBackground = job.pid;
+    return 0;
   }
 
   /**

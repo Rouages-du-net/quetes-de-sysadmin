@@ -200,6 +200,7 @@ mission-journal = What has happened
 mission-nothing = Nothing yet: the story moves on as you act.
 # During tail -f or journalctl -f: the button that does Ctrl-C.
 follow-stop = Stop (Ctrl-C)
+follow-suspend = Suspend (Ctrl-Z)
 keys-title = Terminal keys
 key-up = Previous command
 key-down = Next command

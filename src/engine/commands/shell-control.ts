@@ -5,6 +5,72 @@
 
 import type { Command } from './index';
 import type { Shell } from '../shell';
+import { bgCommand, disownCommand, fgCommand, jobsCommand, waitCommand } from '../jobs';
+
+// nohup command… (GNU coreutils, https://www.gnu.org/software/coreutils/nohup):
+// the command ignores the hangup of the session; its output, if it would go to
+// the terminal, is appended to nohup.out (here, or in $HOME if this place is not writable).
+function nohup(game: Shell, args: string[], last: boolean): string {
+  if (!args.length) return game.error("nohup: missing operand\nTry 'nohup --help' for more information.", 125);
+  const before = game.errorCount();
+  const output = game.run(args, null, false);
+  const code = game.status ?? (game.errorCount() > before ? 1 : 0);
+  if (!last) {
+    game.error('nohup: ignoring input');
+    game.status = code;
+    return output;
+  }
+  const here = game.writtenIn(`${game.cwd}/nohup.out`);
+  const target = here ? 'nohup.out' : `${game.shellHome}/nohup.out`;
+  const error = game.writeOutput(target, output, true);
+  if (error) return game.error(error, 127);
+  game.error(`nohup: ignoring input and appending output to '${target}'`);
+  game.status = code;
+  return '';
+}
+
+// watch [-n seconds] [-t] command (procps, https://man7.org/linux/man-pages/man1/watch.1.html):
+// runs the command again and again and shows its output full screen, until
+// Ctrl-C. In the game, the screen is redrawn as the machine's time passes
+// (the follow of tail -f), when the output changes.
+function watch(game: Shell, args: string[]): string {
+  let interval = 2;
+  let title = true;
+  let i = 0;
+  for (; i < args.length; i++) {
+    const a = args[i];
+    const n = /^(?:-n|--interval=?)(.*)$/.exec(a);
+    if (n) {
+      const value = n[1] || args[++i];
+      if (value === undefined || !/^\d+(\.\d+)?$/.test(value)) return game.error(`watch: failed to parse argument: '${value ?? ''}'`, 1);
+      interval = Math.max(0.1, Number(value));
+    } else if (a === '-t' || a === '--no-title') title = false;
+    else if (a === '-d' || a === '--differences' || a === '-c' || a === '--color' || a === '-x' || a === '--exec') continue;
+    else if (a.startsWith('-') && a !== '-') return game.error(`watch: invalid option -- '${a.replace(/^-+/, '').slice(0, 1)}'\nTry 'watch --help' for more information.`, 1);
+    else break;
+  }
+  const command = args.slice(i).join(' ');
+  if (!command) return game.error("Usage:\n watch [options] command\nTry 'watch --help' for more information.", 1);
+  const body = () => game.underCommand(command, game.cwd).output;
+  const screen = (text: string) => {
+    if (!title) return text;
+    const left = `Every ${interval.toFixed(1)}s: ${command}`;
+    const date = game.known().includes('date') ? game.underCommand('date', game.cwd).output.trim() : '';
+    const right = date ? `${game.hostName}: ${date}` : game.hostName;
+    return `${left}${' '.repeat(Math.max(1, game.columns - left.length - right.length))}${right}\n\n${text}`;
+  };
+  let last = body();
+  game.follow = {
+    screen: true,
+    read: () => {
+      const next = body();
+      if (next === last) return '';
+      last = next;
+      return screen(next);
+    },
+  };
+  return screen(last);
+}
 
 // seq [-s SEP] [-w] [-f FORMAT] [FIRST [INCREMENT]] LAST
 function seq(args: string[], fail: (m: string) => string): string {
@@ -96,6 +162,13 @@ function su(game: Shell, args: string[]): string {
 }
 
 export const SHELL_CONTROL: Record<string, Command> = {
+  jobs: { ownOptions: true, launch: ({ args, game }) => jobsCommand(game, args) },
+  fg: { ownOptions: true, launch: ({ args, game }) => fgCommand(game, args) },
+  bg: { ownOptions: true, launch: ({ args, game }) => bgCommand(game, args) },
+  wait: { ownOptions: true, launch: ({ args, game }) => waitCommand(game, args) },
+  disown: { ownOptions: true, launch: ({ args, game }) => disownCommand(game, args) },
+  nohup: { ownOptions: true, launch: ({ args, game, last }) => nohup(game, args, last) },
+  watch: { ownOptions: true, launch: ({ args, game }) => watch(game, args) },
   su: { ownOptions: true, launch: ({ args, game }) => su(game, args) },
   seq: { ownOptions: true, launch: ({ args, game }) => seq(args, (m) => game.error(m)) },
   // read [-r] [-p prompt] [name…]: a line from the input (< file, <<<, a here-document),

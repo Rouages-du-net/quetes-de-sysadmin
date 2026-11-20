@@ -668,8 +668,8 @@ them safely.
     `commands/shell-control.ts`).
   - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
     (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
-  - [ ] **Jobs**: `&`, `jobs`, `fg`, `bg`, `nohup`, `watch`, `screen`
-    (tmux exists).
+  - [x] **Jobs**: `&`, `jobs`, `fg`, `bg`, `wait`, `disown`, `kill %1`,
+    Ctrl-Z, `nohup`, `watch` (`jobs.ts`). Left: `screen` (tmux exists).
   - [ ] **systemd and the journal**: `systemctl list-unit-files`,
     `systemctl status` without a unit, `journalctl --since "1 hour ago"`.
   - [ ] **Accounts**: `useradd -m`, `adduser`, `passwd` (only `usermod`,

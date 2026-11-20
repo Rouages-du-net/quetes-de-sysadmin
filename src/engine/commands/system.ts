@@ -6,6 +6,7 @@
 //   the story's own reactions, which return an optional message.
 
 import { isBsd } from '../freebsd';
+import { jobFor, signalJob } from '../jobs';
 import { bsdPs } from './bsd-tools';
 import type { Command } from './index';
 import type { Game } from '../shell';
@@ -183,6 +184,16 @@ export const SYSTEM: Record<string, Command> = {
       if (!pids.length) return game.error(game.t('kill-usage'));
       const messages: string[] = [];
       for (const raw of pids) {
+        // A job (%1, or a job's PID): bash's builtin kill knows them.
+        const job = raw.startsWith('%') || game.jobs.some((j) => String(j.pid) === raw) ? jobFor(game, raw) : null;
+        if (raw.startsWith('%') && !job) {
+          game.error(`bash: kill: ${raw}: no such job`);
+          continue;
+        }
+        if (job) {
+          signalJob(game, job, signal);
+          continue;
+        }
         const listing: Process[] = game.state.process ?? [];
         const p = listing.find((q) => String(q.pid) === raw);
         if (!p) game.error(game.t('kill-none', { pid: raw }));

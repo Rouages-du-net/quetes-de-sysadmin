@@ -142,6 +142,11 @@ presents them for people.
   shell on top of the login one (`Shell.shells`, `openShell`; `shellUser`,
   `shellHome` for the prompt, `~`, `$HOME`, `cd`); `exit`/Ctrl-D leave it,
   a new connection closes them (`closeShells`).
+- Jobs: `src/engine/jobs.ts` (`Shell.jobs`, `cmd &` through
+  `Shell.background`, reported after the next input by `notices`; `jobs`,
+  `fg`, `bg`, `wait`, `disown`, `kill %N`, Ctrl-Z `Shell.suspend` and
+  `Console.suspend`); `nohup` and `watch` (a follow with `screen: true`,
+  redrawn by the interface) in `commands/shell-control.ts`.
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in

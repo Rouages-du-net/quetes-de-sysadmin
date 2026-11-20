@@ -308,7 +308,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const form = el('form', { autocomplete: 'off' }, prompt, field, match);
   // tail -f, journalctl -f: the command keeps control until Ctrl-C (this button, the keyboard or the key bar).
   const followStop = el('button', { type: 'button', class: 'stop-follow', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
-  const terminal = el('div', { class: 'terminal' }, output, form, followStop);
+  // Ctrl-Z: the command stops and becomes a job (jobs, fg, bg).
+  const followSuspend = el('button', { type: 'button', class: 'suspend-follow', hidden: '' }, el('kbd', {}, '^Z'), ` ${t('follow-suspend')}`);
+  const terminal = el('div', { class: 'terminal' }, output, form, followStop, followSuspend);
   const quitFocus = el('button', { type: 'button', class: 'leave-focus' }, t('display-quit-focus'));
   // The keys that phone keyboards lack (shown on touch screens).
   const TOUCHES: [string, string][] = [
@@ -626,6 +628,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const tokens = (line: string): Token[] | null => {
     const sh = gameTerminal.shell;
     if (!display.colours || sh.maskedInput() || sh.question || sh.waiting) return null;
+    // A here-document's body is text, not commands.
+    if (sh.continuation !== null && /<<-?\s*['"]?\w/.test(sh.continuation)) return null;
     return colourise(sh, line);
   };
   const inSpans = (js: Token[]) => js.map((j) => (j.kind === 'text' ? j.text : el('span', { class: `c-${j.kind}` }, j.text)));
@@ -919,6 +923,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (followTimer !== null) clearInterval(followTimer);
     followTimer = null;
     followStop.hidden = true;
+    followSuspend.hidden = true;
     form.hidden = false;
     if (touchesBar.dataset.mode === 'follow') delete touchesBar.dataset.mode;
   };
@@ -934,19 +939,44 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     form.hidden = true;
     touchesBar.dataset.mode = 'follow';
     followStop.hidden = false;
+    followSuspend.hidden = false;
     followStop.focus();
+    // watch redraws its screen: the last one is replaced rather than followed by the next.
+    const screen = gameTerminal.followsScreen;
+    if (screen) output.lastElementChild?.classList.add('watch');
     followTimer = window.setInterval(() => {
       const fresh = gameTerminal.follow(SECONDS_FOLLOW);
       if (!fresh) return;
-      show(fresh, 'follow');
+      if (screen) output.querySelectorAll('pre.watch').forEach((p) => p.remove());
+      show(fresh, screen ? 'watch' : 'follow');
       after();
     }, 1000);
   };
+  const suspendFollow = () => {
+    if (followTimer === null) return;
+    followEnd();
+    show(gameTerminal.suspend());
+    after();
+    input.focus();
+  };
+  followSuspend.addEventListener('click', suspendFollow);
   followStop.addEventListener('click', stopFollow);
   followStop.addEventListener('keydown', (e) => {
     if ((e.ctrlKey && e.key.toLowerCase() === 'c') || e.key === 'Escape') {
       e.preventDefault();
       stopFollow();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      suspendFollow();
+    }
+  });
+  followSuspend.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.key.toLowerCase() === 'c') || e.key === 'Escape') {
+      e.preventDefault();
+      stopFollow();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      suspendFollow();
     }
   });
 
