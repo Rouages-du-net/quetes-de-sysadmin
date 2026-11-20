@@ -4,7 +4,8 @@
 import { isBsd } from '../freebsd';
 import { shownOwner } from '../nfs';
 import { cifsShown, cifsUsage } from '../cifs';
-import type { File, Node } from '../world';
+import type { File, Node, Rights } from '../world';
+import { nowOf } from '../time';
 import type { Shell } from '../shell';
 import { applyMode, compareNames, content, glob, octal, readable, modeWithMask, options, sizeFor } from '../tools';
 import { ghostPlace } from '../open-files';
@@ -25,6 +26,11 @@ export const inode = (n: Node) => {
   if (!INODES.has(n)) INODES.set(n, nextInode++);
   return INODES.get(n)!;
 };
+
+// tar -tv's date: 2027-01-01 09:30.
+const isoMinute = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
+// tar -cvv, -xvv: the long listing, like -tv (one -v alone gives the names).
+const hasDoubleV = (args: string[]) => args.filter((a) => /^-[A-Za-z]+$/.test(a)).join('').split('v').length > 2;
 
 const modeFor = (n: Node) => n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
 
@@ -1037,52 +1043,95 @@ export const FILES: Record<string, Command> = {
       for (let i = 0; i < args.length; i++) {
         if (args[i] === '-C') cPlace = args[++i] ?? '';
         else if (args[i].startsWith('--directory=')) cPlace = args[i].slice('--directory='.length);
+        else if (args[i] === '--gzip' || args[i] === '--gunzip') withoutC.push('-z');
+        else if (args[i] === '--bzip2') withoutC.push('-j');
+        else if (args[i] === '--xz') withoutC.push('-J');
+        else if (args[i] === '--auto-compress') withoutC.push('-a');
         else withoutC.push(args[i]);
       }
       const { letters, rest } = options(withoutC);
       if (!letters.has('f') || !rest.length) return game.error(game.t('tar-usage'));
       const [archiveName, ...sources] = rest;
+      // The compression asked: -z (gzip), -j (bzip2), -J (xz); -a guesses it from the archive's suffix.
+      const bySuffix = /\.(tgz|tar\.gz)$/.test(archiveName) ? 'gzip' : /\.(tbz2?|tar\.bz2)$/.test(archiveName) ? 'bzip2' : /\.(txz|tar\.xz)$/.test(archiveName) ? 'xz' : null;
+      const asked: 'gzip' | 'bzip2' | 'xz' | null = letters.has('z') ? 'gzip' : letters.has('j') ? 'bzip2' : letters.has('J') ? 'xz' : letters.has('a') ? bySuffix : null;
+      const now = nowOf(game);
+      // A line of tar -tv: rights, owner/group, size, date, name (GNU tar's widths).
+      const long = (path: string, r: Rights & { mtime?: number }, directory: boolean, bytes: number) => {
+        const ug = `${r.owner ?? game.player}/${r.group ?? r.owner ?? game.player}`;
+        const width = Math.max(19, ug.length + 1 + String(bytes).length);
+        return `${directory ? 'd' : '-'}${r.mode ?? (directory ? 'rwxr-xr-x' : 'rw-r--r--')} ${ug}${String(bytes).padStart(width - ug.length)} ${isoMinute(r.mtime ?? now)} ${path}`;
+      };
       if (letters.has('c')) {
         if (!sources.length) return game.error(game.t('tar-archive-empty'));
         const files: Record<string, File> = {};
+        const dirs: Record<string, Rights & { mtime?: number }> = {};
+        const entries: string[] = [];
         const add = (path: string, e: Node) => {
           if (e.type === 'file') {
             if (!game.can(e, 'r')) return void game.error(game.t('error-permission', { command: 'tar', target: path }));
-            files[path] = { ...e, read: undefined } as File;
-          } else for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
+            files[path] = { ...e, read: undefined, mtime: e.mtime ?? now } as File;
+            entries.push(path);
+          } else {
+            const dir = `${path.replace(/\/$/, '')}/`;
+            dirs[dir] = { owner: e.owner, group: e.group, mode: e.mode, mtime: now };
+            entries.push(dir);
+            for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
+          }
         };
         for (const s of sources) {
           const e = game.find(s);
           if (!e) game.error(game.t('error-missing', { command: 'tar', target: s }));
           else add(s.replace(/^\.?\/+/, ''), e);
         }
-        const compressed = letters.has('z');
-        // Size: a 512-byte header per file; gzip shrinks text a lot
+        const compressed = asked !== null;
+        // Size: a 512-byte header per entry; gzip shrinks text a lot
         // (to about a third) and images, sounds and videos hardly at all,
         // since they are already compressed.
         const already = /\.(png|jpe?g|gif|webp|mp3|ogg|mp4|webm|zip|gz|pdf)$/i;
         const size = Object.entries(files).reduce((t, [path, f]) => {
           const raw = sizeFor(f, game);
-          return t + 512 + (compressed ? Math.round(raw * (already.test(path) ? 0.98 : 0.35)) : raw);
-        }, 0);
-        const archive: File = { type: 'file', content: '', size, owner: game.who, archive: { files, compressed } };
+          return t + 512 + (compressed ? Math.round(raw * (already.test(path) ? 0.98 : asked === 'gzip' ? 0.35 : 0.3)) : raw);
+        }, 512 * Object.keys(dirs).length);
+        const archive: File = {
+          type: 'file',
+          content: '',
+          size,
+          owner: game.who,
+          mtime: now,
+          archive: { files, compressed, ...(asked && asked !== 'gzip' ? { format: asked } : {}), dirs, entries },
+        };
         const error = game.place('tar', archiveName, archive);
         if (error) return game.error(error);
-        return letters.has('v') ? Object.keys(files).join('\n') : '';
+        return letters.has('v') ? entries.map((p) => (!hasDoubleV(withoutC) ? p : Object.hasOwn(dirs, p) ? long(p, dirs[p], true, 0) : long(p, files[p], false, sizeFor(files[p], game)))).join('\n') : '';
       }
       const n = game.find(archiveName);
       if (!n) return game.error(game.t('tar-open-impossible', { target: archiveName }));
       if (n.type !== 'file' || !n.archive) return game.error(game.t('tar-not-one-archive', { target: archiveName }));
+      // Reading, tar recognises the compression by itself; a wrong -z/-j/-J makes the decompressor fail.
+      const real = n.archive.compressed ? (n.archive.format ?? 'gzip') : null;
+      if (asked && asked !== real) {
+        const complaint = asked === 'gzip' ? 'gzip: stdin: not in gzip format' : asked === 'bzip2' ? 'bzip2: (stdin) is not a bzip2 file.' : 'xz: (stdin): File format not recognized';
+        return game.error(`\n${complaint}\ntar: Child returned status 1\ntar: Error is not recoverable: exiting now`, 2);
+      }
       // A truncated archive (disk full, machine turned off while writing):
       // tar reads what comes before the cut, then stops on an error.
       const { truncated } = n.archive;
-      const inputs = Object.entries(n.archive.files).slice(0, truncated);
+      const dirs = n.archive.dirs ?? {};
+      const fileEntries = Object.entries(n.archive.files).slice(0, truncated);
+      const order = (n.archive.entries ?? Object.keys(n.archive.files)).filter((p) => Object.hasOwn(dirs, p) || fileEntries.some(([f]) => f === p));
+      const verbose = (p: string) => {
+        if (!letters.has('v')) return p;
+        if (Object.hasOwn(dirs, p)) return long(p, dirs[p], true, 0);
+        const f = n.archive!.files[p];
+        return long(p, f, false, sizeFor(f, game));
+      };
       const cut = () => {
         game.state.truncatedArchive = game.resolve(archiveName);
         game.error(game.t('tar-truncated'));
       };
       if (letters.has('t')) {
-        const listing = inputs.map(([path]) => path).join('\n');
+        const listing = order.map(verbose).join('\n');
         if (truncated === undefined) return listing;
         // The list, then the error where the archive was cut.
         game.state.truncatedArchive = game.resolve(archiveName);
@@ -1095,21 +1144,32 @@ export const FILES: Record<string, Command> = {
           if (!l || l.type !== 'directory') return game.error(game.t('tar-place-missing', { target: cPlace }));
         }
         const inside = (path: string) => `${base.replace(/\/$/, '')}/${path}`;
-        for (const [path, f] of inputs) {
-          const parts = path.split('/');
+        const makeDir = (place: string) => {
+          if (!game.exists(inside(place))) {
+            const r = dirs[`${place}/`];
+            game.place('tar', inside(place), { type: 'directory', children: {}, owner: game.who, ...(r?.mode ? { mode: r.mode } : {}) });
+          }
+        };
+        for (const p of order) {
+          if (Object.hasOwn(dirs, p)) {
+            makeDir(p.replace(/\/$/, ''));
+            continue;
+          }
+          const f = n.archive.files[p];
+          const parts = p.split('/');
           let place = '';
-          for (const p of parts.slice(0, -1)) {
-            place = place ? `${place}/${p}` : p;
-            if (!game.exists(inside(place))) game.place('tar', inside(place), { type: 'directory', children: {}, owner: game.who });
+          for (const part of parts.slice(0, -1)) {
+            place = place ? `${place}/${part}` : part;
+            makeDir(place);
           }
           // root keeps the owner and permissions stored in the archive;
           // others become owners of what they extract.
-          const error = game.place('tar', inside(path), game.who === 'root' ? { ...f } : { ...f, owner: game.who, group: undefined });
+          const error = game.place('tar', inside(p), game.who === 'root' ? { ...f } : { ...f, owner: game.who, group: undefined });
           if (error) game.error(error);
         }
         if (truncated !== undefined) cut();
-        // -v: each file, as it comes out.
-        return letters.has('v') ? inputs.map(([path]) => path).join('\n') : '';
+        // -v: each entry, as it comes out (-vv: the long listing).
+        return letters.has('v') ? order.map((p) => (hasDoubleV(withoutC) ? verbose(p) : p)).join('\n') : '';
       }
       return game.error(game.t('tar-option-missing'));
     },

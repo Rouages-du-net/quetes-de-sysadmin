@@ -221,6 +221,13 @@ presents them for people.
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
   `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what The Lab's
   chapters share.
+- `src/engine/compression.ts`: compressed files (a binary file with the
+  real gzip, bzip2, xz or zip header, the text scrambled behind it, gzip's
+  CRC-32 and ISIZE trailer; `packedFile` for a story's world, estimated
+  sizes); `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`, `zmore`, `zdiff`,
+  `bzip2`, `xz` and their cousins, `zip`/`unzip` (package `zip`/`unzip`)
+  in `commands/compress.ts`; `tar -j/-J/-a`, `-tv` and directories in
+  `commands/files.ts` (`File.archive.format`, `dirs`, `entries`).
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story

@@ -39,10 +39,10 @@ describe('tar', () => {
   it('reads the old style without a dash, and -v lists what it extracts', () => {
     const s = shell();
     expect(s.execute('tar czf x.tgz d')).toBe('');
-    expect(s.execute('tar tf x.tgz')).toBe('d/a\nd/b');
-    expect(s.execute('tar xvzf x.tgz -C out')).toBe('d/a\nd/b');
+    expect(s.execute('tar tf x.tgz')).toBe('d/\nd/a\nd/b');
+    expect(s.execute('tar xvzf x.tgz -C out')).toBe('d/\nd/a\nd/b');
     expect(s.execute('cat out/d/b')).toBe('yo');
-    expect(s.execute('tar cvf y.tar d')).toBe('d/a\nd/b');
+    expect(s.execute('tar cvf y.tar d')).toBe('d/\nd/a\nd/b');
   });
 });
 

@@ -670,8 +670,11 @@ them safely.
     shell with its `#` prompt, `/root`, root's `PATH`, `exit` or Ctrl-D
     back; `sudo !!` works (`Shell.shells`, `su` in
     `commands/shell-control.ts`).
-  - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
-    (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
+  - [x] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`,
+    `zmore`, `zdiff`, `bzip2`, `xz` and their `cat`s, `zip`/`unzip` (after
+    `apt install`), `tar -j/-J/-a` and `tar -tv` with the directories
+    (`compression.ts`, `commands/compress.ts`); logrotate writes real `.gz`
+    files, The Full Disk's `syslog.2.gz` reads with `zcat`.
   - [x] **Jobs**: `&`, `jobs`, `fg`, `bg`, `wait`, `disown`, `kill %1`,
     Ctrl-Z, `nohup`, `watch` (`jobs.ts`). Left: `screen` (tmux exists).
   - [x] **systemd and the journal**: `systemctl list-unit-files`,

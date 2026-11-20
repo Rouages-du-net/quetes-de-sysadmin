@@ -26,7 +26,18 @@ export type File = {
   // Contents of a tar archive: relative paths → copies of the files.
   // `tronquee`: the archive was cut off while being written; only its
   // first `tronquee` files are readable.
-  archive?: { files: Record<string, File>; compressed: boolean; truncated?: number };
+  // `format`: bzip2 or xz (tar -j, -J) when compressed, gzip otherwise.
+  // `dirs`: the directories it holds (tar lists them, d/ before d/a), with
+  // their rights and date; `entries`: the order of everything, directories
+  // ending with / (absent: the files in their order).
+  archive?: {
+    files: Record<string, File>;
+    compressed: boolean;
+    format?: 'bzip2' | 'xz';
+    truncated?: number;
+    dirs?: Record<string, Rights & { mtime?: number }>;
+    entries?: string[];
+  };
   // Symbolic link (ln -s): the target path, as it was written (relative
   // to the link's place, or absolute). It is followed to read, write, enter.
   link?: string;

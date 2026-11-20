@@ -9,6 +9,7 @@
 // be redirected to a file (> overwrites, >> appends). Error messages do
 // not go through pipes (separate error output).
 
+import { packedSize, unpack } from './compression';
 import { onUtf8Terminal } from './charset';
 import { binaryOnTerminal, isBinary } from './ebcdic';
 import { runProgram } from './cobol';
@@ -62,6 +63,12 @@ export const COMPANIONS: Record<string, string[]> = {
   apt: ['apt-get', 'apt-cache', 'dpkg', 'lsb_release'],
   dpkg: ['apt-cache'],
   uname: ['hostnamectl'],
+  // Compressed files (commands/compress.ts): tar's compressors, rotated logs read with zcat, zgrep, zless.
+  tar: ['gzip', 'gunzip', 'zcat', 'bzip2', 'bunzip2', 'bzcat', 'xz', 'unxz', 'xzcat', 'zip', 'unzip'],
+  logrotate: ['gzip', 'gunzip', 'zcat', 'zgrep', 'zless', 'zmore'],
+  grep: ['zgrep'],
+  less: ['zless', 'zmore'],
+  diff: ['zdiff'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.
@@ -604,6 +611,14 @@ export class Shell implements Game {
     if (n.archive) return this.error(this.t('error-binary', v)), null;
     // A LATIN1 file read by a tool that only passes bytes on to a UTF-8 terminal: � for each accent.
     if (n.charset === 'latin1' && !RAW_READERS.includes(cmd)) return onUtf8Terminal(content(n, this));
+    // Debian's ~/.bashrc sets up lesspipe: less shows a compressed file's text (less syslog.2.gz).
+    if (n.charset === 'binary' && cmd === 'less') {
+      const u = unpack(content(n, this));
+      if (u) {
+        if (u.charset) this.outputCharset = u.charset;
+        return u.text;
+      }
+    }
     // Raw bytes (an EBCDIC file): passed on as they are; the terminal shows them its own way (see tube).
     if (n.charset === 'binary') this.outputCharset = 'binary';
     return content(n, this);
@@ -2013,7 +2028,12 @@ export class Shell implements Game {
     const written = this.find(target.file);
     if (written?.type !== 'file') return;
     if (charset === 'latin1') written.charset = 'latin1';
-    else if (charset === 'binary' && isBinary(content(written, this))) written.charset = 'binary';
+    else if (charset === 'binary' && isBinary(content(written, this))) {
+      written.charset = 'binary';
+      // gzip -c f > f.gz: the file takes the compressed size.
+      const u = target.addition ? null : unpack(content(written, this));
+      if (u) written.size = packedSize(u.format, u.isize, { name: u.name });
+    }
     else if (!target.addition) delete written.charset;
     this.outputCharset = null;
   }
