@@ -670,8 +670,11 @@ them safely.
     shell with its `#` prompt, `/root`, root's `PATH`, `exit` or Ctrl-D
     back; `sudo !!` works (`Shell.shells`, `su` in
     `commands/shell-control.ts`).
-  - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
-    (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
+  - [x] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`,
+    `zmore`, `zdiff`, `bzip2`, `xz` and their `cat`s, `zip`/`unzip` (after
+    `apt install`), `tar -j/-J/-a` and `tar -tv` with the directories
+    (`compression.ts`, `commands/compress.ts`); logrotate writes real `.gz`
+    files, The Full Disk's `syslog.2.gz` reads with `zcat`.
   - [x] **Jobs**: `&`, `jobs`, `fg`, `bg`, `wait`, `disown`, `kill %1`,
     Ctrl-Z, `nohup`, `watch` (`jobs.ts`). Left: `screen` (tmux exists).
   - [x] **systemd and the journal**: `systemctl list-unit-files`,
@@ -684,19 +687,24 @@ them safely.
     `-l`, `-u`, `-S`), `su ACCOUNT` with its password, `getent passwd`/
     `group`/`hosts`/`shadow`, `w`, `lastlog2` (Debian 13 dropped
     `lastlog`). Left: `groupadd`, `deluser`, `chpasswd`.
-  - [ ] **Small tools**: `basename`, `dirname`, `realpath`, `seq`, `yes`,
-    `tac`, `nl`, `column -t`, `paste`, `md5sum`, `cmp`, `whereis`,
-    `more`, `htop`, `vmstat`, `lscpu`, `sync`, `shutdown`/`poweroff`,
-    `chattr`/`lsattr`, `ss -s`.
-  - [ ] **Network clients**: `wget` (`-O`, `-qO-`), `nslookup`, `host`
-    without a DNS model, `tracepath`, `mtr`, `ifconfig` (net-tools isn't
-    installed on Debian: "command not found" is right, a hint to `ip`
-    would help).
-  - [ ] **Finer points**: `du` counts apparent sizes, not 4 KiB blocks
-    (`du -sh` of small files shows bytes); `mv` of a directory (refused by
-    design); `rm -r` (refused by design); `ls -l` without dates; `tar`'s
-    lists without directories; `curl`'s progress meter; `cp -u`, `ls -F`,
-    `find -prune`/`-xdev`/`-ls`.
+  - [x] **Small tools**: `basename`, `dirname`, `realpath`, `yes`, `tac`,
+    `nl`, `column -t`, `paste`, `md5sum`, `sha1sum`, `cmp`, `whereis`,
+    `more`, `vmstat`, `lscpu`, `sync`, `timeout`, `install`,
+    `shutdown`/`poweroff`/`halt`, `chattr`/`lsattr` (`+i`, `+a` honoured),
+    `ss -s` (`commands/small-tools.ts`); `htop` and `cal` stay "command
+    not found", as on a minimal Debian.
+  - [x] **Network clients**: `wget` (`-O`, `-qO-`, `-q`, `--spider`, on
+    top of the game's curl), `nslookup`, `host` without a DNS model (the
+    story's network, else a timeout) (`commands/net-clients.ts`);
+    `tracepath`, `mtr`, `ifconfig`, `route` stay "command not found" as on
+    Debian, and `ifconfig` earns a tip pointing to `ip a`, `ip r`, `ss`.
+  - [x] **Finer points**: `du` counts 4 KiB blocks (apparent sizes with
+    `-b`, `--apparent-size`); `ls -l` with links, dates (the six months
+    rule, the language's months) and `total`, aligned like GNU ls; `tar`
+    lists directories; `curl -o` shows its progress meter (`-s` silences
+    it); `cp -u`, `ls -F`, `touch` on an existing file, `find -prune`/
+    `-xdev`/`-ls`. Left: `mv` of a directory and `rm -r` (refused by
+    design), hard links' count in `ls -l`.
 - [ ] **An offensive story**: understanding an attack by replaying it, not
   just reading its outcome. Outside the game's usual scope ("Game rules" in
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to

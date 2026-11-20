@@ -6,9 +6,10 @@
 // (state.openFiles); logrotate: part of the directives, one state per
 // log, shortened -d and -v outputs.
 
+import { packedFile } from '../compression';
 import type { File, Node } from '../world';
 import type { Shell } from '../shell';
-import { wildcard } from '../tools';
+import { content, wildcard } from '../tools';
 import { inode } from './files';
 import { erases, openSet, held } from '../open-files';
 import { runScript } from '../script';
@@ -345,14 +346,14 @@ function logrotate(game: Shell, args: string[]): string {
       if (compressA) {
         const e = place.children[nameFor(compressA, false)];
         if (e?.type === 'file') {
-          place.children[nameFor(compressA, true)] = {
-            type: 'file',
-            content: '',
-            size: Math.round(size(e) / 10),
+          // gzip reads the log on its standard input: no original name in the header; zcat reads it back.
+          place.children[nameFor(compressA, true)] = packedFile('gzip', content(e, game), {
+            size: size(e),
+            mtime: e.mtime,
             owner: e.owner,
             group: e.group,
             mode: e.mode,
-          };
+          });
           delete place.children[nameFor(compressA, false)];
           if (verbose) output.push(`compressing log with: /bin/gzip`);
         }

@@ -20,7 +20,7 @@ import type { Command } from './index';
 // The kernel itself, without cache (the rest of "kernel" is disk cache).
 const ONLY_KERNEL = 150 * 1024 * 1024;
 
-function memoryDigits(game: Shell) {
+export function memoryDigits(game: Shell) {
   const m = memory(game)!;
   const total = m.total;
   const busy = Math.min(total, used(game));

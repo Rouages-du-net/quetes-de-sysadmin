@@ -34,7 +34,10 @@ export const BASE: Record<string, BasePackage> = {
   'base-passwd': { version: '3.6.7', architecture: 'amd64', section: 'admin', priority: 'required', essential: true, description: 'Debian base system master password and group files', size: 243, files: sbin('update-passwd') },
   bash: { version: '5.2.37-2+b5', architecture: 'amd64', section: 'shells', priority: 'required', essential: true, description: 'GNU Bourne Again SHell', size: 7262, files: [...bin('bash', 'bashbug', 'clear_console'), '/etc/bash.bashrc', '/etc/skel/.bash_logout', '/etc/skel/.bashrc', '/etc/skel/.profile'], homepage: 'https://tiswww.case.edu/php/chet/bash/bashtop.html' },
   bsdextrautils: { version: '2.41-5', architecture: 'amd64', section: 'utils', priority: 'standard', description: 'extra utilities from 4.4BSD-Lite', size: 335, files: bin('column', 'hexdump', 'look', 'ul', 'write') },
+  'bind9-dnsutils': { version: '1:9.20.15-1~deb13u1', architecture: 'amd64', section: 'net', priority: 'standard', description: 'Clients provided with BIND 9', size: 791, files: bin('dig', 'nslookup', 'nsupdate', 'delv'), homepage: 'https://www.isc.org/bind/' },
+  'bind9-host': { version: '1:9.20.15-1~deb13u1', architecture: 'amd64', section: 'net', priority: 'standard', description: 'DNS Lookup Utility', size: 151, files: bin('host'), homepage: 'https://www.isc.org/bind/' },
   bsdutils: { version: '1:2.41-5', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'basic utilities from 4.4BSD-Lite', size: 360, files: bin('logger', 'renice', 'script', 'scriptreplay', 'wall') },
+  bzip2: { version: '1.0.8-6', architecture: 'amd64', section: 'utils', priority: 'standard', description: 'high-quality block-sorting file compressor - utilities', size: 116, files: bin('bzip2', 'bunzip2', 'bzcat', 'bzgrep', 'bzless'), homepage: 'https://sourceware.org/bzip2/' },
   'ca-certificates': { version: '20250419', architecture: 'all', section: 'misc', priority: 'standard', description: 'Common CA certificates', size: 405, files: [...sbin('update-ca-certificates'), '/etc/ca-certificates.conf'] },
   coreutils: {
     version: '9.7-3',
@@ -65,7 +68,7 @@ export const BASE: Record<string, BasePackage> = {
   findutils: { version: '4.10.0-3', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'utilities for finding files--find, xargs', size: 1888, files: bin('find', 'xargs'), homepage: 'https://savannah.gnu.org/projects/findutils/' },
   gpgv: { version: '2.4.7-21', architecture: 'amd64', section: 'utils', priority: 'important', description: 'GNU privacy guard - signature verification tool', size: 418, files: bin('gpgv') },
   grep: { version: '3.11-4', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'GNU grep, egrep and fgrep', size: 1159, files: bin('grep', 'egrep', 'fgrep'), homepage: 'https://www.gnu.org/software/grep/' },
-  gzip: { version: '1.13-1', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'GNU compression utilities', size: 247, files: bin('gzip', 'gunzip', 'zcat', 'zgrep', 'zless', 'zmore') },
+  gzip: { version: '1.13-1', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'GNU compression utilities', size: 247, files: bin('gzip', 'gunzip', 'zcat', 'zgrep', 'zless', 'zmore', 'zdiff') },
   hostname: { version: '3.25', architecture: 'amd64', section: 'admin', priority: 'required', essential: true, description: 'utility to set/show the host name or domain name', size: 47, files: bin('hostname', 'dnsdomainname', 'domainname') },
   ifupdown: { version: '0.8.44', architecture: 'amd64', section: 'admin', priority: 'important', description: 'high level tools to configure network interfaces', size: 222, files: [...sbin('ifup', 'ifdown', 'ifquery'), '/etc/network/interfaces'] },
   init: { version: '1.69', architecture: 'amd64', section: 'metapackages', priority: 'required', essential: true, description: 'metapackage ensuring an init system is installed', size: 15 },
@@ -98,6 +101,7 @@ export const BASE: Record<string, BasePackage> = {
   'systemd-sysv': { version: '257.8-1~deb13u2', architecture: 'amd64', section: 'admin', priority: 'important', description: 'system and service manager - SysV compatibility symlinks', size: 76, files: sbin('init', 'halt', 'poweroff', 'reboot', 'shutdown', 'runlevel', 'telinit') },
   'systemd-timesyncd': { version: '257.8-1~deb13u2', architecture: 'amd64', section: 'admin', priority: 'important', description: 'minimalistic service to synchronize local time with NTP servers', size: 189, files: ['/usr/lib/systemd/systemd-timesyncd', '/etc/systemd/timesyncd.conf'] },
   tar: { version: '1.35+dfsg-3.1', architecture: 'amd64', section: 'utils', priority: 'required', essential: true, description: 'GNU version of the tar archiving utility', size: 3234, files: bin('tar'), homepage: 'https://www.gnu.org/software/tar/' },
+  traceroute: { version: '1:2.1.6-1', architecture: 'amd64', section: 'net', priority: 'standard', description: 'Traces the route taken by packets over an IPv4/IPv6 network', size: 162, files: bin('traceroute.db', 'traceroute6.db', 'lft.db', 'tcptraceroute.db'), homepage: 'https://traceroute.sourceforge.net/' },
   tzdata: { version: '2025b-4+deb13u1', architecture: 'all', section: 'localization', priority: 'required', description: 'time zone and daylight-saving time data', size: 1384, files: ['/usr/share/zoneinfo/Europe/Paris', '/usr/share/zoneinfo/UTC'], homepage: 'https://www.iana.org/time-zones' },
   udev: { version: '257.8-1~deb13u2', architecture: 'amd64', section: 'admin', priority: 'important', description: '/dev/ and hotplug management daemon', size: 11500, files: [...bin('udevadm'), '/usr/lib/systemd/systemd-udevd'] },
   'util-linux': {
@@ -114,6 +118,7 @@ export const BASE: Record<string, BasePackage> = {
   'vim-tiny': { version: '2:9.1.1230-2', architecture: 'amd64', section: 'editors', priority: 'important', description: 'Vi IMproved - enhanced vi editor - compact version', size: 1773, files: bin('vim.tiny'), homepage: 'https://www.vim.org/' },
   wget: { version: '1.25.0-2', architecture: 'amd64', section: 'web', priority: 'standard', description: 'retrieves files from the web', size: 3699, files: [...bin('wget'), '/etc/wgetrc'], homepage: 'https://www.gnu.org/software/wget/' },
   whiptail: { version: '0.52.25-1', architecture: 'amd64', section: 'utils', priority: 'important', description: 'Displays user-friendly dialog boxes from shell scripts', size: 75, files: bin('whiptail') },
+  'xz-utils': { version: '5.8.1-1', architecture: 'amd64', section: 'utils', priority: 'standard', description: 'XZ-format compression utilities', size: 520, files: bin('xz', 'unxz', 'xzcat', 'xzgrep', 'xzless'), homepage: 'https://tukaani.org/xz/' },
 };
 
 // Packages of the archive that aren't installed, but that apt can show and
@@ -127,6 +132,8 @@ export const ARCHIVE: Record<string, BasePackage> = {
   'python3-certbot-nginx': { version: '4.0.0-1', architecture: 'all', section: 'python', priority: 'optional', description: 'Nginx plugin for Certbot', size: 318, files: ['/usr/lib/python3/dist-packages/certbot_nginx/__init__.py'], homepage: 'https://certbot.eff.org/' },
   'cifs-utils': { version: '2:7.2-2', architecture: 'amd64', section: 'otherosfs', priority: 'optional', description: 'Common Internet File System utilities', size: 337, files: sbin('mount.cifs', 'mount.smb3', 'cifs.upcall'), homepage: 'https://wiki.samba.org/index.php/LinuxCIFS_utils' },
   smbclient: { version: '2:4.22.3+dfsg-4', architecture: 'amd64', section: 'net', priority: 'optional', description: 'command-line SMB/CIFS clients for Unix', size: 1680, files: bin('smbclient', 'smbget', 'smbtar'), homepage: 'https://www.samba.org' },
+  zip: { version: '3.0-15', architecture: 'amd64', section: 'utils', priority: 'optional', description: 'Archiver for .zip files', size: 610, files: bin('zip', 'zipcloak', 'zipnote', 'zipsplit'), homepage: 'https://infozip.sourceforge.net/Zip.html' },
+  unzip: { version: '6.0-29', architecture: 'amd64', section: 'utils', priority: 'optional', description: 'De-archiver for .zip files', size: 389, files: bin('unzip', 'funzip', 'unzipsfx', 'zipinfo'), homepage: 'https://infozip.sourceforge.net/UnZip.html' },
   dos2unix: { version: '7.5.2-1', architecture: 'amd64', section: 'text', priority: 'optional', description: 'convert text file line endings between CRLF and LF', size: 1946, files: bin('dos2unix', 'unix2dos', 'mac2unix'), homepage: 'https://waterlan.home.xs4all.nl/dos2unix.html' },
 };
 

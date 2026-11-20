@@ -221,6 +221,28 @@ presents them for people.
   `src/engine/fstab.ts`, `mount -a` in `commands/disks.ts`, `blkid` and
   `findmnt` in `commands/fstab.ts`; `chapters/lab.ts`: what The Lab's
   chapters share.
+- `src/engine/compression.ts`: compressed files (a binary file with the
+  real gzip, bzip2, xz or zip header, the text scrambled behind it, gzip's
+  CRC-32 and ISIZE trailer; `packedFile` for a story's world, estimated
+  sizes); `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`, `zmore`, `zdiff`,
+  `bzip2`, `xz` and their cousins, `zip`/`unzip` (package `zip`/`unzip`)
+  in `commands/compress.ts`; `tar -j/-J/-a`, `-tv` and directories in
+  `commands/files.ts` (`File.archive.format`, `dirs`, `entries`).
+- `commands/small-tools.ts`: `basename`, `dirname`, `realpath`
+  (`canonical()`), `yes`, `tac`, `nl`, `column`, `paste`, `cmp`, `whereis`,
+  `more`, `vmstat`, `lscpu`, `sync`, `timeout`, `install`, `chattr`/`lsattr`
+  (`Rights.attributes`; `immutable()`/`appendOnly()` of `tools.ts` checked by
+  `rm`, `mv`, `chmod`, `touch`, `tee`, `Shell.place`, redirections, nano),
+  `shutdown`/`poweroff`/`halt` (like `reboot`), `ss -s`; `md5sum` and
+  `sha1sum` in `commands/checksums.ts`.
+- `commands/net-clients.ts`: `wget` (through the game's `curl`),
+  `nslookup`, and `host` without the simulated DNS (`hostWithoutDns`);
+  the `net-tools` tip of `tips.ts` for `ifconfig`, `route`, `netstat`.
+- `ls -l` (`longRow`, `longLines`, `lsDate`: links, dates by the six
+  months rule, `total`), `ls -F`, `du` in 4 KiB blocks, `cp -u`, `touch`,
+  `find -prune`/`-xdev`/`-ls` in `commands/files.ts`; `nowOf()` of
+  `time.ts`: the date a file without `mtime` has; curl's progress meter
+  (`progressMeter`) in `commands/network.ts`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story

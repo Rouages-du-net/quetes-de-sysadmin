@@ -13,6 +13,7 @@
 // https://man7.org/linux/man-pages/man8/lsof.8.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/truncate-invocation.html
 
+import { packedFile } from '../compression';
 import { d, f, name, accountsFiles, type Chapter, type Accounts, type Rights } from '../world';
 import type { Game, Shell } from '../shell';
 import { newSystemd, systemd } from '../systemd';
@@ -182,7 +183,8 @@ export const fullDisk: Chapter = {
         log: place({
           syslog: log(t('full-disk-syslog'), 41_000_000),
           'syslog.1': log('', 38_000_000),
-          'syslog.2.gz': log('', 4_100_000),
+          // Rotated and compressed by logrotate: zcat, zgrep and zless read it.
+          'syslog.2.gz': { ...packedFile('gzip', t('full-disk-syslog-old'), { size: 13_600_000, mtime: Date.UTC(2027, 7, 1, 0, 0), owner: 'root', group: 'adm', mode: 'rw-r-----' }), size: 4_100_000 },
           'auth.log': log('', 2_300_000),
           radio: place(
             { 'stream.log': log(t('full-disk-stream-log'), 16_640_000_000, 'radio') },

@@ -220,6 +220,9 @@ export const PACKAGES: Record<string, Package> = {
   },
   smbclient: { version: '2:4.22.3+dfsg-4', architecture: 'amd64', download: 488, installed: 1680 },
   dos2unix: { version: '7.5.2-1', architecture: 'amd64', download: 497, installed: 1946 },
+  // zip and unzip: not installed by default on Debian (priority optional).
+  zip: { version: '3.0-15', architecture: 'amd64', download: 234, installed: 610 },
+  unzip: { version: '6.0-29', architecture: 'amd64', download: 166, installed: 389 },
   // lsb_release (lsb-release-minimal): no longer installed by default since Debian 12.
   'lsb-release': {
     version: '12.1-1',

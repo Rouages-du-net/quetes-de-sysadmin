@@ -9,6 +9,7 @@
 // be redirected to a file (> overwrites, >> appends). Error messages do
 // not go through pipes (separate error output).
 
+import { packedSize, unpack } from './compression';
 import { onUtf8Terminal } from './charset';
 import { binaryOnTerminal, isBinary } from './ebcdic';
 import { runProgram } from './cobol';
@@ -32,7 +33,7 @@ import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
 
 export { split, applyMode } from './tools';
-import { applyMode, braces, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
+import { applyMode, appendOnly, braces, immutable, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
 import { parse, plainList, unterminated, type ListEntry, type List } from './compound';
 import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
@@ -48,7 +49,7 @@ const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unal
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
-  echo: ['printf', 'seq'],
+  echo: ['printf', 'seq', 'yes'],
   sudo: ['su', 'passwd'],
   find: ['xargs'],
   mkdir: ['rmdir'],
@@ -62,6 +63,27 @@ export const COMPANIONS: Record<string, string[]> = {
   apt: ['apt-get', 'apt-cache', 'dpkg', 'lsb_release'],
   dpkg: ['apt-cache'],
   uname: ['hostnamectl'],
+  // Compressed files (commands/compress.ts): tar's compressors, rotated logs read with zcat, zgrep, zless.
+  tar: ['gzip', 'gunzip', 'zcat', 'bzip2', 'bunzip2', 'bzcat', 'xz', 'unxz', 'xzcat', 'zip', 'unzip'],
+  logrotate: ['gzip', 'gunzip', 'zcat', 'zgrep', 'zless', 'zmore'],
+  grep: ['zgrep'],
+  less: ['zless', 'zmore'],
+  diff: ['zdiff', 'cmp'],
+  // Small tools (commands/small-tools.ts), brought by their nearest cousin.
+  ls: ['basename', 'dirname', 'realpath'],
+  cat: ['tac', 'nl', 'more'],
+  cut: ['paste', 'column'],
+  sha256sum: ['md5sum', 'sha1sum'],
+  which: ['whereis'],
+  free: ['vmstat'],
+  nproc: ['lscpu'],
+  reboot: ['shutdown', 'poweroff', 'halt', 'sync'],
+  chmod: ['chattr', 'lsattr', 'install'],
+  sleep: ['timeout'],
+  // Network clients (commands/net-clients.ts).
+  curl: ['wget'],
+  dig: ['nslookup', 'host'],
+  host: ['nslookup'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.
@@ -604,6 +626,14 @@ export class Shell implements Game {
     if (n.archive) return this.error(this.t('error-binary', v)), null;
     // A LATIN1 file read by a tool that only passes bytes on to a UTF-8 terminal: � for each accent.
     if (n.charset === 'latin1' && !RAW_READERS.includes(cmd)) return onUtf8Terminal(content(n, this));
+    // Debian's ~/.bashrc sets up lesspipe: less shows a compressed file's text (less syslog.2.gz).
+    if (n.charset === 'binary' && cmd === 'less') {
+      const u = unpack(content(n, this));
+      if (u) {
+        if (u.charset) this.outputCharset = u.charset;
+        return u.text;
+      }
+    }
     // Raw bytes (an EBCDIC file): passed on as they are; the terminal shows them its own way (see tube).
     if (n.charset === 'binary') this.outputCharset = 'binary';
     return content(n, this);
@@ -619,6 +649,9 @@ export class Shell implements Game {
     const reason = this.block(path + '/..');
     if (reason) return reason;
     if (this.onlyRead(path)) return this.t('error-read-only', v);
+    // chattr +i on the place, or on what is there: even root may not.
+    if (immutable(parent) || immutable(parent.children[this.name(path)]) || appendOnly(parent.children[this.name(path)]))
+      return `${cmd === 'bash' ? '-bash' : cmd}: ${path}: Operation not permitted`;
     if (!this.writtenIn(path)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'error-creation-permission', v);
     const name = this.name(path);
     const old = parent.children[name];
@@ -2013,7 +2046,12 @@ export class Shell implements Game {
     const written = this.find(target.file);
     if (written?.type !== 'file') return;
     if (charset === 'latin1') written.charset = 'latin1';
-    else if (charset === 'binary' && isBinary(content(written, this))) written.charset = 'binary';
+    else if (charset === 'binary' && isBinary(content(written, this))) {
+      written.charset = 'binary';
+      // gzip -c f > f.gz: the file takes the compressed size.
+      const u = target.addition ? null : unpack(content(written, this));
+      if (u) written.size = packedSize(u.format, u.isize, { name: u.name });
+    }
     else if (!target.addition) delete written.charset;
     this.outputCharset = null;
   }
@@ -2026,6 +2064,7 @@ export class Shell implements Game {
     if (n) {
       if (this.onlyRead(file)) return this.t('error-read-only', { command: 'bash', target: file });
       if (!this.traverses(file) || !this.can(n, 'w')) return this.t('redirection-permission', { target: file });
+      if (immutable(n) || (appendOnly(n) && !addition)) return `-bash: ${file}: Operation not permitted`;
       const before = content(n, this);
       n.content = addition && before ? `${before}\n${text}` : text;
       n.lines = true;
@@ -2182,7 +2221,7 @@ export class Shell implements Game {
       const n = this.find(e.path);
       const lines = text === '' ? 0 : text.replace(/\n$/, '').split('\n').length;
       if (n?.type === 'file') {
-        if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-error-write', { path: e.path });
+        if (!this.traverses(e.path) || !this.can(n, 'w') || immutable(n) || appendOnly(n)) return this.t('nano-error-write', { path: e.path });
         n.content = e.dos ? text.replace(/\n$/, '').replace(/\r?\n/g, '\r\n') : text.replace(/\n$/, '');
         n.lines = true;
         delete n.size;

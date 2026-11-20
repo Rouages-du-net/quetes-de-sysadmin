@@ -4,9 +4,10 @@
 import { isBsd } from '../freebsd';
 import { shownOwner } from '../nfs';
 import { cifsShown, cifsUsage } from '../cifs';
-import type { File, Node } from '../world';
+import type { File, Node, Rights } from '../world';
+import { nowOf } from '../time';
 import type { Shell } from '../shell';
-import { applyMode, compareNames, content, glob, octal, readable, modeWithMask, options, sizeFor } from '../tools';
+import { applyMode, appendOnly, compareNames, content, glob, immutable, octal, readable, modeWithMask, options, sizeFor } from '../tools';
 import { ghostPlace } from '../open-files';
 import { colourise, lsColour, visibleWidth, readColour, invalidColourMessage, sgr } from '../colours';
 import { COMMANDS, type Command, type Context } from './index';
@@ -26,16 +27,53 @@ export const inode = (n: Node) => {
   return INODES.get(n)!;
 };
 
+// tar -tv's date: 2027-01-01 09:30.
+const isoMinute = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
+// tar -cvv, -xvv: the long listing, like -tv (one -v alone gives the names).
+const hasDoubleV = (args: string[]) => args.filter((a) => /^-[A-Za-z]+$/.test(a)).join('').split('v').length > 2;
+
 const modeFor = (n: Node) => n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
 
-// A line of "ls -l". Deliberate difference: the link count and
-// the date are left out.
 // The name of an ls entry, in colour if ls colours (see couleurs.ts).
 type Paint = (name: string, n: Node) => string;
 const withoutPainting: Paint = (name) => name;
 const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColour(name, n.type, n.type === 'file' && n.link !== undefined, modeFor(n)), name) : withoutPainting);
 
-function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting): string {
+// ls -F: what kind of entry it is, after its name (/ place, @ link, * executable).
+const classify = (n: Node) =>
+  n.type === 'directory' ? '/' : n.link !== undefined ? '@' : /x/.test(modeFor(n)) ? '*' : '';
+
+// The date of ls -l (GNU coreutils): "Nov 20 14:54" within six months
+// (and not in the future), "Nov 20  2025" otherwise; in French, "20 nov.  14:54".
+const SIX_MONTHS = 15_778_476_000;
+export function lsDate(game: Shell, mtime: number | undefined): string {
+  const now = nowOf(game);
+  const ms = mtime ?? now;
+  const d = new Date(ms);
+  const language = game.t.language;
+  const months = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(language, { month: 'short', timeZone: 'UTC' }).format(Date.UTC(2027, m, 15)));
+  const width = Math.max(...months.map((m) => m.length));
+  const month = months[d.getUTCMonth()].padEnd(width);
+  const recent = ms <= now && now - ms < SIX_MONTHS;
+  const end = recent ? `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` : ` ${d.getUTCFullYear()}`;
+  const day = String(d.getUTCDate()).padStart(2);
+  return language === 'en' ? `${month} ${day} ${end}` : `${day} ${month} ${end}`;
+}
+
+// The blocks a node takes on disk (KiB), for ls's "total" and du.
+const blocksOf = (game: Shell, n: Node) => (n.type === 'directory' ? 4 : n.link !== undefined ? 0 : Math.ceil(sizeFor(n, game) / 4096) * 4);
+
+// A row of "ls -l": rights, links, owner, group, size, date, name.
+interface LongRow {
+  mode: string;
+  links: string;
+  owner: string;
+  group: string;
+  size: string;
+  date: string;
+  name: string;
+}
+function longRow(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting, mark = false): LongRow {
   // -n: the numbers (uid, gid) instead of the names.
   // Through an NFS mount: the server's numbers, with this machine's names.
   // Through a Windows share (cifs): the mount's owner, group and modes.
@@ -47,11 +85,22 @@ function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = 
   const group = numeric ? String(game.accounts.groups[groupName]?.gid ?? groupName) : groupName;
   const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);
   const size = human ? readable(bytes, game.t.language) : String(bytes);
-  const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : '';
+  // A place has two links, plus one per place inside it (their ..).
+  const links = n.type === 'directory' ? 2 + Object.values(n.children).filter((c) => c.type === 'directory').length : 1;
+  const date = lsDate(game, n.type === 'file' ? n.mtime : undefined);
   // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
   if (n.type === 'file' && n.link !== undefined)
-    return `lrwxrwxrwx ${owner.padEnd(8)} ${group.padEnd(8)} ${String(n.link.length).padStart(6)} ${paint(name, n)} -> ${n.link}`;
-  return `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
+    return { mode: 'lrwxrwxrwx', links: '1', owner, group, size: String(n.link.length), date, name: `${paint(name, n)}${mark ? '@' : ''} -> ${n.link}` };
+  // The / added to places stays (like ls -F): colour is never the only sign.
+  const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(n) : '';
+  return { mode: `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)}`, links: String(links), owner, group, size, date, name: `${paint(name, n)}${suffix}` };
+}
+
+/** The rows of ls -l, aligned like GNU ls: each column as wide as its widest value. */
+function longLines(rows: LongRow[]): string[] {
+  const w = (k: keyof LongRow) => Math.max(...rows.map((r) => r[k].length));
+  const [links, owner, group, size] = [w('links'), w('owner'), w('group'), w('size')];
+  return rows.map((r) => `${r.mode} ${r.links.padStart(links)} ${r.owner.padEnd(owner)} ${r.group.padEnd(group)} ${r.size.padStart(size)} ${r.date} ${r.name}`);
 }
 
 // Source → (destination place, final name), like mv and cp on Linux:
@@ -108,20 +157,29 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting, one
   const long = letters.has('l') || letters.has('n');
   // -i: the inode number in front of each name.
   const ino = (e: Node, text: string) => (letters.has('i') ? `${String(inode(e)).padStart(7)} ${text}` : text);
+  // -F: each name followed by its kind (/, @, *).
+  const mark = letters.has('F');
+  const row = (name: string, e: Node) => longRow(game, name, e, letters.has('h'), letters.has('n'), paint, mark);
   // -d: the place itself, not its contents.
-  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
+  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLines([row(target, n)])[0] : paint(target, n) + (mark ? classify(n) : ''));
   if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { target: target }));
   // -a: every name, . and .. included; -A: every name but . and ..
   let inputs: [string, Node][] = Object.entries(n.children).filter(([name]) => letters.has('a') || letters.has('A') || !name.startsWith('.'));
   if (letters.has('a')) inputs.unshift(['.', n], ['..', game.find(target + '/..') ?? n]);
   inputs = sortEntries(game, inputs, letters);
-  if (long) return inputs.map(([name, e]) => ino(e, longLine(game, name, e, letters.has('h'), letters.has('n'), paint))).join('\n');
+  if (long) {
+    // First the blocks the entries take (KiB, like GNU ls), then one line each.
+    const blocks = inputs.reduce((t, [, e]) => t + blocksOf(game, e), 0);
+    const total = `total ${letters.has('h') ? readable(blocks * 1024, game.t.language) : blocks}`;
+    const lines = longLines(inputs.map(([name, e]) => row(name, e)));
+    return [total, ...inputs.map(([, e], k) => ino(e, lines[k]))].join('\n');
+  }
   // The / added to places stays outside the colour (like ls -F): colour is never the only sign.
-  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : '');
+  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(e) : '');
   if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last && !one ? '    ' : '\n');
   // Like the real ls: in columns on screen, one name per line in a
   // pipe or a file (and without the / added to places), or with -1.
-  if (!last) return inputs.map(([name, e]) => paint(name, e)).join('\n');
+  if (!last) return inputs.map(([name, e]) => paint(name, e) + (mark ? classify(e) : '')).join('\n');
   if (one) return inputs.map(([name, e]) => shows(name, e)).join('\n');
   return inColumns(inputs.map(([name, e]) => shows(name, e)), game.columns);
 }
@@ -183,6 +241,11 @@ function overwriting(game: Shell, sources: string[], dest: string, letters: Set<
       const target = game.find(source) ? destination(game, source, dest) : null;
       const exists = target !== null && game.find(target)?.type === 'file' && game.resolve(source) !== target;
       if (exists && letters.has('n')) continue;
+      // -u (update): only when the source is newer than the destination (a file without a date is recent).
+      if (exists && letters.has('u')) {
+        const time = (n: Node | null) => (n?.type === 'file' && n.mtime !== undefined ? n.mtime : nowOf(game));
+        if (time(game.find(source)) <= time(game.find(target!))) continue;
+      }
       if (exists && letters.has('i') && !(command === 'mv' && letters.has('f'))) {
         const shown = game.find(dest)?.type === 'directory' ? `${dest.replace(/\/$/, '')}/${game.name(source)}` : dest;
         // The question ends with a space (Fluent trims it from the text).
@@ -217,6 +280,7 @@ const moveOne: One = (game, source, dest, letters) => {
   const reason = game.block(source) ?? game.block(target + '/..');
   if (reason) return game.error(reason) || null;
   if (game.resolve(source) === target) return null;
+  if (immutable(n) || appendOnly(n) || immutable(game.find(source + '/..'))) return game.error(`mv: cannot move '${source}' to '${target}': Operation not permitted`, 1) || null;
   if (!game.writtenIn(source)) return game.error(game.t('mv-permission', { target: source })) || null;
   const error = game.place('mv', target, n);
   if (error) return game.error(error) || null;
@@ -264,6 +328,9 @@ function find(game: Shell, args: string[]): string {
   const toDelete: string[] = [];
   let hasAction = false;
   let failed = false;
+  // -prune: don't go into the directory being looked at; -xdev: stay on the starting file system.
+  let pruned = false;
+  let xdev = false;
   const clock: number | undefined = game.state.systemd?.clock;
   const now = clock ?? 0;
   // A file without a date is recent: as old as the clock, or newer than any dated one.
@@ -353,6 +420,25 @@ function find(game: Shell, args: string[]): string {
       }
       case '-empty':
         return test((_, e) => (e.type === 'directory' ? !Object.keys(e.children).length : sizeFor(e, game) === 0));
+      case '-prune':
+        return test((_, e) => {
+          if (e.type === 'directory') pruned = true;
+          return true;
+        });
+      case '-xdev':
+      case '-mount':
+        xdev = true;
+        return test(() => true);
+      // -ls: like ls -dils (inode, blocks in KiB, rights, links, owner, group, size, date, path).
+      case '-ls':
+        hasAction = true;
+        return test((path, e) => {
+          const r = longRow(game, path, game.find(path, false) ?? e, false);
+          const blocks = e.type === 'directory' ? 4 : Math.ceil(sizeFor(e, game) / 4096) * 4;
+          const name = r.name.replace(/\/$/, '');
+          out.push(`${String(inode(e)).padStart(9)} ${String(blocks).padStart(6)} ${r.mode} ${r.links.padStart(3)} ${r.owner.padEnd(8)} ${r.group.padEnd(8)} ${r.size.padStart(8)} ${r.date} ${name}\n`);
+          return true;
+        }, true);
       case '-true':
         return test(() => true);
       case '-false':
@@ -446,13 +532,18 @@ function find(game: Shell, args: string[]): string {
     return x.op === 'and' ? evaluate(x.left, path, e) && evaluate(x.right, path, e) : evaluate(x.left, path, e) || evaluate(x.right, path, e);
   };
 
+  const device = (path: string) => game.mount(game.resolve(path))?.path;
+  let startDevice: string | undefined;
   const walk = (path: string, e: Node, level: number) => {
+    pruned = false;
     if (level >= minDepth) {
       const kept = expression ? evaluate(expression, path, e) : true;
       // Without an action, the default one: -print, of what the whole expression keeps.
       if (kept && !hasAction) out.push(path + '\n');
     }
-    if (e.type !== 'directory' || level >= maxDepth) return;
+    if (e.type !== 'directory' || level >= maxDepth || pruned) return;
+    // -xdev: a mount point is listed, not entered.
+    if (xdev && level > 0 && device(path) !== startDevice) return;
     if (!game.can(e, 'r') || !game.can(e, 'x')) return void game.error(game.t('find-permission', { target: path }));
     for (const [name, child] of Object.entries(e.children).sort(([a], [b]) => compareNames(a, b))) walk(`${path.replace(/\/$/, '')}/${name}`, child, level + 1);
   };
@@ -463,6 +554,7 @@ function find(game: Shell, args: string[]): string {
       failed = true;
       continue;
     }
+    startDevice = device(start);
     walk(start, n, 0);
   }
   for (const b of batches) {
@@ -709,6 +801,10 @@ export const FILES: Record<string, Command> = {
             game.error(game.t('error-permission', { command: 'tee', target: target }));
             continue;
           }
+          if (immutable(n) || (appendOnly(n) && !letters.has('a'))) {
+            game.error(`tee: ${target}: Operation not permitted`, 1);
+            continue;
+          }
           const before = content(n, game);
           n.content = letters.has('a') && before ? `${before}\n${text}` : text;
           n.lines = true;
@@ -773,6 +869,8 @@ export const FILES: Record<string, Command> = {
             } else game.error(game.t('rm-directory', { target: target }));
           } else if (n.isProtected?.rm) game.error(n.isProtected.rm);
           else if (game.block(target)) game.error(game.block(target)!);
+          // chattr +i or +a (on it or on its place): even root may not.
+          else if (immutable(n) || appendOnly(n) || immutable(game.find(target + '/..'))) game.error(`rm: cannot remove '${target}': Operation not permitted`, 1);
           // Deleting a file means changing the place that holds it: it takes
           // write permission on that place, not on the file.
           else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
@@ -867,7 +965,12 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       if (!args.length) return game.error(game.t('touch-usage'));
       for (const target of args) {
-        if (game.exists(target)) continue;
+        const there = game.find(target);
+        if (there && (immutable(there) || appendOnly(there))) game.error(`touch: cannot touch '${target}': Operation not permitted`, 1);
+        else if (there && game.who !== 'root' && !game.can(there, 'w') && (there.owner ?? game.player) !== game.who) game.error(`touch: cannot touch '${target}': Permission denied`, 1);
+        // An existing file: its date becomes now.
+        else if (there?.type === 'file') there.mtime = nowOf(game);
+        if (there) continue;
         const error = game.place('touch', target, { type: 'file', content: '', owner: game.who });
         if (error) game.error(error);
       }
@@ -923,6 +1026,7 @@ export const FILES: Record<string, Command> = {
         if (!n) game.error(game.t('chmod-access-missing', { target: target }));
         else if (!game.traverses(target)) game.error(game.t('chmod-access-permission', { target: target }));
         else if (game.who !== 'root' && (n.owner ?? game.player) !== game.who) game.error(game.t('chmod-not-allowed', { target: target }));
+        else if (immutable(n) || appendOnly(n)) game.error(`chmod: changing permissions of '${target}': Operation not permitted`, 1);
         else if (!applyMode(modeFor(n), rights)) game.error(game.t('chmod-mode-incorrect', { permissions: rights }));
         else apply(n);
       }
@@ -937,10 +1041,12 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       // --inodes: count files (and places) instead of bytes; -d N (--max-depth=N): show only N levels.
       const inodes = args.includes('--inodes');
+      // --apparent-size (and -b): the bytes the files hold, not the 4 KiB blocks they take on the disk.
+      const apparent = args.includes('--apparent-size');
       let depth = Infinity;
       const raw: string[] = [];
       for (let i = 0; i < args.length; i++) {
-        if (args[i] === '--inodes') continue;
+        if (args[i] === '--inodes' || args[i] === '--apparent-size') continue;
         if (args[i] === '-d') depth = Number(args[++i]);
         else if (args[i].startsWith('--max-depth=')) depth = Number(args[i].slice(12));
         else raw.push(args[i]);
@@ -957,12 +1063,15 @@ export const FILES: Record<string, Command> = {
         if (e.type === 'file') {
           if (seen.has(e)) return 0;
           seen.add(e);
-          const size = inodes ? 1 : sizeFor(e, game);
+          const bytes = sizeFor(e, game);
+          // Like GNU du on ext4: whole 4 KiB blocks (an empty file takes none, a symbolic link none here).
+          const size = inodes ? 1 : apparent || letters.has('b') ? bytes : e.link !== undefined ? 0 : Math.ceil(bytes / 4096) * 4096;
           // -a: every file too, not only places.
           if (letters.has('a') && !letters.has('s') && level > 0 && level <= depth) lines.push(`${fmt(size)}\t${path}`);
           return size;
         }
-        let total = inodes ? 1 : 0;
+        // A directory takes its own block.
+        let total = inodes ? 1 : 4096;
         for (const [k, child] of Object.entries(e.children)) total += walk(`${path.replace(/\/$/, '')}/${k}`, child, level + 1);
         if (!letters.has('s') && level <= depth) lines.push(`${fmt(total)}\t${path}`);
         return total;
@@ -1037,52 +1146,95 @@ export const FILES: Record<string, Command> = {
       for (let i = 0; i < args.length; i++) {
         if (args[i] === '-C') cPlace = args[++i] ?? '';
         else if (args[i].startsWith('--directory=')) cPlace = args[i].slice('--directory='.length);
+        else if (args[i] === '--gzip' || args[i] === '--gunzip') withoutC.push('-z');
+        else if (args[i] === '--bzip2') withoutC.push('-j');
+        else if (args[i] === '--xz') withoutC.push('-J');
+        else if (args[i] === '--auto-compress') withoutC.push('-a');
         else withoutC.push(args[i]);
       }
       const { letters, rest } = options(withoutC);
       if (!letters.has('f') || !rest.length) return game.error(game.t('tar-usage'));
       const [archiveName, ...sources] = rest;
+      // The compression asked: -z (gzip), -j (bzip2), -J (xz); -a guesses it from the archive's suffix.
+      const bySuffix = /\.(tgz|tar\.gz)$/.test(archiveName) ? 'gzip' : /\.(tbz2?|tar\.bz2)$/.test(archiveName) ? 'bzip2' : /\.(txz|tar\.xz)$/.test(archiveName) ? 'xz' : null;
+      const asked: 'gzip' | 'bzip2' | 'xz' | null = letters.has('z') ? 'gzip' : letters.has('j') ? 'bzip2' : letters.has('J') ? 'xz' : letters.has('a') ? bySuffix : null;
+      const now = nowOf(game);
+      // A line of tar -tv: rights, owner/group, size, date, name (GNU tar's widths).
+      const long = (path: string, r: Rights & { mtime?: number }, directory: boolean, bytes: number) => {
+        const ug = `${r.owner ?? game.player}/${r.group ?? r.owner ?? game.player}`;
+        const width = Math.max(19, ug.length + 1 + String(bytes).length);
+        return `${directory ? 'd' : '-'}${r.mode ?? (directory ? 'rwxr-xr-x' : 'rw-r--r--')} ${ug}${String(bytes).padStart(width - ug.length)} ${isoMinute(r.mtime ?? now)} ${path}`;
+      };
       if (letters.has('c')) {
         if (!sources.length) return game.error(game.t('tar-archive-empty'));
         const files: Record<string, File> = {};
+        const dirs: Record<string, Rights & { mtime?: number }> = {};
+        const entries: string[] = [];
         const add = (path: string, e: Node) => {
           if (e.type === 'file') {
             if (!game.can(e, 'r')) return void game.error(game.t('error-permission', { command: 'tar', target: path }));
-            files[path] = { ...e, read: undefined } as File;
-          } else for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
+            files[path] = { ...e, read: undefined, mtime: e.mtime ?? now } as File;
+            entries.push(path);
+          } else {
+            const dir = `${path.replace(/\/$/, '')}/`;
+            dirs[dir] = { owner: e.owner, group: e.group, mode: e.mode, mtime: now };
+            entries.push(dir);
+            for (const [k, child] of Object.entries(e.children)) add(`${path.replace(/\/$/, '')}/${k}`, child);
+          }
         };
         for (const s of sources) {
           const e = game.find(s);
           if (!e) game.error(game.t('error-missing', { command: 'tar', target: s }));
           else add(s.replace(/^\.?\/+/, ''), e);
         }
-        const compressed = letters.has('z');
-        // Size: a 512-byte header per file; gzip shrinks text a lot
+        const compressed = asked !== null;
+        // Size: a 512-byte header per entry; gzip shrinks text a lot
         // (to about a third) and images, sounds and videos hardly at all,
         // since they are already compressed.
         const already = /\.(png|jpe?g|gif|webp|mp3|ogg|mp4|webm|zip|gz|pdf)$/i;
         const size = Object.entries(files).reduce((t, [path, f]) => {
           const raw = sizeFor(f, game);
-          return t + 512 + (compressed ? Math.round(raw * (already.test(path) ? 0.98 : 0.35)) : raw);
-        }, 0);
-        const archive: File = { type: 'file', content: '', size, owner: game.who, archive: { files, compressed } };
+          return t + 512 + (compressed ? Math.round(raw * (already.test(path) ? 0.98 : asked === 'gzip' ? 0.35 : 0.3)) : raw);
+        }, 512 * Object.keys(dirs).length);
+        const archive: File = {
+          type: 'file',
+          content: '',
+          size,
+          owner: game.who,
+          mtime: now,
+          archive: { files, compressed, ...(asked && asked !== 'gzip' ? { format: asked } : {}), dirs, entries },
+        };
         const error = game.place('tar', archiveName, archive);
         if (error) return game.error(error);
-        return letters.has('v') ? Object.keys(files).join('\n') : '';
+        return letters.has('v') ? entries.map((p) => (!hasDoubleV(withoutC) ? p : Object.hasOwn(dirs, p) ? long(p, dirs[p], true, 0) : long(p, files[p], false, sizeFor(files[p], game)))).join('\n') : '';
       }
       const n = game.find(archiveName);
       if (!n) return game.error(game.t('tar-open-impossible', { target: archiveName }));
       if (n.type !== 'file' || !n.archive) return game.error(game.t('tar-not-one-archive', { target: archiveName }));
+      // Reading, tar recognises the compression by itself; a wrong -z/-j/-J makes the decompressor fail.
+      const real = n.archive.compressed ? (n.archive.format ?? 'gzip') : null;
+      if (asked && asked !== real) {
+        const complaint = asked === 'gzip' ? 'gzip: stdin: not in gzip format' : asked === 'bzip2' ? 'bzip2: (stdin) is not a bzip2 file.' : 'xz: (stdin): File format not recognized';
+        return game.error(`\n${complaint}\ntar: Child returned status 1\ntar: Error is not recoverable: exiting now`, 2);
+      }
       // A truncated archive (disk full, machine turned off while writing):
       // tar reads what comes before the cut, then stops on an error.
       const { truncated } = n.archive;
-      const inputs = Object.entries(n.archive.files).slice(0, truncated);
+      const dirs = n.archive.dirs ?? {};
+      const fileEntries = Object.entries(n.archive.files).slice(0, truncated);
+      const order = (n.archive.entries ?? Object.keys(n.archive.files)).filter((p) => Object.hasOwn(dirs, p) || fileEntries.some(([f]) => f === p));
+      const verbose = (p: string) => {
+        if (!letters.has('v')) return p;
+        if (Object.hasOwn(dirs, p)) return long(p, dirs[p], true, 0);
+        const f = n.archive!.files[p];
+        return long(p, f, false, sizeFor(f, game));
+      };
       const cut = () => {
         game.state.truncatedArchive = game.resolve(archiveName);
         game.error(game.t('tar-truncated'));
       };
       if (letters.has('t')) {
-        const listing = inputs.map(([path]) => path).join('\n');
+        const listing = order.map(verbose).join('\n');
         if (truncated === undefined) return listing;
         // The list, then the error where the archive was cut.
         game.state.truncatedArchive = game.resolve(archiveName);
@@ -1095,21 +1247,32 @@ export const FILES: Record<string, Command> = {
           if (!l || l.type !== 'directory') return game.error(game.t('tar-place-missing', { target: cPlace }));
         }
         const inside = (path: string) => `${base.replace(/\/$/, '')}/${path}`;
-        for (const [path, f] of inputs) {
-          const parts = path.split('/');
+        const makeDir = (place: string) => {
+          if (!game.exists(inside(place))) {
+            const r = dirs[`${place}/`];
+            game.place('tar', inside(place), { type: 'directory', children: {}, owner: game.who, ...(r?.mode ? { mode: r.mode } : {}) });
+          }
+        };
+        for (const p of order) {
+          if (Object.hasOwn(dirs, p)) {
+            makeDir(p.replace(/\/$/, ''));
+            continue;
+          }
+          const f = n.archive.files[p];
+          const parts = p.split('/');
           let place = '';
-          for (const p of parts.slice(0, -1)) {
-            place = place ? `${place}/${p}` : p;
-            if (!game.exists(inside(place))) game.place('tar', inside(place), { type: 'directory', children: {}, owner: game.who });
+          for (const part of parts.slice(0, -1)) {
+            place = place ? `${place}/${part}` : part;
+            makeDir(place);
           }
           // root keeps the owner and permissions stored in the archive;
           // others become owners of what they extract.
-          const error = game.place('tar', inside(path), game.who === 'root' ? { ...f } : { ...f, owner: game.who, group: undefined });
+          const error = game.place('tar', inside(p), game.who === 'root' ? { ...f } : { ...f, owner: game.who, group: undefined });
           if (error) game.error(error);
         }
         if (truncated !== undefined) cut();
-        // -v: each file, as it comes out.
-        return letters.has('v') ? inputs.map(([path]) => path).join('\n') : '';
+        // -v: each entry, as it comes out (-vv: the long listing).
+        return letters.has('v') ? order.map((p) => (hasDoubleV(withoutC) ? verbose(p) : p)).join('\n') : '';
       }
       return game.error(game.t('tar-option-missing'));
     },

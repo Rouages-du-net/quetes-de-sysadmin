@@ -300,7 +300,7 @@ table ip nat {
       const k = keysFor(c);
       let all = play(['cat malik-laptop.conf', 'umask 077', 'wg genkey | tee privatekey | wg pubkey > publickey', 'ls -l']);
       const me = L('you');
-      expect(all).toContain(`-rw------- ${me.padEnd(8)} ${me.padEnd(8)} ${'44'.padStart(6)} privatekey`);
+      expect(all).toMatch(new RegExp(`-rw------- 1 ${me} +${me} +44 .* privatekey`));
       edit('sudo nano /etc/wireguard/wg0.conf', () => WG0(k.privee()) + PEER_MALIK(k.malik));
       edit('nano malik-laptop.conf', LAPTOP(k.isPublic()));
       edit('sudo nano /etc/nftables.conf', FIREWALL);

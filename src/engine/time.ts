@@ -171,3 +171,6 @@ export function desync(j: Game) {
   h.synchronised = false;
   h.server = undefined;
 }
+
+/** The machine's "now" as its files see it (ms, local time read as UTC): its wall clock, systemd's, or a fixed date. */
+export const nowOf = (j: Game): number => (timeOfDay(j) && systemd(j) ? machineTime(j).wall : (systemd(j)?.clock ?? Date.UTC(2027, 0, 1)));

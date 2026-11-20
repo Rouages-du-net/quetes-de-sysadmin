@@ -105,7 +105,7 @@ for (const language of LANGUAGES)
       all = run('sudo mount -t nfs nas.internal:/srv/photos /mnt/photos', 'df -h', 'mount', 'ls -l /mnt/photos');
       expect(all).toMatch(/nas\.internal:\/srv\/photos +2000G .* \/mnt\/photos/);
       expect(all).toContain('nas.internal:/srv/photos on /mnt/photos type nfs4 (rw,relatime,vers=4.2,');
-      expect(all).toMatch(/drwxrwsr-x 1002 +club .* 2028-outings\//);
+      expect(all).toMatch(/drwxrwsr-x \d+ 1002 +club .* 2028-outings\//);
       contains(all, 'prochain redémarrage');
       expect(finished()).toBe(false);
       edit('sudo nano /etc/fstab', (x) => `${x}\n${FSTAB_LINE}`);
@@ -147,19 +147,19 @@ for (const language of LANGUAGES)
     it('chapter 2 — solution: the numbers, root_squash, usermod -u, chown', () => {
       const { run, finished } = play(['nfs-export']);
       let all = run('cat message_from_margot.txt', 'ls -l /srv/photos/2028-film-scans', 'id sam');
-      expect(all).toMatch(/-rw-r--r-- nora +nora +48000000 roll-01\.tif/);
+      expect(all).toMatch(/-rw-r--r-- \d+ nora +nora +48000000 .* roll-01\.tif/);
       expect(all).toContain('uid=1002(sam)');
       contains(all, 'le client\n    envoie des numéros'.replace('\n    ', ' '));
       all = run('ssh darkroom', 'yes', 'id sam', 'ls -n /mnt/photos/2028-outings', 'sudo cp /home/sam/scans/roll-04.tif /mnt/photos/2028-film-scans/');
       expect(all).toContain('uid=1001(sam)');
-      expect(all).toMatch(/-rw-r--r-- 1002 +1500 +3570000 heron\.jpg/);
+      expect(all).toMatch(/-rw-r--r-- \d+ 1002 +1500 +3570000 .* heron\.jpg/);
       if (!fr) expect(all).toMatch(/cp: cannot create .*roll-04\.tif.*Permission denied/);
       contains(all, 'devient nobody');
       all = run('sudo chown sam /mnt/photos/2028-outings/heron.jpg', 'sudo usermod -u 1002 sam');
       expect(all).toContain(t('chown-not-allowed', { target: '/mnt/photos/2028-outings/heron.jpg' }));
       contains(all, 'pkill -u sam');
       all = run('ps -u sam', 'sudo pkill -u sam', 'sudo usermod -u 1002 sam', 'ls -l /mnt/photos/2028-outings');
-      expect(all).toMatch(/-rw-r--r-- sam +club +3570000 heron\.jpg/);
+      expect(all).toMatch(/-rw-r--r-- \d+ sam +club +3570000 .* heron\.jpg/);
       contains(all, 'propriétaire:groupe');
       expect(finished()).toBe(false);
       all = run('exit', 'sudo chown -R sam:club /srv/photos/2028-film-scans');
@@ -201,7 +201,7 @@ for (const language of LANGUAGES)
       contains(all, 'pare-feu du NAS');
       all = run(`smbclient //localhost/photos -U sam%${machinesInLanguage(t, 'negative-2028')} -c "put /tmp/contact-sheet.jpg sheet.jpg; ls"`, 'ls -l /srv/photos/sheet.jpg');
       expect(all).toContain('putting file /tmp/contact-sheet.jpg as \\sheet.jpg');
-      expect(all).toMatch(/-rw-rw-r-- sam +club +820000 \/srv\/photos\/sheet\.jpg/);
+      expect(all).toMatch(/-rw-rw-r-- \d+ sam +club +820000 .* \/srv\/photos\/sheet\.jpg/);
       expect(finished()).toBe(false);
       all = run('sudo ufw allow from 192.0.2.0/24 to any app Samba', 'sudo ufw status');
       expect(all).toMatch(/Samba +ALLOW +192\.0\.2\.0\/24/);
@@ -223,7 +223,7 @@ for (const language of LANGUAGES)
       contains(all, 'Tom compris');
       edit('sudo nano /etc/samba/smb.conf', (x) => x.replace('writable = yes', 'writable = yes\n   valid users = sam nora margot'));
       all = run(`smbclient //localhost/photos -U nora%${machinesInLanguage(t, 'slide-2028')} -c "put /tmp/contact-sheet.jpg n.jpg"`, 'ls -l /srv/photos/n.jpg');
-      expect(all).toMatch(/-rw-r--r-- nora +club/);
+      expect(all).toMatch(/-rw-r--r-- \d+ nora +club/);
       contains(all, 'create mask = 0744');
       expect(finished()).toBe(false);
       edit('sudo nano /etc/samba/smb.conf', (x) => x.replace('valid users = sam nora margot', 'valid users = sam nora margot\n   force create mode = 0664\n   create mask = 0775\n   force directory mode = 0775'));

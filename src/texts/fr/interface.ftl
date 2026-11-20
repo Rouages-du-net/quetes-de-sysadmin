@@ -437,6 +437,7 @@ tip-up-twice = Tu remontes de plusieurs niveaux ? cd ../.. remonte de deux d'un 
 tip-cd-back = Tu reviens là où tu étais ? cd - te ramène au dossier précédent, quel que soit son chemin.
 tip-cd-home = Tu rentres chez toi ? cd tout seul, ou cd ~, t'y ramène de n'importe où.
 tip-tab = Des noms longs à taper ? Appuie sur Tab : il complète le nom pour toi. Deux fois, il liste les choix possibles.
+tip-net-tools = ifconfig, route et netstat font partie de net-tools, qui n’est plus installé sur Debian : ip a montre les adresses, ip r les routes, ss -tlnp qui écoute.
 display-tips = Astuces
 display-tour = Visite guidée
 

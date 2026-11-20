@@ -120,7 +120,7 @@ for (const language of LANGUAGES)
       play([`sudo chmod 600 ${CREDS}`]);
       expect(play([`sudo mount -t cifs //cabinet/plans /mnt/plans -o credentials=${CREDS}`])).not.toContain('error');
       expect(flag('mounted')).toBe(true);
-      expect(play(['ls -l /mnt/plans'])).toMatch(/drwxr-xr-x root +root .* exports/);
+      expect(play(['ls -l /mnt/plans'])).toMatch(/drwxr-xr-x \d+ root +root .* exports/);
       expect(flag('root-owned')).toBe(true);
       play(['sudo chown -R plotter: /mnt/plans']);
       expect(flag('chown')).toBe(true);

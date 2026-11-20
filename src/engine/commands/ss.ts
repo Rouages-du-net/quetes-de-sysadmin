@@ -11,6 +11,7 @@
 // Differences: Internet sockets only (no Unix domain sockets), and netstat's
 // -r (routing) and -i (interfaces) are not modelled.
 
+import { ssSummary } from './small-tools';
 import type { Shell } from '../shell';
 import { MACHINES, WORKSTATION } from '../machines';
 import { dockerListeners } from '../docker';
@@ -70,6 +71,8 @@ export const SS: Record<string, Command> = {
   ss: {
     launch: ({ args, game }) => {
       const letters = new Set(args.filter((a) => /^-[a-z46]+$/.test(a)).flatMap((a) => [...a.slice(1)]));
+      // -s: the summary.
+      if (letters.has('s') || args.includes('--summary')) return ssSummary(game);
       const tcp = letters.has('t') || !letters.has('u');
       const udp = letters.has('u');
       const numeric = letters.has('n');

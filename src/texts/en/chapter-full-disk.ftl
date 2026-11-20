@@ -37,6 +37,11 @@ full-disk-stream-log =
 full-disk-syslog =
     Aug 15 02:40:01 radio CRON[24117]: (radio) CMD (/usr/local/bin/record night-show)
     Aug 15 02:40:03 radio record[24118]: write failed: No space left on device
+full-disk-syslog-old =
+    Jul 31 23:50:01 radio CRON[20871]: (radio) CMD (/usr/local/bin/record late-jazz)
+    Jul 31 23:59:58 radio record[20872]: recording finished: late-jazz-2027-07-31.ogg
+    Aug  1 00:00:01 radio systemd[1]: Starting logrotate.service - Rotate log files...
+    Aug  1 00:00:02 radio systemd[1]: logrotate.service: Deactivated successfully.
 full-disk-logrotate-conf =
     # see "man logrotate" for details
 

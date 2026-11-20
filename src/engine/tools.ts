@@ -7,6 +7,10 @@ import { typography } from '../texts';
 
 export const content = (n: File, game: Game) =>
   typeof n.content === 'function' ? n.content(game) : n.prose && !n.lines ? typography(n.content, game.t.language) : n.content;
+/** chattr +i: nobody, root included, may change, rename or delete it. */
+export const immutable = (n: { attributes?: string } | null | undefined) => !!n?.attributes?.includes('i');
+/** chattr +a: it may only grow (>>), never be rewritten, renamed or deleted. */
+export const appendOnly = (n: { attributes?: string } | null | undefined) => !!n?.attributes?.includes('a');
 export const sizeFor = (n: File, game: Game) => n.size ?? (n.charset === 'binary' ? content(n, game).length : new TextEncoder().encode(content(n, game)).length);
 
 // Wildcard pattern (*, ?) → regular expression.

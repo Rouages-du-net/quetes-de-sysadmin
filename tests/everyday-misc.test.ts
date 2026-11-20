@@ -39,10 +39,10 @@ describe('tar', () => {
   it('reads the old style without a dash, and -v lists what it extracts', () => {
     const s = shell();
     expect(s.execute('tar czf x.tgz d')).toBe('');
-    expect(s.execute('tar tf x.tgz')).toBe('d/a\nd/b');
-    expect(s.execute('tar xvzf x.tgz -C out')).toBe('d/a\nd/b');
+    expect(s.execute('tar tf x.tgz')).toBe('d/\nd/a\nd/b');
+    expect(s.execute('tar xvzf x.tgz -C out')).toBe('d/\nd/a\nd/b');
     expect(s.execute('cat out/d/b')).toBe('yo');
-    expect(s.execute('tar cvf y.tar d')).toBe('d/a\nd/b');
+    expect(s.execute('tar cvf y.tar d')).toBe('d/\nd/a\nd/b');
   });
 });
 
@@ -57,8 +57,12 @@ describe('df -T, du -a and -c', () => {
 
   it('du -a lists the files, -c adds a total', () => {
     const s = shell();
-    expect(s.execute('du -ab d')).toBe('2\td/a\n2\td/b\n4\td');
-    expect(s.execute('du -sbc d out')).toBe('4\td\n0\tout\n4\ttotal');
+    // -b: the apparent sizes (a directory counts its own 4096 bytes).
+    expect(s.execute('du -ab d')).toBe('2\td/a\n2\td/b\n4100\td');
+    expect(s.execute('du -sbc d out')).toBe('4100\td\n4096\tout\n8196\ttotal');
+    // Without it, like GNU du on ext4: whole 4 KiB blocks, counted in KiB.
+    expect(s.execute('du -a d')).toBe('4\td/a\n4\td/b\n12\td');
+    expect(s.execute('du -sh d')).toBe('12K\td');
   });
 });
 
@@ -106,7 +110,9 @@ describe('curl -o, -O and ping -cN', () => {
     const s = story('fix');
     const page = s.execute('curl -s http://localhost/') ?? '';
     expect(page).toContain('<title>');
-    expect(s.execute('curl -o page.html http://localhost/')).toBe('');
+    // Into a file: the progress meter on the error output; -s silences it.
+    expect(s.execute('curl -o page.html http://localhost/')).toMatch(/^ {2}% Total {4}% Received % Xferd {2}Average Speed {3}Time {4}Time {5}Time {2}Current\n {33}Dload {2}Upload {3}Total {3}Spent {4}Left {2}Speed\n100 +\d+ {2}100 +\d+ {4}0 {5}0 +\S+ {6}0 --:--:-- --:--:-- --:--:-- +\S+$/);
+    expect(s.execute('curl -so page.html http://localhost/')).toBe('');
     expect(s.execute('cat page.html')).toBe(page);
     expect(s.execute('curl -O http://localhost/')).toBe('curl: Remote file name has no length\ncurl: (23) Failure writing output to destination');
     expect(s.execute('echo $?')).toBe('23');

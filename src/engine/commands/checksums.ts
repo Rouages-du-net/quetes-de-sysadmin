@@ -69,32 +69,93 @@ export function fileBytes(text: string, binary = false): Uint8Array {
   return new TextEncoder().encode(text === '' ? '' : `${text}\n`);
 }
 
-/** A file's digest, as sha256sum computes it. */
-export function digestOf(game: Shell, n: File): string {
-  const text = content(n, game);
-  if (n.size !== undefined && n.size !== new TextEncoder().encode(text).length) return sha256(new TextEncoder().encode(`${text}|${n.size}`));
-  return sha256(fileBytes(text, n.charset === 'binary'));
+/** The MD5 of some bytes, in hexadecimal (RFC 1321). */
+export function md5(bytes: Uint8Array): string {
+  const S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+  const T = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 2 ** 32) >>> 0);
+  const length = bytes.length;
+  const padded = new Uint8Array(Math.ceil((length + 9) / 64) * 64);
+  padded.set(bytes);
+  padded[length] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padded.length - 8, (length * 8) >>> 0, true);
+  view.setUint32(padded.length - 4, Math.floor((length * 8) / 2 ** 32), true);
+  let [a0, b0, c0, d0] = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476];
+  for (let o = 0; o < padded.length; o += 64) {
+    const m = Array.from({ length: 16 }, (_, i) => view.getUint32(o + i * 4, true));
+    let [a, b, c, d] = [a0, b0, c0, d0];
+    for (let i = 0; i < 64; i++) {
+      const r = i >> 4;
+      let f: number;
+      let g: number;
+      if (r === 0) [f, g] = [(b & c) | (~b & d), i];
+      else if (r === 1) [f, g] = [(d & b) | (~d & c), (5 * i + 1) % 16];
+      else if (r === 2) [f, g] = [b ^ c ^ d, (3 * i + 5) % 16];
+      else [f, g] = [c ^ (b | ~d), (7 * i) % 16];
+      const x = (a + f + T[i] + m[g]) >>> 0;
+      const sh = S[r * 4 + (i % 4)];
+      [a, d, c] = [d, c, b];
+      b = (b + ((x << sh) | (x >>> (32 - sh)))) >>> 0;
+    }
+    [a0, b0, c0, d0] = [(a0 + a) >>> 0, (b0 + b) >>> 0, (c0 + c) >>> 0, (d0 + d) >>> 0];
+  }
+  return [a0, b0, c0, d0].map((w) => [0, 8, 16, 24].map((k) => ((w >>> k) & 0xff).toString(16).padStart(2, '0')).join('')).join('');
 }
 
-function sha256sum(game: Shell, args: string[], input: string | null): string {
+/** The SHA-1 of some bytes, in hexadecimal (FIPS 180-4). */
+export function sha1(bytes: Uint8Array): string {
+  const length = bytes.length;
+  const padded = new Uint8Array(Math.ceil((length + 9) / 64) * 64);
+  padded.set(bytes);
+  padded[length] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padded.length - 8, Math.floor((length * 8) / 2 ** 32));
+  view.setUint32(padded.length - 4, (length * 8) >>> 0);
+  const h = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0];
+  const w = new Uint32Array(80);
+  const rotl = (x: number, n: number) => (x << n) | (x >>> (32 - n));
+  for (let o = 0; o < padded.length; o += 64) {
+    for (let i = 0; i < 16; i++) w[i] = view.getUint32(o + i * 4);
+    for (let i = 16; i < 80; i++) w[i] = rotl(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
+    let [a, b, c, d, e] = h;
+    for (let i = 0; i < 80; i++) {
+      const [f, k] = i < 20 ? [(b & c) | (~b & d), 0x5a827999] : i < 40 ? [b ^ c ^ d, 0x6ed9eba1] : i < 60 ? [(b & c) | (b & d) | (c & d), 0x8f1bbcdc] : [b ^ c ^ d, 0xca62c1d6];
+      const t = (rotl(a, 5) + f + e + k + w[i]) >>> 0;
+      [e, d, c, b, a] = [d, c, rotl(b, 30) >>> 0, a, t];
+    }
+    [h[0], h[1], h[2], h[3], h[4]] = [(h[0] + a) >>> 0, (h[1] + b) >>> 0, (h[2] + c) >>> 0, (h[3] + d) >>> 0, (h[4] + e) >>> 0];
+  }
+  return h.map((x) => x.toString(16).padStart(8, '0')).join('');
+}
+
+type Hash = (bytes: Uint8Array) => string;
+
+/** A file's digest, as sha256sum (or md5sum, sha1sum) computes it. */
+export function digestOf(game: Shell, n: File, hash: Hash = sha256): string {
+  const text = content(n, game);
+  if (n.size !== undefined && n.size !== new TextEncoder().encode(text).length) return hash(new TextEncoder().encode(`${text}|${n.size}`));
+  return hash(fileBytes(text, n.charset === 'binary'));
+}
+
+function sha256sum(game: Shell, args: string[], input: string | null, name = 'sha256sum', hash: Hash = sha256, hexLength = 64): string {
   const check = args.includes('-c') || args.includes('--check');
   const quiet = args.includes('--quiet');
   const silent = args.includes('--status');
   const files = args.filter((a) => !a.startsWith('-') || a === '-');
   const open = (path: string): File | string => {
     const n = game.find(path);
-    if (!n) return `sha256sum: ${path}: No such file or directory`;
-    if (n.type === 'directory') return `sha256sum: ${path}: Is a directory`;
-    if (!game.traverses(path) || !game.can(n, 'r')) return `sha256sum: ${path}: Permission denied`;
+    if (!n) return `${name}: ${path}: No such file or directory`;
+    if (n.type === 'directory') return `${name}: ${path}: Is a directory`;
+    if (!game.traverses(path) || !game.can(n, 'r')) return `${name}: ${path}: Permission denied`;
     return n;
   };
   if (!check) {
-    if (!files.length || files[0] === '-') return `${sha256(fileBytes(input ?? ''))}  -`;
+    if (!files.length || files[0] === '-') return `${hash(fileBytes(input ?? '', game.outputCharset === 'binary'))}  -`;
     const lines: string[] = [];
     for (const path of files) {
       const n = open(path);
       if (typeof n === 'string') game.error(n, 1);
-      else lines.push(`${digestOf(game, n)}  ${path}`);
+      else lines.push(`${digestOf(game, n, hash)}  ${path}`);
     }
     return lines.join('\n');
   }
@@ -107,7 +168,7 @@ function sha256sum(game: Shell, args: string[], input: string | null): string {
   let unread = 0;
   let badLines = 0;
   for (const line of text.split('\n').filter((l) => l.trim())) {
-    const m = /^([0-9a-fA-F]{64}) [ *](.+)$/.exec(line);
+    const m = new RegExp(`^([0-9a-fA-F]{${hexLength}}) [ *](.+)$`).exec(line);
     if (!m) {
       badLines++;
       continue;
@@ -115,18 +176,18 @@ function sha256sum(game: Shell, args: string[], input: string | null): string {
     const n = open(m[2]);
     if (typeof n === 'string') {
       unread++;
-      game.error(n.replace(/^sha256sum: [^:]+: /, `sha256sum: ${m[2]}: `));
+      game.error(n.replace(new RegExp(`^${name}: [^:]+: `), `${name}: ${m[2]}: `));
       out.push(`${m[2]}: FAILED open or read`);
       continue;
     }
-    const ok = digestOf(game, n) === m[1].toLowerCase();
+    const ok = digestOf(game, n, hash) === m[1].toLowerCase();
     if (!ok) failed++;
     if (!ok || !quiet) out.push(`${m[2]}: ${ok ? 'OK' : 'FAILED'}`);
   }
   const listed = files[0] ?? '-';
-  if (badLines && badLines === text.split('\n').filter((l) => l.trim()).length) return game.error(`sha256sum: ${listed}: no properly formatted checksum lines found`, 1);
-  if (unread) game.error(`sha256sum: WARNING: ${unread} listed file${unread > 1 ? 's' : ''} could not be read`, 1);
-  if (failed) game.error(`sha256sum: WARNING: ${failed} computed checksum${failed > 1 ? 's' : ''} did NOT match`, 1);
+  if (badLines && badLines === text.split('\n').filter((l) => l.trim()).length) return game.error(`${name}: ${listed}: no properly formatted checksum lines found`, 1);
+  if (unread) game.error(`${name}: WARNING: ${unread} listed file${unread > 1 ? 's' : ''} could not be read`, 1);
+  if (failed) game.error(`${name}: WARNING: ${failed} computed checksum${failed > 1 ? 's' : ''} did NOT match`, 1);
   if (failed || unread) game.status = 1;
   game.state.sha256Checked = [...((game.state.sha256Checked as { cwd: string; ok: number; failed: number }[] | undefined) ?? []), { cwd: game.cwd, ok: out.filter((l) => l.endsWith(': OK')).length, failed: failed + unread }];
   return silent ? '' : out.join('\n');
@@ -134,4 +195,7 @@ function sha256sum(game: Shell, args: string[], input: string | null): string {
 
 export const CHECKSUMS: Record<string, Command> = {
   sha256sum: { ownOptions: true, launch: ({ args, game, input }) => sha256sum(game, args, input) },
+  // md5sum and sha1sum: the same tool with older digests (fine to spot a change, no longer to trust a download).
+  md5sum: { ownOptions: true, launch: ({ args, game, input }) => sha256sum(game, args, input, 'md5sum', md5, 32) },
+  sha1sum: { ownOptions: true, launch: ({ args, game, input }) => sha256sum(game, args, input, 'sha1sum', sha1, 40) },
 };

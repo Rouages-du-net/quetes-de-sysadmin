@@ -11,6 +11,7 @@ import type { Shell } from '../shell';
 import { bytes, decode, readCharset } from '../charset';
 import { bytesOf, byteString, decodeEbcdic, encodeEbcdic, isBinary, readEbcdic, type Ebcdic } from '../ebcdic';
 import { systemd } from '../systemd';
+import { unpack, zipEntries } from '../compression';
 
 type Charset = 'latin1' | 'utf8' | 'ascii' | Ebcdic;
 const charsetOf = (name: string): Charset | null => {
@@ -38,16 +39,38 @@ export function saveFile(game: Shell, cmd: string, path: string, text: string, b
   return refused ? `${cmd}: ${path}: ${game.find(path + '/..') ? 'Permission denied' : 'No such file or directory'}` : null;
 }
 
+/** What file(1) says of compressed bytes (libmagic's gzip, bzip2, xz and zip entries). */
+function compressedDescription(bytes: string): string | null {
+  if (zipEntries(bytes)) return 'Zip archive data, at least v2.0 to extract, compression method=deflate';
+  const u = unpack(bytes);
+  if (!u) return null;
+  if (u.format === 'bzip2') return 'bzip2 compressed data, block size = 900k';
+  if (u.format === 'xz') return 'XZ compressed data, checksum CRC64';
+  const d = new Date(u.mtime * 1000);
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const p = (x: number) => String(x).padStart(2, '0');
+  const date = `${DAYS[d.getUTCDay()]} ${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2)} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} ${d.getUTCFullYear()}`;
+  return [
+    'gzip compressed data',
+    ...(u.name ? [`was "${u.name}"`] : []),
+    ...(u.mtime ? [`last modified: ${date}`] : []),
+    ...(u.xfl === 2 ? ['max compression'] : u.xfl === 4 ? ['max speed'] : []),
+    'from Unix',
+    `original size modulo 2^32 ${u.isize}`,
+  ].join(', ');
+}
+
 /** What file(1) says of a node: its type, and for a text its charset (by its bytes, like libmagic). */
 function describe(n: import('../world').Node): string {
   if (n.type === 'directory') return 'directory';
   if (n.link) return `symbolic link to ${n.link}`;
-  if (n.archive) return n.archive.compressed ? 'gzip compressed data' : 'POSIX tar archive';
+  if (n.archive) return n.archive.compressed ? (n.archive.format === 'bzip2' ? 'bzip2 compressed data, block size = 900k' : n.archive.format === 'xz' ? 'XZ compressed data, checksum CRC64' : 'gzip compressed data, from Unix') : 'POSIX tar archive (GNU)';
   if (n.crypto) return 'PGP armored data';
   if (n.program) return n.program.kind === 'executable'
     ? 'ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 3.2.0, not stripped'
     : 'ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, not stripped';
-  if (n.charset === 'binary') return 'data';
+  if (n.charset === 'binary') return compressedDescription(typeof n.content === 'string' ? n.content : '') ?? 'data';
   const text = typeof n.content === 'string' ? n.content : '';
   if (/^\(binary/.test(text) || (!text && n.size)) return 'data';
   if (!text) return 'empty';

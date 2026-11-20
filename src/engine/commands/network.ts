@@ -85,13 +85,13 @@ const BASE_LOCAL = ['localhost', '127.0.0.1'];
 const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 const ms = (v: number) => v.toFixed(3);
 
-function dnsServers(game: Shell): string[] {
+export function dnsServers(game: Shell): string[] {
   const conf = game.read('/etc/resolv.conf') ?? '';
   return [...conf.matchAll(/^\s*nameserver\s+(\S+)/gm)].map((m) => m[1]);
 }
 
 // Resolves a name as the system would. `server`: force a DNS server.
-function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
+export function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
   if (isIp(name)) return { ip: name };
   const r: Network | undefined = game.state.network;
   const servers = server ? [server] : dnsServers(game);
@@ -301,10 +301,24 @@ export const NETWORK: Record<string, Command> = {
         n.lines = true;
         delete n.size;
       }
+      // Writing to a file, curl shows its progress meter on the error output (-s silences it).
+      const silent = args.some((a) => a === '--silent' || (/^-[A-Za-z]+$/.test(a) && a.includes('s')));
+      if (!silent) game.error(progressMeter(new TextEncoder().encode(body ? `${body}\n` : '').length));
       return '';
     },
   },
 };
+
+// curl's progress meter once the transfer is over (curl 8: the two header lines, then the last state).
+function progressMeter(bytes: number): string {
+  const size = (n: number) => (n < 100_000 ? String(n) : n < 1024 * 10_000 ? `${Math.floor(n / 1024)}k` : `${(n / 1024 / 1024).toFixed(1)}M`).padStart(5);
+  const speed = size(bytes * 1000);
+  return [
+    '  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current',
+    '                                 Dload  Upload   Total   Spent    Left  Speed',
+    `100 ${size(bytes)}  100 ${size(bytes)}    0     0 ${speed}      0 --:--:-- --:--:-- --:--:-- ${speed}`,
+  ].join('\n');
+}
 
 // curl itself, its body on the screen (or in the pipe).
 function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {
@@ -434,7 +448,7 @@ function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; in
       const site = (game.state.network as Network).web[host];
       if (!site)
         return game.error(`curl: (7) Failed to connect to ${host} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
-      return headers ? site.headers.join('\n') : site.body;
+      return headers ? site.headers.join('\n') : withHeaders ? `${site.headers.join('\n')}\n\n${site.body}` : site.body;
     }
   }
 }

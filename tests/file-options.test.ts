@@ -57,7 +57,7 @@ describe('ls', () => {
     expect(s.execute('ls -S /var/log')).toBe('dpkg.log  syslog  auth.log');
     expect(s.execute('ls --sort=size -r /var/log')).toBe('auth.log  syslog  dpkg.log');
     expect(s.execute('ls -r /var/log')).toBe('syslog  dpkg.log  auth.log');
-    expect((s.execute('ls -ltr /var/log') ?? '').split('\n').map((l) => l.split(/\s+/).at(-1))).toEqual(['dpkg.log', 'syslog', 'auth.log']);
+    expect((s.execute('ls -ltr /var/log') ?? '').split('\n').slice(1).map((l) => l.split(/\s+/).at(-1))).toEqual(['dpkg.log', 'syslog', 'auth.log']);
     expect(s.execute('ls --sort=foo')).toContain("ls: invalid argument 'foo' for '--sort'");
   });
 
@@ -89,13 +89,13 @@ describe('cp, mv, rm, rmdir', () => {
     const s = shell();
     s.execute('sudo cp -a /etc/app /etc/app.bak');
     s.execute('sunflower');
-    expect(s.execute('ls -l /etc/app.bak')).toContain('root     root          7 app.conf');
+    expect(s.execute('ls -l /etc/app.bak')).toMatch(/root +root +7 .* app\.conf\n/);
     expect(s.find('/etc/app.bak/app.conf')).toMatchObject({ mtime: DAY });
     expect(s.execute('ls /etc/app.bak/conf.d')).toBe('a.conf');
     // Without -p, a copy is new and yours.
     s.execute('cp /etc/app/app.conf .');
     expect(s.find('app.conf')).not.toHaveProperty('mtime');
-    expect(s.execute('ls -l app.conf')).toContain('you      you');
+    expect(s.execute('ls -l app.conf')).toMatch(/ 1 you you /);
   });
 
   it('cp -i asks, cp -n never replaces', () => {
