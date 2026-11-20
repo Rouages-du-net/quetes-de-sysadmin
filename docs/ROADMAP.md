@@ -639,13 +639,13 @@ them safely.
   ranges and `-c`, `head -n -N`, `tail -n +N`, `sed` ranges, `tar czf`,
   `tar -xv`, `df -T`, `du -a/-c`, `curl -o/-O`, `ping -c1`, and `vim`
   pointing to nano. Still missing, roughly by how often they are typed:
-  - [ ] **A chapter's commands**: most chapters list few commands, so
-    `ps aux`, `df -h`, `wc -l`, `sort`, `less` answer "you don't have this
-    command yet" on a server story (The Watch's "fix" has 14). Read-only
-    basics (`ls`, `cat`, `less`, `head`, `tail`, `grep`, `wc`, `sort`,
-    `uniq`, `ps`, `df`, `du`, `free`, `uptime`, `id`, `hostname`,
-    `date`…) could come with every Debian server, as `COMPANIONS` does for
-    `xargs`; the teachers' sheets would keep listing only the chapter's.
+  - [x] **A chapter's commands**: a chapter keeps the commands of every
+    chapter it assumes (`src/engine/availability.ts`), when its machine's
+    system has them and the tool is installed there; The Watch's "fix"
+    went from 14 commands to more than 50. The teachers' sheets still list
+    only the chapter's new ones, and `help` shows the inherited ones on a
+    line of their own. Left: a command no assumed chapter teaches is still
+    "not learned yet" (`ps` in a chapter whose path never met it).
   - [ ] **A Debian machine's default state**: a world without `state.mounts`,
     processes or memory gives an empty `df -h`, `ps aux` and `mount`, and
     `free: Unable to create meminfo structure`; `ip a` says "Cannot open

@@ -34,6 +34,7 @@ import { live } from './activity';
 export { split, applyMode } from './tools';
 import { applyMode, braces, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
+import { inherited, inheritedHere } from './availability';
 import { read as readSudoers, sudoersFile } from './sudoers';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
@@ -746,9 +747,38 @@ export class Shell implements Game {
     // French); help, like bash's builtin, works in every language.
     // bash's harmless builtins are always there, and a command brings its
     // everyday companions (find brings xargs, mkdir rmdir…: see COMPANIONS).
-    const own = this.chapter.commands;
-    const companions = own.flatMap((c) => COMPANIONS[c] ?? []);
-    return [...new Set([...own, ...companions, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, this.t('command-help')])];
+    const { own, kept } = this.commandSets();
+    return [...own, ...kept];
+  }
+
+  /**
+   * The chapter's own commands (with their companions and the shell's), and
+   * those it keeps from the chapters it assumes, when they exist on this
+   * machine (see availability.ts).
+   */
+  private commandSets(): { own: string[]; kept: string[] } {
+    const mine = this.chapter.commands;
+    const own = [...new Set([...mine, ...mine.flatMap((c) => COMPANIONS[c] ?? []), 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, this.t('command-help')])];
+    const source = this.inheritsFrom;
+    const inherited = source ? inheritedHere(this, source) : [];
+    const kept = [...new Set([...inherited, ...inherited.flatMap((c) => COMPANIONS[c] ?? [])])].filter((c) => !own.includes(c));
+    return { own, kept };
+  }
+
+  /**
+   * The chapter whose assumed chapters this machine inherits commands from:
+   * its own; on an internal host, the story's chapter unless the host lists
+   * what is installed on it (InternalHost.commands).
+   */
+  private get inheritsFrom(): Chapter | null {
+    if (!this.parent) return this.chapter;
+    return this.principal.chapter.hosts?.[this.host]?.commands ? null : this.principal.chapter;
+  }
+
+  /** An inherited command this machine doesn't have (another system's, or a tool not installed here). */
+  private notHere(cmd: string): boolean {
+    const source = this.inheritsFrom;
+    return !!source && !this.chapter.commands.includes(cmd) && inherited(source).includes(cmd) && !inheritedHere(this, source).includes(cmd);
   }
 
   /** Runs one of the game's commands from another (command ls, xargs grep): its output, as in a pipe unless `last`. */
@@ -1458,7 +1488,11 @@ export class Shell implements Game {
     if (root && !this.known().includes('sudo')) return this.error(this.t('sudo-not-still'));
     // Real behaviour: cd is built into the shell, it is not a program.
     if (root && cmd === 'cd') return this.error(this.t('sudo-cd'));
-    if (cmd === 'help' || cmd === this.t('command-help')) return this.t('help-commands', { commands: this.known().join(', ') });
+    if (cmd === 'help' || cmd === this.t('command-help')) {
+      // The chapter's own commands first, then those it keeps from the chapters it assumes.
+      const { own, kept } = this.commandSets();
+      return [this.t('help-commands', { commands: own.join(', ') }), ...(kept.length ? [this.t('help-inherited', { commands: kept.join(', ') })] : []), this.t('help-more')].join('\n');
+    }
     if (cmd === 'man' || cmd === 'apropos' || cmd === 'whatis') return this.consulter(cmd, rest);
     // A FreeBSD machine: what only a Debian system has is simply not there
     // (sh: "systemctl: not found"), and bash only after pkg install bash.
@@ -1518,6 +1552,11 @@ export class Shell implements Game {
     if (!command && OTHER_EDITORS.includes(cmd) && this.known().includes('nano')) {
       this.status = 127;
       return this.error(this.t('editor-only-nano', { command: cmd, file: rest.find((a) => !a.startsWith('-') && !a.startsWith('+')) ?? this.t('editor-file') }));
+    }
+    // An inherited command missing from this machine: the system's own answer.
+    if (command && !this.known().includes(cmd) && this.notHere(cmd)) {
+      this.status = 127;
+      return this.error(isBsd(this) || isSolaris(this) ? `${cmd}: not found` : `-bash: ${cmd}: command not found`);
     }
     if (!this.known().includes(cmd) || !command)
       return this.error(this.t(command || cmd === 'sudo' ? 'command-not-still' : 'command-missing', { command: cmd }));

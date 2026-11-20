@@ -44,9 +44,13 @@ machine du réseau simulé. Un chapitre, c'est :
 ### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 
 - `id`, `number`, et l'histoire qui l'accueille (`src/engine/chapters/index.ts`).
-- `commands` : celles que le chapitre connaît (les autres répondent
-  « commande introuvable », comme sur une machine où le paquet manque) ;
-  leur manuel reste lisible avec `man`.
+- `commands` : celles que le chapitre enseigne. Le chapitre garde aussi
+  les commandes de chaque chapitre qu'il suppose (les prérequis `after` de
+  son histoire et les chapitres précédents de son histoire) qui existent
+  sur sa machine (`src/engine/availability.ts`) ; les autres répondent
+  « tu n'as pas encore cette commande », et leur manuel reste lisible avec
+  `man`. `withhold` garde fermée une commande supposée quand elle ferait
+  la leçon à la place du joueur ou de la joueuse.
 - `createWorld(t)` : le système de fichiers de départ ; les textes viennent
   de `t('…')`, jamais du code.
 - `state()` et `initialise(jeu)` : l'état des outils simulés (services,

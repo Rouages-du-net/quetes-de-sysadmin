@@ -93,10 +93,12 @@ function dnsServers(game: Shell): string[] {
 // Resolves a name as the system would. `server`: force a DNS server.
 function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
   if (isIp(name)) return { ip: name };
-  const r: Network = game.state.network;
+  const r: Network | undefined = game.state.network;
   const servers = server ? [server] : dnsServers(game);
-  if (!servers.some((s) => r.resolvers.includes(s))) return { error: 'timeout', servers };
-  const ip = r.names[name.replace(/\.$/, '')];
+  // A machine whose network the story doesn't describe: no name is known.
+  if (!r) return { error: 'unknown', servers };
+  if (!servers.some((s) => r.resolvers?.includes(s))) return { error: 'timeout', servers };
+  const ip = r.names?.[name.replace(/\.$/, '')];
   return ip ? { ip } : { error: 'unknown', servers };
 }
 
@@ -214,7 +216,7 @@ export const NETWORK: Record<string, Command> = {
         const errors = Array(3).fill(`;; communications error to ${s}#53: timed out`).join('\n');
         return short ? errors : `${errors}\n\n${header}\n;; no servers could be reached`;
       }
-      const inUse = server ?? dnsServers(game).find((s) => (game.state.network as Network).resolvers.includes(s))!;
+      const inUse = server ?? dnsServers(game).find((s) => (game.state.network as Network | undefined)?.resolvers?.includes(s)) ?? dnsServers(game)[0] ?? '127.0.0.53';
       if (short) return 'ip' in res ? res.ip : '';
       const fqdn = name.replace(/\.$/, '') + '.';
       return [
