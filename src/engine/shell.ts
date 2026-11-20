@@ -49,7 +49,7 @@ const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unal
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
-  echo: ['printf', 'seq'],
+  echo: ['printf', 'seq', 'yes'],
   sudo: ['su', 'passwd'],
   find: ['xargs'],
   mkdir: ['rmdir'],
@@ -68,7 +68,18 @@ export const COMPANIONS: Record<string, string[]> = {
   logrotate: ['gzip', 'gunzip', 'zcat', 'zgrep', 'zless', 'zmore'],
   grep: ['zgrep'],
   less: ['zless', 'zmore'],
-  diff: ['zdiff'],
+  diff: ['zdiff', 'cmp'],
+  // Small tools (commands/small-tools.ts), brought by their nearest cousin.
+  ls: ['basename', 'dirname', 'realpath'],
+  cat: ['tac', 'nl', 'more'],
+  cut: ['paste', 'column'],
+  sha256sum: ['md5sum', 'sha1sum'],
+  which: ['whereis'],
+  free: ['vmstat'],
+  nproc: ['lscpu'],
+  reboot: ['shutdown', 'poweroff', 'halt', 'sync'],
+  chmod: ['chattr', 'lsattr', 'install'],
+  sleep: ['timeout'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.

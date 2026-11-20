@@ -12,6 +12,12 @@ systemctl-access-refuse =
     Failed to { $action } { $service }.service: Access denied
     (you need to be root: sudo systemctl { $action } { $service })
 journalctl-argument = journalctl: unexpected argument '{ $argument }' (for a service: journalctl -u { $argument })
+poweroff-refuse =
+    Call to PowerOff failed: Access denied
+    (you need to be root: sudo poweroff)
+shutdown-refuse =
+    Call to ScheduleShutdown failed: Access denied
+    (you need to be root: sudo shutdown)
 reboot-refuse =
     Failed to reboot system: Access denied
     (you need to be root: sudo reboot)

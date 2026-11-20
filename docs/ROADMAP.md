@@ -687,10 +687,12 @@ them safely.
     `-l`, `-u`, `-S`), `su ACCOUNT` with its password, `getent passwd`/
     `group`/`hosts`/`shadow`, `w`, `lastlog2` (Debian 13 dropped
     `lastlog`). Left: `groupadd`, `deluser`, `chpasswd`.
-  - [ ] **Small tools**: `basename`, `dirname`, `realpath`, `seq`, `yes`,
-    `tac`, `nl`, `column -t`, `paste`, `md5sum`, `cmp`, `whereis`,
-    `more`, `htop`, `vmstat`, `lscpu`, `sync`, `shutdown`/`poweroff`,
-    `chattr`/`lsattr`, `ss -s`.
+  - [x] **Small tools**: `basename`, `dirname`, `realpath`, `yes`, `tac`,
+    `nl`, `column -t`, `paste`, `md5sum`, `sha1sum`, `cmp`, `whereis`,
+    `more`, `vmstat`, `lscpu`, `sync`, `timeout`, `install`,
+    `shutdown`/`poweroff`/`halt`, `chattr`/`lsattr` (`+i`, `+a` honoured),
+    `ss -s` (`commands/small-tools.ts`); `htop` and `cal` stay "command
+    not found", as on a minimal Debian.
   - [ ] **Network clients**: `wget` (`-O`, `-qO-`), `nslookup`, `host`
     without a DNS model, `tracepath`, `mtr`, `ifconfig` (net-tools isn't
     installed on Debian: "command not found" is right, a hint to `ip`

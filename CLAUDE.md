@@ -228,6 +228,13 @@ presents them for people.
   `bzip2`, `xz` and their cousins, `zip`/`unzip` (package `zip`/`unzip`)
   in `commands/compress.ts`; `tar -j/-J/-a`, `-tv` and directories in
   `commands/files.ts` (`File.archive.format`, `dirs`, `entries`).
+- `commands/small-tools.ts`: `basename`, `dirname`, `realpath`
+  (`canonical()`), `yes`, `tac`, `nl`, `column`, `paste`, `cmp`, `whereis`,
+  `more`, `vmstat`, `lscpu`, `sync`, `timeout`, `install`, `chattr`/`lsattr`
+  (`Rights.attributes`; `immutable()`/`appendOnly()` of `tools.ts` checked by
+  `rm`, `mv`, `chmod`, `touch`, `tee`, `Shell.place`, redirections, nano),
+  `shutdown`/`poweroff`/`halt` (like `reboot`), `ss -s`; `md5sum` and
+  `sha1sum` in `commands/checksums.ts`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
