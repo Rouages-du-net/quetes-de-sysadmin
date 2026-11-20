@@ -646,11 +646,13 @@ them safely.
     only the chapter's new ones, and `help` shows the inherited ones on a
     line of their own. Left: a command no assumed chapter teaches is still
     "not learned yet" (`ps` in a chapter whose path never met it).
-  - [ ] **A Debian machine's default state**: a world without `state.mounts`,
-    processes or memory gives an empty `df -h`, `ps aux` and `mount`, and
-    `free: Unable to create meminfo structure`; `ip a` says "Cannot open
-    netlink socket" without a `lan`; no `/etc/os-release` (`cat
-    /etc/os-release`, `lsb_release -a`, `hostnamectl`), no `hostname -I`.
+  - [x] **A Debian machine's default state**: a chapter that models no
+    mounts, processes, memory or network gets those of a small Debian 13
+    virtual machine (`src/engine/debian.ts`): `df -h`, `mount`, `findmnt`,
+    `ps aux` (systemd, journald, cron, sshd, the session's bash, `ps`
+    itself, the chapter's running services), `free`, `top`, `ip a`, `ip r`,
+    `hostname -I`, `/etc/os-release`, `hostnamectl`; `lsb_release` stays
+    "command not found" (lsb-release isn't installed by default).
   - [ ] **Package management**: `apt remove`/`purge`/`search`/`show`/
     `policy`, `apt-get` and `apt-cache` (the scripts' forms), `dpkg -l`,
     `-L`, `-S`, `-s`.

@@ -147,6 +147,13 @@ presents them for people.
   `fg`, `bg`, `wait`, `disown`, `kill %N`, Ctrl-Z `Shell.suspend` and
   `Console.suspend`); `nohup` and `watch` (a follow with `screen: true`,
   redrawn by the interface) in `commands/shell-control.ts`.
+- `src/engine/debian.ts`: a Debian machine's default state, given by the
+  Shell's constructor when the chapter models none (`debianDefaults`):
+  base mounts (`pseudo` ones only for `mount`/`findmnt`, `bytesBase`),
+  base processes (`base`, kept by a reboot; `state.baseProcesses`: `ps`
+  shows itself), memory, `/etc/os-release` and `/etc/debian_version`;
+  `baseLan` (lo, eth0 with the machine's address, `state.baseLan`) for `ip`
+  and `hostname -I`; `hostnamectl` in `commands/hostnamectl.ts`.
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in

@@ -82,6 +82,7 @@ import { JQ } from './jq';
 import { KUBECTL } from './kubectl';
 import { K3S } from './k3s';
 import { SHELL_CONTROL } from './shell-control';
+import { HOSTNAMECTL } from './hostnamectl';
 
 export interface Context {
   args: string[];
@@ -167,6 +168,7 @@ function build(): Record<string, Command> {
     ...SCRIPTS,
     ...BUILTINS,
     ...SHELL_CONTROL,
+    ...HOSTNAMECTL,
     ...EVERYDAY,
     ...DISKS,
     ...STOCKAGE,

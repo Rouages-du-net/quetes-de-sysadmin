@@ -713,7 +713,9 @@ export const PAGES: Record<string, Page> = {
   which: { examples: ['which systemctl', 'which visudo'], see: ['sudoers', 'man'] },
   whatis: { see: ['man', 'apropos'] },
   whoami: { see: ['sudo'] },
-  hostname: { long: { 'fqdn': 'f', 'long': 'f' }, options: ['f'], examples: ['hostname', 'hostname -f'], see: ['whoami', 'ssh'] },
+  hostname: { long: { 'fqdn': 'f', 'long': 'f', 'all-ip-addresses': 'I', 'ip-address': 'i' }, options: ['f', 'I', 'i'], examples: ['hostname', 'hostname -f', 'hostname -I'], see: ['whoami', 'ssh', 'hostnamectl', 'ip'] },
+  hostnamectl: { examples: ['hostnamectl', 'cat /etc/os-release', 'sudo hostnamectl set-hostname kneader'], see: ['hostname', 'uname', 'os-release'] },
+  'os-release': { section: 5, examples: ['cat /etc/os-release', 'grep VERSION_CODENAME /etc/os-release'], see: ['hostnamectl', 'uname'] },
   // IBM i (story "The Order Book"): the 5250 client, PASE's system and db2, and the CL commands (their parameters).
   tn5250: { examples: ['tn5250 mill', 'tn5250 mill.internal'], see: ['ssh', 'SIGNOFF', 'WRKACTJOB'] },
   system: { examples: ['system "WRKACTJOB"', 'system "DSPMSG QSYSOPR"', 'system -v "DSPLIB ORDERS"'], see: ['db2', 'WRKACTJOB', 'DSPMSG'] },

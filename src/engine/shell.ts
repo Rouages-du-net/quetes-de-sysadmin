@@ -40,6 +40,7 @@ import { arithmetic, ArithError, type ArithVars } from './arith';
 import { addJob, notices, type Job } from './jobs';
 import { inherited, inheritedHere } from './availability';
 import { permitted, read as readSudoers, sudoersFile } from './sudoers';
+import { debianDefaults } from './debian';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
 // The job tools come with them (jobs.ts): nohup and watch too, there on every Debian.
@@ -52,6 +53,8 @@ export const COMPANIONS: Record<string, string[]> = {
   find: ['xargs'],
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
+  hostname: ['hostnamectl'],
+  uname: ['hostnamectl'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.
@@ -315,6 +318,8 @@ export class Shell implements Game {
     this.who = this.player;
     this.nameMachine();
     chapter.initialise?.(this);
+    // What every Debian machine has, when the chapter didn't model it (debian.ts).
+    debianDefaults(this);
   }
 
   // The chapters write their machine's name in English (/etc/hostname,
@@ -634,9 +639,10 @@ export class Shell implements Game {
   // Mounted media (USB stick…) have a capacity: state.mounts.
   // The most specific medium containing this path (/srv/radio before /).
   mount(absolute: string): { path: string; capacity: number; inodes?: number; inodesBase?: number } | null {
-    const mounts: { path: string; capacity: number; inodes?: number }[] = this.state.mounts ?? [];
+    const mounts: { path: string; capacity: number; inodes?: number; pseudo?: boolean }[] = this.state.mounts ?? [];
     return (
       mounts
+        .filter((m) => !m.pseudo)
         .filter((m) => m.path === '/' || absolute === m.path || absolute.startsWith(m.path + '/'))
         .sort((a, b) => b.path.length - a.path.length)[0] ?? null
     );
@@ -674,7 +680,7 @@ export class Shell implements Game {
       (x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')),
     );
     const other = inside.reduce((t, x) => t + ((d) => (d ? this.size(d) : 0))(this.find(x.path)), 0);
-    const inUse = (place ? this.size(place) : 0) - other;
+    const inUse = (place ? this.size(place) : 0) - other + ((m as { bytesBase?: number }).bytesBase ?? 0);
     return inUse - (old ? this.size(old) : 0) + this.size(n) > m.capacity;
   }
 

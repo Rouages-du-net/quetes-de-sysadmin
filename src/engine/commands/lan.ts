@@ -11,6 +11,7 @@ import type { Command, Context } from './index';
 import { colourise, sgr, type When } from '../colours';
 import { addresses6, cidr6, defaultRoute6, disabled6, routes6, sync6 } from '../ipv6';
 import type { Game } from '../shell';
+import { baseLan, isDebian } from '../debian';
 
 const NOT_ALLOWED = 'RTNETLINK answers: Operation not permitted';
 
@@ -125,7 +126,8 @@ export function colourIp(text: string): string {
 const after = (words: string[], word: string) => (words.includes(word) ? words[words.indexOf(word) + 1] : undefined);
 
 function ip(game: Shell, args: string[]): string {
-  const l = lan(game);
+  // A machine whose chapter models no network: lo and eth0 (debian.ts).
+  const l = lan(game) ?? (isDebian(game) ? baseLan(game) : undefined);
   if (!l) return game.error('Cannot open netlink socket: Operation not permitted', 1);
   sync6(game);
   const options = args.filter((a) => a.startsWith('-'));

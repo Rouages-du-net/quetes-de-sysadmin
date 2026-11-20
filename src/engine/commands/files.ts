@@ -11,6 +11,8 @@ import { ghostPlace } from '../open-files';
 import { colourise, lsColour, visibleWidth, readColour, invalidColourMessage, sgr } from '../colours';
 import { COMMANDS, type Command, type Context } from './index';
 import { escape } from './builtins';
+import { lan } from '../lan';
+import { baseLan, isDebian } from '../debian';
 
 // Shell builtins: which doesn't find them.
 const BUILT_IN = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'aide', 'test', 'history', 'type', 'command'];
@@ -539,6 +541,17 @@ export const FILES: Record<string, Command> = {
   hostname: {
     launch: ({ args, game }) => {
       const name = game.read('/etc/hostname')?.trim() || game.hostName;
+      // -I: every address of the machine but loopback and link-local ones (hostname(1), net-tools 2.10).
+      if (args.includes('-I') || args.includes('--all-ip-addresses')) {
+        const l = lan(game) ?? (isDebian(game) ? baseLan(game) : undefined);
+        if (!l) return '';
+        return `${l.order.map((n) => l.interfaces[n]).filter((i) => i && i.up && i.name !== 'lo').flatMap((i) => i.addresses.map((a) => a.split('/')[0])).join(' ')} `;
+      }
+      // -i: the addresses the name resolves to (/etc/hosts gives Debian's 127.0.1.1).
+      if (args.includes('-i') || args.includes('--ip-address')) {
+        const line = (game.read('/etc/hosts') ?? '').split('\n').find((l) => l.replace(/#.*/, '').trim().split(/\s+/).slice(1).includes(name));
+        return line?.trim().split(/\s+/)[0] ?? game.error(`hostname: Name or service not known`);
+      }
       if (!args.includes('-f')) return name;
       const line = (game.read('/etc/hosts') ?? '').split('\n').find((l) => l.replace(/#.*/, '').trim().split(/\s+/).slice(1).includes(name));
       return line?.trim().split(/\s+/)[1] ?? name;
@@ -974,7 +987,7 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       const { letters, rest } = options(args);
       const fmt = (o: number) => (letters.has('h') ? readable(o, game.t.language) : String(Math.ceil(o / 1024)));
-      const mounts: { path: string; capacity: number; name: string; inodes?: number; inodesBase?: number }[] = game.state.mounts ?? [];
+      const mounts: { path: string; capacity: number; name: string; inodes?: number; inodesBase?: number; bytesBase?: number; pseudo?: boolean }[] = (game.state.mounts ?? []).filter((m: { pseudo?: boolean }) => !m.pseudo);
       const chosen = (rest.length ? rest.map((r) => game.mount(game.resolve(r))).filter(Boolean) : mounts) as typeof mounts;
       // -i: inodes (one per file or place) instead of bytes.
       if (letters.has('i')) {
@@ -1003,7 +1016,7 @@ export const FILES: Record<string, Command> = {
         // A Windows share (cifs): the server's volume, as the server counts it.
         const remote = cifsUsage(game, m.path);
         const capacity = remote?.capacity ?? m.capacity;
-        const inUse = remote ? Math.min(capacity, remote.used) : Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path));
+        const inUse = remote ? Math.min(capacity, remote.used) : Math.min(m.capacity, (place ? game.size(place) : 0) - other + ghostPlace(game, m.path) + (m.bytesBase ?? 0));
         const pct = Math.round((100 * inUse) / capacity);
         lines.push(
           typed(`${(m.name ?? m.path).padEnd(18)} ${fmt(capacity).padStart(6)} ${fmt(inUse).padStart(7)} ${fmt(Math.max(0, capacity - inUse)).padStart(6)} ${String(pct).padStart(3)}% ${m.path}`, remote ? 'cifs' : (m.system ?? 'ext4')),

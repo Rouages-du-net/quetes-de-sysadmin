@@ -1022,12 +1022,24 @@ man-whatis = affiche en une ligne à quoi sert une commande.
     .synopsis = whatis commande
 man-whoami = affiche sous quel nom d’utilisateur tu agis (who am I).
     .synopsis = whoami
-man-hostname = affiche le nom de la machine où tu es (lu dans /etc/hostname). Utile quand on rebondit d'une machine à l'autre en ssh : l'invite le montre aussi (vous@nom).
-    .synopsis = hostname [-f]
+man-hostname = affiche le nom de la machine sur laquelle tu es (lu dans /etc/hostname). Utile quand on saute d'une machine à l'autre avec ssh : l'invite le montre aussi (vous@nom). -I liste les adresses de la machine (toutes sauf celle de bouclage), -i l'adresse que donne son nom (127.0.1.1 sur Debian, par /etc/hosts).
+    .synopsis = hostname [-f] [-I] [-i]
     .option-f = le nom complet (FQDN), d'après /etc/hosts.
+    .option-I = toutes les adresses de la machine (pas 127.0.0.1).
+    .option-i = l'adresse que donne le nom de la machine.
     .example-1 = sur quelle machine suis-je ?
     .example-2 = son nom complet, avec le domaine
+    .example-3 = ses adresses sur le réseau
 
+man-hostnamectl = montre l'identité de la machine (systemd) : son nom (Static hostname), le genre de machine (ici une machine virtuelle, kvm), son identifiant (Machine ID), le système d'exploitation (lu dans /etc/os-release), le noyau et l'architecture. hostnamectl set-hostname NOM change le nom pour de bon (écrit dans /etc/hostname, réservé à root) : l'invite le montre à la connexion suivante ; pense à /etc/hosts.
+    .synopsis = hostnamectl [status] ; hostnamectl hostname [NOM] ; hostnamectl set-hostname NOM
+    .example-1 = la machine, son système et son noyau
+    .example-2 = la version du système, dans le fichier lui-même
+    .example-3 = renommer la machine
+man-os-release = le fichier qui dit quel système d'exploitation tourne : /etc/os-release (sur Debian, un lien vers /usr/lib/os-release). Une ligne VARIABLE=valeur chacune, lisible par un script : NAME, VERSION_ID (13), VERSION_CODENAME (trixie), PRETTY_NAME (le nom à afficher), ID (debian). /etc/debian_version donne la version intermédiaire (13.2). lsb_release -a dit la même chose, quand le paquet lsb-release est installé (il ne l'est pas par défaut sur Debian 13).
+    .synopsis = /etc/os-release ; /usr/lib/os-release
+    .example-1 = quel système, quelle version ?
+    .example-2 = seulement le nom de code de la version
 man-check_disk = plugin de supervision (monitoring-plugins, le format de Nagios et d'Icinga) : la place libre d'un support. Il écrit une ligne (DISK OK, WARNING ou CRITICAL, puis les mesures après « | ») et rend un code : 0 OK, 1 WARNING, 2 CRITICAL, 3 UNKNOWN. -w 20% : alerte quand il reste moins de 20 % de libre ; -c 10% : critique sous 10 %. -W et -K font de même pour les inodes libres (sans eux, les inodes ne sont pas surveillés). -p choisit le support (on peut en donner plusieurs). Sur Debian, les plugins sont dans /usr/lib/nagios/plugins, hors du PATH : on les lance par leur chemin complet.
     .synopsis = /usr/lib/nagios/plugins/check_disk -w LIBRE% -c LIBRE% [-W LIBRE% -K LIBRE%] -p lieu [-p lieu…]
     .example-1 = le disque système : alerte sous 20 % de libre, critique sous 10 %

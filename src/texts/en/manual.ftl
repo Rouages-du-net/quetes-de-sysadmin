@@ -1010,12 +1010,24 @@ man-whatis = displays in one line what a command is for.
     .synopsis = whatis command
 man-whoami = displays which user name you are acting as (who am I).
     .synopsis = whoami
-man-hostname = displays the name of the machine you are on (read from /etc/hostname). Useful when you hop from one machine to another with ssh: the prompt shows it too (you@name).
-    .synopsis = hostname [-f]
+man-hostname = displays the name of the machine you are on (read from /etc/hostname). Useful when you hop from one machine to another with ssh: the prompt shows it too (you@name). -I lists the machine's addresses (all but loopback), -i the address its name resolves to (127.0.1.1 on Debian, through /etc/hosts).
+    .synopsis = hostname [-f] [-I] [-i]
     .option-f = the full name (FQDN), from /etc/hosts.
+    .option-I = all the machine's addresses (not 127.0.0.1).
+    .option-i = the address the machine's name resolves to.
     .example-1 = which machine am I on?
     .example-2 = its full name, with the domain
+    .example-3 = its addresses on the network
 
+man-hostnamectl = shows the machine's identity (systemd): its name (Static hostname), the kind of machine (here a virtual machine, kvm), its machine ID, the operating system (read from /etc/os-release), the kernel and the architecture. hostnamectl set-hostname NAME changes the name for good (written to /etc/hostname, reserved for root): the prompt shows it at the next login; remember /etc/hosts.
+    .synopsis = hostnamectl [status] ; hostnamectl hostname [NAME] ; hostnamectl set-hostname NAME
+    .example-1 = the machine, its system and its kernel
+    .example-2 = the system's release, from the file itself
+    .example-3 = rename the machine
+man-os-release = the file that says which operating system runs: /etc/os-release (on Debian, a link to /usr/lib/os-release). One VARIABLE=value per line, readable by a script: NAME, VERSION_ID (13), VERSION_CODENAME (trixie), PRETTY_NAME (the name to show), ID (debian). /etc/debian_version gives the point release (13.2). lsb_release -a says the same, when the lsb-release package is installed (it isn't by default on Debian 13).
+    .synopsis = /etc/os-release ; /usr/lib/os-release
+    .example-1 = which system, which release?
+    .example-2 = only the release's code name
 man-check_disk = monitoring plugin (monitoring-plugins, the Nagios and Icinga format): the free space on a volume. It writes one line (DISK OK, WARNING or CRITICAL, then the measurements after "|") and returns a code: 0 OK, 1 WARNING, 2 CRITICAL, 3 UNKNOWN. -w 20%: warning when less than 20% is free; -c 10%: critical below 10%. -W and -K do the same for free inodes (without them, inodes are not monitored). -p picks the volume (you can give several). On Debian, the plugins are in /usr/lib/nagios/plugins, outside the PATH: you run them by their full path.
     .synopsis = /usr/lib/nagios/plugins/check_disk -w FREE% -c FREE% [-W FREE% -K FREE%] -p directory [-p directory…]
     .example-1 = the system disk: warning below 20% free, critical below 10%

@@ -260,7 +260,8 @@ export function restart(game: Game, sd: Systemd) {
   sd.pending = [];
   sd.clock += 90_000;
   sd.boot++;
-  game.state.process = (game.state.process as Process[] | undefined)?.filter((p) => p.pid === 1) ?? [];
+  // The base processes of a Debian machine (debian.ts) come back with the boot; the services' are started again below.
+  game.state.process = (game.state.process as (Process & { base?: boolean })[] | undefined)?.filter((p) => p.pid === 1 || p.base) ?? [];
   // The installed kernel becomes the running one; /run (tmpfs) starts empty again, with reboot-required.
   const kernel = game.state.kernel as { active: string; installed: string } | undefined;
   if (kernel) kernel.active = kernel.installed;

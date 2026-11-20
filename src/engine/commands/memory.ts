@@ -31,12 +31,19 @@ function memoryDigits(game: Shell) {
 
 // The machine's boot: the first line of this boot's journal.
 const boot = (game: Shell) => {
-  const sd = systemd(game)!;
+  const sd = systemd(game);
+  if (!sd) return clockOf(game) - 3 * 86_400_000 - 4 * 3_600_000 - 17 * 60_000;
   return sd.log.find((e) => e.boot === sd.boot)?.time ?? sd.clock;
 };
+// A machine without a systemd model: date's default clock (scripts.ts).
+const clockOf = (game: Shell) => systemd(game)?.clock ?? Date.UTC(2027, 0, 1);
 
 const shortName = (p: Process) =>
-  p.zombie ? p.command.replace(/^\[(.*)\].*$/, '$1') : p.command.split(/\s+/)[0].split('/').at(-1)!.replace(/:$/, '');
+  p.zombie
+    ? p.command.replace(/^\[(.*)\].*$/, '$1')
+    : p.command.startsWith('[')
+      ? p.command.slice(1, -1)
+      : p.command.split(/\s+/)[0].split('/').at(-1)!.replace(/:$/, '').replace(/^-/, '');
 
 function free(game: Shell, args: string[]): string {
   const c = memoryDigits(game);
@@ -62,7 +69,6 @@ function free(game: Shell, args: string[]): string {
 const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 19);
 
 function top(game: Shell, args: string[]): string {
-  const sd = systemd(game)!;
   const m = memory(game)!;
   // The processor, if the machine tracks it (cpu.ts): shares, load, nice.
   const model = cpu(game);
@@ -81,7 +87,7 @@ function top(game: Shell, args: string[]): string {
   const trie = [...listing].sort((a, b) => key(b) - key(a) || a.pid - b.pid);
   const available = Math.round(c.available / 1024 / 102.4) / 10;
   const inMio = (o: number) => (o / 1024 / 1024).toFixed(1).padStart(8);
-  const uptime = sd.clock - boot(game);
+  const uptime = clockOf(game) - boot(game);
   const days = Math.floor(uptime / 86_400_000);
   const h = Math.floor((uptime % 86_400_000) / 3_600_000);
   const min = String(Math.floor((uptime % 3_600_000) / 60_000)).padStart(2, '0');
@@ -98,7 +104,7 @@ function top(game: Shell, args: string[]): string {
   const nRunning = model ? Math.max(1, listing.filter(running).length) : 1;
   const nStopped = listing.filter((p) => p.stopped).length;
   return [
-    `top - ${timeOfDay(sd.clock)} up ${days ? `${days} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${load}`,
+    `top - ${timeOfDay(clockOf(game))} up ${days ? `${days} days, ` : ''}${String(h).padStart(2)}:${min},  1 user,  load average: ${load}`,
     `Tasks: ${String(listing.length).padStart(3)} total, ${String(nRunning).padStart(3)} running, ${String(Math.max(0, listing.length - nRunning - zombies - nStopped)).padStart(3)} sleeping, ${String(nStopped).padStart(3)} stopped, ${String(zombies).padStart(3)} zombie`,
     cpuLine,
     `MiB Mem : ${inMio(c.total)} total, ${inMio(c.free)} free, ${inMio(c.used)} used, ${inMio(c.cache)} buff/cache`,
@@ -149,7 +155,7 @@ export const MEMORY: Record<string, Command> = {
         return game.error(
           `top: unknown option '${unknown.replace(/^-+/, '')}'\nUsage:\n  top -hv | -bcEeHiOSs1 -d secs -n max -u|U user -p pid(s) -o field -w [cols]`,
         );
-      if (!memory(game) || !systemd(game)) return game.error('top: failed tty get');
+      if (!memory(game)) return game.error('top: failed tty get');
       return top(game, args);
     },
   },
