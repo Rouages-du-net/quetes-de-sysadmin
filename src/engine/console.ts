@@ -486,9 +486,14 @@ export class Console {
     return [sh.follow.read(), sh.principal.events(), this.noteEnd(sh.principal, before)].filter(Boolean).join('\n\n');
   }
 
-  /** Ctrl-C: stops following. */
+  /** Ctrl-C: stops following; at the secondary prompt (PS2), drops the input. */
   interrupt(): string {
-    if (!this.shell.follow) return '';
+    if (!this.shell.follow) {
+      if (this.shell.continuation === null) return '';
+      if (this.remote) this.inputs?.push({ interrupt: true });
+      this.shell.dropInput();
+      return '';
+    }
     if (this.remote) this.inputs?.push({ interrupt: true });
     else this.inputs = null;
     this.shell.follow = null;

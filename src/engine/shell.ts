@@ -41,11 +41,11 @@ import { inherited, inheritedHere } from './availability';
 import { read as readSudoers, sudoersFile } from './sudoers';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
-const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias'];
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue'];
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
-  echo: ['printf'],
+  echo: ['printf', 'seq'],
   find: ['xargs'],
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
@@ -908,6 +908,8 @@ export class Shell implements Game {
       const output = currentShell(this) === 'cmd' ? runCmd(this, line) : runPowerShell(this, line);
       return output === null ? null : this.conclude(this.countLine(output), true);
     }
+    // Ctrl-D (the interface sends the end-of-transmission character).
+    if (line === '\u0004') return this.endOfInput();
     // History, like bash: !! (the last command), !n, !-n, !prefix.
     // The expanded line is shown before it runs, and it is the one kept.
     const expanded = this.expandHistory(line);

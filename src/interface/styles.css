@@ -540,6 +540,8 @@
 .qds .c-option { color: var(--_c-option); }
 .qds .c-string { color: var(--_c-string); }
 .qds .c-operator { color: var(--_c-operator); font-weight: 700; }
+/* bash's reserved words (for, do, done, if, then, fi…): like the operators they stand with. */
+.qds .c-keyword { color: var(--_c-operator); font-weight: 700; }
 .qds .c-glob { color: var(--_c-glob); }
 .qds .c-path { text-decoration: underline; text-underline-offset: 0.2em; }
 

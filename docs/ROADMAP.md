@@ -654,9 +654,13 @@ them safely.
   - [ ] **Package management**: `apt remove`/`purge`/`search`/`show`/
     `policy`, `apt-get` and `apt-cache` (the scripts' forms), `dpkg -l`,
     `-L`, `-S`, `-s`.
-  - [ ] **Shell control flow on the line**: `for f in *; do …; done`,
-    `if … then … fi`, `while read`; here-documents (`<<EOF`), `$((…))`,
-    `${VAR:-x}`; an unknown variable is kept as typed instead of empty.
+  - [x] **Shell control flow on the line**: `for`, `if`, `while`/`until`
+    (and `while read`), `case`, `break`/`continue`, `{ …; }` and `( … )`,
+    here-documents, `$((…))` and `((…))`, `${VAR:-x}` and the other
+    parameter expansions, the secondary prompt `>` for an unfinished input,
+    `seq`, `read`; an unset variable is empty (`compound.ts`, `control.ts`,
+    `arith.ts`). Left: functions, arrays, `[[ … ]]`, `/bin/sh` scripts
+    (`script.ts`) still without compounds.
   - [ ] **Becoming root**: `sudo -i`, `sudo -s`, `su -` (a root shell with
     its `#` prompt) and `exit` back; `sudo !!` works.
   - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`

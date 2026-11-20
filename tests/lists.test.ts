@@ -111,7 +111,11 @@ describe('Command lists in the interactive shell', () => {
     expect(s.execute('; ls')).toBe("syntax error near unexpected token `;'");
     expect(s.lastStatus).toBe(2);
     expect(s.execute('ls && || pwd')).toBe("syntax error near unexpected token `||'");
-    expect(s.execute('ls &&')).toBe('syntax error: unexpected end of file');
+    // A line that ends on && is not over: bash's secondary prompt, then Ctrl-D.
+    expect(s.execute('ls &&')).toBe('');
+    expect(s.prompt()).toBe('>');
+    expect(s.endOfInput()).toBe('syntax error: unexpected end of file');
+    expect(s.prompt()).toBe('you@sysadmin:~$');
     expect(shell('fr').execute('ls ;; pwd')).toBe('erreur de syntaxe près du symbole inattendu « ;; »');
   });
 

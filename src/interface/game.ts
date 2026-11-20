@@ -880,13 +880,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     after();
   };
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const line = input.value;
+  // A line typed (Enter), or Ctrl-D (sent as the end-of-transmission character, shown as nothing).
+  const submitLine = (line: string) => {
     // A password is not displayed and doesn't go into the history.
     const secret = gameTerminal.shell.maskedInput();
     const response = secret || gameTerminal.shell.question !== null;
-    if (secret) show(prompt.textContent ?? '', 'cmd');
+    if (secret || line === '\u0004') show(prompt.textContent ?? '', 'cmd');
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
@@ -907,6 +906,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     after(lineFor);
     openEditor();
     openFollow();
+  };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitLine(input.value);
   });
 
   // A follow (tail -f, journalctl -f): the screen makes time pass on the
@@ -1025,6 +1028,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       show(`${prompt.textContent} ${input.value}^C`, 'cmd');
       input.value = '';
       position = machineHistory().length;
+      // At the secondary prompt (>), the whole input is dropped.
+      gameTerminal.interrupt();
+      promptUpdate();
+      return;
+    }
+    // Ctrl-D on an empty line: the end of the input (bash leaves the shell, or ends an input left open at >).
+    if (e.ctrlKey && e.key.toLowerCase() === 'd' && !input.value) {
+      e.preventDefault();
+      submitLine('\u0004');
       return;
     }
     if (e.key === 'Tab') {

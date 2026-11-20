@@ -725,7 +725,7 @@ for (const language of LANGUAGES)
 
       it('another solution: the zone in conf.d, the limit on the whole site, 1 request per second', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
-        s.execute('echo "limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limits.conf');
+        s.execute("echo 'limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;' | sudo tee /etc/nginx/conf.d/limits.conf");
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);

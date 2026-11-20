@@ -121,7 +121,7 @@ for (const language of LANGUAGES)
         all = play(['sudo chown opendkim:opendkim /etc/dkimkeys/mail.private', 'sudo systemctl restart opendkim', 'systemctl is-active opendkim']);
         expect(all).toContain('active');
         all = play([
-          'sudo postconf -e "smtpd_milters = inet:localhost:8891" "non_smtpd_milters = $smtpd_milters" "milter_default_action = accept"',
+          `sudo postconf -e "smtpd_milters = inet:localhost:8891" 'non_smtpd_milters = \$smtpd_milters' "milter_default_action = accept"`,
           'sudo systemctl reload postfix',
           'echo test | mail -s test2 check-auth@verifier.example',
           'sudo grep DKIM-Signature /var/log/mail.log',

@@ -127,6 +127,16 @@ presents them for people.
   `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
   `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
   `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
+- Compound commands on the interactive line: `src/engine/compound.ts`
+  parses an input (for, `for ((…))`, if, while, until, case, `{ …; }`,
+  `( … )`, `((…))`, `&`, newlines, comments, here-documents) and says when
+  it is unfinished (`Shell.continuation`, the PS2 prompt `>`, Ctrl-C
+  `dropInput`, Ctrl-D `endOfInput`); `src/engine/control.ts` runs it as a
+  generator (each simple command through `Shell.runSimple`, as if typed;
+  a question pauses it, `Shell.program`; `MAX_ITERATIONS` guards loops;
+  `read`, `break`, `continue`); `src/engine/arith.ts`: `$((…))`; parameter
+  expansion in `Shell.parameter`; `seq`, `read`, `break`, `continue` in
+  `commands/shell-control.ts`.
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in
