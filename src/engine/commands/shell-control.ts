@@ -4,6 +4,7 @@
 // the list of numbers a for loop often goes through.
 
 import type { Command } from './index';
+import { opens } from './accounts';
 import type { Shell } from '../shell';
 import { bgCommand, disownCommand, fgCommand, jobsCommand, waitCommand } from '../jobs';
 
@@ -120,8 +121,9 @@ function seq(args: string[], fail: (m: string) => string): string {
 // a shell as another account (root by default), after that account's
 // password; - (-l, --login) makes it a login shell, in its home. On Debian
 // installed with sudo, root has no password: su always fails there with
-// "Authentication failure", and sudo -i (or sudo su -) is the way in. root
-// itself needs no password.
+// "Authentication failure", and sudo -i (or sudo su -) is the way in, unless
+// root was given one (sudo passwd root). Another account opens with its own
+// password (passwd, adduser), never when locked. root itself needs no password.
 function su(game: Shell, args: string[]): string {
   let login = false;
   let command: string | null = null;
@@ -136,13 +138,26 @@ function su(game: Shell, args: string[]): string {
   const user = names[0] ?? 'root';
   if (user !== 'root' && !game.accounts.users[user]) return game.error(`su: user ${user} does not exist or the user entry does not contain all the required fields`, 1);
   if (game.who !== 'root') {
-    // The target's password, never shown; the game knows no root password (Debian's root is locked).
+    // The target's password, never shown (see passwordOf in accounts.ts).
     game.ask(
       game.t('su-password'),
-      () => {
-        game.status = 1;
-        game.lastStatus = 1;
-        return 'su: Authentication failure';
+      (typed) => {
+        if (!opens(game, user, typed)) {
+          game.status = 1;
+          game.lastStatus = 1;
+          return 'su: Authentication failure';
+        }
+        if (command !== null) {
+          const before = game.who;
+          game.who = user;
+          try {
+            return game.runTask(command);
+          } finally {
+            game.who = before;
+          }
+        }
+        game.openShell(user, login);
+        return '';
       },
       true,
     );

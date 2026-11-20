@@ -48,6 +48,7 @@ redirection-permission = { $target }: Permission denied
 redirection-sudo = (The > redirection is done by your own shell, not by sudo. Tip: send the text into "sudo tee -a file", which writes as root.)
 command-not-still = { $command }: you don't have this command yet in this chapter. Type "help" for the list.
 command-missing = { $command }: command not found. Type "help" for the list.
+command-replaced = { $command }: command not found. (Debian 13 no longer has { $command }: try { $replacement }.)
 # { $commands }: list of commands, separated by commas
 # Le nom de la commande qui liste les autres, dans la langue (aide, help)
 command-help = help

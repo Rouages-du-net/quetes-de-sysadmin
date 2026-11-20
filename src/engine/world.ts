@@ -91,7 +91,8 @@ export interface NtfsAcl {
 // groups (supplementary groups).
 export interface Accounts {
   // expire: end of the account's validity (YYYY-MM-DD, usermod -e, chage -E).
-  users: Record<string, { uid: number; group: string; home?: string; shell?: string; expires?: string }>;
+  // gecos: the comment field (full name, room, phones: adduser, useradd -c).
+  users: Record<string, { uid: number; group: string; home?: string; shell?: string; expires?: string; gecos?: string }>;
   groups: Record<string, { gid: number; members: string[] }>;
 }
 
@@ -317,7 +318,7 @@ export const accountsFiles = (): Record<string, File> => ({
     (game) =>
       Object.entries(game.accounts.users)
         .map(([name, u]) =>
-          [name, 'x', u.uid, game.accounts.groups[u.group]?.gid ?? u.uid, '', u.home ?? `/home/${name}`, u.shell ?? '/bin/bash'].join(':'),
+          [name, 'x', u.uid, game.accounts.groups[u.group]?.gid ?? u.uid, u.gecos ?? '', u.home ?? `/home/${name}`, u.shell ?? '/bin/bash'].join(':'),
         )
         .join('\n'),
     { lines: true, owner: 'root' },

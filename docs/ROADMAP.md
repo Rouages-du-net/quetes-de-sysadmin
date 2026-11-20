@@ -679,9 +679,11 @@ them safely.
     `journalctl --since "1 hour ago"`, `-p warning..err`, `-b -1`,
     `--list-boots`, `-r`, `-g`, `-o short-iso`/`cat`; a Debian machine
     without a systemd model gets the base services (`debian.ts`).
-  - [ ] **Accounts**: `useradd -m`, `adduser`, `passwd` (only `usermod`,
-    `userdel`, `gpasswd`, `chage` exist), `su`, `getent passwd`, `w`,
-    `lastlog`.
+  - [x] **Accounts**: `useradd -m -s /bin/bash -G grp` with Debian's
+    defaults, `adduser` and its questions, `passwd` (one's own, root's,
+    `-l`, `-u`, `-S`), `su ACCOUNT` with its password, `getent passwd`/
+    `group`/`hosts`/`shadow`, `w`, `lastlog2` (Debian 13 dropped
+    `lastlog`). Left: `groupadd`, `deluser`, `chpasswd`.
   - [ ] **Small tools**: `basename`, `dirname`, `realpath`, `seq`, `yes`,
     `tac`, `nl`, `column -t`, `paste`, `md5sum`, `cmp`, `whereis`,
     `more`, `htop`, `vmstat`, `lscpu`, `sync`, `shutdown`/`poweroff`,

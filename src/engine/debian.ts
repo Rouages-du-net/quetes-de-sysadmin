@@ -166,6 +166,11 @@ export function debianDefaults(game: Shell): void {
     state.process = listing.sort((a, b) => a.pid - b.pid);
     state.baseProcesses = true;
   }
+  // The player's session (who, w): from the workstation, a couple of minutes ago.
+  if (state.sessions === undefined) {
+    const at = (systemd(game)?.clock ?? BASE_NOW) - 2 * 60_000;
+    state.sessions = [{ user: game.player, tty: 'pts/0', since: new Date(at).toISOString().slice(0, 16).replace('T', ' '), forEachOf: WORKSTATION.address, ...(state.baseProcesses ? { pid: game.shellPid - 1 } : {}) }];
+  }
   if (state.memory === undefined) {
     const rss: Record<number, number> = {};
     for (const q of state.process as Process[]) if (!q.command.startsWith('[')) rss[q.pid] = Math.round((q.mem / 100) * 2 * GiB) || 4 * MiB;

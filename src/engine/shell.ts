@@ -49,17 +49,24 @@ const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unal
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
   echo: ['printf', 'seq'],
-  sudo: ['su'],
+  sudo: ['su', 'passwd'],
   find: ['xargs'],
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
   hostname: ['hostnamectl'],
+  usermod: ['useradd', 'adduser', 'passwd', 'getent'],
+  userdel: ['useradd', 'adduser'],
+  id: ['getent'],
+  who: ['w'],
+  last: ['lastlog2'],
   apt: ['apt-get', 'apt-cache', 'dpkg', 'lsb_release'],
   dpkg: ['apt-cache'],
   uname: ['hostnamectl'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.
+// Commands Debian 13 no longer ships, and their replacement (trixie's release notes: lastlog isn't year-2038 safe).
+const REPLACED: Record<string, string> = { lastlog: 'lastlog2' };
 const OTHER_EDITORS = ['vi', 'vim', 'vim.tiny', 'vim.basic', 'nvim', 'view', 'emacs', 'micro', 'joe', 'mcedit', 'ed'];
 
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
@@ -1011,7 +1018,10 @@ export class Shell implements Game {
     if (this.question) {
       const { answer } = this.question;
       this.question = null;
-      const answered = this.conclude(answer(line.trim()), true);
+      const reply = answer(line.trim());
+      // An answer may open a shell (su's password).
+      this.enterShell();
+      const answered = this.conclude(reply, true);
       return this.resumeList(answered, this.status ?? 0);
     }
     // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
@@ -1694,6 +1704,9 @@ export class Shell implements Game {
 
   /** The player's password, in the language (sunflower → tournesol in French, see passwords.ftl). */
   playerPassword(): string | undefined {
+    // Changed with passwd: the new one (see commands/accounts.ts).
+    const changed = (this.state.passwords as Record<string, string> | undefined)?.[this.player];
+    if (changed !== undefined) return changed;
     const m = this.chapter.password;
     return m && password(this.t, m);
   }
@@ -2104,6 +2117,11 @@ export class Shell implements Game {
       return output;
     }
     // Another editor (vim, vi, emacs…): the game's is nano, which it points to.
+    // A command Debian 13 dropped for another: the shell's answer, and the game's pointer to it.
+    if (!command && REPLACED[cmd] && this.known().includes(REPLACED[cmd])) {
+      this.status = 127;
+      return this.error(this.t('command-replaced', { command: cmd, replacement: REPLACED[cmd] }));
+    }
     if (!command && OTHER_EDITORS.includes(cmd) && this.known().includes('nano')) {
       this.status = 127;
       return this.error(this.t('editor-only-nano', { command: cmd, file: rest.find((a) => !a.startsWith('-') && !a.startsWith('+')) ?? this.t('editor-file') }));

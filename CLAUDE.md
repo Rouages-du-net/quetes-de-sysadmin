@@ -255,7 +255,11 @@ presents them for people.
   workstation.
 - `src/engine/sudoers.ts`: sudo's policy (`/etc/sudoers`, `@includedir`,
   rules); `visudo` and `sudo -l` in `commands/sudoers.ts`; `userdel`,
-  `gpasswd`, `chage` in `commands/accounts.ts`; `umask` (the session's mask,
+  `gpasswd`, `chage`, `useradd`, `adduser` (its questions), `passwd`,
+  `getent`, `w`, `lastlog2` in `commands/accounts.ts` (passwords:
+  `passwordOf`, `state.passwords`, `state.unsetPasswords`,
+  `state.lockedAccounts`; `su` opens an account with its password;
+  `REPLACED` in `shell.ts` points lastlog to lastlog2); `umask` (the session's mask,
   `Shell.mask`) and setgid applied on creation (`place`).
 - `chapters/till-web.ts`: The Co-op's site and till app (simulated
   Express: `.env` read at start, `trust proxy`, locks per address); nginx
