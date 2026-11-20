@@ -383,8 +383,8 @@ export const PAGES: Record<string, Page> = {
   },
   id: { options: ['u', 'g', 'G', 'n'], long: { user: 'u', group: 'g', groups: 'G', name: 'n' }, examples: ['id', 'id malo', 'id -un', 'id -Gn'], see: ['groups', 'whoami', 'usermod'] },
   journalctl: {
-    options: ['u', 'n', 'b', 'k', 'p', 'x', 'e', 'f'],
-    examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M'], see: ['systemctl', 'dmesg', 'journald.conf'] },
+    options: ['u', 'n', 'b', 'k', 'p', 'x', 'e', 'f', 'r', 'o', 'g'],
+    examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M', 'journalctl --since "1 hour ago"', 'journalctl -b -1 -p warning', 'journalctl -u ssh -o short-iso --no-pager', 'journalctl --list-boots'], see: ['systemctl', 'dmesg', 'journald.conf'] },
   'journald.conf': { section: 5, examples: ['sudo nano /etc/systemd/journald.conf', 'sudo systemctl restart systemd-journald', 'journalctl --disk-usage'], see: ['journalctl', 'systemctl', 'df'] },
   logger: { examples: ['logger "test from the valley"', 'logger -t sshd "Failed password for test"', 'logger -p local0.warning "water tank low"'], see: ['rsyslogd', 'rsyslog.conf', 'journalctl'] },
   iptables: {
@@ -666,7 +666,7 @@ export const PAGES: Record<string, Page> = {
     examples: [
       'systemctl status nginx', 'systemctl --failed', 'sudo systemctl restart nginx', 'sudo systemctl enable --now nginx', 'sudo systemctl edit radio-playlist',
       'sudo systemctl set-property radio-playlist MemoryMax=512M', 'systemctl cat menu', 'systemctl list-dependencies menu', 'systemctl list-dependencies --after menu',
-      'sudo systemctl reset-failed menu',
+      'sudo systemctl reset-failed menu', 'systemctl status', 'systemctl list-unit-files --type=service --state=enabled',
     ],
     see: ['journalctl', 'systemd.unit', 'systemd.service', 'systemd-analyze', 'ps', 'sudo', 'reboot', 'top'],
   },

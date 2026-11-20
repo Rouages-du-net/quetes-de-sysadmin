@@ -11,7 +11,7 @@ import { readNice, readQuota } from '../cpu';
 import { human, JOURNAL, journalFiles, machineId, usage, vacuum } from '../journal-files';
 import { readLimit } from '../limits';
 import { loadUnits, readCalendar, nextCalendar, nextTrigger, timerFor } from '../timers';
-import { toUtc } from '../systemd';
+import { toUtc, summerTime } from '../systemd';
 import {
   loadDependencies, startWithDependencies, stopWithDependents, restartWithDependents, runPending, dependencyTree, catUnit, verify,
   analyzeDuration, criticalChain, mainFile, key,
@@ -45,7 +45,7 @@ function status(game: Shell, sd: Systemd, name: string, paint: Paint = raw): str
   const lines = [
     // × (×): systemd's failure symbol.
     `${s.state === 'failed' ? paint('0;1;31', '\u00d7') : s.state === 'active' ? paint('0;1;32', '●') : '○'} ${unit} - ${s.description}`,
-    `     Loaded: loaded (${s.file ?? (sd.ordered ? mainFile(game, name, s) : null) ?? `/usr/lib/systemd/system/${unit}`}; ${s.active ? 'enabled' : 'disabled'}; preset: enabled)`,
+    `     Loaded: loaded (${s.file ?? (sd.ordered ? mainFile(game, name, s) : null) ?? `/usr/lib/systemd/system/${unit}`}; ${s.static ? 'static' : `${s.active ? 'enabled' : 'disabled'}; preset: enabled`})`,
     ...(s.overrides?.length
       ? s.overrides.flatMap((path, i) => {
           const place = path.replace(/\/[^/]+$/, '');
@@ -154,8 +154,10 @@ function readMoment(sd: Systemd, text: string): number | null {
   if (text === 'today') return day;
   if (text === 'yesterday') return day - 86_400_000;
   if (text === 'tomorrow') return day + 86_400_000;
-  const relative = /^-(\d+)\s*(s|min|m|h|d)$/.exec(text.trim());
-  if (relative) return now - Number(relative[1]) * { s: 1000, min: 60_000, m: 60_000, h: 3_600_000, d: 86_400_000 }[relative[2] as 's']!;
+  // -1h, +30min, "1 hour ago", "2 days ago" (systemd.time(7)).
+  const UNITS: Record<string, number> = { s: 1000, sec: 1000, second: 1000, seconds: 1000, m: 60_000, min: 60_000, minute: 60_000, minutes: 60_000, h: 3_600_000, hour: 3_600_000, hours: 3_600_000, d: 86_400_000, day: 86_400_000, days: 86_400_000, w: 604_800_000, week: 604_800_000, weeks: 604_800_000 };
+  const relative = /^([-+])(\d+)\s*([a-z]+)$/.exec(text.trim()) ?? /^()(\d+)\s*([a-z]+)\s+ago$/.exec(text.trim());
+  if (relative && UNITS[relative[3]]) return now + (relative[1] === '+' ? 1 : -1) * Number(relative[2]) * UNITS[relative[3]];
   const m = /^(?:(\d{4})-(\d{2})-(\d{2}))?\s*(?:(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(text.trim());
   if (!m || (!m[1] && !m[4])) return null;
   const base = m[1] ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : day;
@@ -370,6 +372,108 @@ function readSpan(text: string): number | null {
   return ms[unit] === undefined ? null : Number(m[1]) * ms[unit];
 }
 
+
+// The boot IDs journalctl shows (-- Boot … --, --list-boots): one per boot, fixed.
+export const bootId = (n: number) => `${String(n).padStart(2, '0')}f3c1e9a7d54b2c8e06a1d9f4b7c2e5`;
+
+// systemctl list-unit-files [PATTERN…] [--type=T] [--state=S]: each unit file,
+// its state (enabled, disabled, static) and Debian's preset (enable everything).
+// https://www.freedesktop.org/software/systemd/man/latest/systemctl.html#list-unit-files%20PATTERN%E2%80%A6
+function unitFiles(game: Shell, sd: Systemd, args: string[], patterns: string[]): string {
+  const option = (name: string) => {
+    const a = args.find((x) => x.startsWith(`--${name}=`));
+    return a ? a.slice(name.length + 3).split(',') : args.includes(`--${name}`) ? (args[args.indexOf(`--${name}`) + 1] ?? '').split(',') : null;
+  };
+  const types = option('type') ?? option('t');
+  const states = option('state');
+  const rows: [string, string, string][] = [];
+  for (const [n, x] of Object.entries(sd.services)) rows.push([`${n}.service`, x.static ? 'static' : x.active ? 'enabled' : 'disabled', x.static ? '-' : 'enabled']);
+  for (const [n, m] of Object.entries(sd.timers ?? {})) rows.push([`${n}.timer`, m.active ? 'enabled' : 'disabled', 'enabled']);
+  for (const t of ['basic.target', 'graphical.target', 'multi-user.target', 'network-online.target', 'rescue.target', 'sysinit.target', 'timers.target'])
+    if (!rows.some(([u]) => u === t)) rows.push([t, 'static', '-']);
+  const glob = (p: string, u: string) => new RegExp(`^${p.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.')}$`).test(u);
+  const chosen = rows
+    .filter(([u]) => !types || types.includes(u.split('.').at(-1)!))
+    .filter(([, st]) => !states || states.includes(st))
+    .filter(([u]) => !patterns.length || patterns.some((p) => glob(p, u) || glob(`${p}.service`, u)))
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  const w0 = Math.max(9, ...chosen.map((r) => r[0].length));
+  const w1 = Math.max(5, ...chosen.map((r) => r[1].length));
+  if (!chosen.length) return '0 unit files listed.';
+  return [
+    `${'UNIT FILE'.padEnd(w0)} ${'STATE'.padEnd(w1)} PRESET`,
+    ...chosen.map(([u, st, pr]) => `${u.padEnd(w0)} ${st.padEnd(w1)} ${pr}`),
+    '',
+    `${chosen.length} unit files listed.`,
+  ].join('\n');
+}
+
+// systemctl status with no unit: the machine, its state (running, or degraded
+// with a failed unit) and its control groups as a tree, each service's
+// processes under system.slice, the session's under user.slice.
+function machineStatus(game: Shell, sd: Systemd, paint: Paint): string {
+  const failed = Object.values(sd.services).filter((x) => x.state === 'failed').length;
+  const boot = sd.log.find((e) => e.boot === sd.boot)?.time ?? sd.clock;
+  const processes = (game.state.process ?? []) as { pid: number; user: string; command: string }[];
+  const services = Object.entries(sd.services)
+    .filter(([, x]) => x.state === 'active' && x.process.length)
+    .map(([n, x]) => [`${n}.service`, processes.filter((p) => x.process.some((q) => q.pid === p.pid))] as const)
+    .filter(([, ps]) => ps.length)
+    .sort((a, b) => a[0].localeCompare(b[0]));
+  const inServices = new Set(services.flatMap(([, ps]) => ps.map((p) => p.pid)));
+  const player = game.player;
+  const uid = game.accounts.users[player]?.uid ?? 1000;
+  const mine = processes.filter((p) => p.user === player && !inServices.has(p.pid));
+  const manager = mine.filter((p) => p.command.startsWith('/usr/lib/systemd/systemd --user') || p.command === '(sd-pam)');
+  const session = [
+    ...processes.filter((p) => p.user === 'root' && p.command.startsWith(`sshd-session: ${player}`)),
+    ...mine.filter((p) => !manager.includes(p) && !p.command.startsWith('[')),
+    { pid: (game.state.nextPid as number | undefined) ?? game.shellPid + 100, user: game.who, command: 'systemctl status' },
+  ].sort((a, b) => a.pid - b.pid);
+  const branch = (items: string[], prefix: string) => items.map((t, i) => `${prefix}${i === items.length - 1 ? '└─' : '├─'}${t}`);
+  const lines = [
+    `${paint(failed ? '0;1;31' : '0;1;32', '●')} ${sd.host}`,
+    `    State: ${failed ? paint('0;1;31', 'degraded') : paint('0;1;32', 'running')}`,
+    `    Units: ${200 + Object.keys(sd.services).length + Object.keys(sd.timers ?? {}).length} loaded (incl. loaded aliases)`,
+    '     Jobs: 0 queued',
+    `   Failed: ${failed} units`,
+    `    Since: ${dateComplete(boot, game.t.language, sd)}; ${duration(sd.clock - boot)} ago`,
+    '  systemd: 257.8-1~deb13u2',
+    '   CGroup: /',
+  ];
+  const pad = '           ';
+  const tree: string[] = [];
+  const init = processes.find((p) => p.pid === 1);
+  tree.push('├─init.scope', `│ └─1 ${init?.command ?? '/sbin/init'}`);
+  tree.push('├─system.slice');
+  services.forEach(([unit, ps], i) => {
+    const last = i === services.length - 1;
+    tree.push(`│ ${last ? '└─' : '├─'}${unit}`, ...branch(ps.map((p) => `${p.pid} ${p.command}`), `│ ${last ? '  ' : '│ '}`));
+  });
+  tree.push('└─user.slice', `  └─user-${uid}.slice`, `    ├─session-1.scope`, ...branch(session.map((p) => `${p.pid} ${p.command}`), '    │ '));
+  tree.push(`    └─user@${uid}.service`, '      └─init.scope', ...branch(manager.map((p) => `${p.pid} ${p.command}`), '        '));
+  return [...lines, ...tree.map((t) => pad + t)].join('\n');
+}
+
+
+// journalctl -o: short (the default), short-iso (ISO 8601 dates with the
+// offset), short-precise (microseconds), short-full, short-unix, cat (the
+// message only). https://www.freedesktop.org/software/systemd/man/latest/journalctl.html#-o
+function formatted(e: Systemd['log'][number], sd: Systemd, output: string, language: string, colour: boolean): string {
+  if (output === 'short') return logLine(e, sd, language, colour);
+  const shows = e.time + (sd.difference ?? 0);
+  const zone = sd.zone ?? (summerTime(shows) ? 'CEST' : 'CET');
+  const offset = zone === 'CEST' ? '+02:00' : zone === 'CET' ? '+01:00' : '+00:00';
+  const iso = new Date(shows).toISOString().slice(0, 19);
+  const who = `${sd.host} ${e.ident}${e.pid ? `[${e.pid}]` : ''}: ${e.message}`;
+  if (output === 'cat') return e.message;
+  if (output === 'short-iso') return `${iso}${offset} ${who}`;
+  if (output === 'short-unix') return `${(toUtc(e.time) / 1000).toFixed(6)} ${who}`;
+  if (output === 'short-full') return `${dateComplete(e.time, language, sd)} ${who}`;
+  const line = logLine(e, sd, language, false);
+  return line.replace(/^(\S+ \d\d \d\d:\d\d:\d\d)/, '$1.000000');
+}
+
 export const SYSTEMD: Record<string, Command> = {
   // Manual pages only (configuration files and a service), see pages.ts.
   'systemd.unit': { section: 5, launch: () => '' },
@@ -492,16 +596,21 @@ export const SYSTEMD: Record<string, Command> = {
       const sd = systemd(game);
       if (!sd) return game.error('System has not been booted with systemd as init system (PID 1). Can\'t operate.');
       const now = args.includes('--now');
-      const unknown = args.find((a) => /^-[^-]/.test(a));
+      const unknown = args.find((a) => /^-[^-]/.test(a) && a !== '-t');
       if (unknown) return game.error(`systemctl: invalid option -- '${unknown[1]}'`);
-      const words = args.filter((a) => !a.startsWith('--') || a === '--failed');
+      // Options with a value: --type service, --state enabled (also written --type=service).
+      const valued = ['--type', '--state', '-t'];
+      const words = args.filter((a, k) => (!a.startsWith('-') || a === '--failed') && !valued.includes(args[k - 1]));
       const [action = 'list-units', ...names] = words;
-      const VERBS = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default', 'cat', 'list-dependencies', 'reset-failed'];
+      const VERBS = ['status', 'start', 'stop', 'restart', 'reload', 'enable', 'disable', 'is-active', 'is-enabled', 'list-units', 'reboot', '--failed', 'edit', 'daemon-reload', 'set-property', 'list-timers', 'default', 'cat', 'list-dependencies', 'reset-failed', 'list-unit-files', 'is-failed'];
       if (!VERBS.includes(action)) return game.error(`Unknown command verb '${action}'.`);
       // Looking at the services' state after a reboot: that is checking.
       const consulter = () => (sd.checkedAfterBoot = true);
       if (action === '--failed' || (action === 'list-units' && args.includes('--failed'))) return consulter(), listing(sd, true, paint);
       if (action === 'list-units') return consulter(), listing(sd, false, paint);
+      if (action === 'list-unit-files') return unitFiles(game, sd, args, names);
+      // status with no unit: the whole machine.
+      if (action === 'status' && !names.length) return consulter(), machineStatus(game, sd, paint);
       if (action === 'daemon-reload') {
         if (game.who !== 'root') return refuse(game, 'daemon-reload', 'systemd');
         reread(game, sd);
@@ -620,7 +729,13 @@ export const SYSTEMD: Record<string, Command> = {
         } else if (action === 'is-active') {
           consulter();
           outputs.push(s.state);
-        } else if (action === 'is-enabled') outputs.push(s.active ? 'enabled' : 'disabled');
+        } else if (action === 'is-enabled') {
+          outputs.push(s.static ? 'static' : s.active ? 'enabled' : 'disabled');
+          if (!s.static && !s.active) game.status = 1;
+        } else if (action === 'is-failed') {
+          outputs.push(s.state);
+          if (s.state !== 'failed') game.status = 1;
+        }
         else if (game.who !== 'root') refuse(game, action, name);
         else {
           const link = `/etc/systemd/system/multi-user.target.wants/${name}.service`;
@@ -707,12 +822,39 @@ export const SYSTEMD: Record<string, Command> = {
       let since: number | null = null;
       let until: number | null = null;
       let follow = false;
+      // -b [N] (0: this boot, -1: the one before), -o FORMAT, -r, -g PATTERN, -p FROM..TO.
+      let bootOffset: number | null = null;
+      let output = 'short';
+      let reverse = false;
+      let grep: RegExp | null = null;
+      let lowest = 0;
+      let listBoots = false;
+      const readPriority = (v: string) => ({ emerg: 0, alert: 1, crit: 2, err: 3, warning: 4, notice: 5, info: 6, debug: 7 } as Record<string, number>)[v] ?? (/^[0-7]$/.test(v) ? Number(v) : null);
+      const setPriority = (v: string): boolean => {
+        const [a, b] = v.split('..');
+        const x = readPriority(a);
+        const y = b === undefined ? null : readPriority(b);
+        if (x === null || (b !== undefined && y === null)) return false;
+        // -p err: err and more serious; -p FROM..TO: that range.
+        if (y === null) [lowest, priority] = [0, x];
+        else [lowest, priority] = [Math.min(x, y), Math.max(x, y)];
+        return true;
+      };
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
         if (a.startsWith('--')) {
           if (a.startsWith('--unit=')) unit = a.slice(7);
           else if (a === '--follow') follow = true;
-          else if (a === '--no-pager' || a === '--pager-end') continue;
+          else if (a === '--no-pager' || a === '--pager-end' || a === '--no-hostname' || a === '--quiet') continue;
+          else if (a === '--reverse') reverse = true;
+          else if (a === '--list-boots') listBoots = true;
+          else if (/^--boot(=|$)/.test(a)) bootOffset = a.includes('=') ? Number(a.slice(7)) : /^-?\d+$/.test(args[i + 1] ?? '') ? Number(args[++i]) : 0;
+          else if (/^--output(=|$)/.test(a)) output = a.includes('=') ? a.slice(9) : (args[++i] ?? '');
+          else if (/^--grep(=|$)/.test(a)) grep = new RegExp(a.includes('=') ? a.slice(7) : (args[++i] ?? ''), 'i');
+          else if (/^--priority(=|$)/.test(a)) {
+            const v = a.includes('=') ? a.slice(11) : (args[++i] ?? '');
+            if (!setPriority(v)) return game.error(`Failed to parse priority value: ${v}`);
+          }
           // --since / --until: a date ("2027-09-12 02:00"), a time (today), today, yesterday.
           else if (/^--(since|until)(=|$)/.test(a)) {
             const value = a.includes('=') ? a.slice(a.indexOf('=') + 1) : args[++i];
@@ -728,15 +870,27 @@ export const SYSTEMD: Record<string, Command> = {
         // Grouped short options, like -xeu nginx: the last one may take a value.
         for (let j = 1; j < a.length; j++) {
           const l = a[j];
-          if ('unp'.includes(l)) {
+          if ('unpog'.includes(l)) {
             const value = a.slice(j + 1) || args[++i];
             if (value === undefined) return game.error(`journalctl: option requires an argument -- '${l}'`);
             if (l === 'u') unit = value;
             else if (l === 'n') count = Number(value);
-            else priority = { emerg: 0, alert: 1, crit: 2, err: 3, warning: 4, notice: 5, info: 6, debug: 7 }[value] ?? Number(value);
+            else if (l === 'o') output = value;
+            else if (l === 'g') grep = new RegExp(value, /[A-Z]/.test(value) ? '' : 'i');
+            else if (!setPriority(value)) return game.error(`Failed to parse priority value: ${value}`);
             break;
           }
-          if (l === 'b') onlyBoot = true;
+          // -b alone (this boot), or -b -1, -b 0, -b1: a boot by its offset.
+          if (l === 'b') {
+            const glued = a.slice(j + 1);
+            if (/^-?\d+$/.test(glued)) {
+              bootOffset = Number(glued);
+              break;
+            }
+            bootOffset = j === a.length - 1 && /^-?\d+$/.test(args[i + 1] ?? '') ? Number(args[++i]) : 0;
+            onlyBoot = true;
+          }
+          else if (l === 'r') reverse = true;
           // -k: the kernel's messages, since this boot.
           else if (l === 'k') {
             onlyKernel = true;
@@ -746,6 +900,22 @@ export const SYSTEMD: Record<string, Command> = {
           else if (l === 'f') follow = true;
           else if (l !== 'x' && l !== 'e' && l !== 'q') return game.error(`journalctl: invalid option -- '${l}'`);
         }
+      }
+      if (!['short', 'short-iso', 'short-precise', 'short-full', 'cat', 'short-unix'].includes(output)) return game.error(`Unknown output format '${output}'.`);
+      // The boots in the journal (--list-boots), and the one asked for (-b -1).
+      const boots = [...new Set(sd.log.map((e) => e.boot))].sort((a, b) => a - b);
+      if (listBoots) {
+        const rows = boots.map((b) => {
+          const entries = sd.log.filter((e) => e.boot === b);
+          return `${String(b - sd.boot).padStart(3)} ${bootId(b)} ${dateComplete(entries[0].time, game.t.language, sd)} ${dateComplete(entries.at(-1)!.time, game.t.language, sd)}`;
+        });
+        return ['IDX BOOT ID                          FIRST ENTRY                 LAST ENTRY', ...rows].join('\n');
+      }
+      let boot: number | null = null;
+      if (bootOffset !== null) {
+        boot = bootOffset <= 0 ? sd.boot + bootOffset : (boots[bootOffset - 1] ?? -1);
+        if (!boots.includes(boot)) return game.error(`Data from the specified boot (${bootOffset > 0 ? `+${bootOffset}` : bootOffset}) is not available: No such boot ID in journal`);
+        onlyBoot = true;
       }
       // Reading the whole journal: root, or the adm and systemd-journal groups.
       const allowed = game.who === 'root' || game.groupsFor(game.who).some((g) => g === 'adm' || g === 'systemd-journal');
@@ -763,7 +933,9 @@ export const SYSTEMD: Record<string, Command> = {
         (!u || e.unit === u) &&
         (!onlyKernel || e.ident === 'kernel') &&
         e.priority <= priority &&
-        (!onlyBoot || e.boot === sd.boot) &&
+        e.priority >= lowest &&
+        (!grep || grep.test(e.message)) &&
+        (!onlyBoot || e.boot === (boot ?? sd.boot)) &&
         (since === null || shows(e) >= since) &&
         (until === null || shows(e) <= until);
       let inputs = sd.log.filter(kept);
@@ -781,10 +953,11 @@ export const SYSTEMD: Record<string, Command> = {
         };
       }
       if (!inputs.length) return '-- No entries --';
+      if (reverse) inputs = [...inputs].reverse();
       const lines: string[] = [];
       inputs.forEach((e, i) => {
-        if (i > 0 && e.boot !== inputs[i - 1].boot) lines.push(`-- Boot ${String(e.boot).padStart(2, '0')}f3c1e9a7d54b2c8e06a1d9f4b7c2e5 --`);
-        lines.push(logLine(e, sd, game.t.language, colour));
+        if (i > 0 && e.boot !== inputs[i - 1].boot && output !== 'cat') lines.push(`-- Boot ${bootId(e.boot)} --`);
+        lines.push(formatted(e, sd, output, game.t.language, colour));
       });
       return lines.join('\n');
     },

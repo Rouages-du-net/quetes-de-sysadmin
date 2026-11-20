@@ -62,7 +62,9 @@ presents them for people.
   restarts scheduled by
   `Restart=` (`runPending`); `systemctl cat`, `list-dependencies`,
   `reset-failed`, `systemd-analyze time`/`blame`/`critical-chain`/`verify`
-  and `networkctl` in `commands/systemd.ts`; `chapters/canteen.ts`: what
+  and `networkctl` in `commands/systemd.ts` (with `systemctl status` of the
+  whole machine, `list-unit-files`, and journalctl's `-b N`, `--list-boots`,
+  `-o`, `-r`, `-g`, relative `--since`); `chapters/canteen.ts`: what
   The Canteen's chapters share.
 - `src/engine/sshd.ts`: a machine's SSH server (`sshd_config` read like
   OpenSSH, configuration applied on reload).
@@ -151,7 +153,8 @@ presents them for people.
   Shell's constructor when the chapter models none (`debianDefaults`):
   base mounts (`pseudo` ones only for `mount`/`findmnt`, `bytesBase`),
   base processes (`base`, kept by a reboot; `state.baseProcesses`: `ps`
-  shows itself), memory, `/etc/os-release` and `/etc/debian_version`;
+  shows itself), a systemd with the base services (`BASE_SERVICES`,
+  `Service.static`) and their journal (`state.baseSystemd`), memory, `/etc/os-release` and `/etc/debian_version`;
   `baseLan` (lo, eth0 with the machine's address, `state.baseLan`) for `ip`
   and `hostname -I`; `hostnamectl` in `commands/hostnamectl.ts`.
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts

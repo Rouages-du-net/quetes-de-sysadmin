@@ -921,8 +921,8 @@ man-visudo = edits /etc/sudoers (or, with -f, another rules file, such as /etc/s
     .example-1 = edit the main policy
     .example-2 = write rules in a file of /etc/sudoers.d
     .example-3 = check the whole policy
-man-systemctl = manages services, those programs that run all the time (web server…), through systemd. status shows a service's state and its latest messages; start, stop, restart start it, stop it or restart it; reload makes it reread its configuration. enable makes it start with the machine, disable doesn't: start only lasts until the next reboot. --failed lists failed services. Only root can change a service's state. list-timers lists the timers (systemd's scheduled tasks) and when they next fire. To modify a service without touching the shipped file (in /usr/lib/systemd/system), you write an override (drop-in): edit opens it in the editor (/etc/systemd/system/service.service.d/override.conf), with the section ({"["}Unit] or {"["}Service]) and only the lines to change, for example After=postgresql.service, MemoryMax=512M (the memory beyond which systemd kills the service) or Restart=on-failure (restart it if it dies in failure). After writing a unit file or an override by hand, daemon-reload makes systemd reread it. cat shows the unit file and its overrides, as systemd reads them; list-dependencies shows what a unit pulls in (Requires=, Wants=), and with --after what it waits for. After too many failed starts (start-limit-hit), reset-failed lets you start it again. set-property changes a property right away and keeps it: systemctl set-property service MemoryMax=512M.
-    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit|cat|reset-failed] service ; systemctl list-dependencies [--after|--before] [unit] ; systemctl set-property service property=value ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
+man-systemctl = manages services, those programs that run all the time (web server…), through systemd. status shows a service's state and its latest messages; start, stop, restart start it, stop it or restart it; reload makes it reread its configuration. enable makes it start with the machine, disable doesn't: start only lasts until the next reboot. --failed lists failed services. Only root can change a service's state. list-timers lists the timers (systemd's scheduled tasks) and when they next fire. To modify a service without touching the shipped file (in /usr/lib/systemd/system), you write an override (drop-in): edit opens it in the editor (/etc/systemd/system/service.service.d/override.conf), with the section ({"["}Unit] or {"["}Service]) and only the lines to change, for example After=postgresql.service, MemoryMax=512M (the memory beyond which systemd kills the service) or Restart=on-failure (restart it if it dies in failure). After writing a unit file or an override by hand, daemon-reload makes systemd reread it. cat shows the unit file and its overrides, as systemd reads them; list-dependencies shows what a unit pulls in (Requires=, Wants=), and with --after what it waits for. After too many failed starts (start-limit-hit), reset-failed lets you start it again. set-property changes a property right away and keeps it: systemctl set-property service MemoryMax=512M. status with no service shows the whole machine: running, or degraded when a unit failed, and its control groups as a tree (each service and its processes, then your session's). list-unit-files lists the unit files with their state (enabled: starts at boot, disabled, static: started by another unit, never enabled) and Debian's preset; --type=service and --state=enabled narrow it.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|is-failed|edit|cat|reset-failed] service ; systemctl status ; systemctl list-unit-files [--type=TYPE] [--state=STATE] [pattern] ; systemctl list-dependencies [--after|--before] [unit] ; systemctl set-property service property=value ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .example-1 = the state of nginx and its latest messages
     .example-2 = the failed services (the first reflex after a reboot)
     .example-3 = restart nginx
@@ -933,6 +933,8 @@ man-systemctl = manages services, those programs that run all the time (web serv
     .example-8 = what menu pulls in when it starts
     .example-9 = what menu waits for (After=)
     .example-10 = forget menu's failures and its start limit
+    .example-11 = the whole machine: its state, its services and their processes
+    .example-12 = the services that start at boot
 man-systemd-analyze = tools for systemd. calendar tests an OnCalendar= expression (a timer's): its normalized form, and when it will next fire (*:0/5 every 5 minutes; *-*-* 03:30:00 every day at 3:30 a.m.; Mon..Fri 08:00 on weekdays; hourly, daily, weekly). time says how long the last boot took (kernel, then userspace, until multi-user.target); blame lists the units by the time they took to start; critical-chain shows the chain of units that delayed the end of the boot, or a unit: after @ when the unit was ready, after + how long it took to start. verify reads a unit file the way systemd would, and says what it would ignore (an unknown key, a misspelled section, a required unit that doesn't exist); no output means nothing to report.
     .synopsis = systemd-analyze calendar EXPRESSION… ; systemd-analyze time ; systemd-analyze blame ; systemd-analyze critical-chain [UNIT] ; systemd-analyze verify UNIT|FILE
     .example-1 = every 5 minutes
@@ -1370,8 +1372,8 @@ man-umask = shows or changes the session's mask (umask): the permissions REMOVED
     .example-2 = the permissions it leaves, in letters
     .example-3 = the group will be able to write to what I create (for this session)
 
-man-journalctl = reads the systemd journal, where services write their messages (and their errors). -u keeps only one service, -n the last N lines, -b the current boot, -p err the errors, -k the kernel messages (like dmesg). --since and --until keep a time period ("2027-09-12 02:00", today, yesterday, -1h). -x adds explanations and -e jumps to the end: journalctl -xeu nginx is the classic formula when a service refuses to start. -f follows the journal live, until Ctrl-C. You must be root, or in the adm or systemd-journal group, to read everything. --disk-usage and --vacuum-size=500M (or --vacuum-time=2weeks, --vacuum-files=5) measure and trim the persistent journal (/var/log/journal); its lasting limit is SystemMaxUse= in journald.conf.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priority] [--since DATE] [--until DATE] [-x] [-e] [-f] [--disk-usage] [--vacuum-size=SIZE]
+man-journalctl = reads the systemd journal, where services write their messages (and their errors). -u keeps only one service, -n the last N lines, -b the current boot, -p err the errors, -k the kernel messages (like dmesg). --since and --until keep a time period ("2027-09-12 02:00", today, yesterday, -1h, "1 hour ago", "30 min ago"). -b -1 shows the boot before this one (--list-boots lists them); -p takes a range too (-p warning..err); -r puts the newest first; -g keeps the messages matching a pattern; -o chooses the format (short-iso: ISO 8601 dates, cat: the message only); --no-pager writes everything at once. -x adds explanations and -e jumps to the end: journalctl -xeu nginx is the classic formula when a service refuses to start. -f follows the journal live, until Ctrl-C. You must be root, or in the adm or systemd-journal group, to read everything. --disk-usage and --vacuum-size=500M (or --vacuum-time=2weeks, --vacuum-files=5) measure and trim the persistent journal (/var/log/journal); its lasting limit is SystemMaxUse= in journald.conf.
+    .synopsis = journalctl [-u service] [-n N] [-b [N]] [-k] [-p priority] [--since DATE] [--until DATE] [-r] [-g pattern] [-o format] [-x] [-e] [-f] [--no-pager] [--list-boots] [--disk-usage] [--vacuum-size=SIZE]
     .option-k = only kernel messages, since boot (kernel).
     .option-u = only the messages of this service (unit).
     .option-n = only the last N lines.
@@ -1380,6 +1382,9 @@ man-journalctl = reads the systemd journal, where services write their messages 
     .option-x = adds explanations to known messages.
     .option-e = jumps straight to the end of the journal.
     .option-f = follows the journal: the last 10 lines, then whatever arrives, until Ctrl-C.
+    .option-r = the newest messages first (reverse).
+    .option-o = the output format: short, short-iso, short-precise, short-full, cat.
+    .option-g = only the messages matching this pattern (grep).
     .example-1 = nginx's messages
     .example-2 = the formula when a service won't start
     .example-3 = errors since the last boot
@@ -1388,6 +1393,10 @@ man-journalctl = reads the systemd journal, where services write their messages 
     .example-6 = watch the ssh connections live (Ctrl-C to stop)
     .example-7 = how much space the journal takes on disk
     .example-8 = trim the archived files down to 500M
+    .example-9 = the last hour
+    .example-10 = the warnings and errors of the previous boot
+    .example-11 = ssh's messages with ISO dates, all at once
+    .example-12 = the boots the journal remembers
 man-reboot = restarts the machine. Enabled services (systemctl enable) start again on their own; the others stay stopped. Over an ssh connection, the session is cut: you have to reconnect. Root only.
     .synopsis = reboot
     .example-1 = restart the machine

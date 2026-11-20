@@ -674,8 +674,11 @@ them safely.
     (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
   - [x] **Jobs**: `&`, `jobs`, `fg`, `bg`, `wait`, `disown`, `kill %1`,
     Ctrl-Z, `nohup`, `watch` (`jobs.ts`). Left: `screen` (tmux exists).
-  - [ ] **systemd and the journal**: `systemctl list-unit-files`,
-    `systemctl status` without a unit, `journalctl --since "1 hour ago"`.
+  - [x] **systemd and the journal**: `systemctl list-unit-files`,
+    `systemctl status` without a unit, `is-enabled` of a static unit,
+    `journalctl --since "1 hour ago"`, `-p warning..err`, `-b -1`,
+    `--list-boots`, `-r`, `-g`, `-o short-iso`/`cat`; a Debian machine
+    without a systemd model gets the base services (`debian.ts`).
   - [ ] **Accounts**: `useradd -m`, `adduser`, `passwd` (only `usermod`,
     `userdel`, `gpasswd`, `chage` exist), `su`, `getent passwd`, `w`,
     `lastlog`.

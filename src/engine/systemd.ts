@@ -78,6 +78,8 @@ export interface Service {
   execStart?: string;
   // How long the service takes to start (ms; systemd-analyze blame), 100 ms by default.
   startDuration?: number | ((game: Game) => number);
+  // A static unit (no [Install] section: started by another, never enabled), like systemd-journald.
+  static?: boolean;
 }
 
 export interface Input {
@@ -337,6 +339,9 @@ export function dateComplete(ms: number, language: string, sd?: Systemd): string
 /** "1h 2min", "3min 12s", "5s", like systemd. */
 export function duration(ms: number): string {
   let s = Math.max(0, Math.round(ms / 1000));
+  // Days, like systemd's format_timestamp_relative(): "3 days", "1 day 2h" (from 25 hours).
+  if (s >= 2 * 86_400) return `${Math.floor(s / 86_400)} days`;
+  if (s >= 25 * 3600) return `1 day ${Math.floor((s - 86_400) / 3600)}h`;
   const h = Math.floor(s / 3600);
   const min = Math.floor((s % 3600) / 60);
   s %= 60;

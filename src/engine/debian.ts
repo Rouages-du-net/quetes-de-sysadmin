@@ -9,6 +9,9 @@
 //   - the base processes (systemd, journald, udevd, timesyncd, dbus,
 //     logind, cron, agetty, sshd's listener and the player's session, its
 //     bash), plus the services the chapter's systemd model runs;
+//   - systemd: the base services (cron, ssh, journald, logind, timesyncd,
+//     udevd, dbus, getty@tty1; static ones marked), their journal since a
+//     boot three days ago, cron's last hourly run and the player's login;
 //   - memory for free and top (2 GiB, no swap);
 //   - a network for ip and hostname -I: lo, and eth0 with the machine's
 //     documentation address (machines.ts), its gateway the network's .1
@@ -27,7 +30,7 @@ import type { Process } from './commands/system';
 import type { Lan } from './lan';
 import type { File } from './world';
 import { MACHINES, WORKSTATION } from './machines';
-import { systemd } from './systemd';
+import { newSystemd, systemd, type DefinitionService } from './systemd';
 
 const GiB = 1024 ** 3;
 const MiB = 1024 ** 2;
@@ -107,12 +110,53 @@ function baseProcesses(game: Shell): Process[] {
   ];
 }
 
+// The base services (systemd's units of a fresh Debian 13 server), with their main process.
+const BASE_SERVICES: [string, string, string, number][] = [
+  ['systemd-journald', 'Journal Service', 'systemd-journald', 242],
+  ['systemd-udevd', 'Rule-based Manager for Device Events and Files', 'systemd-udevd', 281],
+  ['systemd-timesyncd', 'Network Time Synchronization', 'systemd-timesyncd', 402],
+  ['cron', 'Regular background program processing daemon', 'cron', 489],
+  ['dbus', 'D-Bus System Message Bus', 'dbus-daemon', 491],
+  ['systemd-logind', 'User Login Management', 'systemd-logind', 497],
+  ['getty@tty1', 'Getty on tty1', 'agetty', 530],
+  ['ssh', 'OpenBSD Secure Shell server', 'sshd', 538],
+];
+// The machine's clock without a model: booted 3 days and 4 hours before date's default time (scripts.ts).
+export const BASE_NOW = Date.UTC(2027, 0, 1);
+const BASE_BOOT = BASE_NOW - (3 * 86_400_000 + 4 * 3_600_000 + 17 * 60_000);
+
 /** Gives a Debian machine what the chapter didn't model (see the top of this file). */
 export function debianDefaults(game: Shell): void {
   if (!isDebian(game)) return;
   const state = game.state;
   const uid = game.accounts.users[game.player]?.uid ?? 1000;
   if (state.mounts === undefined) state.mounts = baseMounts(uid);
+  // systemd: the base services, their journal since the boot. Their processes
+  // are the base ones, unless the chapter has its own (then none, to keep its PIDs).
+  if (state.systemd === undefined) {
+    const own = state.process !== undefined;
+    const base = baseProcesses(game);
+    const definitions: Record<string, DefinitionService> = Object.fromEntries(
+      BASE_SERVICES.map(([name, description, executable, pid]) => [
+        name,
+        { description, executable, active: true, process: own ? [] : base.filter((p) => p.pid === pid), ...(name === 'systemd-journald' || name === 'systemd-udevd' || name === 'dbus' || name === 'systemd-logind' ? { static: true } : {}) },
+      ]),
+    );
+    const sd = newSystemd(game.hostName, BASE_BOOT, BASE_NOW, definitions);
+    // What the journal saw last: cron's hourly jobs, then the player's login (from the workstation).
+    const you = game.player;
+    const at = (minutes: number, unit: string, ident: string, pid: number, message: string) =>
+      sd.log.push({ time: BASE_NOW - minutes * 60_000, boot: sd.boot, unit, ident, pid, message, priority: 6 });
+    at(43, 'cron.service', 'CRON', 2391, 'pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)');
+    at(43, 'cron.service', 'CRON', 2392, '(root) CMD (cd / && run-parts --report /etc/cron.hourly)');
+    at(43, 'cron.service', 'CRON', 2391, 'pam_unix(cron:session): session closed for user root');
+    at(2, 'ssh.service', 'sshd-session', game.shellPid - 9, `Accepted publickey for ${you} from ${WORKSTATION.address} port 52814 ssh2: ED25519 SHA256:q4oG7v2Lw0c1sNf8YkTzR3bHmXe9JdUaPiQ5tVyW6Ko`);
+    at(2, 'ssh.service', 'sshd-session', game.shellPid - 9, `pam_unix(sshd:session): session opened for user ${you}(uid=${uid}) by ${you}(uid=0)`);
+    at(2, 'systemd-logind.service', 'systemd-logind', 497, `New session 1 of user ${you}.`);
+    at(2, '', 'systemd', 1, `Started session-1.scope - Session 1 of User ${you}.`);
+    state.systemd = sd;
+    state.baseSystemd = true;
+  }
   if (state.process === undefined) {
     const listing = baseProcesses(game);
     // The services the chapter's systemd model runs.

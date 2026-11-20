@@ -931,8 +931,8 @@ man-visudo = modifie /etc/sudoers (ou, avec -f, un autre fichier de règles, com
     .example-1 = modifier la politique principale
     .example-2 = écrire des règles dans un fichier de /etc/sudoers.d
     .example-3 = vérifier toute la politique
-man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), par systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le redémarrent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne dure que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. list-timers liste les timers (les tâches planifiées de systemd) et leur prochain déclenchement. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section ({"["}Unit] ou {"["}Service]) et seulement les lignes à changer, par exemple After=postgresql.service, MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit à la main un fichier d'unité ou une surcharge, daemon-reload les fait relire par systemd. cat affiche le fichier d'unité et ses surcharges, tels que systemd les lit ; list-dependencies montre ce qu'une unité entraîne (Requires=, Wants=), et avec --after ce qu'elle attend. Après trop de démarrages ratés (start-limit-hit), reset-failed permet de la démarrer à nouveau. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M.
-    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|edit|cat|reset-failed] service ; systemctl list-dependencies [--after|--before] [unité] ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
+man-systemctl = gère les services, ces programmes qui tournent en permanence (serveur web…), par systemd. status montre l'état d'un service et ses derniers messages ; start, stop, restart le démarrent, l'arrêtent ou le redémarrent ; reload lui fait relire sa configuration. enable le fait démarrer avec la machine, disable non : start ne dure que jusqu'au prochain redémarrage. --failed liste les services en échec. Seul root peut changer l'état d'un service. list-timers liste les timers (les tâches planifiées de systemd) et leur prochain déclenchement. Pour modifier un service sans toucher au fichier livré (dans /usr/lib/systemd/system), on écrit une surcharge (drop-in) : edit l'ouvre dans l'éditeur (/etc/systemd/system/service.service.d/override.conf), avec la section ({"["}Unit] ou {"["}Service]) et seulement les lignes à changer, par exemple After=postgresql.service, MemoryMax=512M (la mémoire au-delà de laquelle systemd tue le service) ou Restart=on-failure (le relancer s'il meurt en échec). Après avoir écrit à la main un fichier d'unité ou une surcharge, daemon-reload les fait relire par systemd. cat affiche le fichier d'unité et ses surcharges, tels que systemd les lit ; list-dependencies montre ce qu'une unité entraîne (Requires=, Wants=), et avec --after ce qu'elle attend. Après trop de démarrages ratés (start-limit-hit), reset-failed permet de la démarrer à nouveau. set-property change une propriété tout de suite et la garde : systemctl set-property service MemoryMax=512M. status sans service montre toute la machine : running, ou degraded quand une unité a échoué, et ses groupes de contrôle en arbre (chaque service et ses processus, puis ceux de ta session). list-unit-files liste les fichiers d'unité avec leur état (enabled : démarre au boot, disabled, static : démarré par une autre unité, jamais activé) et le réglage par défaut de Debian (preset) ; --type=service et --state=enabled réduisent la liste.
+    .synopsis = systemctl [status|start|stop|restart|reload|enable|disable|is-active|is-enabled|is-failed|edit|cat|reset-failed] service ; systemctl status ; systemctl list-unit-files [--type=TYPE] [--state=ÉTAT] [motif] ; systemctl list-dependencies [--after|--before] [unité] ; systemctl set-property service propriété=valeur ; systemctl daemon-reload ; systemctl --failed ; systemctl reboot
     .example-1 = l'état de nginx et ses derniers messages
     .example-2 = les services en échec (le premier réflexe après un redémarrage)
     .example-3 = redémarrer nginx
@@ -943,6 +943,8 @@ man-systemctl = gère les services, ces programmes qui tournent en permanence (s
     .example-8 = ce que menu entraîne quand il démarre
     .example-9 = ce que menu attend (After=)
     .example-10 = oublier les échecs de menu et sa limite de démarrages
+    .example-11 = toute la machine : son état, ses services et leurs processus
+    .example-12 = les services qui démarrent au boot
 man-systemd-analyze = des outils pour systemd. calendar teste une expression OnCalendar= (celle d'un timer) : sa forme normalisée, et son prochain déclenchement (*:0/5 toutes les 5 minutes ; *-*-* 03:30:00 tous les jours à 3 h 30 ; Mon..Fri 08:00 en semaine ; hourly, daily, weekly). time dit combien de temps a pris le dernier démarrage (le noyau, puis l'espace utilisateur, jusqu'à multi-user.target) ; blame liste les unités selon le temps qu'elles ont mis à démarrer ; critical-chain montre la chaîne d'unités qui a retardé la fin du démarrage, ou une unité : après @ le moment où l'unité était prête, après + le temps qu'elle a mis à démarrer. verify lit un fichier d'unité comme le ferait systemd, et dit ce qu'il ignorerait (une clé inconnue, une section mal écrite, une unité requise qui n'existe pas) ; aucune sortie veut dire rien à signaler.
     .synopsis = systemd-analyze calendar EXPRESSION… ; systemd-analyze time ; systemd-analyze blame ; systemd-analyze critical-chain [UNITÉ] ; systemd-analyze verify UNITÉ|FICHIER
     .example-1 = toutes les 5 minutes
@@ -1388,8 +1390,8 @@ man-umask = affiche ou change le masque (umask) de la session : les droits RETIR
     .example-2 = les droits qu'il laisse, en lettres
     .example-3 = le groupe pourra écrire dans ce que je crée (pour cette session)
 
-man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). --since et --until gardent une période (« 2027-09-12 02:00 », today, yesterday, -1h). -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. -f suit le journal en direct, jusqu'à Ctrl-C. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire. --disk-usage et --vacuum-size=500M (ou --vacuum-time=2weeks, --vacuum-files=5) mesurent et réduisent le journal persistant (/var/log/journal) ; sa limite durable est SystemMaxUse= dans journald.conf.
-    .synopsis = journalctl [-u service] [-n N] [-b] [-k] [-p priorité] [--since DATE] [--until DATE] [-x] [-e] [-f] [--disk-usage] [--vacuum-size=TAILLE]
+man-journalctl = lit le journal de systemd, où les services écrivent leurs messages (et leurs erreurs). -u ne garde qu'un service, -n les N dernières lignes, -b le démarrage en cours, -p err les erreurs, -k les messages du noyau (comme dmesg). --since et --until gardent une période (« 2027-09-12 02:00 », today, yesterday, -1h, « 1 hour ago », « 30 min ago »). -b -1 montre le démarrage d'avant (--list-boots les liste) ; -p accepte aussi une plage (-p warning..err) ; -r met les plus récents en premier ; -g garde les messages qui correspondent à un motif ; -o choisit le format (short-iso : dates ISO 8601, cat : le message seul) ; --no-pager écrit tout d'un coup. -x ajoute des explications et -e va à la fin : journalctl -xeu nginx est la formule classique quand un service refuse de démarrer. -f suit le journal en direct, jusqu'à Ctrl-C. Il faut être root, ou dans le groupe adm ou systemd-journal, pour tout lire. --disk-usage et --vacuum-size=500M (ou --vacuum-time=2weeks, --vacuum-files=5) mesurent et réduisent le journal persistant (/var/log/journal) ; sa limite durable est SystemMaxUse= dans journald.conf.
+    .synopsis = journalctl [-u service] [-n N] [-b [N]] [-k] [-p priorité] [--since DATE] [--until DATE] [-r] [-g motif] [-o format] [-x] [-e] [-f] [--no-pager] [--list-boots] [--disk-usage] [--vacuum-size=TAILLE]
     .option-k = seulement les messages du noyau, depuis le démarrage (kernel).
     .option-u = seulement les messages de ce service (unit).
     .option-n = seulement les N dernières lignes.
@@ -1398,6 +1400,9 @@ man-journalctl = lit le journal de systemd, où les services écrivent leurs mes
     .option-x = ajoute des explications aux messages connus.
     .option-e = va directement à la fin du journal.
     .option-f = suit le journal (follow) : les 10 dernières lignes, puis ce qui arrive, jusqu'à Ctrl-C.
+    .option-r = les messages les plus récents d'abord (reverse).
+    .option-o = le format de sortie : short, short-iso, short-precise, short-full, cat.
+    .option-g = seulement les messages qui correspondent à ce motif (grep).
     .example-1 = les messages de nginx
     .example-2 = la formule quand un service ne démarre pas
     .example-3 = les erreurs depuis le dernier démarrage
@@ -1406,6 +1411,10 @@ man-journalctl = lit le journal de systemd, où les services écrivent leurs mes
     .example-6 = regarder en direct les connexions ssh (Ctrl-C pour arrêter)
     .example-7 = la place que prend le journal sur le disque
     .example-8 = réduire les fichiers archivés à 500M
+    .example-9 = la dernière heure
+    .example-10 = les avertissements et erreurs du démarrage précédent
+    .example-11 = les messages de ssh avec des dates ISO, d'un coup
+    .example-12 = les démarrages dont le journal se souvient
 man-reboot = redémarre la machine. Les services activés (systemctl enable) repartent tout seuls ; les autres restent arrêtés. Sur une connexion ssh, la session est coupée : il faut se reconnecter. Réservé à root.
     .synopsis = reboot
     .example-1 = redémarrer la machine
