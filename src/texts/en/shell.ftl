@@ -36,6 +36,13 @@ syntax-redirection = syntax error: missing file name after { $operator }
 syntax-pipe = syntax error near unexpected token `|'
 syntax-token = syntax error near unexpected token `{ $token }'
 syntax-end = syntax error: unexpected end of file
+syntax-eof = syntax error: unexpected end of file
+# { $line }: the input's line number; { $delimiter }: the here-document's word (EOF)
+heredoc-eof = warning: here-document at line { $line } delimited by end-of-file (wanted `{ $delimiter }')
+# { $command }: break or continue, typed outside a loop
+shell-loop-only = -bash: { $command }: only meaningful in a `for', `while', or `until' loop
+# { $count }: the number of rounds after which the game stops a loop
+shell-loop-limit = (The game stopped this loop after { $count } rounds: a loop that never ends would freeze the page. On a real machine, Ctrl-C stops it.)
 redirection-is-one-directory = { $target }: Is a directory
 redirection-permission = { $target }: Permission denied
 redirection-sudo = (The > redirection is done by your own shell, not by sudo. Tip: send the text into "sudo tee -a file", which writes as root.)
