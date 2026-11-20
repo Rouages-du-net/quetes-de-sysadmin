@@ -27,7 +27,7 @@
 //   chapter its story opens after (`after`), which it builds on.
 
 import { STORIES } from './chapters';
-import { prerequisites } from './unlocking';
+import { assumed } from './unlocking';
 import type { Story } from './world';
 
 export type Level = 1 | 2 | 3 | 4 | 5;
@@ -49,11 +49,11 @@ export function levelsOf(stories: readonly Story[] = STORIES): Map<string, Level
     const story = storyOf.get(id)!;
     const index = story.chapters.findIndex((c) => c.id === id);
     const chapter = story.chapters[index];
-    const assumed = new Set([...prerequisites(story.id, stories), ...story.chapters.slice(0, index).map((c) => c.id)]);
-    const seen = new Set([...assumed].flatMap((c) => commands.get(c) ?? []));
+    const assumedHere = new Set(assumed(id, stories));
+    const seen = new Set([...assumedHere].flatMap((c) => commands.get(c) ?? []));
     const fresh = chapter.commands.filter((c) => !seen.has(c)).length;
     const factor = Math.min(MAX_SIZE_FACTOR, Math.max(1, (chapter.events.length + fresh) / ORDINARY_SIZE));
-    const weight = (assumed.size + 1) * factor;
+    const weight = (assumedHere.size + 1) * factor;
     let result = 1 + LEVELS.filter((t) => weight >= t).length;
     if (index > 0) result = Math.max(result, level(story.chapters[index - 1].id));
     else for (const c of story.after ?? []) result = Math.max(result, level(c) - 1);

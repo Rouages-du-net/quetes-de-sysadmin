@@ -143,8 +143,14 @@ export interface Event {
 export interface Chapter {
   id: string;
   number: number;
-  // Commands known in this chapter (the others are "not learned yet").
+  // Commands this chapter teaches. The chapter also has those of the
+  // chapters it assumes (its story's prerequisites and its story's earlier
+  // chapters) that exist on its machine, see availability.ts; the others
+  // are "not learned yet".
   commands: string[];
+  // Commands of the assumed chapters kept gated here, because one would do
+  // the lesson for the player (see availability.ts).
+  withhold?: string[];
   // The "home" directory (~), where you start.
   home: string;
   // The story's network plan at this chapter (the planned network, see plan.ts).

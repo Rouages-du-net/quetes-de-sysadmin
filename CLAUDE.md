@@ -196,6 +196,14 @@ presents them for people.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
   declares in `chapters/index.ts` (`after`) the chapters to finish before
   receiving its key (`prerequisites()` for tests).
+- `src/engine/availability.ts`: the commands a chapter has: its own
+  `commands`, plus those of the chapters it assumes (`assumed()` in
+  `unlocking.ts`, the same as difficulty's) that exist on the machine (its
+  system: `Machine.os`, POSIX utilities on every Unix-like; the tool
+  installed: its model or configuration), minus `Chapter.withhold`; sudo
+  only with the chapter's password; read by `Shell.known()` (help, Tab,
+  highlighting, `type`, `man`); an internal host with its own `commands`
+  inherits nothing. The teachers' sheets keep only the new own commands.
 - `src/engine/difficulty.ts`: each chapter's difficulty, 1 to 5, computed
   on an absolute scale from the chapters it assumes (its prerequisites) and
   from its size (nothing to set by hand): adding a story never changes the

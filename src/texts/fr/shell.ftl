@@ -44,9 +44,10 @@ command-missing = { $command } : commande introuvable. Tape « aide » pour la l
 # { $commands } : liste des commandes, séparées par des virgules
 # Le nom de la commande qui liste les autres, dans la langue (aide, help)
 command-help = aide
-help-commands =
-    Commandes connues : { $commands }.
-    Pour en savoir plus : « man commande » (le manuel complet), « commande --help » (un résumé), « man -k mot » (trouver une commande par mot-clé).
+help-commands = Commandes connues : { $commands }.
+# { $commands } : les commandes gardées des chapitres que celui-ci suppose, séparées par des virgules
+help-inherited = Apprises dans les chapitres précédents : { $commands }.
+help-more = Pour en savoir plus : « man commande » (le manuel complet), « commande --help » (un résumé), « man -k mot » (trouver une commande par mot-clé).
 
 ## man, apropos, whatis (messages de man-db)
 

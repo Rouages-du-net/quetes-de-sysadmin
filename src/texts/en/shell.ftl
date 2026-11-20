@@ -44,9 +44,10 @@ command-missing = { $command }: command not found. Type "help" for the list.
 # { $commands }: list of commands, separated by commas
 # Le nom de la commande qui liste les autres, dans la langue (aide, help)
 command-help = help
-help-commands =
-    Known commands: { $commands }.
-    To learn more: "man command" (the full manual), "command --help" (a summary), "man -k word" (find a command by keyword).
+help-commands = Known commands: { $commands }.
+# { $commands }: the commands this chapter has from the chapters it assumes, separated by commas
+help-inherited = Learned in earlier chapters: { $commands }.
+help-more = To learn more: "man command" (the full manual), "command --help" (a summary), "man -k word" (find a command by keyword).
 
 ## man, apropos, whatis (man-db messages)
 

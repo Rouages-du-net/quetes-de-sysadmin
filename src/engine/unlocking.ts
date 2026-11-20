@@ -38,3 +38,16 @@ export function prerequisites(id: string, stories: readonly Story[] = STORIES): 
   add(id);
   return seen;
 }
+
+/**
+ * The chapters a chapter assumes: those that unlock its story
+ * (prerequisites()), then the earlier chapters of its own story. Difficulty
+ * (difficulty.ts) and the commands a chapter inherits (availability.ts) both
+ * read it.
+ */
+export function assumed(chapter: string, stories: readonly Story[] = STORIES): string[] {
+  const story = storyFor(chapter, stories);
+  if (!story) return [];
+  const index = story.chapters.findIndex((c) => c.id === chapter);
+  return [...new Set([...prerequisites(story.id, stories), ...story.chapters.slice(0, index).map((c) => c.id)])];
+}

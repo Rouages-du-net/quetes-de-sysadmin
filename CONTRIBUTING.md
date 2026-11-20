@@ -94,9 +94,13 @@ a machine in `src/engine/machines.ts`.
 ### The chapter (`Chapter`, in `src/engine/world.ts`)
 
 - `id`, `number`, and the story that holds it.
-- `commands`: the commands the chapter knows (others answer "command not
-  found", as on a machine missing the package); their manual stays readable
-  with `man`.
+- `commands`: the commands the chapter teaches. The chapter also keeps
+  the commands of every chapter it assumes (its story's `after`
+  prerequisites and its story's earlier chapters) that exist on its machine
+  (`src/engine/availability.ts`); the others answer "you don't have this
+  command yet", and their manual stays readable with `man`. `withhold`
+  keeps an assumed command gated when it would do the lesson for the
+  player.
 - `createWorld(t)`: the starting file system; texts come from `t('…')`,
   never from the code.
 - `state()` and `initialise(jeu)`: the state of the simulated tools
