@@ -33,7 +33,7 @@ import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
 
 export { split, applyMode } from './tools';
-import { applyMode, braces, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
+import { applyMode, appendOnly, braces, immutable, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
 import { parse, plainList, unterminated, type ListEntry, type List } from './compound';
 import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
@@ -634,6 +634,9 @@ export class Shell implements Game {
     const reason = this.block(path + '/..');
     if (reason) return reason;
     if (this.onlyRead(path)) return this.t('error-read-only', v);
+    // chattr +i on the place, or on what is there: even root may not.
+    if (immutable(parent) || immutable(parent.children[this.name(path)]) || appendOnly(parent.children[this.name(path)]))
+      return `${cmd === 'bash' ? '-bash' : cmd}: ${path}: Operation not permitted`;
     if (!this.writtenIn(path)) return this.t(cmd === 'bash' ? 'redirection-permission' : 'error-creation-permission', v);
     const name = this.name(path);
     const old = parent.children[name];
@@ -2046,6 +2049,7 @@ export class Shell implements Game {
     if (n) {
       if (this.onlyRead(file)) return this.t('error-read-only', { command: 'bash', target: file });
       if (!this.traverses(file) || !this.can(n, 'w')) return this.t('redirection-permission', { target: file });
+      if (immutable(n) || (appendOnly(n) && !addition)) return `-bash: ${file}: Operation not permitted`;
       const before = content(n, this);
       n.content = addition && before ? `${before}\n${text}` : text;
       n.lines = true;
@@ -2202,7 +2206,7 @@ export class Shell implements Game {
       const n = this.find(e.path);
       const lines = text === '' ? 0 : text.replace(/\n$/, '').split('\n').length;
       if (n?.type === 'file') {
-        if (!this.traverses(e.path) || !this.can(n, 'w')) return this.t('nano-error-write', { path: e.path });
+        if (!this.traverses(e.path) || !this.can(n, 'w') || immutable(n) || appendOnly(n)) return this.t('nano-error-write', { path: e.path });
         n.content = e.dos ? text.replace(/\n$/, '').replace(/\r?\n/g, '\r\n') : text.replace(/\n$/, '');
         n.lines = true;
         delete n.size;

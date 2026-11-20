@@ -7,7 +7,7 @@ import { cifsShown, cifsUsage } from '../cifs';
 import type { File, Node, Rights } from '../world';
 import { nowOf } from '../time';
 import type { Shell } from '../shell';
-import { applyMode, compareNames, content, glob, octal, readable, modeWithMask, options, sizeFor } from '../tools';
+import { applyMode, appendOnly, compareNames, content, glob, immutable, octal, readable, modeWithMask, options, sizeFor } from '../tools';
 import { ghostPlace } from '../open-files';
 import { colourise, lsColour, visibleWidth, readColour, invalidColourMessage, sgr } from '../colours';
 import { COMMANDS, type Command, type Context } from './index';
@@ -223,6 +223,7 @@ const moveOne: One = (game, source, dest, letters) => {
   const reason = game.block(source) ?? game.block(target + '/..');
   if (reason) return game.error(reason) || null;
   if (game.resolve(source) === target) return null;
+  if (immutable(n) || appendOnly(n) || immutable(game.find(source + '/..'))) return game.error(`mv: cannot move '${source}' to '${target}': Operation not permitted`, 1) || null;
   if (!game.writtenIn(source)) return game.error(game.t('mv-permission', { target: source })) || null;
   const error = game.place('mv', target, n);
   if (error) return game.error(error) || null;
@@ -715,6 +716,10 @@ export const FILES: Record<string, Command> = {
             game.error(game.t('error-permission', { command: 'tee', target: target }));
             continue;
           }
+          if (immutable(n) || (appendOnly(n) && !letters.has('a'))) {
+            game.error(`tee: ${target}: Operation not permitted`, 1);
+            continue;
+          }
           const before = content(n, game);
           n.content = letters.has('a') && before ? `${before}\n${text}` : text;
           n.lines = true;
@@ -779,6 +784,8 @@ export const FILES: Record<string, Command> = {
             } else game.error(game.t('rm-directory', { target: target }));
           } else if (n.isProtected?.rm) game.error(n.isProtected.rm);
           else if (game.block(target)) game.error(game.block(target)!);
+          // chattr +i or +a (on it or on its place): even root may not.
+          else if (immutable(n) || appendOnly(n) || immutable(game.find(target + '/..'))) game.error(`rm: cannot remove '${target}': Operation not permitted`, 1);
           // Deleting a file means changing the place that holds it: it takes
           // write permission on that place, not on the file.
           else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
@@ -873,7 +880,9 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       if (!args.length) return game.error(game.t('touch-usage'));
       for (const target of args) {
-        if (game.exists(target)) continue;
+        const there = game.find(target);
+        if (there && (immutable(there) || appendOnly(there))) game.error(`touch: cannot touch '${target}': Operation not permitted`, 1);
+        if (there) continue;
         const error = game.place('touch', target, { type: 'file', content: '', owner: game.who });
         if (error) game.error(error);
       }
@@ -929,6 +938,7 @@ export const FILES: Record<string, Command> = {
         if (!n) game.error(game.t('chmod-access-missing', { target: target }));
         else if (!game.traverses(target)) game.error(game.t('chmod-access-permission', { target: target }));
         else if (game.who !== 'root' && (n.owner ?? game.player) !== game.who) game.error(game.t('chmod-not-allowed', { target: target }));
+        else if (immutable(n) || appendOnly(n)) game.error(`chmod: changing permissions of '${target}': Operation not permitted`, 1);
         else if (!applyMode(modeFor(n), rights)) game.error(game.t('chmod-mode-incorrect', { permissions: rights }));
         else apply(n);
       }

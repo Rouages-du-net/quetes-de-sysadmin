@@ -75,7 +75,8 @@ export interface CryptoBlob {
 // Unix owner, group and permissions (rwx for the owner, the
 // group, the others). By default: "you", the group named after the
 // owner, rw-r--r-- (file), rwxr-xr-x (place).
-export type Rights = { owner?: string; group?: string; mode?: string; acl?: NtfsAcl };
+// `attributes`: ext4's attributes set by chattr (i: immutable, a: append only).
+export type Rights = { owner?: string; group?: string; mode?: string; acl?: NtfsAcl; attributes?: string };
 // A Windows machine's NTFS security descriptor (see windows-acl.ts): the
 // owner and the explicit entries; the inherited ones come from the parents.
 export interface NtfsAce {
