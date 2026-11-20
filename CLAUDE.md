@@ -137,6 +137,11 @@ presents them for people.
   `read`, `break`, `continue`); `src/engine/arith.ts`: `$((…))`; parameter
   expansion in `Shell.parameter`; `seq`, `read`, `break`, `continue` in
   `commands/shell-control.ts`.
+- Root shells: `sudo -i`, `sudo -s`, `sudo su [-]` (parsed in `Shell.tube`,
+  sudo's policy decides) and `su` (`commands/shell-control.ts`) open a
+  shell on top of the login one (`Shell.shells`, `openShell`; `shellUser`,
+  `shellHome` for the prompt, `~`, `$HOME`, `cd`); `exit`/Ctrl-D leave it,
+  a new connection closes them (`closeShells`).
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in

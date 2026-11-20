@@ -616,7 +616,8 @@ export const FILES: Record<string, Command> = {
         game.visits.add(old);
         return old;
       }
-      const target = args[0] ?? '~';
+      // Without an argument: the shell's home ($HOME: /root after sudo -i).
+      const target = args[0] ?? game.shellHome;
       const n = game.find(target);
       if (!n) return game.error(game.t('error-missing', { command: 'cd', target: target }));
       if (n.type !== 'directory') return game.error(game.t('cd-not-one-directory', { target: target }));

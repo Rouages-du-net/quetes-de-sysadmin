@@ -4,6 +4,7 @@
 // the list of numbers a for loop often goes through.
 
 import type { Command } from './index';
+import type { Shell } from '../shell';
 
 // seq [-s SEP] [-w] [-f FORMAT] [FIRST [INCREMENT]] LAST
 function seq(args: string[], fail: (m: string) => string): string {
@@ -49,7 +50,53 @@ function seq(args: string[], fail: (m: string) => string): string {
   return out.join(separator);
 }
 
+// su [-] [account] [-c command] (util-linux, https://man7.org/linux/man-pages/man1/su.1.html):
+// a shell as another account (root by default), after that account's
+// password; - (-l, --login) makes it a login shell, in its home. On Debian
+// installed with sudo, root has no password: su always fails there with
+// "Authentication failure", and sudo -i (or sudo su -) is the way in. root
+// itself needs no password.
+function su(game: Shell, args: string[]): string {
+  let login = false;
+  let command: string | null = null;
+  const names: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '-' || a === '-l' || a === '--login') login = true;
+    else if (a === '-c' || a === '--command') command = args[++i] ?? '';
+    else if (a.startsWith('-')) return game.error(`su: invalid option -- '${a.replace(/^-+/, '').slice(0, 1)}'\nTry 'su --help' for more information.`, 1);
+    else names.push(a);
+  }
+  const user = names[0] ?? 'root';
+  if (user !== 'root' && !game.accounts.users[user]) return game.error(`su: user ${user} does not exist or the user entry does not contain all the required fields`, 1);
+  if (game.who !== 'root') {
+    // The target's password, never shown; the game knows no root password (Debian's root is locked).
+    game.ask(
+      game.t('su-password'),
+      () => {
+        game.status = 1;
+        game.lastStatus = 1;
+        return 'su: Authentication failure';
+      },
+      true,
+    );
+    return '';
+  }
+  if (command !== null) {
+    const before = game.who;
+    game.who = user;
+    try {
+      return game.runTask(command);
+    } finally {
+      game.who = before;
+    }
+  }
+  game.openShell(user, login);
+  return '';
+}
+
 export const SHELL_CONTROL: Record<string, Command> = {
+  su: { ownOptions: true, launch: ({ args, game }) => su(game, args) },
   seq: { ownOptions: true, launch: ({ args, game }) => seq(args, (m) => game.error(m)) },
   // read [-r] [-p prompt] [name…]: a line from the input (< file, <<<, a here-document),
   // or from the keyboard; in a pipeline, read runs in a subshell and sets nothing.

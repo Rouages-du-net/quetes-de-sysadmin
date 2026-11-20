@@ -642,7 +642,8 @@ export const PAGES: Record<string, Page> = {
   sshd: { section: 8, options: ['t', 'T', 'f'], examples: ['sudo sshd -t', 'sudo sshd -T | grep -i password'], see: ['sshd_config', 'ssh', 'systemctl'] },
   sshd_config: { section: 5, examples: ['sudo nano /etc/ssh/sshd_config', 'ls /etc/ssh/sshd_config.d'], see: ['sshd', 'ssh', 'nano'] },
   ssh_config: { section: 5, examples: ['nano ~/.ssh/config', 'ssh -G wiki'], see: ['ssh', 'sshd_config'] },
-  sudo: { examples: ['sudo cat /etc/sudoers', 'sudo -u postgres psql -l', 'sudo -l', 'sudo -l -U lina'], see: ['whoami', 'sudoers', 'visudo'] },
+  sudo: { options: ['i', 's', 'l', 'U', 'u', 'E'], examples: ['sudo cat /etc/sudoers', 'sudo -u postgres psql -l', 'sudo -l', 'sudo -l -U lina', 'sudo -i', 'sudo !!'], see: ['su', 'whoami', 'sudoers', 'visudo'] },
+  su: { options: ['l', 'c'], examples: ['su -', 'su - malo', 'sudo -i'], see: ['sudo', 'whoami', 'exit'] },
   sudoers: { section: 5, examples: ['sudo cat /etc/sudoers', 'sudo ls /etc/sudoers.d', 'sudo visudo -f /etc/sudoers.d/till'], see: ['sudo', 'visudo'] },
   systemctl: {
     examples: [

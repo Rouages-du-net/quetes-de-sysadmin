@@ -23,3 +23,6 @@ sudo =
     User { $account } may run the following commands on { $host }:
     { $rules }
 sudo-none = User { $account } is not allowed to run sudo on { $host }.
+# { $user }: the player; { $command }: the shell's path; { $account }: root or sudo -u's account; { $host }: the machine
+sudo-not-allowed = Sorry, user { $user } is not allowed to execute '{ $command }' as { $account } on { $host }.
+su-password = Password:

@@ -238,6 +238,7 @@ export class Console {
     if (!chapter && old && (old.chapter === c || !old.finished)) {
       // Like a new connection: start again from your home. Reconnecting
       // can be an objective (e.g. checking you haven't locked yourself out).
+      old.closeShells();
       old.cwd = old.home;
       old.state.connections = (old.state.connections ?? 1) + 1;
       // The connection's port (ss shows it; the session survives a change of sshd's port).

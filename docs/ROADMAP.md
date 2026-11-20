@@ -661,8 +661,11 @@ them safely.
     `seq`, `read`; an unset variable is empty (`compound.ts`, `control.ts`,
     `arith.ts`). Left: functions, arrays, `[[ … ]]`, `/bin/sh` scripts
     (`script.ts`) still without compounds.
-  - [ ] **Becoming root**: `sudo -i`, `sudo -s`, `su -` (a root shell with
-    its `#` prompt) and `exit` back; `sudo !!` works.
+  - [x] **Becoming root**: `sudo -i`, `sudo -s`, `sudo su`, `sudo su -`,
+    `su -` (root's password: "Authentication failure" on Debian), a root
+    shell with its `#` prompt, `/root`, root's `PATH`, `exit` or Ctrl-D
+    back; `sudo !!` works (`Shell.shells`, `su` in
+    `commands/shell-control.ts`).
   - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
     (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
   - [ ] **Jobs**: `&`, `jobs`, `fg`, `bg`, `nohup`, `watch`, `screen`

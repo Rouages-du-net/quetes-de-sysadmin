@@ -38,7 +38,7 @@ import { parse, plainList, unterminated, type ListEntry, type List } from './com
 import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
 import { arithmetic, ArithError, type ArithVars } from './arith';
 import { inherited, inheritedHere } from './availability';
-import { read as readSudoers, sudoersFile } from './sudoers';
+import { permitted, read as readSudoers, sudoersFile } from './sudoers';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
 const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue'];
@@ -46,6 +46,7 @@ const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unal
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
   echo: ['printf', 'seq'],
+  sudo: ['su'],
   find: ['xargs'],
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
@@ -197,6 +198,11 @@ export class Shell implements Game {
   inPipeline = false;
   // An expansion failed ($((1/0)), ${X:?}): bash drops the rest of the input.
   aborted = false;
+  // The shells opened on top of the login one (sudo -i, sudo -s, su -), innermost last:
+  // their account, whether it is a login shell, and what the shell below had.
+  shells: { user: string; login: boolean; saved: { cwd: string; old: string | null; vars: Record<string, string>; exported: Set<string>; aliases: Record<string, string>; mask: string; who: string } }[] = [];
+  // A shell to open once the current command is over (sudo -i, su).
+  private opening: { user: string; login: boolean } | null = null;
   // The PID of the last job put in the background ($!).
   lastBackground: number | null = null;
   // A command list (a && b; c) whose run stopped at a question (sudo's
@@ -339,6 +345,65 @@ export class Shell implements Game {
       this.state.bashPid = Math.max(2417, ...pids.filter((p) => p < 30000)) + 1;
     }
     return this.state.bashPid as number;
+  }
+
+  /** The account of the shell typed in: the player's, or root's after sudo -i. */
+  get shellUser(): string {
+    return this.shells.at(-1)?.user ?? this.player;
+  }
+
+  /** That shell's home ($HOME, ~, cd): /root for root. */
+  get shellHome(): string {
+    const user = this.shells.at(-1)?.user;
+    if (!user) return this.home;
+    return this.accounts.users[user]?.home ?? (user === 'root' ? '/root' : `/home/${user}`);
+  }
+
+  /**
+   * Opens a shell as this account once the current command is over (sudo -i,
+   * sudo -s, sudo su, su -): `login` (-i, su -) starts it in its home, with a
+   * fresh environment; otherwise it stays here. exit (or Ctrl-D) goes back.
+   */
+  openShell(user: string, login: boolean): void {
+    this.opening = { user, login };
+  }
+
+  // The shell asked for by the command that just ran.
+  private enterShell(): void {
+    const o = this.opening;
+    if (!o) return;
+    this.opening = null;
+    this.shells.push({ user: o.user, login: o.login, saved: { cwd: this.cwd, old: this.old, vars: this.vars, exported: this.exported, aliases: this.aliases, mask: this.mask, who: this.who } });
+    this.who = o.user;
+    // sudo resets the environment (env_reset): the variables and aliases of the shell below are not there.
+    this.vars = {};
+    this.exported = new Set();
+    this.aliases = {};
+    if (!o.login) return;
+    const home = this.shellHome;
+    // Debian always has /root (rwx------): a world that didn't describe it gets it now.
+    if (!this.exists(home) && o.user === 'root') {
+      const parent = this.find('/');
+      if (parent?.type === 'directory') parent.children.root = { type: 'directory', children: {}, owner: 'root', group: 'root', mode: 'rwx------' };
+    }
+    if (this.find(home)?.type === 'directory') {
+      this.old = null;
+      this.cwd = home;
+      this.visits.add(home);
+    }
+  }
+
+  /** Leaves the innermost shell (exit, Ctrl-D): bash says logout for a login shell, exit otherwise. */
+  private leaveShell(): string {
+    const s = this.shells.pop()!;
+    Object.assign(this, s.saved);
+    return s.login ? 'logout' : 'exit';
+  }
+
+  /** Back to the login shell (a new connection, a reboot). */
+  closeShells(): void {
+    while (this.shells.length) this.leaveShell();
+    this.opening = null;
   }
 
   /** The player's account, under its name in the language (vous, you…). */
@@ -612,12 +677,13 @@ export class Shell implements Game {
     if (this.continuation !== null) return '>';
     // A Windows Server's PowerShell (see powershell.ts).
     if (isWindows(this)) return windowsPrompt(this);
-    const here =
-      this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
+    const home = this.shellHome;
+    const here = this.cwd === home ? '~' : this.cwd.startsWith(home + '/') ? '~' + this.cwd.slice(home.length) : this.cwd;
     // In tmux, the status bar shows the session's name: we put it in front of the prompt.
-    // root (a chapter's rescue console) has its own prompt, with #, like bash.
+    // root (sudo -i, or a chapter's rescue console) has its own prompt, with #, like bash.
     const root = this.who === 'root';
-    return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.player}@${this.hostName}:${here}${root ? '#' : '$'}`;
+    const user = this.shells.length ? this.shellUser : root ? 'root' : this.player;
+    return `${this.tmux ? `[${this.tmux}] ` : ''}${user}@${this.hostName}:${here}${root ? '#' : '$'}`;
   }
 
   ask(prompt: string, answer: (response: string) => string, secret = false): void {
@@ -713,7 +779,7 @@ export class Shell implements Game {
     const m = /^~([^/]*)(\/.*)?$/.exec(word);
     if (!m) return word;
     const [, who, rest = ''] = m;
-    const home = who === '' ? this.home : who === '+' ? this.cwd : who === '-' ? this.old : this.accounts.users[who] ? (this.accounts.users[who].home ?? (who === 'root' ? '/root' : `/home/${who}`)) : null;
+    const home = who === '' ? this.shellHome : who === '+' ? this.cwd : who === '-' ? this.old : this.accounts.users[who] ? (this.accounts.users[who].home ?? (who === 'root' ? '/root' : `/home/${who}`)) : null;
     return home === null ? word : home + rest;
   }
 
@@ -735,18 +801,19 @@ export class Shell implements Game {
     if (Object.hasOwn(this.vars, name)) return this.vars[name];
     // bash's own variables, not in the environment.
     if (name === 'HOSTNAME') return this.read('/etc/hostname')?.trim() || this.hostName;
-    if (name === 'UID' || name === 'EUID') return String(this.accounts.users[this.player]?.uid ?? 1000);
+    if (name === 'UID' || name === 'EUID') return String(this.shellUser === 'root' ? 0 : (this.accounts.users[this.shellUser]?.uid ?? 1000));
     return this.defaults()[name] ?? null;
   }
 
   /** The environment a login gives the player (env, printenv, $HOME…). */
   defaults(): Record<string, string> {
-    const user = this.player;
+    const user = this.shellUser;
     const v: Record<string, string> = {
-      HOME: this.home,
+      HOME: this.shellHome,
       LANG: 'C.UTF-8',
       LOGNAME: user,
-      PATH: '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games',
+      // root's PATH: sudo's secure_path (Debian's /etc/sudoers), with the sbin directories.
+      PATH: user === 'root' ? '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' : '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games',
       PWD: this.cwd,
       SHELL: this.accounts.users[user]?.shell ?? '/bin/bash',
       TERM: 'xterm-256color',
@@ -1250,6 +1317,8 @@ export class Shell implements Game {
         this.tmux = null;
         return '[exited]';
       }
+      // A shell opened with sudo -i, sudo -s or su: back to the one below.
+      if (this.shells.length) return this.conclude(this.leaveShell(), true);
       // The emergency-mode shell: exit resumes booting (see fstab.ts).
       const rescue = this.state.continueBoot as ((j: Shell) => string) | undefined;
       if (this.state.rescue && rescue) return this.conclude(rescue(this), true);
@@ -1271,7 +1340,7 @@ export class Shell implements Game {
         ].join('\n');
       }
     }
-    if (withSudo && this.known().includes('sudo') && !this.authenticated) {
+    if (withSudo && this.known().includes('sudo') && !this.authenticated && this.who !== 'root') {
       this.waiting = { line, attempts: 0, stdin, capture };
       const lecture = this.doneLecture ? '' : this.t('sudo-lecture');
       this.doneLecture = true;
@@ -1280,6 +1349,7 @@ export class Shell implements Game {
     this.chapter.beforeCommand?.(this);
     if (this.chapter.activity) live(this, this.chapter.activity.not);
     const output = this.countLine(this.tube(line, words, stdin, capture));
+    this.enterShell();
     // What went down the pipe, kept while the chapter looks at the command.
     const piped = this.piped;
     try {
@@ -1577,6 +1647,7 @@ export class Shell implements Game {
       this.chapter.beforeCommand?.(this);
       if (this.chapter.activity) live(this, this.chapter.activity.not);
       const result = this.countLine(this.tube(waiting.line, split(waiting.line), waiting.stdin, waiting.capture));
+      this.enterShell();
       const piped = this.piped;
       const output = this.conclude(result, true);
       this.piped = piped;
@@ -1741,11 +1812,31 @@ export class Shell implements Game {
         if (args[0] === '-u') {
           as = args[1] ?? '';
           args = args.slice(2);
-          if (!this.accounts.users[as]) {
+          if (!this.accounts.users[as] && as !== 'root') {
             this.error(this.t('sudo-account-unknown', { account: as }));
             input = '';
             return;
           }
+        }
+        // sudo -i, sudo -s (or sudo bash): a shell as root (or -u's account); with a command, the command alone.
+        const shellFlag = ['-i', '--login', '-s', '--shell'].includes(args[0] ?? '') ? args[0] : null;
+        if (shellFlag) args = args.slice(1);
+        if ((shellFlag && !args.length) || (args.length === 1 && args[0] === 'bash' && segments.length === 1)) {
+          const login = shellFlag === '-i' || shellFlag === '--login';
+          const shellPath = this.accounts.users[as]?.shell ?? '/bin/bash';
+          commands.push(['sudo', ...(shellFlag ? [shellFlag] : args)]);
+          input = '';
+          if (!this.known().includes('sudo')) {
+            this.error(this.t('sudo-not-still'));
+            return;
+          }
+          // sudo's policy decides (Debian without /etc/sudoers in the world: the sudo group may).
+          if (this.exists(sudoersFile(this)) && this.who !== 'root' && !permitted(this, this.player, shellPath, as)) {
+            this.error(this.t('sudo-not-allowed', { user: this.player, command: shellPath, account: as, host: this.hostName }), 1);
+            return;
+          }
+          this.openShell(as, login);
+          return;
         }
       }
       // NAME=value before the command: for its environment only (alone on the line: a session variable).
