@@ -4162,3 +4162,16 @@ man-poweroff = powers the machine off at once (root), like shutdown now. Over ss
 man-halt = halts the machine (root): the system stops, without necessarily cutting the power. Like poweroff, the session drops.
     .synopsis = halt
     .example-1 = halt the system
+
+man-wget = downloads a URL into a file named after it (index.html for a directory; an existing name gets .1), telling everything on the way: resolving the name, connecting, the server's answer (200 OK, 404 Not Found…), the size, the progress bar. -O FILE chooses the file, -O - writes to the standard output, -q says nothing: wget -qO- URL is curl's habit. --spider only checks the URL answers. Exit code 4 for a network failure, 8 for an error answer from the server.
+    .synopsis = wget [-q] [-O FILE] [--spider] URL
+    .option-O = the file to write (- for the standard output).
+    .option-q = quiet: no log.
+    .example-1 = download a page
+    .example-2 = into a chosen file
+    .example-3 = the answer on the screen, nothing else
+    .example-4 = does the URL answer?
+man-nslookup = asks a DNS server for a name's address: the server used (Server:, from /etc/resolv.conf, or the one given after the name), then the answer (Name:, Address:), or ** server can't find NAME: NXDOMAIN. Like dig and host, it never reads /etc/hosts: a name there may be unknown to the DNS. Older than dig, still everywhere (Windows too).
+    .synopsis = nslookup NAME [SERVER]
+    .example-1 = the address of a name
+    .example-2 = asked to a given server

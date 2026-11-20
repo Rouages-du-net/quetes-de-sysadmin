@@ -693,10 +693,11 @@ them safely.
     `shutdown`/`poweroff`/`halt`, `chattr`/`lsattr` (`+i`, `+a` honoured),
     `ss -s` (`commands/small-tools.ts`); `htop` and `cal` stay "command
     not found", as on a minimal Debian.
-  - [ ] **Network clients**: `wget` (`-O`, `-qO-`), `nslookup`, `host`
-    without a DNS model, `tracepath`, `mtr`, `ifconfig` (net-tools isn't
-    installed on Debian: "command not found" is right, a hint to `ip`
-    would help).
+  - [x] **Network clients**: `wget` (`-O`, `-qO-`, `-q`, `--spider`, on
+    top of the game's curl), `nslookup`, `host` without a DNS model (the
+    story's network, else a timeout) (`commands/net-clients.ts`);
+    `tracepath`, `mtr`, `ifconfig`, `route` stay "command not found" as on
+    Debian, and `ifconfig` earns a tip pointing to `ip a`, `ip r`, `ss`.
   - [ ] **Finer points**: `du` counts apparent sizes, not 4 KiB blocks
     (`du -sh` of small files shows bytes); `mv` of a directory (refused by
     design); `rm -r` (refused by design); `ls -l` without dates; `tar`'s

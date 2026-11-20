@@ -85,13 +85,13 @@ const BASE_LOCAL = ['localhost', '127.0.0.1'];
 const isIp = (s: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(s);
 const ms = (v: number) => v.toFixed(3);
 
-function dnsServers(game: Shell): string[] {
+export function dnsServers(game: Shell): string[] {
   const conf = game.read('/etc/resolv.conf') ?? '';
   return [...conf.matchAll(/^\s*nameserver\s+(\S+)/gm)].map((m) => m[1]);
 }
 
 // Resolves a name as the system would. `server`: force a DNS server.
-function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
+export function resolveName(game: Shell, name: string, server?: string): { ip: string } | { error: 'timeout' | 'unknown'; servers: string[] } {
   if (isIp(name)) return { ip: name };
   const r: Network | undefined = game.state.network;
   const servers = server ? [server] : dnsServers(game);
@@ -434,7 +434,7 @@ function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; in
       const site = (game.state.network as Network).web[host];
       if (!site)
         return game.error(`curl: (7) Failed to connect to ${host} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
-      return headers ? site.headers.join('\n') : site.body;
+      return headers ? site.headers.join('\n') : withHeaders ? `${site.headers.join('\n')}\n\n${site.body}` : site.body;
     }
   }
 }

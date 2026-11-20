@@ -582,6 +582,8 @@ export const PAGES: Record<string, Page> = {
   install: { options: ['m', 'o', 'g', 'd', 'D'], values: ['m', 'o', 'g'], examples: ['sudo install -m 755 deploy.sh /usr/local/bin/deploy', 'sudo install -d -m 750 -o www-data /srv/site', 'install -m 600 key.pem ~/.ssh/'], see: ['cp', 'chmod', 'chown', 'mkdir'] },
   chattr: { examples: ['sudo chattr +i /etc/resolv.conf', 'sudo chattr -i /etc/resolv.conf', 'sudo chattr +a /var/log/audit.log'], see: ['lsattr', 'chmod', 'rm'] },
   lsattr: { options: ['d', 'R', 'a'], examples: ['lsattr /etc/resolv.conf', 'lsattr -d /srv/site'], see: ['chattr', 'ls'] },
+  wget: { options: ['O', 'q'], long: { spider: '', 'output-document': 'O', quiet: 'q', header: '' }, examples: ['wget http://localhost/', 'wget -O page.html http://localhost/', 'wget -qO- http://localhost/health', 'wget --spider http://localhost/'], see: ['curl'] },
+  nslookup: { examples: ['nslookup www.example', 'nslookup www.example 192.0.2.53'], see: ['dig', 'host'] },
   shutdown: { section: 8, options: ['r', 'h', 'P', 'H', 'c'], examples: ['sudo shutdown -r now', 'sudo shutdown +10', 'sudo shutdown -c', 'sudo shutdown now'], see: ['reboot', 'poweroff', 'systemctl'] },
   poweroff: { section: 8, examples: ['sudo poweroff'], see: ['shutdown', 'reboot', 'halt'] },
   halt: { section: 8, examples: ['sudo halt'], see: ['poweroff', 'shutdown', 'reboot'] },

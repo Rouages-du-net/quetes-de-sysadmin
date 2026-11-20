@@ -80,6 +80,10 @@ export const COMPANIONS: Record<string, string[]> = {
   reboot: ['shutdown', 'poweroff', 'halt', 'sync'],
   chmod: ['chattr', 'lsattr', 'install'],
   sleep: ['timeout'],
+  // Network clients (commands/net-clients.ts).
+  curl: ['wget'],
+  dig: ['nslookup', 'host'],
+  host: ['nslookup'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.

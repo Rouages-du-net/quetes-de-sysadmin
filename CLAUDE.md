@@ -235,6 +235,9 @@ presents them for people.
   `rm`, `mv`, `chmod`, `touch`, `tee`, `Shell.place`, redirections, nano),
   `shutdown`/`poweroff`/`halt` (like `reboot`), `ss -s`; `md5sum` and
   `sha1sum` in `commands/checksums.ts`.
+- `commands/net-clients.ts`: `wget` (through the game's `curl`),
+  `nslookup`, and `host` without the simulated DNS (`hostWithoutDns`);
+  the `net-tools` tip of `tips.ts` for `ifconfig`, `route`, `netstat`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story

@@ -10,7 +10,7 @@
 import type { Shell } from './shell';
 import { split } from './tools';
 
-export const TIPS = ['silence', 'up-twice', 'cd-back', 'cd-home', 'tab'] as const;
+export const TIPS = ['silence', 'up-twice', 'cd-back', 'cd-home', 'tab', 'net-tools'] as const;
 export type Tip = (typeof TIPS)[number];
 
 /** What a session remembers between lines, for the tips (kept by the interface, per session). */
@@ -35,6 +35,8 @@ export interface TipLine {
 
 // Commands that say nothing when they succeed.
 const SILENT = ['mv', 'cp', 'mkdir', 'touch', 'rm', 'rmdir', 'ln', 'chmod', 'chown', 'chgrp'];
+// net-tools' commands, no longer installed on Debian: ip and ss replace them.
+const NET_TOOLS = ['ifconfig', 'route', 'netstat', 'arp'];
 // A name long enough that typing it in full is a chore.
 const LONG = 9;
 // Lines with a long name typed in full before the Tab tip.
@@ -82,6 +84,9 @@ export function newTips(l: TipLine, memory: TipMemory, shown: readonly string[])
         !onlyUp(target),
     );
   }
+
+  // ifconfig and its cousins: "command not found", and the tools that replace them.
+  add('net-tools', NET_TOOLS.includes(words[0]) && !sh.known().includes(words[0]));
 
   // Long names typed in full, without Tab.
   if (ok && !l.tab && words.slice(1).some((w) => !w.startsWith('-') && (w.split('/').filter(Boolean).at(-1) ?? '').length >= LONG)) memory.longNames++;

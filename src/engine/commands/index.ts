@@ -85,6 +85,7 @@ import { SHELL_CONTROL } from './shell-control';
 import { HOSTNAMECTL } from './hostnamectl';
 import { COMPRESS } from './compress';
 import { SMALL_TOOLS } from './small-tools';
+import { NET_CLIENTS } from './net-clients';
 
 export interface Context {
   args: string[];
@@ -213,6 +214,7 @@ function build(): Record<string, Command> {
     ...K3S,
     ...COMPRESS,
     ...SMALL_TOOLS,
+    ...NET_CLIENTS,
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

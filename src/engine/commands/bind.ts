@@ -7,6 +7,7 @@ import type { Shell } from '../shell';
 import { dns, query, readZone, reloadZones, serverFor, declaredZones, type Rr } from '../dns';
 import { summerTime, systemd, toUtc } from '../systemd';
 import type { Command } from './index';
+import { hostWithoutDns } from './net-clients';
 
 const VERSION = '9.20.9-1-Debian';
 const TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA'];
@@ -91,7 +92,9 @@ export const BIND: Record<string, Command> = {
       const d = dns(game);
       const positional = args.filter((a) => !a.startsWith('-'));
       const [name, requestServer] = positional;
-      if (!name || !d) return game.error(game.t('host-usage'));
+      if (!name) return game.error(game.t('host-usage'));
+      // No simulated DNS: the story's network, or no server answers.
+      if (!d) return hostWithoutDns(game, name, requestServer);
       const target = requestServer ?? systemResolver(game);
       const server = serverFor(d, target);
       if (!server) return game.error(`host: couldn't get address for '${target}': not found`);
