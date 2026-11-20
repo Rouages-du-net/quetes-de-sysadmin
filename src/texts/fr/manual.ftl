@@ -459,6 +459,7 @@ man-cp = copie un fichier (copy). L’original reste en place. -r copie un lieu 
     .option-p = garde les droits et les dates (preserve) ; root garde aussi le propriétaire.
     .option-i = demande avant de remplacer un fichier existant (interactive) : o pour remplacer.
     .option-n = ne remplace jamais un fichier existant (no clobber).
+    .option-u = ne copie que si la source est plus récente que la destination, ou que la destination manque (update).
     .option-v = dit ce qui est copié (verbose).
     .option-f = remplace sans demander (force).
     .example-1 = faire une copie à côté
@@ -571,7 +572,7 @@ man-echo = affiche le texte. Très utile avec > pour écrire dans un fichier : e
     .example-2 = deux lignes, avec un échappement
 man-exit = quitte le shell. Dans une session ssh, ferme la connexion et ramène à la machine d'où l'on venait (ici, ton poste).
     .synopsis = exit
-man-find = cherche des fichiers dans un lieu et tous ses sous-lieux. Ex. : find . -name "*.pdf" ; -type f ne garde que les fichiers, -type d que les dossiers ; -mtime +30 ceux modifiés il y a plus de 30 jours (-mtime -7 : moins de 7 jours) ; -maxdepth 1 ne descend pas dans les sous-lieux ; -delete efface ce qui est trouvé (prudence : lancer d'abord sans -delete pour voir la liste) ; -printf FORMAT affiche chacun à ta façon (%p le chemin, %f le nom, %s la taille, %u le propriétaire, %m les droits, \n un saut de ligne : GNU find seulement). Autres tests : -iname (sans tenir compte de la casse), -path, -size +100M (plus de 100 Mio ; k, M, G ; les tailles sont arrondies au-dessus, donc -size -1M ne trouve que les fichiers vides), -newer fichier (modifiés après lui), -perm 644 (exactement), -perm -002 (au moins ces bits), -perm /022 (l'un d'eux), -user, -group, -empty, -mmin. Les tests côte à côte doivent tous passer ; -o veut dire « ou », ! (ou -not) « non », et ( ) les groupent (à protéger : \( \)). -exec commande {"{"}{"}"} \; lance la commande pour chaque fichier ({"{"}{"}"} est son chemin) ; avec + au lieu de \;, une seule fois pour tous. find parcourt les lieux lui-même : il efface des centaines de milliers de fichiers là où rm * échoue (« Liste d'arguments trop longue »).
+man-find = cherche des fichiers dans un lieu et tous ses sous-lieux. Ex. : find . -name "*.pdf" ; -type f ne garde que les fichiers, -type d que les dossiers ; -mtime +30 ceux modifiés il y a plus de 30 jours (-mtime -7 : moins de 7 jours) ; -maxdepth 1 ne descend pas dans les sous-lieux ; -delete efface ce qui est trouvé (prudence : lancer d'abord sans -delete pour voir la liste) ; -printf FORMAT affiche chacun à ta façon (%p le chemin, %f le nom, %s la taille, %u le propriétaire, %m les droits, \n un saut de ligne : GNU find seulement). Autres tests : -iname (sans tenir compte de la casse), -path, -size +100M (plus de 100 Mio ; k, M, G ; les tailles sont arrondies au-dessus, donc -size -1M ne trouve que les fichiers vides), -newer fichier (modifiés après lui), -perm 644 (exactement), -perm -002 (au moins ces bits), -perm /022 (l'un d'eux), -user, -group, -empty, -mmin. Les tests côte à côte doivent tous passer ; -o veut dire « ou », ! (ou -not) « non », et ( ) les groupent (à protéger : \( \)). -exec commande {"{"}{"}"} \; lance la commande pour chaque fichier ({"{"}{"}"} est son chemin) ; avec + au lieu de \;, une seule fois pour tous. find parcourt les lieux lui-même : il efface des centaines de milliers de fichiers là où rm * échoue (« Liste d'arguments trop longue »). -prune n’entre pas dans le répertoire qui vient de correspondre (find . -name .git -prune -o -print), -xdev reste sur le système de fichiers de départ (ni /proc, ni un disque monté), -ls liste chaque résultat comme ls -dils.
     .synopsis = find [lieu…] [-maxdepth N] [-mindepth N] [tests] [-o|!] [-print|-print0|-printf F|-delete|-exec commande {"{"}{"}"} ;|+]
     .example-1 = les fichiers texte, ici et en dessous
     .example-2 = les statistiques de plus de 30 jours (pour voir)
@@ -581,6 +582,8 @@ man-find = cherche des fichiers dans un lieu et tous ses sous-lieux. Ex. : find 
     .example-6 = les fichiers que tout le monde peut modifier (deux façons de le dire)
     .example-7 = les journaux qui contiennent « error », un seul grep pour tous
     .example-8 = les fichiers d'ana sous /home
+    .example-9 = chaque fichier, sans entrer dans les répertoires .git
+    .example-10 = les gros fichiers du seul système de fichiers racine, listés comme ls -l
 man-free = montre la mémoire vive de la machine (et le swap) : total, utilisée (used), libre (free), le cache disque (buff/cache) et surtout available, ce qui reste vraiment pour lancer des programmes. -h écrit en Ki, Mi, Gi ; -m en mégaoctets. Pour savoir QUI prend la mémoire : top ou ps aux.
     .synopsis = free [-h] [-m]
     .option-h = tailles lisibles : Ki, Mi, Gi.
@@ -691,11 +694,12 @@ man-ln = crée un lien (link). Avec -s, un lien symbolique : un petit fichier qu
     .example-1 = activer un site nginx, à la façon de Debian
     .example-2 = voir les liens et ce qu'ils visent
     .example-3 = basculer le lien current vers une autre version, d'un coup
-man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le propriétaire et la taille ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms. Les noms viennent par ordre alphabétique : -t trie par date (le plus récent d'abord : ls -ltr met le dernier fichier modifié en bas), -S par taille (le plus gros d'abord), -r inverse l'ordre ; -R liste aussi chaque lieu en dessous. À l'écran, les noms sont en couleur (--color=auto, comme l'alias du ~/.bashrc de Debian) : les lieux en bleu, les liens en cyan, les programmes en vert ; --color=never coupe les couleurs, --color=always les garde même dans un tube.
-    .synopsis = ls [-aAlhndi1] [-t|-S|-U|-X] [-r] [-R] [--sort=MOT] [--color[=QUAND]] [lieu…]
+man-ls = liste le contenu d’un lieu (list). -a montre aussi les fichiers cachés, dont le nom commence par un point. -l (long) montre les permissions, le nombre de liens, le propriétaire, le groupe, la taille et la date de dernière modification (l’heure dans les six mois, l’année au-delà), après un total des blocs occupés (en Kio) ; -h écrit les tailles en K, M, G ; -n montre les numéros (uid, gid) au lieu des noms. Les noms viennent par ordre alphabétique : -t trie par date (le plus récent d'abord : ls -ltr met le dernier fichier modifié en bas), -S par taille (le plus gros d'abord), -r inverse l'ordre ; -R liste aussi chaque lieu en dessous. À l'écran, les noms sont en couleur (--color=auto, comme l'alias du ~/.bashrc de Debian) : les lieux en bleu, les liens en cyan, les programmes en vert ; --color=never coupe les couleurs, --color=always les garde même dans un tube.
+    .synopsis = ls [-aAlhndiF1] [-t|-S|-U|-X] [-r] [-R] [--sort=MOT] [--color[=QUAND]] [lieu…]
     .option-a = montre tout (all), y compris les fichiers cachés, dont le nom commence par un point, et les lieux . et ..
     .option-A = comme -a, sans . ni .. (almost all).
-    .option-l = format long : type, permissions, propriétaire, groupe, taille et nom, une entrée par ligne.
+    .option-l = format long : type, permissions, liens, propriétaire, groupe, taille, date et nom, une entrée par ligne.
+    .option-F = ajoute la nature de chaque entrée après son nom : / un lieu, @ un lien, * un programme (classify).
     .option-h = avec -l, écrit les tailles de façon lisible (human-readable) : 1,2K, 34M, 5G.
     .option-n = comme -l, mais avec les numéros du propriétaire (uid) et du groupe (gid) au lieu de leurs noms (numeric).
     .option-i = montre le numéro d'inode de chaque fichier : deux noms avec le même numéro sont le même fichier (un lien physique).

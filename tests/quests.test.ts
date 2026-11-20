@@ -252,7 +252,7 @@ for (const language of LANGUAGES)
           'sudo chmod 770 /srv/team',
         ]);
         contains(all, 'uid=1000(vous) gid=1000(vous) groupes=1000(vous),4(adm),27(sudo),1003(web-team)');
-        contains(all, '-rw-r----- www-data adm');
+        contains(all, '-rw-r----- 1 www-data adm');
         contains(all, 'usermod : Permission non accordée.');
         contains(all, 'malo : malo adm');
         contains(all, 'Malo n’est plus dans le groupe web-team'.replace('’', "'"));
@@ -938,12 +938,12 @@ for (const language of LANGUAGES)
           'ls -l /srv/gallery',
         ]);
         expect(all).toContain('node');
-        expect(all).toMatch(new RegExp(`drwxr-xr-x ${L('you')} +${L('you')} +4096 photos`));
+        expect(all).toMatch(new RegExp(`drwxr-xr-x \\d+ ${L('you')} +${L('you')} +4096 .* photos`));
         contains(all, "l'uid 1000, c'est toi");
         expect(s.finished).toBe(false);
         s.execute(L('sudo chgrp -R yasmine /srv/gallery/photos'));
         s.execute(L('sudo chmod -R g+w /srv/gallery/photos'));
-        expect(s.execute(L('ls -ln /srv/gallery'))).toMatch(/drwxrwxr-x 1000 +1001 +4096 photos/);
+        expect(s.execute(L('ls -ln /srv/gallery'))).toMatch(/drwxrwxr-x \d+ 1000 +1001 +4096 .* photos/);
         expect(s.finished).toBe(true);
       });
 

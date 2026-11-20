@@ -112,7 +112,7 @@ for (const language of LANGUAGES)
         expect(all).toContain('check-auth@verifier.example');
         all = play(['sudo opendkim-genkey -v -d gardens.example -s mail -D /etc/dkimkeys', 'sudo ls -l /etc/dkimkeys']);
         expect(all).toContain('opendkim-genkey: DNS TXT record written to mail.txt');
-        expect(all).toMatch(/-rw------- root +root +\d+ mail\.private/);
+        expect(all).toMatch(/-rw------- \d+ root +root +\d+ .* mail\.private/);
         write(CONF, configure('Socket\t\t\tinet:8891@localhost'));
         // The key belongs to root: opendkim can't read it.
         all = play(['sudo systemctl restart opendkim', 'journalctl -u opendkim -n 4']);

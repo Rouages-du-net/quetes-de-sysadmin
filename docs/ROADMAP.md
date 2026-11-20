@@ -698,11 +698,13 @@ them safely.
     story's network, else a timeout) (`commands/net-clients.ts`);
     `tracepath`, `mtr`, `ifconfig`, `route` stay "command not found" as on
     Debian, and `ifconfig` earns a tip pointing to `ip a`, `ip r`, `ss`.
-  - [ ] **Finer points**: `du` counts apparent sizes, not 4 KiB blocks
-    (`du -sh` of small files shows bytes); `mv` of a directory (refused by
-    design); `rm -r` (refused by design); `ls -l` without dates; `tar`'s
-    lists without directories; `curl`'s progress meter; `cp -u`, `ls -F`,
-    `find -prune`/`-xdev`/`-ls`.
+  - [x] **Finer points**: `du` counts 4 KiB blocks (apparent sizes with
+    `-b`, `--apparent-size`); `ls -l` with links, dates (the six months
+    rule, the language's months) and `total`, aligned like GNU ls; `tar`
+    lists directories; `curl -o` shows its progress meter (`-s` silences
+    it); `cp -u`, `ls -F`, `touch` on an existing file, `find -prune`/
+    `-xdev`/`-ls`. Left: `mv` of a directory and `rm -r` (refused by
+    design), hard links' count in `ls -l`.
 - [ ] **An offensive story**: understanding an attack by replaying it, not
   just reading its outcome. Outside the game's usual scope ("Game rules" in
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to

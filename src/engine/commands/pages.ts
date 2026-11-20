@@ -177,7 +177,7 @@ export const PAGES: Record<string, Page> = {
   check_disk: { examples: ['/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /', '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio'], see: ['df', 'check_http', 'check_procs', 'mail'] },
   check_http: { examples: ['/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live'], see: ['curl', 'check_disk', 'check_procs'] },
   check_procs: { examples: ['/usr/lib/nagios/plugins/check_procs -C stream -c 1:'], see: ['ps', 'check_disk', 'check_http'] },
-  cp: { long: { 'recursive': 'r', 'archive': 'a', 'interactive': 'i', 'no-clobber': 'n', 'verbose': 'v', 'force': 'f' }, options: ['r', 'R', 'a', 'p', 'i', 'n', 'v', 'f'], examples: ['cp sourdough sourdough_2', 'cp ~/Market/cheese .', 'cp -a /etc/nginx /etc/nginx.bak', 'cp -iv notes.txt backup/'], see: ['mv', 'rm', 'rsync'] },
+  cp: { long: { 'recursive': 'r', 'archive': 'a', 'interactive': 'i', 'no-clobber': 'n', 'verbose': 'v', 'force': 'f', 'update': 'u' }, options: ['r', 'R', 'a', 'p', 'i', 'n', 'v', 'f', 'u'], examples: ['cp sourdough sourdough_2', 'cp ~/Market/cheese .', 'cp -a /etc/nginx /etc/nginx.bak', 'cp -iv notes.txt backup/'], see: ['mv', 'rm', 'rsync'] },
   crontab: { examples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/memories/ /mnt/backup/memories/', 'sudo crontab -u malo -l'], see: ['rsync', 'nano', 'systemctl'] },
   curl: { options: ['I', 'i', 'k', '4', '6', 'v', 's', 'G', 'X', 'o', 'O'], examples: ['curl -I http://localhost/', 'curl -6 -v http://www.ferry.example/', 'curl -4 http://www.ferry.example/booking/', 'curl http://[::1]/', 'curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s -G --data-urlencode 'query=up{job=\"node\"}' http://localhost:9090/api/v1/query", 'curl -o page.html http://localhost/'], see: ['dig', 'nginx', 'openssl', 'ss', 'jq'] },
   df: { long: { 'human-readable': 'h', 'inodes': 'i', 'print-type': 'T' }, options: ['h', 'i', 'T'], examples: ['df -h', 'df -i', 'df -ih /srv/radio', 'df -hT'], see: ['du', 'find'] },
@@ -223,11 +223,11 @@ export const PAGES: Record<string, Page> = {
     examples: ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs webapp', 'sudo docker compose config', 'sudo docker compose down'],
     see: ['docker'],
   },
-  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b', 'all': 'a', 'total': 'c' }, options: ['h', 's', 'd', 'b', 'a', 'c'], values: ['d'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
+  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b', 'all': 'a', 'total': 'c', 'apparent-size': '' }, options: ['h', 's', 'd', 'b', 'a', 'c'], values: ['d'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
   'fail2ban-client': { examples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client unban 198.51.100.40', 'sudo fail2ban-client get recidive bantime', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], see: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, examples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], see: ['fail2ban-client', 'nano', 'nft'] },
   find: {
-    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete', 'find / -type f -size +100M', "find /etc -name '*.conf' -newer /etc/hostname", "find /var/www -type f -perm /o+w -o -type f -perm -002", "find . -name '*.log' -exec grep -l error {} +", 'find /home -user ana -type f'],
+    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete', 'find / -type f -size +100M', "find /etc -name '*.conf' -newer /etc/hostname", "find /var/www -type f -perm /o+w -o -type f -perm -002", "find . -name '*.log' -exec grep -l error {} +", 'find /home -user ana -type f', "find /srv -name .git -prune -o -type f -print", 'sudo find / -xdev -size +100M -ls'],
     see: ['ls', 'grep', 'du', 'rm', 'crontab', 'xargs'],
   },
   grep: {
@@ -527,7 +527,7 @@ export const PAGES: Record<string, Page> = {
   mount: { section: 8, examples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/usb', 'sudo umount /mnt/usb', 'sudo mount -a', 'sudo mount -t nfs nas.internal:/srv/photos /mnt/photos'], see: ['umount', 'lsblk', 'df', 'findmnt', 'blkid', 'nfs', 'mount.cifs'] },
   umount: { section: 8, examples: ['sudo umount /mnt/usb'], see: ['mount', 'lsblk'] },
   lsof: { section: 8, examples: ['sudo lsof +L1', 'sudo lsof /var/log/radio/stream.log', 'sudo lsof -p 1730'], see: ['df', 'du', 'ps'] },
-  ls: { long: { 'color': '', 'all': 'a', 'almost-all': 'A', 'human-readable': 'h', 'numeric-uid-gid': 'n', 'inode': 'i', 'directory': 'd', 'reverse': 'r', 'recursive': 'R', 'sort': '' }, options: ['a', 'A', 'l', 'h', 'n', 'i', 'd', 't', 'r', 'S', 'R', 'U', 'X', '1'], examples: ['ls', 'ls -a', 'ls -l ~/memories', 'ls -ld /srv/till', 'ls -ltr /var/log', 'ls -lhS /var/log', 'ls -R /etc/nginx'], see: ['cd', 'pwd', 'chmod', 'find'] },
+  ls: { long: { 'color': '', 'all': 'a', 'almost-all': 'A', 'human-readable': 'h', 'numeric-uid-gid': 'n', 'inode': 'i', 'directory': 'd', 'reverse': 'r', 'recursive': 'R', 'sort': '', 'classify': 'F' }, options: ['a', 'A', 'l', 'h', 'n', 'i', 'd', 't', 'r', 'S', 'R', 'U', 'X', 'F', '1'], examples: ['ls', 'ls -a', 'ls -l ~/memories', 'ls -ld /srv/till', 'ls -ltr /var/log', 'ls -lhS /var/log', 'ls -R /etc/nginx'], see: ['cd', 'pwd', 'chmod', 'find'] },
   logrotate: {
     section: 8,
     examples: ['sudo logrotate -d /etc/logrotate.d/radio', 'sudo logrotate -f /etc/logrotate.d/radio', 'cat /etc/logrotate.d/rsyslog'],

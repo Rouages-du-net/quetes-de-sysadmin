@@ -238,6 +238,11 @@ presents them for people.
 - `commands/net-clients.ts`: `wget` (through the game's `curl`),
   `nslookup`, and `host` without the simulated DNS (`hostWithoutDns`);
   the `net-tools` tip of `tips.ts` for `ifconfig`, `route`, `netstat`.
+- `ls -l` (`longRow`, `longLines`, `lsDate`: links, dates by the six
+  months rule, `total`), `ls -F`, `du` in 4 KiB blocks, `cp -u`, `touch`,
+  `find -prune`/`-xdev`/`-ls` in `commands/files.ts`; `nowOf()` of
+  `time.ts`: the date a file without `mtime` has; curl's progress meter
+  (`progressMeter`) in `commands/network.ts`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
   `forget` policies, `prune`), kept in `state.restic`.
 - `src/engine/unlocking.ts`: stories open in waves; an added story

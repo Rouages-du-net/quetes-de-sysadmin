@@ -301,10 +301,24 @@ export const NETWORK: Record<string, Command> = {
         n.lines = true;
         delete n.size;
       }
+      // Writing to a file, curl shows its progress meter on the error output (-s silences it).
+      const silent = args.some((a) => a === '--silent' || (/^-[A-Za-z]+$/.test(a) && a.includes('s')));
+      if (!silent) game.error(progressMeter(new TextEncoder().encode(body ? `${body}\n` : '').length));
       return '';
     },
   },
 };
+
+// curl's progress meter once the transfer is over (curl 8: the two header lines, then the last state).
+function progressMeter(bytes: number): string {
+  const size = (n: number) => (n < 100_000 ? String(n) : n < 1024 * 10_000 ? `${Math.floor(n / 1024)}k` : `${(n / 1024 / 1024).toFixed(1)}M`).padStart(5);
+  const speed = size(bytes * 1000);
+  return [
+    '  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current',
+    '                                 Dload  Upload   Total   Spent    Left  Speed',
+    `100 ${size(bytes)}  100 ${size(bytes)}    0     0 ${speed}      0 --:--:-- --:--:-- --:--:-- ${speed}`,
+  ].join('\n');
+}
 
 // curl itself, its body on the screen (or in the pipe).
 function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {

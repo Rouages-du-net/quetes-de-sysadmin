@@ -34,14 +34,46 @@ const hasDoubleV = (args: string[]) => args.filter((a) => /^-[A-Za-z]+$/.test(a)
 
 const modeFor = (n: Node) => n.mode ?? (n.type === 'directory' ? 'rwxr-xr-x' : 'rw-r--r--');
 
-// A line of "ls -l". Deliberate difference: the link count and
-// the date are left out.
 // The name of an ls entry, in colour if ls colours (see couleurs.ts).
 type Paint = (name: string, n: Node) => string;
 const withoutPainting: Paint = (name) => name;
 const painting = (enabled: boolean): Paint => (enabled ? (name, n) => sgr(lsColour(name, n.type, n.type === 'file' && n.link !== undefined, modeFor(n)), name) : withoutPainting);
 
-function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting): string {
+// ls -F: what kind of entry it is, after its name (/ place, @ link, * executable).
+const classify = (n: Node) =>
+  n.type === 'directory' ? '/' : n.link !== undefined ? '@' : /x/.test(modeFor(n)) ? '*' : '';
+
+// The date of ls -l (GNU coreutils): "Nov 20 14:54" within six months
+// (and not in the future), "Nov 20  2025" otherwise; in French, "20 nov.  14:54".
+const SIX_MONTHS = 15_778_476_000;
+export function lsDate(game: Shell, mtime: number | undefined): string {
+  const now = nowOf(game);
+  const ms = mtime ?? now;
+  const d = new Date(ms);
+  const language = game.t.language;
+  const months = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(language, { month: 'short', timeZone: 'UTC' }).format(Date.UTC(2027, m, 15)));
+  const width = Math.max(...months.map((m) => m.length));
+  const month = months[d.getUTCMonth()].padEnd(width);
+  const recent = ms <= now && now - ms < SIX_MONTHS;
+  const end = recent ? `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` : ` ${d.getUTCFullYear()}`;
+  const day = String(d.getUTCDate()).padStart(2);
+  return language === 'en' ? `${month} ${day} ${end}` : `${day} ${month} ${end}`;
+}
+
+// The blocks a node takes on disk (KiB), for ls's "total" and du.
+const blocksOf = (game: Shell, n: Node) => (n.type === 'directory' ? 4 : n.link !== undefined ? 0 : Math.ceil(sizeFor(n, game) / 4096) * 4);
+
+// A row of "ls -l": rights, links, owner, group, size, date, name.
+interface LongRow {
+  mode: string;
+  links: string;
+  owner: string;
+  group: string;
+  size: string;
+  date: string;
+  name: string;
+}
+function longRow(game: Shell, name: string, n: Node, human: boolean, numeric = false, paint: Paint = withoutPainting, mark = false): LongRow {
   // -n: the numbers (uid, gid) instead of the names.
   // Through an NFS mount: the server's numbers, with this machine's names.
   // Through a Windows share (cifs): the mount's owner, group and modes.
@@ -53,11 +85,22 @@ function longLine(game: Shell, name: string, n: Node, human: boolean, numeric = 
   const group = numeric ? String(game.accounts.groups[groupName]?.gid ?? groupName) : groupName;
   const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);
   const size = human ? readable(bytes, game.t.language) : String(bytes);
-  const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : '';
+  // A place has two links, plus one per place inside it (their ..).
+  const links = n.type === 'directory' ? 2 + Object.values(n.children).filter((c) => c.type === 'directory').length : 1;
+  const date = lsDate(game, n.type === 'file' ? n.mtime : undefined);
   // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
   if (n.type === 'file' && n.link !== undefined)
-    return `lrwxrwxrwx ${owner.padEnd(8)} ${group.padEnd(8)} ${String(n.link.length).padStart(6)} ${paint(name, n)} -> ${n.link}`;
-  return `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)} ${owner.padEnd(8)} ${group.padEnd(8)} ${size.padStart(6)} ${paint(name, n)}${suffix}`;
+    return { mode: 'lrwxrwxrwx', links: '1', owner, group, size: String(n.link.length), date, name: `${paint(name, n)}${mark ? '@' : ''} -> ${n.link}` };
+  // The / added to places stays (like ls -F): colour is never the only sign.
+  const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(n) : '';
+  return { mode: `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)}`, links: String(links), owner, group, size, date, name: `${paint(name, n)}${suffix}` };
+}
+
+/** The rows of ls -l, aligned like GNU ls: each column as wide as its widest value. */
+function longLines(rows: LongRow[]): string[] {
+  const w = (k: keyof LongRow) => Math.max(...rows.map((r) => r[k].length));
+  const [links, owner, group, size] = [w('links'), w('owner'), w('group'), w('size')];
+  return rows.map((r) => `${r.mode} ${r.links.padStart(links)} ${r.owner.padEnd(owner)} ${r.group.padEnd(group)} ${r.size.padStart(size)} ${r.date} ${r.name}`);
 }
 
 // Source → (destination place, final name), like mv and cp on Linux:
@@ -114,20 +157,29 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting, one
   const long = letters.has('l') || letters.has('n');
   // -i: the inode number in front of each name.
   const ino = (e: Node, text: string) => (letters.has('i') ? `${String(inode(e)).padStart(7)} ${text}` : text);
+  // -F: each name followed by its kind (/, @, *).
+  const mark = letters.has('F');
+  const row = (name: string, e: Node) => longRow(game, name, e, letters.has('h'), letters.has('n'), paint, mark);
   // -d: the place itself, not its contents.
-  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLine(game, target, n, letters.has('h'), letters.has('n'), paint) : paint(target, n));
+  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLines([row(target, n)])[0] : paint(target, n) + (mark ? classify(n) : ''));
   if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { target: target }));
   // -a: every name, . and .. included; -A: every name but . and ..
   let inputs: [string, Node][] = Object.entries(n.children).filter(([name]) => letters.has('a') || letters.has('A') || !name.startsWith('.'));
   if (letters.has('a')) inputs.unshift(['.', n], ['..', game.find(target + '/..') ?? n]);
   inputs = sortEntries(game, inputs, letters);
-  if (long) return inputs.map(([name, e]) => ino(e, longLine(game, name, e, letters.has('h'), letters.has('n'), paint))).join('\n');
+  if (long) {
+    // First the blocks the entries take (KiB, like GNU ls), then one line each.
+    const blocks = inputs.reduce((t, [, e]) => t + blocksOf(game, e), 0);
+    const total = `total ${letters.has('h') ? readable(blocks * 1024, game.t.language) : blocks}`;
+    const lines = longLines(inputs.map(([name, e]) => row(name, e)));
+    return [total, ...inputs.map(([, e], k) => ino(e, lines[k]))].join('\n');
+  }
   // The / added to places stays outside the colour (like ls -F): colour is never the only sign.
-  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : '');
+  const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(e) : '');
   if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last && !one ? '    ' : '\n');
   // Like the real ls: in columns on screen, one name per line in a
   // pipe or a file (and without the / added to places), or with -1.
-  if (!last) return inputs.map(([name, e]) => paint(name, e)).join('\n');
+  if (!last) return inputs.map(([name, e]) => paint(name, e) + (mark ? classify(e) : '')).join('\n');
   if (one) return inputs.map(([name, e]) => shows(name, e)).join('\n');
   return inColumns(inputs.map(([name, e]) => shows(name, e)), game.columns);
 }
@@ -189,6 +241,11 @@ function overwriting(game: Shell, sources: string[], dest: string, letters: Set<
       const target = game.find(source) ? destination(game, source, dest) : null;
       const exists = target !== null && game.find(target)?.type === 'file' && game.resolve(source) !== target;
       if (exists && letters.has('n')) continue;
+      // -u (update): only when the source is newer than the destination (a file without a date is recent).
+      if (exists && letters.has('u')) {
+        const time = (n: Node | null) => (n?.type === 'file' && n.mtime !== undefined ? n.mtime : nowOf(game));
+        if (time(game.find(source)) <= time(game.find(target!))) continue;
+      }
       if (exists && letters.has('i') && !(command === 'mv' && letters.has('f'))) {
         const shown = game.find(dest)?.type === 'directory' ? `${dest.replace(/\/$/, '')}/${game.name(source)}` : dest;
         // The question ends with a space (Fluent trims it from the text).
@@ -271,6 +328,9 @@ function find(game: Shell, args: string[]): string {
   const toDelete: string[] = [];
   let hasAction = false;
   let failed = false;
+  // -prune: don't go into the directory being looked at; -xdev: stay on the starting file system.
+  let pruned = false;
+  let xdev = false;
   const clock: number | undefined = game.state.systemd?.clock;
   const now = clock ?? 0;
   // A file without a date is recent: as old as the clock, or newer than any dated one.
@@ -360,6 +420,25 @@ function find(game: Shell, args: string[]): string {
       }
       case '-empty':
         return test((_, e) => (e.type === 'directory' ? !Object.keys(e.children).length : sizeFor(e, game) === 0));
+      case '-prune':
+        return test((_, e) => {
+          if (e.type === 'directory') pruned = true;
+          return true;
+        });
+      case '-xdev':
+      case '-mount':
+        xdev = true;
+        return test(() => true);
+      // -ls: like ls -dils (inode, blocks in KiB, rights, links, owner, group, size, date, path).
+      case '-ls':
+        hasAction = true;
+        return test((path, e) => {
+          const r = longRow(game, path, game.find(path, false) ?? e, false);
+          const blocks = e.type === 'directory' ? 4 : Math.ceil(sizeFor(e, game) / 4096) * 4;
+          const name = r.name.replace(/\/$/, '');
+          out.push(`${String(inode(e)).padStart(9)} ${String(blocks).padStart(6)} ${r.mode} ${r.links.padStart(3)} ${r.owner.padEnd(8)} ${r.group.padEnd(8)} ${r.size.padStart(8)} ${r.date} ${name}\n`);
+          return true;
+        }, true);
       case '-true':
         return test(() => true);
       case '-false':
@@ -453,13 +532,18 @@ function find(game: Shell, args: string[]): string {
     return x.op === 'and' ? evaluate(x.left, path, e) && evaluate(x.right, path, e) : evaluate(x.left, path, e) || evaluate(x.right, path, e);
   };
 
+  const device = (path: string) => game.mount(game.resolve(path))?.path;
+  let startDevice: string | undefined;
   const walk = (path: string, e: Node, level: number) => {
+    pruned = false;
     if (level >= minDepth) {
       const kept = expression ? evaluate(expression, path, e) : true;
       // Without an action, the default one: -print, of what the whole expression keeps.
       if (kept && !hasAction) out.push(path + '\n');
     }
-    if (e.type !== 'directory' || level >= maxDepth) return;
+    if (e.type !== 'directory' || level >= maxDepth || pruned) return;
+    // -xdev: a mount point is listed, not entered.
+    if (xdev && level > 0 && device(path) !== startDevice) return;
     if (!game.can(e, 'r') || !game.can(e, 'x')) return void game.error(game.t('find-permission', { target: path }));
     for (const [name, child] of Object.entries(e.children).sort(([a], [b]) => compareNames(a, b))) walk(`${path.replace(/\/$/, '')}/${name}`, child, level + 1);
   };
@@ -470,6 +554,7 @@ function find(game: Shell, args: string[]): string {
       failed = true;
       continue;
     }
+    startDevice = device(start);
     walk(start, n, 0);
   }
   for (const b of batches) {
@@ -882,6 +967,9 @@ export const FILES: Record<string, Command> = {
       for (const target of args) {
         const there = game.find(target);
         if (there && (immutable(there) || appendOnly(there))) game.error(`touch: cannot touch '${target}': Operation not permitted`, 1);
+        else if (there && game.who !== 'root' && !game.can(there, 'w') && (there.owner ?? game.player) !== game.who) game.error(`touch: cannot touch '${target}': Permission denied`, 1);
+        // An existing file: its date becomes now.
+        else if (there?.type === 'file') there.mtime = nowOf(game);
         if (there) continue;
         const error = game.place('touch', target, { type: 'file', content: '', owner: game.who });
         if (error) game.error(error);
@@ -953,10 +1041,12 @@ export const FILES: Record<string, Command> = {
     launch: ({ args, game }) => {
       // --inodes: count files (and places) instead of bytes; -d N (--max-depth=N): show only N levels.
       const inodes = args.includes('--inodes');
+      // --apparent-size (and -b): the bytes the files hold, not the 4 KiB blocks they take on the disk.
+      const apparent = args.includes('--apparent-size');
       let depth = Infinity;
       const raw: string[] = [];
       for (let i = 0; i < args.length; i++) {
-        if (args[i] === '--inodes') continue;
+        if (args[i] === '--inodes' || args[i] === '--apparent-size') continue;
         if (args[i] === '-d') depth = Number(args[++i]);
         else if (args[i].startsWith('--max-depth=')) depth = Number(args[i].slice(12));
         else raw.push(args[i]);
@@ -973,12 +1063,15 @@ export const FILES: Record<string, Command> = {
         if (e.type === 'file') {
           if (seen.has(e)) return 0;
           seen.add(e);
-          const size = inodes ? 1 : sizeFor(e, game);
+          const bytes = sizeFor(e, game);
+          // Like GNU du on ext4: whole 4 KiB blocks (an empty file takes none, a symbolic link none here).
+          const size = inodes ? 1 : apparent || letters.has('b') ? bytes : e.link !== undefined ? 0 : Math.ceil(bytes / 4096) * 4096;
           // -a: every file too, not only places.
           if (letters.has('a') && !letters.has('s') && level > 0 && level <= depth) lines.push(`${fmt(size)}\t${path}`);
           return size;
         }
-        let total = inodes ? 1 : 0;
+        // A directory takes its own block.
+        let total = inodes ? 1 : 4096;
         for (const [k, child] of Object.entries(e.children)) total += walk(`${path.replace(/\/$/, '')}/${k}`, child, level + 1);
         if (!letters.has('s') && level <= depth) lines.push(`${fmt(total)}\t${path}`);
         return total;

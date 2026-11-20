@@ -36,7 +36,7 @@ describe('useradd and adduser', () => {
     expect(s.execute('getent passwd alex')).toBe('alex:x:1001:1001::/home/alex:/bin/bash');
     expect(s.execute('getent group sudo')).toBe('sudo:x:27:you,alex');
     expect(s.execute('ls -A /home/alex')).toBe('.bash_logout  .bashrc  .profile');
-    expect(s.execute('ls -ld /home/alex')).toMatch(/^drwxr-xr-x alex +alex/);
+    expect(s.execute('ls -ld /home/alex')).toMatch(/^drwxr-xr-x \d+ alex +alex/);
     // No password yet: locked (L).
     expect(s.execute('sudo passwd -S alex')).toMatch(/^alex L \d{4}-\d\d-\d\d 0 99999 7 -1$/);
     // Without -m nor -s: no home, /bin/sh.
@@ -73,7 +73,7 @@ describe('useradd and adduser', () => {
     expect(s.prompt()).toBe('Is the information correct? [Y/n] ');
     expect(s.execute('')).toBe("info: Adding new user `mei' to supplemental / extra groups `users' ...\ninfo: Adding user `mei' to group `users' ...");
     expect(s.execute('getent passwd mei')).toBe('mei:x:1001:1001:Mei Lin,,,:/home/mei:/bin/bash');
-    expect(s.execute('ls -ld /home/mei')).toMatch(/^drwx------ mei/);
+    expect(s.execute('ls -ld /home/mei')).toMatch(/^drwx------ \d+ mei/);
     expect(s.execute('id mei')).toBe('uid=1001(mei) gid=1001(mei) groups=1001(mei),100(users)');
     expect(s.execute('sudo adduser mei sudo')).toBe("info: Adding user `mei' to group `sudo' ...");
     expect(s.execute('sudo adduser mei')).toBe("fatal: The user `mei' already exists.");

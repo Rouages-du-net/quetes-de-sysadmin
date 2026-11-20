@@ -454,6 +454,7 @@ man-cp = copies a file (copy). The original stays in place. -r copies a whole pl
     .option-p = keeps the rights and the dates (preserve); root also keeps the owner.
     .option-i = asks before replacing an existing file (interactive): y to replace.
     .option-n = never replaces an existing file (no clobber).
+    .option-u = copies only when the source is newer than the destination, or the destination is missing (update).
     .option-v = says what is copied (verbose).
     .option-f = replaces without asking (force).
     .example-1 = make a copy next to it
@@ -556,7 +557,7 @@ man-echo = prints the text. Very useful with > to write into a file: echo "hello
     .example-2 = two lines, with an escape
 man-exit = leaves the shell. In an ssh session, closes the connection and takes you back to the machine you came from (here, your workstation).
     .synopsis = exit
-man-find = searches for files in a place and all its sub-places. E.g.: find . -name "*.pdf"; -type f keeps only files, -type d only directories; -mtime +30 those modified more than 30 days ago (-mtime -7: less than 7 days); -maxdepth 1 does not go down into sub-places; -delete deletes what is found (careful: run it first without -delete to see the list); -printf FORMAT prints each one your way (%p the path, %f the name, %s the size, %u the owner, %m the rights, \n a new line: GNU find only). Other tests: -iname (any case), -path, -size +100M (more than 100 MiB; k, M, G; sizes are rounded up, so -size -1M only finds empty files), -newer file (modified after it), -perm 644 (exactly), -perm -002 (at least these bits), -perm /022 (any of them), -user, -group, -empty, -mmin. Tests side by side must all pass; -o means "or", ! (or -not) "not", and ( ) group them (escape them: \( \)). -exec command {"{"}{"}"} \; runs the command for each file ({"{"}{"}"} is its path); with + instead of \;, once for all of them. find walks through places by itself: it deletes hundreds of thousands of files where rm * fails ("Argument list too long").
+man-find = searches for files in a place and all its sub-places. E.g.: find . -name "*.pdf"; -type f keeps only files, -type d only directories; -mtime +30 those modified more than 30 days ago (-mtime -7: less than 7 days); -maxdepth 1 does not go down into sub-places; -delete deletes what is found (careful: run it first without -delete to see the list); -printf FORMAT prints each one your way (%p the path, %f the name, %s the size, %u the owner, %m the rights, \n a new line: GNU find only). Other tests: -iname (any case), -path, -size +100M (more than 100 MiB; k, M, G; sizes are rounded up, so -size -1M only finds empty files), -newer file (modified after it), -perm 644 (exactly), -perm -002 (at least these bits), -perm /022 (any of them), -user, -group, -empty, -mmin. Tests side by side must all pass; -o means "or", ! (or -not) "not", and ( ) group them (escape them: \( \)). -exec command {"{"}{"}"} \; runs the command for each file ({"{"}{"}"} is its path); with + instead of \;, once for all of them. find walks through places by itself: it deletes hundreds of thousands of files where rm * fails ("Argument list too long"). -prune doesn't go into the directory just matched (find . -name .git -prune -o -print), -xdev stays on the starting file system (not /proc, nor a mounted disk), -ls lists each match like ls -dils.
     .synopsis = find [place…] [-maxdepth N] [-mindepth N] [tests] [-o|!] [-print|-print0|-printf F|-delete|-exec command {"{"}{"}"} ;|+]
     .example-1 = the text files, here and below
     .example-2 = the statistics older than 30 days (to look)
@@ -566,6 +567,8 @@ man-find = searches for files in a place and all its sub-places. E.g.: find . -n
     .example-6 = the files anybody may write to (two ways to say it)
     .example-7 = the logs that contain "error", one grep for all of them
     .example-8 = ana's files under /home
+    .example-9 = every file, without going into .git directories
+    .example-10 = big files of the root file system only, listed like ls -l
 man-free = shows the machine's RAM (and swap): total, used, free, the disk cache (buff/cache) and above all available, what is really left for starting programs. -h writes in Ki, Mi, Gi; -m in megabytes. To find out WHO is taking the memory: top or ps aux.
     .synopsis = free [-h] [-m]
     .option-h = readable sizes: Ki, Mi, Gi.
@@ -677,11 +680,12 @@ man-ln = creates a link (link). With -s, a symbolic link: a small file that hold
     .example-1 = enable an nginx site, the Debian way
     .example-2 = see the links and what they point to
     .example-3 = switch the current link to another version, in one go
-man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the owner and the size; -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names. Names come in alphabetical order: -t sorts by date (the most recent first: ls -ltr puts the last modified file at the bottom), -S by size (the largest first), -r reverses the order; -R also lists every place below. On screen, names are in colour (--color=auto, like the alias in Debian's ~/.bashrc): places in blue, links in cyan, programs in green; --color=never turns colours off, --color=always keeps them even in a pipe.
-    .synopsis = ls [-aAlhndi1] [-t|-S|-U|-X] [-r] [-R] [--sort=WORD] [--color[=WHEN]] [place…]
+man-ls = lists the content of a place (list). -a also shows hidden files, whose name starts with a dot. -l (long) shows the permissions, the number of links, the owner, the group, the size and the date of the last change (the time within six months, the year beyond), after a total of the blocks taken (in KiB); -h writes sizes in K, M, G; -n shows the numbers (uid, gid) instead of the names. Names come in alphabetical order: -t sorts by date (the most recent first: ls -ltr puts the last modified file at the bottom), -S by size (the largest first), -r reverses the order; -R also lists every place below. On screen, names are in colour (--color=auto, like the alias in Debian's ~/.bashrc): places in blue, links in cyan, programs in green; --color=never turns colours off, --color=always keeps them even in a pipe.
+    .synopsis = ls [-aAlhndiF1] [-t|-S|-U|-X] [-r] [-R] [--sort=WORD] [--color[=WHEN]] [place…]
     .option-a = shows everything (all), including hidden files, whose name starts with a dot, and the places . and ..
     .option-A = like -a, without . and .. (almost all).
-    .option-l = long format: type, permissions, owner, group, size and name, one entry per line.
+    .option-l = long format: type, permissions, links, owner, group, size, date and name, one entry per line.
+    .option-F = adds each entry's kind after its name: / a place, @ a link, * a program (classify).
     .option-h = with -l, writes sizes in a readable way (human-readable): 1.2K, 34M, 5G.
     .option-n = like -l, but with the numbers of the owner (uid) and the group (gid) instead of their names (numeric).
     .option-i = shows the inode number of each file: two names with the same number are the same file (a hard link).

@@ -106,9 +106,9 @@ for (const language of LANGUAGES)
     it('chapter 2 — solution: setgid, umask in ~/.profile, visudo (with an error fixed)', () => {
       const { c, jouer: play, editer: edit } = part(DEPARTURE);
       let all = play(['ls -l /srv/till/statements', 'groups lina karim']);
-      expect(all).toContain('-rw-r--r-- lina     lina');
+      expect(all).toMatch(/-rw-r--r-- \d+ lina +lina /);
       all = shareDirectory(play) + play(['ls -ld /srv/till/statements']);
-      expect(all).toContain('drwxrwsr-x root     till');
+      expect(all).toMatch(/drwxrwsr-x \d+ root +till /);
       for (const who of ['lina', 'karim']) edit(`sudo nano /home/${who}/.profile`, (t) => t.replace('#umask 022', 'umask 002'));
       all = play(['which systemctl', 'sudo visudo -f /etc/sudoers.d/till']);
       expect(all).toContain('/usr/bin/systemctl');
