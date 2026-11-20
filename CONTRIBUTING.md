@@ -134,8 +134,12 @@ the tool's **official** documentation (manual pages, project site, RFCs).
 ### Difficulty
 
 Each chapter shows a difficulty from 1 to 5 stars, computed by
-`src/engine/difficulty.ts` from how much of the game comes before it and
-from its size: there is nothing to set by hand.
+`src/engine/difficulty.ts` from the chapters it assumes (those that open its
+story, then the earlier ones of its story) and from its size (the steps the
+game checks, the commands it introduces): there is nothing to set by hand.
+The scale is absolute, with fixed thresholds: a new story gets its own
+levels and changes no one else's, so choose its `after` for what it really
+assumes, not for its stars.
 
 ### Tests
 

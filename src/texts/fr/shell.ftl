@@ -145,3 +145,7 @@ colour-argument-invalid =
       - « never », « no », « none »
       - « auto », « tty », « if-tty »
     Saisissez « { $command } --help » pour plus d'informations.
+
+# vim, vi, emacs… : pas simulés ; le jeu montre son éditeur.
+editor-only-nano = { $command } : commande introuvable. L'éditeur de ce jeu est nano : nano { $file } (Ctrl-O pour enregistrer, Ctrl-X pour quitter).
+editor-file = fichier

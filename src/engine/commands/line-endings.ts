@@ -34,7 +34,12 @@ function convert(game: Shell, args: string[], input: string | null, to: 'unix' |
     else if (a === '-n' || a === '--newfile') pairs = true;
     else if (a === '-k' || a === '--keepdate' || a === '-o' || a === '--oldfile') continue;
     else if (a === '-h' || a === '--help') return game.t(`${me}-usage`);
-    else if (a.startsWith('-') && a !== '-') return game.error(`${me}: option '${a}' unknown.\n${game.t(`${me}-usage`)}`, 1);
+    else if (a.startsWith('-') && a !== '-') {
+      // dos2unix 7.5 (checked): an unknown option prints only the usage, on
+      // the standard output, with exit code 1.
+      game.status = 1;
+      return game.t(`${me}-usage`);
+    }
     else files.push(a);
   }
   // No file: a filter, from the pipe to the output.

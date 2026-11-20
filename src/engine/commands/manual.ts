@@ -142,7 +142,11 @@ export function invalidOption(name: string, c: Command, args: string[], t: Trans
       return t('manual-option-long-unknown', { command: name, option: a.split('=')[0] });
     }
     if (!a.startsWith('-') || a === '-' || /^-\d+$/.test(a)) continue;
-    for (const letter of a.slice(1)) if (!c.options.includes(letter)) return t('manual-option-invalid', { command: name, letter: letter });
+    for (const letter of a.slice(1)) {
+      if (!c.options.includes(letter)) return t('manual-option-invalid', { command: name, letter: letter });
+      // An option that takes a value (head -n5, sort -k2,2n): the rest of the word is its value.
+      if (c.values?.includes(letter)) break;
+    }
   }
   return null;
 }

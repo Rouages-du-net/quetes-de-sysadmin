@@ -216,6 +216,7 @@ export function ping6(game: Shell, args: string[], forced: Family | null): strin
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '-c') n = Math.max(1, Math.min(10, Number(args[++i]) || 4));
+    else if (/^-c\d+$/.test(a)) n = Math.max(1, Math.min(10, Number(a.slice(2)) || 4));
     else if (a === '-I') iface = args[++i] ?? null;
     else if (a === '-6') family = 6;
     else if (a === '-4') family = 4;

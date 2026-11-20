@@ -628,14 +628,68 @@ them safely.
 
 ### Other ideas
 
+- [ ] **Everyday commands still missing.** A review of about 400 forms a
+  sysadmin types by reflex (November 2026) filled the biggest gaps:
+  redirections (`2>`, `&>`, `2>&1`, `<`, `<<<`, `/dev/null`), `$HOME` and
+  the login's variables, `~`, `$(…)`, braces, `[…]`, `!$`, the backslash,
+  `true`/`false`/`[`, `type`, `command`, `alias`, `printf`, `echo -e`,
+  `id -u`, `ls -t/-r/-S/-R/-1`, `cp -a/-i/-v`, `mv -i/-v`, `rm -f/-i/-v`,
+  `rmdir`, `find` (`-exec`, `-size`, `-perm`, `-newer`, `-o`, `!`…),
+  `xargs`, `env`, `printenv`, `sort -k/-t/-u/-h/-V`, `uniq -d/-u`, `cut`
+  ranges and `-c`, `head -n -N`, `tail -n +N`, `sed` ranges, `tar czf`,
+  `tar -xv`, `df -T`, `du -a/-c`, `curl -o/-O`, `ping -c1`, and `vim`
+  pointing to nano. Still missing, roughly by how often they are typed:
+  - [ ] **A chapter's commands**: most chapters list few commands, so
+    `ps aux`, `df -h`, `wc -l`, `sort`, `less` answer "you don't have this
+    command yet" on a server story (The Watch's "fix" has 14). Read-only
+    basics (`ls`, `cat`, `less`, `head`, `tail`, `grep`, `wc`, `sort`,
+    `uniq`, `ps`, `df`, `du`, `free`, `uptime`, `id`, `hostname`,
+    `date`…) could come with every Debian server, as `COMPANIONS` does for
+    `xargs`; the teachers' sheets would keep listing only the chapter's.
+  - [ ] **A Debian machine's default state**: a world without `state.mounts`,
+    processes or memory gives an empty `df -h`, `ps aux` and `mount`, and
+    `free: Unable to create meminfo structure`; `ip a` says "Cannot open
+    netlink socket" without a `lan`; no `/etc/os-release` (`cat
+    /etc/os-release`, `lsb_release -a`, `hostnamectl`), no `hostname -I`.
+  - [ ] **Package management**: `apt remove`/`purge`/`search`/`show`/
+    `policy`, `apt-get` and `apt-cache` (the scripts' forms), `dpkg -l`,
+    `-L`, `-S`, `-s`.
+  - [ ] **Shell control flow on the line**: `for f in *; do …; done`,
+    `if … then … fi`, `while read`; here-documents (`<<EOF`), `$((…))`,
+    `${VAR:-x}`; an unknown variable is kept as typed instead of empty.
+  - [ ] **Becoming root**: `sudo -i`, `sudo -s`, `su -` (a root shell with
+    its `#` prompt) and `exit` back; `sudo !!` works.
+  - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
+    (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
+  - [ ] **Jobs**: `&`, `jobs`, `fg`, `bg`, `nohup`, `watch`, `screen`
+    (tmux exists).
+  - [ ] **systemd and the journal**: `systemctl list-unit-files`,
+    `systemctl status` without a unit, `journalctl --since "1 hour ago"`.
+  - [ ] **Accounts**: `useradd -m`, `adduser`, `passwd` (only `usermod`,
+    `userdel`, `gpasswd`, `chage` exist), `su`, `getent passwd`, `w`,
+    `lastlog`.
+  - [ ] **Small tools**: `basename`, `dirname`, `realpath`, `seq`, `yes`,
+    `tac`, `nl`, `column -t`, `paste`, `md5sum`, `cmp`, `whereis`,
+    `more`, `htop`, `vmstat`, `lscpu`, `sync`, `shutdown`/`poweroff`,
+    `chattr`/`lsattr`, `ss -s`.
+  - [ ] **Network clients**: `wget` (`-O`, `-qO-`), `nslookup`, `host`
+    without a DNS model, `tracepath`, `mtr`, `ifconfig` (net-tools isn't
+    installed on Debian: "command not found" is right, a hint to `ip`
+    would help).
+  - [ ] **Finer points**: `du` counts apparent sizes, not 4 KiB blocks
+    (`du -sh` of small files shows bytes); `mv` of a directory (refused by
+    design); `rm -r` (refused by design); `ls -l` without dates; `tar`'s
+    lists without directories; `curl`'s progress meter; `cp -u`, `ls -F`,
+    `find -prune`/`-xdev`/`-ls`.
 - [ ] **An offensive story**: understanding an attack by replaying it, not
   just reading its outcome. Outside the game's usual scope ("Game rules" in
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to
   build it is in `docs/OFFENSIVE-STORY.md`.
 - [x] **Difficulty**: 1 to 5 stars per chapter (and a range per story),
-  computed from what comes before it in the game and from its size
-  (`src/engine/difficulty.ts`); in the menu, the learning paths and the
-  teachers' sheets.
+  computed on an absolute scale from the chapters it assumes and from its
+  size (`src/engine/difficulty.ts`), so that adding a story changes no
+  other story's levels; in the menu, the learning paths and the teachers'
+  sheets.
 - [x] **On-call duty and the incident of the day** (`src/engine/on-call.ts`):
   every day, a chapter drawn from the date (the same for everyone, with no
   server) among the chapters of the learning paths about failures that

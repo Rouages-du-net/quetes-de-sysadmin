@@ -311,12 +311,12 @@ export const STORIES: Story[] = [
   },
   {
     id: 'ferry',
-    after: ['vlan', 'works-for-me'],
+    after: ['zones', 'works-for-me'],
     chapters: [newCard, otherDoor, bothWays],
   },
   {
     id: 'bike-share',
-    after: ['ssh-alerts'],
+    after: ['ssh-alerts', 'heavy-load'],
     chapters: [blindSpot, threshold, quietHours],
   },
   {

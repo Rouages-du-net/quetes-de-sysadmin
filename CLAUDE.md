@@ -108,6 +108,17 @@ presents them for people.
   mounted directories); the apps of the images are declared by the chapters
   (`APPS`); the command in `commands/docker.ts`. Docker Compose
   (`compose.yaml`, `.env`, the project's network) in `src/engine/compose.ts`.
+- The interactive line's redirections (`2>`, `&>`, `2>&1`, `>&2`, `<`,
+  `<<<`, `/dev/null`: `split`/`redirectionAt` in `tools.ts`, routed per
+  command by `Shell.tube`), expansions (`Shell.expandLine`: variables a
+  login sets, `Shell.defaults()`, `$(…)` and backticks run by `capture`;
+  `braces()`, `Shell.tilde`, `glob()` in every part of a path,
+  `Shell.expand`), history's `!$`/`!^`/`!*`; bash's builtins `true`,
+  `false`, `type`, `command`, `printf` in `commands/builtins.ts` (`[ … ]`
+  becomes `test` in `tube`); `ALWAYS_THERE` and `COMPANIONS` in `shell.ts`:
+  what every chapter knows, and the companions a chapter's command brings.
+  `find` (an expression of tests, operators and actions, `-exec`) in
+  `commands/files.ts`; `xargs`, `env`, `printenv` in `commands/everyday.ts`.
 - Command lists on the interactive line (`a && b || c; d`): `splitList`
   and `listRuns` in `src/engine/tools.ts`, run by `Shell.runLine`/`runList`
   in `shell.ts` (each command as if typed alone: events, `afterCommand`;
@@ -186,9 +197,10 @@ presents them for people.
   declares in `chapters/index.ts` (`after`) the chapters to finish before
   receiving its key (`prerequisites()` for tests).
 - `src/engine/difficulty.ts`: each chapter's difficulty, 1 to 5, computed
-  from what comes before it in the game and from its size (nothing to set
-  by hand); shown as stars in the menu, the learning paths and the
-  teachers' sheets.
+  on an absolute scale from the chapters it assumes (its prerequisites) and
+  from its size (nothing to set by hand): adding a story never changes the
+  level of the chapters it doesn't come after (`levelsOf()` for tests);
+  shown as stars in the menu, the learning paths and the teachers' sheets.
 - `src/engine/console.ts`, `machines.ts`, `workstation.ts`: the simulated network
   (and the rescue snapshot, `Console.restore`: the engine stays
   deterministic, no `Date.now` nor `Math.random`); you start from the

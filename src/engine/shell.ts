@@ -32,9 +32,23 @@ import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
 
 export { split, applyMode } from './tools';
-import { applyMode, compareNames, content, listRuns, split, splitList, wildcard, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
+import { applyMode, braces, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
 import { read as readSudoers, sudoersFile } from './sudoers';
+
+// bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias'];
+// The everyday companions a chapter's command brings with it: a sysadmin who
+// may use find reaches for xargs, one who may use echo for printf…
+export const COMPANIONS: Record<string, string[]> = {
+  echo: ['printf'],
+  find: ['xargs'],
+  mkdir: ['rmdir'],
+  export: ['env', 'printenv'],
+};
+
+// Editors the game doesn't simulate: typing one points to nano.
+const OTHER_EDITORS = ['vi', 'vim', 'vim.tiny', 'vim.basic', 'nvim', 'view', 'emacs', 'micro', 'joe', 'mcedit', 'ed'];
 
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
 const ARG_MAX = 2_097_152;
@@ -183,12 +197,18 @@ export class Shell implements Game {
   // The session's variables (NAME=value) and those exported (export): a
   // program sees the exported ones, and the NAME=value written before it.
   vars: Record<string, string> = {};
+  // The aliases defined in this session (alias ll='ls -l'); Debian's colour aliases are in builtins.ts.
+  aliases: Record<string, string> = {};
   exported = new Set<string>();
   // The environment of the command running now (restic reads RESTIC_* there).
   // sudo resets it (env_reset): only NAME=value written after sudo, or -E, pass.
   environment: Record<string, string> = {};
   // The file the current command's output goes to (> file), if there is one: wg genkey looks at it.
   outputTo: string | null = null;
+  // A command substitution is running: its output goes into the line, not to the screen.
+  private capturing = false;
+  // The errors the last pipeline wrote on screen (not those sent to a file).
+  private shownErrors: string[] = [];
   // The tmux session being typed in (null: outside tmux); the sessions live in state.tmux.
   tmux: string | null = null;
   // The connection has just dropped (the network went down): the console brings you back to the workstation.
@@ -587,21 +607,82 @@ export class Shell implements Game {
     return Object.entries(this.principal.chapter.hosts ?? {}).map(([name, h]) => ({ name, address: h.address, domain: hostInLanguage(this.t, h.domain) }));
   }
 
-  // Expands * and ? as the shell does, before the command. Hidden files are
-  // only matched if the pattern starts with a dot.
+  // Expands *, ? and [...] as the shell does, before the command, in every
+  // part of a path (*/*.conf; a final / keeps only places). Hidden files are
+  // only matched if the pattern starts with a dot. No match: the word stays.
   expand(word: string): string[] {
-    if (!/[*?]/.test(word)) return [word];
-    const i = word.lastIndexOf('/');
-    const base = i >= 0 ? word.slice(0, i + 1) : '';
-    const pattern = word.slice(i + 1);
-    const place = this.find(base || '.');
-    if (place?.type !== 'directory' || this.block(base || '.') || !this.can(place, 'r')) return [word];
-    const re = wildcard(pattern);
-    const found = Object.keys(place.children)
-      .filter((n) => re.test(n) && (pattern.startsWith('.') || !n.startsWith('.')))
-      .sort(compareNames)
-      .map((n) => base + n);
+    if (!hasGlob(word)) return [word];
+    const absolute = word.startsWith('/');
+    const parts = word.split('/');
+    // The paths found so far, as typed (relative or absolute).
+    let found: string[] = [absolute ? '/' : ''];
+    for (let k = absolute ? 1 : 0; k < parts.length; k++) {
+      const part = parts[k];
+      const lastPart = k === parts.length - 1;
+      const join = (base: string, name: string) => (base === '' ? name : base.endsWith('/') ? base + name : `${base}/${name}`);
+      if (part === '') {
+        // A final / (*/): only places; a double // stays.
+        if (lastPart) found = found.filter((f) => this.find(f || '.')?.type === 'directory').map((f) => f + '/');
+        continue;
+      }
+      if (!hasGlob(part)) {
+        found = found.map((f) => join(f, part));
+        continue;
+      }
+      const re = glob(part);
+      found = found.flatMap((base) => {
+        const place = this.find(base || '.');
+        if (place?.type !== 'directory' || this.block(base || '.') || !this.can(place, 'r')) return [];
+        return Object.keys(place.children)
+          .filter((n) => re.test(n) && (part.startsWith('.') || !n.startsWith('.')))
+          .sort(compareNames)
+          .map((n) => join(base, n));
+      });
+      if (!found.length) return [word];
+    }
     return found.length ? found : [word];
+  }
+
+  /**
+   * A word's tilde (man bash, "Tilde Expansion"): ~ and ~/… are your home,
+   * ~account that account's (as /etc/passwd gives it), ~+ the current place, ~- the previous one.
+   */
+  tilde(word: string): string {
+    const m = /^~([^/]*)(\/.*)?$/.exec(word);
+    if (!m) return word;
+    const [, who, rest = ''] = m;
+    const home = who === '' ? this.home : who === '+' ? this.cwd : who === '-' ? this.old : this.accounts.users[who] ? (this.accounts.users[who].home ?? (who === 'root' ? '/root' : `/home/${who}`)) : null;
+    return home === null ? word : home + rest;
+  }
+
+  /**
+   * The value of a variable (man bash, "Shell Variables"): the session's, then
+   * those a Debian login sets (HOME, USER, LOGNAME, SHELL, PATH from
+   * /etc/profile, PWD, OLDPWD, HOSTNAME, UID, TERM). Undefined: null.
+   */
+  variable(name: string): string | null {
+    if (Object.hasOwn(this.vars, name)) return this.vars[name];
+    // bash's own variables, not in the environment.
+    if (name === 'HOSTNAME') return this.read('/etc/hostname')?.trim() || this.hostName;
+    if (name === 'UID' || name === 'EUID') return String(this.accounts.users[this.player]?.uid ?? 1000);
+    return this.defaults()[name] ?? null;
+  }
+
+  /** The environment a login gives the player (env, printenv, $HOME…). */
+  defaults(): Record<string, string> {
+    const user = this.player;
+    const v: Record<string, string> = {
+      HOME: this.home,
+      LANG: 'C.UTF-8',
+      LOGNAME: user,
+      PATH: '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games',
+      PWD: this.cwd,
+      SHELL: this.accounts.users[user]?.shell ?? '/bin/bash',
+      TERM: 'xterm-256color',
+      USER: user,
+    };
+    if (this.old !== null) v.OLDPWD = this.old;
+    return v;
   }
 
   // Tab completion of the last word.
@@ -663,7 +744,16 @@ export class Shell implements Game {
   known(): string[] {
     // The command that lists the others has the language's name (aide in
     // French); help, like bash's builtin, works in every language.
-    return [...this.chapter.commands, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', this.t('command-help')];
+    // bash's harmless builtins are always there, and a command brings its
+    // everyday companions (find brings xargs, mkdir rmdir…: see COMPANIONS).
+    const own = this.chapter.commands;
+    const companions = own.flatMap((c) => COMPANIONS[c] ?? []);
+    return [...new Set([...own, ...companions, 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, this.t('command-help')])];
+  }
+
+  /** Runs one of the game's commands from another (command ls, xargs grep): its output, as in a pipe unless `last`. */
+  run(args: string[], input: string | null, last = false): string {
+    return this.launch(args, input, false, last);
   }
 
 
@@ -749,13 +839,24 @@ export class Shell implements Game {
         continue;
       }
       const rest = line.slice(i + 1);
-      const m = /^(!|-?\d+|[A-Za-z_./][^\s;|&<>()]*)/.exec(rest);
+      const m = /^(!|\$|\^|\*|-?\d+|[A-Za-z_./][^\s;|&<>()]*)/.exec(rest);
       if (!m) {
         output += c;
         continue;
       }
       const h = this.history;
       const pattern = m[1];
+      // !$, !^, !*: the previous line's last word, first argument, all arguments (as typed, quotes kept).
+      const previous = h.at(-1);
+      const typed = previous === undefined ? [] : (previous.match(/(?:[^\s'"]+|'[^']*'|"[^"]*")+/g) ?? []);
+      const word = pattern === '$' ? typed.at(-1) : pattern === '^' ? typed[1] : pattern === '*' ? typed.slice(1).join(' ') : null;
+      if (word !== null) {
+        if (previous === undefined) return { line, error: `-bash: !${pattern}: event not found` };
+        if (word === undefined) return { line, error: `-bash: !${pattern}: bad word specifier` };
+        output += word;
+        i += 1;
+        continue;
+      }
       const match =
         pattern === '!' ? h.at(-1) : /^-?\d+$/.test(pattern) ? (Number(pattern) < 0 ? h.at(Number(pattern)) : h[Number(pattern) - 1]) : [...h].reverse().find((l) => l.startsWith(pattern));
       if (match === undefined) return { line, error: `-bash: !${pattern}: event not found` };
@@ -839,11 +940,8 @@ export class Shell implements Game {
 
   // One command of the line (a pipeline, with its redirection).
   private runCommand(line: string): string | null {
-    // $? (outside single quotes): the exit code of the previous line.
-    // $NAME and ${NAME}, for the session's variables (an unknown one stays as typed).
-    line = line.replace(/'[^']*'|\$\?|\$\{\?\}|\$\{([A-Za-z_]\w*)\}|\$([A-Za-z_]\w*)/g, (m, a?: string, b?: string) =>
-      m.startsWith("'") ? m : m === '$?' || m === '${?}' ? String(this.lastStatus) : (this.vars[(a ?? b)!] ?? m),
-    );
+    const expanded = this.expandLine(this.withAliases(line));
+    line = expanded.line;
     const words = split(line);
     if (!words.length) return '';
     this.typedCommands++;
@@ -892,7 +990,146 @@ export class Shell implements Game {
     }
     this.chapter.beforeCommand?.(this);
     if (this.chapter.activity) live(this, this.chapter.activity.not);
-    return this.conclude(this.countLine(this.tube(line, words)), true);
+    const output = this.countLine(this.tube(line, words));
+    return this.conclude([...expanded.errors, output].filter(Boolean).join('\n'), true);
+  }
+
+  /**
+   * Aliases (man bash, "ALIASES"): the first word of each command of the
+   * pipeline, unquoted, replaced by its alias's text (once: an alias that
+   * starts with its own name, alias ls='ls -F', is not expanded again).
+   */
+  withAliases(line: string): string {
+    if (!Object.keys(this.aliases).length) return line;
+    let out = '';
+    let quote = '';
+    let start = true;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quote) {
+        if (c === quote) quote = '';
+        out += c;
+        continue;
+      }
+      if (start && /\S/.test(c)) {
+        start = false;
+        const m = /^[^\s|;&<>()'"\\]+(?=[\s|;&<>()]|$)/.exec(line.slice(i));
+        if (m && Object.hasOwn(this.aliases, m[0])) {
+          out += this.aliases[m[0]];
+          i += m[0].length - 1;
+          continue;
+        }
+      }
+      if (c === '"' || c === "'") quote = c;
+      else if (c === '|') start = true;
+      out += c;
+    }
+    return out;
+  }
+
+  /**
+   * Expands a command's line before it is split (man bash, "EXPANSION"),
+   * outside single quotes: $? and ${?} (the last exit code), $NAME and ${NAME}
+   * (an unknown variable stays as typed), and command substitution, $(…) and
+   * `…`: the command's output, without its final newlines; unquoted, its
+   * words stay words (an operator in them is no operator). The errors of the
+   * substituted commands go to the screen.
+   */
+  expandLine(line: string): { line: string; errors: string[] } {
+    let out = '';
+    let quote = '';
+    const errors: string[] = [];
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quote === "'") {
+        if (c === "'") quote = '';
+        out += c;
+        continue;
+      }
+      if (c === "'" && !quote) {
+        quote = "'";
+        out += c;
+        continue;
+      }
+      if (c === '"') {
+        quote = quote === '"' ? '' : '"';
+        out += c;
+        continue;
+      }
+      // \$ and \` stay as typed (split() drops the backslash).
+      if (c === '\\' && i + 1 < line.length) {
+        out += c + line[++i];
+        continue;
+      }
+      // $(…) and `…`: the command inside, up to its closing parenthesis or backtick.
+      let inner: string | null = null;
+      if (c === '$' && line[i + 1] === '(') {
+        let depth = 0;
+        let q = '';
+        let j = i + 1;
+        for (; j < line.length; j++) {
+          const x = line[j];
+          if (q) {
+            if (x === q) q = '';
+          } else if (x === '"' || x === "'") q = x;
+          else if (x === '(') depth++;
+          else if (x === ')' && --depth === 0) break;
+        }
+        if (j < line.length) {
+          inner = line.slice(i + 2, j);
+          i = j;
+        }
+      } else if (c === '`') {
+        const j = line.indexOf('`', i + 1);
+        if (j > 0) {
+          inner = line.slice(i + 1, j);
+          i = j;
+        }
+      }
+      if (inner !== null) {
+        const r = this.capture(inner);
+        errors.push(...r.errors);
+        const value = r.output.replace(/\n+$/, '');
+        // Quoted, the output as it is; unquoted, its words, each kept a word.
+        out += quote ? value : value.split(/\s+/).filter(Boolean).map((w) => (/[|&;<>"'\s]/.test(w) ? (w.includes("'") ? `"${w}"` : `'${w}'`) : w)).join(' ');
+        continue;
+      }
+      const m = c === '$' ? /^\$(?:\?|\{\?\}|\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))/.exec(line.slice(i)) : null;
+      if (!m) {
+        out += c;
+        continue;
+      }
+      const name = m[1] ?? m[2];
+      out += name === undefined ? String(this.lastStatus) : (this.variable(name) ?? m[0]);
+      i += m[0].length - 1;
+    }
+    return { line: out, errors };
+  }
+
+  // Runs a command substitution's commands, without the story's events: their output (as in a pipe) and their errors.
+  private capture(line: string): { output: string; errors: string[] } {
+    const before = { last: this.last, status: this.status, errors: this.errors };
+    this.capturing = true;
+    try {
+      const list = splitList(line);
+      if ('error' in list) return { output: '', errors: [list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end')] };
+      const outputs: string[] = [];
+      const errors: string[] = [];
+      let status = 0;
+      for (const item of list.items) {
+        if (!listRuns(item.before, status)) continue;
+        const sub = this.expandLine(item.command);
+        errors.push(...sub.errors);
+        this.tube(sub.line, split(sub.line));
+        errors.push(...this.shownErrors);
+        if (this.last.output && !this.last.redirection) outputs.push(this.last.output);
+        status = this.status ?? (this.errors.length ? 1 : 0);
+      }
+      return { output: outputs.join('\n'), errors };
+    } finally {
+      this.capturing = false;
+      Object.assign(this, before);
+    }
   }
 
   // A line that ended in error (an error message, or a non-zero exit code) counts for the summary.
@@ -1004,24 +1241,60 @@ export class Shell implements Game {
     this.errors = [];
     this.status = null;
     const segments: Word[][] = [[]];
-    let redirection: { file: string; addition: boolean } | null = null;
+    // Each command's redirections, read from left to right like bash (man bash,
+    // "REDIRECTION"): where its output goes (a file, or "err" with >&2), where
+    // its errors go (a file, "out": wherever the output goes, with 2>&1), its input.
+    type Target = { file: string; addition: boolean };
+    type Routes = { out?: Target; err?: Target | 'out' | 'screen'; outToErr?: boolean; input?: { file: string } | { text: string } };
+    const routes: Routes[] = [{}];
     for (let i = 0; i < words.length; i++) {
       const m = words[i];
-      if (m.op === '|') segments.push([]);
-      else if (m.op === '>' || m.op === '>>') {
-        const target = words[i + 1];
-        if (!target || target.op) return this.t('syntax-redirection', { operator: m.op });
-        redirection = { file: target.text, addition: m.op === '>>' };
-        i++;
-      } else segments.at(-1)!.push(m);
+      if (m.op === '|') {
+        segments.push([]);
+        routes.push({});
+        continue;
+      }
+      if (!m.op) {
+        segments.at(-1)!.push(m);
+        continue;
+      }
+      const r = routes.at(-1)!;
+      if (!takesTarget(m.op)) {
+        // 2>&1: the errors go where the output goes now (>f 2>&1: the file; 2>&1 >f: the screen).
+        if (m.op === '2>&1') r.err = r.out ?? 'out';
+        else r.outToErr = true;
+        continue;
+      }
+      const target = words[i + 1];
+      if (!target || target.op) return this.t('syntax-redirection', { operator: m.op });
+      i++;
+      const t = { file: target.text, addition: m.op.endsWith('>>') };
+      if (m.op === '<') r.input = { file: target.text };
+      // A here-string: the word, with a newline.
+      else if (m.op === '<<<') r.input = { text: target.text };
+      else if (m.op === '2>' || m.op === '2>>') r.err = t;
+      else {
+        r.out = t;
+        r.outToErr = false;
+        if (m.op.startsWith('&')) r.err = t;
+      }
     }
     if (segments.some((s) => !s.length)) return this.t('syntax-pipe');
+    // The last command's output redirection (the file that events and commands see).
+    const redirection = routes.at(-1)!.out ?? null;
+    // The errors not shown on screen (redirected elsewhere: they still make the command fail),
+    // and the outputs sent with the errors (>&2).
+    const hidden = new Set<number>();
+    const toErrors: string[] = [];
+    // What the last command wrote, even into a file (events read it).
+    let written: string | null = null;
 
     let input: string | null = null;
     const commands: string[][] = [];
     segments.forEach((segment, i) => {
       // Like the shell: wildcards are not expanded inside quotes.
-      let args = segment.flatMap((m) => (m.city ? [m.text] : this.expand(m.text)));
+      // Like the shell: braces, then the tilde, then wildcards; nothing inside quotes.
+      let args = segment.flatMap((m) => (m.city ? [m.text] : braces(m.text).flatMap((w) => this.expand(this.tilde(w)))));
       let root = false;
       let keepEnv = false;
       // sudo -u account: act as that account rather than root.
@@ -1059,46 +1332,97 @@ export class Shell implements Game {
         input = '';
         return;
       }
+      // [ condition ] is test, whose last argument must be ].
+      if (args[0] === '[') {
+        if (args.at(-1) !== ']') {
+          this.error("-bash: [: missing `]'", 2);
+          input = '';
+          return;
+        }
+        args = ['test', ...args.slice(1, -1)];
+      }
       const exportedEnv = Object.fromEntries([...this.exported].filter((n) => n in this.vars).map((n) => [n, this.vars[n]]));
       this.environment = root && !keepEnv ? assigned : { ...exportedEnv, ...assigned };
       commands.push(args);
-      const last = i === segments.length - 1 && !redirection;
+      const r = routes[i];
+      const final = i === segments.length - 1;
+      const last = final && !r.out && !r.outToErr && !this.capturing;
       this.as = as;
-      this.outputTo = i === segments.length - 1 && redirection ? this.resolve(redirection.file) : null;
-      input = this.launch(args, input, root, last);
+      const before = this.errors.length;
+      // < file: bash opens it before running the command; if it can't, the command doesn't run.
+      if (r.input && 'file' in r.input) {
+        const text = this.resolve(r.input.file) === '/dev/null' ? '' : this.readFor('bash', r.input.file);
+        if (text === null) {
+          this.status = 1;
+          input = '';
+          return;
+        }
+        input = text;
+      } else if (r.input) input = r.input.text;
+      this.outputTo = r.out && this.resolve(r.out.file) !== '/dev/null' ? this.resolve(r.out.file) : null;
+      let produced = this.launch(args, input, root, last);
       this.outputTo = null;
+      // This command's errors, sent where its redirections say.
+      const errors = this.errors.slice(before);
+      const err = r.err ?? 'screen';
+      const hide = () => errors.forEach((_, k) => hidden.add(before + k));
+      // 2>&1 in a pipe: the errors go down the pipe with the output.
+      if (err === 'out' && !final) {
+        hide();
+        produced = [...errors, produced].filter(Boolean).join('\n');
+      }
+      if (r.outToErr) {
+        if (produced) toErrors.push(produced);
+        produced = '';
+      }
+      if (final) written = produced;
+      if (r.out) {
+        // With &> or >f 2>&1, the errors go into the same file, before the output.
+        if (err === r.out) hide();
+        const text = err === r.out ? [...errors, produced].filter(Boolean).join('\n') : produced;
+        // The redirection is done by YOUR shell, before sudo: even with sudo in
+        // front of the command, it is "you" who writes to the file.
+        const error = this.redirect(r.out.file, text, r.out.addition);
+        if (error) {
+          this.error(error);
+          if (/(^|\|)\s*sudo\s/.test(line)) this.error(this.t('redirection-sudo'));
+        } else this.keepCharset(r.out);
+        produced = '';
+      }
+      if (typeof err === 'object' && err !== r.out) {
+        hide();
+        const error = this.redirect(err.file, errors.join('\n'), err.addition);
+        if (error) this.error(error);
+      }
+      input = produced;
     });
     let output: string = input ?? '';
     const charset = this.outputCharset;
     this.outputCharset = null;
     // On screen, LATIN1 bytes show as � on the UTF-8 terminal.
-    if (charset === 'latin1' && !redirection) output = onUtf8Terminal(output);
+    if (charset === 'latin1') output = onUtf8Terminal(output);
     // Raw bytes on the terminal: � above 0x7F, control bytes unseen.
-    if (charset === 'binary' && !redirection) output = binaryOnTerminal(output);
+    if (charset === 'binary') output = binaryOnTerminal(output);
     // Events read the output as the player reads it, without colour codes.
-    this.last = { line, commands, output: withoutColours(output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
+    this.last = { line, commands, output: withoutColours(redirection ? (written ?? '') : output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
+    this.shownErrors = [...this.errors.filter((_, k) => !hidden.has(k)), ...toErrors].filter(Boolean);
+    return [...this.shownErrors, output].filter(Boolean).join('\n');
+  }
 
-    if (redirection) {
-      // The redirection is done by YOUR shell, before sudo: even with sudo in
-      // front of the command, it is "you" who writes to the file.
-      const error = this.redirect(redirection.file, output, redirection.addition);
-      // A command that wrote LATIN1 (pg_dump of a LATIN1 database): the file keeps those bytes.
-      const written = this.find(redirection.file);
-      if (!error && written?.type === 'file') {
-        if (charset === 'latin1') written.charset = 'latin1';
-        else if (charset === 'binary' && isBinary(output)) written.charset = 'binary';
-        else if (!redirection.addition) delete written.charset;
-      }
-      if (error) {
-        this.error(error);
-        if (/(^|\|)\s*sudo\s/.test(line)) this.error(this.t('redirection-sudo'));
-      }
-      output = '';
-    }
-    return [...this.errors, output].filter(Boolean).join('\n');
+  // A command that wrote LATIN1 (pg_dump of a LATIN1 database) into a file: the file keeps those bytes.
+  private keepCharset(target: { file: string; addition: boolean }): void {
+    const charset = this.outputCharset;
+    const written = this.find(target.file);
+    if (written?.type !== 'file') return;
+    if (charset === 'latin1') written.charset = 'latin1';
+    else if (charset === 'binary' && isBinary(content(written, this))) written.charset = 'binary';
+    else if (!target.addition) delete written.charset;
+    this.outputCharset = null;
   }
 
   private redirect(file: string, text: string, addition: boolean): string | null {
+    // /dev/null swallows everything (the world doesn't need to have a /dev).
+    if (this.resolve(file) === '/dev/null') return null;
     const n = this.find(file);
     if (n?.type === 'directory') return this.t('redirection-is-one-directory', { target: file });
     if (n) {
@@ -1189,6 +1513,11 @@ export class Shell implements Game {
       const output = this.error(`-bash: ${cmd}: command not found`);
       this.status = 127;
       return output;
+    }
+    // Another editor (vim, vi, emacs…): the game's is nano, which it points to.
+    if (!command && OTHER_EDITORS.includes(cmd) && this.known().includes('nano')) {
+      this.status = 127;
+      return this.error(this.t('editor-only-nano', { command: cmd, file: rest.find((a) => !a.startsWith('-') && !a.startsWith('+')) ?? this.t('editor-file') }));
     }
     if (!this.known().includes(cmd) || !command)
       return this.error(this.t(command || cmd === 'sudo' ? 'command-not-still' : 'command-missing', { command: cmd }));

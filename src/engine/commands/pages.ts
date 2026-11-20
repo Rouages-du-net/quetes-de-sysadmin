@@ -6,7 +6,7 @@
 
 import type { Command } from './index';
 
-type Page = Pick<Command, 'options' | 'long' | 'examples' | 'see' | 'section'>;
+type Page = Pick<Command, 'options' | 'values' | 'long' | 'examples' | 'see' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
   ansible: { options: ['m', 'a', 'b', 'i', 'u', 'l', 'C', 'D'], examples: ['ansible centres -m ping', 'ansible centres -a "cat /etc/hostname"', 'ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible centres --list-hosts'], see: ['ansible-playbook', 'ansible-inventory', 'ansible-doc', 'ssh'] },
@@ -52,6 +52,17 @@ export const PAGES: Record<string, Page> = {
     see: ['dpkg', 'systemctl', 'nginx', 'tmux'],
   },
   dpkg: { examples: ['sudo dpkg --configure -a'], see: ['apt'] },
+  echo: { options: ['n', 'e', 'E'], examples: ['echo "hello" > note.txt', 'echo -e "first\\tline\\nsecond"'], see: ['printf', 'tee', 'cat'] },
+  printf: { examples: ["printf '%s\\n' alpha beta", "printf '%-10s %5d\\n' nginx 80 sshd 22", "printf '%.2f\\n' 3.14159"], see: ['echo'] },
+  true: { examples: ['true'], see: ['false', 'test'] },
+  alias: { examples: ['alias', "alias ll='ls -la'", 'type ll'], see: ['unalias', 'type'] },
+  unalias: { options: ['a'], examples: ['unalias ll'], see: ['alias'] },
+  xargs: { options: ['0', 'n', 'I', 'L', 'r', 't', 'd'], examples: ["find /var/log -name '*.gz' | xargs ls -l", "find . -name '*.tmp' -print0 | xargs -0 rm", 'cat hosts.txt | xargs -n 1 ping -c 1', "ls *.conf | xargs -I {} cp {} {}.bak"], see: ['find', 'grep'] },
+  env: { options: ['i', 'u'], examples: ['env', 'env | grep PATH', 'env LANG=C date'], see: ['printenv', 'export'] },
+  printenv: { examples: ['printenv HOME', 'printenv'], see: ['env', 'export'] },
+  false: { examples: ['false || echo failed'], see: ['true', 'test'] },
+  type: { options: ['t', 'p', 'a'], examples: ['type ls cd', 'type -t ls'], see: ['command', 'which', 'man'] },
+  command: { options: ['v', 'V'], examples: ['command -v rsync', 'command ls'], see: ['type', 'which'] },
   iostat: {
     options: ['c', 'd', 'x', 'k', 'm', 'y', 'z', 'h'],
     examples: ['iostat', 'iostat -x 1 3', 'iostat -dm'],
@@ -156,10 +167,10 @@ export const PAGES: Record<string, Page> = {
   check_disk: { examples: ['/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /', '/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -W 20% -K 10% -p /srv/radio'], see: ['df', 'check_http', 'check_procs', 'mail'] },
   check_http: { examples: ['/usr/lib/nagios/plugins/check_http -H localhost -p 8000 -u /live'], see: ['curl', 'check_disk', 'check_procs'] },
   check_procs: { examples: ['/usr/lib/nagios/plugins/check_procs -C stream -c 1:'], see: ['ps', 'check_disk', 'check_http'] },
-  cp: { long: { 'recursive': 'r' }, options: ['r'], examples: ['cp sourdough sourdough_2', 'cp ~/Market/cheese .'], see: ['mv', 'rm'] },
+  cp: { long: { 'recursive': 'r', 'archive': 'a', 'interactive': 'i', 'no-clobber': 'n', 'verbose': 'v', 'force': 'f' }, options: ['r', 'R', 'a', 'p', 'i', 'n', 'v', 'f'], examples: ['cp sourdough sourdough_2', 'cp ~/Market/cheese .', 'cp -a /etc/nginx /etc/nginx.bak', 'cp -iv notes.txt backup/'], see: ['mv', 'rm', 'rsync'] },
   crontab: { examples: ['crontab -e', 'crontab -l', '15 3 * * * rsync -a ~/memories/ /mnt/backup/memories/', 'sudo crontab -u malo -l'], see: ['rsync', 'nano', 'systemctl'] },
-  curl: { options: ['I', 'i', 'k', '4', '6', 'v', 's', 'G', 'X'], examples: ['curl -I http://localhost/', 'curl -6 -v http://www.ferry.example/', 'curl -4 http://www.ferry.example/booking/', 'curl http://[::1]/', 'curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s -G --data-urlencode 'query=up{job=\"node\"}' http://localhost:9090/api/v1/query"], see: ['dig', 'nginx', 'openssl', 'ss', 'jq'] },
-  df: { long: { 'human-readable': 'h', 'inodes': 'i' }, options: ['h', 'i'], examples: ['df -h', 'df -i', 'df -ih /srv/radio'], see: ['du', 'find'] },
+  curl: { options: ['I', 'i', 'k', '4', '6', 'v', 's', 'G', 'X', 'o', 'O'], examples: ['curl -I http://localhost/', 'curl -6 -v http://www.ferry.example/', 'curl -4 http://www.ferry.example/booking/', 'curl http://[::1]/', 'curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s -G --data-urlencode 'query=up{job=\"node\"}' http://localhost:9090/api/v1/query", 'curl -o page.html http://localhost/'], see: ['dig', 'nginx', 'openssl', 'ss', 'jq'] },
+  df: { long: { 'human-readable': 'h', 'inodes': 'i', 'print-type': 'T' }, options: ['h', 'i', 'T'], examples: ['df -h', 'df -i', 'df -ih /srv/radio', 'df -hT'], see: ['du', 'find'] },
   dmesg: { long: { 'ctime': 'T' }, section: 1, options: ['T'], examples: ['sudo dmesg', 'sudo dmesg -T', 'sudo dmesg | grep -i "out of memory"'], see: ['journalctl', 'free', 'top'] },
   free: { long: { 'human': 'h', 'mebi': 'm', 'bytes': 'b', 'kibi': 'k', 'gibi': 'g' }, options: ['h', 'm', 'b', 'k', 'g'], examples: ['free -h'], see: ['top', 'ps', 'df'] },
   top: { examples: ['top -o %MEM', 'top -b -n 1'], see: ['ps', 'free', 'kill', 'uptime', 'renice'] },
@@ -202,12 +213,12 @@ export const PAGES: Record<string, Page> = {
     examples: ['sudo docker compose up -d', 'sudo docker compose ps', 'sudo docker compose logs webapp', 'sudo docker compose config', 'sudo docker compose down'],
     see: ['docker'],
   },
-  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b' }, options: ['h', 's', 'd', 'b'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
+  du: { long: { 'human-readable': 'h', 'summarize': 's', 'inodes': '', 'max-depth': '', 'bytes': 'b', 'all': 'a', 'total': 'c' }, options: ['h', 's', 'd', 'b', 'a', 'c'], values: ['d'], examples: ['sudo du -sh /var/log/*', 'sudo du --inodes -d 1 /srv', 'sudo du --inodes -s /srv/radio/*'], see: ['df', 'find'] },
   'fail2ban-client': { examples: ['sudo fail2ban-client status', 'sudo fail2ban-client status sshd', 'sudo fail2ban-client set sshd unbanip 198.51.100.40', 'sudo fail2ban-client unban 198.51.100.40', 'sudo fail2ban-client get recidive bantime', 'sudo fail2ban-client -t', 'sudo fail2ban-client reload'], see: ['jail.conf', 'journalctl', 'ufw'] },
   'jail.conf': { section: 5, examples: ['sudo nano /etc/fail2ban/jail.local', 'sudo fail2ban-client get sshd bantime', 'sudo nft list table inet f2b-table'], see: ['fail2ban-client', 'nano', 'nft'] },
   find: {
-    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete'],
-    see: ['ls', 'grep', 'du', 'rm', 'crontab'],
+    examples: ['find . -name "*.txt"', 'find /srv/radio/stats -type f -mtime +30', 'find /srv/radio/stats -type f -mtime +30 -delete', 'find / -type f -size +100M', "find /etc -name '*.conf' -newer /etc/hostname", "find /var/www -type f -perm /o+w -o -type f -perm -002", "find . -name '*.log' -exec grep -l error {} +", 'find /home -user ana -type f'],
+    see: ['ls', 'grep', 'du', 'rm', 'crontab', 'xargs'],
   },
   grep: {
     long: {
@@ -221,7 +232,8 @@ export const PAGES: Record<string, Page> = {
     see: ['cat', 'find'],
   },
   groups: { examples: ['groups', 'groups malo'], see: ['id', 'usermod'] },
-  head: { long: {  }, options: ['n'], see: ['tail', 'cat'] },
+  head: { long: { lines: '', bytes: '' }, options: ['n', 'c'], values: ['n', 'c'], examples: ['head -n 3 /etc/passwd', 'head -n -2 notes.txt', 'head -c 100 key.pem'], see: ['tail', 'cat'] },
+  cut: { long: { complement: '', 'only-delimited': 's', 'output-delimiter': '', delimiter: '', fields: '', characters: '', bytes: '' }, options: ['d', 'f', 'c', 'b', 's'], values: ['d', 'f', 'c', 'b'], examples: ['cut -d: -f1 /etc/passwd', 'cut -d: -f1,3,6 /etc/passwd', 'cut -c1-15 /var/log/syslog'], see: ['awk', 'sort', 'tr'] },
   host: { examples: ['host cafe.example', 'host cafe.example ns2.registry.example'], see: ['dig'] },
   ip: {
     section: 8,
@@ -359,7 +371,7 @@ export const PAGES: Record<string, Page> = {
     ],
     see: ['sftp', 'scp', 'rsync'],
   },
-  id: { examples: ['id', 'id malo'], see: ['groups', 'whoami', 'usermod'] },
+  id: { options: ['u', 'g', 'G', 'n'], long: { user: 'u', group: 'g', groups: 'G', name: 'n' }, examples: ['id', 'id malo', 'id -un', 'id -Gn'], see: ['groups', 'whoami', 'usermod'] },
   journalctl: {
     options: ['u', 'n', 'b', 'k', 'p', 'x', 'e', 'f'],
     examples: ['journalctl -u nginx', 'journalctl -xeu nginx', 'journalctl -b -p err', 'journalctl -n 20', 'journalctl --since "2027-09-12 02:00" --until "2027-09-12 03:30"', 'journalctl -fu ssh', 'journalctl --disk-usage', 'sudo journalctl --vacuum-size=500M'], see: ['systemctl', 'dmesg', 'journald.conf'] },
@@ -505,7 +517,7 @@ export const PAGES: Record<string, Page> = {
   mount: { section: 8, examples: ['mount', 'sudo mount -o ro /dev/sdb1 /mnt/usb', 'sudo umount /mnt/usb', 'sudo mount -a', 'sudo mount -t nfs nas.internal:/srv/photos /mnt/photos'], see: ['umount', 'lsblk', 'df', 'findmnt', 'blkid', 'nfs', 'mount.cifs'] },
   umount: { section: 8, examples: ['sudo umount /mnt/usb'], see: ['mount', 'lsblk'] },
   lsof: { section: 8, examples: ['sudo lsof +L1', 'sudo lsof /var/log/radio/stream.log', 'sudo lsof -p 1730'], see: ['df', 'du', 'ps'] },
-  ls: { long: { 'color': '', 'all': 'a', 'human-readable': 'h', 'numeric-uid-gid': 'n', 'inode': 'i', 'directory': 'd' }, options: ['a', 'l', 'h', 'n', 'i', 'd'], examples: ['ls', 'ls -a', 'ls -l ~/memories', 'ls -ld /srv/till'], see: ['cd', 'pwd', 'chmod'] },
+  ls: { long: { 'color': '', 'all': 'a', 'almost-all': 'A', 'human-readable': 'h', 'numeric-uid-gid': 'n', 'inode': 'i', 'directory': 'd', 'reverse': 'r', 'recursive': 'R', 'sort': '' }, options: ['a', 'A', 'l', 'h', 'n', 'i', 'd', 't', 'r', 'S', 'R', 'U', 'X', '1'], examples: ['ls', 'ls -a', 'ls -l ~/memories', 'ls -ld /srv/till', 'ls -ltr /var/log', 'ls -lhS /var/log', 'ls -R /etc/nginx'], see: ['cd', 'pwd', 'chmod', 'find'] },
   logrotate: {
     section: 8,
     examples: ['sudo logrotate -d /etc/logrotate.d/radio', 'sudo logrotate -f /etc/logrotate.d/radio', 'cat /etc/logrotate.d/rsyslog'],
@@ -514,7 +526,7 @@ export const PAGES: Record<string, Page> = {
   mail: { examples: ['echo "Hello" | mail -s Test zoe', 'command | mail -E -s Alert zoe', 'mail'], see: ['crontab', 'check_disk'] },
   man: { options: ['k'], examples: ['man ls', 'man -k copie', 'ls --help'], see: ['apropos', 'whatis'] },
   mkdir: { long: { 'parents': 'p' }, options: ['p'], examples: ['mkdir Classroom', 'mkdir -p /srv/site/releases/1'], see: ['touch', 'cd'] },
-  mv: { examples: ['mv crab Bucket', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Harbour/lettre.txt'], see: ['cp', 'rm'] },
+  mv: { long: { 'interactive': 'i', 'no-clobber': 'n', 'verbose': 'v', 'force': 'f' }, options: ['i', 'n', 'v', 'f'], examples: ['mv crab Bucket', 'mv brouillon.txt lettre.txt', 'mv brouillon.txt ~/Harbour/lettre.txt', 'mv -iv *.log old/'], see: ['cp', 'rm'] },
   exit: { see: ['ssh'] },
   'named-checkzone': { section: 8, examples: ['named-checkzone cafe.example /etc/bind/zones/db.cafe.example'], see: ['rndc', 'dig', 'named-checkconf'] },
   'named-checkconf': { section: 8, examples: ['sudo named-checkconf'], see: ['named-checkzone', 'rndc'] },
@@ -595,10 +607,11 @@ export const PAGES: Record<string, Page> = {
     see: ['rsync', 'tar', 'df', 'export', 'sha256sum', 'cryptsetup'],
   },
   readlink: { long: { 'canonicalize': 'f' }, options: ['f'], examples: ['readlink /srv/site/current', 'readlink -f /srv/site/current'], see: ['ln', 'ls'] },
-  rm: { examples: ['rm barricade'], see: ['mv', 'cp'] },
+  rm: { long: { 'force': 'f', 'interactive': '', 'verbose': 'v', 'recursive': 'r', 'dir': 'd' }, options: ['f', 'i', 'v', 'r', 'R', 'd'], examples: ['rm barricade', 'rm -i *.tmp', 'rm -f missing.txt'], see: ['mv', 'cp', 'rmdir'] },
+  rmdir: { long: { 'parents': 'p', 'verbose': 'v', 'ignore-fail-on-non-empty': '' }, options: ['p', 'v'], examples: ['rmdir old', 'rmdir -p releases/1/tmp'], see: ['mkdir', 'rm'] },
   sh: { examples: ['sh tests.sh', './deployer.sh', 'chmod +x deployer.sh'], see: ['bash', 'test', 'chmod'] },
   bash: { examples: ['bash tests.sh', 'sudo nginx -t && sudo systemctl reload nginx', 'grep -q backup /etc/crontab || echo missing', 'cd /var/log; ls'], see: ['sh', 'history'] },
-  sort: { long: { 'numeric-sort': 'n', 'reverse': 'r' }, options: ['n', 'r'], examples: ['sort -n sizes.txt'], see: ['uniq', 'wc'] },
+  sort: { long: { 'numeric-sort': 'n', 'reverse': 'r', unique: 'u', 'human-numeric-sort': 'h', 'ignore-case': 'f', 'version-sort': 'V', check: 'c', stable: 's' }, options: ['n', 'r', 'u', 'k', 't', 'h', 'f', 'V', 'c', 's', 'b', 'o'], values: ['k', 't', 'o'], examples: ['sort -n sizes.txt', 'sort -t: -k3,3n /etc/passwd', 'du -sh /var/log/* | sort -h', 'sort -u visitors.txt', "awk '{print $1}' access.log | sort | uniq -c | sort -rn"], see: ['uniq', 'wc', 'cut'] },
   ssh: {
     options: ['i', 'p', 'J', 'L', 'N', 'f', 'G'],
     examples: ['ssh kingdom', 'ssh -i ~/.ssh/id_kingdom you@kingdom.internal', 'cat ~/.ssh/config', 'ssh -J community wiki', 'ssh -f -N -L 8080:localhost:8080 wiki', 'ssh wiki uptime'],
@@ -655,12 +668,12 @@ export const PAGES: Record<string, Page> = {
     see: ['systemd.timer', 'systemd.unit', 'systemctl'],
   },
   'systemd.timer': { examples: ['sudo nano /etc/systemd/system/probe.timer', 'sudo systemctl enable --now probe.timer', 'systemctl list-timers'], see: ['systemctl', 'systemd-analyze', 'crontab', 'journalctl'] },
-  tail: { long: { follow: 'f' }, options: ['n', 'f', 'F'], examples: ['tail -n 5 /var/log/syslog', 'tail -f /var/log/nginx/access.log'], see: ['head', 'cat', 'journalctl'] },
+  tail: { long: { follow: 'f', lines: '', bytes: '' }, options: ['n', 'f', 'F', 'c'], values: ['n', 'c'], examples: ['tail -n 5 /var/log/syslog', 'tail -f /var/log/nginx/access.log', 'tail -n +2 report.csv'], see: ['head', 'cat', 'journalctl'] },
   tar: { long: { 'create': 'c', 'list': 't', 'extract': 'x', 'get': 'x', 'gzip': 'z', 'verbose': 'v', 'directory': '' }, options: ['c', 't', 'x', 'z', 'v', 'f', 'C'], examples: ['tar -czf backup.tar.gz Folder', 'tar -tzf backup.tar.gz', 'tar -xzf backup.tar.gz', 'sudo tar -xzf /mnt/backup/site.tar.gz -C /'], see: ['du', 'df', 'rsync', 'restic'] },
   tee: { long: { 'append': 'a' }, options: ['a'], see: ['echo'] },
   touch: { examples: ['touch gear'], see: ['mkdir'] },
   traceroute: { see: ['ping'] },
-  uniq: { long: { 'count': 'c' }, options: ['c'], examples: ['sort visits | uniq -c | sort -n'], see: ['sort'] },
+  uniq: { long: { 'count': 'c', 'repeated': 'd', 'unique': 'u', 'ignore-case': 'i' }, options: ['c', 'd', 'u', 'i', 'f', 's'], values: ['f', 's'], examples: ['sort visits | uniq -c | sort -n', 'sort visits | uniq -d'], see: ['sort'] },
   ufw: { section: 8, examples: ['sudo ufw status verbose', 'sudo ufw allow OpenSSH', 'sudo ufw allow from 192.0.2.2 to any port 22', 'sudo ufw default deny incoming', 'sudo ufw enable', 'sudo ufw delete allow 80', 'sudo ufw allow from 192.0.2.0/24 to any app Samba', 'grep IPV6 /etc/default/ufw', 'sudo ufw reload'], see: ['ss', 'ssh', 'systemctl'] },
   wc: { long: { 'lines': 'l', 'words': 'w', 'bytes': 'c' }, options: ['l', 'w', 'c'], examples: ['grep erreur journal | wc -l'], see: ['grep', 'sort'] },
   usermod: { long: { 'append': 'a', 'groups': 'G', 'lock': 'L', 'unlock': 'U', 'expiredate': 'e', 'shell': 's', 'uid': 'u' },

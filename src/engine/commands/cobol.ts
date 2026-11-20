@@ -49,11 +49,12 @@ export const COBOL: Record<string, Command> = {
         else sources.push(a);
       }
       if (output === null && args.includes('-o')) return game.error(`cobc: option requires an argument -- 'o'`, 1);
+      // GnuCOBOL 3.1.2 (checked): "cobc: error: no input files", but "cobc: FILE: No such file or directory".
       if (!sources.length) return game.error('cobc: error: no input files', 1);
       const file = sources[0];
       const n = game.find(file);
-      if (!n || n.type !== 'file') return game.error(`cobc: error: ${file}: No such file or directory`, 1);
-      if (!game.traverses(file) || !game.can(n, 'r')) return game.error(`cobc: error: ${file}: Permission denied`, 1);
+      if (!n || n.type !== 'file') return game.error(`cobc: ${file}: No such file or directory`, 1);
+      if (!game.traverses(file) || !game.can(n, 'r')) return game.error(`cobc: ${file}: Permission denied`, 1);
       const r = compile(game, file, content(n, game), { free, dirs, kind: kind === 'object' ? 'module' : kind });
       if ('errors' in r) {
         game.status = 1;

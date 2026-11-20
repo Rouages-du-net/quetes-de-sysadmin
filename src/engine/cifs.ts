@@ -146,6 +146,7 @@ export interface CifsRequest {
  */
 export function mountCifs(client: Shell, r: CifsRequest): string | { ask: string } {
   const unc = /^\/\/([^/]+)\/([^/]+)\/?$/.exec(r.source.replace(/\\/g, '/'));
+  // cifs-utils 7.0: "%s: bad UNC (%s)", and "error %d (%s) opening credential file %s".
   if (!unc) return `mount.cifs: bad UNC (${r.source})`;
   const [, host, shareName] = unc;
   const values: Record<string, string> = {};
@@ -182,12 +183,18 @@ export function mountCifs(client: Shell, r: CifsRequest): string | { ask: string
   const found = serverFor(client, host);
   if (!found) return `mount error: could not resolve address for ${host}: Unknown error`;
   const server = found.shell;
-  if (!isWindows(server)) return error(115, 'Operation now in progress');
   // Port 445 dropped by the server's firewall: the connection never completes.
-  if (!reaches(client, server, 445)) return error(115, 'Operation now in progress');
+  // cifs-utils 7.0's mount.cifs.c (main, after mount(2)): on EINPROGRESS it
+  // prints "could not connect to ADDRESS" without a newline, tries the next
+  // address, and having none left, "Unable to find suitable address." (exit 32).
+  const unreachable = () => `mount error(115): could not connect to ${shellAddress(server) ?? host}Unable to find suitable address.`;
+  if (!isWindows(server)) return unreachable();
+  if (!reaches(client, server, 445)) return unreachable();
   const w = windows(server);
-  // SMB1 is off on the server: it drops the connection at the first request.
-  if (vers === '1.0' && !w.smb1) return error(112, 'Host is down');
+  // SMB1 is off on the server: it drops the connection at the first request
+  // (EHOSTDOWN), which cifs-utils 7.0 explains before the error itself.
+  if (vers === '1.0' && !w.smb1)
+    return `mount error: Server abruptly closed the connection.\nThis can happen if the server does not support the SMB version you are trying to use.\nThe default SMB version recently changed from SMB1 to SMB2.1 and above. Try mounting with vers=1.0.\n${error(112, 'Host is down')}`;
   // domain=SCHOOL: a domain account, checked by the domain controller (a wrong password counts towards its lockout).
   const dom = values.domain ?? values.dom ?? values.workgroup;
   const account = dom && !/^workgroup$/i.test(dom) && dom.toUpperCase() !== w.computer.toUpperCase() ? `${dom}\\${user}` : user;

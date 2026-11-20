@@ -268,6 +268,8 @@ function authenticate(origin: Shell, jumps: Jump[], next: () => string, i: numbe
   // The configuration applied by the remote sshd (if simulated), otherwise Debian's default.
   const config: Record<string, string> = s.shell.state.sshd?.load ?? {};
   // A Windows domain account (SCHOOL\\alice, alice@school.internal): the domain controller decides.
+  // Win32-OpenSSH logs a password on with LOGON32_LOGON_NETWORK_CLEARTEXT, Logon Type 8
+  // (contrib/win32/win32compat/win32_usertoken_utils.c, PowerShell/openssh-portable).
   const from = { address: shellAddress(i ? jumps[i - 1].shell : origin), caller: isWindows(s.shell) ? windows(s.shell).computer : '', type: 8 };
   const domain = isWindows(s.shell) ? domainLogon(s.shell, s.user, undefined, from) : null;
   const existsAccount = domain !== null || !!s.shell.accounts.users[s.user];

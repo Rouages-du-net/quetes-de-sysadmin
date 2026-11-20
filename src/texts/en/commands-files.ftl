@@ -59,7 +59,7 @@ chmod-mode-incorrect = chmod: invalid mode: '{ $permissions }' (see man chmod)
 ## find
 
 # { $predicate }: the unknown option typed
-find-predicate-unknown = find: unknown predicate `{ $predicate }' (here: -name, -type, -mtime, -maxdepth, -delete, -printf)
+find-predicate-unknown = find: unknown predicate `{ $predicate }'
 find-argument-missing = find: missing argument to `{ $predicate }'
 # { $predicate }: -mtime, -maxdepth; { $value }: what was typed
 find-argument-numeric = find: invalid argument `{ $value }' to `{ $predicate }'
@@ -75,6 +75,8 @@ missing = du: cannot access '{ $target }': No such file or directory
 # the columns (18, 6, 7, 6 and 4 characters).
 df-header = Filesystem           Size    Used  Avail Use% Mounted on
 df-header-inodes = Filesystem          Inodes   IUsed   IFree IUse% Mounted on
+# df -T: the title of the type column.
+df-type = Type
 depth = du: invalid maximum depth
 
 ## tar
@@ -90,3 +92,27 @@ tar-truncated =
     tar: Error is not recoverable: exiting now
 tar-place-missing = tar: { $target }: Cannot chdir: No such file or directory
 tar-option-missing = tar: You must specify one of the '-Acdtrux', '--delete' or '--test-label' options
+
+## cp, mv, rm and rmdir: options (coreutils 9.4's messages)
+
+target-not-directory = { $command }: target '{ $target }': Not a directory
+target-missing = { $command }: target '{ $target }': No such file or directory
+# -i: the question (the code adds the space after it); y (or yes) replaces the file.
+cp-overwrite = cp: overwrite '{ $target }'? 
+mv-overwrite = mv: overwrite '{ $target }'? 
+# mv -v
+mv-renamed = renamed '{ $source }' -> '{ $destination }'
+rm-ask = rm: remove regular file '{ $target }'? 
+rm-ask-empty = rm: remove regular empty file '{ $target }'? 
+rm-ask-link = rm: remove symbolic link '{ $target }'? 
+rm-removed = removed '{ $target }'
+rm-removed-directory = removed directory '{ $target }'
+rmdir-usage =
+    rmdir: missing operand
+    Try 'rmdir --help' for more information.
+rmdir-failed = rmdir: failed to remove '{ $target }': { $reason }
+rmdir-missing = No such file or directory
+rmdir-not-directory = Not a directory
+rmdir-not-empty = Directory not empty
+rmdir-permission = Permission denied
+rmdir-removing = rmdir: removing directory, '{ $target }'

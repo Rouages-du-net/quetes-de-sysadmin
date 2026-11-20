@@ -144,7 +144,8 @@ for (const language of LANGUAGES)
       // The key file is still readable by everyone.
       expect(done('lost-disk')).toBe(false);
       all = play(['sudo cryptdisks_start offsite']);
-      expect(all).toContain('WARNING: key file /root/offsite.key has insecure permissions, owner, or mode.');
+      // Debian's cryptsetup_message, folded by fold -s at 80 columns.
+      expect(all).toContain('Starting crypto disk...cryptsetup: WARNING: offsite: key file /root/offsite.key has insecure\n    ownership, see /usr/share/doc/cryptsetup/README.Debian.gz.\noffsite (starting)...offsite (started)...done.');
       play(['sudo cryptdisks_stop offsite', 'sudo chmod 400 /root/offsite.key']);
       expect(done('lost-disk')).toBe(true);
     });
@@ -272,3 +273,31 @@ for (const language of LANGUAGES)
       expect(done('restore-drill')).toBe(true);
     });
   });
+
+// Messages checked against the real tools: cryptsetup 2.7 on a file image,
+// and Debian's cryptdisks_start/cryptdisks_stop scripts with their LSB logging.
+describe('cryptsetup and cryptdisks: verified messages', () => {
+  const c = new Console({ language: 'en', finished: [...BEFORE, 'lost-disk'] });
+  const one = (l: string) => {
+    const o = c.execute(l) ?? '';
+    return c.shell.waiting && /^sudo /.test(l) && !c.shell.lastStatus && /lecture/.test(o) ? c.execute(MDP) ?? '' : o;
+  };
+  one('ssh crate');
+  one('yes');
+  it("cryptdisks_start's and cryptdisks_stop's usage, root check, unknown names", () => {
+    expect(one('sudo cryptdisks_start')).toBe('Usage: /usr/sbin/cryptdisks_start [-r|--readonly] <name> [.. <name>]\n\nreads /etc/crypttab and starts the mapping corresponding to <name>');
+    expect(c.shell.lastStatus).toBe(1);
+    expect(one('sudo cryptdisks_stop')).toBe('usage: /usr/sbin/cryptdisks_stop <name>\n\nreads /etc/crypttab and stops the mapping corresponding to <name>');
+    expect(one('cryptdisks_start offsite')).toBe('/usr/sbin/cryptdisks_start needs root privileges ... (warning).');
+    expect(one('sudo cryptdisks_start elsewhere')).toBe('Starting crypto disk...elsewhere (failed, not found in crypttab)...failed.');
+    expect(c.shell.lastStatus).toBe(1);
+    expect(one('sudo cryptdisks_stop elsewhere')).toBe('Stopping crypto disk...elsewhere (stopped)...done.');
+    expect(c.shell.lastStatus).toBe(0);
+  });
+  it('the last key slot: the warning, then "Operation aborted, the keyslot was NOT wiped." (exit code 2)', () => {
+    one('sudo cryptsetup luksKillSlot --key-file /root/offsite.key /dev/sdb1 0');
+    expect(one('sudo cryptsetup luksKillSlot /dev/sdb1 1')).toBe('\nWARNING!\n========\nThis is the last keyslot. Device will become unusable after purging this key.\n');
+    expect(one('no')).toBe('Operation aborted, the keyslot was NOT wiped.');
+    expect(c.shell.lastStatus).toBe(2);
+  });
+});

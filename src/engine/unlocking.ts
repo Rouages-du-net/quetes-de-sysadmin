@@ -9,8 +9,8 @@ import type { Story } from './world';
 
 export const FIRST = 'eraser';
 
-const story = (id: string): Story | undefined => STORIES.find((h) => h.id === id);
-const storyFor = (chapter: string): Story | undefined => STORIES.find((h) => h.chapters.some((c) => c.id === chapter));
+const story = (id: string, stories: readonly Story[] = STORIES): Story | undefined => stories.find((h) => h.id === id);
+const storyFor = (chapter: string, stories: readonly Story[]): Story | undefined => stories.find((h) => h.chapters.some((c) => c.id === chapter));
 
 /** The chapters still missing to open this story (empty: it is open). */
 export function missing(id: string, finished: readonly string[]): string[] {
@@ -23,13 +23,14 @@ export const isOpen = (id: string, finished: readonly string[]): boolean => miss
 /**
  * All the chapters to finish, in order, to open this story (and
  * those it depends on): a story's chapters follow one another, so
- * finishing one assumes the earlier ones are finished.
+ * finishing one assumes the earlier ones are finished. (`stories`: the
+ * game's by default; tests may pass another list.)
  */
-export function prerequisites(id: string): string[] {
+export function prerequisites(id: string, stories: readonly Story[] = STORIES): string[] {
   const seen: string[] = [];
   const add = (h: string) => {
-    for (const c of story(h)?.after ?? []) {
-      const source = storyFor(c)!;
+    for (const c of story(h, stories)?.after ?? []) {
+      const source = storyFor(c, stories)!;
       add(source.id);
       for (const x of source.chapters.slice(0, source.chapters.findIndex((y) => y.id === c) + 1)) if (!seen.includes(x.id)) seen.push(x.id);
     }

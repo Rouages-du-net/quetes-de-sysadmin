@@ -103,7 +103,9 @@ for (const language of LANGUAGES)
     it('chapter 2 — false leads: -free, a module, the check commented out', () => {
       const { c, play, edit, flag } = part(['copybook']);
       play(['cd /opt/batch/src']);
-      expect(play(['cobc -x -free -I ../copybooks contrib.cob'])).toContain('syntax error');
+      // GnuCOBOL 3.1.2's first errors (checked); the real compiler then goes on.
+      expect(play(['cobc -x -free -I ../copybooks contrib.cob'])).toContain('contrib.cob:1: error: PROGRAM-ID header missing\ncontrib.cob:1: error: PROCEDURE DIVISION header missing\ncontrib.cob:1: error: syntax error, unexpected Literal');
+      expect(play(['cobc -x nothere.cob'])).toBe('cobc: nothere.cob: No such file or directory');
       expect(flag('free')).toBe(true);
       play(['cobc -I ../copybooks ebc2asc.cob']);
       expect(play(['./ebc2asc.so'])).toContain('Segmentation fault');

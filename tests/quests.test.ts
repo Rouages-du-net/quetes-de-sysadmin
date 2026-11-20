@@ -1347,7 +1347,8 @@ for (const language of LANGUAGES)
         const inodes =
           s.execute(L(`ls -i ${D}/daily.0/localhost/srv/share/rules/rules-scans.pdf ${D}/daily.6/localhost/srv/share/rules/rules-scans.pdf`)) ??
           '';
-        const [a, b] = inodes.split('\n\n').map((l) => l.trim().split(' ')[0]);
+        // Like GNU ls: the two files together, each with its inode number.
+        const [a, , b] = inodes.trim().split(/\s+/);
         expect(a).toBe(b);
         if (reference) expect(s.execute(L(`diff ${D}/daily.0/localhost/srv/share/inventory.csv ${D}/daily.1/localhost/srv/share/inventory.csv`))).toContain(
           '> jeu offert n°13;1;neuf',

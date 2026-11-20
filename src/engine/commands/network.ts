@@ -156,6 +156,8 @@ export const NETWORK: Record<string, Command> = {
       const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
         if (args[i] === '-c') n = Math.max(1, Math.min(10, Number(args[++i]) || 4));
+        // -c3: the count glued to its option.
+        else if (/^-c\d+$/.test(args[i])) n = Math.max(1, Math.min(10, Number(args[i].slice(2)) || 4));
         else rest.push(args[i]);
       }
       const host = rest[0];
@@ -165,9 +167,10 @@ export const NETWORK: Record<string, Command> = {
       const res = resolveName(game, host);
       if ('error' in res)
         return game.error(`ping: ${host}: ${res.error === 'timeout' ? 'Temporary failure in name resolution' : 'Name or service not known'}`);
-      const r: Network = game.state.network;
-      const m = r.machines[res.ip];
-      const jumps = r.routes[res.ip]?.length ?? 1;
+      const r: Network | undefined = game.state.network;
+      // A machine whose network the story doesn't describe: nobody answers.
+      const m = r?.machines?.[res.ip];
+      const jumps = r?.routes?.[res.ip]?.length ?? 1;
       const lines = [`PING ${host} (${res.ip}) 56(84) bytes of data.`];
       const time: number[] = [];
       if (m?.ping)
@@ -258,7 +261,53 @@ export const NETWORK: Record<string, Command> = {
   curl: {
     // curl has many options (-s, -L, -v…): the ones not simulated are ignored.
     ownOptions: true,
-    launch: ({ args, game }) => {
+    // -o FILE and -O (the URL's last part): the body goes into the file, not to the screen.
+    launch: (c) => {
+      const { args, game } = c;
+      // -o may end a group of letters (-so, -sSLo): its value is the next word.
+      const io = args.findIndex((a) => a === '--output' || /^-[A-Za-z]*o$/.test(a));
+      const file = io >= 0 ? args[io + 1] : undefined;
+      const remote = args.some((a) => a === '--remote-name' || /^-[A-Za-z]*O[A-Za-z]*$/.test(a));
+      const writeOut = args.some((a) => a === '-w' || a === '--write-out');
+      if ((file === undefined || file === '/dev/null' || writeOut) && !remote) return curlTo(c);
+      const url = args.filter((a, k) => !a.startsWith('-') && !(k > 0 && ['-o', '--output', '-H', '--header', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-e', '--referer'].includes(args[k - 1]))).at(-1) ?? '';
+      const target = file ?? decodeURIComponent(/^[a-z]+:\/\/[^/]*(\/.*)?$/i.exec(url)?.[1]?.split(/[?#]/)[0].split('/').at(-1) ?? '');
+      if (!target) return game.error('curl: Remote file name has no length\ncurl: (23) Failure writing output to destination', 23);
+      // The rest of the line, without -o FILE and -O (the letters grouped with them stay).
+      const rest = args
+        .map((a, k) => (k === io && a !== '--output' ? a.slice(0, -1) : /^-[A-Za-z]*O[A-Za-z]*$/.test(a) ? a.replace('O', '') : a))
+        .filter((a, k) => a !== '-' && a !== '--remote-name' && !(io >= 0 && (k === io + 1 || (k === io && (a === '--output' || a === '')))));
+      const before = game.errorCount();
+      const body = curlTo({ ...c, args: rest, last: false });
+      if (game.errorCount() > before) return body;
+      const n = game.find(target);
+      const error =
+        n?.type === 'directory'
+          ? 'Is a directory'
+          : n
+            ? game.can(n, 'w') && game.traverses(target)
+              ? null
+              : 'Permission denied'
+            : game.place('curl', target, { type: 'file', content: body, owner: game.who, lines: true })
+              ? game.find(target + '/..')
+                ? 'Permission denied'
+                : 'No such file or directory'
+              : null;
+      if (error) return game.error(`Warning: Failed to open the file ${target}: ${error}\ncurl: (23) Failure writing output to destination`, 23);
+      if (n?.type === 'file') {
+        n.content = body;
+        n.lines = true;
+        delete n.size;
+      }
+      return '';
+    },
+  },
+};
+
+// curl itself, its body on the screen (or in the pipe).
+function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {
+  {
+    {
       // A story that models its network for metrics (Prometheus, exporters): its own curl.
       if (game.state.metricsHere) return metricsCurl(game, args);
       if (speaks6(game)) return curl6(game, args);
@@ -384,6 +433,6 @@ export const NETWORK: Record<string, Command> = {
       if (!site)
         return game.error(`curl: (7) Failed to connect to ${host} port ${m[1] === 'http' ? 80 : 443} after 3002 ms: Couldn't connect to server`);
       return headers ? site.headers.join('\n') : site.body;
-    },
-  },
-};
+    }
+  }
+}

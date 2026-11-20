@@ -145,3 +145,7 @@ colour-argument-invalid =
       - ‘never’, ‘no’, ‘none’
       - ‘auto’, ‘tty’, ‘if-tty’
     Try '{ $command } --help' for more information.
+
+# vim, vi, emacs…: not simulated; the game points to its editor.
+editor-only-nano = { $command }: command not found. This game's editor is nano: nano { $file } (Ctrl-O to save, Ctrl-X to quit).
+editor-file = file

@@ -72,9 +72,16 @@ export const SOLARIS_CHECKS: Record<string, (args: string[]) => string | null> =
 };
 
 // /usr/xpg4/bin's POSIX versions: more options, but still not GNU's.
-// The usage follows the synopsis of Solaris 10's grep(1).
-const XPG4_GREP_USAGE =
-  'Usage:\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] -e pattern_list...\n\t[-f pattern_file]... [file...]\n\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] [-e pattern_list...]\n\t-f pattern_file... [file...]\n\tgrep [-E|-F] [-c|-l|-q] [-bhinsvwx] pattern [file...]';
+// The usage of grep_xpg4's usage() (OpenSolaris's usr/src/cmd/grep_xpg4/grep.c,
+// the closest public source to Solaris 10's binary), exit code 2.
+const XPG4_GREP_USAGE = [
+  'Usage:\tgrep [-c|-l|-q] [-bhinsvwx] pattern_list [file ...]',
+  '\tgrep [-c|-l|-q] [-bhinsvwx] [-e pattern_list]... [-f pattern_file]... [file...]',
+  '\tgrep -E [-c|-l|-q] [-bhinsvx] pattern_list [file ...]',
+  '\tgrep -E [-c|-l|-q] [-bhinsvx] [-e pattern_list]... [-f pattern_file]... [file...]',
+  '\tgrep -F [-c|-l|-q] [-bhinsvx] pattern_list [file ...]',
+  '\tgrep -F [-c|-l|-q] [-bhinsvx] [-e pattern_list]... [-f pattern_file]... [file...]',
+].join('\n');
 export const XPG4_CHECKS: Record<string, (args: string[]) => string | null> = {
   // No context (-A, -B, -C), no -o, no -m: GNU additions.
   grep: (args) => {

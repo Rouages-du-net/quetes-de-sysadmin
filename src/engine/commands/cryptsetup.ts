@@ -179,9 +179,11 @@ function luksFormat(game: Shell, st: StorageState, p: Parsed): string {
   if (p.batch) return passphrase();
   const old = systemFor(st, d);
   const table = st.disks[d.replace(/^\/dev\//, '')]?.table;
+  // cryptsetup 2.7 (checked on a file image): one line per signature found,
+  // then a blank line and the warning; the blank line comes first otherwise.
   const warning = [
-    ...(old ? [`WARNING: Device ${given} already contains a '${old.type}' superblock signature.`, ''] : []),
-    ...(table ? [`WARNING: Device ${given} already contains a 'gpt' partition signature.`, ''] : []),
+    ...(old ? [`WARNING: Device ${given} already contains a '${old.type}' superblock signature.`] : []),
+    ...(table ? [`WARNING: Device ${given} already contains a 'gpt' partition signature.`] : []),
     '',
     'WARNING!',
     '========',
@@ -195,7 +197,7 @@ function luksFormat(game: Shell, st: StorageState, p: Parsed): string {
     }
     return passphrase();
   });
-  return warning.replace(/^\n/, '');
+  return warning;
 }
 
 // ——— open ———
@@ -397,8 +399,9 @@ function removeSlot(game: Shell, h: Header, slot: number, batch: boolean): strin
     return '';
   };
   if (Object.keys(h.slots).length > 1 || batch) return remove();
-  question(game, "Are you sure? (Type 'yes' in capital letters): ", (typed) => (typed === 'YES' ? remove() : failed(game, 'Operation aborted.', 1)));
-  return '\nWARNING!\n========\nThis is the last keyslot. Device will become unusable after purging this key.\n'.replace(/^\n/, '');
+  // cryptsetup 2.7 (checked on a file image): the keyslot kept, exit code 2.
+  question(game, "Are you sure? (Type 'yes' in capital letters): ", (typed) => (typed === 'YES' ? remove() : failed(game, 'Operation aborted, the keyslot was NOT wiped.', 2)));
+  return '\nWARNING!\n========\nThis is the last keyslot. Device will become unusable after purging this key.\n';
 }
 
 function luksRemoveKey(game: Shell, st: StorageState, p: Parsed): string {
@@ -500,51 +503,112 @@ function cryptsetup(game: Shell, args: string[]): string {
 }
 
 // ——— cryptdisks_start / cryptdisks_stop (Debian) ———
+// Their texts follow Debian's scripts (cryptsetup 2.7, /usr/sbin/cryptdisks_start,
+// /lib/cryptsetup/cryptdisks-functions and functions) and the LSB logging of
+// /lib/lsb/init-functions: log_action_begin_msg prints "TEXT...",
+// device_msg "NAME (STATE)...", log_action_end_msg "done." or "failed.",
+// log_warning_msg "TEXT ... (warning).", cryptsetup_message "cryptsetup: TEXT"
+// on stderr, folded at 80 columns (fold -s) with following lines indented.
+
+/** cryptsetup_message of Debian's functions: one line, or folded like fold -s | sed '1! s/^/    /'. */
+function cryptsetupMessage(text: string): string {
+  const line = `cryptsetup: ${text}`;
+  if (text.length < 70) return line;
+  const out: string[] = [];
+  let rest = line;
+  while (rest.length > 80) {
+    const cut = rest.lastIndexOf(' ', 79);
+    const at = cut < 0 ? 80 : cut + 1;
+    out.push(rest.slice(0, at).trimEnd());
+    rest = rest.slice(at);
+  }
+  out.push(rest);
+  return out.map((l, i) => (i ? `    ${l}` : l)).join('\n');
+}
 
 function cryptdisks(game: Shell, args: string[], start: boolean): string {
   const self = start ? 'cryptdisks_start' : 'cryptdisks_stop';
-  const name = args.find((a) => !a.startsWith('-'));
-  if (!name) return game.error(`Usage: ${self} [-r|--readonly] <name> [<name> ..]`, 1);
-  if (game.who !== 'root') return game.error(`${self} needs root privileges`, 1);
+  // $0 is the path the script was run from.
+  const usage = start
+    ? `Usage: /usr/sbin/cryptdisks_start [-r|--readonly] <name> [.. <name>]\n\nreads /etc/crypttab and starts the mapping corresponding to <name>`
+    : `usage: /usr/sbin/cryptdisks_stop <name>\n\nreads /etc/crypttab and stops the mapping corresponding to <name>`;
+  const names: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (!start) {
+      names.push(a);
+      continue;
+    }
+    if (names.length || a === '--') {
+      names.push(...args.slice(a === '--' ? i + 1 : i));
+      break;
+    }
+    if (a === '-r' || a === '--readonly') continue;
+    if (a === '-h' || a === '--help' || a === '-?') return failed(game, usage, 0);
+    if (a.startsWith('-')) return game.error(`Error: unknown option '${a}'\n${usage}`, 1);
+    names.push(a);
+  }
+  const name = names[0];
+  if (!name) return game.error(usage, 1);
+  if (game.who !== 'root') return game.error(`/usr/sbin/${self} needs root privileges ... (warning).`, 1);
   const st = storageOf(game);
-  const entry = readCrypttab(game.read('/etc/crypttab') ?? '').find((e) => e.name === name);
   const title = start ? 'Starting crypto disk...' : 'Stopping crypto disk...';
-  if (!st || !entry) return game.error(`${title}${name} (failed)...${name}: not found in crypttab...failed.`, 1);
   if (!start) {
-    if (!cryptOf(st)[name]) return `${title}${name} (stopped)...done.`;
+    // remove_mapping doesn't read crypttab: only the mapping's name counts.
+    if (!st || !cryptOf(st)[name]) return `${title}${name} (stopped)...done.`;
     if (((game.state.mounts ?? []) as { name: string }[]).some((m) => m.name === `/dev/mapper/${name}`)) return game.error(`${title}${name} (busy)...failed.`, 1);
     close(st, name);
     mapperUpdate(game);
     return `${title}${name} (stopping)...done.`;
   }
+  const entry = readCrypttab(game.read('/etc/crypttab') ?? '').find((e) => e.name === name);
+  if (!st || !entry) return game.error(`${title}${name} (failed, not found in crypttab)...failed.`, 1);
   if (cryptOf(st)[name]) return `${title}${name} (running)...done.`;
   const d = deviceFor(st, entry.source);
   const h = d ? luksOf(st)[d] : undefined;
-  if (!d || !h) return game.error(`${title}${name} (starting)...${name}: the source device ${entry.source} is not present (yet).\n...failed.`, 1);
-  if (mappingOf(st, d)) return game.error(`${title}${name} (starting)...${name}: the source device ${entry.source} is in use...failed.`, 1);
+  if (!d || !h) return game.error(`${title}${name} (skipped, device ${entry.source} does not exist)...failed.`, 1);
+  const inUse = () => !!mappingOf(st, d);
   const opened = (slot: number) => {
     open(st, d, name, slot);
     mapperUpdate(game);
     game.state.luksOpened = [...((game.state.luksOpened as string[] | undefined) ?? []), `${name}:${h.slots[slot].kind}`];
   };
-  if (entry.key !== 'none' && entry.key !== '-') {
-    const n = game.find(entry.key);
-    if (!n || n.type !== 'file') return game.error(`${title}${name} (starting)...${name}: keyfile not found...failed.`, 1);
-    // Debian checks the key file: owned by root, readable by nobody else.
-    const insecure = n.owner !== 'root' || !/^r[w-]-------$/.test(n.mode ?? 'rw-r--r--');
-    const warning = insecure ? `${name}: WARNING: key file ${entry.key} has insecure permissions, owner, or mode.\n` : '';
-    if (insecure) game.state.cryptdisksInsecure = true;
-    const slot = slotFor(h, game.read(entry.key) ?? '');
-    if (slot === null) return game.error(`${title}${warning}${name} (starting)...${NO_KEY}\n${name}: cryptsetup failed, bad password or options?...failed.`, 1);
+  // cryptsetup's own message when a try fails, null when the mapping is open.
+  const attempt = (key: string | null): string | null => {
+    if (key === null) return 'Failed to open key file.';
+    const slot = slotFor(h, key);
+    if (slot === null) return NO_KEY;
+    if (inUse()) return `Cannot use device ${entry.source} which is in use (already mapped or mounted).`;
     opened(slot);
+    return null;
+  };
+  if (entry.key !== 'none' && entry.key !== '-') {
+    // crypttab_key_check: a missing key file only warns; a key file not owned
+    // by root, or that its group or others can use, warns too (mode %04a not ending in 00).
+    const n = game.find(entry.key);
+    let warning = '';
+    if (!n || n.type !== 'file') warning = `${cryptsetupMessage(`WARNING: ${name}: keyfile '${entry.key}' not found`)}\n`;
+    else if (n.owner !== 'root' || !/^...------$/.test(n.mode ?? 'rw-r--r--')) {
+      warning = `${cryptsetupMessage(`WARNING: ${name}: key file ${entry.key} has insecure ownership, see /usr/share/doc/cryptsetup/README.Debian.gz.`)}\n`;
+      game.state.cryptdisksInsecure = true;
+    }
+    // With a key file, a single try (tries=1).
+    const problem = attempt(n && n.type === 'file' ? (game.read(entry.key) ?? '') : null);
+    if (problem) return game.error(`${title}${warning}${name} (starting)...${problem}\n${name} (failed)...failed.`, 1);
     return `${title}${warning}${name} (starting)...${name} (started)...done.`;
   }
-  secret(game, `Please unlock disk ${name}: `, (typed) => {
-    const slot = slotFor(h, typed);
-    if (slot === null) return failed(game, `${NO_KEY}\n${name}: cryptsetup failed, bad password or options?...failed.`, 1);
-    opened(slot);
-    return `${name} (started)...done.`;
-  });
+  // Asked with askpass, three tries by default.
+  const ask = (left: number) =>
+    secret(game, `Please unlock disk ${name}: `, (typed) => {
+      const problem = attempt(typed);
+      if (!problem) return `${name} (started)...done.`;
+      if (left > 1) {
+        ask(left - 1);
+        return problem;
+      }
+      return failed(game, `${problem}\n${name} (failed)...failed.`, 1);
+    });
+  ask(3);
   return `${title}${name} (starting)...`;
 }
 

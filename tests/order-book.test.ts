@@ -162,6 +162,11 @@ for (const language of LANGUAGES)
       expect(flag('not-saved')).toBe(true);
       expect(play(['system "WRKOBJLCK OBJ(ORDERS/ORDHDR) OBJTYPE(*FILE)"'])).toContain('ORDWEB');
       expect(play(['system "SAVLIB LIB(ORDERS) DEV(*SAVF) SAVF(BACKUP/ORDERS)"'])).toContain('CPA4067');
+      // Message texts from the CL pages of IBM i 7.5's documentation (SAVLIB, RSTLIB).
+      expect(c.shell.last.errors.join('\n')).toContain('CPF3794: Save or restore operation ended unsuccessfully.');
+      expect(play(['system "SAVLIB LIB(ORDERS QGPL) DEV(*SAVF) SAVF(BACKUP/ORDERS)"'])).toContain('CPF3789: Only one library allowed with specified parameters.');
+      play(['system "CRTSAVF FILE(QGPL/EMPTY)"']);
+      expect(play(['system "DSPSAVF QGPL/EMPTY"'])).toContain('CPF3707: Save file EMPTY in QGPL contains no data.');
       expect(play(['system "SAVLIB LIB(ORDERS) DEV(*SAVF) SAVF(BACKUP/ORDERS) CLEAR(*ALL)"'])).toContain('CPF3741');
       expect(flag('saved')).toBe(false);
       expect(play(['system "SAVLIB LIB(ORDERS) DEV(*SAVF) SAVF(BACKUP/ORDERS) SAVACT(*LIB) CLEAR(*ALL)"'])).toContain('CPC3722: 16 objects saved from library ORDERS.');

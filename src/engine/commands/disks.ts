@@ -200,6 +200,17 @@ function mount(game: Shell, args: string[]): string {
   return '';
 }
 
+/**
+ * mount.cifs's exit code (cifs-utils 7.0, mount.h): EX_USAGE (1) for what it
+ * refuses before mounting, the errno for a credentials file it can't open,
+ * EX_FAIL (32) when the mount itself fails.
+ */
+function cifsStatus(message: string): number {
+  const cred = /^error (\d+) \(.*\) opening credential file /.exec(message);
+  if (cred) return Number(cred[1]);
+  return /^(mount\.cifs: bad UNC|bad user name|bad group name|Couldn't chdir|mount error: could not resolve)/.test(message) ? 1 : 32;
+}
+
 /** mount -t cifs (and mount.cifs): cifs-utils must be there; the password may be asked. */
 export function cifs(game: Shell, source: string, point: string, options: string): string {
   const apt = game.state.apt as { installed: Record<string, string> } | undefined;
@@ -209,14 +220,15 @@ export function cifs(game: Shell, source: string, point: string, options: string
   // The errors stay readable by the chapters (an answer to the prompt is not in game.last).
   const noted = (e: string) => ((game.state.cifsErrors ??= []) as string[]).push(e);
   const r = mountCifs(game, request);
-  if (typeof r === 'string') return r ? (noted(r), game.error(r, 32)) : '';
+  if (typeof r === 'string') return r ? (noted(r), game.error(r, cifsStatus(r))) : '';
   game.ask(
     r.ask,
     (typed) => {
       const again = mountCifs(game, { ...request, typed });
       if (typeof again === 'string' && again) {
         noted(again);
-        game.status = 32;
+        game.status = cifsStatus(again);
+        game.lastStatus = game.status;
         return again;
       }
       return '';
