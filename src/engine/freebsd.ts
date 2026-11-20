@@ -22,7 +22,7 @@ export const isBsd = (game: Game) => game.state.os === 'freebsd';
 
 // Commands of a Debian server that a FreeBSD base system doesn't have.
 export const LINUX_ONLY = [
-  'systemctl', 'journalctl', 'apt', 'apt-get', 'dpkg', 'ss', 'ip', 'ufw', 'iptables', 'iptables-save', 'nft', 'update-rc.d', 'useradd', 'free',
+  'systemctl', 'journalctl', 'apt', 'apt-get', 'dpkg', 'ss', 'ip', 'ufw', 'iptables', 'iptables-save', 'nft', 'update-rc.d', 'useradd', 'free', 'watch',
 ];
 
 // ——— /etc/rc.conf ———

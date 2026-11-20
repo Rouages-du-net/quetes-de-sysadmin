@@ -36,11 +36,19 @@ syntax-redirection = syntax error: missing file name after { $operator }
 syntax-pipe = syntax error near unexpected token `|'
 syntax-token = syntax error near unexpected token `{ $token }'
 syntax-end = syntax error: unexpected end of file
+syntax-eof = syntax error: unexpected end of file
+# { $line }: the input's line number; { $delimiter }: the here-document's word (EOF)
+heredoc-eof = warning: here-document at line { $line } delimited by end-of-file (wanted `{ $delimiter }')
+# { $command }: break or continue, typed outside a loop
+shell-loop-only = -bash: { $command }: only meaningful in a `for', `while', or `until' loop
+# { $count }: the number of rounds after which the game stops a loop
+shell-loop-limit = (The game stopped this loop after { $count } rounds: a loop that never ends would freeze the page. On a real machine, Ctrl-C stops it.)
 redirection-is-one-directory = { $target }: Is a directory
 redirection-permission = { $target }: Permission denied
 redirection-sudo = (The > redirection is done by your own shell, not by sudo. Tip: send the text into "sudo tee -a file", which writes as root.)
 command-not-still = { $command }: you don't have this command yet in this chapter. Type "help" for the list.
 command-missing = { $command }: command not found. Type "help" for the list.
+command-replaced = { $command }: command not found. (Debian 13 no longer has { $command }: try { $replacement }.)
 # { $commands }: list of commands, separated by commas
 # Le nom de la commande qui liste les autres, dans la langue (aide, help)
 command-help = help

@@ -6,6 +6,7 @@
 //   the story's own reactions, which return an optional message.
 
 import { isBsd } from '../freebsd';
+import { jobFor, signalJob } from '../jobs';
 import { bsdPs } from './bsd-tools';
 import type { Command } from './index';
 import type { Game } from '../shell';
@@ -39,6 +40,8 @@ interface PsField {
   value: (p: Process) => string | number;
   sort?: (p: Process) => string | number;
 }
+// procps shows a user name longer than its column cut, with a + (systemd+).
+export const psUser = (user: string, width = 8) => (user.length > width ? `${user.slice(0, width - 1)}+` : user);
 const command = (p: Process) => (p.zombie ? `${p.command} <defunct>` : p.command);
 const comm = (p: Process) => p.command.split(/[\s:]/)[0].split('/').at(-1)!.replace(/^-/, '').slice(0, 15);
 const cpuCol: PsField = { header: '%CPU', width: 4, value: (p) => p.cpu.toFixed(1), sort: (p) => p.cpu };
@@ -47,7 +50,7 @@ const niCol: PsField = { header: ' NI', width: 3, value: (p) => p.nice ?? 0, sor
 const PS_FIELDS: Record<string, PsField> = {
   pid: { header: '    PID', width: 7, value: (p) => p.pid, sort: (p) => p.pid },
   ppid: { header: '   PPID', width: 7, value: (p) => p.ppid ?? (p.pid === 1 ? 0 : 1), sort: (p) => p.ppid ?? 1 },
-  user: { header: 'USER    ', width: 8, left: true, value: (p) => p.user.slice(0, 8) },
+  user: { header: 'USER    ', width: 8, left: true, value: (p) => psUser(p.user) },
   ni: niCol,
   nice: niCol,
   pri: { header: 'PRI', width: 3, value: (p) => 19 - (p.nice ?? 0), sort: (p) => 19 - (p.nice ?? 0) },
@@ -108,6 +111,7 @@ export const SYSTEM: Record<string, Command> = {
       refreshCpu(game);
       // FreeBSD's ps: BSD's options and formats (see bsd-tools.ts).
       if (isBsd(game)) return bsdPs(game, args);
+      const original = args;
       // -o FORMAT (and -eo FORMAT): the columns chosen; --sort=[-]KEY.
       const io = args.findIndex((a) => /^-\w*o$/.test(a) || a === '--format');
       const format = io >= 0 ? (args[io + 1] ?? '') : args.find((a) => a.startsWith('--format='))?.slice(9) ?? null;
@@ -121,7 +125,9 @@ export const SYSTEM: Record<string, Command> = {
       // -u account[,account]: only the processes of these accounts.
       const iu = args.findIndex((a) => /^-\w*u$/.test(a));
       const accounts = iu >= 0 ? (args[iu + 1] ?? '').split(',') : null;
-      const listing: Process[] = [...(game.state.process ?? []), ...dockerProcess(game)]
+      // On a machine with Debian's base processes (debian.ts), ps sees itself, like the real one.
+      const self: Process[] = game.state.baseProcesses ? [{ pid: (game.state.nextPid as number | undefined) ?? game.shellPid + 100, user: game.who, cpu: 0, mem: 0.1, command: ['ps', ...original].join(' '), ppid: game.shellPid }] : [];
+      const listing: Process[] = [...(game.state.process ?? []), ...dockerProcess(game), ...self]
         .filter((p: Process) => (onlyPids ? onlyPids.includes(String(p.pid)) : accounts ? accounts.includes(p.user) : all || p.user === game.who || p.user === game.player))
         .sort((a: Process, b: Process) => a.pid - b.pid);
       // ps -p with no such process: the header only, and exit code 1.
@@ -153,11 +159,11 @@ export const SYSTEM: Record<string, Command> = {
       // -f (ps -ef): the full format, with the parent (PPID).
       if (args.some((a) => /^-\w*f/.test(a))) {
         const fLine = (p: Process) =>
-          `${p.user.slice(0, 8).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.command}`;
+          `${psUser(p.user).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.command}`;
         return ['UID          PID    PPID  C STIME TTY          TIME CMD', ...listing.map(fLine)].join('\n');
       }
       const line = (p: Process) =>
-        `${p.user.padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.command}`;
+        `${psUser(p.user).padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.command}`;
       return ['USER          PID  %CPU  %MEM COMMAND', ...listing.map(line)].join('\n');
     },
   },
@@ -183,6 +189,16 @@ export const SYSTEM: Record<string, Command> = {
       if (!pids.length) return game.error(game.t('kill-usage'));
       const messages: string[] = [];
       for (const raw of pids) {
+        // A job (%1, or a job's PID): bash's builtin kill knows them.
+        const job = raw.startsWith('%') || game.jobs.some((j) => String(j.pid) === raw) ? jobFor(game, raw) : null;
+        if (raw.startsWith('%') && !job) {
+          game.error(`bash: kill: ${raw}: no such job`);
+          continue;
+        }
+        if (job) {
+          signalJob(game, job, signal);
+          continue;
+        }
         const listing: Process[] = game.state.process ?? [];
         const p = listing.find((q) => String(q.pid) === raw);
         if (!p) game.error(game.t('kill-none', { pid: raw }));

@@ -308,7 +308,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const form = el('form', { autocomplete: 'off' }, prompt, field, match);
   // tail -f, journalctl -f: the command keeps control until Ctrl-C (this button, the keyboard or the key bar).
   const followStop = el('button', { type: 'button', class: 'stop-follow', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
-  const terminal = el('div', { class: 'terminal' }, output, form, followStop);
+  // Ctrl-Z: the command stops and becomes a job (jobs, fg, bg).
+  const followSuspend = el('button', { type: 'button', class: 'suspend-follow', hidden: '' }, el('kbd', {}, '^Z'), ` ${t('follow-suspend')}`);
+  const terminal = el('div', { class: 'terminal' }, output, form, followStop, followSuspend);
   const quitFocus = el('button', { type: 'button', class: 'leave-focus' }, t('display-quit-focus'));
   // The keys that phone keyboards lack (shown on touch screens).
   const TOUCHES: [string, string][] = [
@@ -626,6 +628,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const tokens = (line: string): Token[] | null => {
     const sh = gameTerminal.shell;
     if (!display.colours || sh.maskedInput() || sh.question || sh.waiting) return null;
+    // A here-document's body is text, not commands.
+    if (sh.continuation !== null && /<<-?\s*['"]?\w/.test(sh.continuation)) return null;
     return colourise(sh, line);
   };
   const inSpans = (js: Token[]) => js.map((j) => (j.kind === 'text' ? j.text : el('span', { class: `c-${j.kind}` }, j.text)));
@@ -880,13 +884,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     after();
   };
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const line = input.value;
+  // A line typed (Enter), or Ctrl-D (sent as the end-of-transmission character, shown as nothing).
+  const submitLine = (line: string) => {
     // A password is not displayed and doesn't go into the history.
     const secret = gameTerminal.shell.maskedInput();
     const response = secret || gameTerminal.shell.question !== null;
-    if (secret) show(prompt.textContent ?? '', 'cmd');
+    if (secret || line === '\u0004') show(prompt.textContent ?? '', 'cmd');
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
@@ -907,6 +910,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     after(lineFor);
     openEditor();
     openFollow();
+  };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitLine(input.value);
   });
 
   // A follow (tail -f, journalctl -f): the screen makes time pass on the
@@ -916,6 +923,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (followTimer !== null) clearInterval(followTimer);
     followTimer = null;
     followStop.hidden = true;
+    followSuspend.hidden = true;
     form.hidden = false;
     if (touchesBar.dataset.mode === 'follow') delete touchesBar.dataset.mode;
   };
@@ -931,19 +939,44 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     form.hidden = true;
     touchesBar.dataset.mode = 'follow';
     followStop.hidden = false;
+    followSuspend.hidden = false;
     followStop.focus();
+    // watch redraws its screen: the last one is replaced rather than followed by the next.
+    const screen = gameTerminal.followsScreen;
+    if (screen) output.lastElementChild?.classList.add('watch');
     followTimer = window.setInterval(() => {
       const fresh = gameTerminal.follow(SECONDS_FOLLOW);
       if (!fresh) return;
-      show(fresh, 'follow');
+      if (screen) output.querySelectorAll('pre.watch').forEach((p) => p.remove());
+      show(fresh, screen ? 'watch' : 'follow');
       after();
     }, 1000);
   };
+  const suspendFollow = () => {
+    if (followTimer === null) return;
+    followEnd();
+    show(gameTerminal.suspend());
+    after();
+    input.focus();
+  };
+  followSuspend.addEventListener('click', suspendFollow);
   followStop.addEventListener('click', stopFollow);
   followStop.addEventListener('keydown', (e) => {
     if ((e.ctrlKey && e.key.toLowerCase() === 'c') || e.key === 'Escape') {
       e.preventDefault();
       stopFollow();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      suspendFollow();
+    }
+  });
+  followSuspend.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey && e.key.toLowerCase() === 'c') || e.key === 'Escape') {
+      e.preventDefault();
+      stopFollow();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      suspendFollow();
     }
   });
 
@@ -1025,6 +1058,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       show(`${prompt.textContent} ${input.value}^C`, 'cmd');
       input.value = '';
       position = machineHistory().length;
+      // At the secondary prompt (>), the whole input is dropped.
+      gameTerminal.interrupt();
+      promptUpdate();
+      return;
+    }
+    // Ctrl-D on an empty line: the end of the input (bash leaves the shell, or ends an input left open at >).
+    if (e.ctrlKey && e.key.toLowerCase() === 'd' && !input.value) {
+      e.preventDefault();
+      submitLine('\u0004');
       return;
     }
     if (e.key === 'Tab') {

@@ -23,3 +23,5 @@ sudo =
     L'utilisateur { $account } peut utiliser les commandes suivantes sur { $host } :
     { $rules }
 sudo-none = L'utilisateur { $account } n'est pas autorisé à exécuter sudo sur { $host }.
+sudo-not-allowed = Désolé, l'utilisateur { $user } n'est pas autorisé à exécuter « { $command } » en tant que { $account } sur { $host }.
+su-password = Mot de passe :

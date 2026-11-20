@@ -725,7 +725,7 @@ for (const language of LANGUAGES)
 
       it('another solution: the zone in conf.d, the limit on the whole site, 1 request per second', () => {
         const { s } = play('concert', ['sudo id', 'ants-2026']);
-        s.execute('echo "limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;" | sudo tee /etc/nginx/conf.d/limits.conf');
+        s.execute("echo 'limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;' | sudo tee /etc/nginx/conf.d/limits.conf");
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
         s.execute('sudo systemctl reload nginx');
         expect(s.finished).toBe(true);
@@ -1271,7 +1271,8 @@ for (const language of LANGUAGES)
         ]);
         expect(all).toMatch(/^6$/m);
         const quiet = reference ? '--silencieux' : '--quiet';
-        expect(all).toMatch(new RegExp(`^${L('frontdesk')} +3141  97\\.3   1\\.4 ${L('/home/frontdesk/.cache/.upd/system-update')} ${quiet}$`, 'm'));
+        // procps cuts a user name longer than 8 characters: frontde+.
+        expect(all).toMatch(new RegExp(`^${(L('frontdesk').length > 8 ? `${L('frontdesk').slice(0, 7)}\\+` : L('frontdesk'))} +3141  97\\.3   1\\.4 ${L('/home/frontdesk/.cache/.upd/system-update')} ${quiet}$`, 'm'));
         expect(all).toContain(`${L('*/10 * * * * /home/frontdesk/.cache/.upd/system-update')} ${quiet}`);
         expect(all).toContain(`Accepted password for ${L('frontdesk')} from 203.0.113.66`);
         expect(all).toContain(reference ? 'SAUVEGARDE' : 'BACKUP');

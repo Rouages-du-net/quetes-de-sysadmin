@@ -23,7 +23,7 @@ export const isSolaris = (game: Game) => game.state.os === 'solaris';
 // Commands a Solaris 10 machine doesn't have (Linux's and FreeBSD's).
 export const NOT_ON_SOLARIS = [
   'systemctl', 'journalctl', 'apt', 'apt-get', 'dpkg', 'ss', 'ip', 'ufw', 'iptables', 'iptables-save', 'nft', 'top', 'free', 'stat',
-  'service', 'sysrc', 'pkg', 'sockstat', 'pfctl', 'freebsd-version', 'update-rc.d', 'pgrep',
+  'service', 'sysrc', 'pkg', 'sockstat', 'pfctl', 'freebsd-version', 'update-rc.d', 'pgrep', 'watch',
 ];
 
 // ——— SMF ———

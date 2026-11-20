@@ -62,7 +62,9 @@ presents them for people.
   restarts scheduled by
   `Restart=` (`runPending`); `systemctl cat`, `list-dependencies`,
   `reset-failed`, `systemd-analyze time`/`blame`/`critical-chain`/`verify`
-  and `networkctl` in `commands/systemd.ts`; `chapters/canteen.ts`: what
+  and `networkctl` in `commands/systemd.ts` (with `systemctl status` of the
+  whole machine, `list-unit-files`, and journalctl's `-b N`, `--list-boots`,
+  `-o`, `-r`, `-g`, relative `--since`); `chapters/canteen.ts`: what
   The Canteen's chapters share.
 - `src/engine/sshd.ts`: a machine's SSH server (`sshd_config` read like
   OpenSSH, configuration applied on reload).
@@ -127,6 +129,34 @@ presents them for people.
   `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
   `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
   `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
+- Compound commands on the interactive line: `src/engine/compound.ts`
+  parses an input (for, `for ((…))`, if, while, until, case, `{ …; }`,
+  `( … )`, `((…))`, `&`, newlines, comments, here-documents) and says when
+  it is unfinished (`Shell.continuation`, the PS2 prompt `>`, Ctrl-C
+  `dropInput`, Ctrl-D `endOfInput`); `src/engine/control.ts` runs it as a
+  generator (each simple command through `Shell.runSimple`, as if typed;
+  a question pauses it, `Shell.program`; `MAX_ITERATIONS` guards loops;
+  `read`, `break`, `continue`); `src/engine/arith.ts`: `$((…))`; parameter
+  expansion in `Shell.parameter`; `seq`, `read`, `break`, `continue` in
+  `commands/shell-control.ts`.
+- Root shells: `sudo -i`, `sudo -s`, `sudo su [-]` (parsed in `Shell.tube`,
+  sudo's policy decides) and `su` (`commands/shell-control.ts`) open a
+  shell on top of the login one (`Shell.shells`, `openShell`; `shellUser`,
+  `shellHome` for the prompt, `~`, `$HOME`, `cd`); `exit`/Ctrl-D leave it,
+  a new connection closes them (`closeShells`).
+- Jobs: `src/engine/jobs.ts` (`Shell.jobs`, `cmd &` through
+  `Shell.background`, reported after the next input by `notices`; `jobs`,
+  `fg`, `bg`, `wait`, `disown`, `kill %N`, Ctrl-Z `Shell.suspend` and
+  `Console.suspend`); `nohup` and `watch` (a follow with `screen: true`,
+  redrawn by the interface) in `commands/shell-control.ts`.
+- `src/engine/debian.ts`: a Debian machine's default state, given by the
+  Shell's constructor when the chapter models none (`debianDefaults`):
+  base mounts (`pseudo` ones only for `mount`/`findmnt`, `bytesBase`),
+  base processes (`base`, kept by a reboot; `state.baseProcesses`: `ps`
+  shows itself), a systemd with the base services (`BASE_SERVICES`,
+  `Service.static`) and their journal (`state.baseSystemd`), memory, `/etc/os-release` and `/etc/debian_version`;
+  `baseLan` (lo, eth0 with the machine's address, `state.baseLan`) for `ip`
+  and `hostname -I`; `hostnamectl` in `commands/hostnamectl.ts`.
 - `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
   (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
   repositories, `push`, hooks) in `commands/git.ts`, `diff` in
@@ -225,12 +255,24 @@ presents them for people.
   workstation.
 - `src/engine/sudoers.ts`: sudo's policy (`/etc/sudoers`, `@includedir`,
   rules); `visudo` and `sudo -l` in `commands/sudoers.ts`; `userdel`,
-  `gpasswd`, `chage` in `commands/accounts.ts`; `umask` (the session's mask,
+  `gpasswd`, `chage`, `useradd`, `adduser` (its questions), `passwd`,
+  `getent`, `w`, `lastlog2` in `commands/accounts.ts` (passwords:
+  `passwordOf`, `state.passwords`, `state.unsetPasswords`,
+  `state.lockedAccounts`; `su` opens an account with its password;
+  `REPLACED` in `shell.ts` points lastlog to lastlog2); `umask` (the session's mask,
   `Shell.mask`) and setgid applied on creation (`place`).
 - `chapters/till-web.ts`: The Co-op's site and till app (simulated
   Express: `.env` read at start, `trust proxy`, locks per address); nginx
   passes `proxy_set_header` to the app (`Request`), and `grep` reads
   regular expressions (`toBasicRegex`).
+- `src/engine/packages.ts`: a Debian 13 machine's base packages (`BASE`:
+  version, section, description, files) and the archive's others
+  (`ARCHIVE`); `installedSet()` (base less `state.apt.removed`, plus
+  `state.apt.installed`), `packageInfo()`, `apt remove`/`purge`/
+  `autoremove` (`state.apt.configs`: dpkg's `rc`, `state.apt.auto`),
+  `search`, `show`, `policy`, `list`, `apt-get`, `apt-cache` and `dpkg -l`/
+  `-L`/`-S`/`-s` in `commands/apt.ts`; `lsb_release` in
+  `commands/hostnamectl.ts`.
 - `commands/tmux.ts`: a machine's tmux sessions (`state.tmux`,
   `Shell.tmux`; the console copies what is displayed) and `uname`;
   `apt upgrade` and `dpkg --configure -a` in `commands/apt.ts`

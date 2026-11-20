@@ -475,12 +475,14 @@
 
 /* tail -f, journalctl -f: incoming lines follow one another with no gap; the button that does Ctrl-C replaces the command line. */
 .qds .output pre.follow { margin-top: -0.5rem; }
-.qds .stop-follow {
+.qds .stop-follow, .qds .suspend-follow {
   font: inherit; color: var(--_terminal-prompt); background: none; cursor: pointer;
   border: 1px dashed color-mix(in oklab, var(--_terminal-text) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem;
 }
-.qds .stop-follow:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 1px; }
-.qds .stop-follow kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
+.qds .suspend-follow { margin-left: 0.5rem; }
+.qds .output pre.watch { margin-top: 0; }
+.qds .stop-follow:focus-visible, .qds .suspend-follow:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 1px; }
+.qds .stop-follow kbd, .qds .suspend-follow kbd { font: inherit; background: var(--_terminal-text); color: var(--_terminal-background); padding: 0 0.2ch; }
 
 /* The nano editor, in the terminal. */
 .qds .nano { display: flex; flex-direction: column; gap: 0.25rem; }
@@ -540,6 +542,8 @@
 .qds .c-option { color: var(--_c-option); }
 .qds .c-string { color: var(--_c-string); }
 .qds .c-operator { color: var(--_c-operator); font-weight: 700; }
+/* bash's reserved words (for, do, done, if, then, fi…): like the operators they stand with. */
+.qds .c-keyword { color: var(--_c-operator); font-weight: 700; }
 .qds .c-glob { color: var(--_c-glob); }
 .qds .c-path { text-decoration: underline; text-underline-offset: 0.2em; }
 

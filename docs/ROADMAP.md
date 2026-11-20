@@ -646,28 +646,44 @@ them safely.
     only the chapter's new ones, and `help` shows the inherited ones on a
     line of their own. Left: a command no assumed chapter teaches is still
     "not learned yet" (`ps` in a chapter whose path never met it).
-  - [ ] **A Debian machine's default state**: a world without `state.mounts`,
-    processes or memory gives an empty `df -h`, `ps aux` and `mount`, and
-    `free: Unable to create meminfo structure`; `ip a` says "Cannot open
-    netlink socket" without a `lan`; no `/etc/os-release` (`cat
-    /etc/os-release`, `lsb_release -a`, `hostnamectl`), no `hostname -I`.
-  - [ ] **Package management**: `apt remove`/`purge`/`search`/`show`/
-    `policy`, `apt-get` and `apt-cache` (the scripts' forms), `dpkg -l`,
-    `-L`, `-S`, `-s`.
-  - [ ] **Shell control flow on the line**: `for f in *; do …; done`,
-    `if … then … fi`, `while read`; here-documents (`<<EOF`), `$((…))`,
-    `${VAR:-x}`; an unknown variable is kept as typed instead of empty.
-  - [ ] **Becoming root**: `sudo -i`, `sudo -s`, `su -` (a root shell with
-    its `#` prompt) and `exit` back; `sudo !!` works.
+  - [x] **A Debian machine's default state**: a chapter that models no
+    mounts, processes, memory or network gets those of a small Debian 13
+    virtual machine (`src/engine/debian.ts`): `df -h`, `mount`, `findmnt`,
+    `ps aux` (systemd, journald, cron, sshd, the session's bash, `ps`
+    itself, the chapter's running services), `free`, `top`, `ip a`, `ip r`,
+    `hostname -I`, `/etc/os-release`, `hostnamectl`; `lsb_release` stays
+    "command not found" (lsb-release isn't installed by default).
+  - [x] **Package management**: `apt remove`/`purge`/`autoremove`/
+    `search`/`show`/`policy`/`list`, `apt-get` and `apt-cache` (the
+    scripts' forms), `dpkg -l`, `-L`, `-S`, `-s`, on a base of about sixty
+    trixie packages (`src/engine/packages.ts`); `lsb_release` comes with
+    the lsb-release package. Left: `apt-mark`, `dpkg -i`.
+  - [x] **Shell control flow on the line**: `for`, `if`, `while`/`until`
+    (and `while read`), `case`, `break`/`continue`, `{ …; }` and `( … )`,
+    here-documents, `$((…))` and `((…))`, `${VAR:-x}` and the other
+    parameter expansions, the secondary prompt `>` for an unfinished input,
+    `seq`, `read`; an unset variable is empty (`compound.ts`, `control.ts`,
+    `arith.ts`). Left: functions, arrays, `[[ … ]]`, `/bin/sh` scripts
+    (`script.ts`) still without compounds.
+  - [x] **Becoming root**: `sudo -i`, `sudo -s`, `sudo su`, `sudo su -`,
+    `su -` (root's password: "Authentication failure" on Debian), a root
+    shell with its `#` prompt, `/root`, root's `PATH`, `exit` or Ctrl-D
+    back; `sudo !!` works (`Shell.shells`, `su` in
+    `commands/shell-control.ts`).
   - [ ] **Compressed files**: `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`
     (rotated logs are `.gz`), `zip`/`unzip`; `tar -j/-J`, `tar -tv`.
-  - [ ] **Jobs**: `&`, `jobs`, `fg`, `bg`, `nohup`, `watch`, `screen`
-    (tmux exists).
-  - [ ] **systemd and the journal**: `systemctl list-unit-files`,
-    `systemctl status` without a unit, `journalctl --since "1 hour ago"`.
-  - [ ] **Accounts**: `useradd -m`, `adduser`, `passwd` (only `usermod`,
-    `userdel`, `gpasswd`, `chage` exist), `su`, `getent passwd`, `w`,
-    `lastlog`.
+  - [x] **Jobs**: `&`, `jobs`, `fg`, `bg`, `wait`, `disown`, `kill %1`,
+    Ctrl-Z, `nohup`, `watch` (`jobs.ts`). Left: `screen` (tmux exists).
+  - [x] **systemd and the journal**: `systemctl list-unit-files`,
+    `systemctl status` without a unit, `is-enabled` of a static unit,
+    `journalctl --since "1 hour ago"`, `-p warning..err`, `-b -1`,
+    `--list-boots`, `-r`, `-g`, `-o short-iso`/`cat`; a Debian machine
+    without a systemd model gets the base services (`debian.ts`).
+  - [x] **Accounts**: `useradd -m -s /bin/bash -G grp` with Debian's
+    defaults, `adduser` and its questions, `passwd` (one's own, root's,
+    `-l`, `-u`, `-S`), `su ACCOUNT` with its password, `getent passwd`/
+    `group`/`hosts`/`shadow`, `w`, `lastlog2` (Debian 13 dropped
+    `lastlog`). Left: `groupadd`, `deluser`, `chpasswd`.
   - [ ] **Small tools**: `basename`, `dirname`, `realpath`, `seq`, `yes`,
     `tac`, `nl`, `column -t`, `paste`, `md5sum`, `cmp`, `whereis`,
     `more`, `htop`, `vmstat`, `lscpu`, `sync`, `shutdown`/`poweroff`,

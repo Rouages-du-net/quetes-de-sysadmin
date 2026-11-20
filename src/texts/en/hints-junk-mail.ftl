@@ -29,7 +29,7 @@ hint-signature-opendkim =
     .solution = In /etc/opendkim.conf: Domain gardens.example, Selector mail, KeyFile /etc/dkimkeys/mail.private, and Socket inet:8891@localhost; sudo systemctl restart opendkim
 hint-signature-milter =
     .lead = Postfix must hand the mail to opendkim: the smtpd_milters and non_smtpd_milters parameters (man postconf). Mail submitted on the machine goes through non_smtpd_milters, and Postfix runs in a chroot.
-    .solution = sudo postconf -e "smtpd_milters = inet:localhost:8891" "non_smtpd_milters = $smtpd_milters" "milter_default_action = accept", then sudo systemctl reload postfix
+    .solution = sudo postconf -e "smtpd_milters = inet:localhost:8891" 'non_smtpd_milters = $smtpd_milters' "milter_default_action = accept", then sudo systemctl reload postfix
 hint-signature-end =
     .lead = The signature can only be checked with the public key, published in the zone (opendkim-genkey's .txt file). And the serial.
     .solution = Add the content of /etc/dkimkeys/mail.txt to /etc/bind/zones/db.gardens.example, raise the serial, sudo rndc reload; sudo opendkim-testkey -d gardens.example -s mail -vvv, then an email to the checker.

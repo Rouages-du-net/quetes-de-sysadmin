@@ -12,7 +12,7 @@ import { COMMANDS } from './commands';
 import { currentShell, isWindows } from './windows';
 import { redirectionAt, type Redirection } from './tools';
 
-export type Kind = 'command' | 'unknown' | 'option' | 'string' | 'operator' | 'path' | 'glob' | 'text';
+export type Kind = 'command' | 'unknown' | 'option' | 'string' | 'operator' | 'keyword' | 'path' | 'glob' | 'text';
 
 export interface Token {
   text: string;
@@ -24,7 +24,7 @@ interface Word {
   chunks: { text: string; city: boolean }[];
   // The word as the shell will read it (without the quotes).
   value: string;
-  op?: '|' | Redirection | ';' | '&&' | '||';
+  op?: '|' | Redirection | ';' | '&&' | '||' | '&' | ';;';
 }
 
 /** The line in pieces: words, operators and spaces, in order. */
@@ -69,9 +69,9 @@ function lexer(line: string): (Word | string)[] {
       finish();
       i += typed.length - 1;
       output.push({ chunks: [{ text: typed, city: false }], value: typed, op });
-    } else if (c === '|' || c === ';' || (c === '&' && line[i + 1] === '&')) {
+    } else if (c === '|' || c === ';' || c === '&') {
       finish();
-      const double = (c === '|' || c === '&') && line[i + 1] === c;
+      const double = (c === '|' || c === '&' || c === ';') && line[i + 1] === c;
       if (double) i++;
       const op = (double ? c + c : c) as NonNullable<Word['op']>;
       output.push({ chunks: [{ text: op, city: false }], value: op, op });
@@ -117,6 +117,8 @@ function path(sh: Shell, value: string): boolean {
   }
 }
 
+const KEYWORDS = new Set(['if', 'then', 'elif', 'else', 'fi', 'for', 'while', 'until', 'do', 'done', 'case', 'esac', '{', '}', '!']);
+
 /** The line split into coloured tokens; their texts joined back give the line. */
 export function colourise(sh: Shell, line: string): Token[] {
   const tokens: Token[] = [];
@@ -126,8 +128,9 @@ export function colourise(sh: Shell, line: string): Token[] {
     if (last && last.kind === kind) last.text += text;
     else tokens.push({ text, kind });
   };
-  // Where we are in the command: expecting its name, a sudo option, or arguments.
-  let expected: 'command' | 'sudo' | 'sudo-value' | 'argument' | 'target' = 'command';
+  // Where we are in the command: expecting its name, a sudo option, or arguments
+  // ('name': for's variable or case's word, then the keyword in).
+  let expected: 'command' | 'sudo' | 'sudo-value' | 'argument' | 'target' | 'name' | 'in' = 'command';
   for (const x of lexer(line)) {
     if (typeof x === 'string') {
       push(x, 'text');
@@ -136,11 +139,23 @@ export function colourise(sh: Shell, line: string): Token[] {
     if (x.op) {
       push(x.value, 'operator');
       // After a redirection comes a file; after a pipe or a list operator, a command.
-      expected = x.op === '2>&1' || x.op === '>&2' ? expected : x.op === '|' || x.op === ';' || x.op === '&&' || x.op === '||' ? 'command' : 'target';
+      expected = x.op === '2>&1' || x.op === '>&2' ? expected : x.op === '|' || x.op === ';' || x.op === '&&' || x.op === '||' || x.op === '&' || x.op === ';;' ? 'command' : 'target';
       continue;
     }
     let kind: Kind;
     const notCity = x.chunks.every((m) => !m.city);
+    // bash's reserved words, where a command could start (for … in … do … done, if … then … fi…).
+    if (notCity && ((expected === 'command' && KEYWORDS.has(x.value)) || (expected === 'in' && x.value === 'in'))) {
+      push(x.value, 'keyword');
+      expected = x.value === 'for' || x.value === 'case' ? 'name' : x.value === 'in' || x.value === 'done' || x.value === 'fi' || x.value === 'esac' || x.value === '}' ? 'argument' : 'command';
+      continue;
+    }
+    if (expected === 'name') {
+      push(x.value, 'text');
+      expected = 'in';
+      continue;
+    }
+    if (expected === 'in') expected = 'argument';
     if (expected === 'command' || expected === 'sudo') {
       if (expected === 'sudo' && x.value.startsWith('-')) {
         kind = 'option';

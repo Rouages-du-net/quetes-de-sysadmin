@@ -34,21 +34,39 @@ import { live } from './activity';
 export { split, applyMode } from './tools';
 import { applyMode, braces, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
+import { parse, plainList, unterminated, type ListEntry, type List } from './compound';
+import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
+import { arithmetic, ArithError, type ArithVars } from './arith';
+import { addJob, notices, type Job } from './jobs';
 import { inherited, inheritedHere } from './availability';
-import { read as readSudoers, sudoersFile } from './sudoers';
+import { permitted, read as readSudoers, sudoersFile } from './sudoers';
+import { debianDefaults } from './debian';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
-const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias'];
+// The job tools come with them (jobs.ts): nohup and watch too, there on every Debian.
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue', 'jobs', 'fg', 'bg', 'wait', 'disown', 'nohup', 'watch'];
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
-  echo: ['printf'],
+  echo: ['printf', 'seq'],
+  sudo: ['su', 'passwd'],
   find: ['xargs'],
   mkdir: ['rmdir'],
   export: ['env', 'printenv'],
+  hostname: ['hostnamectl'],
+  usermod: ['useradd', 'adduser', 'passwd', 'getent'],
+  userdel: ['useradd', 'adduser'],
+  id: ['getent'],
+  who: ['w'],
+  last: ['lastlog2'],
+  apt: ['apt-get', 'apt-cache', 'dpkg', 'lsb_release'],
+  dpkg: ['apt-cache'],
+  uname: ['hostnamectl'],
 };
 
 // Editors the game doesn't simulate: typing one points to nano.
+// Commands Debian 13 no longer ships, and their replacement (trixie's release notes: lastlog isn't year-2038 safe).
+const REPLACED: Record<string, string> = { lastlog: 'lastlog2' };
 const OTHER_EDITORS = ['vi', 'vim', 'vim.tiny', 'vim.basic', 'nvim', 'view', 'emacs', 'micro', 'joe', 'mcedit', 'ed'];
 
 // The room for a program's arguments (getconf ARG_MAX), and the shell's built-in commands, which are not subject to it.
@@ -107,7 +125,7 @@ export interface Game {
   connectionRequest: string | null;
   reboot: boolean;
   edition: Edition | null;
-  follow: { read: () => string } | null;
+  follow: { read: () => string; screen?: boolean } | null;
   history: string[];
 }
 
@@ -123,6 +141,38 @@ export interface Edition {
   dos?: boolean;
   // Closing changes the state (e.g. systemctl edit): it counts as a command, even without a message.
   conclude?: boolean;
+}
+
+/** Where the parenthesis opened at i closes (its index), quotes skipped; -1 if it doesn't. */
+function closing(line: string, i: number): number {
+  let depth = 0;
+  let q = '';
+  for (let j = i; j < line.length; j++) {
+    const x = line[j];
+    if (q) {
+      if (x === q) q = '';
+    } else if (x === '"' || x === "'") q = x;
+    else if (x === '(') depth++;
+    else if (x === ')' && --depth === 0) return j;
+  }
+  return -1;
+}
+
+/**
+ * How bash keeps an input of several lines in its history (cmdhist): one
+ * entry, the lines joined by "; " (or a space after do, then, a pipe…);
+ * with a here-document, the lines as they are.
+ */
+export function historyLine(whole: string): string {
+  if (!whole.includes('\n')) return whole;
+  if (/<<-?\s*['"]?\w/.test(whole)) return whole;
+  const lines = whole.split('\n').map((l) => l.trim()).filter(Boolean);
+  let out = '';
+  for (const l of lines) {
+    if (!out) out = l;
+    else out += /(^|\s)(do|then|else|in|\{)$|[|&;(]$/.test(out) ? ` ${l}` : `; ${l}`;
+  }
+  return out;
 }
 
 export class Shell implements Game {
@@ -148,7 +198,33 @@ export class Shell implements Game {
   // sudo: password already given? line waiting for the password?
   private authenticated = false;
   private doneLecture = false;
-  waiting: { line: string; attempts: number } | null = null;
+  waiting: { line: string; attempts: number; stdin: string | null; capture: boolean } | null = null;
+  // The lines typed so far of an input that isn't over (an open if, quote or
+  // here-document…): bash shows its secondary prompt (PS2, "> ") and reads on.
+  continuation: string | null = null;
+  // A compound input (for, if, while…) paused by a question: the rest runs once it is answered (see control.ts).
+  private program: { steps: Steps; run: Run; line: string } | null = null;
+  // A loop past its first round: its commands don't count again for the summary.
+  repeating = false;
+  // A command whose output goes down a compound's pipe: what it wrote (see control.ts).
+  piped: string | null = null;
+  // The command runs in a pipeline of several commands (read there sets nothing: a subshell).
+  inPipeline = false;
+  // An expansion failed ($((1/0)), ${X:?}): bash drops the rest of the input.
+  aborted = false;
+  // The shells opened on top of the login one (sudo -i, sudo -s, su -), innermost last:
+  // their account, whether it is a login shell, and what the shell below had.
+  shells: { user: string; login: boolean; saved: { cwd: string; old: string | null; vars: Record<string, string>; exported: Set<string>; aliases: Record<string, string>; mask: string; who: string } }[] = [];
+  // A shell to open once the current command is over (sudo -i, su).
+  private opening: { user: string; login: boolean } | null = null;
+  // The jobs (cmd &, Ctrl-Z): see jobs.ts.
+  jobs: Job[] = [];
+  // A job brought back with fg: Ctrl-Z stops it again under its own name.
+  foreground: { text: string; pid: number } | null = null;
+  // The inputs typed so far: a job is reported after an input later than the one that started it.
+  inputCount = 0;
+  // The PID of the last job put in the background ($!).
+  lastBackground: number | null = null;
   // A command list (a && b; c) whose run stopped at a question (sudo's
   // password, a yes/no, nano): the rest runs once it is answered.
   private pendingList: { items: ListItem[]; line: string; commands: string[][] } | null = null;
@@ -176,7 +252,8 @@ export class Shell implements Game {
   edition: Edition | null = null;
   // A follow in progress (tail -f, journalctl -f): read() gives the lines
   // that arrived since last time. Ctrl-C stops it (Console.interrupt).
-  follow: { read: () => string } | null = null;
+  // screen: the whole screen is redrawn (watch), rather than lines added.
+  follow: { read: () => string; screen?: boolean } | null = null;
   // The commands typed on this machine (history, !!).
   history: string[] = [];
   // Story messages triggered while editing, shown on exit.
@@ -250,6 +327,8 @@ export class Shell implements Game {
     this.who = this.player;
     this.nameMachine();
     chapter.initialise?.(this);
+    // What every Debian machine has, when the chapter didn't model it (debian.ts).
+    debianDefaults(this);
   }
 
   // The chapters write their machine's name in English (/etc/hostname,
@@ -280,6 +359,94 @@ export class Shell implements Game {
       const e = this.state[service] as { names?: string[] } | undefined;
       if (Array.isArray(e?.names)) e.names = e.names.map(translate);
     }
+  }
+
+  /** The PID of the login shell ($$): after the machine's processes (state.process), deterministic. */
+  get shellPid(): number {
+    if (typeof this.state.bashPid !== 'number') {
+      const pids = ((this.state.process ?? []) as { pid: number }[]).map((p) => p.pid);
+      this.state.bashPid = Math.max(2417, ...pids.filter((p) => p < 30000)) + 1;
+    }
+    return this.state.bashPid as number;
+  }
+
+  /** The account of the shell typed in: the player's, or root's after sudo -i. */
+  get shellUser(): string {
+    return this.shells.at(-1)?.user ?? this.player;
+  }
+
+  /** That shell's home ($HOME, ~, cd): /root for root. */
+  get shellHome(): string {
+    const user = this.shells.at(-1)?.user;
+    if (!user) return this.home;
+    return this.accounts.users[user]?.home ?? (user === 'root' ? '/root' : `/home/${user}`);
+  }
+
+  /**
+   * Opens a shell as this account once the current command is over (sudo -i,
+   * sudo -s, sudo su, su -): `login` (-i, su -) starts it in its home, with a
+   * fresh environment; otherwise it stays here. exit (or Ctrl-D) goes back.
+   */
+  openShell(user: string, login: boolean): void {
+    this.opening = { user, login };
+  }
+
+  // The shell asked for by the command that just ran.
+  private enterShell(): void {
+    const o = this.opening;
+    if (!o) return;
+    this.opening = null;
+    this.shells.push({ user: o.user, login: o.login, saved: { cwd: this.cwd, old: this.old, vars: this.vars, exported: this.exported, aliases: this.aliases, mask: this.mask, who: this.who } });
+    this.who = o.user;
+    // sudo resets the environment (env_reset): the variables and aliases of the shell below are not there.
+    this.vars = {};
+    this.exported = new Set();
+    this.aliases = {};
+    if (!o.login) return;
+    const home = this.shellHome;
+    // Debian always has /root (rwx------): a world that didn't describe it gets it now.
+    if (!this.exists(home) && o.user === 'root') {
+      const parent = this.find('/');
+      if (parent?.type === 'directory') parent.children.root = { type: 'directory', children: {}, owner: 'root', group: 'root', mode: 'rwx------' };
+    }
+    if (this.find(home)?.type === 'directory') {
+      this.old = null;
+      this.cwd = home;
+      this.visits.add(home);
+    }
+  }
+
+  /** Leaves the innermost shell (exit, Ctrl-D): bash says logout for a login shell, exit otherwise. */
+  private leaveShell(): string {
+    const s = this.shells.pop()!;
+    Object.assign(this, s.saved);
+    return s.login ? 'logout' : 'exit';
+  }
+
+  /** Back to the login shell (a new connection, a reboot). */
+  closeShells(): void {
+    while (this.shells.length) this.leaveShell();
+    this.opening = null;
+  }
+
+  /** A new process's PID, after the login shell's (the jobs). */
+  nextPid(): number {
+    const pid = (typeof this.state.nextPid === 'number' ? this.state.nextPid : this.shellPid + 100) as number;
+    this.state.nextPid = pid + 1;
+    return pid;
+  }
+
+  /** Ctrl-Z: the follow in the foreground (tail -f, watch) stops and becomes a job. */
+  suspend(): string {
+    if (!this.follow) return '';
+    const text = this.foreground?.text ?? this.commandLine;
+    const job = addJob(this, text, 'Stopped');
+    if (this.foreground) job.pid = this.foreground.pid;
+    job.follow = this.follow;
+    this.follow = null;
+    this.foreground = null;
+    this.lastStatus = 148;
+    return `^Z\n[${job.id}]+  ${'Stopped'.padEnd(24)}${text}`;
   }
 
   /** The player's account, under its name in the language (vous, you…). */
@@ -481,9 +648,10 @@ export class Shell implements Game {
   // Mounted media (USB stick…) have a capacity: state.mounts.
   // The most specific medium containing this path (/srv/radio before /).
   mount(absolute: string): { path: string; capacity: number; inodes?: number; inodesBase?: number } | null {
-    const mounts: { path: string; capacity: number; inodes?: number }[] = this.state.mounts ?? [];
+    const mounts: { path: string; capacity: number; inodes?: number; pseudo?: boolean }[] = this.state.mounts ?? [];
     return (
       mounts
+        .filter((m) => !m.pseudo)
         .filter((m) => m.path === '/' || absolute === m.path || absolute.startsWith(m.path + '/'))
         .sort((a, b) => b.path.length - a.path.length)[0] ?? null
     );
@@ -521,7 +689,7 @@ export class Shell implements Game {
       (x) => x.path !== m.path && (m.path === '/' || x.path.startsWith(m.path + '/')),
     );
     const other = inside.reduce((t, x) => t + ((d) => (d ? this.size(d) : 0))(this.find(x.path)), 0);
-    const inUse = (place ? this.size(place) : 0) - other;
+    const inUse = (place ? this.size(place) : 0) - other + ((m as { bytesBase?: number }).bytesBase ?? 0);
     return inUse - (old ? this.size(old) : 0) + this.size(n) > m.capacity;
   }
 
@@ -549,14 +717,17 @@ export class Shell implements Game {
   prompt(): string {
     if (this.waiting) return this.t('sudo-prompt', { user: this.player });
     if (this.question) return this.question.prompt;
+    // bash's secondary prompt (PS2): the input goes on.
+    if (this.continuation !== null) return '>';
     // A Windows Server's PowerShell (see powershell.ts).
     if (isWindows(this)) return windowsPrompt(this);
-    const here =
-      this.cwd === this.home ? '~' : this.cwd.startsWith(this.home + '/') ? '~' + this.cwd.slice(this.home.length) : this.cwd;
+    const home = this.shellHome;
+    const here = this.cwd === home ? '~' : this.cwd.startsWith(home + '/') ? '~' + this.cwd.slice(home.length) : this.cwd;
     // In tmux, the status bar shows the session's name: we put it in front of the prompt.
-    // root (a chapter's rescue console) has its own prompt, with #, like bash.
+    // root (sudo -i, or a chapter's rescue console) has its own prompt, with #, like bash.
     const root = this.who === 'root';
-    return `${this.tmux ? `[${this.tmux}] ` : ''}${root ? 'root' : this.player}@${this.hostName}:${here}${root ? '#' : '$'}`;
+    const user = this.shells.length ? this.shellUser : root ? 'root' : this.player;
+    return `${this.tmux ? `[${this.tmux}] ` : ''}${user}@${this.hostName}:${here}${root ? '#' : '$'}`;
   }
 
   ask(prompt: string, answer: (response: string) => string, secret = false): void {
@@ -652,7 +823,7 @@ export class Shell implements Game {
     const m = /^~([^/]*)(\/.*)?$/.exec(word);
     if (!m) return word;
     const [, who, rest = ''] = m;
-    const home = who === '' ? this.home : who === '+' ? this.cwd : who === '-' ? this.old : this.accounts.users[who] ? (this.accounts.users[who].home ?? (who === 'root' ? '/root' : `/home/${who}`)) : null;
+    const home = who === '' ? this.shellHome : who === '+' ? this.cwd : who === '-' ? this.old : this.accounts.users[who] ? (this.accounts.users[who].home ?? (who === 'root' ? '/root' : `/home/${who}`)) : null;
     return home === null ? word : home + rest;
   }
 
@@ -662,21 +833,31 @@ export class Shell implements Game {
    * /etc/profile, PWD, OLDPWD, HOSTNAME, UID, TERM). Undefined: null.
    */
   variable(name: string): string | null {
+    // The special parameters: $? the last exit code, $$ the shell's PID, $! the last
+    // background job's, $0 the login shell, $1… $# $@ $* (no arguments on the line), $- its options.
+    if (name === '?') return String(this.lastStatus);
+    if (name === '$') return String(this.shellPid);
+    if (name === '!') return this.lastBackground === null ? null : String(this.lastBackground);
+    if (name === '0') return '-bash';
+    if (name === '#') return '0';
+    if (name === '-') return 'himBHs';
+    if (/^[1-9@*]$/.test(name)) return null;
     if (Object.hasOwn(this.vars, name)) return this.vars[name];
     // bash's own variables, not in the environment.
     if (name === 'HOSTNAME') return this.read('/etc/hostname')?.trim() || this.hostName;
-    if (name === 'UID' || name === 'EUID') return String(this.accounts.users[this.player]?.uid ?? 1000);
+    if (name === 'UID' || name === 'EUID') return String(this.shellUser === 'root' ? 0 : (this.accounts.users[this.shellUser]?.uid ?? 1000));
     return this.defaults()[name] ?? null;
   }
 
   /** The environment a login gives the player (env, printenv, $HOME…). */
   defaults(): Record<string, string> {
-    const user = this.player;
+    const user = this.shellUser;
     const v: Record<string, string> = {
-      HOME: this.home,
+      HOME: this.shellHome,
       LANG: 'C.UTF-8',
       LOGNAME: user,
-      PATH: '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games',
+      // root's PATH: sudo's secure_path (Debian's /etc/sudoers), with the sbin directories.
+      PATH: user === 'root' ? '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' : '/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games',
       PWD: this.cwd,
       SHELL: this.accounts.users[user]?.shell ?? '/bin/bash',
       TERM: 'xterm-256color',
@@ -823,13 +1004,24 @@ export class Shell implements Game {
 
   // Runs a line; returns the text to display, or null for "clear".
   // If sudo is waiting for a password, the line is that password.
+  // The jobs that ended since are reported after it, like bash before its prompt.
   execute(line: string): string | null {
+    this.inputCount++;
+    const output = this.executeLine(line);
+    if (output === null || this.continuation !== null || this.waiting || this.question || !this.jobs.length) return output;
+    return [output, notices(this)].filter(Boolean).join('\n');
+  }
+
+  private executeLine(line: string): string | null {
     this.listRun = null;
     if (this.waiting) return this.password(line);
     if (this.question) {
       const { answer } = this.question;
       this.question = null;
-      const answered = this.conclude(answer(line.trim()), true);
+      const reply = answer(line.trim());
+      // An answer may open a shell (su's password).
+      this.enterShell();
+      const answered = this.conclude(reply, true);
       return this.resumeList(answered, this.status ?? 0);
     }
     // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
@@ -838,6 +1030,8 @@ export class Shell implements Game {
       const output = currentShell(this) === 'cmd' ? runCmd(this, line) : runPowerShell(this, line);
       return output === null ? null : this.conclude(this.countLine(output), true);
     }
+    // Ctrl-D (the interface sends the end-of-transmission character).
+    if (line === '\u0004') return this.endOfInput();
     // History, like bash: !! (the last command), !n, !-n, !prefix.
     // The expanded line is shown before it runs, and it is the one kept.
     const expanded = this.expandHistory(line);
@@ -849,11 +1043,191 @@ export class Shell implements Game {
     }
     const echo = expanded.line !== line ? expanded.line : '';
     line = expanded.line;
+    // The next line of an input that wasn't over (PS2).
+    const whole = this.continuation === null ? line : `${this.continuation}\n${line}`;
+    const parsed = parse(whole);
+    if ('incomplete' in parsed) {
+      this.continuation = whole;
+      return echo;
+    }
+    this.continuation = null;
     // Like HISTCONTROL=ignoreboth (Debian's ~/.bashrc): neither lines starting with a space, nor consecutive duplicates.
-    if (line.trim() && !/^\s/.test(line) && this.history.at(-1) !== line) this.history.push(line);
-    if (!echo) return this.runLine(line);
-    const output = this.runLine(line);
+    const kept = historyLine(whole);
+    if (kept.trim() && !/^\s/.test(whole) && this.history.at(-1) !== kept) this.history.push(kept);
+    const output = this.runInput(whole, parsed);
+    if (!echo) return output;
     return output === null ? null : [echo, output].filter(Boolean).join('\n');
+  }
+
+  /**
+   * Ctrl-D: on an empty line, the end of the input (bash leaves the shell, as
+   * exit does); in the middle of an input (PS2), bash's "unexpected end of
+   * file" (a here-document ends there, with a warning).
+   */
+  endOfInput(): string | null {
+    if (this.continuation === null) return this.execute('exit');
+    const whole = this.continuation;
+    this.continuation = null;
+    const parsed = parse(whole, true);
+    if ('error' in parsed && parsed.eof) {
+      this.typedCommands++;
+      this.commandsInError++;
+      this.status = 2;
+      this.lastStatus = 2;
+      return this.t('syntax-eof');
+    }
+    if ('error' in parsed || 'incomplete' in parsed) return this.runInput(whole, parsed);
+    const lines = whole.split('\n').length;
+    const warnings = unterminated(parsed.list).map((h) => this.t('heredoc-eof', { line: String(lines), delimiter: h.delimiter }));
+    const kept = historyLine(whole);
+    if (kept.trim() && this.history.at(-1) !== kept) this.history.push(kept);
+    const output = this.runInput(whole, parsed);
+    return output === null ? null : [...warnings, output].filter(Boolean).join('\n');
+  }
+
+  /** Ctrl-C at the secondary prompt: the input is dropped. */
+  dropInput(): boolean {
+    if (this.continuation === null) return false;
+    this.continuation = null;
+    return true;
+  }
+
+  // A whole input, parsed: a plain list runs the usual way; for, if, while… through control.ts.
+  private runInput(whole: string, parsed: ReturnType<typeof parse>): string | null {
+    if ('error' in parsed) {
+      this.pendingList = null;
+      this.program = null;
+      this.typedCommands++;
+      this.commandsInError++;
+      // bash: a syntax error is exit code 2.
+      this.status = 2;
+      this.lastStatus = 2;
+      return parsed.error === '' ? this.t('syntax-end') : this.t('syntax-token', { token: parsed.error });
+    }
+    if ('incomplete' in parsed) return '';
+    if (!whole.includes('\n') && plainList(parsed.list)) return this.runLine(whole);
+    return this.runProgram(parsed.list, whole);
+  }
+
+  /** Runs a parsed input (control.ts), from the start. */
+  private runProgram(tree: List, line: string): string | null {
+    this.pendingList = null;
+    this.aborted = false;
+    const run = newRun();
+    return this.drive({ steps: runTree(this, run, tree, { stdin: null, capture: null }), run, line });
+  }
+
+  // Runs a program until it ends or a question pauses it.
+  private drive(p: { steps: Steps; run: Run; line: string }): string | null {
+    const step = p.steps.next();
+    if (!step.done) {
+      this.program = p;
+      return flush(p.run);
+    }
+    this.program = null;
+    this.lastStatus = step.value;
+    this.listRun = { line: historyLine(p.line), commands: p.run.commands };
+    return flush(p.run);
+  }
+
+  /** A job in the background (cmd &): see jobs. */
+  *background(run: Run, entry: ListEntry, go: () => Steps): Steps {
+    const job = addJob(this, entry.text, 'Running');
+    show(run, `[${job.id}] ${job.pid}`);
+    const first = entry.node.kind === 'simple' ? split(entry.node.text).map((w) => w.text).find((w) => !/^[A-Za-z_]\w*=/.test(w) && w !== 'nohup') : '';
+    // sleep runs on: time only passes in the game while following.
+    if (first === 'sleep' && this.known().includes('sleep')) return 0;
+    const status = yield* go();
+    if (this.follow) {
+      // A follow (tail -f): it goes on in the background, out of sight.
+      job.follow = this.follow;
+      this.follow = null;
+      run.stopped = this.output || this.cut || this.reboot || !!this.connectionRequest || !!this.sessionRequest;
+    } else {
+      job.state = status === 0 ? 'Done' : 'Exit';
+      job.code = status;
+    }
+    this.lastBackground = job.pid;
+    return 0;
+  }
+
+  /**
+   * One command (or a pipeline) of a compound input, as if typed alone; its
+   * input, if it has one (a here-document, the pipe before it); capture: its
+   * output goes down a pipe (into `piped`) rather than to the screen.
+   */
+  runSimple(line: string, stdin: string | null, capture: boolean): string | null {
+    return this.runCommand(line, stdin, capture);
+  }
+
+  /** read [-r] [-p prompt] [name…] with a line of input (null: none left); returns its exit code. */
+  readLine(words: string[], line: string | null): number {
+    let raw = false;
+    const names: string[] = [];
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i];
+      if (w === '-p' || w === '-t' || w === '-n' || w === '-d' || w === '-u') i++;
+      else if (/^-[rsea]+$/.test(w)) raw ||= w.includes('r');
+      else if (/^-/.test(w)) {
+        this.error(`-bash: read: ${w.slice(0, 2)}: invalid option\nread: usage: read [-ers] [-a array] [-d delim] [-i text] [-n nchars] [-N nchars] [-p prompt] [-t timeout] [-u fd] [name ...]`, 2);
+        return 2;
+      } else if (!/^[A-Za-z_]\w*$/.test(w)) {
+        this.error(`-bash: read: \`${w}': not a valid identifier`);
+        return 1;
+      } else names.push(w);
+    }
+    if (!names.length) names.push('REPLY');
+    let text = line ?? '';
+    // Without -r, a backslash protects the next character (and is removed).
+    if (!raw) text = text.replace(/\\(.)/g, '$1').replace(/\\$/, '');
+    if (names.length === 1 && names[0] === 'REPLY') this.vars.REPLY = text;
+    else {
+      // Split on blanks (IFS): one field per name, the rest of the line for the last one.
+      let rest = text.replace(/^[ \t]+/, '');
+      names.forEach((n, i) => {
+        if (i === names.length - 1) this.vars[n] = rest.replace(/[ \t]+$/, '');
+        else {
+          const m = /^(\S*)[ \t]*/.exec(rest)!;
+          this.vars[n] = m[1];
+          rest = rest.slice(m[0].length);
+        }
+      });
+    }
+    return line === null ? 1 : 0;
+  }
+
+  /** Expands words as a command's arguments are (for's list): variables, $(…), braces, ~, wildcards. */
+  expandWords(raw: string[]): { words: string[]; errors: string[] } {
+    const words: string[] = [];
+    const errors: string[] = [];
+    for (const r of raw) {
+      const e = this.expandLine(r);
+      errors.push(...e.errors);
+      for (const w of split(e.line)) words.push(...(w.city ? [w.text] : braces(w.text).flatMap((x) => this.expand(this.tilde(x)))));
+    }
+    return { words, errors };
+  }
+
+  /** A word expanded into one string (case's word, a redirection's file): no splitting, no wildcards. */
+  expandWord(raw: string): string {
+    return split(this.expandLine(raw).line)
+      .map((w) => (w.city ? w.text : this.tilde(w.text)))
+      .join(' ');
+  }
+
+  /** The variables as arithmetic sees them (assignments go to the session). */
+  arithVars(): ArithVars {
+    return { get: (n) => this.variable(n), set: (n, v) => (this.vars[n] = v) };
+  }
+
+  /** An arithmetic expression's $NAME, ${…} and $(…), expanded first (like bash). */
+  expandArith(expr: string): string {
+    return this.expandLine(expr, true).line;
+  }
+
+  /** Writes a compound's output to a file (> or >>); returns an error. */
+  writeOutput(file: string, text: string, append: boolean): string | null {
+    return this.redirect(file, text, append);
   }
 
   // !! and its cousins, outside single quotes.
@@ -902,6 +1276,8 @@ export class Shell implements Game {
   private runLine(line: string): string | null {
     // A new line: a list left paused (a question abandoned) is over.
     this.pendingList = null;
+    this.program = null;
+    this.aborted = false;
     const list = splitList(line);
     if ('error' in list) {
       this.typedCommands++;
@@ -946,7 +1322,7 @@ export class Shell implements Game {
         this.pendingList = { items: items.slice(k + 1), line, commands };
         break;
       }
-      if (this.output || this.cut || this.reboot || this.connectionRequest || this.sessionRequest || this.follow) break;
+      if (this.output || this.cut || this.reboot || this.connectionRequest || this.sessionRequest || this.follow || this.aborted) break;
     }
     // For the notebook: every command the line ran, under the whole line.
     if (!this.pendingList) this.listRun = { line: line.trim(), commands };
@@ -956,6 +1332,13 @@ export class Shell implements Game {
 
   /** After a question is answered: the rest of the list it paused, if any. */
   private resumeList(output: string | null, status: number): string | null {
+    // A compound input (for, while…) paused by the question: it goes on.
+    const program = this.program;
+    if (program && !this.waiting && !this.question && !this.edition) {
+      this.lastStatus = status;
+      show(program.run, output);
+      return this.drive(program);
+    }
     const pending = this.pendingList;
     if (!pending || this.waiting || this.question || this.edition) return output;
     this.pendingList = null;
@@ -969,12 +1352,24 @@ export class Shell implements Game {
   }
 
   // One command of the line (a pipeline, with its redirection).
-  private runCommand(line: string): string | null {
+  private runCommand(line: string, stdin: string | null = null, capture = false): string | null {
     const expanded = this.expandLine(this.withAliases(line));
     line = expanded.line;
     const words = split(line);
-    if (!words.length) return '';
-    this.typedCommands++;
+    // An expansion that failed ($((1/0)), ${X:?}): bash doesn't run the command.
+    if (expanded.failed) {
+      this.aborted = true;
+      this.typedCommands++;
+      this.commandsInError++;
+      this.status = 1;
+      this.lastStatus = 1;
+      return expanded.errors.join('\n');
+    }
+    if (!words.length) {
+      // A line of expansions only ($EMPTY): $? stays as it was, the substitution's errors show.
+      return expanded.errors.join('\n');
+    }
+    if (!this.repeating) this.typedCommands++;
     this.commandLine = line.trim();
     // A few easter eggs from terminal culture: an answer, and a hidden achievement.
     const egg = EGGS[line.trim().replace(/\s+/g, ' ')];
@@ -991,6 +1386,8 @@ export class Shell implements Game {
         this.tmux = null;
         return '[exited]';
       }
+      // A shell opened with sudo -i, sudo -s or su: back to the one below.
+      if (this.shells.length) return this.conclude(this.leaveShell(), true);
       // The emergency-mode shell: exit resumes booting (see fstab.ts).
       const rescue = this.state.continueBoot as ((j: Shell) => string) | undefined;
       if (this.state.rescue && rescue) return this.conclude(rescue(this), true);
@@ -1012,16 +1409,23 @@ export class Shell implements Game {
         ].join('\n');
       }
     }
-    if (withSudo && this.known().includes('sudo') && !this.authenticated) {
-      this.waiting = { line, attempts: 0 };
+    if (withSudo && this.known().includes('sudo') && !this.authenticated && this.who !== 'root') {
+      this.waiting = { line, attempts: 0, stdin, capture };
       const lecture = this.doneLecture ? '' : this.t('sudo-lecture');
       this.doneLecture = true;
       return lecture;
     }
     this.chapter.beforeCommand?.(this);
     if (this.chapter.activity) live(this, this.chapter.activity.not);
-    const output = this.countLine(this.tube(line, words));
-    return this.conclude([...expanded.errors, output].filter(Boolean).join('\n'), true);
+    const output = this.countLine(this.tube(line, words, stdin, capture));
+    this.enterShell();
+    // What went down the pipe, kept while the chapter looks at the command.
+    const piped = this.piped;
+    try {
+      return this.conclude([...expanded.errors, output].filter(Boolean).join('\n'), true);
+    } finally {
+      this.piped = piped;
+    }
   }
 
   /**
@@ -1059,16 +1463,27 @@ export class Shell implements Game {
 
   /**
    * Expands a command's line before it is split (man bash, "EXPANSION"),
-   * outside single quotes: $? and ${?} (the last exit code), $NAME and ${NAME}
-   * (an unknown variable stays as typed), and command substitution, $(…) and
-   * `…`: the command's output, without its final newlines; unquoted, its
-   * words stay words (an operator in them is no operator). The errors of the
-   * substituted commands go to the screen.
+   * outside single quotes: $? and ${?} (the last exit code), $NAME and
+   * ${NAME} (an unset variable is empty, like bash), the special parameters
+   * ($$, $!, $#, $0, $1…), parameter expansion (${NAME:-word}, ${#NAME},
+   * ${NAME%suffix}, ${NAME/a/b}…, see parameter()), arithmetic $((…)) and
+   * command substitution, $(…) and `…`: the command's output, without its
+   * final newlines; unquoted, its words stay words (an operator in them is no
+   * operator). The errors of the substituted commands go to the screen; an
+   * arithmetic or ${NAME:?} error fails the command (`failed`).
+   * `heredoc`: a here-document's body (or an arithmetic expression), where
+   * quotes are ordinary characters and values go in as they are.
    */
-  expandLine(line: string): { line: string; errors: string[] } {
+  expandLine(line: string, heredoc = false): { line: string; errors: string[]; failed?: boolean } {
     let out = '';
     let quote = '';
     const errors: string[] = [];
+    let failed = false;
+    // A value put into the line: quoted or in a here-document, as it is; unquoted, its words, each kept a word.
+    const put = (value: string) => {
+      if (quote || heredoc) out += value;
+      else out += value.split(/\s+/).filter(Boolean).map((w) => (/[|&;<>"'\s]/.test(w) ? (w.includes("'") ? `"${w}"` : `'${w}'`) : w)).join(' ');
+    };
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
       if (quote === "'") {
@@ -1076,36 +1491,43 @@ export class Shell implements Game {
         out += c;
         continue;
       }
-      if (c === "'" && !quote) {
+      if (c === "'" && !quote && !heredoc) {
         quote = "'";
         out += c;
         continue;
       }
-      if (c === '"') {
+      if (c === '"' && !heredoc) {
         quote = quote === '"' ? '' : '"';
         out += c;
         continue;
       }
-      // \$ and \` stay as typed (split() drops the backslash).
+      // \$ and \` stay as typed (split() drops the backslash); in a here-document, the backslash goes.
       if (c === '\\' && i + 1 < line.length) {
-        out += c + line[++i];
+        if (heredoc) out += /[$`\\]/.test(line[i + 1]) ? line[++i] : c;
+        else out += c + line[++i];
         continue;
+      }
+      // $((…)): arithmetic.
+      if (c === '$' && line.startsWith('$((', i)) {
+        const end = closing(line, i + 1);
+        if (end > 0 && line[end - 1] === ')') {
+          const expr = line.slice(i + 3, end - 1);
+          i = end;
+          try {
+            out += String(arithmetic(this.expandLine(expr, true).line, this.arithVars()));
+          } catch (e) {
+            if (!(e instanceof ArithError)) throw e;
+            errors.push(`-bash: ${e.message}`);
+            failed = true;
+          }
+          continue;
+        }
       }
       // $(…) and `…`: the command inside, up to its closing parenthesis or backtick.
       let inner: string | null = null;
       if (c === '$' && line[i + 1] === '(') {
-        let depth = 0;
-        let q = '';
-        let j = i + 1;
-        for (; j < line.length; j++) {
-          const x = line[j];
-          if (q) {
-            if (x === q) q = '';
-          } else if (x === '"' || x === "'") q = x;
-          else if (x === '(') depth++;
-          else if (x === ')' && --depth === 0) break;
-        }
-        if (j < line.length) {
+        const j = closing(line, i + 1);
+        if (j > 0) {
           inner = line.slice(i + 2, j);
           i = j;
         }
@@ -1119,21 +1541,132 @@ export class Shell implements Game {
       if (inner !== null) {
         const r = this.capture(inner);
         errors.push(...r.errors);
-        const value = r.output.replace(/\n+$/, '');
-        // Quoted, the output as it is; unquoted, its words, each kept a word.
-        out += quote ? value : value.split(/\s+/).filter(Boolean).map((w) => (/[|&;<>"'\s]/.test(w) ? (w.includes("'") ? `"${w}"` : `'${w}'`) : w)).join(' ');
+        put(r.output.replace(/\n+$/, ''));
         continue;
       }
-      const m = c === '$' ? /^\$(?:\?|\{\?\}|\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))/.exec(line.slice(i)) : null;
+      // ${…}: parameter expansion.
+      if (c === '$' && line[i + 1] === '{') {
+        let depth = 0;
+        let j = i + 1;
+        for (; j < line.length; j++) {
+          if (line[j] === '\\') j++;
+          else if (line[j] === '{') depth++;
+          else if (line[j] === '}' && --depth === 0) break;
+        }
+        if (j < line.length) {
+          const r = this.parameter(line.slice(i + 2, j));
+          i = j;
+          if ('error' in r) {
+            errors.push(r.error);
+            failed = true;
+          } else put(r.value);
+          continue;
+        }
+      }
+      const m = c === '$' ? /^\$(?:([?$!#@*0-9-])|([A-Za-z_]\w*))/.exec(line.slice(i)) : null;
       if (!m) {
         out += c;
         continue;
       }
-      const name = m[1] ?? m[2];
-      out += name === undefined ? String(this.lastStatus) : (this.variable(name) ?? m[0]);
+      put(this.variable(m[1] ?? m[2]) ?? '');
       i += m[0].length - 1;
     }
-    return { line: out, errors };
+    return { line: out, errors, ...(failed ? { failed } : {}) };
+  }
+
+  /**
+   * ${…} (man bash, "Parameter Expansion"): ${NAME}, ${#NAME} (its length),
+   * ${NAME:-word} (word if unset or empty), ${NAME-word} (if unset),
+   * ${NAME:=word} (and assigns it), ${NAME:+word} (word if set),
+   * ${NAME:?message} (an error if unset or empty), ${NAME#pattern} and
+   * ${NAME##pattern} (without the shortest/longest matching prefix),
+   * ${NAME%pattern} and ${NAME%%pattern} (suffix), ${NAME/pattern/text}
+   * (the first match replaced; // all of them, /# at the start, /% at the
+   * end), ${NAME:offset:length}, ${NAME^^} and ${NAME,,} (case).
+   */
+  private parameter(inner: string): { value: string } | { error: string } {
+    const length = /^#([A-Za-z_]\w*|[0-9?$!#@*])$/.exec(inner);
+    if (length) return { value: String([...(this.variable(length[1]) ?? '')].length) };
+    const m = /^([A-Za-z_]\w*|[0-9?$!#@*-])(.*)$/s.exec(inner);
+    if (!m) return { error: `-bash: \${${inner}}: bad substitution` };
+    const [, name, rest] = m;
+    const value = this.variable(name);
+    // A word inside: its variables expanded, its quotes removed.
+    const word = (w: string) => this.expandLine(w, true).line.replace(/^(["'])(.*)\1$/s, '$2');
+    if (!rest) return { value: value ?? '' };
+    const op = /^(:?[-=+?])(.*)$/s.exec(rest);
+    if (op) {
+      const unset = op[1].startsWith(':') ? !value : value === null;
+      const kind = op[1].slice(-1);
+      if (kind === '-') return { value: unset ? word(op[2]) : value! };
+      if (kind === '+') return { value: unset ? '' : word(op[2]) };
+      if (kind === '=') {
+        if (!unset) return { value: value! };
+        if (!/^[A-Za-z_]/.test(name)) return { error: `-bash: $${name}: cannot assign in this way` };
+        this.vars[name] = word(op[2]);
+        return { value: this.vars[name] };
+      }
+      if (unset) return { error: `-bash: ${name}: ${op[2] ? word(op[2]) : 'parameter null or not set'}` };
+      return { value: value! };
+    }
+    const v = value ?? '';
+    // A pattern as a regular expression, whole (glob() anchors it).
+    const whole = (p: string) => glob(word(p));
+    const strip = /^(##?|%%?)(.*)$/s.exec(rest);
+    if (strip) {
+      const re = whole(strip[2]);
+      const longest = strip[1].length === 2;
+      const ks = [...Array(v.length + 1).keys()];
+      if (strip[1][0] === '#') {
+        // The shortest (or longest) prefix that matches.
+        for (const k of longest ? ks.reverse() : ks) if (re.test(v.slice(0, k))) return { value: v.slice(k) };
+        return { value: v };
+      }
+      for (const k of longest ? ks : ks.reverse()) if (re.test(v.slice(k))) return { value: v.slice(0, k) };
+      return { value: v };
+    }
+    const sub = /^\/([/#%]?)((?:\\.|[^/])*)(?:\/(.*))?$/s.exec(rest);
+    if (sub) {
+      const [, mode, p, replacement = ''] = sub;
+      if (!p) return { value: v };
+      const re = whole(p);
+      const by = word(replacement);
+      // The leftmost match, the longest there (like bash); /# at the start, /% at the end.
+      const at = (from: number): [number, number] | null => {
+        for (let a = from; a <= v.length; a++) {
+          if (mode === '#' && a > 0) return null;
+          for (let b = v.length; b >= a; b--) {
+            if (mode === '%' && b !== v.length) continue;
+            if (b > a && re.test(v.slice(a, b))) return [a, b];
+          }
+        }
+        return null;
+      };
+      let result = '';
+      let from = 0;
+      for (;;) {
+        const hit = at(from);
+        if (!hit) break;
+        result += v.slice(from, hit[0]) + by;
+        from = hit[1];
+        if (mode !== '/') break;
+      }
+      return { value: result + v.slice(from) };
+    }
+    const slice = /^:(\s*-?\d+)(?::(-?\d+))?$/.exec(rest);
+    if (slice) {
+      const chars = [...v];
+      let from = Number(slice[1].trim());
+      if (from < 0) from = Math.max(0, chars.length + from);
+      const count = slice[2] === undefined ? chars.length : Number(slice[2]);
+      const to = count < 0 ? chars.length + count : from + count;
+      return { value: chars.slice(from, Math.max(from, to)).join('') };
+    }
+    if (rest === '^^') return { value: v.toUpperCase() };
+    if (rest === ',,') return { value: v.toLowerCase() };
+    if (rest === '^') return { value: v.charAt(0).toUpperCase() + v.slice(1) };
+    if (rest === ',') return { value: v.charAt(0).toLowerCase() + v.slice(1) };
+    return { error: `-bash: \${${inner}}: bad substitution` };
   }
 
   // Runs a command substitution's commands, without the story's events: their output (as in a pipe) and their errors.
@@ -1171,6 +1704,9 @@ export class Shell implements Game {
 
   /** The player's password, in the language (sunflower → tournesol in French, see passwords.ftl). */
   playerPassword(): string | undefined {
+    // Changed with passwd: the new one (see commands/accounts.ts).
+    const changed = (this.state.passwords as Record<string, string> | undefined)?.[this.player];
+    if (changed !== undefined) return changed;
     const m = this.chapter.password;
     return m && password(this.t, m);
   }
@@ -1182,7 +1718,11 @@ export class Shell implements Game {
       this.authenticated = true;
       this.chapter.beforeCommand?.(this);
       if (this.chapter.activity) live(this, this.chapter.activity.not);
-      const output = this.conclude(this.countLine(this.tube(waiting.line, split(waiting.line))), true);
+      const result = this.countLine(this.tube(waiting.line, split(waiting.line), waiting.stdin, waiting.capture));
+      this.enterShell();
+      const piped = this.piped;
+      const output = this.conclude(result, true);
+      this.piped = piped;
       return this.resumeList(output, this.lastStatus);
     }
     waiting.attempts++;
@@ -1267,9 +1807,10 @@ export class Shell implements Game {
   }
 
   // A complete line: commands joined by pipes, final redirection.
-  private tube(line: string, words: Word[]): string {
+  private tube(line: string, words: Word[], stdin: string | null = null, toPipe = false): string {
     this.errors = [];
     this.status = null;
+    this.piped = null;
     const segments: Word[][] = [[]];
     // Each command's redirections, read from left to right like bash (man bash,
     // "REDIRECTION"): where its output goes (a file, or "err" with >&2), where
@@ -1319,8 +1860,9 @@ export class Shell implements Game {
     // What the last command wrote, even into a file (events read it).
     let written: string | null = null;
 
-    let input: string | null = null;
+    let input: string | null = stdin;
     const commands: string[][] = [];
+    this.inPipeline = segments.length > 1;
     segments.forEach((segment, i) => {
       // Like the shell: wildcards are not expanded inside quotes.
       // Like the shell: braces, then the tilde, then wildcards; nothing inside quotes.
@@ -1342,11 +1884,31 @@ export class Shell implements Game {
         if (args[0] === '-u') {
           as = args[1] ?? '';
           args = args.slice(2);
-          if (!this.accounts.users[as]) {
+          if (!this.accounts.users[as] && as !== 'root') {
             this.error(this.t('sudo-account-unknown', { account: as }));
             input = '';
             return;
           }
+        }
+        // sudo -i, sudo -s (or sudo bash): a shell as root (or -u's account); with a command, the command alone.
+        const shellFlag = ['-i', '--login', '-s', '--shell'].includes(args[0] ?? '') ? args[0] : null;
+        if (shellFlag) args = args.slice(1);
+        if ((shellFlag && !args.length) || (args.length === 1 && args[0] === 'bash' && segments.length === 1)) {
+          const login = shellFlag === '-i' || shellFlag === '--login';
+          const shellPath = this.accounts.users[as]?.shell ?? '/bin/bash';
+          commands.push(['sudo', ...(shellFlag ? [shellFlag] : args)]);
+          input = '';
+          if (!this.known().includes('sudo')) {
+            this.error(this.t('sudo-not-still'));
+            return;
+          }
+          // sudo's policy decides (Debian without /etc/sudoers in the world: the sudo group may).
+          if (this.exists(sudoersFile(this)) && this.who !== 'root' && !permitted(this, this.player, shellPath, as)) {
+            this.error(this.t('sudo-not-allowed', { user: this.player, command: shellPath, account: as, host: this.hostName }), 1);
+            return;
+          }
+          this.openShell(as, login);
+          return;
         }
       }
       // NAME=value before the command: for its environment only (alone on the line: a session variable).
@@ -1376,7 +1938,7 @@ export class Shell implements Game {
       commands.push(args);
       const r = routes[i];
       const final = i === segments.length - 1;
-      const last = final && !r.out && !r.outToErr && !this.capturing;
+      const last = final && !r.out && !r.outToErr && !this.capturing && !toPipe;
       this.as = as;
       const before = this.errors.length;
       // < file: bash opens it before running the command; if it can't, the command doesn't run.
@@ -1436,6 +1998,12 @@ export class Shell implements Game {
     // Events read the output as the player reads it, without colour codes.
     this.last = { line, commands, output: withoutColours(redirection ? (written ?? '') : output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
     this.shownErrors = [...this.errors.filter((_, k) => !hidden.has(k)), ...toErrors].filter(Boolean);
+    this.inPipeline = false;
+    // Down a compound's pipe: the output goes on to the next command, not to the screen.
+    if (toPipe) {
+      this.piped = redirection ? '' : output;
+      return this.shownErrors.join('\n');
+    }
     return [...this.shownErrors, output].filter(Boolean).join('\n');
   }
 
@@ -1549,6 +2117,11 @@ export class Shell implements Game {
       return output;
     }
     // Another editor (vim, vi, emacs…): the game's is nano, which it points to.
+    // A command Debian 13 dropped for another: the shell's answer, and the game's pointer to it.
+    if (!command && REPLACED[cmd] && this.known().includes(REPLACED[cmd])) {
+      this.status = 127;
+      return this.error(this.t('command-replaced', { command: cmd, replacement: REPLACED[cmd] }));
+    }
     if (!command && OTHER_EDITORS.includes(cmd) && this.known().includes('nano')) {
       this.status = 127;
       return this.error(this.t('editor-only-nano', { command: cmd, file: rest.find((a) => !a.startsWith('-') && !a.startsWith('+')) ?? this.t('editor-file') }));

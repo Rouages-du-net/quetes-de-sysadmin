@@ -31,7 +31,7 @@ export interface OptionsConsole {
 }
 
 
-type Input = { line: string } | { save: string } | { quit: true } | { follow: number } | { interrupt: true };
+type Input = { line: string } | { save: string } | { quit: true } | { follow: number } | { interrupt: true } | { suspend: true };
 
 export class Console {
   // The screen shows the outputs' colours (an interface setting); see colours.ts.
@@ -238,6 +238,7 @@ export class Console {
     if (!chapter && old && (old.chapter === c || !old.finished)) {
       // Like a new connection: start again from your home. Reconnecting
       // can be an objective (e.g. checking you haven't locked yourself out).
+      old.closeShells();
       old.cwd = old.home;
       old.state.connections = (old.state.connections ?? 1) + 1;
       // The connection's port (ss shows it; the session survives a change of sshd's port).
@@ -459,6 +460,7 @@ export class Console {
         else if ('save' in s) this.save(s.save);
         else if ('follow' in s) this.follow(s.follow);
         else if ('interrupt' in s) this.interrupt();
+        else if ('suspend' in s) this.suspend();
         else this.quitEdition();
       }
     } finally {
@@ -486,12 +488,32 @@ export class Console {
     return [sh.follow.read(), sh.principal.events(), this.noteEnd(sh.principal, before)].filter(Boolean).join('\n\n');
   }
 
-  /** Ctrl-C: stops following. */
-  interrupt(): string {
+  /** The follow redraws the whole screen (watch) rather than adding lines. */
+  get followsScreen(): boolean {
+    return !!this.shell.follow?.screen;
+  }
+
+  /** Ctrl-Z: the follow stops and becomes a job (fg brings it back). */
+  suspend(): string {
     if (!this.shell.follow) return '';
+    if (this.remote) this.inputs?.push({ suspend: true });
+    else this.inputs = null;
+    return this.shell.suspend();
+  }
+
+  /** Ctrl-C: stops following; at the secondary prompt (PS2), drops the input. */
+  interrupt(): string {
+    if (!this.shell.follow) {
+      if (this.shell.continuation === null) return '';
+      if (this.remote) this.inputs?.push({ interrupt: true });
+      this.shell.dropInput();
+      return '';
+    }
     if (this.remote) this.inputs?.push({ interrupt: true });
     else this.inputs = null;
     this.shell.follow = null;
+    this.shell.foreground = null;
+    this.shell.lastStatus = 130;
     return '^C';
   }
 

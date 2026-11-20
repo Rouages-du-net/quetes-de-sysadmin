@@ -36,11 +36,16 @@ syntax-redirection = erreur de syntaxe : il manque un nom de fichier après { $o
 syntax-pipe = erreur de syntaxe près du symbole « | »
 syntax-token = erreur de syntaxe près du symbole inattendu « { $token } »
 syntax-end = erreur de syntaxe : fin de fichier prématurée
+syntax-eof = erreur de syntaxe : fin de fichier prématurée
+heredoc-eof = avertissement : « here-document » à la ligne { $line } délimité par la fin du fichier (au lieu de « { $delimiter } »)
+shell-loop-only = -bash: { $command } : n'a de sens que dans une boucle « for », « while » ou « until »
+shell-loop-limit = (Le jeu a arrêté cette boucle après { $count } tours : une boucle sans fin figerait la page. Sur une vraie machine, Ctrl-C l'arrête.)
 redirection-is-one-directory = { $target } : est un dossier
 redirection-permission = { $target } : Permission non accordée
 redirection-sudo = (La redirection > est faite par ton propre shell, pas par sudo. Astuce : envoie le texte dans « sudo tee -a fichier », qui écrit en tant que root.)
 command-not-still = { $command } : tu n’as pas encore cette commande dans ce chapitre. Tape « aide » pour la liste.
 command-missing = { $command } : commande introuvable. Tape « aide » pour la liste.
+command-replaced = { $command } : commande introuvable. (Debian 13 n'a plus { $command } : essaie { $replacement }.)
 # { $commands } : liste des commandes, séparées par des virgules
 # Le nom de la commande qui liste les autres, dans la langue (aide, help)
 command-help = aide

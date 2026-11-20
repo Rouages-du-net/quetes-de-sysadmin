@@ -3,8 +3,13 @@
 
 apt-usage =
     Usage: apt [options] command
-    (Ici : apt update, apt install paquet, apt list --installed ; voir man apt)
-apt-list = (Ici, apt list ne connaît que --installed : apt list --installed.)
+    (Ici : apt update, apt install, apt remove, apt purge, apt autoremove, apt upgrade, apt list [--installed|--upgradable], apt search, apt show, apt policy ; voir man apt)
+apt-get-usage =
+    Usage: apt-get [options] command
+    (Ici : apt-get update, install, remove, purge, autoremove, upgrade, dist-upgrade, clean ; -y répond oui, -qq se tait ; voir man apt-get)
+apt-cache-usage =
+    Usage: apt-cache [options] command
+    (Ici : apt-cache policy, show, search, depends, pkgnames ; voir man apt-cache)
 nginx-without-option = (Ici, nginx ne se lance pas à la main : systemd s'en occupe. Utilise nginx -t pour vérifier la configuration, nginx -T pour l'afficher, nginx -v pour la version ; voir man nginx.)
 
 ## certbot et openssl

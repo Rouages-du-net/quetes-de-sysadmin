@@ -201,6 +201,7 @@ mission-nothing = Rien encore : l'histoire avance à mesure que tu agis.
 keys-title = Touches du terminal
 # Pendant tail -f ou journalctl -f : le bouton qui fait Ctrl-C.
 follow-stop = Arrêter (Ctrl-C)
+follow-suspend = Suspendre (Ctrl-Z)
 key-up = Commande précédente
 key-down = Commande suivante
 # Ce qu'affiche bash pendant Ctrl-R (en anglais, comme readline).

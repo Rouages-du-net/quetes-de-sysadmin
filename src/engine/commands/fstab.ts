@@ -73,7 +73,8 @@ function findmnt(game: Shell, args: string[]): string {
     game.status = 1;
     return '';
   }
-  const options = (m: (typeof listing)[0]) => `${m.onlyRead ? 'ro' : 'rw'},relatime${m.path === '/' ? ',errors=remount-ro' : ''}`;
+  // Debian's base mounts (debian.ts) carry their own options.
+  const options = (m: (typeof listing)[0]) => ((m as { base?: boolean }).base ? `${m.onlyRead ? 'ro' : 'rw'},${(m as { options?: string }).options}` : `${m.onlyRead ? 'ro' : 'rw'},relatime${m.path === '/' ? ',errors=remount-ro' : ''}`);
   // The tree: each mount under the one that contains it.
   const depth = (m: (typeof listing)[0]) => (target ? 0 : listing.filter((x) => x !== m && (x.path === '/' || m.path.startsWith(x.path + '/'))).length);
   const targets = chosen.map((m) => `${depth(m) ? `${'  '.repeat(depth(m) - 1)}└─` : ''}${m.path}`);

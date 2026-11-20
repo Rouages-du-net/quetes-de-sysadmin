@@ -26,8 +26,10 @@ const bootTime = (game: Shell) => {
 };
 const timeOfDay = (ms: number) => new Date(ms).toISOString().slice(11, 19);
 
-function uptime(game: Shell, args: string[]): string {
-  const sd = systemd(game)!;
+export function uptimeLine(game: Shell, args: string[]): string {
+  const sd = systemd(game);
+  // A machine without a systemd model: a quiet server, up for twelve days.
+  if (!sd) return ` ${timeOfDay(0)} up 12 days,  3:04,  1 user,  load average: 0.08, 0.05, 0.01`;
   refreshCpu(game);
   const up = sd.clock - bootTime(game);
   const days = Math.floor(up / 86_400_000);
@@ -46,7 +48,7 @@ function uptime(game: Shell, args: string[]): string {
   }
   const users = new Set(((game.state.sessions ?? []) as { user: string }[]).map((s) => s.user)).size || 1;
   const since = `${days ? `${days} ${days > 1 ? 'days' : 'day'}, ` : ''}${String(h).padStart(2)}:${String(min).padStart(2, '0')}`;
-  return ` ${timeOfDay(sd.clock)} up ${since},  ${users} ${users > 1 ? 'users' : 'user'},  load average: ${loadText(game)}`;
+  return ` ${timeOfDay(sd.clock)} up ${since},  ${users} ${users > 1 ? 'users' : 'user'},  load average: ${cpu(game) ? loadText(game) : '0.08, 0.05, 0.01'}`;
 }
 
 // renice: "renice [-n] PRIORITY [-p|-g|-u] ID…" (util-linux 2.41).
@@ -185,7 +187,7 @@ function cgtop(game: Shell): string {
 
 export const CPU: Record<string, Command> = {
   uptime: {
-    launch: ({ args, game }) => (cpu(game) && systemd(game) ? uptime(game, args) : ` ${timeOfDay(systemd(game)?.clock ?? 0)} up 12 days,  3:04,  1 user,  load average: 0.08, 0.05, 0.01`),
+    launch: ({ args, game }) => uptimeLine(game, args),
   },
   nproc: {
     launch: ({ game }) => String(cpu(game)?.cores ?? 2),

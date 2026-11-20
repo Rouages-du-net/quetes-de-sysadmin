@@ -75,3 +75,76 @@ chage-list =
     Minimum number of days between password change		: 0
     Maximum number of days between password change		: 99999
     Number of days of warning before password expires	: 7
+
+## useradd, passwd (shadow-utils and PAM), adduser (Debian)
+
+useradd-usage =
+    Usage: useradd [options] LOGIN
+    (e.g. useradd -m -s /bin/bash -G group account; see man useradd)
+useradd-permission =
+    useradd: Permission denied.
+    useradd: cannot lock /etc/passwd; try again later.
+useradd-exists = useradd: user '{ $user }' already exists
+useradd-group-missing = useradd: group '{ $group }' does not exist
+useradd-group-exists = useradd: group { $group } exists - if you want to add this user to that group, use -g.
+useradd-bad-name = useradd: invalid user name '{ $user }': use --badname to ignore
+useradd-uid-invalid = useradd: invalid user ID '{ $uid }'
+useradd-uid-exists = useradd: UID { $uid } is not unique
+# { $home }: the home directory that was already there
+useradd-home-exists =
+    useradd: warning: the home directory { $home } already exists.
+    useradd: Not copying any file from skel directory into it.
+passwd-usage =
+    Usage: passwd [options] [LOGIN]
+    (e.g. passwd; sudo passwd account; passwd -S; sudo passwd -l account; see man passwd)
+passwd-changing = Changing password for { $user }.
+passwd-current = Current password:{" "}
+passwd-new = New password:{" "}
+passwd-retype = Retype new password:{" "}
+passwd-updated = passwd: password updated successfully
+passwd-mismatch = Sorry, passwords do not match.
+passwd-none-supplied = No password has been supplied.
+passwd-unchanged-same = Password unchanged
+passwd-too-short = You must choose a longer password.
+passwd-token-error =
+    passwd: Authentication token manipulation error
+    passwd: password unchanged
+passwd-not-allowed = passwd: You may not view or modify password information for { $user }.
+passwd-permission = passwd: Permission denied.
+passwd-unknown-user = passwd: user '{ $user }' does not exist
+passwd-changed = passwd: password changed.
+passwd-expiry-changed = passwd: password expiry information changed.
+passwd-unlock-empty =
+    passwd: unlocking the password would result in a passwordless account.
+    You should set a password with usermod -p to unlock this user's password.
+adduser-usage =
+    adduser [--uid id] [--ingroup group] [--shell shell] [--disabled-password] [--comment comment] [--home dir] user
+    adduser user group
+    (see man adduser)
+adduser-only-root = fatal: Only root may add a user or group to the system.
+adduser-exists = fatal: The user `{ $user }' already exists.
+adduser-user-missing = fatal: The user `{ $user }' does not exist.
+adduser-group-missing = fatal: The group `{ $group }' does not exist.
+adduser-bad-name =
+    fatal: Please enter a username matching the regular expression
+    configured via the NAME_REGEX configuration variable.  Use the `--allow-bad-names' option to relax this check or reconfigure NAME_REGEX
+    in configuration.
+adduser-adding-user = info: Adding user `{ $user }' ...
+# { $from } and { $to }: the range of ids adduser picks from
+adduser-selecting = info: Selecting UID/GID from range { $from } to { $to } ...
+adduser-adding-group = info: Adding new group `{ $group }' ({ $gid }) ...
+adduser-adding-new-user = info: Adding new user `{ $user }' ({ $uid }) with group `{ $group } ({ $gid })' ...
+adduser-creating-home = info: Creating home directory `{ $home }' ...
+adduser-copying = info: Copying files from `/etc/skel' ...
+adduser-changing-info = Changing the user information for { $user }
+adduser-enter-value = Enter the new value, or press ENTER for the default
+adduser-full-name = Full Name
+adduser-room = Room Number
+adduser-work-phone = Work Phone
+adduser-home-phone = Home Phone
+adduser-other = Other
+adduser-correct = Is the information correct? [Y/n]{" "}
+adduser-try-again = Try again? [y/N]{" "}
+adduser-extra-groups = info: Adding new user `{ $user }' to supplemental / extra groups `users' ...
+adduser-adding-to-group = info: Adding user `{ $user }' to group `{ $group }' ...
+adduser-already-member = info: The user `{ $user }' is already a member of `{ $group }'.
