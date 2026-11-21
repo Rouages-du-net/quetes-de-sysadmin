@@ -85,3 +85,5 @@ password-chalkboard-29 = tableau-noir-29
 password-mixing-desk-30 = table-de-mixage-30
 ## L'Outilthèque
 password-pegboard-47 = etabli-47
+## La Maison de santé
+password-waiting-room-30 = salle-d-attente-30

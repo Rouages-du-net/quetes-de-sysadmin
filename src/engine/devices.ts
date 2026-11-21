@@ -39,6 +39,10 @@ export interface Mount {
   // A network mount (see nfs.ts, cifs.ts).
   nfs?: NfsMount;
   cifs?: CifsMount;
+  // A virtual machine's root (see libvirt.ts): its disk's and its partition's sizes when they
+  // differ from the file system's (a disk grown before its partition, a partition before its file system).
+  disk?: number;
+  part?: number;
 }
 
 export const devices = (game: Shell): Record<string, Device> => game.state.devices ?? {};

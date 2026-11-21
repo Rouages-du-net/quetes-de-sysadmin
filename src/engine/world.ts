@@ -7,6 +7,7 @@ import type { Activity } from './activity';
 import type { Translate } from '../texts';
 import type { ElementPlan } from './plan';
 import type { Program } from './cobol';
+import type { DiskImage } from './libvirt';
 
 export type File = {
   type: 'file';
@@ -55,6 +56,8 @@ export type File = {
   program?: Program;
   // NTFS compression (compact /c on Windows): the bytes it takes on the volume.
   onDisk?: number;
+  // A virtual machine's disk image (qcow2, raw, ISO, see libvirt.ts): its metadata; `size` is what it takes on the host.
+  disk?: DiskImage;
 } & Rights;
 // What the simulated gpg stores on an encrypted, signed or key file.
 export interface CryptoBlob {
@@ -138,6 +141,10 @@ export interface InternalHost {
   commands?: string[];
   // The account's home (by default /home/you; C:\Users\you is /C/Users/you on Windows).
   home?: string;
+  // Called just before each command typed on it (e.g. a guest following its hypervisor's disk).
+  beforeCommand?: (game: Game) => void;
+  // Called once the session exists and knows its main machine (Shell.parent is set).
+  attached?: (game: Game) => void;
 }
 
 // A story event: when `condition` becomes true (checked

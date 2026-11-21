@@ -386,6 +386,15 @@ export class Console {
       // The host's console (the server's screen) does not drop: you see the boot.
       sh.reboot = false;
       if (sh.state.rescue && sh.state.rescueBanner) chunks.push(sh.state.rescueBanner as string);
+    } else if (sh.reboot && sh.parent && this.inside.length && this.inside.at(-1)!.shell === sh) {
+      // An internal machine reboots or powers off (a virtual machine): its connection drops, back one step.
+      sh.reboot = false;
+      const e = this.inside.pop()!;
+      if (e.back) {
+        this.inside = [];
+        this.remote = null;
+      }
+      chunks.push(`Connection to ${e.domain} closed by remote host.\nConnection to ${e.domain} closed.`);
     } else if (sh.reboot && this.remote) {
       // The machine reboots: the server closes the connection.
       sh.reboot = false;

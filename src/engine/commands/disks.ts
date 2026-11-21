@@ -62,12 +62,12 @@ function lsblk(game: Shell, args: string[]): string {
   const disks = new Map<string, { majmin: string; rm: number; size: number; parts: Line[] }>();
   for (const m of mounts(game).filter((x) => x.name.startsWith('/dev/vd'))) {
     const disk = m.name.replace(/\d+$/, '');
-    const d = disks.get(disk) ?? { majmin: '254:0', rm: 0, size: m.capacity, parts: [] };
+    const d = disks.get(disk) ?? { majmin: '254:0', rm: 0, size: m.disk ?? m.capacity, parts: [] };
     d.parts.push({
       name: m.name,
       majmin: `254:${d.parts.length + 1}`,
       rm: 0,
-      size: m.capacity,
+      size: m.part ?? m.capacity,
       type: 'part',
       point: m.path,
       system: m.system ?? 'ext4',

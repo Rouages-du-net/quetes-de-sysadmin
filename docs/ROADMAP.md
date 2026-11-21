@@ -658,6 +658,17 @@ them safely.
   git's config, signed commits and tags, reflog, reset, `push --force`,
   archive; `jq -R`/`-s`).
 
+- [x] **Virtualisation with KVM and libvirt** (the machines under the
+  machines): a guest left behind after a power cut and frozen by a chain
+  of forgotten snapshots, a guest on the wrong network and a hand-made
+  clone with its original's MAC and machine-id, an overcommitted host and a
+  full guest disk. Done: story 40, "The Health Centre" (`libvirt.ts`:
+  domains and their XML, states, qcow2 images and backing chains,
+  internal and external snapshots, block commits, the NAT network and the
+  host's bridge, leases, QEMU's open files, the host's memory and swap;
+  `virsh`, `qemu-img`, `virt-install`, `virt-clone`, `growpart`,
+  `systemd-machine-id-setup`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

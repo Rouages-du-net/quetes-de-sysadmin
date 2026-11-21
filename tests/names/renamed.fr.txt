@@ -1474,6 +1474,113 @@ signed-release
   /home/you/lendshed/.git/HEAD → /home/vous/lendshed/.git/HEAD
   /home/you/lendshed/.git/config → /home/vous/lendshed/.git/config
 
+cold-start
+  /home/you → /home/vous
+  /home/you/message_from_grace.txt → /home/vous/message_de_grace.txt
+  /home/you/note_from_ilse.txt → /home/vous/mot_d_ilse.txt
+  /home/you/message_from_priya.txt → /home/vous/message_de_priya.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/libvirt → /home/vous/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/vous/.config/libvirt/libvirt.conf
+
+cold-start:ledger
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LISEZMOI.txt
+
+cold-start:agenda
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+cold-start:records
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-side
+  /home/you → /home/vous
+  /home/you/message_from_grace.txt → /home/vous/message_de_grace.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/libvirt → /home/vous/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/vous/.config/libvirt/libvirt.conf
+
+wrong-side:ledger
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LISEZMOI.txt
+
+wrong-side:agenda
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-side:records
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-side:portal
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-side:agenda-training
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-side:reception
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/you/note_from_hamid.txt → /home/vous/mot_de_hamid.txt
+
+tight-fit
+  /home/you → /home/vous
+  /home/you/message_from_grace.txt → /home/vous/message_de_grace.txt
+  /home/you/note_from_joon.txt → /home/vous/mot_de_joon.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/libvirt → /home/vous/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/vous/.config/libvirt/libvirt.conf
+
+tight-fit:ledger
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LISEZMOI.txt
+
+tight-fit:agenda
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+tight-fit:records
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+tight-fit:portal
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+tight-fit:agenda-training
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

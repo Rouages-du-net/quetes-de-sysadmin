@@ -483,3 +483,9 @@ name-note_from_tomasz-txt = mot_de_tomasz.txt
 name-message_from_rosa-txt = message_de_rosa.txt
 name-message_from_aroha-txt = message_d_aroha.txt
 name-note_from_wanjiru-txt = mot_de_wanjiru.txt
+## La Maison de santé
+name-message_from_grace-txt = message_de_grace.txt
+name-note_from_ilse-txt = mot_d_ilse.txt
+name-message_from_priya-txt = message_de_priya.txt
+name-note_from_hamid-txt = mot_de_hamid.txt
+name-note_from_joon-txt = mot_de_joon.txt

@@ -89,3 +89,4 @@ machine-lane-motd = La Piscine — le serveur Debian de la piscine, un cluster k
 machine-chalk-motd = La Salle des profs — le serveur d'impression de l'école primaire (CUPS) : le secrétariat, la bibliothèque, la salle des profs. Merci de ne pas imprimer l'album de l'école deux fois.
 machine-mast-motd = Les Ondes — le serveur Debian de la fédération de radios associatives : l'intranet, les archives, le portail des contributions, et l'autorité de certification de la fédération dans /srv/ca.
 machine-anvil-motd = L'Outilthèque — la forge de Lendshed : Forgejo (https://forge.lendshed.example), son exécuteur Actions, et les sites de la documentation et des téléchargements. Soyez bienveillant·es avec les contributeur·rices.
+machine-hearth-motd = La Maison de santé — l'hyperviseur de la maison de santé de Millbrook (KVM, libvirt) : ledger, agenda, records et leurs ami·es vivent ici. virsh list --all avant toute chose.

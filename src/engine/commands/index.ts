@@ -78,6 +78,7 @@ import { IBMI } from './ibmi';
 import { POWERSHELL } from './powershell';
 import { LINE_ENDINGS } from './line-endings';
 import { CRYPTSETUP } from './cryptsetup';
+import { VIRT } from './libvirt';
 import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
 import { PROMETHEUS_COMMANDS } from './prometheus';
@@ -214,6 +215,7 @@ function build(): Record<string, Command> {
     ...POWERSHELL,
     ...LINE_ENDINGS,
     ...CRYPTSETUP,
+    ...VIRT,
     ...CHECKSUMS,
     ...ENVIRONMENT,
     ...PROMETHEUS_COMMANDS,
