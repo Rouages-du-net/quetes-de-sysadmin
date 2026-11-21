@@ -668,6 +668,30 @@ presents them for people.
   `passTime`); `expiry-date.ts`, `chain-of-trust.ts`, `stolen-laptop.ts`
   (an expiry watch found in cron or timers and run as it will run:
   `expiryWatch`). Tests: `tests/airwaves.test.ts`.
+- `src/engine/forge.ts`: a machine's Forgejo and its Actions runner
+  (`state.forge`: accounts, tokens and scopes, Sudo, `prohibit_login`;
+  repositories as bare repositories of the machine, team and direct
+  collaborators; protected branches checked by `forgeReceive`, Forgejo's
+  pre-receive hook, called by git's push for a forge URL `forgeRemote`;
+  secrets; workflows `.forgejo/workflows/*.yml` run by `runWorkflows`
+  (`on:`, jobs, `if:` expressions `evaluate`, `env:`, `actions/checkout`,
+  `run:` read line by line, secrets masked, a fork's `pull_request`
+  without secrets, the deploy over rsync checked by `deployVerdict`
+  against authorized_keys' options), commit statuses, pull requests; the
+  HTTP API and web routes `forgeHttp`); `forgejo admin user …`,
+  `forgejo-runner`, the `forgejo-api(7)` page and curl towards the forge
+  (`forgeCurl`) in `commands/forge.ts`; SSH signatures and
+  allowed_signers in `src/engine/sshsig.ts`, `ssh-keygen -Y` in
+  `commands/ssh.ts`; git's config (`configValue`), signed commits and tags
+  (`signWith`, `checkSignature`), tags, `reset`, `--amend`, the reflog
+  (`logRef`, `HEAD@{N}`), `push --force`, `archive`, `-C` and
+  subdirectories (`Repo.deep`) in `commands/git.ts`; `jq -R`/`-s`.
+  `chapters/tool-library.ts`: what the chapters of "The Tool Library"
+  share (`anvil`, the nonprofit's forge: Lendshed's history and the forced
+  push of 14 October, the forge's accounts and tokens, the deploy
+  account, the past runs replayed by `initialiseAnvil`, Kwame's pull
+  request rebased by `kwameSync`); `who-can-push.ts`, `leaky-pipeline.ts`,
+  `signed-release.ts`. Tests: `tests/tool-library.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

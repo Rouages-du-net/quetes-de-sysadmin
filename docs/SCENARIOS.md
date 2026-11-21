@@ -157,7 +157,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `ps aux` | user, PID, %CPU, %MEM, command | adds VSZ, RSS, TTY, STAT, START, TIME |
 | `tar` | computed size (text compressed to a third, media to 98 %); if there isn't room, nothing is written; `-z`/`-j`/`-J`/`-a`, reading recognises the compression (a wrong letter: the decompressor's error, exit code 2); the directories are entries (`d/` before `d/a`); `-tv` (and `-cvv`, `-xvv`) the long listing (`drwxr-xr-x you/you 0 2027-01-01 00:00 d/`) | real compression; a partial archive may remain; directories in the file system's order |
 | compressed files (`compression.ts`, `commands/compress.ts`): `gzip`, `gunzip`, `zcat`, `zgrep`, `zless`, `zmore`, `zdiff`, `bzip2`, `bunzip2`, `bzcat`, `xz`, `unxz`, `xzcat`, `zip`, `unzip` | a compressed file is a binary file starting with the real header (gzip's magic, flags, date, original name, XFL; `BZh9`; `\xfd7zXZ`; `PK\x03\x04`), then the text scrambled with a fixed key stream, then gzip's trailer (CRC-32, ISIZE): `cat` shows garbage, `file` describes it like libmagic, and pipes, redirections and copies keep it readable; `gzip` `-c -d -f -k -l -r -t -v -q -1…-9` with gzip's messages and exit codes (1 error, 2 warning: `already has .gz suffix`, `already exists; not overwritten`, `is a directory -- ignored`, `unknown suffix`), compressed data refused on a terminal; `zcat x` reads `x.gz`; `less` reads a `.gz` like Debian's lesspipe; `zgrep` passes grep's options and prefixes the file's name; logrotate's `compress` writes a real `.gz`; `zip`/`unzip` (not installed by default: `apt install zip unzip`) with `-r`, `-q`, `-l`, `-d`, `-o`, `-n` and unzip's question | no DEFLATE: compressed sizes are estimates (a log to about 30 %, media unchanged); no `-S`, `-N`/`-n` (names are never restored), `bzip2`'s and `xz`'s other options; `xz -l` one stream, one block; `zip` without `-u`, `-d`, `-m`, `-e`; `unzip` without `-x`, `-j`, `-p` |
-| `git` | a single branch (`main`), files at the repository's root only, identifiers computed by the game, `commit` requires `-m`; `log` with `--oneline` and `-p`; remotes by path only (bare repositories of the machine); `push` and `pull` fast-forward only (no merge); `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, subdirectories, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, merges, every hook |
+| `git` | a single branch (`main`), files at the repository's root only (subdirectories in The Tool Library's repositories), identifiers computed by the game, `commit` and `tag -a` require `-m`; `log` with `--oneline`, `-p`, `-n`, `--format`, a revision; remotes by path only (bare repositories of the machine), or a story's forge URL; `push` and `pull` fast-forward only (no merge), `push --force`/`+refspec`, tags; `reset`, `commit --amend`/`--allow-empty`, `reflog` (`HEAD@{N}`, `--date=iso`), `config`, `archive`, `-C`; `pre-receive` and `post-receive` hooks; `push` figures approximate | branches, SHA-1/SHA-256, text editor, remotes over SSH or HTTPS, fetch and remote-tracking branches, merges, rebase, every hook, `gc` |
 | scripts (`sh`, `bash`, `./script`, git hooks, `postrotate`, cron lines, `ExecStart=`) | read and run like the interactive line (`script.ts` through `compound.ts` and `control.ts`): every compound, functions (`name() { …; }`, bash's `function name { …; }`), `$1`…`${10}`, `$#`, `$@`, `"$@"`, `$*`, `$0`, `shift`, `local`, `return`, `exit N`, `set -e` (not in a test, the left of `&&`/`\|\|`, after `!`), `set -u`, `set -x` (`+ cmd`, bash's quoting and `++` in `$(…)`), `set -o pipefail` (bash), `set --`, `trap '…' EXIT`, `getopts`, `.` and `source` (bash), `sh -c`, `-e`, `-u`, `-x`, `-n`; the `#!` line picks the shell (none: bash); `/bin/sh` is dash on Debian: `[[`, `function`, arrays, `$'…'`, `source`, `==` in `[ ]` and `-o pipefail` fail with dash's own messages, its `echo` reads backslashes; each shell's error wording (`name: line 3:` for bash, `name: 3:` for dash, none for FreeBSD's sh and Solaris's /bin/sh) checked against dash 0.5.12 and bash 5.2; a syntax error stops the script after the lines before it ran; CR LF lines keep their `\r`; a child shell (its variables, functions and `cd` stay inside; it starts from the exported variables; cron gives `HOME`, `LOGNAME`, `SHELL`, `PATH=/usr/bin:/bin`) | a command's exit code is 0 if it wrote no error (unless it sets its own); errors and output come out mixed, in order (a pipe after a script gets both); only `read` takes the script's input; no arrays (bash says `syntax error near unexpected token \`('`), `select`, `eval`, `exec`, `wait` on a script's jobs, signals (`trap` stores them, only `EXIT` fires); `set -e`/`-u`/`-x` act in scripts only, not on the interactive line; dash's arithmetic messages only for division by zero; Solaris's `/bin/sh` takes `$(…)` and `$((…))` that the real Bourne shell refuses; systemd runs `ExecStart=` without a shell, the game reads it with `sh` |
 | `diff` | normal format, `-u` (three lines of context), `-r`, `-q`; the time in the `-u` header is the machine's | every option |
 | `date`, `test`, `readlink` | `date` without option or `+FORMAT` (common directives); `test` (and `[ … ]`): `-e -f -d -L -s -r -w -x -n -z`, `=`, `!=` (and `==`, refused by dash), numeric comparisons; bash's `[[ … ]]` (patterns with `==`/`!=`, `=~`, `&&`, `\|\|`, `!`, parentheses, no word splitting); `readlink [-f]` | `date -d`, `-u`…; full `test`; `realpath`; `[[ … ]]`'s `=~` reads the expression as JavaScript's and sets no `BASH_REMATCH` |
@@ -265,7 +265,11 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `promtool` | `check config` (and the rule files it names), `check rules`, `check metrics` (two lint checks), `query instant` (`--time`); `test rules` not simulated (the story tries rules on made-up days itself) | `test rules`, `query range`, `tsdb`, `push` |
 | node exporter, the app's `/metrics` | a few families each: CPU, load, memory, file systems (computed from the machine's files, like `df`), network; the app's requests by route and status, a histogram, a gauge per station, computed from its traffic since its process started (a restart resets the counters) | every collector |
 | Alertmanager and `amtool` | `alertmanager.yml`: `route` (`receiver`, `group_by`, `group_wait`, `group_interval`, `repeat_interval`, `matchers`, `match`, `match_re`, `continue`, nested routes), `receivers` (only `webhook_configs` deliver), `inhibit_rules`; grouping and repeats checked every 15 seconds; silences and their states; reload on SIGHUP or `POST /-/reload`; API v2 (`/api/v2/alerts`, `/api/v2/silences` GET and POST, `/api/v2/silence/ID` DELETE, `/api/v2/status`); `amtool alert query` (`--silenced`, `--inhibited`, `-o extended`/`json`), `silence add` (`--duration`, `--start`, `--end`, `--comment`, `--author`), `silence query` (`--expired`, `-q`), `silence expire`, `check-config`, `config`, `config routes [test]` (`--config.file`, `--verify.receivers`) | email and chat integrations, templates, clustering, time intervals, retries |
-| `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
+| Forgejo (`forge.ts`, The Tool Library) | accounts, tokens with scopes (`all`, `read:`/`write:` + `repository`, `admin`, `user`), basic authentication and Sudo (tokens listed and deleted only with basic authentication), `prohibit_login` stopping tokens; an organisation's repository with team members and direct collaborators; protected branches (exact name, then glob patterns): a force-push always refused, `enable_push`/`enable_push_whitelist`, `require_signed_commits` (a commit verified when signed by a key of the account whose address committed), refused in the pre-receive hook with Forgejo's messages; Actions secrets (never shown back); commit statuses "workflow / job (event)"; pull requests from a fork; the API's JSON for users, tokens, repositories, collaborators, branch protections, statuses, secrets, runs (Forgejo 11's `/actions/runs`), pulls, tags; a job's log page and `/NAME.keys` | no web interface, merges, reviews, issues, webhooks' deliveries, LFS, packages, mirrors, 2FA; required approvals and status checks are kept but there is no merge to enforce them on; the API's error messages approximated where uncertain (an unknown token's 401); answers unpaginated; served without checking TLS |
+| Forgejo Actions (`forge.ts`) | workflows in `.forgejo/workflows/*.yml` (the playbooks' YAML subset): `on:` as a string, a list or a map (`branches`, `tags`), `push`, `pull_request`, `pull_request_target`, `workflow_dispatch`; jobs with `runs-on`, `needs`, `if:` (`github.*`, `secrets.*`, `env.*`, `==`, `!=`, `&&`, `\|\|`, `!`, `startsWith`, `contains`), `env:` at every level, steps with `uses:` (`actions/checkout`, its `with: ref:`) or `run:`; secrets for every event but a fork's `pull_request`; masking of each line of a secret in the logs | a `run:` is read by a small interpreter (`echo`/`printf` with `> file` and `\| base64`, `pip install`, `pytest`, `mkdocs build`, `rsync`/`ssh` to the deploy account, checked against its authorized_keys and `restrict`, `from=`, `command="rrsync DIR"`), not a shell in a container; runner labels not matched; no matrix, services, artifacts, caches, contexts beyond those listed; Forgejo's approval of fork runs not modelled |
+| `forgejo` (`commands/forge.ts`) | `admin user list` (Go's tabwriter), `create`, `change-password`, `must-change-password`, `delete` (refused while the account owns repositories, `--purge`), `generate-access-token`; refused as root; `--config` needed to find `app.ini` | `admin repo-sync-releases`, `doctor`, `dump`, `migrate`, `admin auth`… not simulated; `forgejo web` is the service |
+| git's signatures (`commands/git.ts`, `sshsig.ts`) | `gpg.format ssh`, `user.signingKey` (a path to the private or public key), `commit.gpgsign`, `tag.gpgsign`, `-S`, `--no-gpg-sign`; `verify-commit`, `verify-tag`, `log --show-signature`, `%G?`, `%GK`, `%GS`; `gpg.ssh.allowedSignersFile` with the author's address as principal, namespaces; `ssh-keygen -Y sign`/`verify`/`find-principals`/`check-novalidate` (the SSHSIG armour, namespace and digest checked) | the cryptography is simulated (a signature holds the key and the SHA-256 of the message); openpgp signing fails (no key for git); `key::` literal keys and ssh-agent not simulated; a key's passphrase isn't asked; `valid-after`/`valid-before` and certificates in allowed_signers ignored |
+| `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
 | `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
 | The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; environment variables and mounted files from ConfigMaps and Secrets read when the container starts; a Deployment's `kubernetes.io/change-cause` copied to its new ReplicaSet (and back by `rollout undo`); `kubectl top` from the apps' declared memory and CPU; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction (a node's memory is never short: only limits kill), the kubelet doesn't refresh a running pod's mounted ConfigMaps and Secrets, Secrets stored in clear in the simulated etcd (no `--secrets-encryption`), Traefik's TLS (port 443 answers like 80) |
@@ -276,7 +280,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
 | `nmap -6`, `nc -4`/`-6` | from the vantage point: the story's server's ports in each family (its firewall, its sockets, neighbour discovery: a server that drops it "seems down"); an IPv6 literal needs `-6` (nmap's message) | real probes, `-6` with `-sU`, OS detection |
 | `tar` | `-c`, `-t`, `-x`, `-z`, `-v` (also on extraction), `-f`, `-C`, and the old style without a dash (`tar czf`, `tar xvf`); lists files only; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, `-j`/`-J`, `tar -tv`'s long listing, the directories in lists, multi-volume archives… |
-| `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart | every key type, conversion, certificates… |
+| `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart; `-Y sign`/`verify`/`find-principals`/`check-novalidate` (see git's signatures) | every key type, conversion, certificates… |
 | `certbot` | a single certificate, the chapter's; `certificates`, `renew`, `certonly`, `reconfigure`; simulated authority (the HTTP-01 challenge goes through the simulated nginx); the files in `live/` are rewritten (no links to `archive/`); the nginx plugin doesn't change the configuration | several certificates, a real ACME authority, symbolic links, DNS challenges |
 | `openssl` (`commands/openssl.ts`, `pki.ts`) | OpenSSL 3.5's subcommands for a small authority: `genpkey` (`-algorithm RSA\|EC`, `-pkeyopt rsa_keygen_bits:N`/`ec_paramgen_curve:P-256\|P-384`), `genrsa`, `ecparam -genkey`, `pkey` (`-pubout`, `-text`), `rsa -modulus`; `req` (`-new -key`, `-newkey rsa:N\|ec`, `-subj`, `-addext`, `-x509` with the default configuration's `v3_ca`, `-days` (30 by default), `-config`/`-extensions`, the questions of the default configuration without `-subj`, `-in … -noout -text`, `-verify`); `x509` (`-text`, `-dates`, `-subject`, `-issuer`, `-serial`, `-ext`, `-checkend` with its exit code, `-fingerprint` SHA-1/SHA-256, `-modulus`, `-pubkey`, `-hash`; printed in the order of the line; `-req` with `-CA`/`-CAkey`, the `.srl` file and `-CAcreateserial`, `-set_serial`, `-extfile`/`-extensions`, `-copy_extensions none\|copy\|copyall`, `-signkey`, "Certificate request self-signature ok"); `verify` (`-CAfile` plus the system store, `-untrusted`, `-crl_check(_all)`, `-CRLfile`, `-verify_hostname`, `-purpose`, `-partial_chain`, `-show_chain`; exit code 2); `s_client` against the story's services (the chain built from the top, each verify error, `-showcerts`, `-CAfile`, `-cert`/`-key`, the client CA names); `ca` with an `openssl.cnf` (`$dir`, `index.txt`, `index.txt.attr`, `serial`, `crlnumber`, `newcerts/`, `copy_extensions`, `x509_extensions`; signing with its two questions or `-batch`, `-revoke` with `-crl_reason`, `-gencrl` with `default_crl_days`/`-crldays`, `-status`); `crl` (`-text`, `-nextupdate`, `-CAfile`); OpenSSL's messages and X509 error numbers (2, 3, 9–12, 18–26, 32, 62); keys derived, never random; private keys created 0600 | no real cryptography (a certificate's PEM holds the game's description; a signature is the issuer's key identifier; fingerprints are SHA-1/SHA-256 of that PEM); no passphrase on keys (`-aes256`, a `-newkey` without `-noenc`: the game says so); a subset of the extensions (subjectAltName DNS/IP, basicConstraints, keyUsage, extendedKeyUsage, the key identifiers always added); no `ocsp`, `pkcs12`, `dgst`, `enc`; `s_client` returns at once; no policy matching beyond `commonName = supplied` |
 | `update-ca-certificates` (`commands/openssl.ts`) | `/etc/ca-certificates.conf` and every `*.crt` under `/usr/local/share/ca-certificates` (a `.pem` ignored, a file with several certificates or none warned by rehash) become links in `/etc/ssl/certs` (`name.pem`, the `hash.0` links) and the bundle `ca-certificates.crt` that curl, wget and openssl read; "N added, M removed; done."; `--fresh`; root only | the store holds four of Mozilla's roots instead of about 150; the hooks of `/etc/ca-certificates/update.d` are not run; the Java store is not updated |
@@ -3905,6 +3909,121 @@ log file. Expected traps: deleting the certificate's file, revoking without
 a CRL, a stale CRL, a CRL nginx hasn't loaded, the issuing CA's CRL alone
 (everyone refused: "unable to get certificate CRL"), a whole new CA, a
 watch that misses the stream's certificate or lists everything alike.
+
+## Story 39: The Tool Library (three chapters)
+
+Shared Shed, a nonprofit network of community tool libraries, maintains
+Lendshed, the open-source lending software some forty tool libraries run
+(a Flask app and its documentation site). Its code lives on `anvil`
+(`enclume` in French, 192.0.2.80), a Debian 13 server running Forgejo at
+`https://forge.lendshed.example` (behind nginx, on 127.0.0.1:3000) and a
+Forgejo Actions runner, which publishes the documentation to
+`/srv/www/docs` as the `deploy` account (rsync over ssh). The forge's
+accounts: Wanjiru (lead maintainer, administrator), Rosa (maintainer), the
+player (administrator, the new volunteer sysadmin), Tomasz (maintainer
+until March), Kwame (a contributor with his fork and pull request #57).
+Aroha runs Lendshed for a tool library in Wellington. Each command, half a
+minute passes. Engine: `src/engine/forge.ts` (accounts, tokens and their
+scopes, Sudo, repositories as bare repositories of the machine,
+collaborators, protected branches checked by the forge's pre-receive hook,
+secrets, workflows run by the runner with their logs and commit statuses,
+pull requests from forks; the HTTP API `forgeHttp`), `commands/forge.ts`
+(`forgejo admin user …`, `forgejo-runner`, curl towards the forge, the
+`forgejo-api(7)` page), `src/engine/sshsig.ts` (SSH signatures and
+allowed_signers) with `ssh-keygen -Y`, and git's additions in
+`commands/git.ts` (config, signed commits and tags, tags, reset, `--amend`,
+reflog, `push --force`, archive, subdirectories, `-C`, a forge's URLs);
+`jq -R`/`-s`. The story's machine is built in `chapters/tool-library.ts`.
+It opens after "The Bare Repository" (git hooks and deploying, The Gazette)
+and "Eradication" (a signed release, The Bastion), and extends the security
+and deployment paths. Strictly defensive: protect, detect, repair.
+
+### Chapter 1 — Who Can Push (done)
+
+Monday 4 November 2030. On 14 October at 02:13 someone force-pushed `main`
+with Tomasz's credentials: Rosa's two commits vanished and a commit added a
+typosquatted dependency (`requets`). Rosa put main back two days later.
+Tomasz left the maintainers' team in March but stayed a direct
+collaborator, and his personal access token (all scopes) sat in a release
+script on a laptop he sold; `main` isn't protected.
+
+| Step | Command learnt |
+|---|---|
+| The forced push | `sudo git --git-dir=…/lendshed.git reflog --date=iso`, `git show ID`, `/var/lib/forgejo/log/forgejo.log` |
+| Who can push | `curl -H "Authorization: token $(cat ~/.forgejo-token)" …/api/v1/repos/lendshed/lendshed/collaborators`, `…/collaborators/tomasz/permission` |
+| The collaborator | `curl -X DELETE …/collaborators/tomasz` |
+| The token | `curl -u you:PASSWORD -H "Sudo: tomasz" …/users/tomasz/tokens`, `-X DELETE …/tokens/3`; or `PATCH /admin/users/tomasz {"prohibit_login": true}`; `sudo -u forgejo forgejo --config /etc/forgejo/app.ini admin user list` |
+| Protect main | `…/commits/main/statuses`, `POST …/branch_protections` (`enable_push_whitelist`, `required_approvals`, `enable_status_check`, `status_check_contexts`) |
+| Check | `git reset --hard HEAD~1`, `git push --force` ("branch main is protected from force push"), `git reset --hard HEAD@{1}` |
+
+Goal checked on the state: Tomasz is no collaborator; his token doesn't
+authenticate (deleted, or his account blocked or deleted); a rule protects
+main with an approval, a status check the CI really reports (globs
+allowed) and pushes restricted to a whitelist without Tomasz (or no direct
+push); a force-push was refused after the rule; main still leads to Rosa's
+last commit; the repository is public. Expected traps: a force-push before
+protecting (it rewrites main: put it back from the reflog), Tomasz's
+password changed (tokens don't care), `forgejo admin user delete` (refused:
+he owns a repository; `--purge` is accepted, with another debrief: his
+comments become Ghost), the repository made private, a rule letting every
+writer push, a status check that never comes.
+
+### Chapter 2 — The Leaky Pipeline (done)
+
+Wednesday 13 November. Rosa notices a long base64 line in the log of Kwame's
+pull request. The workflow runs pull requests on `pull_request_target`
+(the base branch's workflow, with the secrets) but checks out the fork's
+code, has the deploy key in the whole workflow's environment, and a debug
+step prints it with `base64 -w0`, past the masking. Logs of a public
+repository are public: the key has leaked.
+
+| Step | Command learnt |
+|---|---|
+| The runs | `curl …/actions/runs \| jq`, `curl https://forge…/lendshed/lendshed/actions/runs/2/jobs/0/logs` |
+| The leak | `base64 -d`, `cat ~/lendshed/.forgejo/workflows/ci.yml` |
+| A new key | `ssh-keygen -t ed25519 -N '' -f ~/deploy_key`, authorized_keys with `restrict,from="192.0.2.80",command="rrsync /srv/www/docs"`, the old line removed |
+| The secret | `jq -Rs '{data: .}' < ~/deploy_key \| curl -X PUT … --data-binary @- …/actions/secrets/DEPLOY_KEY` |
+| The workflow | `pull_request` for tests, the deploy job `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`, the key in its step only; `git commit`, `git push` |
+| The check | Kwame's next runs; `PATCH …/branch_protections/main` with `ci / test (pull_request)`; a deploy with the new key (`git commit --allow-empty` to run it again) |
+
+Goal checked on the state: the old key gone from the deploy account's
+authorized_keys, a new restricted one there, the secret is its private
+half; after main changed, Kwame's latest runs give no secret to the fork's
+code, print none, and still test the pull request's code; the protection's
+required context matches what the pull request reports; the latest push
+to main deployed with the new key. Several solutions: one workflow or two
+(a deploy workflow on `push`), `restrict`, `command=` or `from=`, the JSON
+by jq or by hand with `\n`. Expected traps: removing the echo only (the key
+leaked already; and the fork still gets it), deleting the workflow (no CI),
+`pull_request_target` without the fork's code (untested), raw newlines in
+the JSON, an unrestricted key, a wrong `from=` (the deploy fails), a stale
+required status check.
+
+### Chapter 3 — Signed and Sealed (done)
+
+Monday 25 November, release 2.4.0. A fake "lendshed-2.3.1.tar.gz" circulates
+with a checksum; Aroha asks how to know a release is genuine.
+
+| Step | Command learnt |
+|---|---|
+| Signing | `git config --global gpg.format ssh`, `user.signingkey ~/.ssh/id_ed25519.pub`, `commit.gpgsign true`, `git commit -S` |
+| Trust | `curl https://forge…/wanjiru.keys`, an `allowed_signers` file at the repository's root, `gpg.ssh.allowedSignersFile`, `git verify-commit HEAD`, `git log --show-signature` |
+| The forge | `PATCH …/branch_protections/main {"require_signed_commits": true}`, `git push` ("protected from unverified commit") |
+| The tag | `git tag -s v2.4.0 -m …`, `git verify-tag`, `git push origin v2.4.0` |
+| The release | `git archive --format=tar.gz --prefix=lendshed-2.4.0/ -o /srv/www/downloads/lendshed-2.4.0.tar.gz v2.4.0`, `sha256sum … > SHA256SUMS`, `ssh-keygen -Y sign -f ~/.ssh/id_ed25519 -n file SHA256SUMS` |
+| Downstream | `sha256sum -c SHA256SUMS`, `ssh-keygen -Y verify -f allowed_signers -I you@lendshed.example -n file -s SHA256SUMS.sig < SHA256SUMS` |
+
+Goal checked on the state: main's head on the forge is verified (signed by
+a key of the account whose address committed) and the repository holds an
+allowed_signers file with the player's key; main requires signed commits;
+the tag v2.4.0 on the forge is annotated, signed with the player's key, on
+main; the tarball of the tag, a SHA256SUMS that matches it and its valid
+`file` signature are in `/srv/www/downloads`; both downstream checks were
+run. Expected traps: the old key from a previous laptop (unknown to
+allowed_signers and the forge: refused), an unsigned push once signatures
+are required, a lightweight tag (`cannot verify a non-tag object`), a tag
+already pushed (`--force`), checksums without a signature, a tampered file
+or the wrong principal (`Could not verify signature.`).
 
 ## Ideas for later
 

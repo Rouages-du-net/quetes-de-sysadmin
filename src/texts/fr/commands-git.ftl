@@ -180,3 +180,24 @@ git-usage =
     (voir man git)
 # { $commands } : les sous-commandes du jeu, séparées par des virgules
 git-under-command-unknown = git : '{ $command }' n'est pas une commande git (dans ce jeu : { $commands }).
+
+## Signature, étiquettes, config, reset, archive (https://git-scm.com/docs/git-config, git-tag, git-reset, git-archive)
+
+git-sign-failed = fatal: impossible d'écrire l'objet commit
+git-tag-sign-failed = error: impossible de signer l'étiquette
+git-sign-no-key = user.signingkey ou gpg.ssh.defaultKeyCommand doit être configuré
+git-allowed-signers-missing = gpg.ssh.allowedSignersFile doit être configuré et exister pour la vérification de signature ssh
+git-amend-nothing = fatal: Vous n'avez rien à corriger.
+git-config-usage = usage : git config [<options>]
+git-tag-without-message =
+    Écrivez le message de l'étiquette avec -m, entre guillemets : git tag -a v1.0 -m "Version 1.0"
+    (le vrai git ouvrirait un éditeur de texte)
+git-reset-unstaged = Modifications non indexées après reset :
+git-archive-to-terminal =
+    fatal: refus d'écrire une archive sur le terminal : utilisez -o FICHIER (--output=FICHIER)
+git-push-behind-tip =
+    astuce: Les mises à jour ont été rejetées car la pointe de la branche courante est derrière
+    astuce: son homologue distant. Si vous souhaitez intégrer les changements distants,
+    astuce: utilisez 'git pull' avant de pousser à nouveau.
+    astuce: Voir la 'Note à propos des avances rapides' dans 'git push --help' pour plus d'information.
+git-push-tag-exists-tip = astuce: Les mises à jour ont été rejetées car l'étiquette existe déjà dans la branche distante.

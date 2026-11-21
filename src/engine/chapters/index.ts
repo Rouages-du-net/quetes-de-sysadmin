@@ -147,6 +147,9 @@ import { paperTrail } from './paper-trail';
 import { expiryDate } from './expiry-date';
 import { chainOfTrust } from './chain-of-trust';
 import { stolenLaptop } from './stolen-laptop';
+import { whoCanPush } from './who-can-push';
+import { leakyPipeline } from './leaky-pipeline';
+import { signedRelease } from './signed-release';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -339,6 +342,11 @@ export const STORIES: Story[] = [
     id: 'airwaves',
     after: ['padlock', 'restore-drill'],
     chapters: [expiryDate, chainOfTrust, stolenLaptop],
+  },
+  {
+    id: 'tool-library',
+    after: ['bare-repo', 'eradication'],
+    chapters: [whoCanPush, leakyPipeline, signedRelease],
   },
 ];
 

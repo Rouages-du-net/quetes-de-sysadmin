@@ -88,3 +88,4 @@ machine-lane-motd = The Pool — the swimming pool's Debian server, a single-nod
 
 machine-chalk-motd = The Staff Room — the primary school's print server (CUPS): the office, the library, the staff room. Please don't print the yearbook twice.
 machine-mast-motd = The Airwaves — the community radio federation's Debian server: the intranet, the archive, the contribution portal, and the federation's certificate authority in /srv/ca.
+machine-anvil-motd = The Tool Library — Lendshed's forge: Forgejo (https://forge.lendshed.example), its Actions runner, and the documentation and downloads sites. Be kind to contributors.

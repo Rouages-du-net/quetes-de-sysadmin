@@ -78,3 +78,5 @@ story-staff-room = The Staff Room
     .summary = A primary school prints everything, from registers to report cards, through a small Debian server running CUPS. Unblock Monday morning's queue, add a driverless printer for the staff only and an old one with its driver, then teach the server to forget what it shouldn't keep.
 story-airwaves = The Airwaves
     .summary = Five community radio stations share a Debian server and their own certificate authority, made with openssl years ago. An expired certificate, machines that don't trust the root, a link missing from a chain, a stolen laptop with its client certificate: learn how an internal PKI really works, and keep it healthy.
+story-tool-library = The Tool Library
+    .summary = Forty community tool libraries run Lendshed, an open-source lending software whose code lives on a small self-hosted forge, with its CI. Someone rewrote its history with an old maintainer's token, its pipeline leaked a deploy key, and a fake release circulates: close the doors, rebuild the pipeline so that contributors' code never meets a secret, and make every release verifiable from the first commit to the last byte.

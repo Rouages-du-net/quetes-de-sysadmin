@@ -648,6 +648,16 @@ them safely.
   `ssl_verify_client` and `ssl_crl`; an expiry watch from cron or a
   timer).
 
+- [x] **A self-hosted forge and its CI** (defending the software supply
+  chain): an ex-maintainer's leftover access and an unprotected branch, a
+  CI that hands a deploy key to forks' code and prints it, releases nobody
+  can verify. Done: story 39, "The Tool Library" (`forge.ts`: Forgejo's
+  accounts, tokens, collaborators, protected branches, secrets, workflows
+  and their runs and logs, pull requests from forks, its HTTP API;
+  `forgejo admin user`, `forgejo-runner`; `sshsig.ts` and `ssh-keygen -Y`;
+  git's config, signed commits and tags, reflog, reset, `push --force`,
+  archive; `jq -R`/`-s`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

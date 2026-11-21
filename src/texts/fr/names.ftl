@@ -477,3 +477,9 @@ name-dpo_request-txt = demande_dpd.txt
 ## Les Ondes
 name-message_from_adaeze-txt = message_d_adaeze.txt
 name-note_from_mateo-txt = mot_de_mateo.txt
+## The Tool Library
+name-message_from_wanjiru-txt = message_de_wanjiru.txt
+name-note_from_tomasz-txt = mot_de_tomasz.txt
+name-message_from_rosa-txt = message_de_rosa.txt
+name-message_from_aroha-txt = message_d_aroha.txt
+name-note_from_wanjiru-txt = mot_de_wanjiru.txt
