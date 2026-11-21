@@ -96,6 +96,8 @@ export const MACHINES: Machine[] = [
   machine('chalk', '192.0.2.64', 'staff-room'),
   // The Airwaves: the community radio federation's Debian server, its internal certificate authority and its HTTPS services.
   machine('mast', '192.0.2.72', 'airwaves'),
+  // The Tool Library: a nonprofit's git forge (Forgejo) and its CI runner, for its open-source lending software.
+  machine('anvil', '192.0.2.80', 'tool-library'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

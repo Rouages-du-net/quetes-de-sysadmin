@@ -180,3 +180,24 @@ git-usage =
     (see man git)
 # { $commands }: the game's subcommands, separated by commas
 git-under-command-unknown = git: '{ $command }' is not a git command (in this game: { $commands }).
+
+## Signing, tags, config, reset, archive (https://git-scm.com/docs/git-config, git-tag, git-reset, git-archive)
+
+git-sign-failed = fatal: failed to write commit object
+git-tag-sign-failed = error: unable to sign the tag
+git-sign-no-key = either user.signingkey or gpg.ssh.defaultKeyCommand needs to be configured
+git-allowed-signers-missing = gpg.ssh.allowedSignersFile needs to be configured and exist for ssh signature verification
+git-amend-nothing = fatal: You have nothing to amend.
+git-config-usage = usage: git config [<options>]
+git-tag-without-message =
+    Write the tag's message with -m, in quotes: git tag -a v1.0 -m "Version 1.0"
+    (the real git would open a text editor)
+git-reset-unstaged = Unstaged changes after reset:
+git-archive-to-terminal =
+    fatal: refusing to write an archive to the terminal: use -o FILE (--output=FILE)
+git-push-behind-tip =
+    hint: Updates were rejected because the tip of your current branch is behind
+    hint: its remote counterpart. If you want to integrate the remote changes,
+    hint: use 'git pull' before pushing again.
+    hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+git-push-tag-exists-tip = hint: Updates were rejected because the tag already exists in the remote.

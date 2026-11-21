@@ -27,6 +27,7 @@ import { pingTunnel } from './wireguard';
 import { curl6, ping6, speaks6 } from './ipv6';
 import { metricsCurl } from './prometheus';
 import { pkiCurl, pkiNet } from './openssl';
+import { forgeCurl } from './forge';
 
 // What curl adds when certificate verification fails (curl 8).
 export const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
@@ -322,13 +323,15 @@ function progressMeter(bytes: number): string {
 }
 
 // curl itself, its body on the screen (or in the pipe).
-function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {
+function curlTo({ args, game, input }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {
   {
     {
       // A story that models its network for metrics (Prometheus, exporters): its own curl.
       if (game.state.metricsHere) return metricsCurl(game, args);
       // A story with an internal PKI: its services, its trust store (openssl.ts).
       if (pkiNet(game)) return pkiCurl(game, args);
+      // A machine with a forge (Forgejo): its API and web routes (forge.ts).
+      if (game.state.forge) return forgeCurl(game, args, input);
       if (speaks6(game)) return curl6(game, args);
       // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];

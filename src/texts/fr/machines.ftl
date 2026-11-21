@@ -55,3 +55,4 @@ machine-lane = couloir
 machine-chalk = craie
 machine-mast = pylone
 machine-booth = cabine
+machine-anvil = enclume

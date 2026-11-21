@@ -668,7 +668,19 @@ man-git =
     Un dépôt nu peut réagir à un push : ses crochets (hooks/pre-receive, hooks/post-receive) sont des scripts lancés à chaque réception, s'ils sont exécutables (chmod +x). pre-receive peut refuser le push (code de retour non nul). Pour déployer, post-receive extrait les fichiers dans un lieu : git --work-tree=lieu checkout -f main.
     À l'écran, status, diff, log et show sont en couleur (color.ui=auto) : ce qui part en rouge, ce qui arrive en vert ; --no-color les coupe.
     Un commit se désigne par le début de son identifiant (au moins 4 caractères), ou par HEAD (le dernier), HEAD~1 (l'avant-dernier)…
-    .synopsis = git [--git-dir=dépôt] [--work-tree=lieu] commande
+    D'autres commandes :
+      git config [--global] clé valeur  règle une option (~/.gitconfig avec --global, sinon celles du dépôt) ; --list les liste
+      git reflog [--date=iso]           où la branche a pointé, déplacement après déplacement (un dépôt nu en garde un avec core.logAllRefUpdates)
+      git reset [--hard] ID             ramène la branche à ID (--hard : les fichiers aussi) ; les commits laissés restent dans le reflog
+      git commit --amend [--no-edit]    remplace le dernier commit ; --allow-empty fait un commit sans changement
+      git push --force                  remplace la branche distante même si elle perd des commits (une branche protégée refuse)
+      git tag [-a|-s] NOM -m "msg"      une étiquette : légère (un simple nom), annotée (-a) ou signée (-s) ; git tag -d NOM la supprime
+      git push origin NOM               envoie une étiquette (--tags : toutes)
+      git verify-commit ID, git verify-tag NOM, git log --show-signature   vérifient les signatures
+      git archive --format=tar.gz --prefix=DOSSIER/ -o FICHIER REF   une archive d'un commit ou d'une étiquette
+    Signer avec SSH : git config gpg.format ssh, user.signingkey ~/.ssh/id_ed25519.pub, commit.gpgsign true (ou git commit -S) ; pour vérifier, gpg.ssh.allowedSignersFile désigne un fichier allowed_signers (« adresse clé » par ligne, voir ssh-keygen). HEAD@{"{"}N{"}"} désigne où était la branche il y a N déplacements.
+    -C lieu lance git comme s'il était démarré dans ce lieu.
+    .synopsis = git [-C lieu] [--git-dir=dépôt] [--work-tree=lieu] commande
 man-grep = affiche les lignes qui contiennent le motif. Le motif est une expression régulière : . veut dire « n'importe quel caractère », ^ le début de la ligne, $ la fin, [abc] un caractère parmi a, b, c, et * « autant de fois qu'on veut » ce qui précède ; pour chercher un vrai point, on écrit \. (entre apostrophes). -E permet aussi + ? | et les parenthèses (expressions étendues), -P celles de Perl (\d pour un chiffre…, grep de GNU seulement), -F cherche le texte tel quel. -i ignore les majuscules, -v garde les lignes qui ne le contiennent PAS, -c compte les lignes, -q n'affiche rien (seul compte le code de retour : réussite si le motif est trouvé, utile dans un script). Sans fichier, cherche dans ce qui arrive par un tube. « grep mot * » cherche dans tous les fichiers du lieu. À l'écran, ce qui correspond est surligné en rouge (--color=auto, comme l'alias de Debian) ; --color=never le coupe. -n numérote les lignes, -o n'affiche que ce qui correspond, -m NUM s'arrête après NUM lignes. Autour de chaque ligne trouvée, -A NUM affiche aussi les NUM lignes d'après, -B NUM celles d'avant, -C NUM (ou -NUM) les deux : ces lignes de contexte ont un « - » après le nom et le numéro (fichier-12-texte) là où les lignes trouvées ont un « : » (fichier:13:texte), et « -- » sépare les groupes qui ne se suivent pas (--group-separator=SEP le change, --no-group-separator l'enlève). -c ignore le contexte. -r cherche dans toute une arborescence (le répertoire courant sans fichier ; --include=MOTIF, --exclude=MOTIF et --exclude-dir=MOTIF choisissent les fichiers), -l ne liste que les noms des fichiers qui correspondent, -L ceux qui ne correspondent pas. -w veut des mots entiers, -x des lignes entières ; -e donne un motif (plusieurs -e : n'importe lequel), -f lit les motifs dans un fichier. -s cache les messages sur les fichiers absents ou illisibles. Le code de retour vaut 0 si une ligne est trouvée, 1 sinon, 2 après une erreur.
     .command-1 = grep Effaceur chronique.txt
     .command-3 = grep "mot de passe" journal.txt
@@ -952,19 +964,25 @@ man-ssh-copy-id = installe ta clé publique sur une autre machine : il l'ajoute 
     .synopsis = ssh-copy-id [-i fichier] [compte@]machine
     .example-1 = installer sa clé sur la machine maison
     .example-2 = installer une clé précise
-man-ssh-keygen = crée et gère les clés SSH. Sans option, ou avec -t ed25519, il crée une paire de clés : la clé privée (~/.ssh/id_ed25519, à garder pour soi, chmod 600) et la clé publique (.pub, à donner aux serveurs, dans leur ~/.ssh/authorized_keys ; ssh-copy-id le fait). Une phrase de passe protège la clé privée si on la perd. -C ajoute un commentaire (souvent compte@machine), -f choisit le fichier, -N donne la phrase de passe sans la demander. Il gère aussi la liste des machines connues (~/.ssh/known_hosts) : quand une machine a été réinstallée, sa clé d'hôte change et ssh refuse de s'y connecter ; après avoir vérifié la nouvelle empreinte par un autre moyen, on retire l'ancienne clé avec -R, sous le nom exact écrit dans known_hosts.
-    .synopsis = ssh-keygen [-t ed25519] [-C commentaire] [-f fichier] [-N phrase] ; ssh-keygen -R machine [-f fichier] ; ssh-keygen -F machine ; ssh-keygen -l -f fichier
+man-ssh-keygen = crée et gère les clés SSH. Sans option, ou avec -t ed25519, il crée une paire de clés : la clé privée (~/.ssh/id_ed25519, à garder pour soi, chmod 600) et la clé publique (.pub, à donner aux serveurs, dans leur ~/.ssh/authorized_keys ; ssh-copy-id le fait). Une phrase de passe protège la clé privée si on la perd. -C ajoute un commentaire (souvent compte@machine), -f choisit le fichier, -N donne la phrase de passe sans la demander. Il gère aussi la liste des machines connues (~/.ssh/known_hosts) : quand une machine a été réinstallée, sa clé d'hôte change et ssh refuse de s'y connecter ; après avoir vérifié la nouvelle empreinte par un autre moyen, on retire l'ancienne clé avec -R, sous le nom exact écrit dans known_hosts. Avec -Y, il signe des fichiers et vérifie des signatures : -Y sign -f CLÉ -n ESPACE FICHIER écrit FICHIER.sig (l'espace de noms dit à quoi sert la signature : file, git…) ; -Y verify -f allowed_signers -I PRINCIPAL -n ESPACE -s FICHIER.sig < FICHIER la vérifie (Good "file" signature for …, ou Could not verify signature.) ; -Y find-principals -f allowed_signers -s FICHIER.sig dit de qui est la clé qui a signé ; -Y check-novalidate -n ESPACE -s FICHIER.sig < FICHIER vérifie sans identité. Un fichier allowed_signers a une ligne par signataire : les principaux (adresses, séparées par des virgules), éventuellement namespaces="…", puis la clé publique.
+    .synopsis = ssh-keygen [-t ed25519] [-C commentaire] [-f fichier] [-N phrase] ; ssh-keygen -R machine [-f fichier] ; ssh-keygen -F machine ; ssh-keygen -l -f fichier ; ssh-keygen -Y sign|verify|find-principals|check-novalidate …
     .option-t = le type de clé (ici, ed25519).
     .option-C = un commentaire, écrit à la fin de la clé publique.
     .option-N = la phrase de passe (vide : aucune), sans la demander.
     .option-R = retire de known_hosts toutes les clés de cette machine (l'ancien fichier est gardé en .old).
     .option-F = cherche cette machine dans known_hosts et affiche ses lignes.
     .option-l = affiche l'empreinte des clés d'un fichier (avec -f).
-    .option-f = le fichier à lire ou à modifier (par défaut ~/.ssh/known_hosts).
+    .option-f = le fichier à lire ou à modifier (par défaut ~/.ssh/known_hosts).; avec -Y sign, la clé privée ; avec -Y verify, le fichier allowed_signers.
+    .option-Y = sign, verify, find-principals ou check-novalidate : signatures SSH de fichiers.
+    .option-n = avec -Y : l'espace de noms de la signature (file, git).
+    .option-I = avec -Y verify : le principal (adresse) dont la clé doit avoir signé.
+    .option-s = avec -Y : le fichier de signature.
     .example-1 = oublier l'ancienne clé de la machine (après avoir vérifié la nouvelle empreinte !)
     .example-2 = la machine est-elle dans known_hosts ?
     .example-3 = les empreintes de toutes les machines connues
     .example-4 = créer une paire de clés ed25519
+    .example-5 = signer un fichier de sommes de contrôle (écrit SHA256SUMS.sig)
+    .example-6 = le vérifier comme un·e utilisateur·rice, avec les signataires autorisés
 man-sudo = lance une commande en tant que root, l'administrateur qui a tous les droits (superuser do). Demande TON mot de passe, pas celui de root. Avec -u compte, la commande tourne sous un autre compte que root (par exemple postgres, pour la base de données). sudo -i ouvre un shell root (un shell de connexion : dans /root, avec l'environnement de root, son invite finit par #), sudo -s un shell root qui reste là où tu es ; sudo su et sudo su - font pareil en passant par su. Tape exit (ou Ctrl-D) pour revenir à ton propre shell : un shell root est pratique pour une série de commandes, et dangereux à oublier. sudo !! relance ta dernière commande avec sudo. Qui peut faire quoi est écrit dans /etc/sudoers et /etc/sudoers.d (man sudoers) ; sudo -l liste ce que tu peux faire, sudo -l -U compte ce qu'un autre compte peut faire.
     .synopsis = sudo [-u compte] commande ; sudo -i | -s ; sudo -l [-U compte]
     .option-i = un shell de connexion en tant que root (ou le compte de -u) : dans son dossier personnel, avec son environnement.
@@ -3811,16 +3829,19 @@ man-amtool = la ligne de commande de l’Alertmanager (paquet Debian prometheus-
     .example-7 = les silences en cours ou à venir
     .example-8 = mettre fin à un silence avant l’heure
 man-jq = un processeur de JSON : il lit du JSON (sur son entrée ou dans des fichiers), lui applique un filtre et affiche les résultats, indentés. . est l’entrée elle-même ; .clé une clé d’un objet (."clé" si elle a des caractères inhabituels), .[N] un élément d’un tableau, .[] chaque élément ; | passe chaque résultat au filtre suivant ; , donne plusieurs résultats ; {"{"}nom: .x, y{"}"} et [ … ] construisent des objets et des tableaux ; "\(.x) \(.y)" construit une chaîne ; select(CONDITION) garde ce qui correspond (==, !=, <, >, and, or, not) ; length, keys, map(f), sort_by(f), to_entries, join(", "), test("regex"), startswith("…"). Code de sortie 2 ou 3 pour une entrée illisible ou un filtre fautif, 5 pour une erreur pendant l’exécution.
-    .synopsis = jq [-r] [-c] [-n] [-S] [-e] FILTRE [FICHIER…]
+    .synopsis = jq [-r] [-c] [-n] [-S] [-e] [-R] [-s] FILTRE [FICHIER…]
     .option-r = chaînes brutes : affichées sans leurs guillemets.
     .option-c = compact : chaque résultat sur une ligne.
     .option-n = entrée nulle : rien n’est lu, le filtre tourne une fois sur null.
     .option-S = trie les clés des objets.
     .option-e = code de sortie 1 si le dernier résultat est false ou null.
+    .option-R = entrée brute : chaque ligne est une chaîne (avec -s : toute l'entrée, une seule chaîne).
+    .option-s = tout lire : toutes les entrées dans un tableau (avec -R : une chaîne).
     .example-1 = la réponse de Prometheus, indentée
     .example-2 = chaque cible, avec son job, sa santé et sa dernière erreur
     .example-3 = une ligne par série : son instance et sa valeur
     .example-4 = combien d’alertes dans une réponse enregistrée
+    .example-5 = un fichier (une clé, avec ses retours à la ligne) en chaîne JSON, pour une API
 man-sleep = attend un moment : un nombre de secondes, ou avec une unité (s, m, h, d) ; plusieurs durées s’additionnent. Dans le jeu, sleep rend la main tout de suite, et les histoires où le temps compte (métriques, alertes) laissent passer ce temps-là.
     .synopsis = sleep NOMBRE[SUFFIXE]…
     .example-1 = attendre une minute
@@ -4452,3 +4473,31 @@ man-update-ca-certificates = met à jour les certificats auxquels le système fa
     .example-1 = faire confiance à l'autorité racine de la fédération sur cette machine
     .example-2 = refaire /etc/ssl/certs de zéro
     .example-3 = vérifier que le paquet la contient maintenant
+man-forgejo = la ligne de commande de Forgejo, la forge git auto-hébergée. Le serveur lui-même tourne comme le service forgejo (forgejo web, voir systemctl) ; la commande l'administre : forgejo admin user list [--admin] liste les comptes ; admin user create --username NOM --email ADRESSE --password MDP [--admin] [--random-password] ; admin user change-password --username NOM --password MDP (un jeton ne dépend pas du mot de passe : le changer ne révoque rien) ; admin user must-change-password NOM… ; admin user delete --username NOM (ou --id N) refuse un compte qui possède encore des dépôts, sauf avec --purge, qui les supprime avec tout ce que le compte a écrit (ses commentaires apparaissent alors comme Ghost : pour arrêter un compte, interdisez-lui plutôt la connexion, prohibit_login dans l'API) ; admin user generate-access-token --username NOM --token-name NOM --scopes PORTÉES (all, ou write:repository, read:user…). Forgejo refuse de tourner en root, et sa configuration (/etc/forgejo/app.ini) n'est lisible que par root et le groupe forgejo : lancez-le en tant que forgejo, avec --config. Tout le reste (collaborateurs, branches protégées, secrets, exécutions) passe par l'API HTTP : man forgejo-api.
+    .synopsis = forgejo [--config FICHIER] [--work-path DOSSIER] admin user list|create|change-password|delete|must-change-password|generate-access-token [OPTIONS] ; forgejo --version
+    .option-c = le fichier de configuration, app.ini (--config).
+    .option-w = le répertoire de travail de Forgejo (--work-path).
+    .option-v = la version (--version).
+    .example-1 = les comptes de la forge
+    .example-2 = donner un nouveau mot de passe à un compte
+    .example-3 = supprimer un compte (refusé s'il possède des dépôts)
+    .example-4 = un jeton pour un script, avec la seule portée nécessaire
+    .example-5 = quel Forgejo tourne ici
+man-forgejo-runner = l'exécuteur Actions de Forgejo, qui fait tourner les workflows de la forge. Il prend les jobs des workflows de la forge (.forgejo/workflows/*.yml dans un dépôt) et les exécute, ici dans des conteneurs (étiquette docker). Il tourne comme le service forgejo-runner (forgejo-runner daemon --config /etc/forgejo-runner/config.yml) ; son enregistrement est dans .runner, ses étiquettes dans la configuration ; journalctl -u forgejo-runner montre les tâches prises. Un workflow dit quand il tourne (on: push, pull_request, pull_request_target, workflow_dispatch…), ses jobs (runs-on: une étiquette, needs:, if: une expression), leurs étapes (uses: une action comme actions/checkout@v4, ou run: des lignes de shell), et des variables env:, tirées des secrets avec ${"{"}{"{"} secrets.NOM {"}"}{"}"}. Une demande de fusion venue d'un fork ne reçoit aucun secret sur pull_request ; pull_request_target exécute le workflow de la branche de base avec les secrets : jamais avec le code du fork récupéré. L'exécuteur masque les secrets dans les journaux, seulement leur texte exact (le base64 y échappe).
+    .synopsis = forgejo-runner [--config FICHIER] daemon|generate-config|register|version
+    .option-c = le fichier de configuration (--config).
+    .option-v = la version (--version).
+    .example-1 = la version de l'exécuteur
+    .example-2 = l'exécuteur tourne-t-il ?
+    .example-3 = les tâches qu'il a prises
+    .example-4 = sa configuration, ses étiquettes
+man-forgejo-api = l'API HTTP de Forgejo : comptes, jetons, dépôts, branches protégées, secrets, exécutions Actions. Elle se trouve sous https://FORGE/api/v1 (ici forge.lendshed.example ; le swagger sur /api/swagger). Authentification : un jeton (-H "Authorization: token JETON", ses portées décident : write:repository, write:admin…), ou l'authentification basique (curl -u compte:motdepasse), exigée pour lister ou supprimer des jetons. Un administrateur peut agir au nom d'un autre compte avec l'en-tête Sudo: NOM. Les corps sont en JSON (-H "Content-Type: application/json" -d '…' ; jq -Rs fait une chaîne JSON d'un fichier). Les réponses sont en JSON non indenté : passez-les à jq. Routes : GET /user ; GET /admin/users, PATCH /admin/users/NOM ({"{"}"prohibit_login": true{"}"} bloque un compte et ses jetons), DELETE /admin/users/NOM[?purge=true] ; GET /users/NOM/tokens, DELETE /users/NOM/tokens/ID ; GET /repos/PROPRIÉTAIRE/DÉPÔT, PATCH (« private ») ; GET /repos/PROPRIÉTAIRE/DÉPÔT/collaborators, GET …/collaborators/NOM/permission, PUT ou DELETE …/collaborators/NOM ; GET ou POST /repos/PROPRIÉTAIRE/DÉPÔT/branch_protections, GET, PATCH ou DELETE …/branch_protections/RÈGLE (rule_name, enable_push, enable_push_whitelist, push_whitelist_usernames, required_approvals, enable_status_check, status_check_contexts, require_signed_commits… ; une branche protégée refuse toujours un push forcé) ; GET …/commits/REF/statuses (les contextes de l'intégration continue : « workflow / job (événement) ») ; GET …/actions/secrets, PUT ou DELETE …/actions/secrets/NOM ({"{"}"data": "…"{"}"} ; la valeur d'un secret ne se montre plus jamais) ; GET …/actions/runs (chaque exécution, ses jobs et leur logs_url) ; GET …/pulls, …/forks, …/tags, …/hooks. Pages web : /PROPRIÉTAIRE/DÉPÔT/actions/runs/N/jobs/J/logs (le journal d'un job, public pour un dépôt public), /NOM.keys (les clés SSH publiques d'un compte).
+    .synopsis = curl [-s] [-u COMPTE:MOTDEPASSE | -H "Authorization: token JETON"] [-X MÉTHODE] [-H "Content-Type: application/json" -d JSON] https://FORGE/api/v1/ROUTE
+    .example-1 = qui suis-je, pour ce jeton
+    .example-2 = les collaborateurs directs du dépôt
+    .example-3 = les jetons d'un autre compte, en administrateur (authentification basique)
+    .example-4 = exiger des commits signés sur main
+    .example-5 = remplacer un secret par le contenu d'un fichier
+    .example-6 = les exécutions Actions
+    .example-7 = le journal d'un job
+    .example-8 = les clés SSH publiques d'un compte

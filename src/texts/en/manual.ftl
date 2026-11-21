@@ -652,8 +652,20 @@ man-git =
       git pull name main          fetches the remote's commits
     A bare repository can react to a push: its hooks (hooks/pre-receive, hooks/post-receive) are scripts run on each reception, if they are executable (chmod +x). pre-receive can refuse the push (non-zero exit code). To deploy, post-receive checks the files out into a place: git --work-tree=place checkout -f main.
     On screen, status, diff, log and show are in colour (color.ui=auto): what goes in red, what comes in green; --no-color turns them off.
-    A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before)…
-    .synopsis = git [--git-dir=repository] [--work-tree=place] command
+    A commit is designated by the start of its identifier (at least 4 characters), or by HEAD (the latest), HEAD~1 (the one before), HEAD@{"{"}N{"}"} (where the branch was N moves ago, see git reflog), or a tag…
+    More commands:
+      git config [--global] key value   sets an option (~/.gitconfig with --global, otherwise the repository's); --list lists them
+      git reflog [--date=iso]           where the branch pointed, move after move (a bare repository keeps one with core.logAllRefUpdates)
+      git reset [--hard] ID             moves the branch back to ID (--hard: the files too); the commits left behind stay in the reflog
+      git commit --amend [--no-edit]    replaces the last commit; --allow-empty makes a commit without changes
+      git push --force                  replaces the remote's branch even if it loses commits (a protected branch refuses it)
+      git tag [-a|-s] NAME -m "msg"     a tag: lightweight (just a name), annotated (-a), or signed (-s); git tag -d NAME deletes it
+      git push origin NAME              sends a tag (--tags: all of them)
+      git verify-commit ID, git verify-tag NAME, git log --show-signature   check signatures
+      git archive --format=tar.gz --prefix=DIR/ -o FILE REF   a tarball of a commit or a tag
+    Signing with SSH: git config gpg.format ssh, user.signingkey ~/.ssh/id_ed25519.pub, commit.gpgsign true (or git commit -S); to check, gpg.ssh.allowedSignersFile names an allowed_signers file ("address key" per line, see ssh-keygen).
+    -C place runs git as if started in that place.
+    .synopsis = git [-C place] [--git-dir=repository] [--work-tree=place] command
 man-grep = prints the lines that contain the pattern. The pattern is a regular expression: . means "any character", ^ the start of the line, $ the end, [abc] one character among a, b, c, and * "as many times as you like" whatever precedes it; to search for an actual dot, write \. (in single quotes). -E also allows + ? | and parentheses (extended expressions), -P Perl's (\d for a digit…, GNU grep only), -F searches for the text as is. -i ignores case, -v keeps the lines that do NOT contain it, -c counts the lines, -q prints nothing (only the exit code matters: success if the pattern is found, useful in a script). Without a file, searches what comes in through a pipe. "grep word *" searches all the files in the place. On screen, what matches is highlighted in red (--color=auto, like Debian's alias); --color=never turns it off. -n numbers the lines, -o prints only what matches, -m NUM stops after NUM lines. Around each line found, -A NUM also prints the NUM lines after it, -B NUM those before, -C NUM (or -NUM) both: these context lines have a "-" after the name and the number (file-12-text) where the lines found have a ":" (file:13:text), and "--" separates groups that don't follow each other (--group-separator=SEP changes it, --no-group-separator removes it). -c ignores the context. -r searches a whole tree (the current directory without a file; --include=GLOB, --exclude=GLOB and --exclude-dir=GLOB choose the files), -l lists only the names of the files that match, -L those that don't. -w wants whole words, -x whole lines; -e gives a pattern (several -e: any of them), -f reads the patterns from a file. -s hides the messages about missing or unreadable files. The exit code is 0 if a line is found, 1 if none, 2 after an error.
     .synopsis = grep [-i] [-v] [-c] [-q] [-n] [-o] [-w|-x] [-l|-L] [-r|-R] [-s] [-E|-F] [-h|-H] [-m NUM] [-A NUM] [-B NUM] [-C NUM] [--include=GLOB] [--exclude=GLOB] [--exclude-dir=GLOB] [--color[=WHEN]] {"{"}pattern | -e pattern... | -f file{"}"} [file...]
     .option-i = ignores the difference between uppercase and lowercase.
@@ -942,19 +954,25 @@ man-ssh-copy-id = installs your public key on another machine: it adds it to ~/.
     .synopsis = ssh-copy-id [-i file] [account@]machine
     .example-1 = install your key on the community machine
     .example-2 = install a specific key
-man-ssh-keygen = creates and manages SSH keys. With no option, or with -t ed25519, it creates a key pair: the private key (~/.ssh/id_ed25519, to keep to yourself, chmod 600) and the public key (.pub, to give to servers, in their ~/.ssh/authorized_keys; ssh-copy-id does that). A passphrase protects the private key if you lose it. -C adds a comment (often account@machine), -f picks the file, -N gives the passphrase without asking for it. It also manages the list of known machines (~/.ssh/known_hosts): when a machine has been reinstalled, its host key changes and ssh refuses to connect to it; after checking the new fingerprint by some other means, you remove the old key with -R, under the exact name written in known_hosts.
-    .synopsis = ssh-keygen [-t ed25519] [-C comment] [-f file] [-N passphrase] ; ssh-keygen -R machine [-f file] ; ssh-keygen -F machine ; ssh-keygen -l -f file
+man-ssh-keygen = creates and manages SSH keys. With no option, or with -t ed25519, it creates a key pair: the private key (~/.ssh/id_ed25519, to keep to yourself, chmod 600) and the public key (.pub, to give to servers, in their ~/.ssh/authorized_keys; ssh-copy-id does that). A passphrase protects the private key if you lose it. -C adds a comment (often account@machine), -f picks the file, -N gives the passphrase without asking for it. It also manages the list of known machines (~/.ssh/known_hosts): when a machine has been reinstalled, its host key changes and ssh refuses to connect to it; after checking the new fingerprint by some other means, you remove the old key with -R, under the exact name written in known_hosts. With -Y, it signs files and checks signatures: -Y sign -f KEY -n NAMESPACE FILE writes FILE.sig (the namespace says what the signature is for: file, git…); -Y verify -f allowed_signers -I PRINCIPAL -n NAMESPACE -s FILE.sig < FILE checks it (Good "file" signature for …, or Could not verify signature.); -Y find-principals -f allowed_signers -s FILE.sig says whose key signed; -Y check-novalidate -n NAMESPACE -s FILE.sig < FILE checks without an identity. An allowed_signers file has one line per signer: the principals (addresses, separated by commas), optionally namespaces="…", then the public key.
+    .synopsis = ssh-keygen [-t ed25519] [-C comment] [-f file] [-N passphrase] ; ssh-keygen -R machine [-f file] ; ssh-keygen -F machine ; ssh-keygen -l -f file ; ssh-keygen -Y sign|verify|find-principals|check-novalidate …
     .option-t = the key type (here, ed25519).
     .option-C = a comment, written at the end of the public key.
     .option-N = the passphrase (empty: none), without asking for it.
     .option-R = removes all keys of this machine from known_hosts (the old file is kept as .old).
     .option-F = looks for this machine in known_hosts and displays its lines.
     .option-l = displays the fingerprint of the keys in a file (with -f).
-    .option-f = the file to read or modify (by default ~/.ssh/known_hosts).
+    .option-f = the file to read or modify (by default ~/.ssh/known_hosts); with -Y sign, the private key; with -Y verify, the allowed_signers file.
+    .option-Y = sign, verify, find-principals or check-novalidate: SSH signatures of files.
+    .option-n = with -Y: the signature's namespace (file, git).
+    .option-I = with -Y verify: the principal (address) whose key should have signed.
+    .option-s = with -Y: the signature file.
     .example-1 = forget the machine's old key (after checking the new fingerprint!)
     .example-2 = is the machine in known_hosts?
     .example-3 = the fingerprints of all known machines
     .example-4 = create an ed25519 key pair
+    .example-5 = sign a file of checksums (writes SHA256SUMS.sig)
+    .example-6 = check it as a user would, against the allowed signers
 man-sudo = runs a command as root, the administrator who has all rights (superuser do). Asks for YOUR password, not root's. With -u account, the command runs under an account other than root (for example postgres, for the database). sudo -i opens a shell as root (a login shell: in /root, with root's environment, its prompt ends with #), sudo -s a root shell that stays where you are; sudo su and sudo su - do the same through su. Type exit (or Ctrl-D) to come back to your own shell: a root shell is handy for a series of commands, and dangerous to forget. sudo !! runs your last command again with sudo. Who may do what is written in /etc/sudoers and /etc/sudoers.d (man sudoers); sudo -l lists what you can do, sudo -l -U account what another account can do.
     .synopsis = sudo [-u account] command ; sudo -i | -s ; sudo -l [-U account]
     .option-i = a login shell as root (or as -u's account): in its home, with its environment.
@@ -3790,16 +3808,19 @@ man-amtool = the Alertmanager's command line (Debian's prometheus-alertmanager p
     .example-7 = the silences in force or to come
     .example-8 = end a silence early
 man-jq = a JSON processor: it reads JSON (from its input or files), applies a filter to it and prints the results, indented. . is the input itself; .key a key of an object (."key" if it has unusual characters), .[N] an element of an array, .[] each element; | passes each result to the next filter; , gives several results; {"{"}name: .x, y{"}"} and [ … ] build objects and arrays; "\(.x) \(.y)" builds a string; select(CONDITION) keeps what matches (==, !=, <, >, and, or, not); length, keys, map(f), sort_by(f), to_entries, join(", "), test("regex"), startswith("…"). Exit code 2 or 3 for unreadable input or a filter error, 5 for an error while running.
-    .synopsis = jq [-r] [-c] [-n] [-S] [-e] FILTER [FILE…]
+    .synopsis = jq [-r] [-c] [-n] [-S] [-e] [-R] [-s] FILTER [FILE…]
     .option-r = raw strings: printed without their quotes.
     .option-c = compact: each result on one line.
     .option-n = null input: no input read, the filter runs once on null.
     .option-S = sort the keys of objects.
     .option-e = exit code 1 if the last result is false or null.
+    .option-R = raw input: each line is a string (with -s: the whole input, one string).
+    .option-s = slurp: all the inputs in one array (with -R: one string).
     .example-1 = Prometheus's answer, indented
     .example-2 = each target, with its job, its health and its last error
     .example-3 = one line per series: its instance and its value
     .example-4 = how many alerts in a saved answer
+    .example-5 = a file (a key, with its line breaks) as a JSON string, for an API
 man-sleep = waits for a while: a number of seconds, or with a unit (s, m, h, d); several durations add up. In the game, sleep returns at once, and the stories where time matters (metrics, alerts) let that much time go by.
     .synopsis = sleep NUMBER[SUFFIX]…
     .example-1 = wait a minute
@@ -4431,3 +4452,31 @@ man-update-ca-certificates = updates the certificates the system trusts: the dir
     .example-1 = trust the federation's root authority on this machine
     .example-2 = rebuild /etc/ssl/certs from scratch
     .example-3 = check that the bundle now holds it
+man-forgejo = the command line of Forgejo, the self-hosted git forge. The server itself runs as the forgejo service (forgejo web, see systemctl); the command administers it: forgejo admin user list [--admin] lists the accounts; admin user create --username NAME --email ADDRESS --password PASS [--admin] [--random-password]; admin user change-password --username NAME --password PASS (a token doesn't depend on the password: changing it revokes nothing); admin user must-change-password NAME…; admin user delete --username NAME (or --id N) refuses an account that still owns repositories, unless --purge, which deletes them and everything the account wrote (its comments then show as Ghost: to stop an account, block it from signing in instead, prohibit_login in the API); admin user generate-access-token --username NAME --token-name NAME --scopes SCOPES (all, or write:repository, read:user…). Forgejo refuses to run as root, and its configuration (/etc/forgejo/app.ini) is readable by root and the forgejo group only: run it as forgejo, with --config. Everything else (collaborators, protected branches, secrets, runs) goes through the HTTP API: man forgejo-api.
+    .synopsis = forgejo [--config FILE] [--work-path DIR] admin user list|create|change-password|delete|must-change-password|generate-access-token [OPTIONS] ; forgejo --version
+    .option-c = the configuration file, app.ini (--config).
+    .option-w = Forgejo's working directory (--work-path).
+    .option-v = the version (--version).
+    .example-1 = the forge's accounts
+    .example-2 = give an account a new password
+    .example-3 = delete an account (refused if it owns repositories)
+    .example-4 = a token for a script, with only the scope it needs
+    .example-5 = which Forgejo runs here
+man-forgejo-runner = Forgejo's Actions runner, which runs the forge's workflows. It takes the jobs of the forge's workflows (.forgejo/workflows/*.yml in a repository) and runs them, here in containers (label docker). It runs as the forgejo-runner service (forgejo-runner daemon --config /etc/forgejo-runner/config.yml); its registration is in .runner, its labels in the configuration; journalctl -u forgejo-runner shows the tasks it took. A workflow says when it runs (on: push, pull_request, pull_request_target, workflow_dispatch…), its jobs (runs-on: a label, needs:, if: an expression), their steps (uses: an action such as actions/checkout@v4, or run: shell lines), and env: variables, from secrets with ${"{"}{"{"} secrets.NAME {"}"}{"}"}. A pull request from a fork gets no secrets on pull_request; pull_request_target runs the base branch's workflow with the secrets: never with the fork's code checked out. The runner masks secrets in the logs, only their exact text (base64 escapes it).
+    .synopsis = forgejo-runner [--config FILE] daemon|generate-config|register|version
+    .option-c = the configuration file (--config).
+    .option-v = the version (--version).
+    .example-1 = the runner's version
+    .example-2 = is the runner running?
+    .example-3 = the tasks it took
+    .example-4 = its configuration, its labels
+man-forgejo-api = Forgejo's HTTP API: accounts, tokens, repositories, protected branches, secrets, Actions runs. It lives under https://FORGE/api/v1 (here forge.lendshed.example; the swagger at /api/swagger). Authentication: a token (-H "Authorization: token TOKEN", its scopes decide: write:repository, write:admin…), or basic authentication (curl -u account:password), required to list or delete tokens. An administrator may act as another account with the header Sudo: NAME. Bodies are JSON (-H "Content-Type: application/json" -d '…'; jq -Rs builds a JSON string from a file). Answers are JSON, unindented: pipe them into jq. Routes: GET /user; GET /admin/users, PATCH /admin/users/NAME ({"{"}"prohibit_login": true{"}"} blocks an account and its tokens), DELETE /admin/users/NAME[?purge=true]; GET /users/NAME/tokens, DELETE /users/NAME/tokens/ID; GET /repos/OWNER/REPO, PATCH it ("private"); GET /repos/OWNER/REPO/collaborators, GET …/collaborators/NAME/permission, PUT or DELETE …/collaborators/NAME; GET or POST /repos/OWNER/REPO/branch_protections, GET, PATCH or DELETE …/branch_protections/RULE (rule_name, enable_push, enable_push_whitelist, push_whitelist_usernames, required_approvals, enable_status_check, status_check_contexts, require_signed_commits…; a protected branch always refuses a force-push); GET …/commits/REF/statuses (the CI's contexts: "workflow / job (event)"); GET …/actions/secrets, PUT or DELETE …/actions/secrets/NAME ({"{"}"data": "…"{"}"}; a secret's value is never shown again); GET …/actions/runs (each run, its jobs and their logs_url); GET …/pulls, …/forks, …/tags, …/hooks. Web pages: /OWNER/REPO/actions/runs/N/jobs/J/logs (a job's log, public for a public repository), /NAME.keys (an account's public SSH keys).
+    .synopsis = curl [-s] [-u ACCOUNT:PASSWORD | -H "Authorization: token TOKEN"] [-X METHOD] [-H "Content-Type: application/json" -d JSON] https://FORGE/api/v1/ROUTE
+    .example-1 = who am I, for this token
+    .example-2 = the repository's direct collaborators
+    .example-3 = another account's tokens, as an administrator (basic authentication)
+    .example-4 = require signed commits on main
+    .example-5 = replace a secret with the content of a file
+    .example-6 = the Actions runs
+    .example-7 = a job's log
+    .example-8 = an account's public SSH keys

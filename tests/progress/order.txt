@@ -143,3 +143,6 @@ paper-trail
 expiry-date
 chain-of-trust
 stolen-laptop
+who-can-push
+leaky-pipeline
+signed-release

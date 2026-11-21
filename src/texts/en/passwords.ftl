@@ -83,3 +83,5 @@ password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz
 password-chalkboard-29 = chalkboard-29
 ## The Airwaves
 password-mixing-desk-30 = mixing-desk-30
+## The Tool Library
+password-pegboard-47 = pegboard-47

@@ -9,12 +9,26 @@
 // (https://git-scm.com/book/fr/v2/Git-sur-le-serveur-Mise-en-place-du-serveur,
 // https://git-scm.com/docs/githooks).
 //
+// Also: git config (~/.gitconfig, the repository's config), signed commits
+// and tags with gpg.format = ssh (user.signingKey, commit.gpgsign,
+// gpg.ssh.allowedSignersFile; verify-commit, verify-tag, log
+// --show-signature: https://git-scm.com/docs/git-config#Documentation/git-config.txt-gpgformat),
+// tags (lightweight, annotated, signed) and pushing them, reset, commit
+// --amend, the reflog (core.logAllRefUpdates on a bare repository),
+// push --force (+refspec), archive, -C; a forge's URLs (git@forge:owner/repo.git)
+// lead to its bare repository on the machine and through its pre-receive
+// checks (../forge.ts).
+//
 // Deliberate differences: a single branch (main); only the files placed
 // directly in the repository's folder are tracked (no subfolders, no hidden
-// file but .gitattributes, whose text and eol attributes normalise CR LF); IDs are
-// computed by the game (git uses SHA-1 or SHA-256); git commit without -m
-// would open a text editor: here, -m is required; no remote repository
-// over the network (ssh://, https://), only paths.
+// file but .gitattributes, whose text and eol attributes normalise CR LF),
+// unless the story's repository tracks subdirectories (Repo.deep); IDs are
+// computed by the game (git uses SHA-1 or SHA-256); git commit and git tag
+// -a without -m would open a text editor: here, -m is required; no remote
+// repository over the network (ssh://, https://), only paths and a story's
+// forge; no git fetch nor remote-tracking branches; signing with openpgp
+// fails (no key for git in the game's keyrings), an SSH key with a
+// passphrase signs without asking for it.
 //
 //   state.git = { '/path/of/repo': Repo } (a bare repository: its own folder)
 //   state.author = 'Name <address>'; state.date = 'Tue Oct 13 21:04:00 2026 +0200'
@@ -621,7 +635,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const parent = amend ? (previous!.parent ? (allCommits(here.repo).find((c) => c.id === previous!.parent) ?? null) : null) : headRef(here.repo);
     const before = parent?.files ?? {};
     const { files, more, moins: less } = account(before, here.repo.index);
-    if (!files && !amend) return game.error(game.t('git-nothing-a-validate'));
+    if (!files && !amend && !args.includes('--allow-empty')) return game.error(game.t('git-nothing-a-validate'));
     // -S[keyid], or commit.gpgsign = true (unless --no-gpg-sign).
     const explicit = args.find((a) => a === '-S' || a.startsWith('-S') || a === '--gpg-sign' || a.startsWith('--gpg-sign='));
     const keyId = explicit && explicit !== '-S' && explicit !== '--gpg-sign' ? explicit.replace(/^-S|^--gpg-sign=/, '') : undefined;

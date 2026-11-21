@@ -104,7 +104,7 @@ export const PAGES: Record<string, Page> = {
     ],
     see: ['prometheus-alertmanager', 'promtool', 'curl'],
   },
-  jq: { options: ['r', 'c', 'n', 'S', 'e'], examples: ['curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health, lastError}'", "curl -s -G --data-urlencode 'query=up' http://localhost:9090/api/v1/query | jq -r '.data.result[] | \"\\(.metric.instance) \\(.value[1])\"'", "jq '.alerts | length' alerts.json"], see: ['curl'] },
+  jq: { options: ['r', 'c', 'n', 'S', 'e', 'R', 's'], examples: ['curl -s http://localhost:9090/api/v1/targets | jq .', "curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health, lastError}'", "curl -s -G --data-urlencode 'query=up' http://localhost:9090/api/v1/query | jq -r '.data.result[] | \"\\(.metric.instance) \\(.value[1])\"'", "jq '.alerts | length' alerts.json", "jq -Rs '{data: .}' < key"], see: ['curl'] },
   kubectl: {
     options: ['n', 'A', 'o', 'l', 'f', 'w', 'c', 'p', 'i', 't'],
     examples: [
@@ -746,8 +746,8 @@ export const PAGES: Record<string, Page> = {
   },
   'ssh-copy-id': { examples: ['ssh-copy-id community', 'ssh-copy-id -i ~/.ssh/id_ed25519.pub you@community.internal'], see: ['ssh', 'ssh-keygen', 'sshd_config'] },
   'ssh-keygen': {
-    examples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C you@desk'],
-    see: ['ssh', 'ssh-copy-id'],
+    examples: ['ssh-keygen -R datacenter.internal', 'ssh-keygen -F datacenter.internal', 'ssh-keygen -l -f ~/.ssh/known_hosts', 'ssh-keygen -t ed25519 -C you@desk', 'ssh-keygen -Y sign -f ~/.ssh/id_ed25519 -n file SHA256SUMS', 'ssh-keygen -Y verify -f allowed_signers -I you@lendshed.example -n file -s SHA256SUMS.sig < SHA256SUMS'],
+    see: ['ssh', 'ssh-copy-id', 'git'],
   },
   ss: { long: { 'tcp': 't', 'udp': 'u', 'listening': 'l', 'all': 'a', 'numeric': 'n', 'processes': 'p', 'ipv4': '4', 'ipv6': '6', 'summary': 's' }, section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p', '4', '6', 's'], examples: ['sudo ss -tlnp', 'ss -t', 'ss -tln6', 'ss -s'], see: ['ufw', 'ps', 'systemctl', 'netstat'] },
   netstat: { section: 8, options: ['t', 'u', 'l', 'a', 'n', 'p'], examples: ['sudo netstat -tlnp', 'netstat -tn'], see: ['ss', 'ufw', 'ps'] },
@@ -877,6 +877,32 @@ export const PAGES: Record<string, Page> = {
   dos2unix: { options: ['i', 'k', 'n', 'q'], examples: ['dos2unix nightly-copy.sh', 'dos2unix -i nightly-copy.sh', 'dos2unix -n notes.txt notes-unix.txt'], see: ['unix2dos', 'file', 'tr', 'sed', 'gitattributes'] },
   unix2dos: { options: ['i', 'k', 'n', 'q'], examples: ['unix2dos notes.txt', 'unix2dos -i notes.txt'], see: ['dos2unix', 'file'] },
   tr: { options: ['d', 's'], examples: ["cat nightly-copy.sh | tr -d '\\r' > nightly-copy-unix.sh", 'echo hello | tr a-z A-Z', "echo 'a   b' | tr -s ' '"], see: ['sed', 'dos2unix', 'cat'] },
+  forgejo: {
+    options: ['c', 'w', 'v'],
+    examples: [
+      'sudo -u forgejo forgejo --config /etc/forgejo/app.ini admin user list',
+      "sudo -u forgejo forgejo --config /etc/forgejo/app.ini admin user change-password --username rosa --password 'a-long-one'",
+      'sudo -u forgejo forgejo --config /etc/forgejo/app.ini admin user delete --username tomasz',
+      'sudo -u forgejo forgejo --config /etc/forgejo/app.ini admin user generate-access-token --username you --token-name ci --scopes write:repository',
+      'forgejo --version',
+    ],
+    see: ['forgejo-api', 'forgejo-runner', 'git'],
+  },
+  'forgejo-runner': { options: ['c', 'v'], examples: ['forgejo-runner --version', 'systemctl status forgejo-runner', 'journalctl -u forgejo-runner -n 20', 'sudo cat /etc/forgejo-runner/config.yml'], see: ['forgejo', 'forgejo-api'] },
+  'forgejo-api': {
+    section: 7,
+    examples: [
+      'curl -s -H "Authorization: token $(cat ~/.forgejo-token)" https://forge.lendshed.example/api/v1/user',
+      'curl -s https://forge.lendshed.example/api/v1/repos/lendshed/lendshed/collaborators -H "Authorization: token $TOKEN" | jq -r ".[].login"',
+      'curl -s -u you:PASSWORD -H "Sudo: tomasz" https://forge.lendshed.example/api/v1/users/tomasz/tokens',
+      'curl -X PATCH -H "Authorization: token $TOKEN" -H "Content-Type: application/json" -d \'{"require_signed_commits":true}\' https://forge.lendshed.example/api/v1/repos/lendshed/lendshed/branch_protections/main',
+      "jq -Rs '{data: .}' < key | curl -X PUT -H \"Authorization: token $TOKEN\" -H 'Content-Type: application/json' --data-binary @- https://forge.lendshed.example/api/v1/repos/lendshed/lendshed/actions/secrets/DEPLOY_KEY",
+      'curl -s https://forge.lendshed.example/api/v1/repos/lendshed/lendshed/actions/runs | jq .',
+      'curl -s https://forge.lendshed.example/lendshed/lendshed/actions/runs/2/jobs/0/logs',
+      'curl -s https://forge.lendshed.example/wanjiru.keys',
+    ],
+    see: ['curl', 'jq', 'forgejo', 'git'],
+  },
   gitattributes: { section: 5, examples: ["echo '*.sh text eol=lf' > .gitattributes", 'git add .gitattributes nightly-copy.sh', "echo '* text=auto eol=lf' > .gitattributes"], see: ['git', 'dos2unix'] },
   'mount.cifs': {
     section: 8,
