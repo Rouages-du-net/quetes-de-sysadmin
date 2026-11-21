@@ -470,3 +470,7 @@ name-message_from_folake-txt = message_de_folake.txt
 name-note_from_rui-txt = mot_de_rui.txt
 name-note_from_kemal-txt = mot_de_kemal.txt
 name-new_db_password-txt = nouveau_mdp_bdd.txt
+## The Staff Room
+name-note_from_joe-txt = mot_de_joe.txt
+name-delivery_note-txt = bon_de_livraison.txt
+name-dpo_request-txt = demande_dpd.txt

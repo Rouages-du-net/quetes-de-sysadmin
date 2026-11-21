@@ -141,6 +141,9 @@ import { sshAlerts } from './ssh-alerts';
 import { restartLoop } from './restart-loop';
 import { slowBoot } from './slow-boot';
 import { lateDisk } from './late-disk';
+import { stuckQueue } from './stuck-queue';
+import { newPrinter } from './new-printer';
+import { paperTrail } from './paper-trail';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -323,6 +326,11 @@ export const STORIES: Story[] = [
     id: 'pool',
     after: ['compose', 'blue-green'],
     chapters: [wontStart, frontDesk, lockerRoom, deepEnd],
+  },
+  {
+    id: 'staff-room',
+    after: ['samba-share', 'full-disk'],
+    chapters: [stuckQueue, newPrinter, paperTrail],
   },
 ];
 

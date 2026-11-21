@@ -35,8 +35,10 @@ import { live } from './activity';
 export { split, applyMode } from './tools';
 import { applyMode, appendOnly, braces, immutable, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
-import { parse, plainList, unterminated, type ListEntry, type List } from './compound';
-import { flush, list as runTree, newRun, show, type Run, type Steps } from './control';
+import { runScript } from './script';
+import { parse, parseScript, plainList, unterminated, type ListEntry, type List, type Node as TreeNode } from './compound';
+import { drain, flush, list as runTree, newRun, show, subshell, type Run, type Steps } from './control';
+import { prefix as dialectPrefix, type ScriptRun } from './dialect';
 import { arithmetic, ArithError, type ArithVars } from './arith';
 import { addJob, notices, type Job } from './jobs';
 import { inherited, inheritedHere } from './availability';
@@ -45,7 +47,7 @@ import { debianDefaults } from './debian';
 
 // bash's builtins that change nothing, there in every chapter (commands/builtins.ts).
 // The job tools come with them (jobs.ts): nohup and watch too, there on every Debian.
-const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue', 'jobs', 'fg', 'bg', 'wait', 'disown', 'nohup', 'watch'];
+const ALWAYS_THERE = ['true', 'false', 'type', 'command', 'test', 'alias', 'unalias', 'read', 'break', 'continue', 'jobs', 'fg', 'bg', 'wait', 'disown', 'nohup', 'watch', 'set', 'shift', 'local', 'return', 'trap', 'getopts', 'source'];
 // The everyday companions a chapter's command brings with it: a sysadmin who
 // may use find reaches for xargs, one who may use echo for printf…
 export const COMPANIONS: Record<string, string[]> = {
@@ -180,6 +182,50 @@ function closing(line: string, i: number): number {
   return -1;
 }
 
+/** Where the $'…' starting at i ends (its closing quote), or -1. */
+function ansiEnd(line: string, i: number): number {
+  for (let j = i; j < line.length; j++) {
+    if (line[j] === '\\') j++;
+    else if (line[j] === "'") return j;
+  }
+  return -1;
+}
+
+const ANSI: Record<string, string> = { a: '\x07', b: '\b', e: '\x1b', E: '\x1b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v', '\\': '\\', "'": "'", '"': '"', '?': '?' };
+
+/** bash's ANSI-C quoting (man bash, "QUOTING"): the escapes of $'…'. */
+function decodeAnsi(text: string): string {
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c !== '\\' || i + 1 >= text.length) {
+      out += c;
+      continue;
+    }
+    const n = text[i + 1];
+    const octal = /^[0-7]{1,3}/.exec(text.slice(i + 1));
+    const hex = /^x([0-9a-fA-F]{1,2})/.exec(text.slice(i + 1));
+    const uni = /^[uU]([0-9a-fA-F]{1,8})/.exec(text.slice(i + 1));
+    if (ANSI[n] !== undefined) {
+      out += ANSI[n];
+      i++;
+    } else if (octal) {
+      out += String.fromCharCode(parseInt(octal[0], 8) & 0xff);
+      i += octal[0].length;
+    } else if (hex) {
+      out += String.fromCharCode(parseInt(hex[1], 16));
+      i += hex[0].length;
+    } else if (uni) {
+      out += String.fromCodePoint(parseInt(uni[1], 16));
+      i += uni[0].length;
+    } else if (n === 'c' && i + 2 < text.length) {
+      out += String.fromCharCode(text.charCodeAt(i + 2) & 0x1f);
+      i += 2;
+    } else out += c;
+  }
+  return out;
+}
+
 /**
  * How bash keeps an input of several lines in its history (cmdhist): one
  * entry, the lines joined by "; " (or a space after do, then, a pipe…);
@@ -300,6 +346,26 @@ export class Shell implements Game {
   // The aliases defined in this session (alias ll='ls -l'); Debian's colour aliases are in builtins.ts.
   aliases: Record<string, string> = {};
   exported = new Set<string>();
+  // Shell functions (name() { …; }): their bodies, as parsed (compound.ts).
+  functions: Record<string, TreeNode> = {};
+  // The positional parameters ($1, $2…, $#, $@): a script's arguments, or a function's.
+  positional: string[] = [];
+  // The functions being run: each one's local variables, with the value they hid (undefined: unset).
+  locals: Record<string, string | undefined>[] = [];
+  // set -e, -u, -x, -o pipefail (they act in scripts: script.ts, control.ts).
+  options = { e: false, u: false, x: false, pipefail: false };
+  // trap 'action' SIGNAL: EXIT's action runs when a script ends.
+  traps: Record<string, string> = {};
+  // The script (or sh -c line) running now: its name, its shell's dialect, its line (dialect.ts).
+  script: ScriptRun | null = null;
+  // Each command's exit code in the last pipeline (set -o pipefail).
+  pipeStatus: number[] = [];
+  // The exit code of the last command substitution (an assignment alone takes it: X=$(false) fails).
+  substitution: number | null = null;
+  // Nested command substitutions (set -x writes ++ for bash).
+  captureDepth = 0;
+  // What the last pipeline wrote on its standard output (without its errors).
+  private tubeOutput = '';
   // The environment of the command running now (restic reads RESTIC_* there).
   // sudo resets it (env_reset): only NAME=value written after sudo, or -E, pass.
   environment: Record<string, string> = {};
@@ -871,10 +937,11 @@ export class Shell implements Game {
     if (name === '?') return String(this.lastStatus);
     if (name === '$') return String(this.shellPid);
     if (name === '!') return this.lastBackground === null ? null : String(this.lastBackground);
-    if (name === '0') return '-bash';
-    if (name === '#') return '0';
-    if (name === '-') return 'himBHs';
-    if (/^[1-9@*]$/.test(name)) return null;
+    if (name === '0') return this.script?.name ?? '-bash';
+    if (name === '#') return String(this.positional.length);
+    if (name === '-') return this.script ? `${this.options.e ? 'e' : ''}${this.options.u ? 'u' : ''}${this.options.x ? 'x' : ''}${this.script.dialect === 'bash' ? 'hB' : ''}` : 'himBHs';
+    if (/^\d+$/.test(name)) return this.positional[Number(name) - 1] ?? null;
+    if (name === '@' || name === '*') return this.positional.length ? this.positional.join(' ') : null;
     if (Object.hasOwn(this.vars, name)) return this.vars[name];
     // bash's own variables, not in the environment.
     if (name === 'HOSTNAME') return this.read('/etc/hostname')?.trim() || this.hostName;
@@ -1138,8 +1205,17 @@ export class Shell implements Game {
       return parsed.error === '' ? this.t('syntax-end') : this.t('syntax-token', { token: parsed.error });
     }
     if ('incomplete' in parsed) return '';
-    if (!whole.includes('\n') && plainList(parsed.list)) return this.runLine(whole);
+    if (!whole.includes('\n') && plainList(parsed.list) && !this.flowIn(parsed.list)) return this.runLine(whole);
     return this.runProgram(parsed.list, whole);
+  }
+
+  /** Whether a plain list calls a function, source or ".": those run through control.ts. */
+  private flowIn(list: List): boolean {
+    const first = (n: TreeNode): boolean =>
+      n.kind === 'simple'
+        ? ((w) => w === 'source' || w === '.' || Object.hasOwn(this.functions, w))(split(n.text)[0]?.text ?? '')
+        : n.kind === 'pipeline' ? n.parts.some(first) : n.kind === 'andor' ? first(n.first) || n.rest.some((r) => first(r.node)) : false;
+    return list.some((e) => first(e.node));
   }
 
   /** Runs a parsed input (control.ts), from the start. */
@@ -1507,15 +1583,19 @@ export class Shell implements Game {
    * `heredoc`: a here-document's body (or an arithmetic expression), where
    * quotes are ordinary characters and values go in as they are.
    */
-  expandLine(line: string, heredoc = false): { line: string; errors: string[]; failed?: boolean } {
+  expandLine(line: string, heredoc = false): { line: string; errors: string[]; failed?: boolean; arithmetic?: boolean } {
     let out = '';
     let quote = '';
     const errors: string[] = [];
     let failed = false;
+    // Not only an arithmetic error ($((1/0))): an unset variable under set -u, ${X:?}: a script's shell stops there.
+    let fatal = false;
     // A value put into the line: quoted or in a here-document, as it is; unquoted, its words, each kept a word.
     const put = (value: string) => {
-      if (quote || heredoc) out += value;
-      else out += value.split(/\s+/).filter(Boolean).map((w) => (/[|&;<>"'\s]/.test(w) ? (w.includes("'") ? `"${w}"` : `'${w}'`) : w)).join(' ');
+      if (heredoc) out += value;
+      // Inside double quotes, the value stays one piece of the word (its quotes and backslashes are text).
+      else if (quote) out += value.replace(/[\\"$`]/g, '\\$&');
+      else out += value.split(/[ \t\n]+/).filter(Boolean).map((w) => (/[|&;<>"'\s]/.test(w) ? (w.includes("'") ? `"${w}"` : `'${w}'`) : w)).join(' ');
     };
     for (let i = 0; i < line.length; i++) {
       const c = line[i];
@@ -1523,6 +1603,15 @@ export class Shell implements Game {
         if (c === "'") quote = '';
         out += c;
         continue;
+      }
+      // bash's $'…' (ANSI-C quoting): \n, \t, \r… decoded, as a single-quoted word. Not in sh.
+      if (c === '$' && line[i + 1] === "'" && !quote && !heredoc && (this.script?.dialect ?? 'bash') === 'bash') {
+        const end = ansiEnd(line, i + 2);
+        if (end > 0) {
+          out += `'${decodeAnsi(line.slice(i + 2, end)).replace(/'/g, `'"'"'`)}'`;
+          i = end;
+          continue;
+        }
       }
       if (c === "'" && !quote && !heredoc) {
         quote = "'";
@@ -1550,7 +1639,9 @@ export class Shell implements Game {
             out += String(arithmetic(this.expandLine(expr, true).line, this.arithVars()));
           } catch (e) {
             if (!(e instanceof ArithError)) throw e;
-            errors.push(`-bash: ${e.message}`);
+            // dash words it its way (only division by zero is told apart here).
+            const dash = !!this.script && this.script.dialect !== 'bash';
+            errors.push(`${this.errorPrefix()}: ${dash ? (/division by 0/.test(e.message) ? `arithmetic expression: division by zero: "${expr}"` : `arithmetic expression: expecting primary: "${expr}"`) : e.message}`);
             failed = true;
           }
           continue;
@@ -1592,6 +1683,7 @@ export class Shell implements Game {
           if ('error' in r) {
             errors.push(r.error);
             failed = true;
+            fatal = true;
           } else put(r.value);
           continue;
         }
@@ -1601,10 +1693,31 @@ export class Shell implements Game {
         out += c;
         continue;
       }
-      put(this.variable(m[1] ?? m[2]) ?? '');
+      const name = m[1] ?? m[2];
+      // "$@": each positional parameter its own word ("" when there are none: no word at all).
+      if (name === '@' && quote === '"' && !heredoc) {
+        if (!this.positional.length) {
+          if (line[i - 1] === '"' && line[i + 2] === '"' && out.endsWith('"')) {
+            out = out.slice(0, -1);
+            quote = '';
+            i += 2;
+          } else i += 1;
+          continue;
+        }
+        out += this.positional.map((a) => a.replace(/[\\"$`]/g, '\\$&')).join('" "');
+        i += 1;
+        continue;
+      }
+      const value = this.variable(name);
+      if (value === null && this.unbound(name)) {
+        errors.push(this.unboundMessage(name));
+        failed = true;
+        fatal = true;
+      }
+      put(value ?? '');
       i += m[0].length - 1;
     }
-    return { line: out, errors, ...(failed ? { failed } : {}) };
+    return { line: out, errors, ...(failed ? { failed } : {}), ...(failed && !fatal ? { arithmetic: true } : {}) };
   }
 
   /**
@@ -1618,15 +1731,21 @@ export class Shell implements Game {
    * end), ${NAME:offset:length}, ${NAME^^} and ${NAME,,} (case).
    */
   private parameter(inner: string): { value: string } | { error: string } {
-    const length = /^#([A-Za-z_]\w*|[0-9?$!#@*])$/.exec(inner);
-    if (length) return { value: String([...(this.variable(length[1]) ?? '')].length) };
-    const m = /^([A-Za-z_]\w*|[0-9?$!#@*-])(.*)$/s.exec(inner);
-    if (!m) return { error: `-bash: \${${inner}}: bad substitution` };
+    const length = /^#([A-Za-z_]\w*|\d+|[?$!#@*])$/.exec(inner);
+    if (length) {
+      if (this.variable(length[1]) === null && this.unbound(length[1])) return { error: this.unboundMessage(length[1]) };
+      return { value: String([...(this.variable(length[1]) ?? '')].length) };
+    }
+    const m = /^([A-Za-z_]\w*|\d+|[?$!#@*-])(.*)$/s.exec(inner);
+    if (!m) return { error: `${this.errorPrefix()}: \${${inner}}: bad substitution` };
     const [, name, rest] = m;
     const value = this.variable(name);
     // A word inside: its variables expanded, its quotes removed.
     const word = (w: string) => this.expandLine(w, true).line.replace(/^(["'])(.*)\1$/s, '$2');
-    if (!rest) return { value: value ?? '' };
+    if (!rest) {
+      if (value === null && this.unbound(name)) return { error: this.unboundMessage(name) };
+      return { value: value ?? '' };
+    }
     const op = /^(:?[-=+?])(.*)$/s.exec(rest);
     if (op) {
       const unset = op[1].startsWith(':') ? !value : value === null;
@@ -1635,11 +1754,11 @@ export class Shell implements Game {
       if (kind === '+') return { value: unset ? '' : word(op[2]) };
       if (kind === '=') {
         if (!unset) return { value: value! };
-        if (!/^[A-Za-z_]/.test(name)) return { error: `-bash: $${name}: cannot assign in this way` };
+        if (!/^[A-Za-z_]/.test(name)) return { error: `${this.errorPrefix()}: $${name}: cannot assign in this way` };
         this.vars[name] = word(op[2]);
         return { value: this.vars[name] };
       }
-      if (unset) return { error: `-bash: ${name}: ${op[2] ? word(op[2]) : 'parameter null or not set'}` };
+      if (unset) return { error: `${this.errorPrefix()}: ${name}: ${op[2] ? word(op[2]) : this.script && this.script.dialect !== 'bash' ? (op[1].startsWith(':') ? 'parameter null or not set' : 'parameter not set') : 'parameter null or not set'}` };
       return { value: value! };
     }
     const v = value ?? '';
@@ -1699,14 +1818,67 @@ export class Shell implements Game {
     if (rest === ',,') return { value: v.toLowerCase() };
     if (rest === '^') return { value: v.charAt(0).toUpperCase() + v.slice(1) };
     if (rest === ',') return { value: v.charAt(0).toLowerCase() + v.slice(1) };
-    return { error: `-bash: \${${inner}}: bad substitution` };
+    return { error: `${this.errorPrefix()}: \${${inner}}: bad substitution` };
+  }
+
+  /** Where the shell's own messages come from: -bash on the line, the script's name and line in a script. */
+  errorPrefix(): string {
+    return dialectPrefix(this.script);
+  }
+
+  /** set -u: an unset variable is an error (in a script), except $@ and $*. */
+  private unbound(name: string): boolean {
+    return !!this.script && this.options.u && name !== '@' && name !== '*';
+  }
+
+  private unboundMessage(name: string): string {
+    return `${this.errorPrefix()}: ${name}: ${this.script?.dialect === 'bash' ? 'unbound variable' : 'parameter not set'}`;
+  }
+
+  /** Whether a name is one of the game's commands (a man page for a file is not). */
+  isCommand(name: string): boolean {
+    return !!COMMANDS[name] && COMMANDS[name].section !== 5;
+  }
+
+  /** A command's words, as tube expands them: braces, ~, wildcards (nothing inside quotes). */
+  argsOf(line: string): { args: string[]; redirects: { op: string; target: string }[] } {
+    const args: string[] = [];
+    const redirects: { op: string; target: string }[] = [];
+    const words = split(line, !!this.script);
+    for (let i = 0; i < words.length; i++) {
+      const w = words[i];
+      if (w.op) {
+        redirects.push({ op: w.op, target: takesTarget(w.op) ? (words[++i]?.text ?? '') : '' });
+        continue;
+      }
+      args.push(...(w.city ? [w.text] : braces(w.text).flatMap((x) => this.expand(this.tilde(x)))));
+    }
+    return { args, redirects };
+  }
+
+  /**
+   * A pipeline run for a script (control.ts): its errors and its output apart,
+   * its exit code (and each command's, for pipefail); toPipe: the output goes
+   * on to a pipe or a capture, not to the screen.
+   */
+  pipeline(line: string, stdin: string | null, toPipe: boolean): { errors: string[]; output: string; status: number; statuses: number[] } {
+    this.pipeStatus = [];
+    this.tube(line, split(line, !!this.script), stdin, toPipe);
+    const output = toPipe ? (this.piped ?? '') : this.tubeOutput;
+    this.piped = null;
+    const status = this.status ?? (this.errors.length ? 1 : 0);
+    this.lastStatus = status;
+    return { errors: this.shownErrors, output, status, statuses: this.pipeStatus.length ? this.pipeStatus : [status] };
   }
 
   // Runs a command substitution's commands, without the story's events: their output (as in a pipe) and their errors.
   private capture(line: string): { output: string; errors: string[] } {
     const before = { last: this.last, status: this.status, errors: this.errors };
     this.capturing = true;
+    this.captureDepth++;
     try {
+      // A script's substitution, a compound or a function: run by control.ts, in a subshell.
+      if (this.script || !this.plainCapture(line)) return this.captureProgram(line);
       const list = splitList(line);
       if ('error' in list) return { output: '', errors: [list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end')] };
       const outputs: string[] = [];
@@ -1721,11 +1893,55 @@ export class Shell implements Game {
         if (this.last.output && !this.last.redirection) outputs.push(this.last.output);
         status = this.status ?? (this.errors.length ? 1 : 0);
       }
+      this.substitution = status;
       return { output: outputs.join('\n'), errors };
     } finally {
       this.capturing = false;
+      this.captureDepth--;
       Object.assign(this, before);
     }
+  }
+
+  /** Whether a substitution's text is a plain list of known commands (no compound, no function). */
+  private plainCapture(line: string): boolean {
+    if (!Object.keys(this.functions).length && !/\b(for|while|until|if|case|function)\b|[{}()\n]/.test(line)) return true;
+    const parsed = parse(line, true);
+    if (!('list' in parsed)) return true;
+    const uses = (n: TreeNode): boolean =>
+      n.kind === 'simple' ? Object.hasOwn(this.functions, split(n.text)[0]?.text ?? '') : n.kind === 'pipeline' ? n.parts.some(uses) : n.kind === 'andor' ? uses(n.first) || n.rest.some((r) => uses(r.node)) : true;
+    return plainList(parsed.list) && !parsed.list.some((e) => uses(e.node));
+  }
+
+  /** A substitution run by control.ts, in a subshell: what it wrote on its output, its errors. */
+  private captureProgram(line: string): { output: string; errors: string[] } {
+    const s = this.script;
+    const chunks = s ? parseScript(line, s.dialect === 'bash') : null;
+    const parsed = chunks ? null : parse(line, true);
+    if (parsed && !('list' in parsed)) {
+      this.substitution = 2;
+      return { output: '', errors: ['error' in parsed && parsed.error ? this.t('syntax-token', { token: parsed.error }) : this.t('syntax-end')] };
+    }
+    const lists = chunks ? chunks.chunks : [(parsed as { list: List }).list];
+    const run = newRun();
+    const out: string[] = [];
+    const restore = subshell(this);
+    const saved = { exit: s?.exit ?? null, lastStatus: this.lastStatus };
+    let status = 0;
+    try {
+      for (const l of lists) {
+        status = drain(runTree(this, run, l, { stdin: null, capture: out }));
+        if (run.stopped || s?.exit != null) break;
+      }
+      if (s && s.exit !== null) status = s.exit;
+      if (chunks?.error && !run.stopped && s?.exit == null) status = 2;
+    } finally {
+      restore();
+      if (s) s.exit = saved.exit;
+    }
+    this.substitution = status;
+    this.lastStatus = saved.lastStatus;
+    const errors = run.outputs.filter(Boolean);
+    return { output: out.filter((x) => x !== '').join('\n'), errors };
   }
 
   // A line that ended in error (an error message, or a non-zero exit code) counts for the summary.
@@ -1766,62 +1982,60 @@ export class Shell implements Game {
   }
 
   /**
-   * Runs a command line the way cron would: from the home directory, without
-   * story events; returns everything it wrote (output and errors), which
-   * cron would send by mail.
+   * Runs a command line the way cron would (/bin/sh -c, with cron's small
+   * environment: HOME, LOGNAME, SHELL, PATH=/usr/bin:/bin), from the home
+   * directory, without story events; returns everything it wrote (output
+   * and errors), which cron would send by mail. login: as su -c runs it,
+   * with the account's login shell and the session's exported variables.
    */
-  runTask(line: string): string {
-    const cwd = this.cwd;
-    this.cwd = this.home;
+  runTask(line: string, login = false): string {
+    const user = this.who;
+    const home = this.accounts.users[user]?.home ?? (user === 'root' ? '/root' : `/home/${user}`);
+    if (login) {
+      const shell = (this.accounts.users[user]?.shell ?? '/bin/bash').endsWith('/bash') ? 'bash' : 'sh';
+      return runScript(this, line, { cwd: this.home, name: shell, shell, environment: this.exportedVars() }).output;
+    }
+    const environment = { HOME: home, LOGNAME: user, SHELL: '/bin/sh', PATH: '/usr/bin:/bin' };
+    return runScript(this, line, { cwd: this.home, name: '/bin/sh', shell: 'sh', environment }).output;
+  }
+
+  /** The session's exported variables (what a program it starts receives). */
+  exportedVars(): Record<string, string> {
+    return Object.fromEntries([...this.exported].filter((n) => n in this.vars).map((n) => [n, this.vars[n]]));
+  }
+
+  /**
+   * Runs `body` as a child process would (a script): from `cwd`, and
+   * everything a command or a shell may change (place, variables, functions,
+   * options, the last command and its errors) given back afterwards.
+   */
+  isolated<T>(cwd: string, body: () => T): T {
+    const saved = {
+      cwd: this.cwd, old: this.old, errors: this.errors, last: this.last, status: this.status, piped: this.piped, environment: this.environment,
+      outputTo: this.outputTo, vars: this.vars, exported: this.exported, functions: this.functions, positional: this.positional, locals: this.locals,
+      options: this.options, traps: this.traps, script: this.script, aliases: this.aliases, lastStatus: this.lastStatus, substitution: this.substitution,
+      captureDepth: this.captureDepth, tubeOutput: this.tubeOutput, shownErrors: this.shownErrors, pipeStatus: this.pipeStatus, inPipeline: this.inPipeline,
+      outputCharset: this.outputCharset,
+    };
+    this.cwd = cwd;
+    this.errors = [];
+    this.captureDepth = 0;
     try {
-      return this.tubeList(line).output;
+      return body();
     } finally {
-      this.cwd = cwd;
+      Object.assign(this, saved);
     }
   }
 
   /**
-   * Runs a line for a script (script.ts: git hook, deployment script), from
-   * this place, without touching the current line: returns what it wrote,
-   * whether it succeeded (no error) and the place the script is in
-   * afterwards (cd).
+   * Runs a line as sh -c would (a service's ExecStart=, an Ansible shell
+   * task, an ssh remote command with shell 'bash'…), from this place,
+   * without the story's events and without touching the current line:
+   * returns what it wrote and its exit code (see script.ts).
    */
-  underCommand(line: string, cwd: string): { output: string; ok: boolean; code: number; cwd: string } {
-    const before = { cwd: this.cwd, errors: this.errors, last: this.last };
-    this.cwd = cwd;
-    try {
-      const { output, code } = this.tubeList(line);
-      return { output, ok: code === 0, code, cwd: this.cwd };
-    } finally {
-      this.cwd = before.cwd;
-      this.errors = before.errors;
-      this.last = before.last;
-    }
-  }
-
-  // A line run by cron or a script (sh -c): a command list too, without the story's events.
-  private tubeList(line: string): { output: string; code: number } {
-    const list = splitList(line);
-    if ('error' in list) {
-      this.errors = [];
-      this.status = 2;
-      return { output: list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end'), code: 2 };
-    }
-    const code = () => this.status ?? (this.errors.length ? 1 : 0);
-    if (list.items.length <= 1) {
-      const one = list.items[0]?.command ?? line;
-      const output = this.tube(one, split(one));
-      return { output, code: code() };
-    }
-    let status = 0;
-    const outputs: string[] = [];
-    for (const item of list.items) {
-      if (!listRuns(item.before, status)) continue;
-      outputs.push(this.tube(item.command, split(item.command)));
-      status = code();
-    }
-    this.status = status;
-    return { output: outputs.filter(Boolean).join('\n'), code: status };
+  underCommand(line: string, cwd: string, shell: 'sh' | 'bash' = 'sh'): { output: string; ok: boolean; code: number } {
+    const { output, code } = runScript(this, line, { cwd, name: shell, shell, environment: this.exportedVars() });
+    return { output, ok: code === 0, code };
   }
 
   /** Checks the story's events outside a command (e.g. on reconnection). */
@@ -1987,6 +2201,7 @@ export class Shell implements Game {
       this.outputTo = r.out && this.resolve(r.out.file) !== '/dev/null' ? this.resolve(r.out.file) : null;
       let produced = this.launch(args, input, root, last);
       this.outputTo = null;
+      this.pipeStatus[i] = this.status ?? (this.errors.length > before ? 1 : 0);
       // This command's errors, sent where its redirections say.
       const errors = this.errors.slice(before);
       const err = r.err ?? 'screen';
@@ -2032,6 +2247,7 @@ export class Shell implements Game {
     this.last = { line, commands, output: withoutColours(redirection ? (written ?? '') : output), errors: this.errors, redirection: redirection ? this.resolve(redirection.file) : null };
     this.shownErrors = [...this.errors.filter((_, k) => !hidden.has(k)), ...toErrors].filter(Boolean);
     this.inPipeline = false;
+    this.tubeOutput = output;
     // Down a compound's pipe: the output goes on to the next command, not to the screen.
     if (toPipe) {
       this.piped = redirection ? '' : output;
@@ -2092,6 +2308,8 @@ export class Shell implements Game {
         : raw;
     if (cmd && COMMANDS[cmd]?.directory && cmd === raw) return this.error(this.t('command-missing', { command: cmd }));
     if (!cmd) return '';
+    // : does nothing, successfully (its arguments are expanded all the same).
+    if (cmd === ':') return '';
     if (root && !this.known().includes('sudo')) return this.error(this.t('sudo-not-still'));
     // Real behaviour: cd is built into the shell, it is not a program.
     if (root && cmd === 'cd') return this.error(this.t('sudo-cd'));
@@ -2121,9 +2339,9 @@ export class Shell implements Game {
     // A path (./deployer.sh, /srv/site/deployer.sh): a script, if it is executable.
     if (cmd.includes('/')) {
       const n = this.find(cmd);
-      if (!n) return this.error(this.t('script-missing', { command: cmd }));
-      if (n.type === 'directory') return this.error(this.t('script-directory', { command: cmd }));
-      if (!this.traverses(cmd) || !this.can(n, 'x') || !this.can(n, 'r')) return this.error(this.t('script-permission', { command: cmd }));
+      if (!n) return this.error(this.t('script-missing', { command: cmd }), 127);
+      if (n.type === 'directory') return this.error(this.t('script-directory', { command: cmd }), 126);
+      if (!this.traverses(cmd) || !this.can(n, 'x') || !this.can(n, 'r')) return this.error(this.t('script-permission', { command: cmd }), 126);
       // FreeBSD checks the #! line: an interpreter that doesn't exist (#!/bin/bash,
       // when bash lives in /usr/local/bin) makes sh say the SCRIPT is not found.
       const interpreter = isBsd(this) && n.type === 'file' ? /^#!\s*(\S+)/.exec(content(n, this))?.[1] : undefined;

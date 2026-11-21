@@ -1,11 +1,11 @@
-// The scripts' commands: sh (and bash) to run a script, test (or [ … ] in a
-// script) to check a condition, date and readlink. The scripts themselves
-// are interpreted by script.ts.
+// The scripts' commands: sh (and bash) to run a script or a line (-c), test
+// (or [ … ]) to check a condition, date and readlink. The scripts themselves
+// are run by script.ts.
 // Based on dash (https://manpages.debian.org/dash), and coreutils' test and
 // date (https://www.gnu.org/software/coreutils/manual/).
 
 import type { Shell } from '../shell';
-import { runScript } from '../script';
+import { interpreterOf, runScript } from '../script';
 import { summerTime, systemd } from '../systemd';
 import { timeOfDay, machineTime, setClock } from '../time';
 import { content } from '../tools';
@@ -63,13 +63,63 @@ function relativeGnu(ms: number, text: string): number | null {
 }
 import type { Command } from './index';
 
-/** Runs a file as a /bin/sh script; returns its output (failure if its code is not 0). */
-export function launchScript(game: Shell, file: string, args: string[], name = file): string {
+/**
+ * Runs a file as a script, under `shell` (sh file, bash file) or, run by
+ * its path (./deploy.sh), under the interpreter its #! line names; returns
+ * its output (its exit code becomes the command's).
+ */
+export function launchScript(game: Shell, file: string, args: string[], name = file, shell?: 'sh' | 'bash', options: Partial<Shell['options']> = {}, check = false): string {
   const n = game.find(file);
-  if (n?.type !== 'file') return game.error(game.t('sh-missing', { file: file }));
-  const r = runScript(game, content(n, game), { cwd: game.cwd, name, arguments: args });
-  if (r.code !== 0) game.error('');
+  if (n?.type !== 'file') {
+    if (shell === 'bash') return game.error(`bash: ${file}: No such file or directory`, 127);
+    return game.error(game.t('sh-missing', { file: file }), 2);
+  }
+  const text = content(n, game);
+  const r = runScript(game, text, { cwd: game.cwd, name, arguments: args, shell: shell ?? interpreterOf(game, text), options, check });
+  if (r.code !== 0) game.error('', r.code);
   return r.output;
+}
+
+/** sh [-eux] [-n] [-c line [name [arg…]] | file [arg…]], and bash the same. */
+function shellCommand(game: Shell, args: string[], shell: 'sh' | 'bash'): string {
+  const options: Partial<Shell['options']> = {};
+  let line: string | null = null;
+  let check = false;
+  let i = 0;
+  for (; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--') {
+      i++;
+      break;
+    }
+    if (a === '-o' || a === '+o') {
+      const o = args[++i];
+      const k = ({ errexit: 'e', nounset: 'u', xtrace: 'x', pipefail: 'pipefail' } as Record<string, 'e' | 'u' | 'x' | 'pipefail'>)[o ?? ''];
+      if (!k || (k === 'pipefail' && shell === 'sh')) return game.error(shell === 'sh' ? `sh: 0: Illegal option -o ${o ?? ''}` : `bash: ${o ?? ''}: invalid option name`, 2);
+      options[k] = a === '-o';
+      continue;
+    }
+    if (!/^[-+][a-zA-Z]+$/.test(a)) break;
+    for (const l of a.slice(1)) {
+      if (l === 'c') line = '';
+      else if (l === 'n') check = true;
+      else if (l === 'e' || l === 'u' || l === 'x') options[l] = a[0] === '-';
+      else if (shell === 'sh') return game.error(`sh: 0: Illegal option -${l}`, 2);
+      else return game.error(`bash: -${l}: invalid option\nUsage:\tbash [GNU long option] [option] ...\n\tbash [GNU long option] [option] script-file ...`, 2);
+    }
+  }
+  const rest = args.slice(i);
+  if (line !== null) {
+    // -c: the line is the first operand; then $0 and the arguments.
+    if (!rest.length) return game.error(shell === 'sh' ? 'sh: 0: -c requires an argument' : 'bash: -c: option requires an argument', 2);
+    const [text, zero = shell, ...positional] = rest;
+    const r = runScript(game, text, { cwd: game.cwd, name: zero, arguments: positional, shell, options, check });
+    if (r.code !== 0) game.error('', r.code);
+    return r.output;
+  }
+  const [file, ...positional] = rest;
+  if (!file) return game.error(game.t('sh-interactive'));
+  return launchScript(game, file, positional, file, shell, options, check);
 }
 
 // test EXPRESSION: succeeds (nothing) or fails (code 1, without a message).
@@ -183,22 +233,8 @@ export function readDate(game: Shell, text: string): number | null {
 }
 
 export const SCRIPTS: Record<string, Command> = {
-  sh: {
-    ownOptions: true,
-    launch: ({ args, game }) => {
-      const [file, ...rest] = args;
-      if (!file) return game.error(game.t('sh-interactive'));
-      return launchScript(game, file, rest);
-    },
-  },
-  bash: {
-    ownOptions: true,
-    launch: ({ args, game }) => {
-      const [file, ...rest] = args;
-      if (!file) return game.error(game.t('sh-interactive'));
-      return launchScript(game, file, rest);
-    },
-  },
+  sh: { ownOptions: true, launch: ({ args, game }) => shellCommand(game, args, 'sh') },
+  bash: { ownOptions: true, launch: ({ args, game }) => shellCommand(game, args, 'bash') },
   test: { ownOptions: true, launch: test },
   date: {
     ownOptions: true,

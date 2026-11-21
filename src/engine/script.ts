@@ -1,23 +1,31 @@
-// A small shell script interpreter (/bin/sh), for git hooks
-// and deployment scripts. Each line is run by the game's shell
-// (shell.ts), from the script's place.
+// Shell scripts: a file run by sh or bash (./deploy.sh, sh tests.sh, a git
+// hook, logrotate's postrotate, a cron line). The script is read like the
+// interactive line (compound.ts: for, while, until, if, case, functions,
+// here-documents…) and run by the same runner (control.ts), without the
+// story's events, in a child shell: its variables, functions and cd don't
+// come back to the session; it starts from the exported variables.
 //
-// What it understands, like dash (Debian's /bin/sh, https://manpages.debian.org/dash):
-// comments and the #! line, lines split with "\", set -e
-// (stop at the first command that fails), exit N, variables
-// (NAME=value, export, $NAME, ${NAME}, $1…, $?), $(command), read (one line
-// of input), cd, true, false, :, [ … ] (the test command), and the sequences
-// "a && b", "a || b".
-// An assignment in front of a command (GIT_WORK_TREE=… git …) only applies
-// to git, which reads it as the matching option.
-// A script saved with Windows line endings (CR LF) shows bash's symptoms:
-// an empty line is the command $'\r', a variable assigned at the end of a
-// line keeps the \r, and cd says so (bash's wording, also under sh).
-// Differences: no if, for, while, case nor functions (an error says so),
-// and a command's exit code is 0 if it wrote no error
-// (unless it sets its own, like monitoring plugins or grep).
+// Its interpreter decides the dialect (dialect.ts): #!/bin/bash (or a file
+// without #!, which bash runs itself, or bash file) gets bash; #!/bin/sh and
+// sh file get the system's /bin/sh: dash on Debian
+// (https://manpages.debian.org/dash), without [[ … ]], the function keyword,
+// arrays, $'…' nor source, with an echo that reads backslashes, and its own
+// error messages ("script: 3: [[: not found", "Syntax error: "(" unexpected").
+// FreeBSD's sh and Solaris's /bin/sh word their errors their way.
+//
+// A script saved with Windows line endings (CR LF) shows the real symptoms:
+// the \r stays in the last word of each line (an empty line is the command
+// $'\r', a variable keeps it, cd says so).
+// Simplified: a command's exit code is 0 if it wrote no error (unless it
+// sets its own); errors and output come out mixed, in order; only read
+// takes the script's input; arrays are not simulated.
 
 import type { Shell } from './shell';
+import { parseScript, type List } from './compound';
+import { drain, list, newRun, flush, show } from './control';
+import { syntaxError, type ShDialect } from './dialect';
+import { isBsd } from './freebsd';
+import { isSolaris } from './solaris';
 
 export interface ScriptResult {
   output: string;
@@ -29,182 +37,82 @@ export interface OptionsScript {
   cwd: string;
   // Standard input (for a pre-receive hook: "old new ref").
   input?: string;
-  // $0, $1, $2…
+  // $1, $2…
   arguments?: string[];
-  // The script's name, for error messages (like sh: "name: 3: …").
+  // $0: the script's name, for error messages (dash: "name: 3: …").
   name: string;
+  // The interpreter: bash, or sh (the system's /bin/sh). Default: sh.
+  shell?: 'sh' | 'bash';
+  // Options given to the interpreter (sh -e, -u, -x).
+  options?: Partial<Shell['options']>;
+  // The environment it starts with (default: the environment of the command that runs it).
+  environment?: Record<string, string>;
+  // sh -n: only read it (syntax errors), run nothing.
+  check?: boolean;
 }
 
-// Splits a line on && and || (outside quotes).
-function chain(line: string): { command: string; before: '&&' | '||' | null }[] {
-  const chunks: { command: string; before: '&&' | '||' | null }[] = [];
-  let active = '';
-  let before: '&&' | '||' | null = null;
-  let quote = '';
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (quote) {
-      if (c === quote) quote = '';
-      active += c;
-    } else if (c === '"' || c === "'") {
-      quote = c;
-      active += c;
-    } else if ((c === '&' || c === '|') && line[i + 1] === c) {
-      chunks.push({ command: active.trim(), before });
-      before = c === '&' ? '&&' : '||';
-      active = '';
-      i++;
-    } else active += c;
-  }
-  chunks.push({ command: active.trim(), before });
-  return chunks;
+/** The system's /bin/sh: dash on Debian, FreeBSD's sh, Solaris's Bourne shell. */
+export function systemShell(game: Shell): ShDialect {
+  return isBsd(game) ? 'bsd' : isSolaris(game) ? 'solaris' : 'dash';
 }
 
-const RESERVES_WORDS = ['if', 'then', 'else', 'elif', 'fi', 'for', 'while', 'until', 'do', 'done', 'case', 'esac', 'function'];
+/** The interpreter a #! line names: bash, or sh (none: bash runs the file itself; FreeBSD's and Solaris's shells too). */
+export function interpreterOf(game: Shell, text: string): 'sh' | 'bash' {
+  const m = /^#!\s*(\S+)(?:[ \t]+(\S+))?/.exec(text);
+  if (!m) return isBsd(game) || isSolaris(game) ? 'sh' : 'bash';
+  const program = (m[1].endsWith('/env') ? (m[2] ?? '') : m[1]).split('/').at(-1)!.replace(/\r$/, '');
+  return program === 'bash' ? 'bash' : 'sh';
+}
 
-/** Runs a script; returns what it wrote (output and errors mixed) and its exit code. */
+/** Runs a script; returns what it wrote (output and errors mixed, in order) and its exit code. */
 export function runScript(game: Shell, text: string, options: OptionsScript): ScriptResult {
-  const variables: Record<string, string> = { '?': '0', '0': options.name };
-  (options.arguments ?? []).forEach((a, i) => (variables[String(i + 1)] = a));
-  const input = (options.input ?? '').split('\n');
-  let cwd = options.cwd;
-  let stopOnError = false;
-  const outputs: string[] = [];
-  // The exit code of the line's last $(command): an assignment alone takes it
-  // (DAY=$(date -d …) fails, and set -e stops there, as in sh).
-  let substituted = 0;
+  const dialect: ShDialect = options.shell === 'bash' ? 'bash' : systemShell(game);
+  return game.isolated(options.cwd, () => {
+    const environment = options.environment ?? game.environment;
+    game.vars = { ...environment };
+    game.exported = new Set(Object.keys(environment));
+    game.functions = {};
+    game.positional = [...(options.arguments ?? [])];
+    game.locals = [];
+    game.options = { e: false, u: false, x: false, pipefail: false, ...options.options };
+    game.traps = {};
+    game.aliases = {};
+    game.lastStatus = 0;
+    game.script = { name: options.name, dialect, line: 1, exit: null, noErrexit: 0, sourcing: [], optpos: 1 };
+    const parsed = parseScript(text, dialect === 'bash');
+    const run = newRun();
+    const io = { stdin: { lines: (options.input ?? '') === '' ? [] : options.input!.replace(/\n$/, '').split('\n') }, capture: null };
+    const s = game.script;
+    let status = 0;
+    if (!options.check) {
+      status = chunks(game, run, parsed.chunks, io);
+      if (s.exit !== null) status = s.exit;
+    }
+    if (parsed.error && (options.check || (!run.stopped && s.exit === null))) {
+      show(run, syntaxError(s, parsed.error, text));
+      status = 2;
+    }
+    // trap '…' EXIT: its action runs as the script ends ($? is the script's code).
+    const action = game.traps.EXIT;
+    if (action !== undefined && !options.check) {
+      delete game.traps.EXIT;
+      game.lastStatus = status;
+      s.exit = null;
+      run.stopped = false;
+      const trap = parseScript(action, dialect === 'bash');
+      chunks(game, run, trap.chunks, io);
+      if (s.exit !== null) status = s.exit;
+    }
+    return { output: flush(run) ?? '', code: status };
+  });
+}
 
-  // $NAME, ${NAME}, $1, $? and $(command); nothing inside single quotes.
-  const expand = (s: string): string => {
-    let result = '';
-    let simple = false;
-    for (let i = 0; i < s.length; i++) {
-      const c = s[i];
-      if (c === "'" && !simple) {
-        simple = true;
-        result += c;
-      } else if (c === "'" && simple) {
-        simple = false;
-        result += c;
-      } else if (c === '$' && !simple) {
-        if (s[i + 1] === '(') {
-          let depth = 1;
-          let j = i + 2;
-          for (; j < s.length && depth; j++) depth += s[j] === '(' ? 1 : s[j] === ')' ? -1 : 0;
-          const inside = s.slice(i + 2, j - 1);
-          const r = game.underCommand(expand(inside), cwd);
-          substituted = r.code;
-          // A failing command's message goes to the screen (stderr), not into the value.
-          if (r.code !== 0) {
-            if (r.output.trim()) outputs.push(r.output.trim());
-          } else result += r.output.trim();
-          i = j - 1;
-        } else {
-          const m = /^\{([A-Za-z_][A-Za-z0-9_]*|\d+|\?)\}|^([A-Za-z_][A-Za-z0-9_]*|\d|\?)/.exec(s.slice(i + 1));
-          if (!m) result += c;
-          else {
-            result += variables[m[1] ?? m[2]] ?? '';
-            i += m[0].length;
-          }
-        }
-      } else result += c;
-    }
-    return result;
-  };
-
-  // A simple command; returns its exit code.
-  const launch = (rawValue: string, number: number): number => {
-    substituted = 0;
-    // A carriage return (a script saved on Windows) stays in the words: only spaces and tabs are trimmed.
-    let line = expand(rawValue).replace(/^[ \t]+|[ \t]+$/g, '');
-    const cd = /^cd\s+([^]*)$/.exec(line);
-    if (cd && cd[1].includes('\r')) {
-      outputs.push(`${options.name}: line ${number}: cd: $'${cd[1].replace(/\r/g, '\\r')}': No such file or directory`);
-      return 1;
-    }
-    if (!line || line === ':' || line === 'true') return 0;
-    if (line === 'false') return 1;
-    // [ condition ] is the test command (its last argument must be "]").
-    if (/^\[(\s|$)/.test(line)) {
-      if (!/\s\]$/.test(line)) {
-        outputs.push(game.t('test-hook-missing', { script: options.name, number: number }));
-        return 2;
-      }
-      line = `test ${line.slice(1, -1).trim()}`;
-    }
-    const first = line.split(/\s+/)[0];
-    if (RESERVES_WORDS.includes(first)) {
-      outputs.push(game.t('script-not-simulated', { script: options.name, number: number, word: first }));
-      return 2;
-    }
-    const set = /^set\s+(.*)$/.exec(line);
-    if (set) {
-      if (/-\w*e/.test(set[1])) stopOnError = true;
-      return 0;
-    }
-    const read = /^read\s+(.*)$/.exec(line);
-    if (read) {
-      const names = read[1].split(/\s+/).filter((n) => !n.startsWith('-'));
-      const values = (input.shift() ?? '').trim().split(/\s+/);
-      names.forEach((n, i) => (variables[n] = i === names.length - 1 ? values.slice(i).join(' ') : (values[i] ?? '')));
-      return 0;
-    }
-    // NAME=value (alone): a variable; in front of a command: its environment.
-    const assignments: Record<string, string> = {};
-    for (;;) {
-      const m = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=("[^"]*"|'[^']*'|\S*)\s*/.exec(line);
-      if (!m) break;
-      assignments[m[1]] = m[2].replace(/^(["'])(.*)\1$/, '$2');
-      line = line.slice(m[0].length);
-    }
-    if (!line) {
-      Object.assign(variables, assignments);
-      return substituted;
-    }
-    if (line.startsWith('git ')) {
-      const options = [
-        ...(assignments.GIT_DIR ? [`--git-dir=${assignments.GIT_DIR}`] : []),
-        ...(assignments.GIT_WORK_TREE ? [`--work-tree=${assignments.GIT_WORK_TREE}`] : []),
-      ];
-      if (options.length) line = `git ${options.join(' ')} ${line.slice(4)}`;
-    }
-    const r = game.underCommand(line, cwd);
-    cwd = r.cwd;
-    if (r.output) outputs.push(r.output);
-    return r.code;
-  };
-
-  // The lines, joined after a trailing "\".
-  const lines = text.replace(/\\\n/g, ' ').split('\n');
-  for (let n = 0; n < lines.length; n++) {
-    const line = lines[n].trim();
-    // A line saved on Windows ends with \r (CR LF), which bash reads as part of the last word:
-    // an empty line is a command named \r, and a variable keeps it at the end of its value.
-    if (lines[n].endsWith('\r') && !line.startsWith('#')) {
-      if (!line) {
-        outputs.push(`${options.name}: line ${n + 1}: $'\\r': command not found`);
-        variables['?'] = '127';
-        if (stopOnError) return { output: outputs.join('\n'), code: 127 };
-        continue;
-      }
-      const assignment = /^([A-Za-z_][A-Za-z0-9_]*)=(\S*)$/.exec(line);
-      if (assignment) {
-        variables[assignment[1]] = expand(assignment[2]).replace(/^(["'])(.*)\1$/, '$2') + '\r';
-        continue;
-      }
-    }
-    if (!line || line.startsWith('#')) continue;
-    const exit = /^exit(?:\s+(\S+))?$/.exec(line);
-    if (exit) return { output: outputs.join('\n'), code: Number(expand(exit[1] ?? '$?')) || 0 };
-    let code = 0;
-    for (const { command, before } of chain(line)) {
-      if ((before === '&&' && code !== 0) || (before === '||' && code === 0)) continue;
-      const end = /^exit(?:\s+(\S+))?$/.exec(command);
-      if (end) return { output: outputs.join('\n'), code: Number(expand(end[1] ?? String(code))) || 0 };
-      code = launch(command, n + 1);
-    }
-    variables['?'] = String(code);
-    if (code !== 0 && stopOnError) return { output: outputs.join('\n'), code };
+/** A script's lines, one after the other, until one stops the shell. */
+function chunks(game: Shell, run: ReturnType<typeof newRun>, lists: List[], io: Parameters<typeof list>[3]): number {
+  let status = game.lastStatus;
+  for (const chunk of lists) {
+    status = drain(list(game, run, chunk, io));
+    if (run.stopped || game.script?.exit !== null) break;
   }
-  return { output: outputs.join('\n'), code: Number(variables['?']) };
+  return status;
 }

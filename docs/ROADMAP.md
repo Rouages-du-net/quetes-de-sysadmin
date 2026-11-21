@@ -626,6 +626,16 @@ them safely.
   -p`); memory requests and limits under a swim meet's load (OOMKilled,
   `kubectl top`, a leaky release rolled back, `FailedScheduling`).
 
+- [x] **A print server** (CUPS): a timeless chore. A stuck queue and its
+  runaway job, a driverless queue and an old printer's PPD, sharing with
+  one network only, logs and job history that keep too much. Done: story
+  37, "The Staff Room" (`cups.ts`: `cupsd.conf` with its locations and
+  policy, `printers.conf` written by cupsd, jobs and the spool, the logs
+  and their rotation, the network's printers and clients; `lpstat`, `lp`,
+  `lpr`, `lpq`, `cancel`, `lprm`, `cupsenable`, `cupsdisable`,
+  `cupsaccept`, `cupsreject`, `lpadmin`, `lpoptions`, `lpinfo`, `cupsctl`,
+  `cupsd -t`, `driverless`; `printer-driver-hpcups`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a
@@ -663,8 +673,17 @@ them safely.
     here-documents, `$((…))` and `((…))`, `${VAR:-x}` and the other
     parameter expansions, the secondary prompt `>` for an unfinished input,
     `seq`, `read`; an unset variable is empty (`compound.ts`, `control.ts`,
-    `arith.ts`). Left: functions, arrays, `[[ … ]]`, `/bin/sh` scripts
-    (`script.ts`) still without compounds.
+    `arith.ts`); functions, `[[ … ]]`, `$'…'`, `source`. Left: arrays,
+    `select`, `eval`.
+  - [x] **Scripts in the real shells**: `/bin/sh` scripts, `bash` scripts,
+    git hooks, `postrotate`, cron lines and `ExecStart=` read by the same
+    parser and runner as the interactive line (`script.ts`, `dialect.ts`):
+    every compound, functions with `$1`, `$#`, `"$@"`, `shift`, `local`,
+    `return`; `set -e`, `-u`, `-x`, `-o pipefail`, `trap … EXIT`,
+    `getopts`, `.`; the `#!` line picks bash or dash, and each shell gives
+    its own errors (`[[: not found`, `Syntax error: "(" unexpected`,
+    `line 3: … command not found`), checked against the real dash and bash
+    (`tests/scripts-compound.test.ts`); `sh -c`, `-x`, `-n`.
   - [x] **Becoming root**: `sudo -i`, `sudo -s`, `sudo su`, `sudo su -`,
     `su -` (root's password: "Authentication failure" on Debian), a root
     shell with its `#` prompt, `/root`, root's `PATH`, `exit` or Ctrl-D

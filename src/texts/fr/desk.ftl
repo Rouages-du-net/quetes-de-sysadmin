@@ -85,3 +85,5 @@ machine-crate-motd = L'Épicerie solidaire — le serveur Debian de l'épicerie 
 machine-quay-motd = Le Bac — le serveur Debian de la coopérative du bac, en IPv4 et en IPv6 (son site, son appli de réservation, sa zone DNS ferry.example).
 machine-gauge-motd = Les Vélos partagés — le serveur de supervision de la coopérative (Prometheus, son node exporter, l'Alertmanager) ; selle et moyeu sont derrière lui.
 machine-lane-motd = La Piscine — le serveur Debian de la piscine, un cluster k3s à un seul nœud (l'appli de réservation, namespace swim).
+
+machine-chalk-motd = La Salle des profs — le serveur d'impression de l'école primaire (CUPS) : le secrétariat, la bibliothèque, la salle des profs. Merci de ne pas imprimer l'album de l'école deux fois.

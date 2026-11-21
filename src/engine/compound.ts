@@ -29,7 +29,12 @@ export interface Redirect {
 }
 
 export type Node =
-  | { kind: 'simple'; text: string; heredoc?: HereDoc }
+  // line: where it starts in the input (a script's error messages give it).
+  | { kind: 'simple'; text: string; heredoc?: HereDoc; line?: number }
+  // name() compound, or bash's function name { …; }: a shell function.
+  | { kind: 'function'; name: string; body: Node; line?: number }
+  // bash's [[ … ]]: a conditional expression, kept as typed.
+  | { kind: 'cond'; expr: string; redirects: Redirect[]; line?: number }
   | { kind: 'pipeline'; parts: Node[]; negate: boolean }
   | { kind: 'andor'; first: Node; rest: { op: '&&' | '||'; node: Node }[] }
   | { kind: 'for'; name: string; words: string[] | null; body: List; redirects: Redirect[] }
@@ -52,7 +57,7 @@ export type List = ListEntry[];
 export type Parsed = { list: List } | { incomplete: true } | { error: string; eof?: boolean };
 
 interface Tok {
-  t: 'word' | 'op' | 'nl' | 'arith';
+  t: 'word' | 'op' | 'nl' | 'arith' | 'cond';
   text: string;
   start: number;
   end: number;
@@ -63,12 +68,38 @@ interface Tok {
 
 const RESERVED = new Set(['if', 'then', 'elif', 'else', 'fi', 'for', 'in', 'while', 'until', 'do', 'done', 'case', 'esac', '{', '}', '!']);
 
-class Incomplete extends Error {}
+// What the lexer and the parser read: a script keeps a carriage return in its
+// words (a file saved on Windows), and only bash knows [[ … ]] and `function`.
+export interface Dialect {
+  // \r is part of a word (in a script), not a blank (on the interactive line).
+  cr: boolean;
+  bash: boolean;
+}
+const INTERACTIVE: Dialect = { cr: false, bash: true };
+
+class Incomplete extends Error {
+  // The word the input stops before (dash: "end of file unexpected (expecting "fi")").
+  constructor(public expecting?: string) {
+    super('incomplete');
+  }
+}
 class Syntax extends Error {
-  constructor(public token: string) {
+  // pos: where the unexpected token starts in the input; bad: a function's name dash refuses.
+  constructor(
+    public token: string,
+    public pos = -1,
+    public bad = false,
+  ) {
     super(token);
   }
 }
+
+// Where the lexer is (the start of the token it reads): an input that stops
+// inside a quote stops there.
+let lexAt = 0;
+// Words that a command may follow (for [[, which only starts a command).
+const STARTERS = new Set(['then', 'do', 'else', 'elif', 'if', 'while', 'until', '!', '{', '}', 'time']);
+const STARTER_OPS = new Set(['&&', '||', ';', ';;', ';&', ';;&', '&', '|', '|&', '(', ')']);
 
 /** Where a $( … ), ${ … } or `…` starting at i ends (the index after it), or -1 if the input stops first. */
 function skipExpansion(s: string, i: number): number {
@@ -128,7 +159,7 @@ function skipDouble(s: string, i: number): number {
 }
 
 /** Splits the input into tokens; reads here-document bodies after their line. */
-function lex(src: string, eofOk: boolean): Tok[] {
+function lex(src: string, eofOk: boolean, dialect: Dialect = INTERACTIVE): Tok[] {
   const toks: Tok[] = [];
   const pending: HereDoc[] = [];
   let i = 0;
@@ -160,7 +191,8 @@ function lex(src: string, eofOk: boolean): Tok[] {
   };
   while (i < src.length) {
     const c = src[i];
-    if (c === ' ' || c === '\t' || c === '\r') {
+    lexAt = i;
+    if (c === ' ' || c === '\t' || (c === '\r' && !dialect.cr)) {
       i++;
       continue;
     }
@@ -201,8 +233,8 @@ function lex(src: string, eofOk: boolean): Tok[] {
       const opEnd = i + (strip ? 3 : 2);
       let j = opEnd;
       while (src[j] === ' ' || src[j] === '\t') j++;
-      const word = readWord(src, j);
-      if (!word) throw new Syntax(src[j] === undefined || src[j] === '\n' ? 'newline' : src[j]);
+      const word = readWord(src, j, dialect);
+      if (!word) throw new Syntax(src[j] === undefined || src[j] === '\n' ? 'newline' : src[j], j);
       const quoted = /['"\\]/.test(word.text);
       const h: HereDoc = { delimiter: word.text.replace(/\\(.)/g, '$1').replace(/['"]/g, ''), quoted, strip, body: '' };
       pending.push(h);
@@ -218,14 +250,22 @@ function lex(src: string, eofOk: boolean): Tok[] {
       i += typed.length;
       continue;
     }
+    // bash's [[ … ]], where a command starts: read up to the ]] that ends it.
+    if (dialect.bash && c === '[' && src[i + 1] === '[' && /[ \t\n]/.test(src[i + 2] ?? '') && startsCommand(toks)) {
+      const end = condEnd(src, i + 2);
+      if (end < 0) throw new Incomplete(']]');
+      toks.push({ t: 'cond', text: src.slice(i + 2, end).trim(), start: i, end: end + 2 });
+      i = end + 2;
+      continue;
+    }
     const op = ['&&', '||', ';;&', ';;', ';&', '|&', ';', '&', '|', '(', ')'].find((o) => src.startsWith(o, i));
     if (op) {
       toks.push({ t: 'op', text: op, start: i, end: i + op.length });
       i += op.length;
       continue;
     }
-    const word = readWord(src, i);
-    if (!word) throw new Syntax(c);
+    const word = readWord(src, i, dialect);
+    if (!word) throw new Syntax(c, i);
     toks.push({ t: 'word', text: word.text, start: i, end: word.end, quoted: word.quoted });
     i = word.end;
   }
@@ -239,8 +279,38 @@ function lex(src: string, eofOk: boolean): Tok[] {
   return toks;
 }
 
+/** Whether the next token starts a command (after an operator, a newline or a reserved word). */
+function startsCommand(toks: Tok[]): boolean {
+  const last = toks.at(-1);
+  if (!last || last.t === 'nl') return true;
+  if (last.t === 'op') return STARTER_OPS.has(last.text);
+  return last.t === 'word' && !last.quoted && STARTERS.has(last.text);
+}
+
+/** Where the ]] closing a [[ starts (outside quotes and expansions), or -1. */
+function condEnd(src: string, i: number): number {
+  for (let j = i; j < src.length; j++) {
+    const c = src[j];
+    if (c === '\\') j++;
+    else if (c === "'") {
+      const k = src.indexOf("'", j + 1);
+      if (k < 0) return -1;
+      j = k;
+    } else if (c === '"') {
+      const k = skipDouble(src, j);
+      if (k < 0) return -1;
+      j = k - 1;
+    } else if ((c === '$' && (src[j + 1] === '(' || src[j + 1] === '{')) || c === '`') {
+      const k = skipExpansion(src, j);
+      if (k < 0) return -1;
+      j = k - 1;
+    } else if (c === ']' && src[j + 1] === ']' && /[ \t]/.test(src[j - 1]) && (j + 2 >= src.length || /[\s;&|)]/.test(src[j + 2]))) return j;
+  }
+  return -1;
+}
+
 /** A word from i: up to a blank or an operator outside quotes and expansions. */
-function readWord(src: string, i: number): { text: string; end: number; quoted: boolean } | null {
+function readWord(src: string, i: number, dialect: Dialect = INTERACTIVE): { text: string; end: number; quoted: boolean } | null {
   let j = i;
   let quoted = false;
   let text = '';
@@ -280,7 +350,7 @@ function readWord(src: string, i: number): { text: string; end: number; quoted: 
       j = k;
       continue;
     }
-    if (/[\s;&|()<>]/.test(c)) {
+    if (/[ \t\n\f\v;&|()<>]/.test(c) || (c === '\r' && !dialect.cr)) {
       // A > or < glued to a word (a>b): the word stops there; a redirection follows.
       break;
     }
@@ -292,10 +362,27 @@ function readWord(src: string, i: number): { text: string; end: number; quoted: 
 
 class Parser {
   p = 0;
+  // Where each line starts in the input (for a node's line number).
+  private starts: number[] = [0];
   constructor(
     private toks: Tok[],
     private src: string,
-  ) {}
+    private dialect: Dialect = INTERACTIVE,
+  ) {
+    for (let i = 0; i < src.length; i++) if (src[i] === '\n') this.starts.push(i + 1);
+  }
+
+  /** The line (from 1) of a position in the input. */
+  lineOf(pos: number): number {
+    let lo = 0;
+    let hi = this.starts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (this.starts[mid] <= pos) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo + 1;
+  }
 
   peek(): Tok | undefined {
     return this.toks[this.p];
@@ -314,14 +401,38 @@ class Parser {
   expectWord(text: string): void {
     this.newlines();
     const t = this.peek();
-    if (!t) throw new Incomplete();
-    if (t.t !== 'word' || t.quoted || t.text !== text) throw new Syntax(t.t === 'nl' ? 'newline' : t.text);
+    if (!t) throw new Incomplete(text);
+    if (t.t !== 'word' || t.quoted || t.text !== text) throw new Syntax(t.t === 'nl' ? 'newline' : t.t === 'cond' ? '[[' : t.text, t.start);
     this.p++;
   }
-  fail(): never {
+  fail(expecting?: string): never {
     const t = this.peek();
-    if (!t) throw new Incomplete();
-    throw new Syntax(t.t === 'nl' ? 'newline' : t.t === 'arith' ? '((' : t.text);
+    if (!t) throw new Incomplete(expecting);
+    throw new Syntax(t.t === 'nl' ? 'newline' : t.t === 'arith' ? '((' : t.t === 'cond' ? '[[' : t.text, t.start);
+  }
+
+  // One line of a script: its commands, up to the newline that ends them (a
+  // shell reads, then runs, a script line by line: a syntax error further
+  // down doesn't stop what comes before).
+  chunk(): List {
+    const items: List = [];
+    for (;;) {
+      const t = this.peek();
+      if (!t || t.t === 'nl') return items;
+      const start = t.start;
+      const node = this.andOr();
+      const last = this.toks[this.p - 1];
+      const entry: ListEntry = { node, background: false, text: this.src.slice(start, last.end).replace(/\\\n/g, '').trim() };
+      items.push(entry);
+      const sep = this.peek();
+      if (!sep || sep.t === 'nl') return items;
+      if (sep.t === 'op' && (sep.text === ';' || sep.text === '&')) {
+        entry.background = sep.text === '&';
+        this.p++;
+        continue;
+      }
+      this.fail();
+    }
   }
 
   // A list, up to one of the reserved words (or ")" or a case terminator) that end it.
@@ -332,7 +443,7 @@ class Parser {
       const t = this.peek();
       if (!t) {
         if (top) return items;
-        throw new Incomplete();
+        throw new Incomplete(ends.find((e) => e !== ';;'));
       }
       if (t.t === 'word' && !t.quoted && ends.includes(t.text)) return items;
       if (t.t === 'op' && (ends.includes(t.text) || ((t.text === ';;' || t.text === ';&' || t.text === ';;&') && ends.includes(';;')))) return items;
@@ -390,6 +501,11 @@ class Parser {
   command(): Node {
     const t = this.peek();
     if (!t) throw new Incomplete();
+    if (t.t === 'cond') {
+      this.p++;
+      return { kind: 'cond', expr: t.text, redirects: this.redirects(), line: this.lineOf(t.start) };
+    }
+    if (t.t === 'word' && !t.quoted && t.text === 'function' && this.dialect.bash) return this.functionKeyword();
     if (t.t === 'arith') {
       this.p++;
       return { kind: 'arith', expr: t.text, redirects: this.redirects() };
@@ -397,9 +513,9 @@ class Parser {
     if (t.t === 'op' && t.text === '(') {
       this.p++;
       const body = this.list([')']);
-      if (!this.isOp(')')) this.fail();
+      if (!this.isOp(')')) this.fail(')');
       this.p++;
-      if (!body.length) throw new Syntax(')');
+      if (!body.length) throw new Syntax(')', this.toks[this.p - 1].start);
       return { kind: 'group', body, subshell: true, redirects: this.redirects() };
     }
     if (t.t === 'word' && !t.quoted) {
@@ -417,7 +533,7 @@ class Parser {
           this.p++;
           const body = this.list(['}']);
           this.expectWord('}');
-          if (!body.length) throw new Syntax('}');
+          if (!body.length) throw new Syntax('}', this.toks[this.p - 1].start);
           return { kind: 'group', body, subshell: false, redirects: this.redirects() };
         }
         case 'then':
@@ -429,16 +545,49 @@ class Parser {
         case 'esac':
         case '}':
         case 'in':
-          throw new Syntax(t.text);
+          throw new Syntax(t.text, t.start);
       }
     }
+    // name ( ): a function definition, its body a compound command.
+    const next = this.toks[this.p + 1];
+    if (t.t === 'word' && next?.t === 'op' && next.text === '(' && this.toks[this.p + 2]?.t === 'op' && this.toks[this.p + 2].text === ')') {
+      if (t.quoted || (!this.dialect.bash && !/^[A-Za-z_]\w*$/.test(t.text))) throw new Syntax(t.text, t.start, true);
+      this.p += 3;
+      return this.functionBody(t.text, t.start);
+    }
     return this.simple();
+  }
+
+  // bash: function name [()] compound.
+  functionKeyword(): Node {
+    const start = this.peek()!.start;
+    this.p++;
+    const name = this.peek();
+    if (!name) throw new Incomplete();
+    if (name.t !== 'word') this.fail();
+    this.p++;
+    if (this.isOp('(')) {
+      this.p++;
+      if (!this.isOp(')')) this.fail();
+      this.p++;
+    }
+    return this.functionBody(name.text, start);
+  }
+
+  functionBody(name: string, start: number): Node {
+    this.newlines();
+    const t = this.peek();
+    if (!t) throw new Incomplete();
+    const body = this.command();
+    if (body.kind === 'simple' || body.kind === 'function') throw new Syntax(t.t === 'word' ? t.text : t.text, t.start);
+    return { kind: 'function', name, body, line: this.lineOf(start) };
   }
 
   // The words and redirections of a simple command, kept as typed.
   simple(): Node {
     const parts: string[] = [];
     let heredoc: HereDoc | undefined;
+    const line = this.lineOf(this.peek()!.start);
     for (;;) {
       const t = this.peek();
       if (!t || t.t === 'nl') break;
@@ -458,8 +607,8 @@ class Parser {
         // 2>&1 and >&2 take no file.
         if (t.text === '2>&1' || t.text === '>&2') continue;
         const target = this.peek();
-        if (!target || target.t === 'nl') throw new Syntax('newline');
-        if (target.t !== 'word') throw new Syntax(target.text);
+        if (!target || target.t === 'nl') throw new Syntax('newline', target?.start ?? this.src.length);
+        if (target.t !== 'word') throw new Syntax(target.text, target.start);
         parts.push(target.text);
         this.p++;
         continue;
@@ -467,9 +616,9 @@ class Parser {
       break;
     }
     if (!parts.length && !heredoc) this.fail();
-    // A word followed by "(": a function definition, which the game does not read.
-    if (this.isOp('(')) throw new Syntax('(');
-    return { kind: 'simple', text: parts.join(' '), ...(heredoc ? { heredoc } : {}) };
+    // Words, then "(": not a function definition (one name, then "()").
+    if (this.isOp('(')) this.fail();
+    return { kind: 'simple', text: parts.join(' '), ...(heredoc ? { heredoc } : {}), line };
   }
 
   redirects(): Redirect[] {
@@ -489,8 +638,8 @@ class Parser {
         continue;
       }
       const target = this.peek();
-      if (!target || target.t === 'nl') throw new Syntax('newline');
-      if (target.t !== 'word') throw new Syntax(target.text);
+      if (!target || target.t === 'nl') throw new Syntax('newline', target?.start ?? this.src.length);
+      if (target.t !== 'word') throw new Syntax(target.text, target.start);
       this.p++;
       out.push({ op: t.text, target: target.text });
     }
@@ -502,10 +651,10 @@ class Parser {
     let otherwise: List | null = null;
     for (;;) {
       const test = this.list(['then']);
-      if (!test.length) this.fail();
+      if (!test.length) this.fail('then');
       this.expectWord('then');
       const body = this.list(['elif', 'else', 'fi']);
-      if (!body.length) this.fail();
+      if (!body.length) this.fail('fi');
       branches.push({ test, body });
       if (this.isWord('elif')) {
         this.p++;
@@ -514,7 +663,7 @@ class Parser {
       if (this.isWord('else')) {
         this.p++;
         otherwise = this.list(['fi']);
-        if (!otherwise.length) this.fail();
+        if (!otherwise.length) this.fail('fi');
       }
       this.expectWord('fi');
       return { kind: 'if', branches, otherwise, redirects: this.redirects() };
@@ -524,7 +673,7 @@ class Parser {
   doGroup(): List {
     this.expectWord('do');
     const body = this.list(['done']);
-    if (!body.length) this.fail();
+    if (!body.length) this.fail('done');
     this.expectWord('done');
     return body;
   }
@@ -537,14 +686,14 @@ class Parser {
     if (t.t === 'arith') {
       this.p++;
       const parts = t.text.split(';');
-      if (parts.length !== 3) throw new Syntax('((');
+      if (parts.length !== 3) throw new Syntax('((', t.start);
       if (this.isOp(';')) this.p++;
       this.newlines();
       const body = this.doGroup();
       return { kind: 'cfor', init: parts[0], test: parts[1], step: parts[2], body, redirects: this.redirects() };
     }
     if (t.t !== 'word' || !/^[A-Za-z_]\w*$/.test(t.text)) {
-      if (t.t === 'word') throw new Syntax(t.text);
+      if (t.t === 'word') throw new Syntax(t.text, t.start);
       this.fail();
     }
     const name = t.text;
@@ -567,7 +716,7 @@ class Parser {
   whileClause(until: boolean): Node {
     this.p++;
     const test = this.list(['do']);
-    if (!test.length) this.fail();
+    if (!test.length) this.fail('do');
     const body = this.doGroup();
     return { kind: 'while', until, test, body, redirects: this.redirects() };
   }
@@ -637,6 +786,93 @@ export function parse(src: string, eofOk = false): Parsed {
   }
 }
 
+/** A syntax error in a script, where the shell found it. */
+export interface ScriptError {
+  line: number;
+  // The unexpected token ("fi", "newline", "("), or none: the file ended too soon.
+  token?: string;
+  // What the parser was waiting for at the end of the file ("fi", "done", ")").
+  expecting?: string;
+  // The file ended inside quotes or an expansion: the character that was never closed.
+  open?: string;
+  // dash: a function's name it refuses ("Bad function name").
+  badName?: boolean;
+  // Where the file ended (dash gives it for an unterminated quote; bash, where the quote opened).
+  eofLine?: number;
+}
+
+/** What could not be closed in a word starting at i: a quote, $( or ${, a backquote. */
+function opened(src: string, i: number): string {
+  for (let j = i; j < src.length; j++) {
+    const c = src[j];
+    if (c === '\\') j++;
+    else if (c === "'") {
+      const k = src.indexOf("'", j + 1);
+      if (k < 0) return "'";
+      j = k;
+    } else if (c === '"') {
+      const k = skipDouble(src, j);
+      if (k < 0) return '"';
+      j = k - 1;
+    } else if ((c === '$' && (src[j + 1] === '(' || src[j + 1] === '{')) || c === '`') {
+      const k = skipExpansion(src, j);
+      if (k < 0) return c === '`' ? '`' : src[j + 1] === '(' ? ')' : '}';
+      j = k - 1;
+    }
+  }
+  return '"';
+}
+
+/**
+ * Parses a script (sh, bash, a cron line): its lines, each a list the shell
+ * runs before it reads the next one, up to the first syntax error, if any
+ * (the lines before it still run, as with dash and bash). A carriage return
+ * stays in the words; `bash`: [[ … ]] and the function keyword exist.
+ */
+export function parseScript(src: string, bash: boolean): { chunks: List[]; error?: ScriptError } {
+  const dialect: Dialect = { cr: true, bash };
+  // The line after the last one (where the shells say the file ended).
+  const lines = src.replace(/\n$/, '').split('\n').length + 1;
+  let toks: Tok[];
+  let lexError: ScriptError | null = null;
+  try {
+    toks = lex(src, true, dialect);
+  } catch (e) {
+    if (!(e instanceof Incomplete) && !(e instanceof Syntax)) throw e;
+    // The input stopped inside a word (or a token the lexer refused): what comes
+    // before that word's line still runs.
+    const at = lexAt;
+    const lineStart = src.lastIndexOf('\n', at - 1) + 1;
+    const before = src.slice(0, lineStart);
+    const startLine = before.split('\n').length;
+    lexError = e instanceof Syntax ? { line: startLine, token: e.token } : { line: startLine, eofLine: lines, open: opened(src, at) };
+    try {
+      toks = lex(before, true, dialect);
+    } catch {
+      return { chunks: [], error: lexError };
+    }
+  }
+  const parser = new Parser(toks, src, dialect);
+  const chunks: List[] = [];
+  for (;;) {
+    parser.newlines();
+    if (!parser.peek()) break;
+    const from = parser.p;
+    try {
+      chunks.push(parser.chunk());
+    } catch (e) {
+      if (lexError) return { chunks, error: lexError };
+      if (e instanceof Incomplete) return { chunks, error: { line: lines, expecting: e.expecting } };
+      if (e instanceof Syntax) {
+        const pos = e.pos >= 0 ? e.pos : (toks[from]?.start ?? 0);
+        return { chunks, error: { line: parser.lineOf(pos), token: e.token, ...(e.bad ? { badName: true } : {}) } };
+      }
+      throw e;
+    }
+  }
+  return lexError ? { chunks, error: lexError } : { chunks };
+}
+
 /** Whether a parsed input is only a plain list (simple commands and pipelines joined by ;, && or ||, on one line), which the shell runs its usual way. */
 export function plainList(list: List): boolean {
   const plain = (n: Node): boolean =>
@@ -654,12 +890,13 @@ export function unterminated(list: List): HereDoc[] {
     }
     if (n.kind === 'pipeline') return n.parts.forEach(visit);
     if (n.kind === 'andor') return [n.first, ...n.rest.map((r) => r.node)].forEach(visit);
+    if (n.kind === 'function') return visit(n.body);
     for (const r of n.redirects) if (r.heredoc?.unterminated) out.push(r.heredoc);
     const lists: List[] =
       n.kind === 'if' ? [...n.branches.flatMap((b) => [b.test, b.body]), ...(n.otherwise ? [n.otherwise] : [])]
       : n.kind === 'case' ? n.arms.map((a) => a.body)
       : n.kind === 'while' ? [n.test, n.body]
-      : n.kind === 'arith' ? []
+      : n.kind === 'arith' || n.kind === 'cond' ? []
       : [n.body];
     lists.forEach((l) => l.forEach((e) => visit(e.node)));
   };

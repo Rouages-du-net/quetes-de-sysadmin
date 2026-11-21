@@ -126,12 +126,13 @@ presents them for people.
   in `shell.ts` (each command as if typed alone: events, `afterCommand`;
   paused by sudo's password, a question or nano, `Shell.pendingList`;
   `Shell.listContinues` tells a chapter another command follows, as
-  `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
-  `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
+  `new-card.ts` does for `ifdown eth0 && ifup eth0`); cron and
+  `underCommand` go through `script.ts` (`sh -c`); cmd.exe's `&`, `&&`, `||` in
   `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
 - Compound commands on the interactive line: `src/engine/compound.ts`
   parses an input (for, `for ((…))`, if, while, until, case, `{ …; }`,
-  `( … )`, `((…))`, `&`, newlines, comments, here-documents) and says when
+  `( … )`, `((…))`, `&`, newlines, comments, here-documents, functions
+  `name() { …; }`, bash's `[[ … ]]`; a script's lines: `parseScript`) and says when
   it is unfinished (`Shell.continuation`, the PS2 prompt `>`, Ctrl-C
   `dropInput`, Ctrl-D `endOfInput`); `src/engine/control.ts` runs it as a
   generator (each simple command through `Shell.runSimple`, as if typed;
@@ -157,10 +158,19 @@ presents them for people.
   `Service.static`) and their journal (`state.baseSystemd`), memory, `/etc/os-release` and `/etc/debian_version`;
   `baseLan` (lo, eth0 with the machine's address, `state.baseLan`) for `ip`
   and `hostname -I`; `hostnamectl` in `commands/hostnamectl.ts`.
-- `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
-  (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
-  repositories, `push`, hooks) in `commands/git.ts`, `diff` in
-  `commands/diff.ts`.
+- `src/engine/script.ts`: shell scripts (`sh`, `bash`, `./script` by its
+  `#!` line, git hooks, `postrotate`, cron lines through `runTask`,
+  `underCommand` for `ExecStart=`, ssh remote commands, Ansible's shell)
+  read by `parseScript` of `compound.ts` and run by `control.ts` in a child
+  shell (`Shell.isolated`), without the story's events;
+  `src/engine/dialect.ts`: bash, dash (Debian's `/bin/sh`), FreeBSD's sh,
+  Solaris's sh and their error messages (`rewrite`, `syntaxError`,
+  `notFound`), `ScriptRun` (`Shell.script`); functions (`Shell.functions`,
+  `positional`, `locals`), `return`, `exit`, `source`/`.` and `set -e` in
+  `control.ts`; `set`, `shift`, `local`, `trap`, `getopts`, `[[ … ]]`
+  (`conditional`) in `commands/shell-builtins.ts`; `sh -c`/`-x`/`-n`,
+  `test`, `date` in `commands/scripts.ts`; git (bare repositories, `push`,
+  hooks) in `commands/git.ts`, `diff` in `commands/diff.ts`.
 - `chapters/kiosk.ts`: the app of The Gazette's deployment chapters
   (blue/green, `/health`, migration, simulated visits); nginx can balance
   between several servers (`upstream`).
@@ -614,6 +624,27 @@ presents them for people.
   checked on the pods' environment and both repositories' last commit),
   `deep-end.ts` (OOMKilled, `kubectl top`, requests and limits, a rollback).
   `git log -p` in `commands/git.ts`. Tests: `tests/pool.test.ts`.
+- `src/engine/cups.ts`: a machine's CUPS (`state.cups`: `cupsd.conf` read
+  when cupsd starts, `parseConf`, its `<Location>` blocks and `@LOCAL` from
+  the server's interfaces decided by `reaches`, the default policy's
+  limits by `mayCancel` and `privateValues`; queues kept in memory and
+  written to `printers.conf` on change and on stop (`writePrinters`, a hand
+  edit lost), read at start; jobs and their spool files (`syncSpool`, a
+  document removed by hand aborts its job), `PreserveJobHistory` and
+  `PreserveJobFiles` (`purgeExpired`), `error_log` by `LogLevel` and
+  rotated at `MaxLogSize` (`appendLog`), `access_log`, `page_log`; the
+  network's devices and the models of `lpinfo -m`; `submit` and `verdict`
+  for a print request; `advance` prints at each device's speed; `attach`
+  hooks the cups service); `lpstat`, `lp`, `lpr`, `lpq`, `cancel`, `lprm`,
+  `cupsenable`, `cupsdisable`, `cupsaccept`, `cupsreject`, `lpadmin`,
+  `lpoptions`, `lpinfo`, `cupsctl`, `cupsd -t`, `driverless` and the web
+  pages on port 631 (`webAnswer`) in `commands/cups.ts`;
+  `printer-driver-hpcups` in `commands/apt.ts`. `chapters/staff-room.ts`:
+  what the chapters of "The Staff Room" share (`chalk`, a primary school's
+  print server with a leg on the staff and the pupils' VLANs: its
+  printers, `cupsdConf()`, the staff's and pupils' requests each minute in
+  `passTime`); `stuck-queue.ts`, `new-printer.ts`, `paper-trail.ts`.
+  Tests: `tests/staff-room.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

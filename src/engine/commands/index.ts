@@ -53,6 +53,7 @@ import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
+import { CUPS } from './cups';
 import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
 import { SED } from './sed';
@@ -82,6 +83,7 @@ import { JQ } from './jq';
 import { KUBECTL } from './kubectl';
 import { K3S } from './k3s';
 import { SHELL_CONTROL } from './shell-control';
+import { SCRIPT_BUILTINS } from './shell-builtins';
 import { HOSTNAMECTL } from './hostnamectl';
 import { COMPRESS } from './compress';
 import { SMALL_TOOLS } from './small-tools';
@@ -171,6 +173,7 @@ function build(): Record<string, Command> {
     ...SCRIPTS,
     ...BUILTINS,
     ...SHELL_CONTROL,
+    ...SCRIPT_BUILTINS,
     ...HOSTNAMECTL,
     ...EVERYDAY,
     ...DISKS,
@@ -187,6 +190,7 @@ function build(): Record<string, Command> {
     ...SYSLOG,
     ...NFS,
     ...SAMBA,
+    ...CUPS,
   ...GPG,
   ...IPTABLES,
     ...SED,

@@ -66,10 +66,6 @@ manual-not-page = Il n'y a pas de page de manuel pour { $command }.
 
 ## Scripts (/bin/sh) : crochets de git, scripts de déploiement (src/engine/script.ts)
 
-# { $script } : le nom du script ; { $number } : la ligne ; { $word } : le mot du shell
-script-not-simulated = { $script }: { $number }: « { $word } » : cette construction du shell n'est pas simulée dans ce jeu (ni if, ni for, ni while). Écrire une commande par ligne, avec && ou || pour les enchaîner.
-# { $script } : le nom du script ; { $number } : la ligne
-test-hook-missing = { $script }: { $number }: [: missing ]
 # { $operator } : ce qui a été donné à test
 test-operator = { $operator }: unexpected operator
 test-too-arguments = too many arguments

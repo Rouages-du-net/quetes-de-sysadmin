@@ -151,7 +151,7 @@ function su(game: Shell, args: string[]): string {
           const before = game.who;
           game.who = user;
           try {
-            return game.runTask(command);
+            return game.runTask(command, true);
           } finally {
             game.who = before;
           }
@@ -167,7 +167,7 @@ function su(game: Shell, args: string[]): string {
     const before = game.who;
     game.who = user;
     try {
-      return game.runTask(command);
+      return game.runTask(command, true);
     } finally {
       game.who = before;
     }
@@ -194,6 +194,12 @@ export const SHELL_CONTROL: Record<string, Command> = {
       if (game.inPipeline) return '';
       if (input !== null) {
         game.status = game.readLine(args, input === '' ? null : input.split('\n')[0]);
+        return '';
+      }
+      // In a script, nobody types: the end of the input.
+      if (game.script) {
+        game.readLine(args, null);
+        game.status = 1;
         return '';
       }
       const p = args.indexOf('-p');

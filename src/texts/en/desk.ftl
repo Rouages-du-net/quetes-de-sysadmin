@@ -85,3 +85,5 @@ machine-crate-motd = The Pantry — the community grocery's Debian server (its f
 machine-quay-motd = The Ferry — the ferry cooperative's Debian server, in IPv4 and in IPv6 (its site, its booking app, its DNS zone ferry.example).
 machine-gauge-motd = The Bike Share — the cooperative's monitoring server (Prometheus, its node exporter, the Alertmanager); saddle and hub are behind it.
 machine-lane-motd = The Pool — the swimming pool's Debian server, a single-node k3s cluster (the booking app, namespace swim).
+
+machine-chalk-motd = The Staff Room — the primary school's print server (CUPS): the office, the library, the staff room. Please don't print the yearbook twice.
