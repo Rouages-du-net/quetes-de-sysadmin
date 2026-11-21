@@ -126,12 +126,13 @@ presents them for people.
   in `shell.ts` (each command as if typed alone: events, `afterCommand`;
   paused by sudo's password, a question or nano, `Shell.pendingList`;
   `Shell.listContinues` tells a chapter another command follows, as
-  `new-card.ts` does for `ifdown eth0 && ifup eth0`), and by cron and
-  `underCommand` (`tubeList`); cmd.exe's `&`, `&&`, `||` in
+  `new-card.ts` does for `ifdown eth0 && ifup eth0`); cron and
+  `underCommand` go through `script.ts` (`sh -c`); cmd.exe's `&`, `&&`, `||` in
   `commands/cmd.ts`; PowerShell 5.1 refuses `&&`/`||` (`powershell-parse.ts`).
 - Compound commands on the interactive line: `src/engine/compound.ts`
   parses an input (for, `for ((…))`, if, while, until, case, `{ …; }`,
-  `( … )`, `((…))`, `&`, newlines, comments, here-documents) and says when
+  `( … )`, `((…))`, `&`, newlines, comments, here-documents, functions
+  `name() { …; }`, bash's `[[ … ]]`; a script's lines: `parseScript`) and says when
   it is unfinished (`Shell.continuation`, the PS2 prompt `>`, Ctrl-C
   `dropInput`, Ctrl-D `endOfInput`); `src/engine/control.ts` runs it as a
   generator (each simple command through `Shell.runSimple`, as if typed;
@@ -157,10 +158,19 @@ presents them for people.
   `Service.static`) and their journal (`state.baseSystemd`), memory, `/etc/os-release` and `/etc/debian_version`;
   `baseLan` (lo, eth0 with the machine's address, `state.baseLan`) for `ip`
   and `hostname -I`; `hostnamectl` in `commands/hostnamectl.ts`.
-- `src/engine/script.ts`: a small `/bin/sh` for git hooks and scripts
-  (`sh`, `./script`, `test`, `date` in `commands/scripts.ts`); git (bare
-  repositories, `push`, hooks) in `commands/git.ts`, `diff` in
-  `commands/diff.ts`.
+- `src/engine/script.ts`: shell scripts (`sh`, `bash`, `./script` by its
+  `#!` line, git hooks, `postrotate`, cron lines through `runTask`,
+  `underCommand` for `ExecStart=`, ssh remote commands, Ansible's shell)
+  read by `parseScript` of `compound.ts` and run by `control.ts` in a child
+  shell (`Shell.isolated`), without the story's events;
+  `src/engine/dialect.ts`: bash, dash (Debian's `/bin/sh`), FreeBSD's sh,
+  Solaris's sh and their error messages (`rewrite`, `syntaxError`,
+  `notFound`), `ScriptRun` (`Shell.script`); functions (`Shell.functions`,
+  `positional`, `locals`), `return`, `exit`, `source`/`.` and `set -e` in
+  `control.ts`; `set`, `shift`, `local`, `trap`, `getopts`, `[[ … ]]`
+  (`conditional`) in `commands/shell-builtins.ts`; `sh -c`/`-x`/`-n`,
+  `test`, `date` in `commands/scripts.ts`; git (bare repositories, `push`,
+  hooks) in `commands/git.ts`, `diff` in `commands/diff.ts`.
 - `chapters/kiosk.ts`: the app of The Gazette's deployment chapters
   (blue/green, `/health`, migration, simulated visits); nginx can balance
   between several servers (`upstream`).

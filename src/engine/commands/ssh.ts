@@ -197,7 +197,7 @@ function completeSsh(game: Shell, target: string, command: string[], o: OptionsS
       const before = last.shell.who;
       last.shell.who = last.user;
       try {
-        const r = last.shell.underCommand(command.join(' '), last.shell.home);
+        const r = last.shell.underCommand(command.join(' '), last.shell.home, (last.shell.accounts.users[last.user]?.shell ?? '/bin/bash').endsWith('/bash') ? 'bash' : 'sh');
         game.status = r.code;
         return r.output;
       } finally {

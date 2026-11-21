@@ -35,6 +35,7 @@ import { live } from './activity';
 export { split, applyMode } from './tools';
 import { applyMode, appendOnly, braces, immutable, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
 import { launchScript } from './commands/scripts';
+import { runScript } from './script';
 import { parse, parseScript, plainList, unterminated, type ListEntry, type List, type Node as TreeNode } from './compound';
 import { drain, flush, list as runTree, newRun, show, subshell, type Run, type Steps } from './control';
 import { prefix as dialectPrefix, type ScriptRun } from './dialect';
@@ -1981,18 +1982,26 @@ export class Shell implements Game {
   }
 
   /**
-   * Runs a command line the way cron would: from the home directory, without
-   * story events; returns everything it wrote (output and errors), which
-   * cron would send by mail.
+   * Runs a command line the way cron would (/bin/sh -c, with cron's small
+   * environment: HOME, LOGNAME, SHELL, PATH=/usr/bin:/bin), from the home
+   * directory, without story events; returns everything it wrote (output
+   * and errors), which cron would send by mail. login: as su -c runs it,
+   * with the account's login shell and the session's exported variables.
    */
-  runTask(line: string): string {
-    const cwd = this.cwd;
-    this.cwd = this.home;
-    try {
-      return this.tubeList(line).output;
-    } finally {
-      this.cwd = cwd;
+  runTask(line: string, login = false): string {
+    const user = this.who;
+    const home = this.accounts.users[user]?.home ?? (user === 'root' ? '/root' : `/home/${user}`);
+    if (login) {
+      const shell = (this.accounts.users[user]?.shell ?? '/bin/bash').endsWith('/bash') ? 'bash' : 'sh';
+      return runScript(this, line, { cwd: this.home, name: shell, shell, environment: this.exportedVars() }).output;
     }
+    const environment = { HOME: home, LOGNAME: user, SHELL: '/bin/sh', PATH: '/usr/bin:/bin' };
+    return runScript(this, line, { cwd: this.home, name: '/bin/sh', shell: 'sh', environment }).output;
+  }
+
+  /** The session's exported variables (what a program it starts receives). */
+  exportedVars(): Record<string, string> {
+    return Object.fromEntries([...this.exported].filter((n) => n in this.vars).map((n) => [n, this.vars[n]]));
   }
 
   /**
@@ -2019,47 +2028,14 @@ export class Shell implements Game {
   }
 
   /**
-   * Runs a line for a script (script.ts: git hook, deployment script), from
-   * this place, without touching the current line: returns what it wrote,
-   * whether it succeeded (no error) and the place the script is in
-   * afterwards (cd).
+   * Runs a line as sh -c would (a service's ExecStart=, an Ansible shell
+   * task, an ssh remote command with shell 'bash'…), from this place,
+   * without the story's events and without touching the current line:
+   * returns what it wrote and its exit code (see script.ts).
    */
-  underCommand(line: string, cwd: string): { output: string; ok: boolean; code: number; cwd: string } {
-    const before = { cwd: this.cwd, errors: this.errors, last: this.last };
-    this.cwd = cwd;
-    try {
-      const { output, code } = this.tubeList(line);
-      return { output, ok: code === 0, code, cwd: this.cwd };
-    } finally {
-      this.cwd = before.cwd;
-      this.errors = before.errors;
-      this.last = before.last;
-    }
-  }
-
-  // A line run by cron or a script (sh -c): a command list too, without the story's events.
-  private tubeList(line: string): { output: string; code: number } {
-    const list = splitList(line);
-    if ('error' in list) {
-      this.errors = [];
-      this.status = 2;
-      return { output: list.token ? this.t('syntax-token', { token: list.token }) : this.t('syntax-end'), code: 2 };
-    }
-    const code = () => this.status ?? (this.errors.length ? 1 : 0);
-    if (list.items.length <= 1) {
-      const one = list.items[0]?.command ?? line;
-      const output = this.tube(one, split(one));
-      return { output, code: code() };
-    }
-    let status = 0;
-    const outputs: string[] = [];
-    for (const item of list.items) {
-      if (!listRuns(item.before, status)) continue;
-      outputs.push(this.tube(item.command, split(item.command)));
-      status = code();
-    }
-    this.status = status;
-    return { output: outputs.filter(Boolean).join('\n'), code: status };
+  underCommand(line: string, cwd: string, shell: 'sh' | 'bash' = 'sh'): { output: string; ok: boolean; code: number } {
+    const { output, code } = runScript(this, line, { cwd, name: shell, shell, environment: this.exportedVars() });
+    return { output, ok: code === 0, code };
   }
 
   /** Checks the story's events outside a command (e.g. on reconnection). */

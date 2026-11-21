@@ -151,7 +151,7 @@ function su(game: Shell, args: string[]): string {
           const before = game.who;
           game.who = user;
           try {
-            return game.runTask(command);
+            return game.runTask(command, true);
           } finally {
             game.who = before;
           }
@@ -167,7 +167,7 @@ function su(game: Shell, args: string[]): string {
     const before = game.who;
     game.who = user;
     try {
-      return game.runTask(command);
+      return game.runTask(command, true);
     } finally {
       game.who = before;
     }

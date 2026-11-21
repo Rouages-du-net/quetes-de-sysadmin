@@ -160,6 +160,14 @@ describe('Scripts: the interpreter, the session, the line endings', () => {
     expect(s.execute('unset -f greet; greet')).toContain('greet');
   });
 
+  it("cron lines: /bin/sh -c, with cron's environment; underCommand: sh -c", () => {
+    const s = shell();
+    expect(s.runTask('for i in 1 2; do echo "n$i"; done; echo "$PATH $SHELL"')).toBe('n1\nn2\n/usr/bin:/bin /bin/sh');
+    expect(s.runTask('nosuch')).toBe('/bin/sh: 1: nosuch: not found');
+    expect(s.underCommand('[ -f notes.txt ] && echo yes || echo no', '/home/you')).toEqual({ output: 'yes', ok: true, code: 0 });
+    expect(s.underCommand('exit 3', '/')).toEqual({ output: '', ok: false, code: 3 });
+  });
+
   it('a script stops at a syntax error, after running the lines before it', () => {
     const p = parseScript('echo a\nif true; then\necho b\nfi fi\necho c', false);
     expect(p.chunks.length).toBe(1);
