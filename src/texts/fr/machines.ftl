@@ -52,3 +52,4 @@ machine-gauge = jauge
 machine-saddle = selle
 machine-hub = moyeu
 machine-lane = couloir
+machine-chalk = craie

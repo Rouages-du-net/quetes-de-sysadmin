@@ -80,3 +80,4 @@ password-splash-2029 = splash-2029
 ## The Pool: the booking database's password, old (in the repository) and new (Kemal's)
 password-lane4-butterfly-17 = lane4-butterfly-17
 password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz
+password-chalkboard-29 = chalkboard-29

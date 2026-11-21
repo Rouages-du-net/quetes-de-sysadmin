@@ -92,6 +92,8 @@ export const MACHINES: Machine[] = [
   machine('gauge', '192.0.2.54', 'bike-share'),
   // The Pool: the swimming pool's Debian server, a single-node k3s cluster (the booking app).
   machine('lane', '192.0.2.62', 'pool'),
+  // The Staff Room: a primary school's print server (CUPS), with a leg on the staff and the pupils' networks.
+  machine('chalk', '192.0.2.64', 'staff-room'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

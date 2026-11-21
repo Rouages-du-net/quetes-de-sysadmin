@@ -73,3 +73,6 @@ story-bike-share = The Bike Share
     .summary = A neighbourhood bike share runs its rental app and its docking stations on two small Debian servers, and a third one, gauge, was supposed to watch them with Prometheus. Make it see everything, teach it when to raise the alarm, and make sure the right person hears about it, but not during the maintenance everybody knew about.
 story-pool = The Pool
     .summary = The town's swimming pool moved its booking app to a small Kubernetes cluster, k3s on a single Debian server, and nobody quite knows how it works yet. A release that won't start, a site the cluster doesn't serve, a password in the wrong place, a swim meet that runs out of memory: learn to read pods, Deployments, Services and Ingresses, Secrets, requests and limits, and to fix things in the manifests where they belong.
+
+story-staff-room = The Staff Room
+    .summary = A primary school prints everything, from registers to report cards, through a small Debian server running CUPS. Unblock Monday morning's queue, add a driverless printer for the staff only and an old one with its driver, then teach the server to forget what it shouldn't keep.

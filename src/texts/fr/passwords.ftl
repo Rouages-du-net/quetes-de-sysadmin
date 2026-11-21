@@ -80,3 +80,4 @@ password-splash-2029 = plouf-2029
 ## La Piscine : le mot de passe de la base de réservation, l'ancien (dans le dépôt) et le nouveau (celui de Kemal)
 password-lane4-butterfly-17 = couloir4-papillon-17
 password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz
+password-chalkboard-29 = tableau-noir-29

@@ -102,6 +102,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['dnsmasq'], [], ['/etc/dnsmasq.conf', '/etc/dnsmasq.d']],
   [['exportfs'], ['nfs'], ['/etc/exports']],
   [['testparm', 'smbpasswd', 'pdbedit'], ['samba'], ['/etc/samba']],
+  [['lpstat', 'lp', 'lpr', 'lpq', 'cancel', 'lprm', 'cupsenable', 'cupsdisable', 'cupsaccept', 'cupsreject', 'lpadmin', 'lpoptions', 'lpinfo', 'cupsctl', 'cupsd', 'driverless'], ['cups'], ['/etc/cups']],
   [['lynis'], ['lynis'], ['/etc/lynis']],
   [['promtool', 'prometheus'], ['prometheus'], ['/etc/prometheus']],
   [['amtool', 'alertmanager'], ['alertmanager'], ['/etc/alertmanager']],

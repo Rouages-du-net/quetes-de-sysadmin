@@ -137,3 +137,6 @@ wont-start
 front-desk
 locker-room
 deep-end
+stuck-queue
+new-printer
+paper-trail

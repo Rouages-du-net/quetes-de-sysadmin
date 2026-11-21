@@ -53,6 +53,7 @@ import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
+import { CUPS } from './cups';
 import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
 import { SED } from './sed';
@@ -189,6 +190,7 @@ function build(): Record<string, Command> {
     ...SYSLOG,
     ...NFS,
     ...SAMBA,
+    ...CUPS,
   ...GPG,
   ...IPTABLES,
     ...SED,

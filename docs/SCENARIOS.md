@@ -269,6 +269,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
 | `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
 | The k3s cluster (`k8s.ts`) | one node; kube-system as k3s 1.31 installs it (CoreDNS, local-path-provisioner, metrics-server, Traefik 2.11, ServiceLB's pods, Helm install pods shown); Deployments, ReplicaSets and Pods with deterministic hashes; the rolling update's arithmetic (maxSurge, maxUnavailable, the unhealthy old pods first), revisions, `minReadySeconds`, `progressDeadlineSeconds`; the kubelet's image pulls and their back-off (containerd's messages), `CreateContainerConfigError`, restarts with CrashLoopBackOff's back-off (10 s doubled to 5 min), `OOMKilled` (137) when an app's memory passes its limit, httpGet/tcpSocket/exec probes; environment variables and mounted files from ConfigMaps and Secrets read when the container starts; a Deployment's `kubernetes.io/change-cause` copied to its new ReplicaSet (and back by `rollout undo`); `kubectl top` from the apps' declared memory and CPU; requests against the node's allocatable (`FailedScheduling`); events deduplicated and kept an hour; Endpoints (ready pods) and EndpointSlices; Traefik routes an Ingress's host and path to a Service's port (404 otherwise; its log says why a route was skipped); time passes second by second (ten seconds a command) | many nodes, DaemonSets, Jobs, StatefulSets, PersistentVolumes and the local-path provisioner's work, RBAC, admission, network policies, pods deleted at once (no `Terminating` grace), no startup probes, no QoS eviction (a node's memory is never short: only limits kill), the kubelet doesn't refresh a running pod's mounted ConfigMaps and Secrets, Secrets stored in clear in the simulated etcd (no `--secrets-encryption`), Traefik's TLS (port 443 answers like 80) |
+| CUPS's scheduler (`cups.ts`, The Staff Room) | `cupsd.conf` read when cupsd starts (`cupsd -t` checks it): `LogLevel`, `MaxLogSize` (cupsd rotates a log into `NAME.O` when it next writes past it), `PreserveJobHistory`, `PreserveJobFiles` (`Yes`, `No`, seconds, `1w`, `1d`…), `ErrorPolicy`, `Port`/`Listen`, `<Location>` with `Order`, `Allow`, `Deny` (an address, a network in CIDR or netmask form, a partial address, `@LOCAL` from the server's interfaces, `@IF(name)`, `all`; the longest location wins; localhost always allowed), `<Policy default>` with its `<Limit>` blocks (`Require user @OWNER @SYSTEM`, groups) and `JobPrivateValues`; unknown directives logged and ignored; queues kept in memory and written to `printers.conf` on change and on stop (a hand edit made while cupsd runs is lost), read at start (a queue without its PPD prints raw); queue states (idle, processing, stopped with a message; accepting or not); jobs (pending, processing, completed, canceled, aborted) and their spool files `c00042` and `d00042-001`, a document removed by hand aborts its job ("Aborting job because it has no files."), a missing control file makes cupsd forget the job at start; printing at the device's pages per minute; a failed job's debug history dumped at `LogLevel warn` (`LogDebugHistory`); `error_log`, `access_log`, `page_log` lines; the web interface's pages on port 631 (home, printers, jobs, admin) from the machine itself; the story's staff and pupils' requests (one a minute) checked like `Print-Job`: the location, the queue shared, accepting, its allowed users | classes, filters and backends (a document "prints" at the printer's speed), authentication (a remote client's user name is trusted, as without `AuthType`; a local user is who they are), TLS and certificates, subscriptions and notifications, `MaxJobs`, quotas, `cups-browsed`'s own queues, `systemctl reload cups` rereads `cupsd.conf` like SIGHUP (uncertain on Debian's unit) |
+| CUPS's commands (`commands/cups.ts`) | `lpstat` (`-t -r -d -v -a -p -o -s -u -l -W`, a destination after an option, `%c` dates in the C locale, `lpstat.c`'s columns), `lp` (`-d -n -t -o -s`, standard input), `lpr` (`-P -# -T`), `lpq` (`-P -a`, Rank/Owner/Job/File(s)/Total Size), `cancel` (ids, `QUEUE-ID`, a destination, `-a`, `-u`, `-x` purging even a finished job), `lprm` (`-P`, `-`), `cupsenable`/`cupsdisable` (`-c`, `-r`), `cupsaccept`/`cupsreject` (`-r`), `lpadmin` (`-p -E -v -m everywhere\|raw\|MODEL -P -D -L -o printer-is-shared -o printer-error-policy -u allow:/deny: -d -x`; `-E` before `-p` is encryption; IPP Everywhere refused on a non-IPP URI or a printer without it; the deprecation warnings), `lpoptions` (`-d` in `~/.cups/lpoptions`, `-p`, `-l`, `-x`), `lpinfo` (`-v` with the backends and the devices found, `-m`, `--make-and-model`, `-l`), `cupsctl` (the settings; `--[no-]share-printers`, `--[no-]remote-admin`, `--[no-]remote-any`, `--[no-]user-cancel-any`, `--[no-]debug-logging`, `NAME=value`, `JobPrivateValues`/`JobPrivateAccess` in the default policy; it restarts cupsd), `cupsd -t`, `driverless` (the list, `--std-ipp-uris`, a PPD) | an operation the policy refuses answers `Forbidden` (`cancel: cancel-job failed: Forbidden`, `lpadmin: Forbidden`, `cupsenable: Operation failed: client-error-forbidden`) without asking for a password; `-h` and `-U` accepted and ignored (one local server); `lpoptions -l` lists two options; `lpstat` hides another user's name for a non-administrator by leaving it blank (uncertain); messages for an unknown model (`Unable to copy PPD file.`) or an unreachable printer approximated; `ipptool`, `lpmove`, `lpc`, `cupstestppd` not simulated |
 | `base64` | GNU coreutils' encoding and `-d`, `-w`; `echo -n` before it in a pipe leaves out the newline | `-i` without effect, no `--help` beyond the manual |
 | `sleep` | returns at once; in a story where time matters (The Bike Share), that much time passes for the whole story (at most a day) | waits |
 | sockets in IPv6 (`ss`, the apps) | `0.0.0.0` IPv4 only, `[::]` IPv6 only, `*` an IPv6 socket that also takes IPv4 (IPV6_V6ONLY off); `ss -4`/`-6`; `net.ipv6.bindv6only` read; nginx's sockets follow its loaded `listen` lines (`[::]:80`, `ipv6only=off`) | every socket option |
@@ -3678,6 +3680,124 @@ rollout undo` after that change (it goes back one revision: 2.4.0 again),
 deleting the pods, a limit as big as the node and requests the node can't
 hold (`Pending`, `FailedScheduling: 0/1 nodes are available: 1
 Insufficient memory`), the limits removed, a limit below the peak.
+
+## Story 37: The Staff Room (three chapters)
+
+A primary school (some 300 pupils, 25 staff) prints through `chalk`
+(`craie` in French, 192.0.2.64), a small Debian 13 server in the office
+cupboard running CUPS 2.4. It has a leg on each of the school's networks:
+`eth0` on the servers' network (192.0.2.0/24), `eth1` on the staff VLAN
+(198.51.100.0/24: the classrooms' PCs and Macs), `eth2` on the pupils'
+VLAN (203.0.113.0/24: the library's Chromebooks), because the library's
+printer is for pupils too; so `@LOCAL`, in `cupsd.conf`, means all three.
+The printers: the office laser and the library's colour laser (IPP
+Everywhere), then the staff room's new MFP (IPP Everywhere) and the
+reception's old HP LaserJet 4250 (raw port 9100 only). Ines runs the
+office, Joe is the caretaker, Sven, Amara, Kofi, Aiko and Leila teach; the
+school's data protection officer appears in chapter 3. Each command, a
+minute passes: the printers print, and one of the staff's or pupils'
+requests arrives (in `access_log`). The player is in the `lpadmin` group
+(CUPS's `SystemGroup`). Engine: `src/engine/cups.ts` (the scheduler, its
+configuration, queues, jobs, spool and logs), `commands/cups.ts` (`lpstat`,
+`lp`, `lpr`, `lpq`, `cancel`, `lprm`, `cupsenable`, `cupsdisable`,
+`cupsaccept`, `cupsreject`, `lpadmin`, `lpoptions`, `lpinfo`, `cupsctl`,
+`cupsd -t`, `driverless`, the web pages on port 631), the package
+`printer-driver-hpcups` in `commands/apt.ts` and `packages.ts`. The story's
+machine is built in `chapters/staff-room.ts`. It opens after "The Laptops"
+(The Photo Club: sharing on a small network, Samba's own printing
+sections) and "The Full Disk" (the disk, the logs, logrotate), and extends
+the production path (chapter 2 the network path).
+
+### Chapter 1 — The Stuck Queue (done)
+
+Monday, 8:10, nothing prints. On Friday at 16:00 the office laser jammed
+and Joe switched it off; at 16:05 Sven sent the yearbook proofs at full
+resolution, 900 pages and 3.6 GB. The backend couldn't connect, and with
+`ErrorPolicy stop-printer` cupsd stopped the queue; Monday's jobs pile up
+behind the yearbook and the spool fills `/var` (90 %).
+
+| Step | Command learnt |
+|---|---|
+| The picture | `lpstat -t`: `printer office disabled since … -` and its reason |
+| Why | `tail /var/log/cups/error_log`: the failed job's debug history ("Unable to connect to printer; will retry in 30 seconds...", "Printer stopped due to backend errors") |
+| Which job | `lpq -P office`, `lpstat -o`: job 117 at the head; `df -h`, `sudo ls -l /var/spool/cups` (`c00117`, `d00117-001`) |
+| Only that one | `cancel 117`; its document stays (`PreserveJobFiles`): `cancel -x 117` |
+| Printing again | `cupsenable office`, `lpstat -p`, `lpq` |
+
+Goal checked on the state: the office queue enabled and accepting, job 117
+cancelled (or aborted) and its document gone from the spool, each
+colleague's document queued or printed, at least one printed. Several
+solutions: `cancel -x 117`, or `cancel`/`lprm` then `cancel -x`; enabled
+before or after (900 pages start coming out); `cupsenable`, or cupsd
+stopped, `printers.conf` edited, cupsd started. Expected traps: `cancel -a`
+(everyone's jobs: the colleagues send them again), `systemctl restart cups`
+(the queue stays stopped: `State Stopped` in `printers.conf`), `rm` in the
+spool (cupsd still counts on the job, which then aborts), `printers.conf`
+edited while cupsd runs (written over when it stops).
+
+### Chapter 2 — The New Printer (done)
+
+The staff room's new MFP is plugged in on the staff VLAN; the reception
+wants the old LaserJet 4250 back. `cupsd.conf` shares everything with
+`Allow @LOCAL`, which includes the pupils' VLAN: a new queue (shared by
+default, `DefaultShared`) is reachable from the library's Chromebooks, and
+one prints 30 pages in the staff room.
+
+| Step | Command learnt |
+|---|---|
+| What is there | `driverless`, `sudo lpinfo -v` (`dnssd://…`, `socket://198.51.100.22`) |
+| Driverless | `lpadmin -p staffroom -E -v ipp://mfp-staffroom.internal/ipp/print -m everywhere` (`-E` after `-p`) |
+| The default | `lpadmin -d staffroom` (`lpoptions -d` is only your own) |
+| Who gets in | `tail /var/log/cups/access_log`, `ip -br addr`, `<Location />` and `@LOCAL` |
+| Staff only | `<Location /printers/staffroom>` `Order allow,deny` `Allow 198.51.100.0/24` (or `@IF(eth1)`), `cupsd -t`, `systemctl restart cups`; or `lpadmin -p staffroom -u allow:@staff` |
+| The old one | `-m everywhere` refused ("requires an IPP connection"); `apt update`, `apt install printer-driver-hpcups`, `lpinfo -m \| grep 4250`, `lpadmin -p reception -E -v socket://laserjet-reception.internal:9100 -m drv:///hpcups.drv/hp-laserjet_4250.ppd` |
+
+Goal checked on the state: a driverless queue for the MFP, enabled,
+accepting, the server's default; a staff PC and a staff Mac may print on
+it, a Chromebook may not, and still prints on the library's printer; no
+location open to all; a queue for the LaserJet with a PPD, enabled and
+accepting; the running configuration is the file's. Several solutions: a
+location by network, by interface or with a `Deny`, or `-u allow:@staff`;
+any queue names; HP's PPD or a generic one. Expected traps: `-E` before
+`-p` (a disabled queue), `cupsctl --remote-any` (`Allow all`),
+`printer-is-shared=false` (the staff are refused too), `lpoptions -d`, `-m
+raw` (deprecated, and the LaserJet doesn't read PDF), `printers.conf`
+edited by hand, `cupsd.conf` changed without a restart, the whole server
+closed (the library's Chromebooks lose their printer).
+
+### Chapter 3 — The Paper Trail (done)
+
+In November Darius, the previous admin, debugged the MFP with `LogLevel
+debug2` and `MaxLogSize 0`, removed logrotate's `cups-daemon` file (its
+`prerotate` stops cupsd at midnight) and never put anything back: a 3.9 GB
+`error_log` with every job's name in it, `/var` at 85 %. CUPS also keeps
+every job and document of the term (`PreserveJobHistory Yes`,
+`PreserveJobFiles Yes`), shows titles to anyone (`JobPrivateValues none`),
+lets anyone cancel anything (no `Require` in the `Cancel-Job` limit), and
+serves `/admin` to the school (`Allow @LOCAL`). The titles name pupils
+(report cards, support plans, medical forms: invented names); the data
+protection officer asks for a week of history and no documents.
+
+| Step | Command learnt |
+|---|---|
+| What fills `/var` | `df -h /var`, `sudo du -sh /var/log/cups/*`, `sudo tail /var/log/cups/error_log` (`job-name="…"`) |
+| What CUPS keeps | `lpstat -W completed -o`, `sudo ls /var/spool/cups`, `cupsctl` |
+| The logs | `cupsctl --no-debug-logging`, `cupsctl MaxLogSize=1m` (or logrotate's file back), the old log removed (`error_log.O`) or `truncate -s 0` |
+| Forgetting | `cupsctl PreserveJobHistory=1w PreserveJobFiles=No` (purged at the restart) |
+| Privacy and policy | `cupsctl JobPrivateValues=default`, `cupsctl --no-user-cancel-any` |
+| Administration | `cupsctl --no-remote-admin` |
+
+Goal checked on the state, with cupsd running the file's configuration:
+`LogLevel` warn, error, notice or info; a rotation (`MaxLogSize` between 1
+byte and 100m, or a logrotate file for `/var/log/cups`); the logs under 50
+MB; a history of at most 7 days and documents at most a day, the older ones
+forgotten; `JobPrivateValues` hiding names and owners; `Cancel-Job` for the
+owner and administrators only; `/admin` from localhost only; the staff and
+the library's Chromebooks still printing. Several solutions: `cupsctl`, or
+`nano` then `cupsd -t` and a restart. Expected traps: `cupsd.conf` changed
+without a restart, a broken file (cupsd doesn't start: `Syntax error on
+line N`), the big log rotated into `error_log.O` (it still takes the
+space), `cancel -a` (today's jobs), the whole server closed.
 
 ## Ideas for later
 

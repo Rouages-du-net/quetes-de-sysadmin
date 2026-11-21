@@ -135,6 +135,7 @@ export const ARCHIVE: Record<string, BasePackage> = {
   zip: { version: '3.0-15', architecture: 'amd64', section: 'utils', priority: 'optional', description: 'Archiver for .zip files', size: 610, files: bin('zip', 'zipcloak', 'zipnote', 'zipsplit'), homepage: 'https://infozip.sourceforge.net/Zip.html' },
   unzip: { version: '6.0-29', architecture: 'amd64', section: 'utils', priority: 'optional', description: 'De-archiver for .zip files', size: 389, files: bin('unzip', 'funzip', 'unzipsfx', 'zipinfo'), homepage: 'https://infozip.sourceforge.net/UnZip.html' },
   dos2unix: { version: '7.5.2-1', architecture: 'amd64', section: 'text', priority: 'optional', description: 'convert text file line endings between CRLF and LF', size: 1946, files: bin('dos2unix', 'unix2dos', 'mac2unix'), homepage: 'https://waterlan.home.xs4all.nl/dos2unix.html' },
+  'printer-driver-hpcups': { version: '3.25.2+dfsg0-1', architecture: 'amd64', section: 'text', priority: 'optional', description: 'HP Linux Printing and Imaging - CUPS Raster driver (hpcups)', size: 2154, files: ['/usr/lib/cups/filter/hpcups', '/usr/share/cups/drv/hpcups.drv'], homepage: 'https://developers.hp.com/hp-linux-imaging-and-printing' },
 };
 
 /** A package the game knows (installed or not): base, archive. */

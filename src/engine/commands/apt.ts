@@ -219,6 +219,18 @@ export const PACKAGES: Record<string, Package> = {
     put: (game) => put(game, '/usr/sbin', d({ 'mount.cifs': f('', { owner: 'root', mode: 'rwxr-xr-x', size: 59_464 }) }, undefined, root)),
   },
   smbclient: { version: '2:4.22.3+dfsg-4', architecture: 'amd64', download: 488, installed: 1680 },
+  // HP's CUPS driver (HPLIP): its PPDs for lpinfo -m (see cups.ts).
+  'printer-driver-hpcups': {
+    version: '3.25.2+dfsg0-1',
+    architecture: 'amd64',
+    download: 591,
+    installed: 2154,
+    suggestions: ['hplip'],
+    put: (game) => {
+      put(game, '/usr/share/cups/drv', d({ 'hpcups.drv': f('// HP Linux Imaging and Printing (HPLIP) driver information file', { owner: 'root' }) }, undefined, root));
+      put(game, '/usr/lib/cups/filter', d({ hpcups: f('', { owner: 'root', mode: 'rwxr-xr-x', size: 412_736 }) }, undefined, root));
+    },
+  },
   dos2unix: { version: '7.5.2-1', architecture: 'amd64', download: 497, installed: 1946 },
   // zip and unzip: not installed by default on Debian (priority optional).
   zip: { version: '3.0-15', architecture: 'amd64', download: 234, installed: 610 },

@@ -626,6 +626,16 @@ them safely.
   -p`); memory requests and limits under a swim meet's load (OOMKilled,
   `kubectl top`, a leaky release rolled back, `FailedScheduling`).
 
+- [x] **A print server** (CUPS): a timeless chore. A stuck queue and its
+  runaway job, a driverless queue and an old printer's PPD, sharing with
+  one network only, logs and job history that keep too much. Done: story
+  37, "The Staff Room" (`cups.ts`: `cupsd.conf` with its locations and
+  policy, `printers.conf` written by cupsd, jobs and the spool, the logs
+  and their rotation, the network's printers and clients; `lpstat`, `lp`,
+  `lpr`, `lpq`, `cancel`, `lprm`, `cupsenable`, `cupsdisable`,
+  `cupsaccept`, `cupsreject`, `lpadmin`, `lpoptions`, `lpinfo`, `cupsctl`,
+  `cupsd -t`, `driverless`; `printer-driver-hpcups`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

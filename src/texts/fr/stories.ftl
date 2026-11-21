@@ -73,3 +73,6 @@ story-bike-share = Les Vélos partagés
     .summary = Une coopérative de vélos partagés fait tourner son appli de location et ses stations sur deux petits serveurs Debian, et un troisième, jauge, devait les surveiller avec Prometheus. Faites-lui tout voir, apprenez-lui quand donner l'alerte, et que la bonne personne l'entende, mais pas pendant la maintenance que tout le monde connaissait.
 story-pool = La Piscine
     .summary = La piscine municipale a déménagé son appli de réservation sur un petit cluster Kubernetes, k3s sur un seul serveur Debian, et personne ne sait encore bien comment il marche. Une version qui ne démarre pas, un site que le cluster ne sert pas, un mot de passe au mauvais endroit, un meeting de natation à court de mémoire : apprenez à lire les pods, les Deployments, les Services et les Ingress, les Secrets, les requests et les limits, et à réparer là où il faut, dans les manifestes.
+
+story-staff-room = La Salle des profs
+    .summary = Une école primaire imprime tout, des appels aux bulletins, par un petit serveur Debian qui fait tourner CUPS. Débloquez la file du lundi matin, ajoutez une imprimante sans pilote pour le personnel seulement et une ancienne avec son pilote, puis apprenez au serveur à oublier ce qu'il ne devrait pas garder.
