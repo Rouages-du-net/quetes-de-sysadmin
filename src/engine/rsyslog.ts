@@ -394,6 +394,9 @@ export function route(j: Game, c: Config, m: Message): string[] {
 }
 
 export function processMessage(j: Game, m: Message) {
+  // A machine without rsyslog: journald keeps the message (logger writes to /dev/log).
+  const sd = systemd(j);
+  if (!rsyslog(j) && sd) return void writeLog(sd, '', m.program, 0, m.text, Math.max(0, SEVERITIES.indexOf(m.severity)), false);
   const c = rsyslog(j)?.config;
   if (!c || systemd(j)?.services.rsyslog?.state !== 'active') return;
   for (const path of route(j, c, m)) append(j, path, line(j, m));

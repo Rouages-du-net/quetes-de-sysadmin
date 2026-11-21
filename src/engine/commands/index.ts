@@ -54,6 +54,7 @@ import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
 import { CUPS } from './cups';
+import { OPENSSL } from './openssl';
 import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
 import { SED } from './sed';
@@ -191,6 +192,7 @@ function build(): Record<string, Command> {
     ...NFS,
     ...SAMBA,
     ...CUPS,
+    ...OPENSSL,
   ...GPG,
   ...IPTABLES,
     ...SED,

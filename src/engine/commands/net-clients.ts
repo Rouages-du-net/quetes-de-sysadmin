@@ -25,10 +25,13 @@ interface WgetOptions {
   spider: boolean;
   url: string | null;
   headers: string[];
+  // --no-check-certificate, --ca-certificate=FILE (passed on to curl).
+  insecure: boolean;
+  caFile: string | null;
 }
 
 function parseWget(args: string[]): WgetOptions | string {
-  const o: WgetOptions = { output: null, quiet: false, spider: false, url: null, headers: [] };
+  const o: WgetOptions = { output: null, quiet: false, spider: false, url: null, headers: [], insecure: false, caFile: null };
   for (let k = 0; k < args.length; k++) {
     const a = args[k];
     if (a === '--spider') o.spider = true;
@@ -41,7 +44,10 @@ function parseWget(args: string[]): WgetOptions | string {
       if (a.includes('q')) o.quiet = true;
       const rest = a.slice(a.indexOf('O') + 1);
       o.output = rest || args[++k] || '';
-    } else if (a === '--no-check-certificate' || a === '-nv' || a === '--no-verbose' || a === '-c' || a === '--continue') continue;
+    } else if (a === '--no-check-certificate') o.insecure = true;
+    else if (a.startsWith('--ca-certificate=')) o.caFile = a.slice(17);
+    else if (a === '--ca-certificate') o.caFile = args[++k] ?? '';
+    else if (a === '-nv' || a === '--no-verbose' || a === '-c' || a === '--continue') continue;
     else if (a.startsWith('--')) return `wget: unrecognized option '${a}'`;
     else if (a.startsWith('-') && a.length > 1) return `wget: invalid option -- '${a[1]}'`;
     else o.url = a;
@@ -62,7 +68,8 @@ function wget({ args, game, last }: Context): string {
   const log: string[] = [`--${stamp(now)}--  ${url}`];
   // The request itself: the game's curl, with its headers.
   const before = game.errorCount();
-  const raw = game.run(['curl', '-s', '-i', ...o.headers.flatMap((h) => ['-H', h]), url], null, false);
+  delete game.state.lastPeerIssuer;
+  const raw = game.run(['curl', '-sS', '-i', ...(o.insecure ? ['-k'] : []), ...(o.caFile ? ['--cacert', o.caFile] : []), ...o.headers.flatMap((h) => ['-H', h]), url], null, false);
   const all = game.recoverErrors();
   for (const e of all.slice(0, before)) game.error(e);
   const errors = all.slice(before);
@@ -80,7 +87,9 @@ function wget({ args, game, last }: Context): string {
   if (!/^\d+(\.\d+){3}$/.test(host)) log.push(`Resolving ${host} (${host})... ${address}`);
   if (/\(7\)|\(52\)|\(35\)|\(60\)/.test(curlError) || (!raw && curlError)) {
     if (/\(60\)|\(35\)/.test(curlError)) {
-      log.push(`Connecting to ${host} (${host})|${address}|:${port}... connected.`, `ERROR: cannot verify ${host}'s certificate, issued by ${LEFT}CN=Unknown${RIGHT}:`, '  Unable to locally verify the issuer\'s authority.', `To connect to ${host} insecurely, use \`--no-check-certificate'.`);
+      // The issuer, as GnuTLS writes it (RFC 4514: the most specific part first).
+      const issuer = typeof game.state.lastPeerIssuer === 'string' ? (game.state.lastPeerIssuer as string).split(/,\s*(?=[A-Za-z]+=)/).reverse().join(',') : 'CN=Unknown';
+      log.push(`Connecting to ${host} (${host})|${address}|:${port}... connected.`, `ERROR: cannot verify ${host}'s certificate, issued by ${LEFT}${issuer}${RIGHT}:`, '  Unable to locally verify the issuer\'s authority.', `To connect to ${host} insecurely, use \`--no-check-certificate'.`);
       return finish(5);
     }
     log.push(`Connecting to ${host} (${host})|${address}|:${port}... failed: Connection refused.`);

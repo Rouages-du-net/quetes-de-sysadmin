@@ -93,6 +93,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['restic'], ['restic'], []],
   [['rsnapshot'], [], ['/etc/rsnapshot.conf']],
   [['certbot'], [], ['/etc/letsencrypt']],
+  [['update-ca-certificates'], [], ['/etc/ca-certificates.conf']],
   [['smartctl', 'mdadm', 'sfdisk', 'grub-install'], ['storage'], []],
   [['pvs', 'vgs', 'lvs', 'pvcreate', 'pvremove', 'vgextend', 'vgreduce', 'pvmove', 'lvextend'], ['storage.lvm'], ['/etc/lvm']],
   [['cryptsetup', 'cryptdisks_start', 'cryptdisks_stop'], ['storage.luks'], ['/etc/crypttab']],

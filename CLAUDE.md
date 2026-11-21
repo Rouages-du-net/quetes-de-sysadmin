@@ -101,8 +101,8 @@ presents them for people.
   authority that DNS and the firewall can block, JSON logs, what Caddy
   answers to `curl`); `caddy` in `commands/caddy.ts`.
 - `src/engine/tls.ts`: certificates (PEM files the game can read);
-  `certbot` and `openssl` in `commands/certbot.ts` (the HTTP-01 challenge
-  goes through the simulated nginx).
+  `certbot` in `commands/certbot.ts` (the HTTP-01 challenge goes through
+  the simulated nginx), `openssl` in `commands/openssl.ts` (see `pki.ts`).
 - `src/engine/dns.ts`: DNS (BIND zones, primary, secondary, resolver
   cache); `dig`, `host`, `named-checkzone`, `rndc` in `commands/bind.ts`.
 - `src/engine/docker.ts`: a machine's Docker (images, containers, layer,
@@ -645,6 +645,29 @@ presents them for people.
   printers, `cupsdConf()`, the staff's and pupils' requests each minute in
   `passTime`); `stuck-queue.ts`, `new-printer.ts`, `paper-trail.ts`.
   Tests: `tests/staff-room.test.ts`.
+- `src/engine/pki.ts`: an internal certificate authority's world (keys
+  derived, never random: `KeyInfo`, `keyPem`, `readKey`; requests
+  `readCsr`; certificates with subjectAltName, basicConstraints, keyUsage,
+  extendedKeyUsage, the signer's key, in `tls.ts`'s `Certificate`; CRLs
+  `readCrls`; `openssl.cnf` sections `readConf`; the `openssl ca` database
+  `readIndex`/`writeIndex`; `verify()`: OpenSSL's chain building and checks,
+  its error numbers `VERIFY_ERRORS`; the trust store `trustStore`,
+  `/etc/ssl/certs/ca-certificates.crt`); `commands/openssl.ts`: `openssl`
+  (`genpkey`, `genrsa`, `ecparam`, `pkey`, `rsa`, `req`, `x509` with
+  `-req`, `verify`, `s_client`, `ca`, `crl`), `update-ca-certificates`,
+  curl on a story with an internal PKI (`pkiNet`: which machine answers
+  for a name, `pkiCurl`, `tlsRequest`, `servedOk`); nginx's client
+  certificates (`ssl_verify_client`, `ssl_client_certificate`,
+  `ssl_verify_depth`, `ssl_crl`) and its key check in `nginx.ts`;
+  `logger` writes to the journal on a machine without rsyslog.
+  `chapters/airwaves.ts`: what the chapters of "The Airwaves" share
+  (`mast`, the community radio federation's server: its CA in `/srv/ca`
+  (root, then the issuing CA), nginx's sites, the trust store
+  `trustFiles`, Mateo's monitoring; `booth`, the studio PC, an internal
+  host built by `boothHost()`; the uploaders on `contrib` each minute in
+  `passTime`); `expiry-date.ts`, `chain-of-trust.ts`, `stolen-laptop.ts`
+  (an expiry watch found in cron or timers and run as it will run:
+  `expiryWatch`). Tests: `tests/airwaves.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

@@ -87,3 +87,4 @@ machine-gauge-motd = Les Vélos partagés — le serveur de supervision de la co
 machine-lane-motd = La Piscine — le serveur Debian de la piscine, un cluster k3s à un seul nœud (l'appli de réservation, namespace swim).
 
 machine-chalk-motd = La Salle des profs — le serveur d'impression de l'école primaire (CUPS) : le secrétariat, la bibliothèque, la salle des profs. Merci de ne pas imprimer l'album de l'école deux fois.
+machine-mast-motd = Les Ondes — le serveur Debian de la fédération de radios associatives : l'intranet, les archives, le portail des contributions, et l'autorité de certification de la fédération dans /srv/ca.

@@ -94,6 +94,8 @@ export const MACHINES: Machine[] = [
   machine('lane', '192.0.2.62', 'pool'),
   // The Staff Room: a primary school's print server (CUPS), with a leg on the staff and the pupils' networks.
   machine('chalk', '192.0.2.64', 'staff-room'),
+  // The Airwaves: the community radio federation's Debian server, its internal certificate authority and its HTTPS services.
+  machine('mast', '192.0.2.72', 'airwaves'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

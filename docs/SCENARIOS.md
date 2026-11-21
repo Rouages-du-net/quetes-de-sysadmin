@@ -278,7 +278,10 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `tar` | `-c`, `-t`, `-x`, `-z`, `-v` (also on extraction), `-f`, `-C`, and the old style without a dash (`tar czf`, `tar xvf`); lists files only; a truncated archive stops at the cut (messages close to GNU tar); root keeps owners and rights | also `--strip-components`, `-p`, `-j`/`-J`, `tar -tv`'s long listing, the directories in lists, multi-volume archives… |
 | `ssh-keygen` | `-R`, `-F`, `-l -f`; creates ed25519 keys only (`-t`, `-C`, `-N`, `-f`), fake but well-formed, with their randomart | every key type, conversion, certificates… |
 | `certbot` | a single certificate, the chapter's; `certificates`, `renew`, `certonly`, `reconfigure`; simulated authority (the HTTP-01 challenge goes through the simulated nginx); the files in `live/` are rewritten (no links to `archive/`); the nginx plugin doesn't change the configuration | several certificates, a real ACME authority, symbolic links, DNS challenges |
-| `openssl` | `x509` (`-dates`, `-subject`, `-issuer`, `-ext`, `-checkend`) and `s_client -connect` (returns at once); the PEM contents are specific to the game | hundreds of subcommands; real X.509; `s_client` waits for input |
+| `openssl` (`commands/openssl.ts`, `pki.ts`) | OpenSSL 3.5's subcommands for a small authority: `genpkey` (`-algorithm RSA\|EC`, `-pkeyopt rsa_keygen_bits:N`/`ec_paramgen_curve:P-256\|P-384`), `genrsa`, `ecparam -genkey`, `pkey` (`-pubout`, `-text`), `rsa -modulus`; `req` (`-new -key`, `-newkey rsa:N\|ec`, `-subj`, `-addext`, `-x509` with the default configuration's `v3_ca`, `-days` (30 by default), `-config`/`-extensions`, the questions of the default configuration without `-subj`, `-in … -noout -text`, `-verify`); `x509` (`-text`, `-dates`, `-subject`, `-issuer`, `-serial`, `-ext`, `-checkend` with its exit code, `-fingerprint` SHA-1/SHA-256, `-modulus`, `-pubkey`, `-hash`; printed in the order of the line; `-req` with `-CA`/`-CAkey`, the `.srl` file and `-CAcreateserial`, `-set_serial`, `-extfile`/`-extensions`, `-copy_extensions none\|copy\|copyall`, `-signkey`, "Certificate request self-signature ok"); `verify` (`-CAfile` plus the system store, `-untrusted`, `-crl_check(_all)`, `-CRLfile`, `-verify_hostname`, `-purpose`, `-partial_chain`, `-show_chain`; exit code 2); `s_client` against the story's services (the chain built from the top, each verify error, `-showcerts`, `-CAfile`, `-cert`/`-key`, the client CA names); `ca` with an `openssl.cnf` (`$dir`, `index.txt`, `index.txt.attr`, `serial`, `crlnumber`, `newcerts/`, `copy_extensions`, `x509_extensions`; signing with its two questions or `-batch`, `-revoke` with `-crl_reason`, `-gencrl` with `default_crl_days`/`-crldays`, `-status`); `crl` (`-text`, `-nextupdate`, `-CAfile`); OpenSSL's messages and X509 error numbers (2, 3, 9–12, 18–26, 32, 62); keys derived, never random; private keys created 0600 | no real cryptography (a certificate's PEM holds the game's description; a signature is the issuer's key identifier; fingerprints are SHA-1/SHA-256 of that PEM); no passphrase on keys (`-aes256`, a `-newkey` without `-noenc`: the game says so); a subset of the extensions (subjectAltName DNS/IP, basicConstraints, keyUsage, extendedKeyUsage, the key identifiers always added); no `ocsp`, `pkcs12`, `dgst`, `enc`; `s_client` returns at once; no policy matching beyond `commonName = supplied` |
+| `update-ca-certificates` (`commands/openssl.ts`) | `/etc/ca-certificates.conf` and every `*.crt` under `/usr/local/share/ca-certificates` (a `.pem` ignored, a file with several certificates or none warned by rehash) become links in `/etc/ssl/certs` (`name.pem`, the `hash.0` links) and the bundle `ca-certificates.crt` that curl, wget and openssl read; "N added, M removed; done."; `--fresh`; root only | the store holds four of Mozilla's roots instead of about 150; the hooks of `/etc/ca-certificates/update.d` are not run; the Java store is not updated |
+| curl and wget on an internal PKI | the story's services reached by name from its machines (`pkiNet`); the chain checked against the trust store or `--cacert` (curl allows a partial chain, as since 7.68), then the name (the CN only without a DNS subjectAltName, as curl does): curl's error 60 messages; `-k`, `--cert`/`--key` (error 58), `-v`'s TLS lines, `-f`, `-o`, `-w`; wget's "cannot verify … issued by" with the real issuer, `--no-check-certificate`, `--ca-certificate` | no `--capath` reading, no OCSP, no TLS versions or ciphers to choose |
+| nginx's client certificates | `ssl_client_certificate` (or `ssl_trusted_certificate`), `ssl_verify_client on\|optional\|optional_no_ca`, `ssl_verify_depth` (1 by default), `ssl_crl`, read on loading; OpenSSL's check of the client's chain with the CRLs of the whole chain (the root's CRL too, "unable to get certificate CRL"); the 400 pages "No required SSL certificate was sent" and "The SSL certificate error", the reason in `error.log` at level info; a certificate whose key is not `ssl_certificate_key`'s refused on loading ("key values mismatch") | `$ssl_client_*` variables, `ssl_ocsp`, `ssl_password_file` |
 | `curl https://` | checks the dates and names of the presented certificate (error 60), `-k` to skip | also checks the full chain of trust, OCSP… |
 | clock | Paris time: CET in winter, CEST in summer (unless the chapter sets a time zone) | the machine's time zone |
 | `restic` | `-r` and `--password-file`/`-p`, or the environment (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RESTIC_PASSWORD`), or the password typed; `init`, `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check` (`--read-data`), `stats`, `key list/add/remove/passwd` (`--new-password-file`, `--user`, `--host`); each key's password opens the repository, the current key can't be removed; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `tag`, `--repository-file`, `--password-command`, remote repositories (sftp, S3, rest-server) |
@@ -3798,6 +3801,110 @@ the library's Chromebooks still printing. Several solutions: `cupsctl`, or
 without a restart, a broken file (cupsd doesn't start: `Syntax error on
 line N`), the big log rotated into `error_log.O` (it still takes the
 space), `cancel -a` (today's jobs), the whole server closed.
+
+## Story 38: The Airwaves (three chapters)
+
+Five community radio stations run their common services from `mast`
+(`pylone` in French, 192.0.2.72), a Debian 13 server of the federation: an
+intranet with the schedule and the rota (`intranet` and `board`), the
+shared programme archive, and the portal where reporters upload their
+recordings (`contrib`), all under `airwaves.internal`, served by nginx. No
+public authority can certify `.internal` names: two years ago Kwame, the
+volunteer who looked after everything, set up an internal certificate
+authority with openssl in `/srv/ca` (a root, then in chapter 2 an issuing
+CA under it run with `openssl ca`). Adaeze coordinates the federation;
+Mateo is the technician of the Riverside station, whose new studio PC
+`booth` (`cabine`, 192.0.2.73) is an internal host in chapter 2; Amina,
+Lindiwe and Ravi report from the field. Each command, a minute passes
+(cron, timers, and in chapter 3 the uploaders connecting to `contrib`).
+Engine: `src/engine/pki.ts` (keys, requests, certificates and their
+extensions, CRLs, the `openssl ca` database, OpenSSL's chain building and
+checks, the trust store), `commands/openssl.ts` (`openssl`'s subcommands,
+`update-ca-certificates`, curl on an internal PKI), nginx's client
+certificates and key check in `nginx.ts`, wget's TLS options in
+`commands/net-clients.ts`, `logger` into the journal on a machine without
+rsyslog. The story's machine is built in `chapters/airwaves.ts`. It opens
+after "The Padlock" (Caddy's automatic HTTPS) and "The Restore Drill" (the
+keys and secrets of The Pantry), and extends the security and web paths.
+
+### Chapter 1 — The Expiry Date (done)
+
+Monday 4 March 2030, every station's browser warns about the intranet. Its
+certificate, signed by the root in 2028 the way Kwame's notes show (the CN
+only, 825 days), expired on Sunday night; and `board.airwaves.internal`
+was never covered. The root's private key is readable by every account.
+
+| Step | Command learnt |
+|---|---|
+| What the server presents | `openssl s_client -connect intranet.airwaves.internal:443`, `openssl x509 -noout -dates`, `-checkend 0` |
+| What it covers | `openssl x509 -noout -text`: no subjectAltName |
+| The authority | `cat /srv/ca/README.txt /srv/ca/POLICY.txt`, `ls -l /srv/ca/private`, `sudo chmod 600`/`700` |
+| A request | `openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256`, `openssl req -new -key … -subj /CN=… -addext "subjectAltName=DNS:…,DNS:…"` |
+| Signed by the root | `sudo openssl x509 -req -CA /srv/ca/ca.crt -CAkey /srv/ca/private/ca.key -days 365 -copy_extensions copy` (or `-extfile`) |
+| Installed | `openssl verify -CAfile`, `x509 -pubkey`/`pkey -pubout` with `sha256sum`, `sudo nginx -t` ("key values mismatch"), `systemctl reload nginx`, `curl --cacert /srv/ca/ca.crt https://board.airwaves.internal/` |
+
+Goal checked on the state: nginx serves, for both names, a certificate
+issued by Airwaves Root CA, valid now, whose subjectAltName lists both
+names, not a CA, valid at most 398 days; the root's key still there and
+unreadable by the player's account. Several solutions: a new key or the old
+one, `-addext` with `-copy_extensions copy` or `-extfile` (with or without
+`-extensions`), any file name nginx points to. Expected traps: `curl -k`, a
+self-signed certificate (`req -x509`), a certificate without subjectAltName
+(x509 -req drops the request's extensions), 825 days, the default 30 days,
+a CA:TRUE leaf, nginx not reloaded, a key that doesn't match.
+
+### Chapter 2 — The Chain of Trust (done)
+
+Monday 18 March. Kwame set up `Airwaves Issuing CA 1` under the root and
+signed the archive's certificate with it; nginx sends that certificate
+alone. Mateo's monitoring (`/usr/local/bin/check-sites` every five minutes
+from root's crontab) has been red since he wrote it, and booth refuses both
+sites: neither machine trusts the root (Kwame installed it by hand on the
+stations' PCs only).
+
+| Step | Command learnt |
+|---|---|
+| Red | `tail /var/log/check-sites.log`, `curl https://archive.airwaves.internal/` (60, "unable to get local issuer certificate") |
+| Trust the root | `sudo cp /srv/ca/ca.crt /usr/local/share/ca-certificates/airwaves-root.crt`, `sudo update-ca-certificates` |
+| Still red | `openssl s_client -showcerts` (one certificate, errors 20 and 21), `openssl verify -untrusted /srv/ca/issuing/issuing.crt` |
+| The chain | `cat archive.crt issuing.crt > archive-chain.crt`, `ssl_certificate`, `nginx -t`, reload |
+| booth | `scp /srv/ca/ca.crt booth:`, `ssh booth`, the same two commands, `curl`, `wget` |
+
+Goal checked on the state: mast's and booth's stores hold the root; the
+archive's chain leads to the root with what nginx sends (strict, no partial
+chain); both sites verify from both machines; no `-k` in the monitoring; no
+key of the authority on booth. Expected traps: `-k` in the script, a
+`.pem` in `/usr/local/share/ca-certificates` (ignored), the CA's key copied
+to booth, the intermediate trusted on clients instead of served, the root
+in the served chain (accepted: useless).
+
+### Chapter 3 — The Stolen Laptop (done)
+
+Tuesday 16 April. Lindiwe's laptop was stolen with its client certificate
+(serial 1003) for `contrib`, where nginx requires a certificate from the
+federation's CAs (`ssl_verify_client on`); an address that is none of the
+stations' (203.0.113.66) connects with it every few minutes. Adaeze also
+asks to be warned before a certificate expires: the streaming server's,
+signed by the root in 2029, expires in 20 days.
+
+| Step | Command learnt |
+|---|---|
+| Who connects | `sudo tail /var/log/nginx/access.log`, `cat /srv/ca/issuing/index.txt`, `curl https://contrib…` (400 "No required SSL certificate was sent") |
+| Revoke | `sudo openssl ca -config /srv/ca/issuing/openssl.cnf -revoke newcerts/1003.pem -crl_reason keyCompromise` |
+| Publish | `sudo openssl ca -config … -gencrl -out crl/issuing.crl`, `openssl crl -noout -text`, `openssl verify -crl_check -CRLfile` |
+| nginx | `cat crl/issuing.crl /srv/ca/crl/root.crl > /etc/nginx/ssl/airwaves-crl.pem`, `ssl_crl`, reload; `error.log` (23, certificate revoked) |
+| Watch | a script looping over `/srv/ca/issued` and `newcerts` with `openssl x509 -checkend $((30*86400))`, from cron or a systemd timer |
+
+Goal checked on the state: 1003 revoked in `index.txt`; the loaded nginx
+refuses Lindiwe's certificate and accepts Amina's; a cron job or an active
+timer whose run (as it will run: its output, the journal, the files it
+writes) names the streaming server's certificate and doesn't report the
+healthy ones the same way. Several solutions: `-revoke` with the copy in
+`newcerts` or `certs`, any CRL file, cron or a timer, `echo`, `logger` or a
+log file. Expected traps: deleting the certificate's file, revoking without
+a CRL, a stale CRL, a CRL nginx hasn't loaded, the issuing CA's CRL alone
+(everyone refused: "unable to get certificate CRL"), a whole new CA, a
+watch that misses the stream's certificate or lists everything alike.
 
 ## Ideas for later
 

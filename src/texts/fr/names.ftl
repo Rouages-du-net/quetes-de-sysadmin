@@ -474,3 +474,6 @@ name-new_db_password-txt = nouveau_mdp_bdd.txt
 name-note_from_joe-txt = mot_de_joe.txt
 name-delivery_note-txt = bon_de_livraison.txt
 name-dpo_request-txt = demande_dpd.txt
+## Les Ondes
+name-message_from_adaeze-txt = message_d_adaeze.txt
+name-note_from_mateo-txt = mot_de_mateo.txt

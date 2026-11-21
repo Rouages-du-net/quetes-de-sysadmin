@@ -87,3 +87,4 @@ machine-gauge-motd = The Bike Share — the cooperative's monitoring server (Pro
 machine-lane-motd = The Pool — the swimming pool's Debian server, a single-node k3s cluster (the booking app, namespace swim).
 
 machine-chalk-motd = The Staff Room — the primary school's print server (CUPS): the office, the library, the staff room. Please don't print the yearbook twice.
+machine-mast-motd = The Airwaves — the community radio federation's Debian server: the intranet, the archive, the contribution portal, and the federation's certificate authority in /srv/ca.

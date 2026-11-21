@@ -9,8 +9,7 @@
 // Deploy hooks run after a successful renewal (never during --dry-run).
 // The authority is simulated, with no network.
 //
-// openssl (https://docs.openssl.org/3.5/man1/): x509 to read a
-// certificate, s_client to see the one a server presents.
+// openssl is in openssl.ts.
 //
 // Differences: a single managed certificate (the chapter's); the files in
 // live/ are rewritten instead of being links to archive/; s_client returns
@@ -20,7 +19,7 @@
 import type { Shell } from '../shell';
 import { reload, systemd, toUtc } from '../systemd';
 import { httpRequest } from '../nginx';
-import { dateCertbot, dateOpenssl, DURATION, read, pem, subject, type Certificate } from '../tls';
+import { dateCertbot, DURATION, read, pem, type Certificate } from '../tls';
 import { checkCertificate } from './network';
 import type { Command } from './index';
 
@@ -496,105 +495,6 @@ export const CERTBOT: Record<string, Command> = {
         return ok ? output : game.error(output);
       }
       return game.error(game.t('certbot-usage'));
-    },
-  },
-
-  openssl: {
-    ownOptions: true,
-    launch: ({ args, input, game }) => {
-      const [under, ...rest] = args;
-      if (under === 'version') return 'OpenSSL 3.5.1 1 Jul 2025 (Library: OpenSSL 3.5.1 1 Jul 2025)';
-      if (under === 'x509') {
-        let file: string | null = null;
-        let endIn: number | null = null;
-        const requests: string[] = [];
-        let withoutText = false;
-        for (let i = 0; i < rest.length; i++) {
-          const a = rest[i];
-          if (a === '-in') file = rest[++i] ?? '';
-          else if (a === '-checkend') endIn = Number(rest[++i]);
-          else if (a === '-noout') withoutText = true;
-          else if (['-dates', '-enddate', '-startdate', '-subject', '-issuer', '-serial', '-ext'].includes(a)) {
-            requests.push(a);
-            if (a === '-ext') i++;
-          } else return game.error(`x509: Unknown option or message digest: ${a.replace(/^-/, '')}\nx509: Use -help for summary.`);
-        }
-        let text = input;
-        if (file !== null) {
-          const n = game.find(file);
-          if (!n || n.type !== 'file')
-            return game.error(`Could not open file or uri for loading certificate from ${file}: No such file or directory`);
-          if (!game.traverses(file) || !game.can(n, 'r'))
-            return game.error(`Could not open file or uri for loading certificate from ${file}: Permission denied`);
-          text = game.read(file);
-        }
-        const c = read(text);
-        if (!c) return game.error('Could not find certificate from <stdin>\nUnable to load certificate'.replace('<stdin>', file ?? '<stdin>'));
-        const lines: string[] = [];
-        for (const d of requests) {
-          if (d === '-dates' || d === '-startdate') lines.push(`notBefore=${dateOpenssl(c.start)}`);
-          if (d === '-dates' || d === '-enddate') lines.push(`notAfter=${dateOpenssl(c.end)}`);
-          if (d === '-subject') lines.push(`subject=${subject(c)}`);
-          if (d === '-issuer') lines.push(`issuer=${c.issuer}`);
-          if (d === '-serial') lines.push(`serial=${c.serial.toUpperCase()}`);
-          if (d === '-ext') lines.push('X509v3 Subject Alternative Name: ', `    ${c.names.map((n) => `DNS:${n}`).join(', ')}`);
-        }
-        if (endIn !== null) {
-          const expires = c.end < now(game) + endIn * 1000;
-          lines.push(expires ? 'Certificate will expire' : 'Certificate will not expire');
-        }
-        if (!withoutText) lines.push(pem(c));
-        return lines.filter((l) => l !== '').join('\n');
-      }
-      if (under === 's_client') {
-        let target = '';
-        let sni: string | null = null;
-        for (let i = 0; i < rest.length; i++) {
-          if (rest[i] === '-connect') target = rest[++i] ?? '';
-          else if (rest[i] === '-servername') sni = rest[++i] ?? '';
-          else if (!['-showcerts', '-quiet', '-brief'].includes(rest[i]))
-            return game.error(`s_client: Unknown option: ${rest[i]}\ns_client: Use -help for summary.`);
-        }
-        const [host, port = '443'] = target.split(':');
-        if (!host) return game.error('s_client: -connect host:port is required');
-        const localNames = ['localhost', '127.0.0.1', ...(game.state.nginx?.names ?? [])];
-        if (!localNames.includes(host.toLowerCase())) return game.error(`BIO_lookup_ex: ${host}: Name or service not known\nconnect:errno=0`);
-        const r = httpRequest(game, sni ?? host, '/', Number(port));
-        if (!r?.certificate) return game.error(`connect to ${host} port ${port} failed: Connection refused\nconnect:errno=111`);
-        const c = read(r.certificate)!;
-        const problem = checkCertificate(game, r.certificate, sni ?? host);
-        const code = !problem
-          ? '0 (ok)'
-          : problem.includes('expired')
-            ? '10 (certificate has expired)'
-            : problem.includes('not yet')
-              ? '9 (certificate is not yet valid)'
-              : '62 (hostname mismatch)';
-        return [
-          'CONNECTED(00000003)',
-          `depth=0 ${subject(c)}`,
-          ...(problem?.includes('expired') ? ['verify error:num=10:certificate has expired', `notAfter=${dateOpenssl(c.end)}`] : []),
-          'verify return:1',
-          '---',
-          'Certificate chain',
-          ` 0 s:${subject(c)}`,
-          `   i:${c.issuer}`,
-          '   a:PKEY: id-ecPublicKey, 256 (bit); sigalg: ecdsa-with-SHA384',
-          `   v:NotBefore: ${dateOpenssl(c.start)}; NotAfter: ${dateOpenssl(c.end)}`,
-          '---',
-          'Server certificate',
-          pem(c),
-          `subject=${subject(c)}`,
-          `issuer=${c.issuer}`,
-          '---',
-          'SSL handshake has read 2563 bytes and written 404 bytes',
-          `Verify return code: ${code}`,
-          '---',
-          'DONE',
-        ].join('\n');
-      }
-      if (!under) return game.error(game.t('openssl-usage'));
-      return game.error(`Invalid command '${under}'; type "help" for a list.`);
     },
   },
 };

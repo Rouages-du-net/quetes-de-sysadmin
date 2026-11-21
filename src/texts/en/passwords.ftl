@@ -81,3 +81,5 @@ password-splash-2029 = splash-2029
 password-lane4-butterfly-17 = lane4-butterfly-17
 password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz
 password-chalkboard-29 = chalkboard-29
+## The Airwaves
+password-mixing-desk-30 = mixing-desk-30
