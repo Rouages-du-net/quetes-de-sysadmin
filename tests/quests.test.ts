@@ -15,6 +15,8 @@ import { inLanguage, machinesInLanguage } from './names';
 import { withoutColours } from '../src/engine/colours';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
+// Every command a chapter lists, each once.
+const allCommands = () => [...new Set(STORIES.flatMap((h) => h.chapters.flatMap((c) => c.commands)))];
 
 for (const language of LANGUAGES)
   describe(`Language: ${language}`, () => {
@@ -1908,14 +1910,13 @@ for (const language of LANGUAGES)
         expect(s.execute('man xyz')).toBe("Il n'y a pas de page de manuel pour xyz.");
       });
       it('every command of the game has a page', () => {
-        for (const h of STORIES) for (const c of h.chapters) for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toContain('NOM');
+        // Each command once: many chapters list the same ones.
+        for (const cmd of allCommands()) expect(s.execute(`man ${cmd}`)).toContain('NOM');
       });
     });
     it('every command of the game has a manual page', () => {
       const s = new Shell(chapter('lighthouse'), language);
-      for (const h of STORIES)
-        for (const c of h.chapters)
-          // Windows' cmdlets and programs have their pages in sections PS and CMD.
-          for (const cmd of c.commands) expect(s.execute(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase().replace('.', '\\.')}\\(([18]|PS|CMD)\\)`));
+      // Windows' cmdlets and programs have their pages in sections PS and CMD.
+      for (const cmd of allCommands()) expect(s.execute(`man ${cmd}`)).toMatch(new RegExp(`^${cmd.toUpperCase().replace('.', '\\.')}\\(([18]|PS|CMD)\\)`));
     });
   });
