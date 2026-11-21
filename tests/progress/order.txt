@@ -140,3 +140,6 @@ deep-end
 stuck-queue
 new-printer
 paper-trail
+expiry-date
+chain-of-trust
+stolen-laptop

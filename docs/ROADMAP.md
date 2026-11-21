@@ -636,6 +636,18 @@ them safely.
   `cupsaccept`, `cupsreject`, `lpadmin`, `lpoptions`, `lpinfo`, `cupsctl`,
   `cupsd -t`, `driverless`; `printer-driver-hpcups`).
 
+- [x] **An internal certificate authority** (defensive PKI hygiene):
+  internal names no public authority certifies, an expiring certificate,
+  machines that must trust the root, a chain served without its
+  intermediate, a stolen client certificate. Done: story 38, "The
+  Airwaves" (`pki.ts`: keys, requests, certificates with subjectAltName,
+  basicConstraints, keyUsage and extendedKeyUsage, CRLs, the `openssl ca`
+  database, OpenSSL's chain building and its errors, the trust store;
+  `openssl genpkey`/`req`/`x509 -req`/`verify`/`s_client`/`ca`/`crl`,
+  `update-ca-certificates`, curl and wget against an internal PKI, nginx's
+  `ssl_verify_client` and `ssl_crl`; an expiry watch from cron or a
+  timer).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

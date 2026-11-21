@@ -268,9 +268,9 @@ export const path = (t: Translate, english: string) =>
     .join('/');
 
 // Real system directories whose name is also a translated name of the world
-// (/usr/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and the
+// (/usr/share, /usr/local/share, /var/backups, /proc/sys/net, /etc/letsencrypt/live), and the
 // Lab's /srv/scans, a mount point fstab names, and Prometheus's rules/: they keep their name.
-const SYSTEM_DIRECTORIES = ['/usr/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans', '/etc/prometheus/rules'];
+const SYSTEM_DIRECTORIES = ['/usr/share', '/usr/local/share', '/var/backups', '/proc/sys/net', '/etc/letsencrypt/live', '/srv/scans', '/etc/prometheus/rules'];
 export const systemDirectory = (p: string) => SYSTEM_DIRECTORIES.includes(p) || p.endsWith('/.local/share');
 
 // The accounts that are translated: the player's

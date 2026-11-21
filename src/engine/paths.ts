@@ -21,11 +21,12 @@ export const PATH: Path[] = [
       'scope', 'report', 'exposure', 'traces', 'follow-up',
       'bulletin', 'priority', 'fix', 'proof', 'routine',
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
+      'expiry-date', 'chain-of-trust', 'stolen-laptop',
     ],
   },
   {
     id: 'web',
-    chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock'],
+    chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock', 'expiry-date', 'chain-of-trust'],
   },
   { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'new-card', 'other-door', 'both-ways', 'new-printer'] },
   { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill'] },

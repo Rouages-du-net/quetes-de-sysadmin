@@ -81,3 +81,5 @@ password-splash-2029 = plouf-2029
 password-lane4-butterfly-17 = couloir4-papillon-17
 password-Tq8vR3mKx2Lw9pHz = Tq8vR3mKx2Lw9pHz
 password-chalkboard-29 = tableau-noir-29
+## Les Ondes
+password-mixing-desk-30 = table-de-mixage-30

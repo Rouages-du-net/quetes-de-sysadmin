@@ -1325,6 +1325,36 @@ paper-trail
   /home/you/message_from_ines.txt → /home/vous/message_de_ines.txt
   /home/you/dpo_request.txt → /home/vous/demande_dpd.txt
 
+expiry-date
+  /srv/ca/README.txt → /srv/ca/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_adaeze.txt → /home/vous/message_d_adaeze.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+chain-of-trust
+  /srv/ca/README.txt → /srv/ca/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_adaeze.txt → /home/vous/message_d_adaeze.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+chain-of-trust:booth
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+  /home/you/note_from_mateo.txt → /home/vous/mot_de_mateo.txt
+
+stolen-laptop
+  /srv/ca/README.txt → /srv/ca/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/message_from_adaeze.txt → /home/vous/message_d_adaeze.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

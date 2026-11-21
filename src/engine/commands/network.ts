@@ -26,9 +26,10 @@ import { addressFor, interfaceFor, reach, lan } from '../lan';
 import { pingTunnel } from './wireguard';
 import { curl6, ping6, speaks6 } from './ipv6';
 import { metricsCurl } from './prometheus';
+import { pkiCurl, pkiNet } from './openssl';
 
 // What curl adds when certificate verification fails (curl 8).
-const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
+export const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
 
 curl failed to verify the legitimacy of the server and therefore could not
 establish a secure connection to it. To learn more about this situation and
@@ -326,6 +327,8 @@ function curlTo({ args, game }: { args: string[]; game: Shell; last: boolean; in
     {
       // A story that models its network for metrics (Prometheus, exporters): its own curl.
       if (game.state.metricsHere) return metricsCurl(game, args);
+      // A story with an internal PKI: its services, its trust store (openssl.ts).
+      if (pkiNet(game)) return pkiCurl(game, args);
       if (speaks6(game)) return curl6(game, args);
       // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];

@@ -53,3 +53,5 @@ machine-saddle = saddle
 machine-hub = hub
 machine-lane = lane
 machine-chalk = chalk
+machine-mast = mast
+machine-booth = booth

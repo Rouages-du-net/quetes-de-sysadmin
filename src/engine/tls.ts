@@ -14,6 +14,34 @@ export interface Certificate {
   // Dates UTC, en millisecondes.
   start: number;
   end: number;
+  // A certificate of an internal PKI (see pki.ts) says more: its whole
+  // subject, its public key, the key that signed it (its issuer's), its
+  // extensions. Without `key`, a certificate is a public one (Let's
+  // Encrypt's), trusted as before.
+  subjectDn?: string;
+  key?: KeyInfo;
+  signer?: string;
+  // A subjectAltName extension is present (names: its DNS names; ips: its IP addresses).
+  san?: boolean;
+  ips?: string[];
+  // basicConstraints (present, critical, CA, pathlen), keyUsage, extendedKeyUsage.
+  bc?: boolean;
+  bcCritical?: boolean;
+  ca?: boolean;
+  pathlen?: number;
+  ku?: string[];
+  kuCritical?: boolean;
+  eku?: string[];
+  // The issuer's key algorithm (for the signature algorithm shown).
+  sig?: 'RSA' | 'EC';
+}
+
+// A key pair: its algorithm, its size, and what identifies it (both halves
+// share it; see pki.ts).
+export interface KeyInfo {
+  alg: 'RSA' | 'EC';
+  bits: number;
+  id: string;
 }
 
 const MARK = 'quetes-x509:';
@@ -29,17 +57,31 @@ export function pem(c: Certificate): string {
   return ['-----BEGIN CERTIFICATE-----', ...body, '-----END CERTIFICATE-----'].join('\n');
 }
 
-/** Reads the first certificate of a PEM text; null if there is none or it is damaged. */
-export function read(text: string | null): Certificate | null {
-  const m = /-----BEGIN CERTIFICATE-----\n([\s\S]*?)\n-----END CERTIFICATE-----/.exec(text ?? '');
-  if (!m) return null;
+// One PEM block's content, decoded (null if damaged).
+function decodeBlock(body: string): Certificate | null {
   try {
-    const decode = atob(m[1].replace(/\s/g, ''));
+    const decode = atob(body.replace(/\s/g, ''));
     if (!decode.startsWith(MARK)) return null;
     return JSON.parse(decode.slice(MARK.length, decode.indexOf('\u0000'))) as Certificate;
   } catch {
     return null;
   }
+}
+
+/** Reads the first certificate of a PEM text; null if there is none or it is damaged. */
+export function read(text: string | null): Certificate | null {
+  const m = /-----BEGIN CERTIFICATE-----\r?\n([\s\S]*?)\r?\n-----END CERTIFICATE-----/.exec(text ?? '');
+  return m ? decodeBlock(m[1]) : null;
+}
+
+/** Every readable certificate of a PEM text (a bundle, a chain), in order. */
+export function readAll(text: string | null): Certificate[] {
+  const out: Certificate[] = [];
+  for (const m of (text ?? '').matchAll(/-----BEGIN CERTIFICATE-----\r?\n([\s\S]*?)\r?\n-----END CERTIFICATE-----/g)) {
+    const c = decodeBlock(m[1]);
+    if (c) out.push(c);
+  }
+  return out;
 }
 
 const MONTH = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -53,7 +95,7 @@ export function dateOpenssl(ms: number): string {
 /** "2027-01-21 06:39:59+00:00", like certbot. */
 export const dateCertbot = (ms: number) => `${new Date(ms).toISOString().slice(0, 19).replace('T', ' ')}+00:00`;
 
-export const subject = (c: Certificate) => `CN=${c.cn}`;
+export const subject = (c: Certificate) => c.subjectDn ?? `CN=${c.cn}`;
 
 /** Does the certificate cover this name? (exact names, or a *.domain wildcard one level deep) */
 export const covers = (c: Certificate, name: string) =>

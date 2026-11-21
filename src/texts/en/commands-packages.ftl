@@ -25,7 +25,8 @@ certbot-without-domain = (Give the certificate's names with -d, one -d per name.
 certbot-other-domains = (Here, certbot only manages the existing certificate, for the names: { $names }. Give exactly these names again with -d.)
 openssl-usage =
     help:
-    (Here: openssl x509 -in file -noout -dates, openssl s_client -connect machine:443; see man openssl)
+    (Here: openssl x509 -in file -noout -text, openssl req, openssl verify, openssl s_client -connect machine:443, openssl ca; see man openssl)
+openssl-no-passphrase = (In this game, private keys carry no passphrase: add -noenc (or -nodes) and protect the key with its permissions, chmod 600, readable by its owner only.)
 dpkg-usage =
     dpkg: error: need an action option
 

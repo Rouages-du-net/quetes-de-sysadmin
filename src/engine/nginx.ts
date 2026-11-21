@@ -17,7 +17,8 @@
 import type { Game } from './shell';
 import { wildcard } from './tools';
 import { summerTime, systemd, toUtc } from './systemd';
-import { read as readCertificate } from './tls';
+import { read as readCertificate, readAll, subject } from './tls';
+import { readCrls, readKey, verify, VERIFY_ERRORS } from './pki';
 
 export const VERSION = '1.26.3';
 export const CONF = '/etc/nginx/nginx.conf';
@@ -48,6 +49,11 @@ const DIRECTIVES: Record<string, Rule> = {
   ssl_prefer_server_ciphers: r(1, 1, ['http', 'server']),
   ssl_certificate: r(1, 1, ['http', 'server']),
   ssl_certificate_key: r(1, 1, ['http', 'server']),
+  ssl_client_certificate: r(1, 1, ['http', 'server']),
+  ssl_trusted_certificate: r(1, 1, ['http', 'server']),
+  ssl_verify_client: r(1, 1, ['http', 'server']),
+  ssl_verify_depth: r(1, 1, ['http', 'server']),
+  ssl_crl: r(1, 1, ['http', 'server']),
   access_log: r(1, 3, HTTP),
   gzip: r(1, 1, HTTP),
   server_tokens: r(1, 1, HTTP),
@@ -131,6 +137,12 @@ export interface Server {
   // renewing the file changes nothing until nginx has reloaded.
   ssl: string[];
   certificate: string | null;
+  // Client certificates (https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_verify_client):
+  // the CAs trusted (ssl_client_certificate), the CRLs (ssl_crl), read on loading too.
+  verifyClient?: 'on' | 'optional' | 'optional_no_ca';
+  verifyDepth?: number;
+  clientCas?: string;
+  crl?: string;
   locations: Location[];
   // return at server level (e.g. redirect to HTTPS).
   back?: string[];
@@ -259,8 +271,49 @@ function loadCertificate(game: Game, children: Directive[], http: Directive[], s
       cert!.line,
     );
   if (!key) failure(`no "ssl_certificate_key" is defined for certificate "${cert!.args[0]}"`, listen.file, listen.line);
-  open(key!, 'certificate key');
+  const keyText = open(key!, 'certificate key');
+  // An internal PKI's certificate (pki.ts): the key must be its own.
+  const c = readCertificate(content);
+  if (c?.key) {
+    const k = readKey(keyText);
+    if (!k)
+      failure(`cannot load certificate key "${key!.args[0]}": PEM_read_bio_PrivateKey() failed (SSL: error:1E08010C:DECODER routines::unsupported:No supported data to decode.)`, key!.file, key!.line);
+    if (k!.id !== c.key.id)
+      failure(`SSL_CTX_use_PrivateKey("${key!.args[0]}") failed (SSL: error:05800074:x509 certificate routines::key values mismatch)`, key!.file, key!.line);
+  }
   return content;
+}
+
+// ssl_verify_client, ssl_client_certificate, ssl_verify_depth, ssl_crl: read on loading.
+function loadClientTls(game: Game, children: Directive[], http: Directive[], server: Directive): Partial<Server> {
+  const found = (name: string) => children.find((d) => d.name === name) ?? http.find((d) => d.name === name);
+  const verify = found('ssl_verify_client');
+  const cas = found('ssl_client_certificate') ?? found('ssl_trusted_certificate');
+  const depth = found('ssl_verify_depth');
+  const crl = found('ssl_crl');
+  if (verify && !['on', 'off', 'optional', 'optional_no_ca'].includes(verify.args[0]))
+    failure(`invalid value "${verify.args[0]}" in "ssl_verify_client" directive, it must be "on", "off", "optional" or "optional_no_ca"`, verify.file, verify.line);
+  if (depth && !/^\d+$/.test(depth.args[0])) failure(`invalid value "${depth.args[0]}" in "ssl_verify_depth" directive`, depth.file, depth.line);
+  const mode = verify?.args[0] === 'off' ? undefined : (verify?.args[0] as Server['verifyClient'] | undefined);
+  if ((mode === 'on' || mode === 'optional') && !cas) failure('no ssl_client_certificate or ssl_trusted_certificate for ssl_verify_client', verify!.file, verify!.line);
+  const open = (d: Directive, routine: string) => {
+    const path = d.args[0];
+    const n = game.find(path);
+    if (!n || n.type !== 'file')
+      failure(
+        `${routine}("${path}") failed (SSL: error:80000002:system library::No such file or directory:calling fopen(${path}, r) error:10000080:BIO routines::no such file error:05880002:x509 certificate routines::system lib)`,
+        d.file,
+        d.line,
+      );
+    return game.read(path) ?? '';
+  };
+  void server;
+  return {
+    ...(mode ? { verifyClient: mode } : {}),
+    ...(depth ? { verifyDepth: Number(depth.args[0]) } : {}),
+    ...(cas ? { clientCas: open(cas, 'SSL_CTX_load_verify_locations') } : {}),
+    ...(crl ? { crl: open(crl, 'X509_LOOKUP_load_file') } : {}),
+  };
 }
 
 // limit_req_zone $binary_remote_addr zone=nom:10m rate=2r/s;
@@ -330,6 +383,7 @@ function build(game: Game, read: string[] = []): Configuration {
         }
       }
       const certificate = ssl.length ? loadCertificate(game, children, http, s) : null;
+      const clientTls = ssl.length ? loadClientTls(game, children, http, s) : {};
       // The same name on the same address: the first server read keeps it.
       const names: string[] = [];
       for (const name of values(children, 'server_name').map((n) => n.toLowerCase())) {
@@ -384,6 +438,7 @@ function build(game: Game, read: string[] = []): Configuration {
         statusLimit: status ? Number(status) : undefined,
         ssl,
         certificate,
+        ...clientTls,
         locations,
         back: children.find((d) => d.name === 'return')?.args,
         listening: listening.length ? listening : ['0.0.0.0:80'],
@@ -487,10 +542,13 @@ export interface Response {
   headers: string[];
   // In HTTPS: the certificate presented by the server (PEM).
   certificate?: string;
+  // The CAs it accepts for client certificates (s_client's "Acceptable client certificate CA names").
+  clientCaNames?: string[];
 }
 
 const REASONS: Record<number, string> = {
   200: 'OK',
+  400: 'Bad Request',
   301: 'Moved Permanently',
   302: 'Found',
   403: 'Forbidden',
@@ -501,6 +559,28 @@ const REASONS: Record<number, string> = {
   503: 'Service Temporarily Unavailable',
   504: 'Gateway Time-out',
 };
+// nginx's 400 pages for client certificates (ngx_http_special_response.c).
+const badRequest = (title: string) =>
+  `<html>\n<head><title>400 ${title}</title></head>\n<body>\n<center><h1>400 Bad Request</h1></center>\n<center>${title}</center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
+
+// The client's certificate, checked like nginx with OpenSSL: null if accepted.
+function clientVerdict(game: Game, server: Server, client: Client): { page: string; log: string } | null {
+  const chain = readAll(client.certificate ?? null);
+  if (!chain.length) return server.verifyClient === 'on' ? { page: 'No required SSL certificate was sent', log: 'client sent no required SSL certificate' } : null;
+  if (server.verifyClient === 'optional_no_ca') return null;
+  const r = verify(chain[0], {
+    now: toUtc(systemd(game)?.clock ?? 0),
+    trusted: readAll(server.clientCas ?? null),
+    untrusted: chain.slice(1),
+    crls: readCrls(server.crl ?? null),
+    crlCheck: server.crl ? 'all' : 'none',
+    purpose: 'sslclient',
+    depth: server.verifyDepth ?? 1,
+  });
+  const e = r.errors[0];
+  return e ? { page: 'The SSL certificate error', log: `client SSL certificate verify error: (${e.code}:${VERIFY_ERRORS[e.code]})` } : null;
+}
+
 const page = (code: number) =>
   `<html>\n<head><title>${code} ${REASONS[code]}</title></head>\n<body>\n<center><h1>${code} ${REASONS[code]}</h1></center>\n<hr><center>nginx/${VERSION}</center>\n</body>\n</html>`;
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -616,6 +696,8 @@ export interface Client {
   address: string;
   time: number;
   agent: string;
+  // In HTTPS, the certificate chain the client presents (PEM), if any.
+  certificate?: string;
   method?: string;
   headers?: Record<string, string>;
 }
@@ -660,10 +742,13 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   if (!server) return null;
   // An HTTPS port doesn't answer in plain text (and vice versa): only the right case is simulated.
   if (server.ssl.includes(at(server)) !== (port === 443)) return null;
+  // A client certificate required: nginx checks it, and answers 400 if it is missing or refused.
+  const refusedClient = port === 443 && server.verifyClient ? clientVerdict(game, server, client) : null;
   const response = (code: number, body: string, more: string[] = []): Response => ({
     code,
     body,
     certificate: port === 443 ? (server.certificate ?? undefined) : undefined,
+    ...(port === 443 && server.verifyClient && server.clientCas ? { clientCaNames: readAll(server.clientCas).map(subject) } : {}),
     headers: [
       `HTTP/1.1 ${code} ${REASONS[code] ?? ''}`.trimEnd(),
       `Server: nginx/${VERSION}`,
@@ -688,6 +773,10 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   };
   const loc = chooseLocation(server, path.split('?')[0]);
   const context = `client: ${client.address}, server: ${server.names[0] ?? '_'}, request: "GET ${path} HTTP/1.1", host: "${host}"`;
+  if (refusedClient) {
+    errorLog(game, 'info', `${refusedClient.log} while reading client request headers, ${context}`);
+    return response(400, badRequest(refusedClient.page));
+  }
   // deny : 403 (http, puis server, puis location).
   if ([...server.refusal, ...(loc?.refusal ?? [])].some((r) => couvert(r, client.address))) {
     errorLog(game, 'error', `access forbidden by rule, ${context}`);

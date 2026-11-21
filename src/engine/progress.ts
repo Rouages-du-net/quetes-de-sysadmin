@@ -92,6 +92,9 @@ export const CODE_ORDER = [
   'stuck-queue',
   'new-printer',
   'paper-trail',
+  'expiry-date',
+  'chain-of-trust',
+  'stolen-laptop',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

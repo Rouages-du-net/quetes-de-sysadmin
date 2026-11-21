@@ -471,3 +471,6 @@ name-new_db_password-txt = new_db_password.txt
 name-note_from_joe-txt = note_from_joe.txt
 name-delivery_note-txt = delivery_note.txt
 name-dpo_request-txt = dpo_request.txt
+## The Airwaves
+name-message_from_adaeze-txt = message_from_adaeze.txt
+name-note_from_mateo-txt = note_from_mateo.txt

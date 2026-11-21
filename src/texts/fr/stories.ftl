@@ -76,3 +76,5 @@ story-pool = La Piscine
 
 story-staff-room = La Salle des profs
     .summary = Une école primaire imprime tout, des appels aux bulletins, par un petit serveur Debian qui fait tourner CUPS. Débloquez la file du lundi matin, ajoutez une imprimante sans pilote pour le personnel seulement et une ancienne avec son pilote, puis apprenez au serveur à oublier ce qu'il ne devrait pas garder.
+story-airwaves = Les Ondes
+    .summary = Cinq radios associatives partagent un serveur Debian et leur propre autorité de certification, faite avec openssl il y a des années. Un certificat expiré, des machines qui ne font pas confiance à la racine, un maillon qui manque à une chaîne, un portable volé avec son certificat client : apprends comment fonctionne vraiment une PKI interne, et garde-la en bonne santé.
