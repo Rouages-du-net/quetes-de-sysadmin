@@ -767,11 +767,15 @@ export const FILES: Record<string, Command> = {
     // -n: no newline at the end (what follows in a pipe, base64 for one, sees the difference).
     // -e: backslash escapes (\n, \t…; \c stops the output), -E: none (the default). Like bash,
     // only leading words made of n, e and E are options.
+    // In a dash script (or Solaris's /bin/sh), echo always reads backslashes and knows no -e
+    // (dash: -n only; Solaris: no option at all), like POSIX's XSI echo.
     ownOptions: true,
-    launch: ({ args }) => {
+    launch: ({ args, game }) => {
       let k = 0;
-      let escapes = false;
-      for (; k < args.length && /^-[neE]+$/.test(args[k]); k++) for (const l of args[k].slice(1)) if (l !== 'n') escapes = l === 'e';
+      const dialect = game.script?.dialect ?? 'bash';
+      let escapes = dialect === 'dash' || dialect === 'solaris';
+      const letters = dialect === 'dash' ? /^-n+$/ : dialect === 'solaris' ? /^$/ : /^-[neE]+$/;
+      for (; k < args.length && letters.test(args[k]); k++) for (const l of args[k].slice(1)) if (l !== 'n') escapes = l === 'e';
       const text = args.slice(k).join(' ');
       if (!escapes) return text;
       let out = '';

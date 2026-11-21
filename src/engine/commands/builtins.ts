@@ -6,7 +6,7 @@ import type { Shell } from '../shell';
 import { COMMANDS, type Command } from './index';
 
 // What bash builds in (type says "is a shell builtin"; which finds nothing).
-export const SHELL_BUILTINS = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'test', '[', 'history', 'true', 'false', 'type', 'command', 'printf', 'export', 'unset', 'alias', 'kill', 'read', 'set', 'source', 'jobs', 'fg', 'bg', 'ulimit'];
+export const SHELL_BUILTINS = ['cd', 'exit', 'umask', 'echo', 'pwd', 'help', 'test', '[', 'history', 'true', 'false', 'type', 'command', 'printf', 'export', 'unset', 'alias', 'kill', 'read', 'set', 'source', 'jobs', 'fg', 'bg', 'ulimit', 'shift', 'local', 'return', 'trap', 'getopts', '.', ':'];
 // bash's reserved words (type says "is a shell keyword").
 export const SHELL_KEYWORDS = ['if', 'then', 'else', 'elif', 'fi', 'case', 'esac', 'for', 'select', 'while', 'until', 'do', 'done', 'in', 'function', 'time', '{', '}', '!', '[[', ']]'];
 // The aliases of Debian's /etc/skel/.bashrc (the colour ones, enabled when dircolors exists).
@@ -20,10 +20,11 @@ export const programPath = (name: string) => `${COMMANDS[name]?.section === 8 ? 
 const aliasOf = (game: Shell, name: string): string | undefined =>
   Object.hasOwn(game.aliases, name) ? game.aliases[name] : DEBIAN_ALIASES[name] && game.known().includes(name) ? DEBIAN_ALIASES[name] : undefined;
 
-function kind(game: Shell, name: string): 'alias' | 'keyword' | 'builtin' | 'file' | null {
+function kind(game: Shell, name: string): 'alias' | 'keyword' | 'function' | 'builtin' | 'file' | null {
   if (aliasOf(game, name) !== undefined) return 'alias';
   if (SHELL_KEYWORDS.includes(name)) return 'keyword';
-  if (SHELL_BUILTINS.includes(name) && (game.known().includes(name) || ['true', 'false', 'type', 'command', 'test', '[', 'help', 'history', 'exit'].includes(name))) return 'builtin';
+  if (Object.hasOwn(game.functions, name)) return 'function';
+  if (SHELL_BUILTINS.includes(name) && (game.known().includes(name) || ['true', 'false', 'type', 'command', 'test', '[', 'help', 'history', 'exit', '.', ':'].includes(name))) return 'builtin';
   const c = COMMANDS[name];
   if (c && !c.directory && c.section !== 5 && !c.cmdlet && !c.cl && !c.winexe && game.known().includes(name)) return 'file';
   return null;
@@ -52,6 +53,7 @@ function type(game: Shell, args: string[]): string {
       const all = flags.has('a');
       if (k === 'alias') out.push(`${name} is aliased to \`${aliasOf(game, name)}'`);
       if (k === 'keyword') out.push(`${name} is a shell keyword`);
+      if (k === 'function') out.push(`${name} is a function`);
       if (k === 'builtin' || (all && SHELL_BUILTINS.includes(name) && k === 'alias')) out.push(`${name} is a shell builtin`);
       if (k === 'file' || (all && k === 'alias' && COMMANDS[name] && game.known().includes(name))) out.push(`${name} is ${programPath(name)}`);
       if (all && k === 'file' && ['kill', 'echo', 'printf', 'test', 'pwd', 'true', 'false'].includes(name)) out.unshift(`${name} is a shell builtin`);

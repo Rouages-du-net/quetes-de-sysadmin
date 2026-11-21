@@ -69,10 +69,6 @@ manual-not-page = No manual entry for { $command }
 
 ## Scripts (/bin/sh): git hooks, deployment scripts (src/engine/script.ts)
 
-# { $script }: the script name; { $number }: the line; { $word }: the shell word
-script-not-simulated = { $script }: { $number }: "{ $word }": this shell construct is not simulated in this game (no if, for or while). Write one command per line, with && or || to chain them.
-# { $script }: the script name; { $number }: the line
-test-hook-missing = { $script }: { $number }: [: missing ]
 # { $operator }: what was given to test
 test-operator = { $operator }: unexpected operator
 test-too-arguments = too many arguments

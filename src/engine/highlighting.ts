@@ -103,6 +103,8 @@ function exists(sh: Shell, name: string): boolean {
   if (isWindows(sh) && currentShell(sh) === 'powershell' && /^(if|elseif|else|foreach|try|catch|finally|throw|exit|return|function|param|while|do|until|for|switch|break|continue|default|begin|process|end)$/i.test(name)) return true;
   // A function defined in the session (commands/powershell.ts keeps them in state.psFunctions).
   if (isWindows(sh) && currentShell(sh) === 'powershell' && Object.hasOwn((sh.state.psFunctions as Record<string, unknown> | undefined) ?? {}, name.toLowerCase())) return true;
+  // A shell function defined in the session, ".", ":": the shell answers.
+  if (Object.hasOwn(sh.functions, name) || name === '.' || name === ':') return true;
   // help is built into the shell: it always answers.
   return name === 'help' || sh.known().includes(name);
 }
@@ -117,7 +119,7 @@ function path(sh: Shell, value: string): boolean {
   }
 }
 
-const KEYWORDS = new Set(['if', 'then', 'elif', 'else', 'fi', 'for', 'while', 'until', 'do', 'done', 'case', 'esac', '{', '}', '!']);
+const KEYWORDS = new Set(['if', 'then', 'elif', 'else', 'fi', 'for', 'while', 'until', 'do', 'done', 'case', 'esac', '{', '}', '!', '[[', ']]', 'function']);
 
 /** The line split into coloured tokens; their texts joined back give the line. */
 export function colourise(sh: Shell, line: string): Token[] {
@@ -147,7 +149,7 @@ export function colourise(sh: Shell, line: string): Token[] {
     // bash's reserved words, where a command could start (for … in … do … done, if … then … fi…).
     if (notCity && ((expected === 'command' && KEYWORDS.has(x.value)) || (expected === 'in' && x.value === 'in'))) {
       push(x.value, 'keyword');
-      expected = x.value === 'for' || x.value === 'case' ? 'name' : x.value === 'in' || x.value === 'done' || x.value === 'fi' || x.value === 'esac' || x.value === '}' ? 'argument' : 'command';
+      expected = x.value === 'for' || x.value === 'case' || x.value === 'function' ? 'name' : x.value === 'in' || x.value === 'done' || x.value === 'fi' || x.value === 'esac' || x.value === '}' || x.value === '[[' ? 'argument' : 'command';
       continue;
     }
     if (expected === 'name') {

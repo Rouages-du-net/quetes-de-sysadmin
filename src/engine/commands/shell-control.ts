@@ -196,6 +196,12 @@ export const SHELL_CONTROL: Record<string, Command> = {
         game.status = game.readLine(args, input === '' ? null : input.split('\n')[0]);
         return '';
       }
+      // In a script, nobody types: the end of the input.
+      if (game.script) {
+        game.readLine(args, null);
+        game.status = 1;
+        return '';
+      }
       const p = args.indexOf('-p');
       const prompt = p >= 0 ? (args[p + 1] ?? '') : '';
       game.ask(prompt, (answer) => {

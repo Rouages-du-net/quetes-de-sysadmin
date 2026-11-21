@@ -29,8 +29,15 @@ function exportCommand(game: Shell, args: string[]): string {
   return '';
 }
 
+// unset NAME: the variable (or, without one, the function); -f: the function, -v: the variable.
 function unset(game: Shell, args: string[]): string {
+  const functions = args.includes('-f');
+  const variables = args.includes('-v');
   for (const n of args.filter((a) => !a.startsWith('-'))) {
+    if (functions || (!variables && !Object.hasOwn(game.vars, n) && Object.hasOwn(game.functions, n))) {
+      delete game.functions[n];
+      continue;
+    }
     delete game.vars[n];
     game.exported.delete(n);
   }

@@ -124,7 +124,8 @@ export function redirectionAt(line: string, i: number, wordStart: boolean): Redi
 
 // Splits a line into words, like the shell: spaces separate words,
 // except inside quotes ("…" or '…'); | and the redirections are operators.
-export function split(line: string): Word[] {
+// cr: a carriage return is part of a word (a script saved on Windows: IFS is space, tab, newline).
+export function split(line: string, cr = false): Word[] {
   const words: Word[] = [];
   let active: Word | null = null;
   let quote = '';
@@ -150,7 +151,7 @@ export function split(line: string): Word[] {
       quote = c;
       active ??= { text: '', city: true };
       active.city = true;
-    } else if (/\s/.test(c)) {
+    } else if (c === ' ' || c === '\t' || c === '\n' || (!cr && /\s/.test(c))) {
       finish();
     } else if (c === '|') {
       finish();

@@ -57,7 +57,7 @@ for (const language of LANGUAGES)
       expect(flag('bad-interpreter')).toBe(true);
       const run = play(['bash nightly-copy.sh']);
       expect(run).toContain("nightly-copy.sh: line 5: $'\\r': command not found");
-      expect(run).toContain("nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory");
+      expect(run).toContain(fr ? "nightly-copy.sh: line 6: cd : $'/srv/projects\\r' : aucun fichier ou dossier de ce nom" : "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory");
       expect(first(play(['file nightly-copy.sh']))).toBe('nightly-copy.sh: Bourne-Again shell script, ASCII text executable, with CRLF line terminators');
       expect(play(['cat -A nightly-copy.sh'])).toContain('#!/bin/bash^M$');
       expect(flag('crlf')).toBe(true);

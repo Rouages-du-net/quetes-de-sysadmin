@@ -82,6 +82,7 @@ import { JQ } from './jq';
 import { KUBECTL } from './kubectl';
 import { K3S } from './k3s';
 import { SHELL_CONTROL } from './shell-control';
+import { SCRIPT_BUILTINS } from './shell-builtins';
 import { HOSTNAMECTL } from './hostnamectl';
 import { COMPRESS } from './compress';
 import { SMALL_TOOLS } from './small-tools';
@@ -171,6 +172,7 @@ function build(): Record<string, Command> {
     ...SCRIPTS,
     ...BUILTINS,
     ...SHELL_CONTROL,
+    ...SCRIPT_BUILTINS,
     ...HOSTNAMECTL,
     ...EVERYDAY,
     ...DISKS,
