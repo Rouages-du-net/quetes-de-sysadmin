@@ -480,3 +480,9 @@ name-note_from_tomasz-txt = note_from_tomasz.txt
 name-message_from_rosa-txt = message_from_rosa.txt
 name-message_from_aroha-txt = message_from_aroha.txt
 name-note_from_wanjiru-txt = note_from_wanjiru.txt
+## The Health Centre
+name-message_from_grace-txt = message_from_grace.txt
+name-note_from_ilse-txt = note_from_ilse.txt
+name-message_from_priya-txt = message_from_priya.txt
+name-note_from_hamid-txt = note_from_hamid.txt
+name-note_from_joon-txt = note_from_joon.txt

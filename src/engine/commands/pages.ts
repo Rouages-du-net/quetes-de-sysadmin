@@ -9,6 +9,52 @@ import type { Command } from './index';
 type Page = Pick<Command, 'options' | 'values' | 'long' | 'examples' | 'see' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
+  virsh: {
+    options: ['c', 'q', 'r', 'h', 'v'],
+    examples: [
+      'virsh list --all',
+      'virsh dominfo ledger',
+      'virsh domstate ledger --reason',
+      'virsh domblklist ledger',
+      'virsh domiflist portal',
+      'virsh autostart ledger',
+      'virsh edit portal',
+      'virsh blockcommit ledger vda --active --pivot --verbose',
+      'virsh snapshot-delete ledger before-update --metadata',
+      'virsh dommemstat records',
+      'virsh setmem records 6G --live --config',
+      'virsh blockresize records vda 40G',
+      'virsh snapshot-create-as records before-grow; virsh snapshot-delete records before-grow',
+      'virsh net-dhcp-leases default',
+      'virsh domifaddr agenda --source arp',
+    ],
+    see: ['qemu-img', 'virt-install', 'virt-clone', 'growpart', 'ip'],
+  },
+  'qemu-img': {
+    examples: [
+      'sudo qemu-img info -U --backing-chain /var/lib/libvirt/images/ledger.qcow2',
+      'sudo qemu-img create -f qcow2 /var/lib/libvirt/images/test.qcow2 20G',
+      'sudo qemu-img create -f qcow2 -b base.qcow2 -F qcow2 overlay.qcow2',
+      'sudo qemu-img resize /var/lib/libvirt/images/records.qcow2 +20G',
+      'sudo qemu-img convert -O qcow2 overlay.qcow2 flat.qcow2',
+      'sudo qemu-img check /var/lib/libvirt/images/agenda.qcow2',
+      'sudo qemu-img snapshot -l /var/lib/libvirt/images/records.qcow2',
+    ],
+    see: ['virsh', 'df', 'du', 'lsof'],
+  },
+  'virt-install': {
+    examples: [
+      'sudo virt-install --name test --memory 2048 --vcpus 2 --disk path=/var/lib/libvirt/images/test.qcow2 --import --network bridge=br0 --os-variant debian13 --noautoconsole',
+      'sudo virt-install --name lab --memory 1024 --disk size=20 --cdrom /var/lib/libvirt/images/debian-13.1.0-amd64-netinst.iso --network network=default',
+    ],
+    see: ['virsh', 'virt-clone', 'qemu-img'],
+  },
+  'virt-clone': {
+    examples: ['sudo virt-clone --original agenda --name agenda-training --auto-clone', 'sudo virt-clone --original agenda --name agenda-training --file /var/lib/libvirt/images/agenda-training.qcow2'],
+    see: ['virsh', 'virt-install', 'systemd-machine-id-setup'],
+  },
+  growpart: { options: ['N'], examples: ['sudo growpart -N /dev/vda 1', 'sudo growpart /dev/vda 1'], see: ['resize2fs', 'lsblk', 'df'] },
+  'systemd-machine-id-setup': { examples: ['sudo rm /etc/machine-id && sudo systemd-machine-id-setup', 'hostnamectl'], see: ['hostnamectl', 'virt-clone'] },
   ansible: { options: ['m', 'a', 'b', 'i', 'u', 'l', 'C', 'D'], examples: ['ansible centres -m ping', 'ansible centres -a "cat /etc/hostname"', 'ansible north -b -m service -a "name=ssh state=reloaded"', 'ansible centres --list-hosts'], see: ['ansible-playbook', 'ansible-inventory', 'ansible-doc', 'ssh'] },
   'ansible-doc': { options: ['l'], examples: ['ansible-doc -l', 'ansible-doc copy'], see: ['ansible', 'ansible-playbook'] },
   'ansible-inventory': { examples: ['ansible-inventory --graph', 'ansible-inventory --list'], see: ['ansible', 'ansible-playbook'] },

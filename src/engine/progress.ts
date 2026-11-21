@@ -98,6 +98,9 @@ export const CODE_ORDER = [
   'who-can-push',
   'leaky-pipeline',
   'signed-release',
+  'cold-start',
+  'wrong-side',
+  'tight-fit',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

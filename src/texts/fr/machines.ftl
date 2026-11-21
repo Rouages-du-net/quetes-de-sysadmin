@@ -56,3 +56,4 @@ machine-chalk = craie
 machine-mast = pylone
 machine-booth = cabine
 machine-anvil = enclume
+machine-hearth = foyer

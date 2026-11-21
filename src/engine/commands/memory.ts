@@ -62,7 +62,7 @@ function free(game: Shell, args: string[]): string {
   return [
     ' '.repeat(8) + ['total', 'used', 'free', 'shared', 'buff/cache', 'available'].map((x) => x.padStart(12)).join(''),
     line('Mem:', [c.total, c.used, c.free, c.shared, c.cache, c.available]),
-    line('Swap:', [0, 0, 0]),
+    line('Swap:', ((s) => (s ? [s.total, s.used, s.total - s.used] : [0, 0, 0]))(memory(game)?.swap)),
   ].join('\n');
 }
 
@@ -108,7 +108,9 @@ function top(game: Shell, args: string[]): string {
     `Tasks: ${String(listing.length).padStart(3)} total, ${String(nRunning).padStart(3)} running, ${String(Math.max(0, listing.length - nRunning - zombies - nStopped)).padStart(3)} sleeping, ${String(nStopped).padStart(3)} stopped, ${String(zombies).padStart(3)} zombie`,
     cpuLine,
     `MiB Mem : ${inMio(c.total)} total, ${inMio(c.free)} free, ${inMio(c.used)} used, ${inMio(c.cache)} buff/cache`,
-    `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(available.toFixed(1)).padStart(8)} avail Mem`,
+    m.swap
+      ? `MiB Swap: ${inMio(m.swap.total)} total, ${inMio(m.swap.total - m.swap.used)} free, ${inMio(m.swap.used)} used. ${String(available.toFixed(1)).padStart(8)} avail Mem`
+      : `MiB Swap:      0.0 total,      0.0 free,      0.0 used. ${String(available.toFixed(1)).padStart(8)} avail Mem`,
     '',
     '    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND',
     ...trie.map((p) => {

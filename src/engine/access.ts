@@ -68,8 +68,13 @@ export function resolveName(game: Shell, host: string): string | null {
     const [address, ...names] = line.replace(/#.*/, '').trim().split(/\s+/);
     if (names.includes(host)) return address;
   }
-  return null;
+  // A story's own resolver (libvirt's NSS module and the office's DNS for virtual machines, see libvirt.ts).
+  return (game.state.resolve as ((name: string) => string | null) | undefined)?.(host) ?? null;
 }
+
+// A story may decide who reaches its internal machines (a virtual machine that
+// is off, or behind its hypervisor's NAT): the machine reached, or why not.
+type Reach = (from: Shell, address: string) => { host: string } | 'unreachable' | 'timeout' | null;
 
 // ——— Keys ———
 
@@ -104,6 +109,13 @@ function machineInFace(origin: Shell, address: string): { machine: Host; shell: 
   return internal && shell ? { machine: internal, shell } : null;
 }
 
+// The internal machine a story's own routing chose (see Reach).
+function routedTo(origin: Shell, name: string, address: string): { machine: Host; shell: Shell } | null {
+  const internal = origin.internal_().find((h) => h.name === name);
+  const shell = internal && origin.internal(name);
+  return internal && shell ? { machine: { ...internal, address }, shell } : null;
+}
+
 /**
  * Prepares the jumps to `cible` ([account@]name), going through `saut`
  * (-J, or ProxyJump in ~/.ssh/config): returns the jumps, or ssh's error
@@ -134,7 +146,10 @@ export function prepare(
     if (!address) return `${program}: Could not resolve hostname ${host}: Name or service not known`;
     if (address === WORKSTATION.address || address.startsWith('127.') || port !== '22')
       return `${program}: connect to host ${host} port ${port}: Connection refused`;
-    const inFace = machineInFace(since, address);
+    const routed = (since.principal.state.reach as Reach | undefined)?.(since, address) ?? null;
+    if (routed === 'unreachable') return `${program}: connect to host ${host} port ${port}: No route to host`;
+    if (routed === 'timeout') return `${program}: connect to host ${host} port ${port}: Connection timed out`;
+    const inFace = routed ? routedTo(since, routed.host, address) : machineInFace(since, address);
     if (!inFace) return `${program}: connect to host ${host} port ${port}: No route to host`;
     // Windows Defender Firewall drops what no rule allows: the client waits, then gives up.
     if (!reaches(since, inFace.shell, Number(port))) return `${program}: connect to host ${host} port ${port}: Connection timed out`;

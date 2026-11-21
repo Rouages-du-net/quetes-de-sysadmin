@@ -692,6 +692,34 @@ presents them for people.
   account, the past runs replayed by `initialiseAnvil`, Kwame's pull
   request rebased by `kwameSync`); `who-can-push.ts`, `leaky-pipeline.ts`,
   `signed-release.ts`. Tests: `tests/tool-library.test.ts`.
+- `src/engine/libvirt.ts`: a Debian hypervisor's KVM and libvirt
+  (`state.libvirt` on the host: domains with their definition, written and
+  read as domain XML (`domainXml`, `parseXml` with libxml2's messages,
+  `configFromXml` with the schema's), states and reasons, autostart, the
+  running definition (`Domain.live`) applied at a start, not a guest
+  reboot; disks as qcow2 images in the host's files (`File.disk`: virtual
+  size, backing file, internal snapshots; `File.size` is what they take),
+  backing chains (`chainOf`), QEMU holding its chain's files (`Domain.held`,
+  open files with `Open.alive`: `lsof`, the space of a removed file);
+  internal and external snapshots, block commits (`commit`), a guest paused
+  by a full file system (`advance`, `werror=enospc`); the default NAT
+  network's leases and the office's DHCP by client identifier from
+  `/etc/machine-id` (`bootGuest`), who answers at an address
+  (`answering`), the host's memory and swap (`Memory.swap`, `free`,
+  `top`)); `virsh`, `qemu-img`, `virt-install`, `virt-clone`, `growpart`,
+  `systemd-machine-id-setup` and `resize2fs` on a guest's partition in
+  `commands/libvirt.ts`. A story may resolve names and route ssh itself
+  (`state.resolve`, `state.reach` in `access.ts`); an internal host has
+  `beforeCommand` and `attached` (called once its main machine is known);
+  an internal machine that reboots drops only its own session.
+  `chapters/health-centre.ts`: what the chapters of "The Health Centre"
+  share (`hearth`, the practice's hypervisor, built by `hearthState()` and
+  `hearthWorld()`; its guests `ledger`, `agenda`, `records`, `portal`,
+  `agenda-training` as internal hosts (`guestHost()`: their disk and
+  address follow the host's model, a poweroff or reboot inside reaches
+  libvirt), `reception` the reception's PC; each machine's view of the
+  network, `networkView`, `resolve`, `reach`); `cold-start.ts`,
+  `wrong-side.ts`, `tight-fit.ts`. Tests: `tests/health-centre.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

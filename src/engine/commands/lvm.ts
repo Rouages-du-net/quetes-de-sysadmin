@@ -8,6 +8,7 @@
 // https://manpages.debian.org/trixie/initramfs-tools-core/update-initramfs.8.en.html
 // Differences: see docs/SCENARIOS.md (LVM).
 
+import { resizeGuestFs } from './libvirt';
 import type { Shell } from '../shell';
 import type { Command } from './index';
 import { help } from './manual';
@@ -294,6 +295,9 @@ function growFs(st: StorageState, vg: string, name: string): string[] {
 function resize2fs(game: Shell, st: StorageState | null, args: string[]): string {
   const target = args.find((a) => !a.startsWith('-'));
   if (!target) return game.error(`Usage: resize2fs [-d debug_flags] [-f] [-F] [-M] [-P] [-p] device [-b|-s|new_size] [-S RAID-stride] [-z undo_file]\n`, 1);
+  // A virtual machine's root partition (libvirt.ts): its file system grows to the partition.
+  const guest = resizeGuestFs(game, target);
+  if (guest !== null) return guest;
   if (game.who !== 'root') return game.error(`${E2FS_HEADER}\nresize2fs: Permission denied while trying to open ${target}\nCouldn't find valid filesystem superblock.`, 1);
   const who = st ? readLv(st, target) : null;
   if (!st || !who) return game.error(`${E2FS_HEADER}\nresize2fs: No such file or directory while trying to open ${target}\nCouldn't find valid filesystem superblock.`, 1);

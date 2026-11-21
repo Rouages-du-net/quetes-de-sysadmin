@@ -105,6 +105,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['testparm', 'smbpasswd', 'pdbedit'], ['samba'], ['/etc/samba']],
   [['lpstat', 'lp', 'lpr', 'lpq', 'cancel', 'lprm', 'cupsenable', 'cupsdisable', 'cupsaccept', 'cupsreject', 'lpadmin', 'lpoptions', 'lpinfo', 'cupsctl', 'cupsd', 'driverless'], ['cups'], ['/etc/cups']],
   [['lynis'], ['lynis'], ['/etc/lynis']],
+  [['virsh', 'qemu-img', 'virt-install', 'virt-clone'], ['libvirt'], ['/etc/libvirt']],
   [['promtool', 'prometheus'], ['prometheus'], ['/etc/prometheus']],
   [['amtool', 'alertmanager'], ['alertmanager'], ['/etc/alertmanager']],
 ];

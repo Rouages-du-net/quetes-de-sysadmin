@@ -150,6 +150,9 @@ import { stolenLaptop } from './stolen-laptop';
 import { whoCanPush } from './who-can-push';
 import { leakyPipeline } from './leaky-pipeline';
 import { signedRelease } from './signed-release';
+import { coldStart } from './cold-start';
+import { wrongSide } from './wrong-side';
+import { tightFit } from './tight-fit';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -347,6 +350,11 @@ export const STORIES: Story[] = [
     id: 'tool-library',
     after: ['bare-repo', 'eradication'],
     chapters: [whoCanPush, leakyPipeline, signedRelease],
+  },
+  {
+    id: 'health-centre',
+    after: ['more-room', 'dhcp'],
+    chapters: [coldStart, wrongSide, tightFit],
   },
 ];
 

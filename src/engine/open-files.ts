@@ -22,12 +22,14 @@ export interface Open {
   node: File;
   // Opened for reading (r) or writing (w, by default).
   mode?: 'r' | 'w';
+  // Held while this says so, rather than while the service runs (a virtual machine's QEMU, see libvirt.ts).
+  alive?: (j: Game) => boolean;
 }
 
 export const openSet = (j: Game): Open[] => (j.state.openFiles ??= []);
 
 /** Is the file still held (its service is running)? */
-export const held = (j: Game, o: Open) => systemd(j)?.services[o.service]?.state === 'active';
+export const held = (j: Game, o: Open) => (o.alive ? o.alive(j) : systemd(j)?.services[o.service]?.state === 'active');
 
 /** Has this file been deleted (no name leads to it any more)? */
 export const erases = (j: Game, o: Open) => j.find(o.path) !== o.node;

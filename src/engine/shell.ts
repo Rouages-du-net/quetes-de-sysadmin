@@ -866,10 +866,12 @@ export class Shell implements Game {
       state: def.state,
       initialise: def.initialise,
       afterCommand: def.afterCommand,
+      beforeCommand: def.beforeCommand,
     };
     const s = new Shell(chapter, this.t.language, name);
     s.parent = p;
     p.internals.set(name, s);
+    def.attached?.(s);
     return s;
   }
 

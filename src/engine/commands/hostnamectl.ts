@@ -23,7 +23,7 @@ function prettyName(game: Shell): string {
 function status(game: Shell): string {
   const name = game.read('/etc/hostname')?.trim() || game.hostName;
   const kernel = (game.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
-  const id = machineId(game) || machineIdOf(game.host);
+  const id = game.read('/etc/machine-id')?.trim() || machineId(game) || machineIdOf(game.host);
   const boot = bootId((game.state.systemd as { boot?: number } | undefined)?.boot ?? 1);
   const lines: [string, string][] = [
     ['Static hostname', name],

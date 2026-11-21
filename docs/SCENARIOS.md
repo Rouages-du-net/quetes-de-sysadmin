@@ -269,6 +269,10 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Forgejo Actions (`forge.ts`) | workflows in `.forgejo/workflows/*.yml` (the playbooks' YAML subset): `on:` as a string, a list or a map (`branches`, `tags`), `push`, `pull_request`, `pull_request_target`, `workflow_dispatch`; jobs with `runs-on`, `needs`, `if:` (`github.*`, `secrets.*`, `env.*`, `==`, `!=`, `&&`, `\|\|`, `!`, `startsWith`, `contains`), `env:` at every level, steps with `uses:` (`actions/checkout`, its `with: ref:`) or `run:`; secrets for every event but a fork's `pull_request`; masking of each line of a secret in the logs | a `run:` is read by a small interpreter (`echo`/`printf` with `> file` and `\| base64`, `pip install`, `pytest`, `mkdocs build`, `rsync`/`ssh` to the deploy account, checked against its authorized_keys and `restrict`, `from=`, `command="rrsync DIR"`), not a shell in a container; runner labels not matched; no matrix, services, artifacts, caches, contexts beyond those listed; Forgejo's approval of fork runs not modelled |
 | `forgejo` (`commands/forge.ts`) | `admin user list` (Go's tabwriter), `create`, `change-password`, `must-change-password`, `delete` (refused while the account owns repositories, `--purge`), `generate-access-token`; refused as root; `--config` needed to find `app.ini` | `admin repo-sync-releases`, `doctor`, `dump`, `migrate`, `admin auth`… not simulated; `forgejo web` is the service |
 | git's signatures (`commands/git.ts`, `sshsig.ts`) | `gpg.format ssh`, `user.signingKey` (a path to the private or public key), `commit.gpgsign`, `tag.gpgsign`, `-S`, `--no-gpg-sign`; `verify-commit`, `verify-tag`, `log --show-signature`, `%G?`, `%GK`, `%GS`; `gpg.ssh.allowedSignersFile` with the author's address as principal, namespaces; `ssh-keygen -Y sign`/`verify`/`find-principals`/`check-novalidate` (the SSHSIG armour, namespace and digest checked) | the cryptography is simulated (a signature holds the key and the SHA-256 of the message); openpgp signing fails (no key for git); `key::` literal keys and ssh-agent not simulated; a key's passphrase isn't asked; `valid-after`/`valid-before` and certificates in allowed_signers ignored |
+| libvirt (`libvirt.ts`, The Health Centre) | one host, `qemu:///system` only; domains with their definition (name, uuid, memory and current memory, vCPUs, disks, interfaces, written back as libvirt 11 writes it, the running definition with its backing chain), states and reasons (`running (booted)`, `paused (I/O error)`, `shut off (destroyed)`…), autostart (`/etc/libvirt/qemu/autostart`), a transient domain when undefined while it runs; a guest boots in one command, shuts down at the next (unless paused: the ACPI button goes unheard), reboots in the same QEMU (its running definition unchanged); a guest that writes into a full file system is paused (`werror=enospc`), `domblkerror` says `no space`; QEMU holds its chain's files (`lsof`, a removed file's space kept until it stops, block jobs still reading it); the domain XML read like libvirt (libxml2's messages for a malformed document, the schema's message for an invalid one, a multicast MAC refused, a missing MAC generated); storage pool `default` (a directory), the `default` NAT network (virbr0, its dnsmasq leases) and the host's bridge `br0`; a guest on the bridge gets its address from the office's DHCP at boot, keyed by its client identifier (from `/etc/machine-id`, as systemd-networkd's DUID), and the office's DNS answers for every name a lease was given; two running guests with the same MAC or address on the bridge answer in turn | live migration, other pools and volume management (`vol-create`, `vol-delete`), `net-edit` and other network definitions, the guest agent (`domifaddr --source agent`, `domfsinfo`), NUMA, CPU pinning, hugepages, devices other than disks and interfaces, `virsh edit`'s "Try again?" question (the change is dropped, see the message), the interactive virsh shell, an interactive `virsh console` (it shows what the console printed and gives the prompt back), guests' content inside the images (a guest is an internal host of the story); block jobs finish at once; reverting to an external snapshot is refused (libvirt 9.10 can) |
+| `virsh` snapshots and block jobs | internal snapshots inside the qcow2 image (with the memory when the domain runs, `qemu-img info`'s snapshot list), external disk-only ones (an overlay named after the snapshot, `snapshot-list --tree`); `snapshot-delete` of an external snapshot merges its overlay into the image it froze and removes the file (libvirt 9.0 and later), `--metadata` only forgets it; `blockcommit` (`--active`, `--top`, `--base`, `--shallow`, `--pivot`, `--delete`, `--wait`, `--verbose`), `blockjob --pivot/--abort/--info`; a commit needs room for what the base gains (`Commit failed`); `blockresize` grows only (QEMU's refusal for a shrink) | the job's real progress, `blockcopy`, `blockpull`, checkpoints, `--reuse-external`, `--diskspec` and `--memspec` read but ignored; the error for a snapshot-delete whose overlay left the chain is approximated |
+| `qemu-img` | `info` (`--backing-chain`, `-U`; sizes as QEMU's `size_to_str` writes them), `create` (`-f`, `-b`, `-F`), `resize` (`+`/`-`, `--shrink` required to shrink, data then lost), `convert -O` (the chain flattened), `commit` (the top image emptied), `check`, `snapshot -l/-c/-d`; the lock of a running QEMU ("Failed to get shared "write" lock") | `--output=json`, `amend`, `map`, `measure`, `rebase`, `bench`, encryption, compression, preallocation; a qcow2's size is an estimate (what was written), not its clusters |
+| `virt-install`, `virt-clone`, `growpart`, `systemd-machine-id-setup` | `virt-install` defines and starts a domain (`--name`, `--memory`, `--vcpus`, `--disk path=…,size=…`, `--network network=…\|bridge=…`, `--import`/`--cdrom`/`--location`/`--pxe`, `--noautoconsole`), no installer runs; `virt-clone` (`--original`, `--name`, `--auto-clone`, `--file`) with the source shut off or paused: a new uuid, new MACs, the disk copied (its machine-id and hostname with it); `growpart DISK N` (`-N`) and `resize2fs` on a guest's single partition; `systemd-machine-id-setup` fills a missing or empty `/etc/machine-id` from the VM's UUID (and the guest's next boot does too) | `virt-sysprep`, `virt-customize`, `virt-df`, `virt-viewer`, `virt-manager`; `growpart` on other disks or partition layouts |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
 | `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
@@ -322,7 +326,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, rotation of the levels (`cp -al` then `rsync`); some of the directives; messages close to rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, remote backups |
 | PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("The Traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
 | `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs | every option, every open file of the system |
-| memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap, the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
+| memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap (except a hypervisor whose guests don't fit, The Health Centre: what doesn't fit is in swap at once and leaves it as soon as it fits), the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
 | processor (`uptime`, `top`, `ps -o`, `renice`, `nice`, `pgrep`, `systemd-cgtop`, `CPUQuota=`) | each process's demand (in CPUs) is described by the chapter; the CPU is shared between all processes at once by their nice weight (the kernel's table: 1024 at 0, 15 at 19), never more than a process wants, a service's processes together never more than its `CPUQuota=`; `CPUWeight=` multiplies the weight of the service's processes; the load average decays towards the number of threads that want to run (1, 5, 15 min); `nice` runs its command at once (the game's commands are instant); `renice -g` is refused; `systemd-cgtop` shows one snapshot, services only; `ps -o` knows `pid`, `ppid`, `user`, `ni`, `pri`, `%cpu`, `%mem`, `stat`, `comm`, `args` | autogroups and the cgroup hierarchy share first between sessions and services (so `renice` between two services acts less than here on a default Debian), per-thread nice values, `sy`/`wa`/`st` time, interactive `top` and `systemd-cgtop`, every `ps` column |
 | limits (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`) | only the open-files limit is modelled (the other lines of `/proc/PID/limits` and `ulimit -a` are a Debian machine's); `/proc/PID` exists only for the processes a chapter describes; `ulimit` acts on the game's shell; `limits.conf` is never read (as for systemd services) | every resource (`-u`, `-s`, `-c`…), pam_limits for new sessions |
 | signals (`kill`, `pkill`, `killall`) | `-l`, `-SIGNAL`, `-s`, `-0`; KILL always ends a process, STOP/CONT pause and resume it, the others end it unless it ignores them (a script's `trap`, described by the chapter); `killall` matches a process by its exact program name (`-u`, `-v`), `pkill` by a pattern; the children of a process that ends are adopted by init | handlers that do something else, `pstree`, process groups and sessions |
@@ -4024,6 +4028,125 @@ allowed_signers and the forge: refused), an unsigned push once signatures
 are required, a lightweight tag (`cannot verify a non-tag object`), a tag
 already pushed (`--force`), checksums without a signature, a tampered file
 or the wrong principal (`Could not verify signature.`).
+
+## Story 40: The Health Centre (three chapters)
+
+Millbrook Health Centre, a rural practice (three GPs, two nurses, a
+physiotherapist, a reception desk), runs its servers as KVM virtual
+machines on one Debian 13 hypervisor in the back office: `hearth` (`foyer`
+in French, 192.0.2.88), libvirt 11 and QEMU 10. Its guests: `ledger` (the
+accounting, for Priya), `agenda` (the reception's appointment book),
+`records` (the medical records application), and from chapter 2 `portal`
+(the patients' appointment portal Hamid set up) and `agenda-training`
+(Hamid's hand-made copy of agenda, for training). Each guest is an internal
+host of the story, reachable over ssh when it runs and the network allows
+it; `reception` (192.0.2.95) is the reception desk's PC. The office's
+network is 192.0.2.0/24: its router (192.0.2.1) serves DHCP and DNS;
+hearth is on it through its bridge `br0` (on `eno1`), and so are the guests
+whose interface is on `br0`; libvirt's `default` network (virbr0,
+192.168.122.0/24, NAT) is only reachable from hearth. Ilse, the volunteer
+who built it all, has moved away; Grace manages the practice. Each command,
+twenty seconds pass: guests boot, shut down, write. Engine:
+`src/engine/libvirt.ts` (domains and their XML, states, images and backing
+chains on the host's files, snapshots, block commits, the networks, leases
+and who answers at an address, QEMU's open files, the host's memory and
+swap), `commands/libvirt.ts` (`virsh`, `qemu-img`, `virt-install`,
+`virt-clone`, `growpart`, `systemd-machine-id-setup`, and `resize2fs` on a
+guest's partition); swap in `memory.ts` and `free`/`top`; a story's own
+name resolution and routing for ssh (`state.resolve`, `state.reach` in
+`access.ts`); an internal host's `beforeCommand` and `attached` hooks; an
+internal machine that reboots drops its session only. The story is built in
+`chapters/health-centre.ts`. It opens after "Running out of room" (LVM and growing a
+file system, The Lab) and "DHCP" (a router's network, The Hive), and
+extends the production path (chapter 2 the network path too).
+
+### Chapter 1 — The Cold Start (done)
+
+Monday 11 March 2030. Saturday night's storm cut the power longer than the
+UPS lasts; hearth restarted by itself. agenda and records came back
+(autostart); ledger didn't. Over a year, Ilse took three external disk-only
+snapshots of it (before an update, before the year-end closing, before the
+Debian 13 upgrade) and never merged them: a chain of four images for one
+thin 200 GiB disk, and `/var` (240 GiB) at 98 %.
+
+| Step | Command learnt |
+|---|---|
+| What is down | `virsh list --all`, `virsh dominfo ledger` (`Autostart: disable`) |
+| It freezes | `virsh start ledger`, `virsh list` (`paused`), `virsh domstate --reason` (`paused (I/O error)`), `virsh domblkerror` (`vda: no space`), `df -h /var` |
+| The chain | `virsh domblklist ledger`, `sudo qemu-img info -U --backing-chain …` (without `-U`: QEMU's lock), `virsh snapshot-list ledger` |
+| Room first | Ilse's note and Priya's message: the test clone nobody uses, `sudo rm` |
+| The merge | `virsh blockcommit ledger vda --active --pivot --verbose`, then the overlays removed and `virsh snapshot-delete … --metadata`; or `virsh snapshot-delete` of each snapshot |
+| Back | `virsh resume ledger`, `virsh autostart ledger`, `ssh ledger` |
+
+Goal checked on the state: ledger running and booted, autostart, its chain
+whole as the directories hold it, its snapshots consistent with its disk,
+`/var` below 90 %, an ssh session into it. Several solutions: blockcommit
+then cleanup (or `--delete`), snapshot-delete one by one in any order,
+resumed before or after. Expected traps: a merge before making room
+(`Commit failed`), resuming with the old overlays still on disk (paused
+again), `rm` of an overlay in use (no space back, `lsof +L1`; a block commit
+can still read it while QEMU holds it), the chain broken by `rm` then a stop
+(`Cannot access backing file`, rescue snapshot), `virsh shutdown` of a
+paused guest (unheard), `virsh destroy`, `snapshot-revert` (refused: a year
+of accounts), `undefine` (refused: snapshots), `qemu-img info` without `-U`.
+
+### Chapter 2 — The Wrong Side (done)
+
+Tuesday 26 March. Hamid installed portal with virt-install's defaults: its
+interface is on libvirt's NAT network, unreachable from the reception. He
+also copied agenda by hand for a training session (the disk copied, the XML
+dumped and defined again without its uuid line): the same MAC on the same
+bridge, the same machine-id inside, so the same DHCP client identifier and
+the same address. The reception sees the training copy one time in two.
+
+| Step | Command learnt |
+|---|---|
+| Which network | `virsh domiflist portal` (`network default`), `virsh net-dhcp-leases default` |
+| Seen from the reception | `ssh reception`, `curl http://192.168.122.47/` (fails), `curl http://agenda.internal/` (TRAINING COPY, then the real one) |
+| The bridge | `virsh domiflist agenda` (`bridge br0`), `/etc/network/interfaces`; `virsh edit portal` (`type='bridge'`, `<source bridge='br0'/>`), or `detach-interface`/`attach-interface` |
+| Applied | `virsh shutdown portal`, `virsh start portal` (not `virsh reboot`), `virsh domifaddr portal --source arp`, from reception `curl http://portal.internal/` |
+| The twin | `virsh domiflist agenda-training`: agenda's MAC; stopped, its `<mac>` line removed in `virsh edit` (or virt-clone), started |
+| Its own identity | in the copy, `sudo rm /etc/machine-id`, `sudo systemd-machine-id-setup` (or an empty file and a boot), `sudo reboot` |
+
+Goal checked on the state: portal on `br0` in its definition and running so,
+with a LAN address, reached from reception; agenda unchanged (its MAC, its
+machine-id, 192.0.2.90); agenda-training running with another MAC, another
+machine-id and another address. Several solutions: `virsh edit` or
+`attach-interface --live --config`; a new MAC by editing or with virt-clone;
+`systemd-machine-id-setup`, an empty `/etc/machine-id` and a boot, or any
+new valid id; a reboot from inside or with virsh. Expected traps: a DNAT
+rule on hearth, promiscuous mode on `br0`, a typo in the XML (the schema's
+error) or a missing bridge (`Cannot get interface MTU on 'br1'`), `virsh
+reboot` after the edit (the running definition stays), the original's MAC
+or machine-id changed, a new MAC alone (still 192.0.2.90).
+
+### Chapter 3 — The Tight Fit (done)
+
+Thursday 18 April. Everything is slow and the records application can't
+save. hearth (32 GiB) swaps: records was given 16 GiB, filled with page
+cache, for 3.4 GiB of real use. Inside records, `/` (20 GiB) is full of the
+monthly exports the retention policy says to keep. An internal snapshot
+Ilse took in October (`before-trixie`) is still inside its image.
+
+| Step | Command learnt |
+|---|---|
+| Swapping | `free -h`, `virsh dominfo`, `virsh nodeinfo`, `virsh dommemstat records` (`disk_caches`) |
+| Memory | `virsh setmem records 6G --live --config` |
+| Full | `ssh records`, `df -h /`, `RETENTION.txt` |
+| A way back | `virsh snapshot-create-as records before-grow` |
+| The image | `virsh blockresize records vda 40G` (or shut down, `qemu-img resize … +20G`, start) |
+| Inside | `lsblk`, `dmesg` (`detected capacity change`), `sudo growpart /dev/vda 1`, `sudo resize2fs /dev/vda1`, `df -h /` |
+| The net goes | `virsh snapshot-delete records before-grow`, and `before-trixie` |
+
+Goal checked on the state: no swapping, and the definitions' current memory
+of the guests that start with the host fits its RAM; records' file system
+above 20 GiB; no snapshot left on records; no data lost to a shrink.
+Several solutions: any memory split that fits; blockresize while it runs or
+`qemu-img resize` while it is off. Expected traps: `qemu-img resize` while
+records runs (QEMU's write lock), a shrink (refused, or data lost with
+`--shrink`), `setmem --config` alone (still swapping), a size above the
+maximum memory, `setmaxmem` on a running domain; growing without a snapshot
+first is allowed but noted.
 
 ## Ideas for later
 

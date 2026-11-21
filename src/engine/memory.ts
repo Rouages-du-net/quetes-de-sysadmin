@@ -6,7 +6,8 @@
 //
 //   state.memory = { total, kernel, rss: { pid: bytes } }
 //   state.kernel = [{ time, text }]   (the kernel's messages, for dmesg)
-// Differences: no swap, no cache that frees itself; the OOM killer's score
+// Differences: no swap (except a hypervisor whose guests don't fit, see
+// libvirt.ts: `swap`), no cache that frees itself; the OOM killer's score
 // only takes the occupied memory into account.
 
 import type { Game } from './shell';
@@ -18,6 +19,8 @@ export interface Memory {
   // What the kernel and caches take, outside processes.
   kernel: number;
   rss: Record<number, number>;
+  // Swap, when the machine has some (bytes): what is in use (a hypervisor whose guests don't fit, see libvirt.ts).
+  swap?: { total: number; used: number };
 }
 
 export const memory = (j: Game): Memory | undefined => j.state.memory;

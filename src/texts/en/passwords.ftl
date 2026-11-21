@@ -85,3 +85,5 @@ password-chalkboard-29 = chalkboard-29
 password-mixing-desk-30 = mixing-desk-30
 ## The Tool Library
 password-pegboard-47 = pegboard-47
+## The Health Centre
+password-waiting-room-30 = waiting-room-30

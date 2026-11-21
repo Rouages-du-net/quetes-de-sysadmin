@@ -98,6 +98,8 @@ export const MACHINES: Machine[] = [
   machine('mast', '192.0.2.72', 'airwaves'),
   // The Tool Library: a nonprofit's git forge (Forgejo) and its CI runner, for its open-source lending software.
   machine('anvil', '192.0.2.80', 'tool-library'),
+  // The Health Centre: a rural practice's Debian hypervisor (KVM, libvirt) and its virtual machines.
+  machine('hearth', '192.0.2.88', 'health-centre'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

@@ -56,3 +56,4 @@ machine-chalk = chalk
 machine-mast = mast
 machine-booth = booth
 machine-anvil = anvil
+machine-hearth = hearth
