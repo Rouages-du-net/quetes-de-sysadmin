@@ -2282,6 +2282,8 @@ export class Shell implements Game {
       if (!this.traverses(file) || !this.can(n, 'w')) return this.t('redirection-permission', { target: file });
       if (immutable(n) || (appendOnly(n) && !addition)) return `-bash: ${file}: Operation not permitted`;
       const before = content(n, this);
+      // Appending nothing (2>> f with no error) leaves the file as it was, as in bash.
+      if (addition && text === '') return null;
       n.content = addition && before ? `${before}\n${text}` : text;
       n.lines = true;
       delete n.size;

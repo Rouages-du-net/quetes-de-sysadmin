@@ -69,6 +69,18 @@ describe('Redirections', () => {
     expect(s.execute('wc -l all.txt')).toBe('3 all.txt');
   });
 
+  it('2>> and >> with nothing to write leave the file as it was (bash creates it, adds no line)', () => {
+    const s = shell();
+    expect(s.execute('ls nothere 2> err.txt')).toBe('');
+    expect(s.execute('ls notes.txt 2>> err.txt')).toBe('notes.txt');
+    expect(s.execute('wc -l err.txt')).toBe('1 err.txt');
+    expect(s.execute('cat err.txt')).toBe(MISSING);
+    expect(s.execute('ls notes.txt 2>> fresh.txt')).toBe('notes.txt');
+    expect(s.execute('wc -c fresh.txt')).toBe('0 fresh.txt');
+    expect(s.execute('true >> err.txt')).toBe('');
+    expect(s.execute('wc -l err.txt')).toBe('1 err.txt');
+  });
+
   it('2>&1 in a pipe sends the errors down the pipe', () => {
     const s = shell();
     expect(s.execute('ls nothere | wc -l')).toBe(`${MISSING}\n0`);

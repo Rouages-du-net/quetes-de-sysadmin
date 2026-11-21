@@ -709,12 +709,14 @@ export const JQ: Record<string, Command> = {
         else if (a === '--compact-output') flags.add('c');
         else if (a === '--null-input') flags.add('n');
         else if (a === '--sort-keys') flags.add('S');
+        else if (a === '--raw-input') flags.add('R');
+        else if (a === '--slurp') flags.add('s');
         else if (a === '--exit-status') flags.add('e');
         else if (a === '--color-output' || a === '--monochrome-output') continue;
         else if (a === '--version') return 'jq-1.7.1';
         else if (/^-[a-zA-Z]+$/.test(a) && !rest.length) {
           for (const l of a.slice(1)) {
-            if (!'rcnSeMCj'.includes(l)) return game.error(`jq: Unknown option: ${a}\nUse jq --help for help with command-line options,\nor see the jq manpage, or online docs  at https://jqlang.org`, 2);
+            if (!'rcnSeMCjRs'.includes(l)) return game.error(`jq: Unknown option: ${a}\nUse jq --help for help with command-line options,\nor see the jq manpage, or online docs  at https://jqlang.org`, 2);
             flags.add(l);
           }
         } else if (a.startsWith('--') && a.length > 2) return game.error(`jq: Unknown option: ${a}\nUse jq --help for help with command-line options,\nor see the jq manpage, or online docs  at https://jqlang.org`, 2);
@@ -738,7 +740,16 @@ export const JQ: Record<string, Command> = {
       }
       let values: J[];
       try {
-        values = flags.has('n') ? [null] : readJsonValues(text);
+        // -R: each line is a string (with -s, the whole input is one string); -s: all the values in one array.
+        values = flags.has('n')
+          ? [null]
+          : flags.has('R')
+            ? flags.has('s')
+              ? [text]
+              : text.replace(/\n$/, '').split('\n')
+            : flags.has('s')
+              ? [readJsonValues(text)]
+              : readJsonValues(text);
       } catch (e) {
         return game.error((e as Error).message, 2);
       }

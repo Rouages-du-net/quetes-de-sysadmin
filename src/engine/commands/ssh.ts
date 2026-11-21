@@ -22,6 +22,7 @@ import { hostKey, privateKey, condensed, fingerprint, keyFingerprint, machineByA
 import { allowed, methods, portsSshd } from '../sshd';
 import { KEYS_BY_DEFAULT, configuration, pass, generateKey, prepare } from '../access';
 import { verdict, type Firewall } from '../firewall';
+import { allowedFor, digestText, isPrivateKey, principalsFor, readSignature, sign, type SshSignature } from '../sshsig';
 import type { Command } from './index';
 
 const USAGE = 'usage: ssh [-i identity_file] [-p port] destination [command [argument ...]]';
@@ -326,6 +327,97 @@ function generate(game: Shell, args: string[]): string {
   return lines.shift()!;
 }
 
+// ssh-keygen -Y (https://man.openbsd.org/ssh-keygen#Y): sign a file with
+// a private key (namespace -n: "file", "git"…), verify a signature against
+// an allowed_signers file (-f) for a principal (-I), find the principals of
+// a signature, check it without an identity. See ../sshsig.ts.
+// What ssh-keygen says on its error output (Signing file…, Good "file"
+// signature…) is written there, with the exit code 0.
+function signing(game: Shell, args: string[], input: string | null): string {
+  const usage = 'usage: ssh-keygen -Y find-principals -s signature_file -f allowed_signers_file\n       ssh-keygen -Y check-novalidate -n namespace -s signature_file\n       ssh-keygen -Y sign -f key_file -n namespace file [-O option] ...\n       ssh-keygen -Y verify -f allowed_signers_file -I signer_identity\n                  -n namespace -s signature_file [-r krl_file] [-O option]';
+  const values: Record<string, string> = {};
+  const files: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (['-Y', '-f', '-n', '-I', '-s', '-O', '-r'].includes(a)) {
+      const v = args[++i];
+      if (v === undefined) return game.error(`ssh-keygen: option requires an argument -- ${a.slice(1)}\n${usage}`, 255);
+      values[a] = v;
+    } else if (a.startsWith('-')) return game.error(`ssh-keygen: illegal option -- ${a.slice(1, 2)}\n${usage}`, 255);
+    else files.push(a);
+  }
+  const action = values['-Y'];
+  const say = (text: string) => {
+    game.error(text);
+    game.status = 0;
+    return '';
+  };
+  const readable = (path: string): string | null => {
+    const n = game.find(path);
+    if (n?.type !== 'file' || !game.can(n, 'r')) return null;
+    return game.read(path);
+  };
+  const signature = (): SshSignature | 'missing' | 'invalid' => {
+    const text = readable(values['-s'] ?? '');
+    if (text === null) return 'missing';
+    return readSignature(text) ?? 'invalid';
+  };
+  if (action === 'sign') {
+    const keyFile = values['-f'];
+    const namespace = values['-n'];
+    if (!keyFile) return game.error('Too few arguments for sign: missing key', 255);
+    if (!namespace) return game.error('Too few arguments for sign: missing namespace', 255);
+    // The private key: the file, or the one next to a .pub (without an agent).
+    let key = readable(keyFile);
+    if (!isPrivateKey(key) && keyFile.endsWith('.pub')) key = readable(keyFile.slice(0, -4));
+    if (!isPrivateKey(key)) return game.error(`Couldn't load key ${keyFile}: ${game.exists(keyFile) ? 'invalid format' : 'No such file or directory'}`, 255);
+    if (!files.length) return sign(key!, namespace, input ?? '');
+    const said: string[] = [];
+    for (const file of files) {
+      const text = readable(file);
+      if (text === null) return game.error(`${said.join('\n')}${said.length ? '\n' : ''}Couldn't open ${file}: ${game.exists(file) ? 'Permission denied' : 'No such file or directory'}`, 255);
+      said.push(`Signing file ${file}`);
+      const out = `${file}.sig`;
+      const old = game.find(out);
+      const armour = sign(key!, namespace, text);
+      if (old?.type === 'file') {
+        if (!game.can(old, 'w')) return game.error(`${said.join('\n')}\nCouldn't open ${out}: Permission denied`, 255);
+        Object.assign(old, { content: armour, lines: true, size: undefined });
+      } else {
+        const e = game.place('ssh-keygen', out, { type: 'file', content: armour, lines: true, owner: game.who, mode: 'rw-r--r--' });
+        if (e) return game.error(`${said.join('\n')}\nCouldn't open ${out}: Permission denied`, 255);
+      }
+      said.push(`Write signature to ${out}`);
+    }
+    return say(said.join('\n'));
+  }
+  if (action === 'verify' || action === 'check-novalidate') {
+    const namespace = values['-n'];
+    if (!values['-s'] || !namespace || (action === 'verify' && (!values['-f'] || !values['-I']))) return game.error(`Too few arguments for ${action}`, 255);
+    const s = signature();
+    if (s === 'missing') return game.error(`Couldn't open ${values['-s']}: No such file or directory`, 255);
+    if (s === 'invalid') return game.error("Couldn't parse signature: invalid format\nCould not verify signature.", 255);
+    if (s.namespace !== namespace) return game.error('Signature verification failed: incorrect signature namespace\nCould not verify signature.', 255);
+    if (s.digest !== digestText(input ?? '')) return game.error('Signature verification failed: incorrect signature\nCould not verify signature.', 255);
+    const fp = keyFingerprint(s.key);
+    if (action === 'check-novalidate') return say(`Good "${namespace}" signature with ED25519 key ${fp}`);
+    const allowed = readable(values['-f']);
+    if (allowed === null) return game.error(`Couldn't open ${values['-f']}: No such file or directory\nCould not verify signature.`, 255);
+    if (!allowedFor(allowed, s.key, values['-I'], namespace)) return game.error('Could not verify signature.', 255);
+    return `Good "${namespace}" signature for ${values['-I']} with ED25519 key ${fp}`;
+  }
+  if (action === 'find-principals') {
+    if (!values['-s'] || !values['-f']) return game.error('Too few arguments for find-principals', 255);
+    const s = signature();
+    if (s === 'missing') return game.error(`Couldn't open ${values['-s']}: No such file or directory`, 255);
+    if (s === 'invalid') return game.error("Couldn't parse signature: invalid format", 255);
+    const allowed = readable(values['-f']);
+    const found = allowed === null ? [] : principalsFor(allowed, s.key);
+    return found.length ? found.join('\n') : game.error('No principal matched.', 1);
+  }
+  return game.error(usage, 255);
+}
+
 export const SSH: Record<string, Command> = {
   ssh: {
     launch: ({ args, game }) => {
@@ -426,7 +518,8 @@ export const SSH: Record<string, Command> = {
   // keys (the game provides them).
   'ssh-keygen': {
     ownOptions: true,
-    launch: ({ args, game }) => {
+    launch: ({ args, game, input }) => {
+      if (args.includes('-Y')) return signing(game, args, input);
       const usage = 'usage: ssh-keygen [-t ed25519] [-C comment] [-N passphrase] [-f file] ; ssh-keygen [-l] [-f file] [-F hostname] [-R hostname]';
       let file = '~/.ssh/known_hosts';
       let action: 'R' | 'F' | 'l' | null = null;
