@@ -6,5 +6,8 @@ import { qdsTexts } from './src/texts/plugin.mjs';
 // tests/setup.ts loads them all and registers every story.
 export default defineConfig({
   plugins: [qdsTexts()],
-  test: { include: ['tests/**/*.test.ts'], setupFiles: ['tests/setup.ts'] },
+  // No transform cache on disk: it would keep import.meta.glob's list of
+  // story modules (story-registry.ts) and the texts' groups after a story or
+  // a text file is added.
+  test: { include: ['tests/**/*.test.ts'], setupFiles: ['tests/setup.ts'], fsModuleCache: false },
 });
