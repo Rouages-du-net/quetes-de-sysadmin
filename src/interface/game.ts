@@ -23,6 +23,7 @@ import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engin
 import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } from '../engine/progress';
 import { colourise, type Token } from '../engine/highlighting';
 import { chunks, withoutColours } from '../engine/colours';
+import { autosaveKey, clearAutosave, readAutosave, recordOf, resume as resumeAutosave, writeAutosave, type AutosaveRecord } from '../engine/autosave';
 import { editor } from './editor';
 import { translator, typography, type Language } from '../texts';
 
@@ -83,7 +84,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Display (theme, size, menu view, colours): a setting of this browser only.
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '' };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -194,7 +195,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Tips (see tips.ts) on or off, and the intro tour, to see again.
   const tipsButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true' }, t('display-tips'));
   const tourButton = el('button', { type: 'button', class: 'setting-button' }, t('display-tour'));
-  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, tipsButton, tourButton, focusButton);
+  // The autosave inside a chapter (see autosave.ts), on or off.
+  const autosaveButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true', title: t('display-autosave-title') }, t('display-autosave'));
+  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, tipsButton, autosaveButton, tourButton, focusButton);
   // The mission: the chapter's objective, its instructions, and what has already happened.
   const missionButton = toolButton('mission-button', ICON_MISSION, t('mission-button'));
   const onCallGauge = el('span', { class: 'on-call-gauge', role: 'timer', hidden: '' });
@@ -497,6 +500,22 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   // The terminal and its key bar: together in full screen.
   const screen = el('div', { class: 'screen' }, quitFocus, terminal, touchesBar);
+  // The offer to resume a chapter left in progress (see autosave.ts): a
+  // banner above the terminal, not a modal window (the game may be embedded
+  // in a page the player is reading); its text is announced when it appears.
+  const resumeId = `qds-resume-${Math.random().toString(36).slice(2, 8)}`;
+  const resumeTitle = el('h2', { id: resumeId });
+  const resumeText = el('p', {});
+  const resumeYes = el('button', { type: 'button', class: 'button' });
+  const resumeNo = el('button', { type: 'button', class: 'button button-secondary' }, t('autosave-restart'));
+  const resumeBanner = el(
+    'section',
+    { class: 'resume-offer', 'aria-labelledby': resumeId, hidden: '' },
+    resumeTitle,
+    resumeText,
+    el('p', { class: 'resume-actions' }, resumeYes, ' ', resumeNo),
+  );
+  const resumeStatus = el('p', { class: 'visually-hidden', role: 'status' });
   // Confirmation of exam mode: it restarts the current chapter.
   const examId = `qds-exam-${Math.random().toString(36).slice(2, 8)}`;
   const titleExam = el('h2', { id: examId });
@@ -510,7 +529,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -854,6 +873,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     promptUpdate();
     navUpdate();
     save();
+    autosave();
     // Back to the bottom of the current machine's history (it may have
     // changed: a new command, or a switch of machine through ssh/exit/menu).
     position = machineHistory().length;
@@ -992,7 +1012,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         path: edition.path,
         text: edition.text,
         message: edition.message,
-        save: (text) => gameTerminal.save(text),
+        save: (text) => {
+          const saved = gameTerminal.save(text);
+          autosave();
+          return saved;
+        },
         close: () => {
           show(gameTerminal.quitEdition());
           form.hidden = false;
@@ -1545,6 +1569,131 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const not = gameTerminal.not;
     if (not) restore(not - 1);
   });
+  // ——— Autosave inside a chapter (see autosave.ts) ———
+  // One per language: the inputs hold names and passwords typed in it.
+  const AUTOSAVE_KEY = autosaveKey(KEY, t.language);
+  // The lines of the terminal shown again after a resume.
+  const RESUME_SHOWN = 40;
+  // localStorage itself can throw (storage blocked in a sandboxed frame).
+  const store = (): Storage | null => {
+    try {
+      return localStorage;
+    } catch {
+      return null;
+    }
+  };
+  // What was last written (the chapter's series, the inputs, the hints): written again only when it changes.
+  let autosaved = '';
+  // The chapter whose inputs are kept (null: none).
+  let kept: string | null = null;
+  {
+    const s = store();
+    kept = s ? (readAutosave(s, AUTOSAVE_KEY)?.chapter ?? null) : null;
+  }
+  const forget = () => {
+    const s = store();
+    if (s) clearAutosave(s, AUTOSAVE_KEY);
+    kept = null;
+    autosaved = '';
+  };
+  // A chapter left in progress, offered at start: nothing is written until the player chooses.
+  let pendingResume: AutosaveRecord | null = null;
+  function autosave() {
+    const s = store();
+    if (!s || !display.autosave || pendingResume || onCall) return;
+    const sh = gameTerminal.remote?.shell;
+    // On the workstation: the last point kept stays.
+    if (!sh) return;
+    const record = recordOf(gameTerminal, { exam: gameTerminal.exam, examStart });
+    // Finished, or (re)started: nothing to resume in this chapter.
+    if (sh.finished || record?.n === 0) {
+      if (kept === sh.chapter.id) forget();
+      return;
+    }
+    // No longer replayable (a passage through the workstation, a resumed session): the last point kept stays.
+    if (!record) return;
+    const mark = `${gameTerminal.serial}:${record.n}:${record.hints.length}`;
+    if (mark !== autosaved && writeAutosave(s, AUTOSAVE_KEY, record)) {
+      autosaved = mark;
+      kept = record.chapter;
+    }
+  }
+  // The chapter kept, if it can be offered: its story open, the chapter not finished, the same exam mode.
+  const leftInProgress = (): AutosaveRecord | null => {
+    const s = store();
+    if (!s || !display.autosave) return null;
+    const r = readAutosave(s, AUTOSAVE_KEY);
+    if (!r || r.n === 0) return null;
+    const h = STORIES.findIndex((x) => x.id === r.story);
+    const c = h >= 0 ? chapters(h).findIndex((x) => x.id === r.chapter) : -1;
+    if (c < 0 || finished.includes(r.chapter)) {
+      forget();
+      return null;
+    }
+    if (!accessible(h) || !open(h, c) || r.exam !== gameTerminal.exam || (options.story && options.story !== r.story)) return null;
+    return r;
+  };
+  const placeOf = (r: AutosaveRecord) => {
+    const h = STORIES.findIndex((x) => x.id === r.story);
+    return { h, c: chapters(h).findIndex((x) => x.id === r.chapter) };
+  };
+  const offerResume = (r: AutosaveRecord) => {
+    const { h } = placeOf(r);
+    resumeTitle.textContent = t('autosave-title');
+    resumeText.textContent = typo(t('autosave-text', { chapter: t(`chapter-${r.chapter}`), story: storyTitle(h), steps: r.n }));
+    resumeYes.textContent = t('autosave-resume', { steps: r.n });
+    resumeBanner.hidden = false;
+    // Announced to screen readers, once.
+    resumeStatus.textContent = `${resumeTitle.textContent}. ${resumeText.textContent}`;
+  };
+  function hideResume() {
+    pendingResume = null;
+    resumeBanner.hidden = true;
+    resumeStatus.textContent = '';
+  }
+  resumeYes.addEventListener('click', () => {
+    const r = pendingResume;
+    if (!r) return hideResume();
+    const { h, c } = placeOf(r);
+    // The chapter reopened fresh (nothing written meanwhile), then replayed.
+    launch(h, c);
+    hideResume();
+    const result = resumeAutosave(gameTerminal, r);
+    if (!result.ok) {
+      forget();
+      launch(h, c);
+      show(t(result.reason === 'changed' ? 'autosave-changed' : 'autosave-failed'), 'exam-result');
+    } else {
+      followEnd();
+      output.replaceChildren(measure);
+      // The end of the terminal as it was: the last lines typed and their outputs.
+      const shown = result.transcript.slice(-RESUME_SHOWN);
+      const hidden = result.transcript.filter((x) => x.prompt).length - shown.filter((x) => x.prompt).length;
+      if (hidden > 0) output.appendChild(el('p', { class: 'cut' }, t('autosave-earlier', { steps: hidden })));
+      for (const step of shown) {
+        if (step.prompt) show(step.masked ? step.prompt : `${step.prompt} ${step.line}`, 'cmd');
+        show(step.output);
+      }
+      show(t('autosave-resumed', { steps: r.n }), 'achievements');
+      // In exam mode, the timer goes on from the chapter's start (closing the page doesn't stop it).
+      if (gameTerminal.exam && r.examStart !== undefined) examStart = r.examStart;
+      timerUpdate();
+    }
+    after();
+    openEditor();
+    openFollow();
+    if (!gameTerminal.edition && !gameTerminal.follows) input.focus();
+  });
+  resumeNo.addEventListener('click', () => {
+    const r = pendingResume;
+    hideResume();
+    forget();
+    if (r && gameTerminal.remote?.shell.chapter.id !== r.chapter) {
+      const { h, c } = placeOf(r);
+      launch(h, c);
+    } else after();
+    input.focus();
+  });
   // Help for the current chapter: the levels already opened for this step stay visible.
   const helpUpdate = () => {
     const sh = gameTerminal.remote?.shell;
@@ -1570,6 +1719,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!n || !sh) return;
     sh.requestsHints.add(`${n === 'manual' ? '' : (hint(sh).step ?? '')}:${n}`);
     helpUpdate();
+    autosave();
     hintText.lastElementChild?.scrollIntoView({ block: 'nearest' });
   });
   missionWindow.addEventListener('close', () => setTimeout(() => input.focus()));
@@ -1593,6 +1743,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     coloursButton.setAttribute('aria-pressed', String(display.colours));
     display.tips = display.tips !== false;
     tipsButton.setAttribute('aria-pressed', String(display.tips));
+    display.autosave = display.autosave !== false;
+    autosaveButton.setAttribute('aria-pressed', String(display.autosave));
     colourInput();
     VIEWS.forEach((v) => viewBoutons[v].setAttribute('aria-pressed', String(v === display.view)));
     moreSmall.disabled = display.size === 0;
@@ -1620,6 +1772,18 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     applyDisplay();
   });
   tourButton.addEventListener('click', () => startTour());
+  // Turned off: what was kept goes; turned on: the current chapter is kept from now on.
+  autosaveButton.addEventListener('click', () => {
+    display.autosave = !display.autosave;
+    applyDisplay();
+    if (display.autosave) {
+      autosaved = '';
+      autosave();
+    } else {
+      forget();
+      hideResume();
+    }
+  });
   moreSmall.addEventListener('click', () => {
     display.size--;
     applyDisplay();
@@ -1854,8 +2018,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // At start: the story requested by the attribute, otherwise the one where the
   // player stopped, otherwise the workstation.
   const departure = STORIES.findIndex((h) => h.id === (options.story ?? saved.story));
+  // A chapter left in progress (the tab closed, the phone that killed it): read before anything is written.
+  const left = leftInProgress();
+  if (left) pendingResume = left;
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();
+  if (left) offerResume(left);
   // A first visit (nothing played yet): the tour, once the page is laid out.
   if (display.tour !== 'done' && !finished.length && !Object.keys(notebook).length && !gameTerminal.exam) setTimeout(startTour, 300);
   return {

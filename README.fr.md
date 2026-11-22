@@ -28,6 +28,10 @@ un système entièrement simulé : rien ne sort du navigateur.
 - En ligne : **https://sysadmin.rouages.net** (en français sous `/fr/`, en
   anglais sous `/en/` ; la racine choisit selon la langue du navigateur).
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Ta progression reste dans ton navigateur, sans compte. Un chapitre en
+  cours est sauvegardé après chaque saisie : si la page se ferme (un
+  téléphone ferme souvent les onglets en arrière-plan), le jeu propose de le
+  reprendre là où tu en étais (le réglage « Sauvegarde auto » le désactive).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

@@ -782,6 +782,20 @@ them safely.
   deterministic: reopening the chapter and replaying the inputs (commands,
   answers, nano saves) gives back the machine as it was. No snapshot in exam
   mode, nor after going through the workstation.
+- [x] **Autosave inside a chapter** (`src/engine/autosave.ts`): after each
+  input, the chapter and its inputs (compact: a run of follow seconds kept
+  as one) go to `localStorage` (`KEY-autosave-LANGUAGE`: names and passwords
+  are typed in the language); on opening the game, a banner offers to
+  resume (the inputs replayed, the end of the terminal shown again) or to
+  start the chapter again. Forgotten when the chapter is finished or
+  restarted. A new version of the game that changed the chapter is
+  detected (its opening text, and a fingerprint of the machine after the
+  replay) and the chapter starts again with a message. In exam mode, the
+  timer goes on from the chapter's start; an autosave from outside exam mode
+  is not offered in it. Not during on-call duty. What follows a passage
+  through the workstation (exit, a reboot, a resumed session) or a 5250
+  session is not recorded: the autosave keeps its last replayable point. A
+  setting turns it off; capped at 4,000 inputs or 1 MB.
 - [x] **Learning paths** (`src/engine/paths.ts`, the menu's third view):
   first steps, security, web, networks, backups, containers and deployment,
   production, accounts and identities; each chapter is in at least one

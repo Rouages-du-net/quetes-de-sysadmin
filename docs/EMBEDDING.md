@@ -97,4 +97,11 @@ Pratusevich).
 ## Privacy
 
 The game sends nothing: no data leaves the browser. Progress is kept in the
-`localStorage` of the host page, under the chosen key.
+`localStorage` of the host page, under the chosen key. Next to it, the same
+key with a suffix keeps the display settings (`KEY-display`), on-call results
+(`KEY-on-call`) and the chapter in progress, one per language
+(`KEY-autosave-en`, `KEY-autosave-fr`): the inputs typed since the chapter
+opened, so the game can offer to resume it after the page was closed. They
+may hold the story's passwords as the player typed them: fictional game
+passwords, which stay in the browser like the rest. The player can turn this
+autosave off in the settings.

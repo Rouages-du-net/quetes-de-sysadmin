@@ -23,6 +23,10 @@ system: nothing leaves the browser.
 - Online: **https://sysadmin.rouages.net** (in English at `/en/`, in French
   at `/fr/`; the root picks one from your browser's language).
 - On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
+- Your progress stays in your browser, with no account. A chapter in
+  progress is saved after every input: if the page closes (a phone often
+  kills background tabs), the game offers to resume it where you left off
+  (the "Autosave" setting turns this off).
 
 ## Develop
 
