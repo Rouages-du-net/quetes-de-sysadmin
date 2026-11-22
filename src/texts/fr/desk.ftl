@@ -94,3 +94,4 @@ machine-lb1-motd = La Collecte — lb1, le premier répartiteur de charge de l'�
 machine-baton-motd = La Chorale — baguette, le serveur de la Chorale des Berges : le site, l'espace choristes et sa base, et les données des choristes. La politique de conservation est dans /srv/choir/docs.
 machine-trowel-motd = Les Jardins — truelle, le serveur de base de données de l'association des Jardins de Greenholme (MariaDB) : les réservations, les membres et la liste d'attente de Plotline. sudo mariadb avant toute chose.
 machine-slipway-motd = La Station de sauvetage — cale, le serveur de courrier de la Station de sauvetage de Seaholme : Postfix reçoit, rspamd note, Dovecot range dans /var/vmail. sudo tail /var/log/mail.log avant toute chose.
+machine-belay-motd = Le Mur d'escalade — relais, le serveur du Dévers, la salle d'escalade associative : réservations, adhésions, badges de la porte. Il est branché sur un onduleur dans la baie du bureau (Network UPS Tools : upsc, upsmon).

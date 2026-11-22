@@ -687,6 +687,13 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **UPS and power cuts** (Network UPS Tools 2.8.1, Debian 13): a
+  monitor watching a UPS that no longer exists, a NAS nobody warns, a worn
+  battery and alerts that cry wolf. Done: story 45, "The Climbing Wall"
+  (`nut.ts`: the mains, the UPS and its battery, the machines' halts and
+  power restore policy, upsd, upsmon, upssched; `upsc`, `upscmd`, `upsrw`,
+  `upsmon`, `upsd`, `upsdrvctl`, `ipmitool` in the `nut` family).
+
 - [x] **Running MariaDB** (Debian 13's 11.8 LTS): connections that pile up
   and a query without an index, an app given root over the network, a
   replica stopped on a duplicate key and backups nobody restored. Done:

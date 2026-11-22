@@ -40,6 +40,12 @@ explainer-db-unreachable = Le client de la base n'a pu joindre aucun serveur. Pa
 
 explainer-db-too-many = Toutes les places de connexion du serveur de base sont prises (max_connections). Avant de monter la limite, regarde qui les tient : SHOW PROCESSLIST (en root, qui garde une place de plus) montre chaque connexion, d'où elle vient et si elle dort. Beaucoup de connexions endormies d'une même appli veulent souvent dire que l'appli ne les ferme pas ; wait_timeout décide combien de temps le serveur attend avant de les fermer lui-même.
 
+explainer-ups-unknown = upsd a répondu, mais il ne sert aucun onduleur de ce nom. Le nom d'un onduleur est sa section dans /etc/nut/ups.conf du serveur, écrit NOM@HÔTE (localhost par défaut) : upsc -l HÔTE liste les noms que connaît ce serveur. Dans upsmon.conf, une ligne MONITOR qui nomme un onduleur inexistant ne surveille rien : upsmon ne le verra jamais passer sur batterie.
+
+explainer-ups-denied = upsd a refusé ce compte. Chaque compte de /etc/nut/upsd.users du serveur dit ce qu'il peut faire : instcmds (les commandes instantanées pour upscmd, ou ALL), actions = SET (pour changer des variables avec upsrw), upsmon primary ou secondary (pour upsmon). Un nom de compte ou un mot de passe faux donne la même réponse. upsd relit upsd.users quand on le recharge (systemctl reload nut-server).
+
+explainer-ups-driver = upsd connaît cet onduleur, mais son pilote ne tourne pas, ou a perdu l'onduleur : upsd n'a aucune donnée à donner. Le pilote est un service à part sur Debian (systemctl status nut-driver@NOM, journalctl -u nut-driver@NOM), démarré depuis la section de l'onduleur dans /etc/nut/ups.conf ; vérifie aussi le câble USB.
+
 explainer-db-syntax = Le serveur de base n'a pas pu lire l'instruction SQL. Le texte après « near » est l'endroit où il a cessé de comprendre : l'erreur est juste avant, souvent une virgule ou un guillemet oublié, un mot mal écrit, ou une instruction que ce serveur ne connaît pas. Une instruction tapée dans le shell entre guillemets doubles garde ses apostrophes intactes : mariadb -e "SELECT … WHERE name = 'x'".
 
 explainer-db-read-only = Le serveur de base est en lecture seule (sa variable read_only est active) : il refuse les écritures des comptes ordinaires. Sur un réplica, c'est voulu : les écritures vont au primaire, et le réplica les reçoit. SELECT @@read_only montre le réglage ; connecte-toi au primaire pour écrire.

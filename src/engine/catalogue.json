@@ -5472,6 +5472,109 @@
      "events": 11
     }
    ]
+  },
+  {
+   "id": "climbing-wall",
+   "after": [
+    "boot-order",
+    "firewall"
+   ],
+   "texts": [
+    "chapter-down-in-order.ftl",
+    "chapter-firewall.ftl",
+    "chapter-last-cut.ftl",
+    "chapter-old-battery.ftl",
+    "hints-climbing-wall.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "last-cut",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "upsc",
+      "upsmon",
+      "upsdrvctl",
+      "ipmitool",
+      "exit"
+     ],
+     "events": 12
+    },
+    {
+     "id": "down-in-order",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "ip",
+      "ssh",
+      "ufw",
+      "upsc",
+      "upsmon",
+      "upsd",
+      "upsdrvctl",
+      "ipmitool",
+      "exit"
+     ],
+     "events": 12
+    },
+    {
+     "id": "old-battery",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ssh",
+      "upsc",
+      "upscmd",
+      "upsrw",
+      "upsmon",
+      "upsd",
+      "upssched",
+      "mail",
+      "logger",
+      "echo",
+      "date",
+      "exit"
+     ],
+     "events": 12
+    }
+   ]
   }
  ]
 }

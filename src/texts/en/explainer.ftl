@@ -66,6 +66,22 @@ explainer-db-too-many = Every connection slot of the database server is taken (m
     .match =
         Too many connections
 
+explainer-ups-unknown = upsd answered, but it serves no UPS by that name. A UPS's name is its section in the server's /etc/nut/ups.conf, written NAME@HOST (localhost by default): upsc -l HOST lists the names that server knows. In upsmon.conf, a MONITOR line naming a UPS that doesn't exist watches nothing: upsmon will never see it go on battery.
+    .match =
+        Unknown UPS
+        does not exist on server
+
+explainer-ups-denied = upsd refused this account. Each account in the server's /etc/nut/upsd.users says what it may do: instcmds (the instant commands for upscmd, or ALL), actions = SET (to change variables with upsrw), upsmon primary or secondary (for upsmon). A wrong user name or password gives the same answer. upsd rereads upsd.users when it is reloaded (systemctl reload nut-server).
+    .match =
+        Instant command failed: Access denied
+        Set variable failed: Access denied
+        Can't login to UPS
+
+explainer-ups-driver = upsd knows this UPS, but its driver isn't running, or lost the UPS: upsd has no data to give. The driver is a service of its own on Debian (systemctl status nut-driver@NAME, journalctl -u nut-driver@NAME), started from the UPS's section in /etc/nut/ups.conf; check the USB cable too.
+    .match =
+        Driver not connected
+        Data stale
+
 explainer-db-syntax = The database server could not read the SQL statement. The text after "near" is where it stopped understanding: the mistake is just before it, often a missing comma or quote, a word misspelt, or a statement this server doesn't know. A statement typed in the shell between double quotes keeps its single quotes intact: mariadb -e "SELECT … WHERE name = 'x'".
     .match =
         You have an error in your SQL syntax

@@ -509,3 +509,8 @@ name-note_from_yerlan-txt = note_from_yerlan.txt
 name-message_from_leilani-txt = message_from_leilani.txt
 name-sample-booking-eml = sample-booking.eml
 name-sample-list-eml = sample-list.eml
+## The Climbing Wall
+name-message_from_nkechi-txt = message_from_nkechi.txt
+name-notes_from_haruto-txt = notes_from_haruto.txt
+name-message_from_akosua-txt = message_from_akosua.txt
+name-message_from_thandiwe-txt = message_from_thandiwe.txt

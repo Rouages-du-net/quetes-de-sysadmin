@@ -285,6 +285,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | rspamd (`rspamd.ts`, The Lifeboat) | rspamd 3.12 (Debian 13): UCL as rspamd reads it (`key = value;`, objects, named objects, lists, comments; `delimiter is missing`), `local.d/` merged over the defaults and `override.d/` over both, read at start and on reload (a wrong file stops a start, a reload keeps the old configuration); the actions and their thresholds (defaults reject 15, add header 6, greylist 4; `null` disables one); the greylist module (a first triplet deferred, its retry after five minutes passes); `multimap` rules of type from (SMTP sender by default, `extract_from` mime or both), rcpt, ip, header with `filter` email:domain/email:user, `score` or `action`; `settings` rules (from, from_mime, rcpt, ip; ANDed kinds; `apply { actions }`, `want_spam`); Bayes in Redis with `min_learns`, learned per message id, relearned in the other class; the milter's answers to Postfix (`5.7.1 Spam message rejected`, `4.7.1 Try again later`, `X-Spam: Yes`); `rspamd_task_write_log` lines in `/var/log/rspamd/rspamd.log` | the symbols come from a set of rules the game knows (reverse DNS, a blocklist, SPF, DKIM and DMARC from the story's network, HTML only, all-caps subject, tracking redirectors, image and short text, list headers), with weights close to rspamd's defaults; Bayes is a naive Bayes on the words of the subject and body (four letters or more, any alphabet), so it learns whatever language the mail is in: the story's mail is written in the player's language and its word lists keep spam and ham apart in each language; no fuzzy storage, neural networks, controller web interface or rspamc's JSON |
 | `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
+| NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
+| `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4591,6 +4593,98 @@ sent. Several solutions: `doveadm sieve put -a`, `activate`, or the
 Expected traps: the old reject script activated (mail refused, the list
 answered), a script not active, a syntax error, a vacation without
 `:addresses`.
+## Story 45: The Climbing Wall (three chapters)
+
+Overhang, a community climbing hall run by its members, keeps its bookings,
+memberships and the door's badges on `belay` (192.0.2.141 on the uplink,
+198.51.100.141 on the office network), a small server behind an APC
+Back-UPS in the office rack, with Network UPS Tools as Debian 13 ships it
+(`nut-server`, `nut-client` 2.8.1-5+deb13u1,
+https://packages.debian.org/trixie/nut-server). `harness` (198.51.100.142,
+an internal host from chapter 2) is the NAS with the photos and the signed
+waivers. Nkechi chairs the association, Haruto set up NUT in 2028 before
+moving to Sapporo, Ikaika is the volunteer electrician, Akosua looks after
+the NAS, Thandiwe runs the front desk. Power cuts from the sysadmin's side:
+the monitor, the shutdown order, the battery and the alerts; defensive
+throughout. Engine: `nut.ts` (the physical world: mains, UPS, battery,
+kill timers, the machines' halts, crashes, boots and power restore policy;
+each machine's driver, upsd and upsmon; upssched), its commands in
+`commands/nut.ts` (the `nut` family, loaded with the story), three
+explanations for NUT's errors in the error explainer. The story is built in
+`chapters/climbing-wall.ts`. It opens after "Boot Order" (systemd units,
+The Canteen) and "The Firewall" (ufw), and extends the production path.
+
+### Chapter 1 — The Last Cut (done)
+
+Thursday 18 November 2032, 21:40, after closing time. On Tuesday a storm cut
+the street's power for 83 minutes; belay ran on the UPS for 49, then died.
+Its upsmon watched `eaton@localhost`, the name of a UPS replaced in 2030 (the
+section is now `[hallups]`): "does not exist on server localhost", throttled
+in the journal by Haruto.
+
+| Step | Command learnt |
+|---|---|
+| What upsmon said | `journalctl --list-boots`, `journalctl -u nut-monitor -b -1` |
+| The UPS's real name | `upsc -l`, `upsc hallups`, `/etc/nut/ups.conf` |
+| Watching it | `MONITOR hallups@localhost 1 upsmon … primary` in `upsmon.conf`, `systemctl reload nut-monitor` (or `upsmon -c reload`), `upsc -c hallups` |
+| The drill | `upsdrvctl -t shutdown`, `sudo upsmon -c fsd`, `journalctl -b -1` |
+| Coming back alone | `ipmitool chassis status`, `ipmitool sel list`, `ipmitool chassis policy always-on`, a second drill |
+
+Goal checked on the state: upsmon logged into hallups as a primary with a
+power value of at least 1, `MINSUPPLIES` at least 1, a `SHUTDOWNCMD` that
+halts, the power restore policy always-on, and a drill since upsmon was
+watching where belay halted cleanly and came back by itself. Several
+solutions: the MONITOR line fixed, or the section renamed back to `eaton`
+(driver and upsd restarted); reload or restart. Expected traps:
+`MINSUPPLIES 0`, a `SHUTDOWNCMD` that doesn't halt, nut-monitor stopped, a
+drill while upsmon is still blind (it halts all the same: the drill doesn't
+test the detection), `upsdrvctl shutdown` by hand.
+
+### Chapter 2 — Down in Order (done)
+
+Friday 26 November, 21:45. Since the storm, the NAS is on the same UPS but
+knows nothing about it. It takes two and a half minutes to stop.
+
+| Step | Command learnt |
+|---|---|
+| upsd on the office network | `ss -tlnp`, `LISTEN 198.51.100.141 3493` in `upsd.conf`, `systemctl restart nut-server` (a reload doesn't read LISTEN) |
+| An account for the NAS | `[harness]`, `password`, `upsmon secondary` in `upsd.users`, a reload |
+| The firewall | `ufw allow from 198.51.100.142 to any port 3493 proto tcp` |
+| The secondary | on harness: `MONITOR hallups@belay 1 harness … secondary`, `MODE=netclient`, `systemctl enable --now nut-monitor`, `upsc hallups@belay` |
+| The order | a drill; harness cut mid-shutdown; `offdelay = 180`, `ondelay = 240` in `ups.conf`; a drill again |
+
+Goal checked on the state: harness logged into hallups as a secondary; 3493
+unreachable from the internet; no second primary; `ondelay` greater than
+`offdelay`; a drill where both machines halted cleanly, came back by
+themselves, and harness's upsmon logged in again. Several solutions:
+`LISTEN 0.0.0.0` with a firewall rule for harness only, or the office
+address; any offdelay long enough; harness named by address or by name.
+Expected traps: LISTEN 0.0.0.0 with 3493 open to all, a reload after
+changing LISTEN, harness as a primary, nut-monitor started but not enabled,
+ondelay not greater than offdelay.
+
+### Chapter 3 — Old Battery (done)
+
+Monday 17 January 2033, 10:20, the hall open. The battery (2028) gives ten
+minutes instead of fifty; the line flickers for a few seconds every few
+minutes and `NOTIFYCMD` mails each ONBATT and ONLINE to the front desk.
+
+| Step | Command learnt |
+|---|---|
+| The battery | `upsc hallups` (battery.runtime, battery.mfr.date, ups.test.result), `upscmd -l hallups` |
+| Allowed to test | `instcmds = test.battery.start.quick` in `upsd.users`, a reload, `upscmd -u admin hallups test.battery.start.quick` (password asked) |
+| The verdict | `upsc hallups ups.test.result` ("Done and warning"), `ups.status` (RB); Ikaika swaps the cartridge |
+| The new battery | `upsrw -l hallups`, `upsrw -s battery.mfr.date=2032/12/02 …`, a quick test again ("Done and passed") |
+| Alerts that wait | `NOTIFYCMD /usr/sbin/upssched`; `upssched.conf`: `CMDSCRIPT`, `PIPEFN`, `LOCKFN`, `AT ONBATT * START-TIMER onbatt 60`, `AT ONLINE * CANCEL-TIMER onbatt online`; a reload |
+
+Goal checked on the state: a quick test passed after the swap,
+`battery.mfr.date` between December 2032 and today, upssched wired and a
+trial on the running configuration (an 8-second blip mails nothing, a
+5-minute outage mails at least once; tried on the real scripts, then undone),
+no deep test running. Several solutions: any timer length, `instcmds = ALL`,
+`CANCEL-TIMER` with or without its command, any accepted date. Expected
+traps: a deep test with the hall open, upssched without PIPEFN and LOCKFN,
+the alerts silenced (IGNORE), an EXECUTE at every ONLINE.
 
 ## Ideas for later
 

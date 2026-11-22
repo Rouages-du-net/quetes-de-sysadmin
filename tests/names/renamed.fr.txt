@@ -1754,6 +1754,40 @@ sorting-office
   /home/you/sample-booking.eml → /home/vous/exemple-reservation.eml
   /home/you/sample-list.eml → /home/vous/exemple-liste.eml
 
+last-cut
+  /home/you → /home/vous
+  /home/you/message_from_nkechi.txt → /home/vous/message_de_nkechi.txt
+  /home/you/notes_from_haruto.txt → /home/vous/notes_de_haruto.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+down-in-order
+  /home/you → /home/vous
+  /home/you/message_from_akosua.txt → /home/vous/message_de_akosua.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+down-in-order:harness
+  /srv/archive/README.txt → /srv/archive/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+old-battery
+  /home/you → /home/vous
+  /home/you/message_from_thandiwe.txt → /home/vous/message_de_thandiwe.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+old-battery:harness
+  /srv/archive/README.txt → /srv/archive/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

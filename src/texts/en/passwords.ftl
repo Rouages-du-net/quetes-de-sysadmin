@@ -95,3 +95,5 @@ password-choir-loft-31 = choir-loft-31
 password-compost-heap-17 = compost-heap-17
 ## The Lifeboat
 password-storm-lantern-24 = storm-lantern-24
+## The Climbing Wall
+password-quickdraw-42 = quickdraw-42

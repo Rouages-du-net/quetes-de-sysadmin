@@ -95,3 +95,5 @@ password-choir-loft-31 = tribune-31
 password-compost-heap-17 = tas-de-compost-17
 ## La Station de sauvetage
 password-storm-lantern-24 = lanterne-tempete-24
+## Le Mur d'escalade
+password-quickdraw-42 = degaine-42

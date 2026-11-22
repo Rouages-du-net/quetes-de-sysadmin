@@ -512,3 +512,8 @@ name-note_from_yerlan-txt = mot_de_yerlan.txt
 name-message_from_leilani-txt = message_de_leilani.txt
 name-sample-booking-eml = exemple-reservation.eml
 name-sample-list-eml = exemple-liste.eml
+## Le Mur d'escalade
+name-message_from_nkechi-txt = message_de_nkechi.txt
+name-notes_from_haruto-txt = notes_de_haruto.txt
+name-message_from_akosua-txt = message_de_akosua.txt
+name-message_from_thandiwe-txt = message_de_thandiwe.txt

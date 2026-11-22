@@ -86,6 +86,8 @@ const MODELS: [string[], string[], string[]][] = [
   [['mariadb-dump', 'mysqldump', 'mariadb-admin', 'mysqladmin', 'mariadb-check', 'mysqlcheck', 'mariadb-secure-installation', 'mariadb', 'mysql'], ['mariadb'], ['/etc/mysql']],
   [['doveadm', 'doveconf', 'sievec', 'sieve-test'], ['dovecot'], ['/etc/dovecot']],
   [['rspamc', 'rspamadm'], ['rspamd'], ['/etc/rspamd']],
+  [['upsc', 'upscmd', 'upsrw', 'upsmon', 'upsd', 'upsdrvctl', 'upssched'], ['nut'], ['/etc/nut']],
+  [['ipmitool'], ['power'], []],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],
   [['nginx'], ['nginx'], ['/etc/nginx']],

@@ -90,3 +90,5 @@ story-allotments = The Allotments
     .summary = An allotments association books its plots, its tools and its watering slots through a small app on a MariaDB server. Connections that never leave and a query that reads millions of rows, an app given the keys to everything, a replica that silently stopped following: running a database, from the sysadmin's side.
 story-lifeboat = The Lifeboat
     .summary = A volunteer lifeboat station receives its mail on a small Debian server: Postfix, Dovecot and rspamd. A mailbox that bounces everything, a tide of spam that buries the safety bulletin the crew needs, and the winter bookings to sort while the treasurer is away: running the inbound side of mail, from the sysadmin's chair.
+story-climbing-wall = The Climbing Wall
+    .summary = A community climbing hall keeps its bookings and its door badges on a server behind a UPS, and a storm shows that the UPS protected nothing. A monitor watching the wrong UPS, a NAS that nobody warns, a worn battery and alerts that cry wolf: Network UPS Tools and power cuts, from the sysadmin's side.

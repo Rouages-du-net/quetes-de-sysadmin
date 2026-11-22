@@ -860,6 +860,24 @@ presents them for people.
   the running configuration), `sorting-office.ts` (each user's scripts
   tried on reference messages, `runSieve` quiet). Tests:
   `tests/lifeboat.test.ts`.
+- `src/engine/nut.ts`: Network UPS Tools 2.8.1 and the power behind it
+  (`principal.state.power`: the mains and their cuts, the UPS's battery,
+  output, kill timers and self tests, each machine it feeds with its halt,
+  crash, boot and firmware power restore policy; `state.nut` on each
+  machine: `ups.conf`, `upsd.conf` (LISTEN at start), `upsd.users`,
+  `upsmon.conf`, `upssched.conf` read like parseconf, the units
+  `nut-driver@NAME`, `nut-server`, `nut-monitor` hooked by `attachNut`,
+  upsd's answers `variables`/`instcmd`/`setVar`, upsmon's poll, critical
+  state and forced shutdown, upssched's timers; `second()` is one second of
+  the world); `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`,
+  `upssched`, `ipmitool` in `commands/nut.ts` (the `nut` family).
+  `chapters/climbing-wall.ts`: what the chapters of "The Climbing Wall"
+  share (`belay`, the hall's server on the UPS; `harness`, the NAS, an
+  internal host built by `harnessHost()`; chapter 1's past journal; fifteen
+  seconds per command in `passTime`, the whole drill after `upsmon -c fsd`,
+  `drill()`, Ikaika's button; chapter 3's flickering line and `alertTrial`);
+  `last-cut.ts`, `down-in-order.ts`, `old-battery.ts`. Tests:
+  `tests/climbing-wall.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
