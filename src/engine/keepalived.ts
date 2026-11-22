@@ -359,7 +359,8 @@ function newRun(j: Game, name: string, conf: KaConf, pid: number): Run {
   const sh = shellOf(j, name);
   for (const s of Object.values(conf.scripts)) {
     const path = s.script.split(/\s+/)[0];
-    const missing = path.startsWith('/') && !sh.find(path);
+    // The system's programs (/usr/bin…) are there even if the game's world doesn't list them.
+    const missing = path.startsWith('/') && !sh.find(path) && !/^\/(usr\/)?(local\/)?s?bin\/[\w.-]+$/.test(path);
     run.scripts[s.name] = { status: 'init', streak: 0, nextRun: v.now, disabled: missing || !s.script, code: 0 };
   }
   return run;

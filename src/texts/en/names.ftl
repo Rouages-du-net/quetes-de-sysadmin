@@ -486,3 +486,8 @@ name-note_from_ilse-txt = note_from_ilse.txt
 name-message_from_priya-txt = message_from_priya.txt
 name-note_from_hamid-txt = note_from_hamid.txt
 name-note_from_joon-txt = note_from_joon.txt
+## The Blood Drive
+name-message_from_zainab-txt = message_from_zainab.txt
+name-note_from_bastien-txt = note_from_bastien.txt
+name-message_from_teodor-txt = message_from_teodor.txt
+name-message_from_kirsi-txt = message_from_kirsi.txt

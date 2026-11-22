@@ -90,3 +90,4 @@ machine-chalk-motd = La Salle des profs — le serveur d'impression de l'école 
 machine-mast-motd = Les Ondes — le serveur Debian de la fédération de radios associatives : l'intranet, les archives, le portail des contributions, et l'autorité de certification de la fédération dans /srv/ca.
 machine-anvil-motd = L'Outilthèque — la forge de Lendshed : Forgejo (https://forge.lendshed.example), son exécuteur Actions, et les sites de la documentation et des téléchargements. Soyez bienveillant·es avec les contributeur·rices.
 machine-hearth-motd = La Maison de santé — l'hyperviseur de la maison de santé de Millbrook (KVM, libvirt) : ledger, agenda, records et leurs ami·es vivent ici. virsh list --all avant toute chose.
+machine-lb1-motd = La Collecte — lb1, le premier répartiteur de charge de l'établissement du sang de Lindenvale (keepalived, HAProxy) devant donate.lindenvale.example. Son jumeau est lb2. ip a avant toute chose.

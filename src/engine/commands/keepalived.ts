@@ -150,6 +150,8 @@ function tcpdump(game: Shell, args: string[]): string {
     const v = vrrp(game);
     const me = v.nodes[node!];
     let from = v.packets.length;
+    let last = -1;
+    let same = 0;
     for (let s = 0; s < limit && (count === null || captured < count); s++) {
       advance(1);
       const fresh = vrrp(game).packets.slice(from);
@@ -161,7 +163,9 @@ function tcpdump(game: Shell, args: string[]): string {
         if (pk.kind === 'arp-reply' && pk.dst !== me.address && pk.srcMac !== me.mac && pk.dst !== '192.0.2.254') continue;
         if (!filter.test(pk)) continue;
         captured++;
-        lines.push(packetLine(game, pk, numeric, verbose, ether));
+        same = pk.time === last ? same + 1 : 0;
+        last = pk.time;
+        lines.push(packetLine(game, pk, numeric, verbose, ether, same));
       }
     }
   }
@@ -170,20 +174,22 @@ function tcpdump(game: Shell, args: string[]): string {
   return [...head, ...lines, ...(interrupted ? [game.t('tcpdump-stopped'), '^C'] : []), ...tail].join('\n');
 }
 
-function stampOf(t: number): string {
+// The packets of one second come in order, a few hundred microseconds apart.
+function stampOf(t: number, k: number): string {
   const d = new Date(t);
   const p = (x: number, w = 2) => String(x).padStart(w, '0');
-  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}.${p((t % 1000) * 1000 + ((t / 1000) % 997), 6)}`;
+  const micro = ((Math.floor(t / 1000) * 7919) % 400_000) + k * 1_013 + ((k * 37) % 400);
+  return `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}.${p(Math.min(micro, 999_999), 6)}`;
 }
 
-function packetLine(game: Shell, pk: Packet, numeric: boolean, verbose: number, ether: boolean): string {
+function packetLine(game: Shell, pk: Packet, numeric: boolean, verbose: number, ether: boolean, k: number): string {
   const names: Record<string, string> = {};
   for (const line of (game.read('/etc/hosts') ?? '').split('\n')) {
     const [a, ...n] = line.trim().split(/\s+/);
     if (a && n[0] && !names[a]) names[a] = n[0];
   }
   const name = (a: string) => (numeric ? a : a === VRRP_GROUP ? 'vrrp.mcast.net' : (names[a] ?? a));
-  const t = stampOf(pk.time);
+  const t = stampOf(pk.time, k);
   if (pk.kind !== 'vrrp') {
     const eth = ether ? `${pk.srcMac} > ${pk.kind === 'arp-reply' ? '00:00:5e:00:01:33' : 'ff:ff:ff:ff:ff:ff'}, ethertype ARP (0x0806), length 42: ` : '';
     if (pk.kind === 'arp-reply') return `${t} ${eth}ARP, Reply ${name(pk.target!)} is-at ${pk.srcMac}, length 28`;

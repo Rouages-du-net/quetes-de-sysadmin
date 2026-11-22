@@ -57,3 +57,4 @@ machine-mast = pylone
 machine-booth = cabine
 machine-anvil = enclume
 machine-hearth = foyer
+machine-lb1 = lb1

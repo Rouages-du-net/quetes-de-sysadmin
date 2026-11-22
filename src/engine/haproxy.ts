@@ -315,7 +315,8 @@ const clock = (j: Game) => systemd(j)?.clock ?? 0;
 export function haLog(j: Game, message: string) {
   const r = haproxy(j);
   const n = j.find(LOG);
-  const t = new Date(clock(j)).toISOString().replace(/\.(\d{3})Z$/, (_, ms) => `.${ms}${String(clock(j) % 997).padStart(3, '0')}+00:00`);
+  const c = clock(j) + (Math.floor(clock(j) / 1000) * 389) % 1000;
+  const t = new Date(c).toISOString().replace(/\.(\d{3})Z$/, (_, ms) => `.${ms}${String(c % 997).padStart(3, '0')}+00:00`);
   const line = `${t} ${j.host} haproxy[${r?.pid ?? 0}]: ${message}`;
   if (n?.type === 'file') {
     const text = typeof n.content === 'string' ? n.content : '';
@@ -494,6 +495,7 @@ export function request(j: Game, port: number, path: string, client: string, now
   if (!f) return null;
   const backend = f.defaultBackend ?? (r.conf.backends.some((b) => b.name === f.name) ? f.name : null);
   r.feTotal++;
+  now += (Math.floor(now / 1000) * 389) % 1000 - 3;
   const date = (() => {
     const d = new Date(now);
     const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()];

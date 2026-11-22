@@ -1,6 +1,6 @@
 // Story "The Blood Drive": what its chapters share. The Lindenvale Blood
 // Service books donors' appointments online (donate.lindenvale.example).
-// Bastien, who built it in 2029, left; Ngozi runs the donor service, Rafael
+// Bastien, who built it in 2029, left; Zainab runs the donor service, Teodor
 // writes the booking app, Kirsi runs the network.
 // Two load balancers share a virtual address with keepalived (VRRP):
 // lb1 (the story's main machine, 192.0.2.104) and lb2 (an internal host,
@@ -22,7 +22,7 @@ import type { Translate } from '../../texts';
 import { newSystemd, systemd, writeLog, type DefinitionService } from '../systemd';
 import { generateKey } from '../access';
 import { machineName } from '../machines';
-import { attachKeepalived, masters, startKeepalived, tick, vrrp, shellOf, type Vrrp, type Packet } from '../keepalived';
+import { attachKeepalived, masters, startKeepalived, tick, vrrp, shellOf, type Run, type Vrrp, type Packet } from '../keepalived';
 import { CFG, haproxy, parseCfg, request, runChecks, settle, startHaproxy, startProblem, stopHaproxy, type Answer } from '../haproxy';
 import { readConf } from '../nftables';
 import type { Process } from '../commands/system';
@@ -56,6 +56,7 @@ export interface Story {
   failedOver?: boolean;
   // Chapter 1: the longest time lb1 stayed master with its haproxy down after tracking was loaded.
   stuck?: number;
+  stuckMax?: number;
   // Chapter 2: the technician's visit to web2 (waiting, working until `techUntil`, done).
   tech?: 'waiting' | 'working' | 'done';
   techUntil?: number;
@@ -88,18 +89,60 @@ const root: Rights = { owner: 'root' };
 const dir = (children: Record<string, Node>, rights: Rights = root) => d(children, undefined, rights);
 const file = (text: string, rights: Rights = root): File => f(text, { lines: true, ...rights });
 const proc = (pid: number, user: string, command: string): Process => ({ pid, user, cpu: 0, mem: 0.4, command });
-export const typed = (j: Game) => (j as Shell).last.line ?? '';
-export const seen = (j: Game, text: string | RegExp) => {
+/** The machine of the story where the last command was typed (events are checked on the main machine). */
+export const active = (j: Game): Shell => ((j as Shell).principal.state.lastShell as Shell | undefined) ?? (j as Shell).principal;
+/** Its name as the story knows it (lb1, lb2, web1…). */
+export const activeName = (j: Game) => {
+  const a = active(j);
+  return a === a.principal ? 'lb1' : a.host;
+};
+export const typed = (j: Game) => active(j).last.line ?? '';
+export const seen = (j: Game, text: string | RegExp, on?: string) => {
+  if (on && activeName(j) !== on) return false;
   // The manual quotes the tools' messages: reading it is not meeting them.
   if (/^\s*(man|apropos|whatis|help)\b|--help\b/.test(typed(j))) return false;
-  const all = `${j.last.output}\n${j.last.errors.join('\n')}`;
+  const last = active(j).last;
+  const all = `${last.output}\n${last.errors.join('\n')}`;
   return typeof text === 'string' ? all.includes(text) : text.test(all);
 };
 /** The shell of a machine of the story by name (lb1, lb2, web1…). */
-export const machine = (j: Game, name: string): Shell => shellOf(j, name);
+export const machine = (j: Game, name: string): Shell => shellOf(j, name === 'lb1' ? vrrp(j).main : name);
 /** The haproxy run of a load balancer. */
 export const ha = (j: Game, name: 'lb1' | 'lb2') => haproxy(machine(j, name));
-export const holders = (j: Game) => masters(j);
+export const holders = (j: Game) => masters(j).map((m) => (m === vrrp(j).main ? 'lb1' : m));
+/** A load balancer's running keepalived (its loaded configuration), by story name. */
+export const runOf = (j: Game, name: 'lb1' | 'lb2'): Run | undefined => vrrp(j).runs[name === 'lb1' ? vrrp(j).main : name];
+/** The service's state on a machine of the story. */
+export const serviceState = (j: Game, host: string, unit: string) => systemd(machine(j, host === 'lb1' ? vrrp(j).main : host))?.services[unit]?.state;
+
+/** The run tracks haproxy with a script that is not disabled. */
+export function tracks(r: Run | undefined): boolean {
+  if (!r?.inst) return false;
+  return r.inst.track.some((t) => !r.scripts[t.name]?.disabled && /haproxy/.test(r.conf.scripts[t.name]?.script ?? ''));
+}
+
+/**
+ * Whether, with the configurations keepalived has loaded, haproxy dying on
+ * `x` moves the address to `y` (whose haproxy runs): x goes FAULT (weight
+ * 0), or its priority falls below y's and y may preempt.
+ */
+export function wouldFailOver(j: Game, x: 'lb1' | 'lb2', y: 'lb1' | 'lb2'): boolean {
+  const a = runOf(j, x);
+  const b = runOf(j, y);
+  if (!a?.inst || !b?.inst || !tracks(a) || a.inst.vrid !== b.inst.vrid) return false;
+  const haproxyScripts = (r: Run) => r.inst!.track.filter((t) => !r.scripts[t.name]?.disabled && /haproxy/.test(r.conf.scripts[t.name]?.script ?? ''));
+  const weight = (r: Run, t: { name: string; weight?: number }) => t.weight ?? r.conf.scripts[t.name].weight;
+  if (haproxyScripts(a).some((t) => weight(a, t) === 0)) return true;
+  let failing = a.inst.priority;
+  for (const t of haproxyScripts(a)) if (weight(a, t) < 0) failing += weight(a, t);
+  let healthy = b.inst.priority;
+  for (const t of b.inst.track) if (!b.scripts[t.name]?.disabled && weight(b, t) > 0) healthy += weight(b, t);
+  failing = Math.max(1, Math.min(254, failing));
+  healthy = Math.max(1, Math.min(254, healthy));
+  const address = (n: string) => (n === 'lb1' ? LB1 : LB2);
+  const wins = healthy > failing || (healthy === failing && address(y).split('.').map(Number)[3] > address(x).split('.').map(Number)[3]);
+  return wins && !b.inst.nopreempt;
+}
 
 // ——— Configuration files ———
 
@@ -418,7 +461,7 @@ function webHost(name: string, n: ChapterNo): InternalHost {
         : '2030-05-13 09:02:11 INFO booking: started, 4 workers';
       return dir({
         etc: dir({ ...accountsFiles(), hostname: file(name), hosts: file(hostsFile()), 'resolv.conf': file(`search internal\nnameserver ${GATEWAY}`) }),
-        srv: dir({ booking: dir({ 'README.txt': file('Donor booking app (Rafael). gunicorn on 0.0.0.0:8080.\nGET /health answers 200 when the app and its database are fine, 500 otherwise.') }, { owner: 'booking', mode: 'rwxr-xr-x' }) }),
+        srv: dir({ booking: dir({ 'README.txt': file('Donor booking app (Teodor). gunicorn on 0.0.0.0:8080.\nGET /health answers 200 when the app and its database are fine, 500 otherwise.') }, { owner: 'booking', mode: 'rwxr-xr-x' }) }),
         var: dir({ log: dir({ booking: dir({ 'app.log': file(log, { owner: 'booking', mode: 'rw-r--r--' }) }) }) }),
         home: dir({ you: d({ '.ssh': d({ authorized_keys: f(key.isPublic, { lines: true, mode: 'rw-------' }) }, undefined, { mode: 'rwx------' }) }) }),
         root: dir({}, { owner: 'root', mode: 'rwx------' }),
@@ -552,7 +595,7 @@ export function initialiseStory(j: Game, n: ChapterNo) {
     main: p.host,
     nodes: { [p.host]: { name: p.host, address: LB1, mac: MAC.lb1, iface: 'eth0' }, lb2: { name: 'lb2', address: LB2, mac: MAC.lb2, iface: 'eth0' } },
     runs: {},
-    speakers: n === 3 ? [{ address: EDGE_A, mac: MAC.edgeA, vrid: 51, priority: 120, vips: [`${GATEWAY}/24`], advertInt: 1 }] : [],
+    speakers: [],
     packets: [],
     now: 0,
     nextPid: 4000,
@@ -566,17 +609,39 @@ export function initialiseStory(j: Game, n: ChapterNo) {
     const s = p.internal(name)!;
     s.state.network = networkView(s);
   }
+  // The past: the nodes booted, lb1 won the election; in chapter 3, the routers' VRRP group came at 21:30 on
+  // Tuesday, and lb2's new firewall at 22:04.
+  jump(p, BOOT[n] + 9000);
   prepareLb(p, 'lb1');
   prepareLb(machine(p, 'lb2'), 'lb2');
-  // The past: the nodes started an hour ago; lb1 won the election (in chapter 3, lb2 lost lb1's adverts on Tuesday night).
-  const start = NOW[n] - 60_000;
-  for (const s of shells(p)) systemd(s)!.clock = start;
-  vrrp(p).now = start;
+  // Chapter 3: before Tuesday night, lb2 ran the old, open ruleset.
+  if (n === 3) machine(p, 'lb2').state.nft = { tables: [] };
   startKeepalived(p, p.host);
+  advance(p, 2, false);
   startKeepalived(machine(p, 'lb2'), 'lb2');
+  advance(p, 20, false);
+  if (n === 3) {
+    jump(p, Date.UTC(2030, 5, 4, 21, 30, 0));
+    vrrp(p).speakers.push({ address: EDGE_A, mac: MAC.edgeA, vrid: 51, priority: 120, vips: [`${GATEWAY}/24`], advertInt: 1 });
+    advance(p, 3, false);
+    jump(p, Date.UTC(2030, 5, 4, 22, 4, 0));
+    const lb2 = machine(p, 'lb2');
+    const sd = systemd(lb2)!;
+    writeLog(sd, 'nftables.service', 'systemd', 1, 'Starting nftables.service - nftables...', 6, false);
+    writeLog(sd, 'nftables.service', 'systemd', 1, 'Finished nftables.service - nftables.', 6, false);
+    const { ruleset } = readConf(lb2);
+    if (ruleset) lb2.state.nft = ruleset;
+    advance(p, 8, false);
+  }
   seedJournal(p, n);
-  advance(p, 50, false);
-  for (const s of shells(p)) systemd(s)!.clock = Math.max(systemd(s)!.clock, NOW[n]);
+  jump(p, NOW[n] - 30_000);
+  advance(p, 30);
+}
+
+/** The story's clocks set to a moment (a jump over days where nothing happened). */
+function jump(p: Shell, t: number) {
+  for (const s of shells(p)) systemd(s)!.clock = t;
+  vrrp(p).now = t;
 }
 
 // ——— Time ———
@@ -590,6 +655,7 @@ export const shells = (j: Game): Shell[] => {
 /** A command passes on any machine of the story: five seconds (and what sleep asked for). */
 export function passTime(j: Game) {
   const p = (j as Shell).principal;
+  p.state.lastShell = j;
   let slept = 0;
   for (const s of shells(p)) {
     slept += (s.state.slept as number | undefined) ?? 0;
@@ -629,6 +695,13 @@ function second(p: Shell, t: number, donors: boolean) {
     if (t % 4000 === 0) settle(sh, () => receiving);
   }
   if (split(p)) st.split = (st.split ?? 0) + 1;
+  if (st.chapter === 1) {
+    const down = serviceState(p, 'lb1', 'haproxy') !== 'active';
+    const h = holders(p);
+    if (down && tracks(runOf(p, 'lb1')) && h.length === 1 && h[0] === 'lb2' && serviceState(p, 'lb2', 'haproxy') === 'active') st.failedOver = true;
+    st.stuck = down && tracks(runOf(p, 'lb1')) && h.includes('lb1') ? (st.stuck ?? 0) + 1 : 0;
+    if ((st.stuck ?? 0) > (st.stuckMax ?? 0)) st.stuckMax = st.stuck;
+  }
   // The gateway asks who has the virtual address, every ten seconds; every master answers.
   if (t % 10_000 === 0) {
     vrrp(p).packets.push({ time: t, kind: 'arp-request', src: GATEWAY, dst: 'ff:ff:ff:ff:ff:ff', srcMac: MAC.gateway, target: VIP });

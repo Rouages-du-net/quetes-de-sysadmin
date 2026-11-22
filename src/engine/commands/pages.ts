@@ -9,6 +9,35 @@ import type { Command } from './index';
 type Page = Pick<Command, 'options' | 'values' | 'long' | 'examples' | 'see' | 'section'>;
 
 export const PAGES: Record<string, Page> = {
+  keepalived: {
+    options: ['t', 'f', 'v'],
+    examples: ['sudo keepalived -t', 'sudo keepalived -t -f /tmp/keepalived.conf', 'sudo systemctl reload keepalived', 'sudo journalctl -u keepalived -n 20', 'keepalived -v'],
+    see: ['keepalived.conf', 'ip', 'tcpdump', 'systemctl', 'journalctl'],
+  },
+  'keepalived.conf': {
+    examples: ['vrrp_script chk_haproxy { script "/usr/bin/killall -0 haproxy"; interval 2; weight -20 }', 'track_script { chk_haproxy }', 'unicast_peer { 192.0.2.105 }'],
+    see: ['keepalived', 'haproxy', 'nft'],
+  },
+  haproxy: {
+    options: ['c', 'f', 'q', 'v'],
+    examples: ['sudo haproxy -c -f /etc/haproxy/haproxy.cfg', 'sudo systemctl reload haproxy', 'echo "show stat" | sudo socat stdio /run/haproxy/admin.sock | cut -d, -f1,2,5,18,37', 'echo "set server be_booking/web2 state drain" | sudo socat stdio /run/haproxy/admin.sock', 'echo "set server be_booking/web2 state ready" | sudo socat stdio /run/haproxy/admin.sock', 'echo "show servers state" | sudo socat stdio /run/haproxy/admin.sock', 'sudo tail -f /var/log/haproxy.log'],
+    see: ['socat', 'keepalived', 'curl', 'systemctl'],
+  },
+  socat: {
+    examples: ['echo "show info" | sudo socat stdio /run/haproxy/admin.sock', 'echo "show stat" | sudo socat - UNIX-CONNECT:/run/haproxy/admin.sock'],
+    see: ['haproxy', 'nc'],
+  },
+  tcpdump: {
+    section: 8,
+    options: ['i', 'c', 'n', 'v', 'e'],
+    examples: ['sudo tcpdump -i eth0 vrrp', 'sudo tcpdump -i eth0 -c 5 -n vrrp', 'sudo tcpdump -i eth0 -nv "ip proto 112"', 'sudo tcpdump -i eth0 -n arp', 'sudo tcpdump -i eth0 -n vrrp and src 192.0.2.104'],
+    see: ['ip', 'nft', 'keepalived'],
+  },
+  pidof: {
+    options: ['s'],
+    examples: ['pidof haproxy', 'pidof -s keepalived'],
+    see: ['ps', 'pgrep', 'killall'],
+  },
   virsh: {
     options: ['c', 'q', 'r', 'h', 'v'],
     examples: [
