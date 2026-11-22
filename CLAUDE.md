@@ -747,6 +747,15 @@ presents them for people.
   a "Tips" setting), the intro tour of a first visit and the notebook's
   window (with its shortcuts) in `game.ts`; and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
+- `src/pwa/`: the installable game (Progressive Web App), on the site's
+  pages only, never in the embeddable element: the manifests (`manifest.ts`,
+  served by `src/pages/<language>/manifest.webmanifest.ts`), the service
+  worker (template `service-worker.js`, written to `dist/sw.js` with its
+  precache list and a version hashed from the build by the integration of
+  `build.ts`), its registration and the footer's "Install the game"
+  (`site.ts`, `install.ts`, imported by `Base.astro`, texts in
+  `Base.astro`); icons in `public/icons/`, drawn by `scripts/icons.mjs`.
+  Tests: `tests/pwa.test.ts`, the PWA part of `tests/browser.mjs`.
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
   attributes `lang`, `story`, `save-key`, `theme="light|dark"`,
   `exam-control="page"` (with the `exam` property and the `exam-change`
@@ -771,7 +780,8 @@ presents them for people.
   stories, machines, places, accounts, passwords); French is a translation.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
-  language choice, the 404 page, embedding in another page.
+  language choice, the 404 page, embedding in another page, the PWA
+  (service workers blocked elsewhere, `serviceWorkers: 'allow'` there).
 - Deployment: `.github/workflows/deploy.yml` (tests on each PR, FTPS and a
   check of the live site from `main`, including the root's redirections);
   see `docs/DEPLOYMENT.md`. Every new resource must respect the CSP (no

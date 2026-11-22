@@ -22,6 +22,9 @@ system: nothing leaves the browser.
 
 - Online: **https://sysadmin.rouages.net** (in English at `/en/`, in French
   at `/fr/`; the root picks one from your browser's language).
+- On your phone or computer: **"Install the game"** in the site's footer
+  (or "Share → Add to Home Screen" in Safari on iOS); installed, the game
+  opens full screen and plays offline, and your progress stays on the device.
 - On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
 
 ## Develop

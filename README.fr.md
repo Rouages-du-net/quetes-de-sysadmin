@@ -27,6 +27,10 @@ un système entièrement simulé : rien ne sort du navigateur.
 
 - En ligne : **https://sysadmin.rouages.net** (en français sous `/fr/`, en
   anglais sous `/en/` ; la racine choisit selon la langue du navigateur).
+- Sur ton téléphone ou ton ordinateur : **« Installer le jeu »** en bas de
+  page du site (ou « Partager → Sur l'écran d'accueil » dans Safari sur
+  iOS) ; installé, le jeu s'ouvre en plein écran et marche hors ligne, et ta
+  progression reste sur l'appareil.
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :

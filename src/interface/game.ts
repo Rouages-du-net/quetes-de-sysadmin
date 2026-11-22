@@ -989,6 +989,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   // Prefetch: a story's chunk while the pointer is on its button (or the button has the focus).
   const prefetch = (h: number) => {
+    if (navigator.onLine === false) return;
     if (h >= 0 && h < STORIES.length && accessible(h)) loadStory(STORIES[h].id, t.language).catch(() => {});
   };
   form.addEventListener('submit', (e) => {
@@ -1335,12 +1336,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const { h, c } = placeFor(chapter);
     // During on-call duty, no second on-call: the button comes back at the end (or on giving up).
     incidentButton.disabled = true;
+    onCall = { date, chapter, start: Date.now(), sh: null, epuise: false };
+    // The story may load first: the budget starts once the incident is on screen.
     launch(h, c).then(() => {
-      if (gameTerminal.remote?.story.id !== STORIES[h].id) {
+      if (!onCall || gameTerminal.remote?.story.id !== STORIES[h].id) {
+        onCall = null;
         incidentUpdate();
         return;
       }
-      onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
+      onCall.start = Date.now();
+      onCall.sh = gameTerminal.remote?.shell ?? null;
       show(t('on-call-start'), 'achievements');
       onCallUpdate();
       input.focus();
@@ -1957,6 +1962,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // the workstation the first open story not finished (where `ssh` leads next).
   const idle = (f: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 3000 }) : setTimeout(f, 1500));
   idle(() => {
+    if (navigator.onLine === false) return;
     loadTexts(t.language, 'manual').catch(() => {});
     if (departure < 0 || !accessible(departure)) prefetch(STORIES.findIndex((s, h) => accessible(h) && s.chapters.some((c) => !finished.includes(c.id))));
   });

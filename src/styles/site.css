@@ -105,6 +105,19 @@ a:hover { color: var(--amber); }
 a:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 quetes-de-sysadmin { margin: 1.5rem 0 3rem; }
 footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem; }
+/* "Install the game", at the top of the footer (src/pwa/install.ts): shown
+   only when the browser can install it, or as Safari's instructions on iOS. */
+.install { margin: 0.75rem 0; }
+.install[hidden], .install [hidden] { display: none; }
+.install-button, .install-ios > summary { font: 600 0.95rem var(--mono); color: var(--text); background: var(--card); border: 1px solid var(--phosphor); border-radius: 0.35rem; padding: 0.45rem 0.9rem; min-height: 2.75rem; cursor: pointer; }
+.install-button:hover, .install-ios > summary:hover { color: var(--phosphor); }
+.install-button:focus-visible, .install-ios > summary:focus-visible, .install-status:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.install-button::before, .install-ios > summary::before { content: '↓' / ''; margin-right: 0.6ch; color: var(--phosphor); }
+.install-ios > summary { display: inline-flex; align-items: center; list-style: none; box-sizing: border-box; }
+.install-ios > summary::-webkit-details-marker { display: none; }
+.install-ios p { max-width: 42rem; color: var(--text); }
+.install-status { margin: 0.5rem 0 0; color: var(--text); }
+.install-status:empty { display: none; }
 /* The exam-mode checkbox, under "For teachers" (wired to the game, see src/exam-control.ts). */
 .exam-control label { display: flex; align-items: flex-start; gap: 0.5rem; cursor: pointer; }
 .exam-control input { accent-color: var(--phosphor); width: 1.1rem; height: 1.1rem; margin: 0.2rem 0 0; flex: none; }

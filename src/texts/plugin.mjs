@@ -48,6 +48,17 @@ export function entries(source) {
   return out.map((e) => ({ id: e.id, text: e.lines.join('\n').replace(/\n+$/, '') }));
 }
 
+// A manual page's first sentence (what whatis and the notebook show, see
+// commands/manual.ts's recap), kept in the core texts as man-summary-<page>:
+// the notebook shows it before the manual's pages have loaded. None for a
+// sentence with a placeable.
+function summary(text) {
+  const lines = text.split('\n').filter((l) => !l.startsWith('#'));
+  const first = lines[0].slice(lines[0].indexOf('=') + 1).trim() || (lines.slice(1).find((l) => l.trim() && !l.trim().startsWith('.')) ?? '').trim();
+  const sentence = first.split(/(?<=\.)\s|(?<=。)/)[0];
+  return sentence && !/[{}]/.test(sentence) ? sentence : null;
+}
+
 const languages = () => readdirSync(TEXTS, { withFileTypes: true }).filter((d) => d.isDirectory() && readdirSync(join(TEXTS, d.name)).some((f) => f.endsWith('.ftl'))).map((d) => d.name).sort();
 // Read in every language at once: a save made in another language (machine
 // names, the player's account, the workstation's ssh config) is translated
@@ -74,17 +85,22 @@ function computeGroups(language) {
   const shared = [];
   const titles = [];
   const manualOwn = [];
+  const summaries = [];
   const pages = [];
   for (const f of files) {
     if (f === 'manual.ftl') {
-      for (const e of entries(read(f))) (e.id.startsWith('man-') ? pages : manualOwn).push(e.text);
+      for (const e of entries(read(f))) {
+        (e.id.startsWith('man-') ? pages : manualOwn).push(e.text);
+        const line = e.id.startsWith('man-') && summary(e.text);
+        if (line) summaries.push(`${e.id.replace(/^man-/, 'man-summary-')} = ${line}`);
+      }
     } else if (storyFile(f) && claimed.has(f)) {
       const title = f.startsWith('chapter-') && entries(read(f)).find((e) => e.id === f.slice(0, -4));
       if (title) titles.push(title.text);
     } else (SHARED.includes(f) ? shared : core).push([f, read(f)]);
   }
   const result = {
-    core: [...core, ['manual.ftl (own messages)', manualOwn.join('\n')], ['chapter titles', titles.join('\n')]],
+    core: [...core, ['manual.ftl (own messages)', manualOwn.join('\n')], ['manual.ftl (summaries)', summaries.join('\n')], ['chapter titles', titles.join('\n')]],
     shared,
     manual: [['manual.ftl (pages)', pages.join('\n')]],
   };
