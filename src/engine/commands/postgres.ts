@@ -4,10 +4,12 @@
 // After https://www.postgresql.org/docs/16/app-pgdump.html,
 // https://www.postgresql.org/docs/16/app-pgrestore.html and
 // https://www.postgresql.org/docs/16/app-psql.html.
-// Differences: SQL reduced to SELECT count(*), SELECT … [WHERE col = v] [ORDER BY]
-// [LIMIT], DELETE [WHERE col = v], TRUNCATE, DROP TABLE, ALTER ROLE … PASSWORD
-// (a role's password, by the postgres account), and to the meta-commands
-// \l, \dt, \d, \du; psql without -c or -f doesn't open in interactive mode.
+// Differences: SQL reduced to SELECT count(*), SELECT … [WHERE …] [ORDER BY]
+// [LIMIT], DELETE [WHERE …], INSERT INTO … VALUES, TRUNCATE, DROP TABLE,
+// ALTER ROLE … PASSWORD (a role's password, by the postgres account), and to
+// the meta-commands \l, \dt, \d, \du; WHERE as sql-where.ts reads it;
+// psql's output: aligned, --csv, -A (unaligned, -F separator), -t (rows
+// only); psql without -c or -f doesn't open in interactive mode.
 
 import type { Shell } from '../shell';
 import { connection, copyOf, dumpEncoding, dumpSql, readDumpSql, postgres, grid, versionLine, type Table } from '../postgres';
@@ -18,7 +20,34 @@ import { roleSql } from './pg-roles';
 import { allowed, type Privilege } from '../pg-roles';
 import { server } from '../pg-server';
 import { systemd } from '../systemd';
+import { SqlError, values as sqlValues, where } from '../sql-where';
 import type { Command } from './index';
+
+// psql's output format for the rows of a SELECT (-A, -F, -t, --csv), set by the command line.
+interface Format {
+  csv?: boolean;
+  unaligned?: boolean;
+  separator?: string;
+  tuplesOnly?: boolean;
+}
+let format: Format = {};
+
+/** The rows of a query in psql's chosen format. */
+function rows(columns: string[], lines: string[][]): string {
+  const quote = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
+  if (format.csv) return [...(format.tuplesOnly ? [] : [columns.join(',')]), ...lines.map((l) => l.map(quote).join(','))].join('\n');
+  if (format.unaligned) {
+    const sep = format.separator ?? '|';
+    const out = [...(format.tuplesOnly ? [] : [columns.join(sep)]), ...lines.map((l) => l.join(sep))];
+    if (!format.tuplesOnly) out.push(`(${lines.length} ${lines.length === 1 ? 'row' : 'rows'})`);
+    return out.join('\n');
+  }
+  if (format.tuplesOnly) {
+    const widths = columns.map((c, i) => Math.max(0, ...lines.map((l) => (l[i] ?? '').length)));
+    return [...lines.map((l) => ` ${l.map((v, i) => v.padEnd(widths[i])).join(' | ')}`.trimEnd()), ''].join('\n');
+  }
+  return grid(columns, lines);
+}
 
 // A command's options: -x value, --long=value, -Fc.
 function readOptions(args: string[], withValue: string[]) {
@@ -116,15 +145,45 @@ function sql(game: Shell, base: string, httpRequest: string): string {
     (pg.passwords ??= {})[alter[1]] = alter[2];
     return 'ALTER ROLE';
   }
-  // WHERE col = value (a single condition).
+  // WHERE: comparisons, AND, OR, dates and intervals (sql-where.ts).
   const filter = (t: Table, or?: string): string[][] | string => {
-    if (!or) return t.lines;
-    const m = /^(\w+)\s*=\s*('?[^']*'?|\d+)$/.exec(or.trim());
-    if (!m) return `ERROR:  syntax error at or near "${or.trim().split(/\s+/)[1] ?? or}"`;
-    const i = t.columns.indexOf(m[1]);
-    if (i < 0) return `ERROR:  column "${m[1]}" does not exist`;
-    return t.lines.filter((l) => l[i] === value(m[2]));
+    try {
+      return where(t.columns, t.lines, or, systemd(game)?.clock ?? 0);
+    } catch (e) {
+      if (e instanceof SqlError) return `ERROR:  ${e.message}`;
+      throw e;
+    }
   };
+  // INSERT INTO table [(columns)] VALUES (…)[, (…)]
+  const insert = /^insert\s+into\s+(\w+)\s*(?:\(([^)]*)\))?\s*values\s*(.+)$/is.exec(r);
+  if (insert) {
+    const t = table(insert[1], 'INSERT');
+    if (typeof t === 'string') return game.error(t);
+    const named = insert[2] ? insert[2].split(',').map((c) => c.trim().toLowerCase()) : t.columns;
+    const unknown = named.find((c) => !t.columns.includes(c));
+    if (unknown) return game.error(`ERROR:  column "${unknown}" of relation "${insert[1].toLowerCase()}" does not exist`);
+    const groups = [...insert[3].matchAll(/\(((?:[^()']|'(?:[^']|'')*'|\([^()]*\))*)\)/g)].map((m) => m[1]);
+    if (!groups.length) return game.error(`ERROR:  syntax error at or near "${insert[3].trim().split(/\s+/)[0]}"`);
+    const added: string[][] = [];
+    for (const g of groups) {
+      let cells: string[];
+      try {
+        cells = sqlValues(g, systemd(game)?.clock ?? 0);
+      } catch (e) {
+        if (e instanceof SqlError) return game.error(`ERROR:  ${e.message}`);
+        throw e;
+      }
+      if (cells.length > named.length) return game.error('ERROR:  INSERT has more expressions than target columns');
+      if (cells.length < named.length) return game.error('ERROR:  INSERT has more target columns than expressions');
+      const row = t.columns.map((c) => (named.includes(c) ? cells[named.indexOf(c)] : ''));
+      if (row[0] === '') return game.error(`ERROR:  null value in column "${t.columns[0]}" of relation "${insert[1].toLowerCase()}" violates not-null constraint`);
+      if ([...t.lines, ...added].some((l) => l[0] === row[0]))
+        return game.error(`ERROR:  duplicate key value violates unique constraint "${insert[1].toLowerCase()}_pkey"\nDETAIL:  Key (${t.columns[0]})=(${row[0]}) already exists.`);
+      added.push(row);
+    }
+    t.lines.push(...added);
+    return `INSERT 0 ${added.length}`;
+  }
   const account = /^select\s+count\(\*\)\s+from\s+(\w+)(?:\s+where\s+(.+))?$/i.exec(r);
   if (account) {
     const t = table(account[1]);
@@ -150,7 +209,7 @@ function sql(game: Shell, base: string, httpRequest: string): string {
       lines = [...lines].sort((a, z) => (/^\d+$/.test(a[i]) ? Number(a[i]) - Number(z[i]) : a[i].localeCompare(z[i])) * (selection[5] ? -1 : 1));
     }
     if (selection[6]) lines = lines.slice(0, Number(selection[6]));
-    return grid(
+    return rows(
       columns,
       lines.map((l) => columns.map((c) => l[t.columns.indexOf(c)])),
     );
@@ -221,7 +280,18 @@ export const POSTGRES: Record<string, Command> = {
   psql: {
     ownOptions: true,
     launch: ({ args, game }) => {
-      const { options, positionnels: positional } = readOptions(args, ['-d', '--dbname', '-c', '--command', '-f', '--file', '-U', '--username']);
+      const { options, positionnels: positional } = readOptions(args, ['-d', '--dbname', '-c', '--command', '-f', '--file', '-U', '--username', '-F', '--field-separator']);
+      format = {
+        csv: !!options['--csv'],
+        unaligned: !!(options['-A'] || options['--no-align']),
+        separator: options['-F'] ?? options['--field-separator'],
+        tuplesOnly: !!(options['-t'] || options['--tuples-only']),
+      };
+      // Bundled short options: -At, -tA.
+      for (const a of args.filter((x) => /^-[At]{2,}$/.test(x))) {
+        if (a.includes('A')) format.unaligned = true;
+        if (a.includes('t')) format.tuplesOnly = true;
+      }
       if (options['-l'] || options['--list']) {
         const e = connection(game, 'psql', 'postgres');
         return e ? game.error(e) : sql(game, 'postgres', '\\l');

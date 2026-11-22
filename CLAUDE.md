@@ -773,6 +773,23 @@ presents them for people.
   every two seconds, web2's maintenance, `wouldFailOver`);
   `no-failover.ts`, `sick-server.ts`, `split-brain.ts`. Tests:
   `tests/blood-drive.test.ts`.
+- nginx's access logs (`log_format`, `access_log path [format]|off`,
+  `map` blocks, `accessLines`: what a request writes) in `nginx.ts`;
+  logrotate's `maxage` (`readConfig` exported) in `commands/logs.ts`;
+  journald's `MaxRetentionSec=` (`timeSpan`, `maxRetention`) in
+  `journal-files.ts`; a WHERE clause and INSERT's values as PostgreSQL
+  reads them (comparisons, AND/OR, NULL, LIKE, IN, dates and intervals) in
+  `src/engine/sql-where.ts`, psql's `INSERT`, `--csv`, `-A`, `-t` in
+  `commands/postgres.ts`; restic's `--keep-within` (`readWithin`).
+  `chapters/choir.ts`: what the chapters of "The Choir" share (`baton`,
+  the choir's server: its members from `choir-members` in the texts, the
+  tables built by `referenceTables`, the policy, nginx's logs since 2027,
+  the audit log, the journal, the uploads, the restic repository and the
+  purge and backup units of chapter 3; visitors each command in
+  `passTime`); `kept-forever.ts`, `access-request.ts` (`answer`: what the
+  export holds and whether it leaks), `forget-me.ts` (`purgeVerdict`: the
+  scheduled purge run once on a copy of the database). Tests:
+  `tests/choir.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

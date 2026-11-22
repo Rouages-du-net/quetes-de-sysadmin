@@ -12,7 +12,16 @@
 // proxy_set_header (https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header):
 // inherited from the level above only if the level has none; by default,
 // Host $proxy_host and Connection close; the client's other headers pass through.
-// Differences: only some of the directives.
+// Access logs (https://nginx.org/en/docs/http/ngx_http_log_module.html):
+// log_format (combined predefined), access_log path [format] or off, at
+// http or server level (the server's own replace the http ones); map
+// (https://nginx.org/en/docs/http/ngx_http_map_module.html) makes a
+// variable from another: exact keys, then regular expressions in order
+// (~, ~* case-insensitive, captures $1 or named), default; the usual way to
+// write a truncated address in the log.
+// Differences: only some of the directives; a log file deleted by hand is
+// created again at the next line (nginx would keep writing to the deleted
+// file until a reload or `nginx -s reopen`).
 
 import type { Game } from './shell';
 import { wildcard } from './tools';
@@ -54,7 +63,9 @@ const DIRECTIVES: Record<string, Rule> = {
   ssl_verify_client: r(1, 1, ['http', 'server']),
   ssl_verify_depth: r(1, 1, ['http', 'server']),
   ssl_crl: r(1, 1, ['http', 'server']),
-  access_log: r(1, 3, HTTP),
+  access_log: r(1, 5, HTTP),
+  log_format: r(2, 99, ['http']),
+  map: r(2, 2, ['http'], true),
   gzip: r(1, 1, HTTP),
   server_tokens: r(1, 1, HTTP),
   server: r(0, 0, ['http'], true),
@@ -148,6 +159,8 @@ export interface Server {
   back?: string[];
   limit?: Limit;
   statusLimit?: number;
+  // access_log: the server's own, otherwise the http block's, otherwise the default.
+  accessLog?: AccessLog;
 }
 
 // A group of servers (upstream): proxy_pass http://name/ balances between them.
@@ -155,8 +168,21 @@ export interface Upstream {
   servers: { address: string; weight: number; rescue: boolean; off: boolean }[];
 }
 
+// A map block: the value of $variable computed from the source (a string with variables).
+export interface MapBlock {
+  source: string;
+  entries: { key: string; regex?: RegExp; value: string }[];
+  fallback: string;
+}
+
+// Where a server writes its access log, and in which format (a log_format name); empty: off.
+export type AccessLog = { path: string; format: string }[];
+
 export interface Configuration {
   servers: Server[];
+  // log_format: name → the format (combined predefined); map: variable (without $) → block.
+  formats?: Record<string, string>;
+  maps?: Record<string, MapBlock>;
   upstreams: Record<string, Upstream>;
   // nginx -t's warnings ([warn]): the configuration stays valid.
   warnings: string[];
@@ -219,6 +245,18 @@ function parse(game: Game, file: string, context: string, read: string[]): Direc
         words = [];
         // In "types", each line maps a MIME type to extensions.
         if (ctx === 'types') continue;
+        // In "map", each line is a key and its value (or default, hostnames…).
+        if (ctx === 'map') {
+          if (j.word === '{') failure(`unexpected "{"`, file, line);
+          if (name === 'include') {
+            for (const included of includedFiles(game, args[0] ?? '', file, line)) directives.push(...parse(game, included, ctx, read));
+            continue;
+          }
+          if (['hostnames', 'volatile'].includes(name) && !args.length) continue;
+          if (args.length !== 1) failure(`invalid number of the map parameters`, file, line);
+          directives.push({ name, args, file, line });
+          continue;
+        }
         const rule = ctx === 'upstream' && name === 'server' ? UPSTREAM_SERVER : DIRECTIVES[name];
         if (!rule) failure(`unknown directive "${name}"`, file, line);
         if (!rule.inside.includes(ctx)) failure(`"${name}" directive is not allowed here`, file, line);
@@ -357,6 +395,30 @@ function build(game: Game, read: string[] = []): Configuration {
   const http = root.find((d) => d.name === 'http')?.children ?? [];
   const values = (listing: Directive[], name: string) => listing.filter((d) => d.name === name).flatMap((d) => d.args);
   const zones = readZones(http);
+  const formats = readFormats(http);
+  const maps = readMaps(http);
+  const named = (m: MapBlock, v: string) => m.entries.some((e) => e.regex && e.regex.source.includes(`(?<${v}>`));
+  const known = (v: string) => KNOWN_VARIABLES.has(v) || !!maps[v] || /^(http|arg|cookie|sent_http|upstream_http)_\w+$/.test(v);
+  for (const [n, f] of Object.entries(formats)) {
+    if (n === 'combined') continue;
+    for (const m of f.text.matchAll(/\$\{?(\w+)\}?/g)) if (!known(m[1])) failure(`unknown "${m[1]}" variable`, f.file, f.line);
+  }
+  for (const m of Object.values(maps))
+    for (const v of [m.source, ...m.entries.map((e) => e.value), m.fallback].flatMap((x) => [...x.matchAll(/\$\{?(\w+)\}?/g)].map((y) => y[1])))
+      if (!known(v) && !/^\d$/.test(v) && !named(m, v)) failure(`unknown "${v}" variable`, m.file, m.line);
+  const accessLogs = (ds: Directive[]): AccessLog | undefined => {
+    const own = ds.filter((d) => d.name === 'access_log');
+    if (!own.length) return undefined;
+    const out: AccessLog = [];
+    for (const d of own) {
+      if (d.args[0] === 'off') continue;
+      const format = d.args[1] && !d.args[1].includes('=') ? d.args[1] : 'combined';
+      if (!formats[format]) failure(`unknown log format "${format}"`, d.file, d.line);
+      out.push({ path: d.args[0], format });
+    }
+    return out;
+  };
+  const httpLogs = accessLogs(http);
   const bySeenDefault: Record<string, true> = {};
   const seenNames = new Set<string>();
   const warnings: string[] = [];
@@ -448,9 +510,75 @@ function build(game: Game, read: string[] = []): Configuration {
         root: values(children, 'root')[0] ?? values(http, 'root')[0] ?? '/usr/share/nginx/html',
         index: values(children, 'index').length ? values(children, 'index') : values(http, 'index').length ? values(http, 'index') : ['index.html'],
         refusal: [...values(http, 'deny'), ...values(children, 'deny')],
+        accessLog: accessLogs(children) ?? httpLogs ?? [{ path: '/var/log/nginx/access.log', format: 'combined' }],
       };
     });
-  return { servers, warnings, zones, upstreams: readUpstreams(http) };
+  return {
+    servers,
+    warnings,
+    zones,
+    upstreams: readUpstreams(http),
+    formats: Object.fromEntries(Object.entries(formats).map(([n, f]) => [n, f.text])),
+    maps: Object.fromEntries(Object.entries(maps).map(([n, m]) => [n, { source: m.source, entries: m.entries, fallback: m.fallback }])),
+  };
+}
+
+// The variables a log format or a map may use (ngx_http_core_module's and the log module's).
+const KNOWN_VARIABLES = new Set([
+  'remote_addr', 'binary_remote_addr', 'remote_user', 'remote_port', 'time_local', 'time_iso8601', 'msec', 'request', 'request_method', 'request_uri', 'uri',
+  'document_uri', 'args', 'query_string', 'status', 'body_bytes_sent', 'bytes_sent', 'request_length', 'request_time', 'host', 'hostname', 'server_name',
+  'server_addr', 'server_port', 'server_protocol', 'scheme', 'https', 'pipe', 'connection', 'connection_requests', 'upstream_addr', 'upstream_status',
+  'upstream_response_time', 'proxy_add_x_forwarded_for', 'realip_remote_addr', 'nginx_version', 'pid',
+]);
+
+const COMBINED = '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent"';
+
+// log_format name [escape=default|json|none] string ...; (combined is predefined and can't be redefined)
+function readFormats(http: Directive[]): Record<string, { text: string; file: string; line: number }> {
+  const formats: Record<string, { text: string; file: string; line: number }> = { combined: { text: COMBINED, file: '', line: 0 } };
+  for (const d of http.filter((x) => x.name === 'log_format')) {
+    const [name, ...rest] = d.args;
+    if (formats[name]) failure(`duplicate "log_format" name "${name}"`, d.file, d.line);
+    const escape = rest[0]?.startsWith('escape=') ? rest.shift()! : null;
+    if (escape && !['escape=default', 'escape=json', 'escape=none'].includes(escape)) failure(`unknown log format escaping "${escape.slice(7)}"`, d.file, d.line);
+    if (!rest.length) failure(`invalid number of arguments in "log_format" directive`, d.file, d.line);
+    formats[name] = { text: rest.join(''), file: d.file, line: d.line };
+  }
+  return formats;
+}
+
+// map $source $variable { key value; ~regex value; default value; }
+function readMaps(http: Directive[]): Record<string, MapBlock & { file: string; line: number }> {
+  const maps: Record<string, MapBlock & { file: string; line: number }> = {};
+  for (const d of http.filter((x) => x.name === 'map')) {
+    const [source, target] = d.args;
+    if (!target.startsWith('$')) failure(`invalid variable name "${target}"`, d.file, d.line);
+    const variable = target.slice(1);
+    if (maps[variable] || KNOWN_VARIABLES.has(variable)) failure(`the duplicate "${variable}" variable`, d.file, d.line);
+    const block: MapBlock & { file: string; line: number } = { source, entries: [], fallback: '', file: d.file, line: d.line };
+    for (const e of d.children ?? []) {
+      const value = e.args[0];
+      if (e.name === 'default') {
+        block.fallback = value;
+        continue;
+      }
+      if (e.name.startsWith('~')) {
+        const insensitive = e.name.startsWith('~*');
+        const raw = e.name.slice(insensitive ? 2 : 1);
+        try {
+          // PCRE's named captures (?P<name>…) are written (?<name>…) in JavaScript.
+          block.entries.push({ key: e.name, regex: new RegExp(raw.replace(/\(\?P</g, '(?<'), insensitive ? 'i' : ''), value });
+        } catch (x) {
+          failure(`pcre2_compile() failed: ${(x as Error).message.replace(/^Invalid regular expression: /, '')} in "${raw}"`, e.file, e.line);
+        }
+      } else {
+        if (block.entries.some((x) => !x.regex && x.key === e.name)) failure(`duplicate parameter "${e.name}"`, e.file, e.line);
+        block.entries.push({ key: e.name.replace(/^\\/, ''), value });
+      }
+    }
+    maps[variable] = block;
+  }
+  return maps;
 }
 
 // upstream nom { server 127.0.0.1:3001 weight=9; server 127.0.0.1:3002 weight=1; }
@@ -686,7 +814,7 @@ export function httpRequest(game: Game, host: string, path: string, port = 80, t
   game.state.nginxTrace = trace;
   const who = client ?? { address: '127.0.0.1', time: systemd(game)?.clock ?? 0, agent: 'curl/8.14.1' };
   const r = handle(game, host, path, port, who);
-  if (r && trace) accessLog(game, who, path, r);
+  if (r && trace) accessLog(game, who, host, path, port, r);
   return r;
 }
 
@@ -708,13 +836,80 @@ function localeTime(ms: number): string {
   return `${String(d.getUTCDate()).padStart(2, '0')}/${MONTH[d.getUTCMonth()]}/${d.getUTCFullYear()}:${d.toISOString().slice(11, 19)} ${summerTime(ms) ? '+0200' : '+0100'}`;
 }
 
-// A line of /var/log/nginx/access.log (combined format), if the chapter asks for it.
-function accessLog(game: Game, c: Client, path: string, r: Response) {
+/**
+ * The lines nginx writes for a request in its access logs (each access_log
+ * of the server that takes it, in its log_format, the map variables
+ * computed), without writing them: [file, line].
+ */
+export function accessLines(game: Game, c: Client, host: string, path: string, port: number, r: Pick<Response, 'code' | 'body'>): [string, string][] {
+  const config: Configuration | null = game.state.nginx?.load ?? null;
+  if (!config) return [];
+  const picked = pickServer(config, host, port, c);
+  const logs = picked?.server.accessLog ?? [{ path: '/var/log/nginx/access.log', format: 'combined' }];
+  const header = (name: string) => c.headers?.[name.replace(/_/g, '-')] ?? '';
+  const base: Record<string, string> = {
+    remote_addr: c.address,
+    remote_user: '',
+    time_local: localeTime(c.time),
+    time_iso8601: `${new Date(c.time).toISOString().slice(0, 19)}${summerTime(c.time) ? '+02:00' : '+01:00'}`,
+    msec: (c.time / 1000).toFixed(3),
+    request: `${c.method ?? 'GET'} ${path} HTTP/1.1`,
+    request_method: c.method ?? 'GET',
+    request_uri: path,
+    uri: path.split('?')[0],
+    args: path.split('?')[1] ?? '',
+    status: String(r.code),
+    body_bytes_sent: String(new TextEncoder().encode(r.body).length),
+    host: host.toLowerCase(),
+    server_name: picked?.server.names[0] ?? '',
+    server_protocol: 'HTTP/1.1',
+    scheme: port === 443 ? 'https' : 'http',
+    http_referer: header('referer'),
+    http_user_agent: c.agent,
+  };
+  const value = (name: string, own: Record<string, string> = {}, depth = 0): string => {
+    if (name in own) return own[name];
+    if (name in base) return base[name];
+    if (name.startsWith('http_')) return header(name.slice(5));
+    const m = config.maps?.[name];
+    if (!m || depth > 8) return '';
+    const source = expand(m.source, {}, depth + 1);
+    for (const e of [...m.entries.filter((x) => !x.regex), ...m.entries.filter((x) => x.regex)]) {
+      if (!e.regex) {
+        if (e.key === source) return expand(e.value, {}, depth + 1);
+        continue;
+      }
+      const found = e.regex.exec(source);
+      if (!found) continue;
+      const captures: Record<string, string> = { ...(found.groups ?? {}) };
+      found.forEach((g, i) => {
+        if (i > 0) captures[String(i)] = g ?? '';
+      });
+      return expand(e.value, captures, depth + 1);
+    }
+    return expand(m.fallback, {}, depth + 1);
+  };
+  const expand = (text: string, own: Record<string, string> = {}, depth = 0): string => text.replace(/\$\{?(\w+)\}?/g, (_, n: string) => value(n, own, depth));
+  // In a log line, an empty variable is written "-".
+  const logged = (format: string) => format.replace(/\$\{?(\w+)\}?/g, (_, n: string) => value(n) || '-');
+  return logs.map((l) => [l.path, logged(config.formats?.[l.format] ?? COMBINED)]);
+}
+
+// The lines of the access logs (access_log, log_format), if the chapter asks for it.
+function accessLog(game: Game, c: Client, host: string, path: string, port: number, r: Response) {
   if (!game.state.nginx?.accessLog) return;
-  const n = game.find('/var/log/nginx/access.log');
-  if (n?.type !== 'file' || typeof n.content !== 'string') return;
-  const line = `${c.address} - - [${localeTime(c.time)}] "${c.method ?? 'GET'} ${path} HTTP/1.1" ${r.code} ${new TextEncoder().encode(r.body).length} "-" "${c.agent}"`;
-  n.content = n.content ? `${n.content}\n${line}` : line;
+  for (const [file, line] of accessLines(game, c, host, path, port, r)) {
+    let n = game.find(file);
+    if (!n) {
+      const dir = game.find(file.replace(/\/[^/]+$/, '') || '/');
+      if (dir?.type !== 'directory') continue;
+      n = dir.children[file.split('/').at(-1)!] = { type: 'file', content: '', lines: true, owner: 'www-data', group: 'adm', mode: 'rw-r-----' };
+    }
+    if (n.type !== 'file' || typeof n.content !== 'string') continue;
+    n.content = n.content ? `${n.content}\n${line}` : line;
+    if (n.size !== undefined) n.size += line.length + 1;
+    n.mtime = c.time;
+  }
 }
 
 // An address covered by a deny rule (address, CIDR range or all).
@@ -727,10 +922,8 @@ function couvert(rule: string, address: string): boolean {
   return (count(base) & mask) >>> 0 === (count(address) & mask) >>> 0;
 }
 
-function handle(game: Game, host: string, path: string, port: number, client: Client): Response | null {
-  const sd = systemd(game);
-  const config: Configuration | null = game.state.nginx?.load ?? null;
-  if (!config || sd?.services.nginx?.state !== 'active') return null;
+/** The server block that takes a request (its name, otherwise the port's default server), and the address it took it on. */
+function pickServer(config: Configuration, host: string, port: number, client: Client): { server: Server; at: string } | null {
   // The family the request arrived in: the client's address (::1, 2001:db8::…), or a literal [::1] host.
   const v6 = client.address.includes(':') || /^\[|:/.test(host);
   const dualAt = `[::]:${port}`;
@@ -739,7 +932,17 @@ function handle(game: Game, host: string, path: string, port: number, client: Cl
   const candidates = config.servers.filter(takes);
   const at = (s: Server) => (s.listening.includes(a) ? a : dualAt);
   const server = candidates.find((s) => s.names.includes(host.toLowerCase())) ?? candidates.find((s) => s.byDefault.includes(at(s))) ?? candidates[0];
-  if (!server) return null;
+  return server ? { server, at: at(server) } : null;
+}
+
+function handle(game: Game, host: string, path: string, port: number, client: Client): Response | null {
+  const sd = systemd(game);
+  const config: Configuration | null = game.state.nginx?.load ?? null;
+  if (!config || sd?.services.nginx?.state !== 'active') return null;
+  const picked = pickServer(config, host, port, client);
+  if (!picked) return null;
+  const server = picked.server;
+  const at = (_: Server) => picked.at;
   // An HTTPS port doesn't answer in plain text (and vice versa): only the right case is simulated.
   if (server.ssl.includes(at(server)) !== (port === 443)) return null;
   // A client certificate required: nginx checks it, and answers 400 if it is missing or refused.

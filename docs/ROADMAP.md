@@ -680,6 +680,13 @@ them safely.
   checks, balancing, the runtime API, the HTTP log; `keepalived`,
   `haproxy`, `socat`, `tcpdump`, `pidof`).
 
+- [x] **Personal data and retention** (the GDPR from the sysadmin's side):
+  logs kept for years against a written policy, a member's access request,
+  an erasure that keeps the accounting records, a purge that really runs and
+  backups that age out. Done: story 42, "The Choir" (logrotate's `maxage`,
+  nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
+  WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

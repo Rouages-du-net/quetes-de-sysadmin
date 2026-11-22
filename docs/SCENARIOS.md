@@ -275,6 +275,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `virt-install`, `virt-clone`, `growpart`, `systemd-machine-id-setup` | `virt-install` defines and starts a domain (`--name`, `--memory`, `--vcpus`, `--disk path=…,size=…`, `--network network=…\|bridge=…`, `--import`/`--cdrom`/`--location`/`--pxe`, `--noautoconsole`), no installer runs; `virt-clone` (`--original`, `--name`, `--auto-clone`, `--file`) with the source shut off or paused: a new uuid, new MACs, the disk copied (its machine-id and hostname with it); `growpart DISK N` (`-N`) and `resize2fs` on a guest's single partition; `systemd-machine-id-setup` fills a missing or empty `/etc/machine-id` from the VM's UUID (and the guest's next boot does too) | `virt-sysprep`, `virt-customize`, `virt-df`, `virt-viewer`, `virt-manager`; `growpart` on other disks or partition layouts |
 | keepalived (`keepalived.ts`, The Blood Drive) | `/etc/keepalived/keepalived.conf` read when keepalived starts and on reload (SIGHUP): `global_defs` (`router_id`, `enable_script_security`, `script_user`), `vrrp_script` (`script`, `interval`, `weight`, `fall`, `rise`), `vrrp_instance` (`state`, `interface`, `virtual_router_id`, `priority`, `advert_int`, `nopreempt`, `authentication` PASS, `virtual_ipaddress`, `track_script` with its own weight, `unicast_src_ip`, `unicast_peer`); its messages for unknown keywords (with the line), invalid VRIDs and priorities, a missing track script, nopreempt with state MASTER; a VRRPv2 election second by second: initial BACKUP state, master down interval (3 × advert_int + skew), adverts to 224.0.0.18 or the unicast peers, priority 0 when a master stops, preemption and `nopreempt`, a tie won by the higher address, FAULT for a failed check of weight 0, the weights of the tracked checks, an advert for the same VRID with other addresses dropped as bogus, the firewall of the receiving node (nftables' input hook) deciding what keepalived hears; the master holds the virtual addresses (`ip a`, secondary) and sends gratuitous ARPs; a reload keeps the state of an instance that kept its VRID and interface; `keepalived -t`, `-v` | one instance per node takes part (the first one), no `vrrp_sync_group`, VRRPv3, `use_vmac`, `notify*` scripts, LVS (`virtual_server`); AH authentication read but not checked; the usual checks (`pidof`, `killall -0`, `pgrep`, `systemctl is-active`) are computed, other scripts run in the game's shell; the exit code of `keepalived -t` is 1 for any error |
 | HAProxy (`haproxy.ts`, The Blood Drive) | `/etc/haproxy/haproxy.cfg` read like HAProxy 3.0 (sections `global`, `defaults`, `frontend`, `backend`, `listen`; `bind`, `default_backend`, `balance` roundrobin/leastconn/first, `server` with `check`, `inter`, `fall`, `rise`, `backup`, `weight`, `maxconn`, `disabled`, `default-server`, `option httpchk [METHOD] URI`, `http-check send`, `http-check expect status|rstatus`, `option allbackups`, `stats socket`); `haproxy -c -f` (ALERT lines with the file and line, "did you mean", a missing default_backend, warnings for http-check rules without httpchk), `-q`, `-v`, `-vv`; the service checks the file before a reload (Debian's ExecReload); a frontend bound to an address the node doesn't hold fails unless `net.ipv4.ip_nonlocal_bind` is 1; health checks every `inter` (L4OK, L4CON, L7OK, L7STS), a server starting UP (one failure marks it DOWN), `fall`/`rise`; the runtime API through `socat` (`show stat`, `show servers state`, `show info`, `show backend`, `enable`/`disable server`, `set server … state ready|drain|maint`, `set server … weight`, `get`/`set weight`, `help`); the HTTP log format in `/var/log/haproxy.log` (Debian's rsyslog rule), check transitions and drain/maintenance messages; a donor's request every two seconds through whoever holds the virtual address; `kill` of haproxy restarted by systemd (`Restart=always`) | `show stat` prints its first 51 fields; sessions are a count that rises and falls with traffic, not real connections; no ACLs, stick tables, SSL, cookies or persistence; a reload starts the servers' states afresh (no `server-state-file`); `/run/haproxy/admin.sock` is a plain file in the world |
+| nginx's access logs (`nginx.ts`, The Choir) | `log_format name [escape=…] 'string' …` (`combined` predefined, a duplicate refused), `access_log path [format]` and `access_log off` at `http` or `server` level (the server's own replace the http block's; Debian's default `/var/log/nginx/access.log combined`), checked by `nginx -t` (`unknown log format`, `unknown "x" variable`); `map $source $variable { … }` in `http`: exact keys, then regular expressions in order (`~`, `~*`, numbered and named captures, PCRE's `(?P<name>…)`), `default`, `hostnames`/`volatile` accepted, `include`, nginx's messages (`invalid number of the map parameters`, `the duplicate "x" variable`); the variables of the log line (`$remote_addr`, `$remote_user`, `$time_local`, `$time_iso8601`, `$request`, `$status`, `$body_bytes_sent`, `$http_referer`, `$http_user_agent`, `$host`, `$request_uri`…, an empty one written `-`); a deleted log is created again at the next line | `buffer=`, `gzip=`, `if=`, `open_log_file_cache`, `error_log`'s format, `map` over strings with `hostnames` matching, a map in `stream` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -295,7 +296,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | nginx's client certificates | `ssl_client_certificate` (or `ssl_trusted_certificate`), `ssl_verify_client on\|optional\|optional_no_ca`, `ssl_verify_depth` (1 by default), `ssl_crl`, read on loading; OpenSSL's check of the client's chain with the CRLs of the whole chain (the root's CRL too, "unable to get certificate CRL"); the 400 pages "No required SSL certificate was sent" and "The SSL certificate error", the reason in `error.log` at level info; a certificate whose key is not `ssl_certificate_key`'s refused on loading ("key values mismatch") | `$ssl_client_*` variables, `ssl_ocsp`, `ssl_password_file` |
 | `curl https://` | checks the dates and names of the presented certificate (error 60), `-k` to skip | also checks the full chain of trust, OCSP… |
 | clock | Paris time: CET in winter, CEST in summer (unless the chapter sets a time zone) | the machine's time zone |
-| `restic` | `-r` and `--password-file`/`-p`, or the environment (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RESTIC_PASSWORD`), or the password typed; `init`, `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check` (`--read-data`), `stats`, `key list/add/remove/passwd` (`--new-password-file`, `--user`, `--host`); each key's password opens the repository, the current key can't be removed; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `tag`, `--repository-file`, `--password-command`, remote repositories (sftp, S3, rest-server) |
+| `restic` | `-r` and `--password-file`/`-p`, or the environment (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RESTIC_PASSWORD`), or the password typed; `init`, `snapshots`, `ls`, `find`, `diff`, `dump`, `restore`, `backup`, `forget`, `prune`, `check` (`--read-data`), `stats`, `key list/add/remove/passwd` (`--new-password-file`, `--user`, `--host`); `forget --keep-within` (y, m, d, h, from the newest snapshot); each key's password opens the repository, the current key can't be removed; one "pack" per backup; repository files unreadable but not binary; no progress bars | all of it, and `mount`, `copy`, `tag`, `--repository-file`, `--password-command`, remote repositories (sftp, S3, rest-server) |
 | `cryptsetup` | LUKS2 only (one cipher, aes-xts-plain64, argon2id): `luksFormat` (the real YES question, the existing signature's warning, a passphrase twice or a key file, `-q`), `open`/`luksOpen` (three tries, `--key-file`), `close`/`luksClose`, `status`, `luksDump`, `luksAddKey`, `luksRemoveKey`, `luksKillSlot`, `isLuks`, `luksUUID`, `luksHeaderBackup`; the real refusals (a device in use, a mounted mapping, a wrong key) and exit codes; no real encryption: the clear file system is kept in the header while closed; salts and digests derived from the UUID | plain, LUKS1, BitLocker and TrueCrypt modes, `--header`, tokens, `reencrypt`, `luksHeaderRestore`, `benchmark`, `resize`, `refresh`, `erase` |
 | `/etc/crypttab`, `cryptdisks_start`, `cryptdisks_stop` | crypttab read by Debian's scripts (name, `UUID=` or `/dev/…` source, key file or `none`, options); the key file's rights checked (Debian's warning: not owned by root, or usable by its group or others); the outputs of Debian's scripts (cryptsetup 2.7's cryptdisks_start and cryptdisks_stop, cryptdisks-functions, and the LSB logging: `NAME (starting)...`, `done.`/`failed.`, `cryptsetup:` warnings folded at 80 columns), three tries for a passphrase, one for a key file; crypttab isn't read at boot (no simulated reboot here) | `systemd-cryptsetup@.service`, the initramfs, `keyscript=`, `tries=`, `discard` applied |
 | `mkfs.ext4` | `-L`, `-F`, `-q`; mke2fs 1.47's report (blocks, inodes, superblock backups computed from the size); refuses a mounted device or one in use (a LUKS device open, a RAID member); asks before writing over a file system | `-b`, `-i`, `-m`, `-O`, `-E`, other file systems (`mkfs` alone) |
@@ -327,8 +328,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | fstab, emergency mode (`mount -a`, `blkid`, `findmnt`, `systemctl default`) | fstab read like mount and systemd (`UUID=`, `LABEL=`, `/dev/…`, `/dev/disk/by-*`, `nofail`, `noauto`); at boot, a missing source without `nofail` stops the machine in emergency mode (faithful systemd log, the 90 s wait played at once); `systemctl default`/`exit` resume with the fstab read at the last `daemon-reload`; `mount -a`'s hint when fstab has changed; `findmnt --verify` (sources, types, mount points); `blkid` (`-U`, `-L`) | swap, network mounts, `x-systemd.*`, `fsck`, hand-written `.mount` units, `findmnt` on /proc and /sys |
 | `resize2fs`, `update-initramfs` | `resize2fs` grows an LV's ext4 to its size (online); `update-initramfs -u` keeps a copy of `mdadm.conf` | shrinking, a given size, other file systems; the initramfs's real contents |
 | `rsnapshot` | `configtest`, `-t`, `-v`, `du`, rotation of the levels (`cp -al` then `rsync`); some of the directives; messages close to rsnapshot 1.4 | `backup_script`, `link_dest`, `sync_first`, remote backups |
-| PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE col = v ORDER BY … LIMIT`, `DELETE`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); a role's password is only read by one chapter's app ("The Traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
-| `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs | every option, every open file of the system |
+| PostgreSQL | roles and "peer" authentication; `psql -c/-f/-l` with a reduced SQL (`SELECT count(*)`, `SELECT … WHERE … ORDER BY … LIMIT`, `DELETE`, `INSERT INTO … [(columns)] VALUES (…), (…)`, `TRUNCATE`, `DROP TABLE`, `ALTER ROLE … PASSWORD` by the `postgres` account, `\l`, `\dt`, `\d`, `\du`); WHERE (`sql-where.ts`) with `=`, `<>`, `<`, `<=`, `>`, `>=`, `AND`, `OR`, `NOT`, parentheses, `IS [NOT] NULL`, `[NOT] LIKE`/`ILIKE`, `[NOT] IN (…)`, `current_date`, `now()`, `DATE '…'`, `'…'::date`, `± interval '2 years'`; psql's `--csv`, `-A` (`-F`), `-t`; a role's password is only read by one chapter's app ("The Traces"); `pg_dump` (text, `-Fc`, `-t`, `-f`), `pg_restore` (`-l`, `-d`, `-t`, `--data-only`, `--clean`), `createdb`, `dropdb`; a `-Fc` archive only holds a reference kept by the game; one primary key per table | all of PostgreSQL, interactive psql, WAL and point-in-time recovery |
+| `lsof`, `truncate`, `logrotate` | `lsof` only knows the open files described by the chapter (`+L1`, `-p`, `-u`, a file); `logrotate`: some of the directives, `-d`, `-f`, `-v`, shortened outputs; a rotation removes only the log that passes `rotate` and, with `maxage N`, the rotated logs 1 to N+1 older than N days ("removing old log"), as logrotate does: numbered files beyond a lowered count stay | every option, every open file of the system, `dateext` (its glob of old logs), `olddir` |
 | memory (`free`, `top`, `dmesg`) | each process's memory is described by the chapter; no swap (except a hypervisor whose guests don't fit, The Health Centre: what doesn't fit is in swap at once and leaves it as soon as it fits), the cache isn't freed (`available` = `free`); the OOM killer kills the biggest process (no `oom_score_adj`); `top` shows a snapshot and returns (`-b`, `-n`, `-o`, `-c`); `dmesg` (`-T`) for root only | swap, cache reclaim, the OOM killer's score, interactive `top`, `htop` |
 | processor (`uptime`, `top`, `ps -o`, `renice`, `nice`, `pgrep`, `systemd-cgtop`, `CPUQuota=`) | each process's demand (in CPUs) is described by the chapter; the CPU is shared between all processes at once by their nice weight (the kernel's table: 1024 at 0, 15 at 19), never more than a process wants, a service's processes together never more than its `CPUQuota=`; `CPUWeight=` multiplies the weight of the service's processes; the load average decays towards the number of threads that want to run (1, 5, 15 min); `nice` runs its command at once (the game's commands are instant); `renice -g` is refused; `systemd-cgtop` shows one snapshot, services only; `ps -o` knows `pid`, `ppid`, `user`, `ni`, `pri`, `%cpu`, `%mem`, `stat`, `comm`, `args` | autogroups and the cgroup hierarchy share first between sessions and services (so `renice` between two services acts less than here on a default Debian), per-thread nice values, `sy`/`wa`/`st` time, interactive `top` and `systemd-cgtop`, every `ps` column |
 | limits (`ulimit`, `prlimit`, `LimitNOFILE=`, `/proc/PID/limits`) | only the open-files limit is modelled (the other lines of `/proc/PID/limits` and `ulimit -a` are a Debian machine's); `/proc/PID` exists only for the processes a chapter describes; `ulimit` acts on the game's shell; `limits.conf` is never read (as for systemd services) | every resource (`-u`, `-s`, `-c`…), pam_limits for new sessions |
@@ -337,7 +338,7 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | PostgreSQL server (`pg_stat_activity`, `SHOW`, `ALTER SYSTEM`, `pg_reload_conf()`, `pg_terminate_backend`, `EXPLAIN`, `CREATE INDEX`) | a few settings, read from `postgresql.conf` then `postgresql.auto.conf`, those marked "requires restart" applied on restart only; sessions described by the chapter; `pg_stat_activity` with `WHERE col = 'v' [AND …]`, `ORDER BY`, `LIMIT`; `EXPLAIN` of a `SELECT` on one table with one equality: Index Scan if an index covers the column, else a (parallel, beyond 100,000 rows) Seq Scan, with costs computed from the table's declared size; B-tree indexes on one column | statistics, the planner's real costs, joins, multi-column and other index types, `pg_stat_statements`, `pg_ctl`, interactive `psql` |
 | PostgreSQL roles and replication (`CREATE ROLE`, `GRANT`, `ALTER DEFAULT PRIVILEGES`, `SET ROLE`, `\dp`, `pg_lsclusters`, `pg_ctlcluster`, `pg_isready`, `pg_promote()`) | table privileges only, one schema whose `USAGE` and the database's `CONNECT` stay PUBLIC's; memberships always inherited; `psql -c` runs several statements separated by `;` and stops at the first error; a standby's state is described by the chapter (no WAL, no second server): promotion, `standby.signal` and restart, the read-only errors | column and function privileges, `WITH GRANT OPTION`, row-level security, real streaming replication, `pg_basebackup`, `pg_rewind` |
 | rsyslog (`/etc/rsyslog.conf`, `rsyslog.d`, `rsyslogd -N1`, `logger`) | the configuration read when the service starts: `module`/`$ModLoad`, `imudp`/`imtcp` inputs (also `$UDPServerRun`), `template` and `$template` with a few properties (`%HOSTNAME%`, `%FROMHOST-IP%`, `%PROGRAMNAME%`, dates), selectors, property filters, `if … then` with `==`, `!=`, `contains`, `startswith`, `and`, `or`, `not`, blocks, `&`, `stop`/`~`; files written in the traditional format; the remote machines send one message each per command, received if rsyslog listens and the firewall lets them in | `omfwd` and forwarding, queues, TLS, `imfile`, `imjournal`, `mmjsonparse`, most properties and functions of RainerScript, rate limiting |
-| The journal on disk (`journalctl --disk-usage`, `--vacuum-size`/`--vacuum-time`/`--vacuum-files`, `journald.conf`) | the files of `/var/log/journal` and their sizes (they count in `df` and `du`); `SystemMaxUse=` (from `journald.conf` and its drop-ins) read when journald starts, then the oldest archived files deleted; the active file rotated at 128M | `SystemKeepFree=`, `RuntimeMaxUse=`, `MaxRetentionSec=`, compression, the files' content (`journalctl` reads the simulated journal, not these files) |
+| The journal on disk (`journalctl --disk-usage`, `--vacuum-size`/`--vacuum-time`/`--vacuum-files`, `journald.conf`) | the files of `/var/log/journal` and their sizes (they count in `df` and `du`); `SystemMaxUse=` and `MaxRetentionSec=` (a systemd time span: `30day`, `1month`, `4w 2d`, seconds without a unit; from `journald.conf` and its drop-ins) read when journald starts, then the oldest archived files deleted, and those whose last entry is older than the retention; the active file rotated at 128M | `SystemKeepFree=`, `RuntimeMaxUse=`, `MaxFileSec=`, compression, the files' content (`journalctl` reads the simulated journal, not these files) |
 | NFS (`/etc/exports`, `exportfs`, `showmount`, `mount -t nfs`, fstab's `nfs` lines) | exports read like `exportfs` (clients by address, network, name or `*`, a space before the parentheses giving the options to everyone, the default options shown by `-v`), loaded by `exportfs -r` or when nfs-server starts; a client's mount grafts the server's directory (one tree: what one writes, the other sees); every access decided with the client's numbers (uid, gids), `root_squash`/`all_squash`, `ro`; names shown by each machine for those numbers; the firewall checked on 2049 (mount) and 111 (showmount) | NFSv3 and its other ports (mountd, statd), Kerberos (`sec=krb5`), idmapd, `subtree_check`, locks, `showmount -a`/`-d`, the server's cache of credentials |
 | Samba (`smb.conf`, `testparm`, `smbpasswd`, `pdbedit -L`, `smbclient`) | a standalone server: shares with `path`, `read only`/`writable`, `valid users`/`invalid users` (names, `@group`), `guest ok`, `create mask`, `directory mask`, `force create mode`, `force directory mode`, `force user`, `force group`; synonyms and case ignored; smb.conf read for each connection; Samba's own passwords; Linux permissions applied to the connected user; `smbclient -L`, `-U user[%password]`, `-N`, `-c` with `ls`, `cd`, `put`, `get`, `mkdir`, `rm` | printers, domains and Active Directory, ACLs and `vfs objects`, `hosts allow`, `smbclient`'s interactive session (only `-c`), `testparm` doesn't wait for Enter |
 | `iostat`, `pidstat`, `ionice` | `iostat` `-c`, `-d`, `-x`, `-k`, `-m`, `-y`, interval and count; `pidstat -d`, `-u`; `ionice -p`, `-c`, `-n`; one disk, a simplified queue model (waiting climbs beyond 60 % of capacity); ionice priorities only count with `mq-deadline` or `bfq`; every report gives the current instant | several disks, partitions (`-p`), `iotop`, `ionice` on a command to start, cgroup v1 `blkio` |
@@ -4250,6 +4251,119 @@ the donors served. Several solutions: `ip protocol vrrp`, `112`, `ip daddr
 traps: stopping keepalived on lb2 (no redundancy), changing priorities, a
 rule only added with `nft` (lost at the next boot), a new VRID on one node
 only (two groups, two masters again).
+
+## Story 42: The Choir (three chapters)
+
+The Riverside Community Choir keeps its site, its members' area and its
+members' data on a small Debian 13 server, `baton` (192.0.2.112): nginx
+serves `www.riversidechoir.example`, the members' app (gunicorn) keeps the
+PostgreSQL database `choir` (members, rehearsal attendance, subscriptions,
+the newsletter), the uploads (a photo and its consent form per member) and
+a security log of the members' area. Ruben built it in 2027 and moved away;
+Amara chairs the choir, Kenji is the treasurer. The board adopted a
+retention policy in 2029 (`/srv/choir/docs/retention-policy.txt`): members
+two years after leaving, attendance two years, payments ten years, web logs
+thirty days with truncated addresses, the audit log twelve months, the
+journal thirty days, backups three months. Personal data and its retention,
+from the sysadmin's side: defensive and practical, the GDPR's principles
+only (storage limitation, access, erasure and its limits), no legal advice.
+No real personal data: invented names, `.example` addresses, Ofcom's and
+ARCEP's drama phone ranges. Engine: logrotate's `maxage`, nginx's `map`,
+`log_format` and `access_log` (`accessLines`), journald's `MaxRetentionSec=`,
+psql's WHERE (`sql-where.ts`), `INSERT`, `--csv`, `-A`, `-t`, restic's
+`--keep-within`. The story is built in `chapters/choir.ts`. It opens after
+"The Full Journal" (journald, The Huts) and "The Database" (pg_dump and
+psql, The Game Library), and extends the security path (chapter 3 the
+backups path too).
+
+### Chapter 1 — Kept Forever (done)
+
+Tuesday 4 March 2031, 9:10. The access logs go back to September 2027
+(Ruben's `rotate 520`, weekly), with every visitor's full address; the
+journal keeps three and a half years.
+
+| Step | Command learnt |
+|---|---|
+| The promise | `cat /srv/choir/docs/retention-policy.txt` |
+| What is kept | `ls /var/log/nginx \| wc -l`, `cat /etc/logrotate.d/nginx`, `du`, `zcat` |
+| Thirty days | `daily` + `rotate 30`, `weekly` + `rotate 3`, or `maxage 30` in `/etc/logrotate.d/nginx`; `logrotate -d`, `-v -f` |
+| The past | `find /var/log/nginx -name 'access.log.*' -mtime +30` then `-delete` (logrotate only removes the archive that passes its count) |
+| Truncated addresses | `map $remote_addr $remote_addr_anon { … }` (IPv4 and IPv6), `log_format anonymised …`, `access_log … anonymised`, `nginx -t`, `systemctl reload nginx` |
+| The journal | `journalctl --disk-usage`, `MaxRetentionSec=30day`, `systemctl restart systemd-journald` (or `--vacuum-time` on top) |
+
+Goal checked on the state: logrotate's retention for `access.log` at most
+31 days (the rotations kept plus the current file, or `maxage` plus one
+period), no file of `/var/log/nginx` older than 31 days, the last three
+weeks still there (addresses truncated by hand still count), the loaded
+nginx writing neither a visitor's IPv4 nor IPv6 address and still logging
+the request, journald's loaded retention at most 31 days and no archived
+journal older, the audit archives of the last twelve months still there.
+Several solutions: any of the logrotate settings, `find` or `rm` by hand,
+any map that truncates both families (or a default revealing nothing), the
+map in `conf.d` or in the site's file, `MaxRetentionSec=` in `journald.conf`
+or a drop-in. Expected traps: removing today's log only, a blanket `find
+/var/log -mtime +30 -delete` (the audit log is kept twelve months),
+`access_log off`, a map that keeps IPv6 addresses whole, a vacuum without
+`MaxRetentionSec=`, a file edited but not reloaded, logrotate run with the
+new count and the old archives still there.
+
+### Chapter 2 — The Access Request (done)
+
+Monday 17 March, 18:40. Priya Raman, an alto, asks for a copy of all the
+data the choir holds about her (GDPR article 15); Amara wants it in
+`/srv/choir/gdpr-requests/priya-raman/`.
+
+| Step | Command learnt |
+|---|---|
+| Her record | `sudo -u postgres psql choir -c '\dt'`, `SELECT * FROM members WHERE last_name = 'Raman'` |
+| The other tables | `attendance`, `payments` (`member_id = 27`), `newsletter` (by email), `psql --csv … > file` |
+| Her files | `sudo ls /srv/choir/uploads/27`, `sudo cp` |
+| The logs | `grep -rl priya.raman /var/log`, `grep`, `zgrep` on `audit.log.1.gz`, `mail.log` |
+| A forgotten copy | `sudo grep -r 'Priya Raman' /srv/choir` (the phone-tree export, her old address) |
+
+Goal checked on the state: the files under the requests directory hold her
+member row (email, phone, address), every rehearsal date, every
+subscription reference, her newsletter subscription, byte-identical copies
+of her photo and consent form, her audit lines of both months and her mail
+log lines, her phone-tree line; and no other member's or subscriber's email
+or phone number. Several solutions: any file layout and format (aligned,
+CSV, unaligned, one file or many). Expected traps: the members table only,
+a whole dump, log or export copied (other people's data), the gzipped
+month forgotten.
+
+### Chapter 3 — Forget Me (done)
+
+Monday 7 April, 9:30. Tomas Novak left on Saturday and asks to be erased
+(article 17); Kenji reminds that subscriptions are accounting records. Ruben's
+nightly purge (`choir-purge.timer`) was never enabled, runs as `www-data`
+(no database role) and forgets the attendance; the weekly restic backup has
+84 snapshots since September 2029.
+
+| Step | Command learnt |
+|---|---|
+| Where he is | `SELECT` on `members`, `attendance`, `payments`, `newsletter` |
+| Erasure | `DELETE FROM attendance WHERE member_id = 41; DELETE FROM newsletter WHERE email = …; DELETE FROM members WHERE id = 41` (payments kept), `rm` and `rmdir` of his uploads |
+| The purge | `systemctl list-timers --all`, `systemctl cat`, `systemctl start`, `journalctl -u choir-purge` (`role "www-data" does not exist`) |
+| Fixed | `User=postgres`, the attendance line (`rehearsed_on < current_date - interval '2 years'`), `daemon-reload`, `systemctl enable --now choir-purge.timer` |
+| The backups | `restic snapshots`, `forget --keep-weekly 13 --prune` (or `--keep-within 3m`, or daily/weekly/monthly), `--dry-run` |
+| On its own | the same `forget … --prune` in `/usr/local/sbin/choir-backup` |
+
+Goal checked on the state: Tomas gone from members, attendance, newsletter
+and uploads, his payments still there; the purge jobs that will run (active
+timers as their loaded service runs them, crontabs as their account) run
+once on a copy of the database where the expired rows are present (put back
+if a hand deleted them): the members who left more than two years ago and
+the attendance older than two years deleted, nothing else; the repository's
+oldest snapshot between six weeks and about three months old, at least three
+snapshots, pruned; the backup script's forget policy, applied to two years
+of weekly snapshots, keeping as much, with `--prune`, and the backup timer
+still active. Several solutions: a timer or a crontab, any WHERE that says
+the same, `--keep-weekly`, `--keep-within`, `--keep-monthly` or a mix,
+`forget --prune` or `forget` then `prune`. Expected traps: deleting the
+payments (put back with `INSERT` from the dump), a purge that fails, that
+isn't scheduled, that deletes by the joining date, or forgets the
+attendance; `forget` without `prune`; `--keep-last 1`; trimming the
+repository without changing the script.
 
 ## Ideas for later
 

@@ -89,3 +89,5 @@ password-pegboard-47 = etabli-47
 password-waiting-room-30 = salle-d-attente-30
 ## La Collecte
 password-donor-chair-12 = fauteuil-don-12
+## La Chorale
+password-choir-loft-31 = tribune-31
