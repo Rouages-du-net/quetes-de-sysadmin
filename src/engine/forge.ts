@@ -25,7 +25,7 @@
 import type { Shell } from './shell';
 import type { Commit, GitSignature, Repo, Tag } from './commands/git';
 import { readYaml, YamlError, type Value } from './ansible';
-import { base64Encode } from './k8s';
+import { base64Encode } from './base64';
 import { publicFor } from './access';
 import { writeLog } from './systemd';
 import { keyFingerprint } from './machines';

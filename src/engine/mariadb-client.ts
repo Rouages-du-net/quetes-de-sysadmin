@@ -798,7 +798,7 @@ function secure(game: Shell): string {
   return intro;
 }
 
-// ——— The programs (registered by the story's module: see commands/mariadb.ts) ———
+// ——— The programs (the mariadb family, registered with the story: see families/mariadb.ts) ———
 
 type Launch = (c: Context) => string;
 const launch = (f: (game: Shell, program: string, args: string[], input: string | null, last: boolean) => string, program: string): Launch => ({ args, game, input, last }) => f(game, program, args, input, last);

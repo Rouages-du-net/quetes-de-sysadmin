@@ -9,7 +9,7 @@
 // private key makes it (publicFor in access.ts ties both halves); checking
 // compares the digest, the namespace and the key with the allowed signers.
 
-import { base64Decode, base64Encode } from './k8s';
+import { base64Decode, base64Encode } from './base64';
 import { sha256 } from './commands/checksums';
 import { publicFor } from './access';
 

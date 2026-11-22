@@ -47,6 +47,7 @@ describe('The service worker', () => {
     writeFileSync(join(dist, '_astro/game.abc.js'), 'import"./engine.ghi.js";');
     writeFileSync(join(dist, '_astro/engine.ghi.js'), 'engine');
     writeFileSync(join(dist, '_astro/texts-fr--core.jkl.js'), 'texts');
+    writeFileSync(join(dist, '_astro/texts-fr--summaries.stu.js'), 'summaries');
     writeFileSync(join(dist, '_astro/eraser.mno.js'), 'a story');
     writeFileSync(join(dist, '_astro/texts-en--manual.pqr.js'), 'the manual');
     writeFileSync(join(dist, '_astro/font.def.woff2'), 'woff2');
@@ -66,6 +67,7 @@ describe('The service worker', () => {
       '/_astro/font.def.woff2',
       '/_astro/game.abc.js',
       '/_astro/texts-fr--core.jkl.js',
+      '/_astro/texts-fr--summaries.stu.js',
     ]);
   });
 

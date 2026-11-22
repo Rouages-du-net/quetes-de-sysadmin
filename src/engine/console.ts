@@ -16,7 +16,7 @@ import { bannedOnPort, type Fail2banState } from './fail2ban';
 import { noteTmux } from './commands/tmux';
 import { inColumns } from './commands/files';
 import { live } from './activity';
-import { signOn } from './commands/ibmi';
+import { family } from './families';
 import { isWindows } from './windows';
 import { windowsLogin } from './windows-accounts';
 import { LANGUAGES, translator, type Language, type Translate } from '../texts';
@@ -211,7 +211,7 @@ export class Console {
       const opened = this.connect(name, chapter, true, port);
       // What follows is typed at the 5250 screen: no rescue snapshot for this session.
       this.inputs = null;
-      return [opened, signOn(this.remote!.shell)].filter(Boolean).join('\n\n');
+      return [opened, family('ibmi').signOn(this.remote!.shell)].filter(Boolean).join('\n\n');
     }
     this.inside = [];
     const machine = MACHINES.find((m) => m.name === name)!;

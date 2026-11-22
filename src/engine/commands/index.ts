@@ -16,8 +16,6 @@ import { TMUX } from './tmux';
 import { LAN } from './lan';
 import { NFTABLES } from './nftables';
 import { WIREGUARD } from './wireguard';
-import { LDAP } from './ldap';
-import { RADIUS } from './radius';
 import { NMAP } from './nmap';
 import { LYNIS } from './lynis';
 import { SFTP } from './sftp';
@@ -53,8 +51,6 @@ import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
 import { SAMBA } from './samba';
-import { CUPS } from './cups';
-import { FORGE } from './forge';
 import { OPENSSL } from './openssl';
 import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
@@ -70,30 +66,20 @@ import { LVM } from './lvm';
 import { FSTAB } from './fstab';
 import { APACHE } from './apache';
 import { MAIL } from './mail';
-import { ANSIBLE } from './ansible';
-import { CADDY } from './caddy';
 import { BYTES } from './bytes';
-import { COBOL } from './cobol';
-import { IBMI } from './ibmi';
-import { POWERSHELL } from './powershell';
 import { LINE_ENDINGS } from './line-endings';
 import { CRYPTSETUP } from './cryptsetup';
-import { VIRT } from './libvirt';
-import { KEEPALIVED_COMMANDS } from './keepalived';
-import { HAPROXY_COMMANDS } from './haproxy';
 import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
-import { PROMETHEUS_COMMANDS } from './prometheus';
 import { JQ } from './jq';
-import { KUBECTL } from './kubectl';
-import { K3S } from './k3s';
 import { SHELL_CONTROL } from './shell-control';
 import { SCRIPT_BUILTINS } from './shell-builtins';
 import { HOSTNAMECTL } from './hostnamectl';
 import { COMPRESS } from './compress';
 import { SMALL_TOOLS } from './small-tools';
 import { NET_CLIENTS } from './net-clients';
-import { MARIADB } from './mariadb';
+import { BASE64 } from './base64';
+import { FAMILY_COMMANDS, familyCommand } from '../families';
 
 export interface Context {
   args: string[];
@@ -153,8 +139,6 @@ function build(): Record<string, Command> {
     ...LAN,
     ...NFTABLES,
     ...WIREGUARD,
-    ...LDAP,
-    ...RADIUS,
     ...NMAP,
     ...LYNIS,
     ...SFTP,
@@ -196,8 +180,6 @@ function build(): Record<string, Command> {
     ...SYSLOG,
     ...NFS,
     ...SAMBA,
-    ...CUPS,
-    ...FORGE,
     ...OPENSSL,
   ...GPG,
   ...IPTABLES,
@@ -210,27 +192,19 @@ function build(): Record<string, Command> {
     ...TRANSFERS,
     ...APACHE,
     ...MAIL,
-    ...ANSIBLE,
-    ...CADDY,
     ...BYTES,
-    ...COBOL,
-    ...IBMI,
-    ...POWERSHELL,
     ...LINE_ENDINGS,
     ...CRYPTSETUP,
-    ...VIRT,
-    ...KEEPALIVED_COMMANDS,
-    ...HAPROXY_COMMANDS,
     ...CHECKSUMS,
     ...ENVIRONMENT,
-    ...PROMETHEUS_COMMANDS,
     ...JQ,
-    ...KUBECTL,
-    ...K3S,
     ...COMPRESS,
     ...SMALL_TOOLS,
     ...NET_CLIENTS,
-    ...MARIADB,
+    ...BASE64,
+    // The engine families' commands (families.ts): their entry, the
+    // implementation loaded with the stories that use them.
+    ...Object.fromEntries(Object.entries(FAMILY_COMMANDS).map(([name, [, entry]]) => [name, { ...structuredClone(entry), launch: (c: Context) => familyCommand(name).launch(c) }])),
     // Handled by the shell itself (see shell.ts): an entry here for the
     // manual and completion.
     sudo: { launch: ({ args, game }) => (/^-l+$/.test(args[0] ?? '') ? listSudo(game, args) : '') },

@@ -12,7 +12,6 @@
 import { packedSize, unpack } from './compression';
 import { onUtf8Terminal } from './charset';
 import { binaryOnTerminal, isBinary } from './ebcdic';
-import { runProgram } from './cobol';
 import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
 import { SOLARIS_CHECKS, XPG4_CHECKS, OTHER_BINS } from './commands/solaris-tools';
@@ -21,8 +20,7 @@ import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { cifsAccess, cifsUsage } from './cifs';
 import { currentShell, isWindows, windowsPrompt } from './windows';
-import { psCandidates, psComplete, runPowerShell } from './commands/powershell';
-import { runCmd } from './commands/cmd';
+import { family } from './families';
 
 import { path, accountsByDefault, player, password, clean, name, translateAccounts, translateNames, type Chapter, type Accounts, type Directory, type Node } from './world';
 import { COMMANDS, type Command } from './commands';
@@ -996,7 +994,7 @@ export class Shell implements Game {
 
   complete(line: string): string {
     // PowerShell: cmdlet names, parameters, Windows paths (commands/powershell.ts).
-    if (isWindows(this)) return psComplete(this, line);
+    if (isWindows(this)) return family('windows').psComplete(this, line);
     const c = this.candidates(line);
     if (!c || c.names.length === 0) return line;
     if (c.names.length > 1) {
@@ -1012,7 +1010,7 @@ export class Shell implements Game {
   /** The possibilities, when Tab cannot choose (bash shows them on the second Tab); empty otherwise. */
   suggestions(line: string): string[] {
     if (isWindows(this)) {
-      const { names } = psCandidates(this, line);
+      const { names } = family('windows').psCandidates(this, line);
       return names.length > 1 ? names : [];
     }
     const c = this.candidates(line);
@@ -1129,7 +1127,7 @@ export class Shell implements Game {
     // A Windows Server's PowerShell: its own syntax, its cmdlets (commands/powershell.ts).
     if (isWindows(this)) {
       if (line.trim() && !/^\s/.test(line) && this.history.at(-1) !== line) this.history.push(line);
-      const output = currentShell(this) === 'cmd' ? runCmd(this, line) : runPowerShell(this, line);
+      const output = currentShell(this) === 'cmd' ? family('windows').runCmd(this, line) : family('windows').runPowerShell(this, line);
       return output === null ? null : this.conclude(this.countLine(output), true);
     }
     // Ctrl-D (the interface sends the end-of-transmission character).
@@ -2363,7 +2361,7 @@ export class Shell implements Game {
       if (root) this.who = this.as;
       try {
         // A compiled program (cobc): it runs, it doesn't go through sh.
-        if (n.type === 'file' && n.program) return runProgram(this, n.program, rest);
+        if (n.type === 'file' && n.program) return family('cobol').runProgram(this, n.program, rest);
         return launchScript(this, cmd, rest);
       } finally {
         this.who = before;

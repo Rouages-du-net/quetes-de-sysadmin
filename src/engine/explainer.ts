@@ -91,7 +91,8 @@ const markersOf = (t: Translate): Map<Explanation, RegExp[]> => {
         return [e, [...new Set(all)].map(markerPattern)];
       }),
     );
-    cache.set(t.language, m);
+    // English's markers come with its core texts, loaded after a translation's: kept once they are there.
+    if (!english || english.exists('explainer-button')) cache.set(t.language, m);
   }
   return m;
 };

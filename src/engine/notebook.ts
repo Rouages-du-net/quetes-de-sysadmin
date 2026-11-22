@@ -36,13 +36,11 @@ export function note(notebook: Notebook, sh: Shell): string[] {
   return fresh;
 }
 
-/** The notebook's line: what the command does, in one sentence (like whatis). */
-// Its first sentence is in the core texts (man-summary-…, src/texts/plugin.mjs):
-// the notebook shows it before the manual's pages have loaded.
-export const description = (name: string, t: Translate) => {
-  const summary = page(name).replace(/^man-/, 'man-summary-');
-  return recap(t(t.exists(summary) ? summary : page(name)));
-};
+/**
+ * The notebook's line: what the command does, in one sentence (like whatis),
+ * from its manual page (the manual's texts: the interface loads them first).
+ */
+export const description = (name: string, t: Translate) => recap(t(page(name)));
 
 /** The progress: for each story started, the finished chapters. */
 export function progress(finished: string[], t: Translate): string[] {
