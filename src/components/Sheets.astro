@@ -7,12 +7,13 @@
 import { STORIES } from '../engine/chapters';
 import { allSheets } from '../engine/sheets';
 import { difficulty, stars } from '../engine/difficulty';
-import { translator, typography } from '../texts';
+import { loadAllTexts, translator, typography } from '../texts';
 
 interface Props {
   lang: 'fr' | 'en';
 }
 const { lang } = Astro.props;
+await loadAllTexts();
 const t = translator(lang);
 const typo = (text: string) => typography(text, lang);
 const sheets = allSheets();

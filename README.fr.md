@@ -27,7 +27,29 @@ un système entièrement simulé : rien ne sort du navigateur.
 
 - En ligne : **https://sysadmin.rouages.net** (en français sous `/fr/`, en
   anglais sous `/en/` ; la racine choisit selon la langue du navigateur).
+- Sur ton téléphone ou ton ordinateur : **« Installer le jeu »** en bas de
+  page du site (ou « Partager → Sur l'écran d'accueil » dans Safari sur
+  iOS) ; installé, le jeu s'ouvre en plein écran et marche hors ligne, et ta
+  progression reste sur l'appareil.
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Un bogue, un indice pas clair, une idée ? « Signaler un problème ou une
+  idée » (sous le menu, dans un chapitre, ou en pied de page du site) te
+  montre le signalement exact, avec seulement le contexte que tu coches, et
+  te laisse ouvrir une issue GitHub ou copier le texte toi-même : le jeu
+  n'envoie jamais rien.
+- Tu ne sais pas par où commencer ? « Par où commencer ? » pose quatre
+  questions rapides (expérience du terminal, objectif, ce qui t'intéresse,
+  temps par séance) et suggère un parcours et un premier chapitre jouable
+  tout de suite.
+- Ta progression reste dans ton navigateur, sans compte. Un chapitre en
+  cours est sauvegardé après chaque saisie : si la page se ferme (un
+  téléphone ferme souvent les onglets en arrière-plan), le jeu propose de le
+  reprendre là où tu en étais (le réglage « Sauvegarde auto » le désactive).
+- Bloqué·e sur un message d'erreur ? Sous une commande qui a échoué sur une
+  erreur courante (« Permission denied », « aucun fichier ou dossier de ce
+  nom », « Connection refused »…), « Que veut dire cette erreur ? »
+  l'explique simplement et dit où regarder, sans donner la réponse (le
+  réglage « Aide aux erreurs » le désactive ; jamais en mode examen).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

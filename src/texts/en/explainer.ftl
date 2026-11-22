@@ -1,0 +1,136 @@
+### The error explainer (src/engine/explainer.ts): a short explanation,
+### offered under the output of a command that failed, which the player may
+### open. It says what the message means and where to look (a manual page, a
+### diagnostic command), never the chapter's answer.
+###
+### Each explanation's .match attribute lists the error messages it answers,
+### one per line, as the game prints them in this language: * stands for any
+### text, a final $ for the end of the line. The English markers are always
+### read too (many tools answer in English whatever the language): a
+### translation lists only the messages the game prints in its own language
+### (as with LANG set to that language), or leaves .match out. A line can't
+### start with [, * or . in Fluent, and braces must be avoided.
+
+explainer-button = What does this error mean?
+explainer-label = The error, explained:
+
+explainer-sudo-password = sudo asks for your own password, the one of the account you are logged in with, not root's. Nothing appears while you type it, no stars, no dots: that is normal. After three wrong tries sudo gives up; run the command again to get a new prompt.
+    .match =
+        Sorry, try again.
+        incorrect password attempt
+
+explainer-sudoers = sudo knows who you are, and its policy says your account may not run this command as root on this machine: it is a rule, not a wrong password. The rules live in /etc/sudoers and the files of /etc/sudoers.d. sudo -l lists what you may run; man sudoers explains how a rule is written.
+    .match =
+        is not allowed to run sudo
+        is not allowed to execute
+
+explainer-ssh-denied = The SSH server answered, but it refused to let you in: the account, the key or the password didn't fit. The words in brackets are the methods it accepts (publickey, password). ssh -v shows each key ssh tries and the server's answers; on the server, the authentication log tells its side of the story.
+    .match =
+        Permission denied (publickey
+        Permission denied, please try again
+
+explainer-config-test = The configuration check found an error and refused the configuration. Read the line marked [emerg] (or the one before "test failed"): it names the file and the line number, as in file:12. The mistake is often on that line or just above it, a missing semicolon or closing brace. If it says Permission denied instead, the check itself needed root's rights.
+    .match =
+        configuration file * test failed
+        emerg] *
+        Syntax error on line
+
+explainer-yaml = The YAML file could not be read. YAML is strict about indentation: spaces only, never tabs, and the items under a key must line up exactly. The message gives a line number, but the real mistake is often a line or two above it; cat -A shows tabs as ^I.
+    .match =
+        Syntax Error while loading YAML
+        mapping values are not allowed
+        did not find expected
+        could not find expected
+
+explainer-unit-not-found = systemd knows no unit with that name. Check the spelling: it is the name of the unit file, which may differ from the program's (apache2, not httpd, on Debian). systemctl list-unit-files shows the units it knows; a package that isn't installed brings no unit.
+    .match =
+        Unit * could not be found.
+        Unit * not found.
+
+explainer-unit-failed = systemd started the service and the program stopped with an error; the reason is not in this message. systemctl status shows the last lines of the service's log, and journalctl -u with the unit's name shows all of them. Read from the bottom up: the first real error is usually just above the lines saying the unit failed.
+    .match =
+        Job for * failed
+
+explainer-refused = The machine answered, but nothing accepted the connection on that port: no program listens there, or a firewall actively rejects it. On the server, ss -tlnp lists the ports where programs listen, and systemctl status says whether the service runs. Check the address and the port you used, too.
+    .match =
+        Connection refused
+        after 0 ms: Couldn't connect to server
+
+explainer-timed-out = No answer came back before the tool gave up. The packets were probably dropped on the way, often by a firewall that drops instead of rejecting, or the machine is down, or the address is wrong. Compare with "Connection refused", which means the machine did answer.
+    .match =
+        Connection timed out
+        Request timed out.
+        (tcp) timed out
+        ms: Couldn't connect to server
+
+explainer-no-route = Your machine found no way to reach that address: no route leads there, or a router or the far side's firewall answered that it is unreachable. ip route shows where your machine sends its packets; check the address itself too.
+    .match =
+        No route to host
+        Network is unreachable
+        Destination Host Unreachable
+
+explainer-resolve = The name could not be turned into an address: it is a DNS problem (or one in /etc/hosts), not a problem with the server itself. Check the spelling first; then dig or host shows what DNS answers for the name, and /etc/resolv.conf which server your machine asks.
+    .match =
+        Could not resolve host
+        Name or service not known
+        Temporary failure in name resolution
+
+explainer-address-in-use = The program wanted to listen on a port another program already holds: only one program at a time can listen on an address and port. ss -tlnp shows which program has it. Two services set up on the same port, or an old copy still running, are the usual causes.
+    .match =
+        Address already in use
+
+explainer-read-only = This file system is mounted read-only: nobody can write to it, not even root, whatever the rights. mount or findmnt shows the ro option. The system sometimes remounts a disk read-only by itself after serious errors, so dmesg and the journal are worth reading first.
+    .match =
+        Read-only file system
+
+explainer-no-space = The storage that holds this file is full, or it has no inode left (one per file). df -h shows the free space of each file system and df -i its inodes; du helps find what takes the room. A deleted file that a program still holds open keeps its space until the program closes it (lsof).
+    .match =
+        No space left on device
+
+explainer-syntax = The shell could not read the line, so nothing ran: a character that means something to it is in a place where it doesn't fit (a |, a ;, a parenthesis, a word like then or done), or a quote or a block was left open. Look at the token the message names, and check that each quote is closed. man bash, section SHELL GRAMMAR, gives the rules.
+    .match =
+        syntax error near unexpected token
+        syntax error: unexpected end of file
+        : Syntax error:
+        syntax error at line
+
+explainer-ps-not-recognized = PowerShell (or cmd.exe) found no cmdlet, function or program with that name. Check the spelling: cmdlets are named Verb-Noun, like Get-Service, and a script in the current folder runs with .\ in front of its name. Get-Command lists the commands this machine knows; some come from a module that only certain machines have.
+    .match =
+        is not recognized as the name of a cmdlet
+        is not recognized as an internal or external command
+
+explainer-not-found = The shell found no program with that name. Check the spelling and the case (ls, not LS). The program may not be installed on this machine, or not open yet in this chapter: help lists the commands you have, and man -k searches the manual by keyword.
+    .match =
+        command not found
+        : not found$
+        you don't have this command yet
+
+explainer-access-denied = Windows refused the access: your account has no permission on that file, folder, key or service. For a share, the share's permissions and the NTFS permissions both apply, and the stricter one wins. Get-Acl (or icacls) shows who may do what, and whoami /groups the groups your account brings.
+    .match =
+        Access is denied
+        Access to the path * is denied
+        UnauthorizedAccess
+
+explainer-permission = The system refused: your account lacks the right this needs on that file or folder (r to read, w to write, x to enter a folder or run a program). ls -l shows the owner, the group and the rights for each of them and for the others, and every folder on the way must let you through. Some files belong to root on purpose: read the rights before reaching for sudo.
+    .match =
+        Permission denied
+
+explainer-not-permitted = The operation itself is not allowed for your account, whatever the rights: only a file's owner (or root) may change its rights or its owner, and only root may send a signal to another account's processes. Even root gets this message on a file made immutable: lsattr shows the i flag. man chmod, man kill and man chattr explain each case.
+    .match =
+        Operation not permitted
+
+explainer-not-directory = A part of the path you gave is a file, not a folder: nothing can be inside it, and cd can't enter it. ls -l tells them apart: a folder's line starts with d. Check the path one part at a time.
+    .match =
+        Not a directory
+
+explainer-is-directory = The command expected a file and was given a folder. ls shows what a folder contains; cat, nano and a redirection (>) work on files only. Removing or copying a whole folder takes an option: see man rm and man cp.
+    .match =
+        Is a directory
+
+explainer-no-such-file = Nothing exists at that path, as it was spelled. A path that doesn't start with / is relative: it starts from the current folder, which pwd shows; one that starts with / starts from the root. Names are case-sensitive (Notes is not notes), and Tab only completes a name that exists: a good test.
+    .match =
+        No such file or directory
+
+## The setting, next to Tips and Autosave.
+display-explainer = Error help
+display-explainer-title = Offer a short explanation under common error messages

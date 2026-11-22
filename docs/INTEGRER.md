@@ -13,15 +13,19 @@ n'importe quelle page HTML (site statique, CMS, plateforme de cours…).
 <quetes-de-sysadmin></quetes-de-sysadmin>
 ```
 
-Pour ne dépendre d'aucun serveur extérieur, copie le fichier
-`dist/integration/quetes-de-sysadmin.js` (après `npm run build`) sur ton site
-et change l'adresse du script.
+Pour ne dépendre d'aucun serveur extérieur, copie le dossier
+`dist/integration/` (après `npm run build` : `quetes-de-sysadmin.js` et ses
+`chunks/`) sur ton site et change l'adresse du script.
+
+Le fichier est léger : il charge le reste du jeu (son interface et son
+moteur, chaque histoire, chaque groupe de textes) depuis `chunks/`, à côté de
+lui, par rapport à sa propre adresse, et seulement quand il en a besoin.
 
 Le serveur de sysadmin.rouages.net envoie l'en-tête
-`Access-Control-Allow-Origin: *` pour ce fichier (voir `public/.htaccess`) :
-c'est obligatoire pour qu'un script « module » soit chargé depuis un autre
-site. Si tu héberges toi-même le fichier sur un autre domaine que ta page,
-configure le même en-tête.
+`Access-Control-Allow-Origin: *` pour ce fichier et ses morceaux (voir
+`public/.htaccess`) : c'est obligatoire pour qu'un script « module » soit
+chargé depuis un autre site. Si tu les héberges toi-même sur un autre domaine
+que ta page, configure le même en-tête.
 
 ## Attributs
 
@@ -52,6 +56,14 @@ cours, après confirmation s'il est commencé) et son évènement
 `exam-change` (`event.detail.exam`), comme la page d'accueil du site dans
 `src/exam-control.ts`. Ton script doit être un fichier, pas du code en
 ligne, si ta page a une CSP.
+
+## Signaler un problème
+
+Le jeu a son propre bouton « Signaler un problème ou une idée ». Une page
+peut ouvrir la même fenêtre depuis son propre lien en appelant la méthode
+`openFeedback()` de l'élément, comme le pied de page du site dans
+`src/pwa/feedback-link.ts`. Rien n'est envoyé : le joueur ou la joueuse
+voit le signalement et ouvre une issue GitHub ou copie le texte.
 
 ## Couleurs
 
@@ -99,4 +111,11 @@ inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich).
 
 Le jeu n'envoie rien : aucune donnée ne quitte le navigateur. La progression
 est gardée dans le `localStorage` de la page qui l'accueille, sous la clé
-choisie.
+choisie. À côté, la même clé suivie d'un suffixe garde les réglages
+d'affichage (`CLE-display`), les résultats d'astreinte (`CLE-on-call`) et le
+chapitre en cours, un par langue (`CLE-autosave-en`, `CLE-autosave-fr`) : les
+saisies tapées depuis l'ouverture du chapitre, pour proposer de le reprendre
+après la fermeture de la page. Elles peuvent contenir les mots de passe de
+l'histoire tels que le joueur ou la joueuse les a tapés : des mots de passe
+fictifs du jeu, qui restent dans le navigateur comme le reste. La sauvegarde
+automatique se désactive dans les réglages.

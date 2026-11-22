@@ -7,7 +7,7 @@ import type { Shell } from './shell';
 import type { Translate } from '../texts';
 import { COMMANDS } from './commands';
 import { page, recap } from './commands/manual';
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { grade } from './achievements';
 
 export interface NotebookInput {
@@ -37,7 +37,12 @@ export function note(notebook: Notebook, sh: Shell): string[] {
 }
 
 /** The notebook's line: what the command does, in one sentence (like whatis). */
-export const description = (name: string, t: Translate) => recap(t(page(name)));
+// Its first sentence is in the core texts (man-summary-…, src/texts/plugin.mjs):
+// the notebook shows it before the manual's pages have loaded.
+export const description = (name: string, t: Translate) => {
+  const summary = page(name).replace(/^man-/, 'man-summary-');
+  return recap(t(t.exists(summary) ? summary : page(name)));
+};
 
 /** The progress: for each story started, the finished chapters. */
 export function progress(finished: string[], t: Translate): string[] {

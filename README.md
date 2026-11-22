@@ -22,7 +22,26 @@ system: nothing leaves the browser.
 
 - Online: **https://sysadmin.rouages.net** (in English at `/en/`, in French
   at `/fr/`; the root picks one from your browser's language).
+- On your phone or computer: **"Install the game"** in the site's footer
+  (or "Share → Add to Home Screen" in Safari on iOS); installed, the game
+  opens full screen and plays offline, and your progress stays on the device.
 - On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
+- Found a bug, an unclear hint, or have an idea? "Report a problem or an
+  idea" (under the menu, in a chapter, or in the site's footer) shows you
+  the exact report, with only the context you tick, and lets you open a
+  GitHub issue or copy the text yourself: the game never sends anything.
+- Not sure where to begin? "Where do I start?" asks four quick questions
+  (terminal experience, goal, what interests you, time per session) and
+  suggests a learning path and a first chapter you can play now.
+- Your progress stays in your browser, with no account. A chapter in
+  progress is saved after every input: if the page closes (a phone often
+  kills background tabs), the game offers to resume it where you left off
+  (the "Autosave" setting turns this off).
+- Stuck on an error message? Under a command that failed with a common
+  error ("Permission denied", "No such file or directory", "Connection
+  refused"…), "What does this error mean?" explains it in plain words and
+  says where to look, without giving the answer (the "Error help" setting
+  turns this off; never in exam mode).
 
 ## Develop
 

@@ -11,7 +11,20 @@ agents, but its rules apply to everyone.
 
 - **Report a bug**: open an issue with what you typed, what the game
   answered, and what a real Linux would have answered (with a link to the
-  tool's documentation if you can).
+  tool's documentation if you can). The game's "Report a problem or an
+  idea" button (under the menu, among a chapter's actions, and in the
+  site's footer) writes it for you: the player picks the kind (a command's
+  behaviour, an unclear text or hint, an idea, other), writes a message,
+  ticks the context to include (version, language, chapter, the last
+  commands and their outputs, browser, settings, notebook), sees the exact
+  text, then opens a prefilled GitHub issue themselves or copies the text.
+  The game sends nothing. Reports arrive as issues built on
+  `.github/ISSUE_TEMPLATE/feedback.md`, titled `[bug]`, `[text]`, `[idea]`
+  or `[other]`, starting with `<!-- sysadmin-quests feedback v1 -->`;
+  their headings are in the player's language, the lines under them keep
+  English labels (`version:`, `chapter:`…). A report too long for a link
+  lacks its oldest commands and says so; the player was asked to paste the
+  copied text. The text is built by `src/engine/feedback.ts`.
 - **Fix a command's behaviour**: a wrong option, message or exit code is a
   bug; see "A new simulated tool" below for where commands live.
 - **Write a quest**: see "The format of a quest". Propose the idea in an
@@ -79,17 +92,48 @@ simulated network. A chapter is:
 
 | File | Contents |
 |---|---|
-| `src/engine/chapitres/<id>.ts` | the chapter: its commands, starting world, state and events |
+| `src/engine/chapters/<id>.ts` | the chapter: its commands, starting world, state and events |
 | `src/texts/en/chapter-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
 | `src/texts/en/hints-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
 | `tests/<story>.test.ts` | the replayed game: the expected solution, another solution, the false leads |
 | `docs/SCENARIOS.md` | its sheet: the story, the commands learnt, the goal, the traps |
 
-A new chapter also goes at the end of `CODE_ORDER` in
+A new chapter also goes in its story's module (`src/engine/stories/<story>.ts`,
+the chapters in order), at the end of `CODE_ORDER` in
 `src/engine/progress.ts` and of `tests/progress/order.txt`, and in at
-least one learning path (`src/engine/paths.ts`). A new story declares in
-`src/engine/chapters/index.ts` which chapters unlock it (`after`), and gets
-a machine in `src/engine/machines.ts`.
+least one learning path (`src/engine/paths.ts`). A new story gets its
+module in `src/engine/stories/`, declares in `src/engine/chapters/index.ts`
+which chapters unlock it (`after`), and gets a machine in
+`src/engine/machines.ts`. Then run `npm run catalogue`: the menu knows the
+stories from `src/engine/catalogue.json` without loading them (the game
+loads a story only when it is opened), and `npm test` fails while it is
+out of date. A chapter's module must not call `t()` when it is imported:
+its texts load with it.
+
+#### Adding a story (or porting one written before the split)
+
+The game loads a story only when it is opened, so a story is wired in three
+places, which `tests/catalogue.test.ts` checks agree:
+
+1. `src/engine/stories/<story>.ts`: imports its chapters from
+   `src/engine/chapters/` and exports them in order,
+   `export const chapters: Chapter[] = [first, second, third];`
+   (copy any story's module).
+2. `src/engine/chapters/index.ts`: one import,
+   `import { chapters as myStory } from '../stories/<story>';`, and one
+   entry in `STORIES`, `{ id: '<story>', after: [...], chapters: myStory }`.
+   A story written the old way imported each chapter here: move those
+   imports into its module.
+3. `npm run catalogue`: rewrites `src/engine/catalogue.json` (the menu, its
+   chapters' commands and size, and the text files that load with the
+   story: its `chapter-*.ftl` and `hints-<story>.ftl`, plus those of other
+   stories its modules name).
+
+Texts shared by the story outside those files (a `<story>.ftl` like
+`blood-drive.ftl`) load with the core texts. Nothing else changes: machines,
+paths, `CODE_ORDER`, tests. `npm run build` then checks the first visit's
+budget: the story's own code must stay in its chunk, so the engine's core
+(shell, commands, `console.ts`) never imports a chapter.
 
 ### The chapter (`Chapter`, in `src/engine/world.ts`)
 
@@ -176,7 +220,8 @@ A tool (nginx, nftables, slapd…) has its engine in `src/engine/<tool>.ts`
 
 ```bash
 npm test                    # every quest replayed
-npm run build               # the site, the embeddable file, tsc
+npm run build               # the site, the embeddable file, tsc, the first-visit budget
+npm run catalogue           # after adding a story or a chapter
 npm run preview &           # then:
 npm run test:browser     # Chromium, 1000 and 375 px, CSP
 ```

@@ -15,6 +15,42 @@ const browser = await chromium.launch({
   executablePath: existsSync(CHROMIUM) ? CHROMIUM : undefined,
   args: ['--headless=new'],
 });
+// The site registers a service worker (src/pwa/): requests it answers would
+// escape page.route, and so the CSP added below. Pages and contexts block it,
+// except in the tests about it (serviceWorkers: 'allow').
+const newContext = browser.newContext.bind(browser);
+const newPage = browser.newPage.bind(browser);
+// The element shows an empty frame, then the game once it has fetched its
+// chunks (src/element.ts), and waits for a story's while it loads: after a
+// navigation, the page's game is waited for, ready to type in.
+const READY = () => {
+  const host = document.querySelector('quetes-de-sysadmin');
+  if (!host) return true;
+  const root = host.shadowRoot;
+  return !host.hasAttribute('aria-busy') && !!root?.querySelector('.qds .output pre') && !root.querySelector('.qds[aria-busy]');
+};
+// Polled from Node: works under page.clock too.
+const waitReady = async (page) => {
+  for (let i = 0; i < 300 && !(await page.evaluate(READY).catch(() => true)); i++) await new Promise((r) => setTimeout(r, 100));
+};
+const settled = (page) => {
+  for (const name of ['goto', 'reload']) {
+    const original = page[name].bind(page);
+    page[name] = async (...args) => {
+      const response = await original(...args);
+      await waitReady(page);
+      return response;
+    };
+  }
+  return page;
+};
+browser.newContext = async (options = {}) => {
+  const context = await newContext({ serviceWorkers: 'block', ...options });
+  const contextPage = context.newPage.bind(context);
+  context.newPage = async () => settled(await contextPage());
+  return context;
+};
+browser.newPage = async (options = {}) => settled(await newPage({ serviceWorkers: 'block', ...options }));
 
 // The preview server doesn't read .htaccess: we add ourselves the CSP
 // header Apache will send, so that a violation fails the test.
@@ -30,8 +66,11 @@ const withCsp = async (page, { tour = false } = {}) => {
       } catch {}
     });
   await page.route(`${BASE}/**`, async (route) => {
-    const response = await route.fetch();
-    await route.fulfill({ response: response, headers: { ...response.headers(), 'content-security-policy': CSP } });
+    // A chunk still loading in the background (the manual's pages) when the page closes: nothing to answer.
+    try {
+      const response = await route.fetch();
+      await route.fulfill({ response: response, headers: { ...response.headers(), 'content-security-policy': CSP } });
+    } catch {}
   });
 };
 let failures = 0;
@@ -66,7 +105,10 @@ for (const width of [1000, 375]) {
   check(tourBox && tourBox.x >= 0 && tourBox.x + tourBox.width <= width, `${width} px: the tour's bubble fits on the screen`);
   check((await game.locator('.tour-target').count()) === 1, `${width} px: the tour outlines what it points at`);
   for (let i = 0; i < 4; i++) await tour.locator('.button').click();
-  check((await tour.textContent()).includes('Tab'), `${width} px: the tour's last step is about Tab`);
+  check((await tour.textContent()).includes('Tab'), `${width} px: the tour's fifth step is about Tab`);
+  await tour.locator('.button').click();
+  // Its last step points at "Where do I start?": the first visit's card (see start-here.ts).
+  check((await tour.textContent()).includes('par où commencer') && (await game.locator('.start-offer .tour-target').count()) === 1, `${width} px: the tour's last step points at the first visit's offer`);
   await tour.locator('.button').click();
   check(await tour.isHidden(), `${width} px: the tour ends`);
   // The toolbar: Mission, Map, Notebook, as icons with labels (hidden on a narrow screen, still named).
@@ -100,6 +142,34 @@ for (const width of [1000, 375]) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }
+  // The error explainer: a button under a failed command, which unfolds a short explanation (see explainer.ts).
+  const explainers = game.locator('.output .explainer');
+  await tape('cat nulle-part.txt');
+  const explainerButton = explainers.last().locator('button');
+  check((await explainers.count()) === 1 && (await explainerButton.textContent()) === 'Que veut dire cette erreur ?', `${width} px: a failed cat offers its explanation`);
+  check((await explainerButton.getAttribute('aria-expanded')) === 'false' && (await explainers.last().locator('.explanation').isHidden()), `${width} px: the explanation starts folded`);
+  await explainerButton.focus();
+  check(await explainerButton.evaluate((b) => b.getRootNode().activeElement === b), `${width} px: the explainer's button takes the focus`);
+  await explainerButton.press('Enter');
+  const explanation = explainers.last().locator('.explanation');
+  check(
+    (await explainerButton.getAttribute('aria-expanded')) === 'true' && (await explanation.isVisible()) && (await explanation.textContent()).includes('pwd') && (await explanation.getAttribute('aria-live')) === 'polite',
+    `${width} px: Enter unfolds the explanation, announced politely`,
+  );
+  check(await explainerButton.evaluate((b) => b.getRootNode().activeElement === b), `${width} px: the focus stays on the button after Enter`);
+  const explained = await explanation.boundingBox();
+  check(explained && explained.x >= 0 && explained.x + explained.width <= width, `${width} px: the explanation fits on the screen`);
+  if (process.env.CAPTURES) await game.locator('.terminal').screenshot({ path: `${process.env.CAPTURES}/explainer-${width}.png` });
+  await explainerButton.press('Enter');
+  check((await explanation.isHidden()) && (await explanation.textContent()) === '', `${width} px: Enter folds it again`);
+  await input.focus();
+  await tape('ls');
+  check((await explainers.count()) === 1, `${width} px: no explanation offered after a command that succeeds`);
+  const explainerSetting = game.locator('.setting-button', { hasText: 'Aide aux erreurs' });
+  await explainerSetting.click();
+  await tape('cat nulle-part.txt');
+  check((await explainerSetting.getAttribute('aria-pressed')) === 'false' && (await explainers.count()) === 1, `${width} px: the explainer turned off offers nothing`);
+  await explainerSetting.click();
   await tape('mv Jetee/filet Port/Hangar');
   check((await game.locator('.output .tip').count()) === 0, `${width} px: no tip when the story already answers`);
   await tape('mv Port/Hangar/filet Port');
@@ -235,6 +305,188 @@ for (const width of [1000, 375]) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px: sheets without horizontal scrolling`);
   check(errors.length === 0, `${width} px: sheets without console error ${errors.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/enseignants-${width}.png` });
+  await page.close();
+}
+
+// "Where do I start?" (see start-here.ts): a first visit is offered the
+// questions by a card (not a window); answered with the keyboard, they give a
+// suggestion whose Start opens the chapter; the menu's button opens them again
+// with the answers kept; a returning player sees no card, and exam mode hides it all.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  const offer = game.locator('.start-offer');
+  check(await offer.isVisible(), `start ${width} px: a first visit is offered "Par où commencer ?"`);
+  check((await game.locator('dialog[open]').count()) === 0, `start ${width} px: the offer is a card, not a window`);
+  const answer = offer.locator('.button').first();
+  await answer.focus();
+  await page.keyboard.press('Enter');
+  const window = game.locator('dialog.start-window');
+  check(await window.evaluate((d) => d.open), `start ${width} px: the questions open from the keyboard`);
+  check((await window.locator('fieldset legend').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Réponds aux quatre questions'), `start ${width} px: four groups of choices, no suggestion before the answers`);
+  // Every day, a job, security, about 10 minutes: Space on a group's first choice, the arrows for the others.
+  await window.locator('input[type="radio"]').nth(2).focus();
+  await page.keyboard.press('Space');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Space');
+  const result = window.locator('.start-result');
+  const text = await result.textContent();
+  check(text.includes('Protéger un serveur') && text.includes('L’Île du Phare') && text.includes("Autres portes d'entrée"), `start ${width} px: the answers give a path, a chapter that opens now, and other ways in`);
+  check(text.includes("s'ouvre après encore") && (await result.locator('.main .difficulty').count()) === 1, `start ${width} px: what opens the path's chapter, and the difficulty stars`);
+  check((await window.locator('[role="status"]').textContent()).includes('Suggestion'), `start ${width} px: the suggestion is announced`);
+  const box = await window.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `start ${width} px: the questions fit on the screen`);
+  if (width === 375) {
+    await window.locator('input[type="radio"]').nth(6).focus();
+    await page.keyboard.press('Space');
+    check((await result.locator('.start-teachers a').getAttribute('href')).endsWith('/fr/enseignants/'), `start ${width} px: a teacher is pointed to the quest sheets`);
+    await window.locator('input[type="radio"]').nth(5).focus();
+    await page.keyboard.press('Space');
+  }
+  if (process.env.CAPTURES) await window.screenshot({ path: `${process.env.CAPTURES}/start-${width}.png` });
+  await result.locator('.main button').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
+  check(!(await window.evaluate((d) => d.open)) && (await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `start ${width} px: Start opens the chapter`);
+  check(await offer.isHidden(), `start ${width} px: the card goes once answered`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `start ${width} px: no horizontal scrolling`);
+  // Back later: no card, the menu's button, the answers kept (a setting of this browser, not of the progress).
+  await page.reload();
+  check(await offer.isHidden(), `start ${width} px: no card after a reload`);
+  await game.locator('.start-here-button').click();
+  check((await window.locator('input[type="radio"]:checked').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Protéger un serveur'), `start ${width} px: the menu's button opens the questions, answers kept`);
+  await page.keyboard.press('Escape');
+  check(!(await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin') ?? '{}').startHere)), `start ${width} px: the answers are not in the progress`);
+  check(errors.length === 0, `start ${width} px: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+// A returning player (chapters finished) is not interrupted; exam mode hides the questions.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page, { tour: true });
+  await page.addInitScript(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse'] })));
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  await page.waitForTimeout(500);
+  check(await game.locator('.start-offer').isHidden(), 'start returning: no card for a player who has played');
+  check(await game.locator('.tour').isHidden(), 'start returning: no tour either');
+  check(await game.locator('.start-here-button').isVisible(), 'start returning: the menu still has "Par où commencer ?"');
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
+  await page.locator('#exam-mode').check();
+  check(await game.locator('.start-here-entry').isHidden(), 'start exam: the button is hidden in exam mode');
+  check(errors.length === 0, `start returning: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+
+// "Signaler un problème ou une idée" (see feedback.ts): opened from a chapter
+// and from the menu, a context part ticked changes the exact text, the GitHub
+// link carries the title, copying works (or selects the text), Esc closes and
+// gives the focus back, and the dialog makes no request at all.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  const input = game.locator('form input');
+  await game.locator('button[data-story="0"]').click();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
+  for (const c of ['ls', 'pwd']) {
+    await input.fill(c);
+    await input.press('Enter');
+  }
+  // From here on, nothing may go out: the dialog only builds a text.
+  const requests = [];
+  page.on('request', (r) => requests.push(r.url()));
+  const opener = game.locator('.chapter-actions .pill').last();
+  await opener.focus();
+  await page.keyboard.press('Enter');
+  const dialog = game.locator('dialog.feedback-window');
+  check(await dialog.evaluate((d) => d.open), `feedback ${width} px: opens from the chapter's actions`);
+  check((await game.locator('dialog.feedback-window textarea:focus').count()) === 1, `feedback ${width} px: the focus goes to the message`);
+  const preview = dialog.locator('.feedback-preview');
+  await dialog.locator('textarea').first().fill('La commande ls oublie un fichier QDS-ABCD-EFGH');
+  let text = await preview.inputValue();
+  check(text.startsWith('[bug] La commande ls oublie un fichier') && text.includes('- chapter: lighthouse (1, ') && text.includes('- language: fr') && text.includes('### Contexte'), `feedback ${width} px: the exact text, with the parts ticked by default`);
+  check(!text.includes('QDS-ABCD') && text.includes('[code de progression retiré]'), `feedback ${width} px: a progress code is removed`);
+  check(text.includes('<!-- sysadmin-quests feedback v1 -->') && !text.includes('→'), `feedback ${width} px: the report's marker closes with a literal -->`);
+  check((await preview.evaluate((e) => getComputedStyle(e).fontVariantLigatures)) === 'none', `feedback ${width} px: the preview shows no ligature (--> stays three characters)`);
+  check(!text.includes('vous@royaume:~$ ls') && !text.includes('user-agent'), `feedback ${width} px: commands and browser stay out until ticked`);
+  check((await dialog.locator('li[data-part="commands"] textarea').inputValue()).includes('vous@royaume:~$ pwd'), `feedback ${width} px: the chapter's last commands are shown, to edit`);
+  await dialog.locator('li[data-part="commands"] input[type="checkbox"]').check();
+  await dialog.locator('li[data-part="commands"] textarea').fill('vous@royaume:~$ ls\nlettre.txt');
+  text = await preview.inputValue();
+  check(text.includes('### Dernières commandes') && text.includes('vous@royaume:~$ ls\nlettre.txt') && !text.includes('pwd'), `feedback ${width} px: ticking the commands adds them to the text, as edited`);
+  await dialog.locator('li[data-part="commands"] textarea').fill('vous@royaume:~$ echo "a : b ?"\na : b ?');
+  text = await preview.inputValue();
+  check(text.includes('vous@royaume:~$ echo "a : b ?"\na : b ?') && !/[\u00a0\u202f]/.test(text.split('### Dernières commandes')[1]), `feedback ${width} px: commands keep their own spaces (no French typography)`);
+  check(new URL(await dialog.locator('a.feedback-github').getAttribute('href')).searchParams.get('body').includes('<!-- sysadmin-quests feedback v1 -->'), `feedback ${width} px: the link's body has the closed marker`);
+  await dialog.locator('li[data-part="commands"] textarea').fill('vous@royaume:~$ ls\nlettre.txt');
+  const href = await dialog.locator('a.feedback-github').getAttribute('href');
+  const url = new URL(href);
+  check(url.origin + url.pathname === 'https://github.com/Rouages-du-net/quetes-de-sysadmin/issues/new' && url.searchParams.get('title').startsWith('[bug] La commande ls oublie') && url.searchParams.get('body').includes('lettre.txt'), `feedback ${width} px: the GitHub link carries the title and the text`);
+  check((await dialog.locator('a.feedback-github').getAttribute('target')) === '_blank' && (await dialog.locator('a.feedback-github').getAttribute('rel')).includes('noopener'), `feedback ${width} px: the link opens a new tab, without opener`);
+  // Copy: the Clipboard API where it is allowed, otherwise the text selected.
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+  await dialog.locator('.feedback-actions button').click();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.feedback-window [role="status"]').textContent !== '');
+  const status = await dialog.locator('[role="status"]').textContent();
+  const copied = status.includes('copié') ? await page.evaluate(() => navigator.clipboard.readText()) : '';
+  check((status.includes('copié') && copied.startsWith('[bug] La commande ls')) || status.includes('sélectionné'), `feedback ${width} px: copy works or selects the text (${status})`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `feedback ${width} px: the dialog fits on the screen`);
+  if (process.env.CAPTURES) await dialog.screenshot({ path: `${process.env.CAPTURES}/feedback-${width}.png` });
+  await page.keyboard.press('Escape');
+  check(!(await dialog.evaluate((d) => d.open)), `feedback ${width} px: Esc closes it`);
+  await page.waitForTimeout(100);
+  check(await opener.evaluate((b) => b.getRootNode().activeElement === b), `feedback ${width} px: the focus goes back to its button`);
+  // From the menu: the draft is kept.
+  await game.locator('.feedback-entry button').click();
+  check(await dialog.evaluate((d) => d.open) && (await preview.inputValue()).includes('La commande ls oublie'), `feedback ${width} px: opens from the menu, the draft kept`);
+  await dialog.locator('.map-actions .button').click();
+  check(requests.length === 0, `feedback ${width} px: the dialog makes no request ${requests.join(' ')}`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `feedback ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `feedback ${width} px: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+// The site's footer opens the game's dialog; on another page, it leads to the game with #report; exam mode leaves out the commands.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const dialog = page.locator('quetes-de-sysadmin dialog.feedback-window');
+  await page.locator('footer a[data-report]').click();
+  check(await dialog.evaluate((d) => d.open), 'feedback footer: the footer\'s link opens the game\'s dialog');
+  await page.keyboard.press('Escape');
+  await page.goto(`${BASE}/fr/enseignants/`);
+  await page.locator('footer a[data-report]').click();
+  await page.waitForURL(`${BASE}/fr/`);
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('dialog.feedback-window')?.open);
+  check(await dialog.evaluate((d) => d.open), 'feedback footer: from a page without the game, the game\'s page opens the dialog');
+  await page.keyboard.press('Escape');
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
+  await page.locator('#exam-mode').check();
+  await page.locator('quetes-de-sysadmin .feedback-entry button').click();
+  check(await dialog.locator('li[data-part="commands"] input').isDisabled() && (await dialog.textContent()).includes('Pas en mode examen'), 'feedback exam: available, without the commands');
+  check(errors.length === 0, `feedback footer: no console error ${errors.join(' ')}`);
   await page.close();
 }
 
@@ -554,6 +806,74 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
+// Autosave inside a chapter: the page reloaded (a tab closed, a phone that
+// killed it), the game offers to resume; resuming replays the inputs and
+// gives back the machine; "start again" forgets them.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 }, colorScheme: width < 500 ? 'dark' : 'light' });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const game = page.locator('quetes-de-sysadmin');
+  const taper = async (l) => {
+    await game.locator('form input').fill(l);
+    await game.locator('form input').press('Enter');
+  };
+  const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-autosave-fr') ?? 'null'));
+  for (const l of ['ssh royaume', 'yes', 'mv Jetee/filet Port/Hangar', 'cd Port']) await taper(l);
+  check((await kept())?.n === 2 && (await kept())?.chapter === 'lighthouse', `autosave ${width} px: the chapter's inputs are kept in the browser`);
+  await page.reload();
+  const offer = game.locator('.resume-offer');
+  check((await offer.isVisible()) && (await offer.textContent()).includes('après 2 saisies'), `autosave ${width} px: reloaded, the game offers to resume`);
+  check((await game.locator('[role="status"]').first().textContent()).includes('Chapitre en cours'), `autosave ${width} px: the offer is announced`);
+  const box = await offer.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `autosave ${width} px: the offer fits on the screen`);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/autosave-${width}.png`, fullPage: false });
+  await offer.locator('.button', { hasText: 'Reprendre' }).click();
+  check(await offer.isHidden(), `autosave ${width} px: the offer goes away`);
+  check((await game.locator('.output').textContent()).includes('Chapitre repris là où tu en étais : 2 saisies rejouées'), `autosave ${width} px: the chapter is resumed`);
+  check((await game.locator('.output').textContent()).includes('mv Jetee/filet Port/Hangar'), `autosave ${width} px: the end of the terminal is shown again`);
+  check((await game.locator('.prompt').textContent()).includes('~/Port'), `autosave ${width} px: back in the same directory`);
+  await taper('ls Hangar');
+  check((await game.locator('.output pre').last().textContent()).includes('filet'), `autosave ${width} px: the net is still in the boathouse`);
+  check((await kept())?.n === 3, `autosave ${width} px: the autosave goes on after a resume`);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/autosave-resumed-${width}.png` });
+  // The story's chunk and texts slow to come (story-registry.ts): "Resume"
+  // pressed before they are there waits for them, then replays.
+  const slow = async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.fallback().catch(() => {});
+  };
+  await page.route(/\/_astro\/(eraser\.|texts-fr--story-eraser)/, slow);
+  await page.evaluate(() => location.reload());
+  await offer.waitFor({ state: 'visible', timeout: 30000 });
+  check(await page.evaluate(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.qds[aria-busy]') !== null), `autosave ${width} px: the story is still loading when the offer shows`);
+  await offer.locator('.button', { hasText: 'Reprendre' }).click();
+  await waitReady(page);
+  check((await game.locator('.output').textContent()).includes('3 saisies rejouées') && (await game.locator('.prompt').textContent()).includes('~/Port'), `autosave ${width} px: resumed while the story was loading, once it has loaded`);
+  await page.unroute(/\/_astro\/(eraser\.|texts-fr--story-eraser)/, slow);
+  await page.reload();
+  await offer.locator('.button', { hasText: 'Recommencer' }).click();
+  check((await offer.isHidden()) && (await kept()) === null, `autosave ${width} px: "start again" forgets the inputs`);
+  await taper('ls Port/Hangar');
+  check(!(await game.locator('.output pre').last().textContent()).includes('filet'), `autosave ${width} px: the chapter starts again from the beginning`);
+  check((await kept())?.n === 1, `autosave ${width} px: the new start is kept`);
+  // The setting: off, nothing is kept.
+  await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).click();
+  check((await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).getAttribute('aria-pressed')) === 'false' && (await kept()) === null, `autosave ${width} px: turned off, nothing is kept`);
+  await taper('ls');
+  check((await kept()) === null, `autosave ${width} px: turned off, nothing is written`);
+  await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).click();
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `autosave ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `autosave ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // The class table: two students' files and a code, read in the
 // browser; the downloaded CSV neutralises a booby-trapped name.
 for (const width of [1000, 375]) {
@@ -695,6 +1015,8 @@ for (const width of [1000, 375]) {
   const next = game.locator('.paths-list button[data-next]');
   check((await next.textContent()).includes('Le pare-feu') && (await game.locator('.paths-list button[data-state="locked"]').first().textContent()).includes('D\'abord'), `paths ${width} px: the next one, and what is waiting`);
   await next.click();
+  // Its story loads first (story-registry.ts).
+  await waitReady(page);
   check((await game.locator('.prompt').textContent()).startsWith('vous@lettres'), `paths ${width} px: the next chapter opens`);
   await page.reload();
   check((await game.locator('nav.stories').getAttribute('data-view')) === 'paths' && (await game.locator('.paths select').inputValue()) === 'security', `paths ${width} px: the view and the path are kept`);
@@ -760,6 +1082,7 @@ for (const width of [1000, 375]) {
   const window = game.locator('dialog.on-call-window').first();
   check((await window.evaluate((d) => d.open)) && (await window.textContent()).includes('10 janvier 2027'), `on-call ${width} px: the on-call dialog`);
   await window.locator('button', { hasText: 'Prendre l' }).click();
+  await waitReady(page);
   check((await game.locator('.prompt').textContent()).startsWith('vous@datacenter'), `on-call ${width} px: the incident opens`);
   check((await game.locator('.on-call-gauge').textContent()).includes('30:00 (100 %)') && (await game.locator('.incident-button').isDisabled()), `on-call ${width} px: the budget is full, no second on-call`);
   await page.clock.runFor(60_000);
@@ -802,8 +1125,135 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
-// Embedding in any page, with only the embeddable file.
-const page = await browser.newPage();
+// The installable game (src/pwa/): the manifest and its icons, the service
+// worker that takes the page and lets it play offline, the footer's
+// "Install the game" (only when the browser offers it).
+{
+  const context = await browser.newContext({ viewport: { width: 1000, height: 900 }, serviceWorkers: 'allow' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/en/`);
+  const href = await page.locator('link[rel="manifest"]').getAttribute('href');
+  check(href === '/en/manifest.webmanifest', 'pwa: the English page links its manifest');
+  const answer = await page.request.get(`${BASE}${href}`);
+  let manifest = {};
+  try {
+    manifest = JSON.parse(await answer.text());
+  } catch {}
+  check(manifest.start_url === '/en/' && manifest.lang === 'en' && manifest.display === 'standalone', 'pwa: the manifest is valid JSON, in English, standalone');
+  let icons = 0;
+  for (const icon of manifest.icons ?? []) {
+    const r = await page.request.get(`${BASE}${icon.src}`);
+    if (r.ok() && r.headers()['content-type'] === 'image/png') icons++;
+  }
+  check(icons === 3 && manifest.icons.some((i) => i.purpose === 'maskable'), 'pwa: the manifest\'s icons exist (192, 512, maskable)');
+  check((await page.request.get(`${BASE}/icons/apple-touch-icon.png`)).ok(), 'pwa: the Apple touch icon exists');
+  const frManifest = await (await page.request.get(`${BASE}/fr/manifest.webmanifest`)).json();
+  check(frManifest.name === 'Quêtes de Sysadmin' && frManifest.start_url === '/fr/', 'pwa: the French manifest');
+  const script = await page.evaluate(() => navigator.serviceWorker.ready.then((r) => r.active?.scriptURL));
+  check(script === `${BASE}/sw.js`, 'pwa: the service worker is registered and active');
+  await page.reload();
+  check(await page.evaluate(() => navigator.serviceWorker.controller !== null), 'pwa: after a reload, the service worker controls the page');
+  const keys = await page.evaluate(() => caches.keys());
+  // The build's cache, and the runtime one (stories, texts and the manual, kept once loaded).
+  check(keys.filter((k) => /^qds-[0-9a-f]{12}$/.test(k)).length === 1 && keys.every((k) => /^qds-([0-9a-f]{12}|runtime)$/.test(k)), `pwa: one cache named after the build (and the runtime one) ${keys.join(' ')}`);
+  const precached = await page.evaluate(async () => (await (await caches.open((await caches.keys()).find((k) => k !== 'qds-runtime'))).keys()).map((r) => new URL(r.url).pathname));
+  check(precached.some((p) => /\/game\./.test(p)) && !precached.some((p) => /\/(eraser|datacenter)\.|--manual|--story-/.test(p)), 'pwa: the game\'s shell is precached, not the stories nor the manual');
+  // Offline: the game still opens, in each language.
+  await context.setOffline(true);
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Welcome to your workstation'), 'pwa: offline, /en/ reloads and the game starts');
+  await page.goto(`${BASE}/fr/`);
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Bienvenue sur ton poste'), 'pwa: offline, /fr/ opens too');
+  await page.goto(`${BASE}/en/teachers/`);
+  check((await page.locator('html').getAttribute('lang')) === 'en' && (await page.locator('quetes-de-sysadmin').count()) === 1, 'pwa: offline, a page never visited falls back to the game');
+  await context.setOffline(false);
+  // A story opened online plays offline afterwards (its chunk and texts kept at runtime).
+  await page.goto(`${BASE}/en/`);
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  await page.locator('quetes-de-sysadmin button[data-story="0"]').click();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('Lighthouse Island'));
+  await page.waitForTimeout(500);
+  await context.setOffline(true);
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  await page.waitForTimeout(500);
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Lighthouse Island'), 'pwa: a story opened online opens again offline');
+  await page.locator('quetes-de-sysadmin form input').fill('ls');
+  await page.locator('quetes-de-sysadmin form input').press('Enter');
+  await page.waitForTimeout(300);
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Beach'), 'pwa: offline, the story plays (ls)');
+  await context.setOffline(false);
+  await page.goto(`${BASE}/en/`);
+  // The footer: nothing until the browser offers to install.
+  const install = page.locator('.install');
+  const button = page.locator('.install-button');
+  check(!(await install.isVisible()), 'pwa: no "Install the game" while the browser does not offer it');
+  const offer = (outcome) =>
+    page.evaluate((outcome) => {
+      const e = new Event('beforeinstallprompt', { cancelable: true });
+      e.prompt = async () => {
+        window.prompted = true;
+      };
+      e.userChoice = Promise.resolve({ outcome: outcome });
+      dispatchEvent(e);
+    }, outcome);
+  await offer('accepted');
+  check(await button.isVisible() && (await button.textContent()) === 'Install the game', 'pwa: the browser offers to install, the footer shows the button');
+  for (const width of [1000, 375]) {
+    await page.setViewportSize({ width: width, height: 900 });
+    check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `pwa ${width} px: the footer's button without horizontal scrolling`);
+    if (process.env.CAPTURES)
+      for (const scheme of ['light', 'dark']) {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.locator('footer').screenshot({ path: `${process.env.CAPTURES}/install-${width}-${scheme}.png` });
+      }
+  }
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('.install-status')?.textContent);
+  check(await page.evaluate(() => window.prompted === true), 'pwa: the button, with the keyboard, asks the browser\'s question');
+  check(!(await button.isVisible()) && (await page.locator('.install-status').textContent()).includes('being installed'), 'pwa: accepted, the button goes and a message says so');
+  check(await page.evaluate(() => document.activeElement?.classList.contains('install-status')), 'pwa: the focus goes to the message');
+  await page.evaluate(() => dispatchEvent(new Event('appinstalled')));
+  check((await page.locator('.install-status').textContent()) === 'The game is installed.', 'pwa: installed, announced');
+  check(errors.length === 0, `pwa: no console error ${errors.join(' ')}`);
+  await context.close();
+}
+
+// On an iPhone (no beforeinstallprompt): the footer explains Safari's way, in French on /fr/.
+{
+  const context = await browser.newContext({
+    viewport: { width: 375, height: 800 },
+    isMobile: true,
+    hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const help = page.locator('.install-ios');
+  check(await help.isVisible() && !(await page.locator('.install-button').isVisible()), 'pwa iOS: the instructions instead of the button');
+  await help.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  check((await help.locator('p').textContent()).includes("Sur l'écran d'accueil") && (await help.locator('p').isVisible()), 'pwa iOS: opened with the keyboard, "Add to Home Screen" in French');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'pwa iOS: no horizontal scrolling');
+  if (process.env.CAPTURES) await page.locator('footer').screenshot({ path: `${process.env.CAPTURES}/install-ios-375.png` });
+  check(errors.length === 0, `pwa iOS: no console error ${errors.join(' ')}`);
+  await context.close();
+}
+
+// Embedding in any page, with only the embeddable file (which never
+// registers a service worker in its host page).
+const page = await (await browser.newContext({ serviceWorkers: 'allow' })).newPage();
 await page.route(`${BASE}/autre-site.html`, (r) => r.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="en"><body style="font-family:serif">
   <h1>Another site</h1>
   <quetes-de-sysadmin histoire="paquet" cle="test" theme="sombre"></quetes-de-sysadmin>
@@ -819,6 +1269,33 @@ check(
   (await page.evaluate(() => getComputedStyle(document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('a')).color)) === 'rgb(1, 2, 3)',
   'embedding: colours are set from the page (--qds-accent)',
 );
+
+await page.waitForLoadState('load');
+await page.waitForTimeout(500);
+check((await page.evaluate(() => navigator.serviceWorker.getRegistrations())).length === 0, 'embedding: no service worker registered in the host page');
+
+// From another origin: the element fetches its chunks (the game, its texts,
+// the story) relative to its own address, with the CORS header that
+// .htaccess gives /integration/ (the preview server doesn't read it).
+{
+  const other = await browser.newPage();
+  const errors = [];
+  other.on('pageerror', (e) => errors.push(e.message));
+  other.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await other.route(`${BASE}/integration/**`, async (route) => {
+    const response = await route.fetch();
+    await route.fulfill({ response, headers: { ...response.headers(), 'access-control-allow-origin': '*' } });
+  });
+  await other.route('http://other-site.example/', (r) => r.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="fr"><body>
+  <quetes-de-sysadmin story="packet" save-key="cross"></quetes-de-sysadmin>
+  <script type="module" src="${BASE}/integration/quetes-de-sysadmin.js"></script></body></html>` }));
+  await other.goto('http://other-site.example/');
+  await other.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'), null, { timeout: 30000 });
+  await other.waitForTimeout(300);
+  check((await other.locator('quetes-de-sysadmin .output').textContent()).includes('Le Paquet perdu'), 'embedding from another origin: the chunks load from the game\'s site, the story opens in French');
+  check(errors.length === 0, `embedding from another origin: no console error ${errors.join(' ')}`);
+  await other.close();
+}
 
 await browser.close();
 console.log(failures ? `${failures} échec(s)` : 'Tout est bon.');

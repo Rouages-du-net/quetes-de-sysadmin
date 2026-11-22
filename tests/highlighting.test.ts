@@ -74,5 +74,6 @@ describe('Command-line highlighting', () => {
       const s = new Shell(c, 'fr');
       for (const cmd of s.known().filter((x) => x !== 'exit' && x !== 'clear')) expect([cmd, colourise(s, cmd)[0].kind]).toEqual([cmd, 'command']);
     }
-  });
+    // Every chapter of the game: about 3 s alone, more while the other test files run.
+  }, 30_000);
 });

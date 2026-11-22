@@ -317,6 +317,29 @@ rescue-restored = { $steps ->
         [one] ↺ Machine put back as after the chapter's first input.
        *[other] ↺ Machine put back as after { $steps } inputs of the chapter.
     }
+## The autosave inside a chapter (banner above the terminal; see src/engine/autosave.ts)
+autosave-title = Chapter in progress
+# { $chapter }: the chapter's title; { $story }: its story's; { $steps }: the inputs (commands, answers, nano saves) kept
+autosave-text = { $steps ->
+        [one] You left "{ $chapter }" ({ $story }) in progress, after one input. It was kept in this browser: resume it, and the machine comes back as you left it.
+       *[other] You left "{ $chapter }" ({ $story }) in progress, after { $steps } inputs. They were kept in this browser: resume it, and the machine comes back as you left it.
+    }
+autosave-resume = { $steps ->
+        [one] Resume where I left off (one input)
+       *[other] Resume where I left off ({ $steps } inputs)
+    }
+autosave-restart = Start the chapter again
+autosave-resumed = { $steps ->
+        [one] ↺ Chapter resumed where you left off: one input replayed.
+       *[other] ↺ Chapter resumed where you left off: { $steps } inputs replayed.
+    }
+# Above the end of the terminal shown after a resume
+autosave-earlier = { $steps ->
+        [one] (one earlier input not shown)
+       *[other] ({ $steps } earlier inputs not shown)
+    }
+autosave-changed = The game has changed since your last visit: this chapter could not be resumed as you left it. It starts again from the beginning.
+autosave-failed = This chapter could not be resumed. It starts again from the beginning.
 ## Themed paths ("Paths" menu; see src/engine/paths.ts)
 view-paths = Paths
 path-choice = Choose a path
@@ -440,6 +463,8 @@ tip-tab = Long names to type? Press Tab: it completes the name for you. Pressed 
 tip-net-tools = ifconfig, route and netstat belong to net-tools, no longer installed on Debian: ip a shows the addresses, ip r the routes, ss -tlnp who listens.
 display-tips = Tips
 display-tour = Tour
+display-autosave = Autosave
+display-autosave-title = Keep the chapter in progress in this browser, to resume it if the page closes
 
 ## The notebook's button and window
 
@@ -468,3 +493,7 @@ tour-mission = Mission: what you have to do in this chapter, what has already ha
 tour-map = Map: the places you have already visited, to find your way back.
 tour-notebook = Notebook: every command you run is written here, with what it does. Your cheat sheet.
 tour-tab = Tab completes names for you: type the first letters, then Tab. Pressed twice, it lists the choices.
+
+# A story loads the first time it is opened (its chapters and texts).
+loading-story = Loading {$story}…
+loading-failed = This part of the game could not be loaded: check your connection, then try again.

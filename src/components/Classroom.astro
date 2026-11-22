@@ -33,7 +33,7 @@ const fr = lang === 'fr';
 <div id="class" data-lang={lang}></div>
 <script>
   import { mountClass } from '../interface/classroom';
-  import { gameLanguage } from '../texts';
+  import { gameLanguage, loadTexts } from '../texts';
   const root = document.getElementById('class');
-  if (root) mountClass(root, gameLanguage(root.dataset.lang));
+  if (root) loadTexts(root.dataset.lang, 'core').then(() => mountClass(root, gameLanguage(root.dataset.lang)));
 </script>

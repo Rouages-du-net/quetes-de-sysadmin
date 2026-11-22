@@ -7,6 +7,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
+import { registerStories } from '../src/engine/story-registry';
 import { MACHINES, type Machine } from '../src/engine/machines';
 import type { Chapter, Story } from '../src/engine/world';
 import { windowsMachine } from '../src/engine/windows-world';
@@ -43,6 +44,7 @@ describe('A Windows main machine, from the workstation', () => {
     if (i >= 0) STORIES.splice(i, 1);
     added = story(shell);
     STORIES.push(added);
+    registerStories([added]);
     const c = new Console({ language: 'en' });
     // The test story has no title in the texts: the console names it.
     const t = c.t;

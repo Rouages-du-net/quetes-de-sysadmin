@@ -21,7 +21,7 @@
 // https://man7.org/linux/man-pages/man1/chage.1.html
 
 import { path, d, f, player, name, type Chapter } from '../world';
-import { translator, type Translate } from '../../texts';
+import type { Translate } from '../../texts';
 import type { Game, Shell } from '../shell';
 import { parse } from '../cron';
 import { TODAY, keysIn, cooperativeAccounts, M, cooperativeWorld, PASSWORD } from './coop';
@@ -45,7 +45,8 @@ const file = (content: string, owner: string, mode?: string) => f(content, { lin
 const sh = (j: Game) => j as Shell;
 const key = (line: string) => line.trim().split(/\s+/).slice(0, 2).join(' ');
 // The keys without their comment (which is the language's).
-const KEYS = keysIn(translator('en'));
+// (a comment-free stand-in for the translator: the module loads before its texts).
+const KEYS = keysIn(((id: string) => id) as unknown as Translate);
 const MARC = key(KEYS.marc);
 
 // An account's authorised keys.

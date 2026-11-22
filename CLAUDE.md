@@ -258,6 +258,30 @@ presents them for people.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
   declares in `chapters/index.ts` (`after`) the chapters to finish before
   receiving its key (`prerequisites()` for tests).
+- Lazy loading (fast first load on mobile): the game is split in chunks.
+  `src/element.ts` shows an empty frame, then fetches side by side the
+  game (`interface/game.ts` and the engine), its core texts and the story
+  it will open. Each story's chapters are a module, `src/engine/stories/<id>.ts`,
+  loaded by `src/engine/story-registry.ts` (`loadStory`, `loadedStory`,
+  `storyById`) when the story is opened, its machine named on the line,
+  or its button hovered; the menu, unlocking, difficulty, paths, progress,
+  hints' manual pages and on-call duty read `src/engine/catalogue.json`
+  (`catalogue.ts`: ids, `after`, commands, size, each story's text files),
+  generated from `chapters/index.ts` by `npm run catalogue` and checked by
+  `tests/catalogue.test.ts`. The texts come in groups made by the Vite
+  plugin `src/texts/plugin.mjs` (`<language>/core` with every chapter's
+  title and each manual page's first sentence `man-summary-*`, `shared`
+  read in every language, `manual`, `story-<id>`): `loadTexts()` fetches
+  one, `translator()` stays synchronous. The interface loads what a line
+  needs before running it (`needs()` in `game.ts`); otherwise the engine
+  throws `NeedsLoading` (`src/engine/loading.ts`) and the line runs again.
+  No chapter module may call `t()` when it is imported (its texts load
+  with it). Tests load everything first (`tests/setup.ts`). Adding a story:
+  its chapters, then `src/engine/stories/<id>.ts` (its chapters in order),
+  its entry in `chapters/index.ts`, then `npm run catalogue`; adding a
+  chapter to a story: also `npm run catalogue`. `npm run build` ends with
+  `tests/budget.mjs`, the first visit's weight against a budget (see
+  `docs/DEPLOYMENT.md`, "Chunks and budget").
 - `src/engine/availability.ts`: the commands a chapter has: its own
   `commands`, plus those of the chapters it assumes (`assumed()` in
   `unlocking.ts`, the same as difficulty's) that exist on the machine (its
@@ -275,6 +299,11 @@ presents them for people.
   (and the rescue snapshot, `Console.restore`: the engine stays
   deterministic, no `Date.now` nor `Math.random`); you start from the
   workstation and `ssh` to each story's machine (`commands/ssh.ts`).
+  The autosave inside a chapter in `src/engine/autosave.ts` (the inputs,
+  `Console.journal`, kept in `localStorage` under `KEY-autosave-LANGUAGE`,
+  replayed by `Console.replay`; the opening's hash and a `fingerprint` of
+  the machine detect a chapter changed since; the banner and the setting in
+  `game.ts`; tests `tests/autosave.test.ts`).
 - `src/engine/access.ts`: the "real" ssh (machines with `state.realSsh` and
   a story's internal machines, `Chapter.hosts`): `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, passphrase, password;
@@ -761,8 +790,24 @@ presents them for people.
   duty and the incident of the day in `src/engine/on-call.ts` (drawn from
   the date by the interface; the engine doesn't read the time), the
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
-  least one path, `tests/paths.test.ts` checks it), the end-of-chapter
+  least one path, `tests/paths.test.ts` checks it), "Report a problem or
+  an idea" in `src/engine/feedback.ts` (`buildReport()`: a pure function,
+  the parts ticked, `partLines`, progress codes removed, the GitHub link
+  under `URL_LIMIT` by dropping the oldest commands; the interface's
+  last steps `recentSteps`, never a password; no commands in exam mode;
+  nothing sent; the version from `src/version.mjs` as `__QDS_VERSION__`;
+  the footer's link `src/pwa/feedback-link.ts`; texts in `feedback.ftl`;
+  `.github/ISSUE_TEMPLATE/feedback.md`; `tests/feedback.test.ts`), "Where do I start?"
+  in `src/engine/start-here.ts` (four questions, `recommend()`: a path,
+  a chapter playable now or the one that opens the way, alternatives;
+  texts in `start-here.ftl`; the answers kept with the display settings,
+  not the progress; a first visit's card and the tour's last step; hidden
+  in exam mode; `tests/start-here.test.ts`), the end-of-chapter
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
+  the error explainer in `src/engine/explainer.ts` (a failed command's
+  common error recognised from the messages listed in `explainer.ftl`'s
+  `.match`, explained on demand under the output, never in exam mode, an
+  "Error help" setting),
   graduated hints in `src/engine/hints.ts`, their texts in
   `src/texts/<language>/hints-<story>.ftl`: every new chapter has some,
   `tests/hints.test.ts` checks it), one-time tips earned by what the
@@ -771,6 +816,17 @@ presents them for people.
   a "Tips" setting), the intro tour of a first visit and the notebook's
   window (with its shortcuts) in `game.ts`; and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
+- `src/pwa/`: the installable game (Progressive Web App), on the site's
+  pages only, never in the embeddable element: the manifests (`manifest.ts`,
+  served by `src/pages/<language>/manifest.webmanifest.ts`), the service
+  worker (template `service-worker.js`, written to `dist/sw.js` with its
+  precache list, the game's shell from `first-load.mjs`, the build's hashed
+  files and a version hashed from the build by the integration of
+  `build.ts`; stories, their texts and the manual kept at runtime in
+  `qds-runtime`), its registration and the footer's "Install the game"
+  (`site.ts`, `install.ts`, imported by `Base.astro`, texts in
+  `Base.astro`); icons in `public/icons/`, drawn by `scripts/icons.mjs`.
+  Tests: `tests/pwa.test.ts`, the PWA part of `tests/browser.mjs`.
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
   attributes `lang`, `story`, `save-key`, `theme="light|dark"`,
   `exam-control="page"` (with the `exam` property and the `exam-change`
@@ -795,7 +851,8 @@ presents them for people.
   stories, machines, places, accounts, passwords); French is a translation.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
-  language choice, the 404 page, embedding in another page.
+  language choice, the 404 page, embedding in another page, the PWA
+  (service workers blocked elsewhere, `serviceWorkers: 'allow'` there).
 - Deployment: `.github/workflows/deploy.yml` (tests on each PR, FTPS and a
   check of the live site from `main`, including the root's redirections);
   see `docs/DEPLOYMENT.md`. Every new resource must respect the CSP (no
@@ -805,7 +862,8 @@ presents them for people.
 npm install
 npm test                    # Vitest
 npm run dev                 # http://localhost:4321
-npm run build               # Astro site (dist/) + embeddable file (dist/integration/) + tsc
+npm run build               # Astro site (dist/) + embeddable file (dist/integration/) + tsc + first-visit budget
+npm run catalogue           # after adding a story or a chapter: src/engine/catalogue.json
 npm run preview &           # http://localhost:4340, then:
 npm run test:browser
 ```

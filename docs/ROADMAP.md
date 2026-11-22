@@ -793,11 +793,63 @@ them safely.
   deterministic: reopening the chapter and replaying the inputs (commands,
   answers, nano saves) gives back the machine as it was. No snapshot in exam
   mode, nor after going through the workstation.
+- [x] **Autosave inside a chapter** (`src/engine/autosave.ts`): after each
+  input, the chapter and its inputs (compact: a run of follow seconds kept
+  as one) go to `localStorage` (`KEY-autosave-LANGUAGE`: names and passwords
+  are typed in the language); on opening the game, a banner offers to
+  resume (the inputs replayed, the end of the terminal shown again) or to
+  start the chapter again. Forgotten when the chapter is finished or
+  restarted. A new version of the game that changed the chapter is
+  detected (its opening text, and a fingerprint of the machine after the
+  replay) and the chapter starts again with a message. In exam mode, the
+  timer goes on from the chapter's start; an autosave from outside exam mode
+  is not offered in it. Not during on-call duty. What follows a passage
+  through the workstation (exit, a reboot, a resumed session) or a 5250
+  session is not recorded: the autosave keeps its last replayable point. A
+  setting turns it off; capped at 4,000 inputs or 1 MB.
+- [x] **Error explainer** (`src/engine/explainer.ts`): under the output of
+  a command that failed with a message beginners often misread ("Permission
+  denied", "No such file or directory", "command not found", "Connection
+  refused" or "timed out", "Could not resolve host", "Address already in
+  use", a systemd unit not found or failed, `nginx -t`, a shell syntax
+  error, YAML, sudo, PowerShell's "is not recognized"…), a discreet "What
+  does this error mean?" button unfolds 2–4 sentences in plain words: what
+  the message means and which manual page or diagnostic command to turn to,
+  never the chapter's answer. The output itself never changes. The messages
+  it recognises are listed in `explainer.ftl` (`.match`), as the game
+  prints them in each language, English's always read too; only the line's
+  own errors are read (a log shown by `cat` is never explained). Announced
+  to screen readers only when opened. Never in exam mode (like hints and
+  tips: the exam measures what the player knows alone); a setting ("Error
+  help") turns it off. No `explain` command: the game's commands are real
+  ones.
 - [x] **Learning paths** (`src/engine/paths.ts`, the menu's third view):
   first steps, security, web, networks, backups, containers and deployment,
   production, accounts and identities; each chapter is in at least one
   path; the next one to play is highlighted, and what is waiting says which
   chapter to finish first.
+- [x] **Report a problem or an idea** (`src/engine/feedback.ts`): a dialog
+  under the menu, among a chapter's actions and from the site's footer
+  (`src/pwa/feedback-link.ts`, the element's `openFeedback()`): the kind,
+  a message, the context parts to include, each showing exactly what it
+  adds (the version written at build time by `src/version.mjs`, the
+  language, where the player is, the chapter's last commands and outputs,
+  editable, never a password, the browser, the settings, the notebook's
+  commands), the exact text, then a prefilled GitHub issue (a link in a new
+  tab, under 8 KB: the oldest commands dropped, said) or a copy. Progress
+  codes are removed; nothing is sent. In exam mode, without the commands.
+  Issue template `.github/ISSUE_TEMPLATE/feedback.md`.
+- [x] **Where do I start?** (`src/engine/start-here.ts`): four quick
+  questions (experience with a terminal, goal, systems of interest, time
+  per session) and a suggestion computed from them and the player's
+  progress: a learning path, the chapter to play first (always one that
+  opens now; when the path's first chapter is locked, how many chapters
+  open it), one or two other ways in, each with its reason and difficulty
+  stars, and a Start button. Teachers are pointed to the quest sheets. A
+  first visit gets a card above the menu (not a window) and the intro
+  tour's last step points at it; the menu's button is always there, except
+  in exam mode. The answers stay in this browser with the display
+  settings, never in the progress code or the save file.
 - [x] **Command-line highlighting**, like fish or zsh-syntax-highlighting:
   the command in green if the game's shell would run it, in red (with a wavy
   underline) otherwise, options, strings, globs that match something, pipes
@@ -876,6 +928,17 @@ them safely.
   `/fr/enseignants/`, generated at build time (`src/engine/sheets.ts`);
   progress exportable with no account, at the top of the downloaded
   notebook.
+- [x] **Install the game** (Progressive Web App), to play on mobile more
+  often: "Install the game" in the site's footer when the browser offers
+  it (Safari's "Add to Home Screen" explained on iOS), a manifest per
+  language, and a service worker that keeps the game playable offline
+  (`src/pwa/`); never in the embeddable element.
+- [x] **Fast first load on mobile**: the game in chunks (each story's
+  chapters, each group of texts, the manual's pages) loaded when needed,
+  the menu from a generated catalogue, an empty frame while the game loads,
+  a budget checked by the build (`tests/budget.mjs`); on a throttled phone,
+  the terminal answers in about 5.7 s instead of 12.3 s. The service worker
+  precaches only the shell and keeps the stories played.
 
 ---
 

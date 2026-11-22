@@ -317,6 +317,29 @@ rescue-restored = { $steps ->
         [one] ↺ Machine remise comme après la première saisie du chapitre.
        *[other] ↺ Machine remise comme après { $steps } saisies du chapitre.
     }
+## La sauvegarde automatique dans un chapitre (bandeau au-dessus du terminal ; voir src/engine/autosave.ts)
+autosave-title = Chapitre en cours
+# { $chapter } : le titre du chapitre ; { $story } : celui de son histoire ; { $steps } : les saisies (commandes, réponses, enregistrements de nano) gardées
+autosave-text = { $steps ->
+        [one] Tu as laissé « { $chapter } » ({ $story }) en cours, après une saisie. Elle a été gardée dans ce navigateur : reprends-le, et la machine revient comme tu l'as laissée.
+       *[other] Tu as laissé « { $chapter } » ({ $story }) en cours, après { $steps } saisies. Elles ont été gardées dans ce navigateur : reprends-le, et la machine revient comme tu l'as laissée.
+    }
+autosave-resume = { $steps ->
+        [one] Reprendre là où j'en étais (une saisie)
+       *[other] Reprendre là où j'en étais ({ $steps } saisies)
+    }
+autosave-restart = Recommencer le chapitre
+autosave-resumed = { $steps ->
+        [one] ↺ Chapitre repris là où tu en étais : une saisie rejouée.
+       *[other] ↺ Chapitre repris là où tu en étais : { $steps } saisies rejouées.
+    }
+# Au-dessus de la fin du terminal montrée après une reprise
+autosave-earlier = { $steps ->
+        [one] (une saisie plus ancienne non affichée)
+       *[other] ({ $steps } saisies plus anciennes non affichées)
+    }
+autosave-changed = Le jeu a changé depuis ta dernière visite : ce chapitre n'a pas pu être repris comme tu l'avais laissé. Il recommence depuis le début.
+autosave-failed = Ce chapitre n'a pas pu être repris. Il recommence depuis le début.
 ## Les parcours thématiques (menu « Parcours » ; voir src/engine/paths.ts)
 view-paths = Parcours
 path-choice = Choisir un parcours
@@ -440,6 +463,8 @@ tip-tab = Des noms longs à taper ? Appuie sur Tab : il complète le nom pour to
 tip-net-tools = ifconfig, route et netstat font partie de net-tools, qui n’est plus installé sur Debian : ip a montre les adresses, ip r les routes, ss -tlnp qui écoute.
 display-tips = Astuces
 display-tour = Visite guidée
+display-autosave = Sauvegarde auto
+display-autosave-title = Garder le chapitre en cours dans ce navigateur, pour le reprendre si la page se ferme
 
 ## Le bouton et la fenêtre du carnet
 
@@ -468,3 +493,7 @@ tour-mission = Mission : ce que tu dois faire dans ce chapitre, ce qui s'est dé
 tour-map = Carte : les lieux déjà visités, pour retrouver ton chemin.
 tour-notebook = Carnet : chaque commande que tu lances y est notée, avec ce qu'elle fait. Ton aide-mémoire.
 tour-tab = Tab complète les noms pour toi : tape les premières lettres, puis Tab. Deux fois, il liste les choix.
+
+# Une histoire se charge la première fois qu'on l'ouvre (ses chapitres et ses textes).
+loading-story = Chargement de {$story}…
+loading-failed = Cette partie du jeu n'a pas pu être chargée : vérifie ta connexion, puis réessaie.

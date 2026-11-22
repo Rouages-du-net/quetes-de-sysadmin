@@ -18,6 +18,28 @@ const { title, description, lang = 'en', other } = Astro.props;
 const en = lang !== 'fr';
 const home = en ? '/en/' : '/fr/';
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const appName = en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin';
+// The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
+// on a page without the game, or without JavaScript, the game's page opens it (#report).
+const report = en ? 'Report a problem or an idea' : 'Signaler un problème ou une idée';
+// The footer's "Install the game" (src/pwa/install.ts): its messages.
+const install = en
+  ? {
+      label: 'Install the game',
+      help: 'In Safari, tap the Share button, then "Add to Home Screen".',
+      offline: 'Once installed, the game opens full screen and plays offline; your progress stays on this device.',
+      installing: 'The game is being installed: it will appear with your apps.',
+      installed: 'The game is installed.',
+      dismissed: 'Installation cancelled. You can keep playing here.',
+    }
+  : {
+      label: 'Installer le jeu',
+      help: "Dans Safari, touche le bouton Partager, puis « Sur l'écran d'accueil ».",
+      offline: "Une fois installé, le jeu s'ouvre en plein écran et marche hors ligne ; ta progression reste sur cet appareil.",
+      installing: "Le jeu s'installe : il apparaîtra parmi tes applications.",
+      installed: 'Le jeu est installé.',
+      dismissed: 'Installation annulée. Tu peux continuer à jouer ici.',
+    };
 ---
 <!doctype html>
 <html lang={lang}>
@@ -31,18 +53,30 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <meta name="theme-color" content="#eef2ee" media="(prefers-color-scheme: light)" />
   <link rel="canonical" href={canonical} />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href={`${home}manifest.webmanifest`} />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content={appName} />
   {other && <link rel="alternate" hreflang={other.lang} href={new URL(other.href, Astro.site)} />}
   {other && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
 </head>
 <body>
   <header>
-    <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin'}<span class="cursor" aria-hidden="true"></span></a></p>
+    <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{appName}<span class="cursor" aria-hidden="true"></span></a></p>
     {other && <p class="language"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
   </header>
   <main>
     <slot />
   </main>
   <footer>
+    <div class="install" data-install data-installing={install.installing} data-installed={install.installed} data-dismissed={install.dismissed} hidden>
+      <button type="button" class="install-button" hidden>{install.label}</button>
+      <details class="install-ios" hidden>
+        <summary>{install.label}</summary>
+        <p>{install.help} {install.offline}</p>
+      </details>
+      <p class="install-status" role="status" tabindex="-1"></p>
+    </div>
+    <p class="report"><a href={`${home}#report`} data-report>{report}</a></p>
     {en ? (
       <>
         <p>
@@ -76,5 +110,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </>
     )}
   </footer>
+  <script>
+    import '../pwa/site';
+  </script>
 </body>
 </html>

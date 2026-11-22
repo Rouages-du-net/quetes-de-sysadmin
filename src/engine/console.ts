@@ -5,7 +5,8 @@
 // the SSH keys of the other machines: you learn them by playing.
 
 import { Shell } from './shell';
-import { STORIES } from './chapters';
+import { CATALOGUE } from './catalogue';
+import { storyById } from './story-registry';
 import { isOpen, FIRST } from './unlocking';
 import { f, player, type Chapter, type Story } from './world';
 import { machineDomain, MACHINES, machineName, WORKSTATION, translateHosts, type Machine } from './machines';
@@ -31,7 +32,7 @@ export interface OptionsConsole {
 }
 
 
-type Input = { line: string } | { save: string } | { quit: true } | { follow: number } | { interrupt: true } | { suspend: true };
+export type Input = { line: string } | { save: string } | { quit: true } | { follow: number } | { interrupt: true } | { suspend: true };
 
 export class Console {
   // The screen shows the outputs' colours (an interface setting); see colours.ts.
@@ -49,6 +50,10 @@ export class Console {
   private inputs: Input[] | null = null;
   serial = 0;
   private inRestore = false;
+  // The text the current chapter opened with (its title and instructions; see autosave.ts).
+  opening = '';
+  // During a replay: the steps seen, to show the end of the terminal (see replay).
+  private transcript: { prompt: string; line: string; masked: boolean; output: string }[] | null = null;
   t: Translate;
   finished: string[];
   workstation: Shell;
@@ -190,7 +195,7 @@ export class Console {
   // The chapter a connection to this machine will find (see connect).
   private connectionChapter(name: string): Chapter {
     const machine = MACHINES.find((m) => m.name === name)!;
-    const c = this.currentChapter(STORIES.find((h) => h.id === machine.story)!);
+    const c = this.currentChapter(storyById(machine.story!, this.t.language));
     const old = this.sessions.get(name);
     return old && (old.chapter === c || !old.finished) ? old.chapter : c;
   }
@@ -210,7 +215,7 @@ export class Console {
     }
     this.inside = [];
     const machine = MACHINES.find((m) => m.name === name)!;
-    const story = STORIES.find((h) => h.id === machine.story)!;
+    const story = storyById(machine.story!, this.t.language);
     const c = chapter ?? this.currentChapter(story);
     const old = this.sessions.get(name);
     // The banner gives the running kernel (the session's, if it has one).
@@ -291,8 +296,10 @@ export class Console {
     if (!this.inRestore) this.serial++;
     const sh = this.remote!.shell;
     // On Windows, the welcome text is read directly (the session may be in cmd, where cat doesn't exist).
-    if (isWindows(sh)) return [this.title(this.remote!.story, c), (sh.read(`${sh.home}/${sh.welcome}`) ?? '').replace(/\r\n/g, '\n'), sh.events()].filter(Boolean).join('\n\n');
-    return [this.title(this.remote!.story, c), sh.execute(`cat ${sh.welcome}`) ?? ''].join('\n\n');
+    this.opening = isWindows(sh)
+      ? [this.title(this.remote!.story, c), (sh.read(`${sh.home}/${sh.welcome}`) ?? '').replace(/\r\n/g, '\n'), sh.events()].filter(Boolean).join('\n\n')
+      : [this.title(this.remote!.story, c), sh.execute(`cat ${sh.welcome}`) ?? ''].join('\n\n');
+    return this.opening;
   }
 
   disconnect(): string {
@@ -352,6 +359,18 @@ export class Console {
     const sh = this.shell;
     sh.colours = this.colours;
     sh.columns = this.columns;
+    if (this.transcript) {
+      const prompt = sh.prompt();
+      const masked = sh.maskedInput();
+      const output = this.run(line, sh);
+      if (output === null) this.transcript = [];
+      else this.transcript.push({ prompt, line, masked, output });
+      return output;
+    }
+    return this.run(line, sh);
+  }
+
+  private run(line: string, sh: Shell): string | null {
     // An input on the chapter's machine (or its internal machines) is replayed; one on the workstation is not.
     if (this.remote) this.inputs?.push({ line });
     else this.inputs = null;
@@ -440,12 +459,35 @@ export class Console {
   // A chapter has just ended: progress, and keys if any.
   private noteEnd(sh: Shell, alreadyFinished: boolean): string {
     if (alreadyFinished || !sh.finished || sh === this.workstation) return '';
-    const openOnes = STORIES.filter((h) => this.isOpen(h.id)).map((h) => h.id);
+    const openOnes = CATALOGUE.filter((h) => this.isOpen(h.id)).map((h) => h.id);
     if (!this.finished.includes(sh.chapter.id)) this.finished.push(sh.chapter.id);
     return this.giveKeys(openOnes);
   }
 
   // ——— The rescue snapshot ———
+
+  /** The inputs since the chapter was opened (a copy); null: not replayable (see autosave.ts). */
+  get journal(): Input[] | null {
+    return this.remote && this.inputs ? this.inputs.slice() : null;
+  }
+
+  /**
+   * Replays these inputs on the current chapter, reopened (the autosave,
+   * see autosave.ts); returns each line typed with its output (from the
+   * last "clear"; before any, the chapter's opening comes first, with an
+   * empty prompt), or null if it isn't possible.
+   */
+  replay(inputs: Input[]): { prompt: string; line: string; masked: boolean; output: string }[] | null {
+    if (!this.remote) return null;
+    this.inputs = inputs.slice();
+    this.transcript = [];
+    try {
+      if (!this.restore(inputs.length)) return null;
+      return this.transcript;
+    } finally {
+      this.transcript = null;
+    }
+  }
 
   /** The number of replayable inputs since the chapter was opened; null: no snapshot possible. */
   get not(): number | null {
@@ -464,13 +506,19 @@ export class Console {
     this.inRestore = true;
     try {
       this.open(old.chapter);
+      this.transcript?.push({ prompt: '', line: '', masked: false, output: this.opening });
       for (const s of before.slice(0, n)) {
-        if ('line' in s) this.execute(s.line);
-        else if ('save' in s) this.save(s.save);
-        else if ('follow' in s) this.follow(s.follow);
-        else if ('interrupt' in s) this.interrupt();
-        else if ('suspend' in s) this.suspend();
-        else this.quitEdition();
+        if ('line' in s) {
+          this.execute(s.line);
+          continue;
+        }
+        let output = '';
+        if ('save' in s) this.save(s.save);
+        else if ('follow' in s) output = this.follow(s.follow);
+        else if ('interrupt' in s) output = this.interrupt();
+        else if ('suspend' in s) output = this.suspend();
+        else output = this.quitEdition();
+        if (output) this.transcript?.push({ prompt: '', line: '', masked: false, output });
       }
     } finally {
       this.inRestore = false;

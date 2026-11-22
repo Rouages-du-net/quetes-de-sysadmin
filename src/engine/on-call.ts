@@ -6,7 +6,7 @@
 // (like sharing a word-game grid).
 // The engine doesn't read the time: the interface gives the date and the elapsed time.
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { PATH } from './paths';
 
 // 30 minutes of downtime tolerated for the incident.

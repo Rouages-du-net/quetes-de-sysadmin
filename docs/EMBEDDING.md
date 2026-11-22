@@ -13,14 +13,18 @@ page (static site, CMS, learning platform…).
 <quetes-de-sysadmin></quetes-de-sysadmin>
 ```
 
-To depend on no outside server, copy the file
-`dist/integration/quetes-de-sysadmin.js` (after `npm run build`) to your site
-and change the script's address.
+To depend on no outside server, copy the folder `dist/integration/` (after
+`npm run build`: `quetes-de-sysadmin.js` and its `chunks/`) to your site and
+change the script's address.
+
+The file is small: it loads the rest of the game (its interface and engine,
+each story, each group of texts) from `chunks/`, next to it, relative to its
+own address, and only when needed.
 
 The sysadmin.rouages.net server sends the `Access-Control-Allow-Origin: *`
-header for this file (see `public/.htaccess`): a "module" script loaded from
-another site requires it. If you host the file yourself on another domain
-than your page, set the same header.
+header for this file and its chunks (see `public/.htaccess`): a "module"
+script loaded from another site requires it. If you host them yourself on
+another domain than your page, set the same header.
 
 ## Attributes
 
@@ -51,6 +55,14 @@ the chapter is in progress) and its `exam-change` event
 (`event.detail.exam`), as the site's home page does in
 `src/exam-control.ts`. Your script must be a file, not inline, if your
 page has a CSP.
+
+## Reporting a problem
+
+The game has its own "Report a problem or an idea" button. A page may open
+the same dialog from its own link by calling the element's
+`openFeedback()` method, as the site's footer does in
+`src/pwa/feedback-link.ts`. Nothing is sent: the player sees the report
+and opens a GitHub issue or copies the text themselves.
 
 ## Colours
 
@@ -97,4 +109,11 @@ Pratusevich).
 ## Privacy
 
 The game sends nothing: no data leaves the browser. Progress is kept in the
-`localStorage` of the host page, under the chosen key.
+`localStorage` of the host page, under the chosen key. Next to it, the same
+key with a suffix keeps the display settings (`KEY-display`), on-call results
+(`KEY-on-call`) and the chapter in progress, one per language
+(`KEY-autosave-en`, `KEY-autosave-fr`): the inputs typed since the chapter
+opened, so the game can offer to resume it after the page was closed. They
+may hold the story's passwords as the player typed them: fictional game
+passwords, which stay in the browser like the rest. The player can turn this
+autosave off in the settings.

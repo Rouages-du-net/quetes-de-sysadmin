@@ -8,6 +8,24 @@ règles complètes sont dans `CLAUDE.md` (elles valent pour tout le monde,
 pas seulement pour l'agent) ; le détail des textes est dans
 [`docs/TRANSLATING.md`](docs/TRANSLATING.md).
 
+## Signaler un problème ou une idée
+
+Le bouton « Signaler un problème ou une idée » du jeu (sous le menu, parmi
+les actions d'un chapitre, et dans le pied de page du site) rédige le
+signalement : on choisit le type (le comportement d'une commande, un texte
+ou un indice pas clair, une idée, autre chose), on écrit un message, on
+coche le contexte à inclure (version, langue, chapitre, les dernières
+commandes et leurs réponses, navigateur, réglages, carnet), on voit le texte
+exact, puis on ouvre soi-même une issue GitHub préremplie ou on copie le
+texte. Le jeu n'envoie rien. Les signalements arrivent comme des issues
+fondées sur `.github/ISSUE_TEMPLATE/feedback.md`, titrées `[bug]`, `[text]`,
+`[idea]` ou `[other]`, et commencent par
+`<!-- sysadmin-quests feedback v1 -->` ; leurs titres de section sont dans
+la langue du joueur ou de la joueuse, les lignes dessous gardent des
+libellés anglais (`version:`, `chapter:`…). Un signalement trop long pour un
+lien perd ses plus anciennes commandes et le dit ; on a proposé de coller le
+texte copié. Le texte est construit par `src/engine/feedback.ts`.
+
 ## Les principes
 
 - **Vraies commandes, vrais comportements.** Noms, options courantes, codes
@@ -35,11 +53,50 @@ machine du réseau simulé. Un chapitre, c'est :
 
 | Fichier | Contenu |
 |---|---|
-| `src/engine/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
+| `src/engine/chapters/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
 | `src/texts/en/chapter-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
 | `src/texts/en/hints-<story>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
+
+Un nouveau chapitre va aussi dans le module de son histoire
+(`src/engine/stories/<histoire>.ts`, les chapitres dans l'ordre), à la fin de
+`CODE_ORDER` dans `src/engine/progress.ts` et de `tests/progress/order.txt`,
+et dans au moins un parcours (`src/engine/paths.ts`). Une nouvelle histoire
+a son module dans `src/engine/stories/`, déclare dans
+`src/engine/chapters/index.ts` les chapitres qui l'ouvrent (`after`) et
+reçoit une machine dans `src/engine/machines.ts`. Lance ensuite
+`npm run catalogue` : le menu connaît les histoires par
+`src/engine/catalogue.json` sans les charger (le jeu ne charge une histoire
+qu'à son ouverture), et `npm test` échoue tant qu'il n'est pas à jour. Le
+module d'un chapitre ne doit pas appeler `t()` quand il est importé : ses
+textes se chargent avec lui.
+
+#### Ajouter une histoire (ou porter une histoire écrite avant le découpage)
+
+Le jeu ne charge une histoire qu'à son ouverture : une histoire se branche
+donc à trois endroits, dont `tests/catalogue.test.ts` vérifie l'accord :
+
+1. `src/engine/stories/<histoire>.ts` : importe ses chapitres depuis
+   `src/engine/chapters/` et les exporte dans l'ordre,
+   `export const chapters: Chapter[] = [premier, deuxieme, troisieme];`
+   (copie le module d'une autre histoire).
+2. `src/engine/chapters/index.ts` : un import,
+   `import { chapters as monHistoire } from '../stories/<histoire>';`, et une
+   entrée dans `STORIES`, `{ id: '<histoire>', after: [...], chapters: monHistoire }`.
+   Une histoire écrite à l'ancienne importait chaque chapitre ici : déplace
+   ces imports dans son module.
+3. `npm run catalogue` : réécrit `src/engine/catalogue.json` (le menu, les
+   commandes et la taille de ses chapitres, et les fichiers de textes qui se
+   chargent avec l'histoire : ses `chapter-*.ftl` et `hints-<histoire>.ftl`,
+   plus ceux d'autres histoires que ses modules nomment).
+
+Les textes partagés par l'histoire hors de ces fichiers (un `<histoire>.ftl`
+comme `blood-drive.ftl`) se chargent avec les textes communs. Rien d'autre ne
+change : machines, parcours, `CODE_ORDER`, tests. `npm run build` vérifie
+ensuite le budget de la première visite : le code propre à l'histoire doit
+rester dans son morceau, donc le cœur du moteur (shell, commandes,
+`console.ts`) n'importe jamais un chapitre.
 
 ### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 
@@ -129,7 +186,8 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 
 ```bash
 npm test                    # chaque quête rejouée
-npm run build               # le site, le fichier d'intégration, tsc
+npm run build               # le site, le fichier d'intégration, tsc, le budget de la première visite
+npm run catalogue           # après l'ajout d'une histoire ou d'un chapitre
 npm run preview &           # puis :
 npm run test:browser     # Chromium, 1000 et 375 px, CSP
 ```

@@ -11,11 +11,13 @@ Workflow `.github/workflows/deploy.yml`:
 1. **test** (every PR and every push): `npm test` (quests replayed),
    `npm run build`, then `npm run test:browser` in Chromium (1000 and
    375 px, no console error, with the CSP of `.htaccess`, the root's
-   language choice, the 404 page, embedding in another page).
+   language choice, the 404 page, embedding in another page, the installable
+   game: manifests, service worker, offline play, the footer's button).
 2. **deploy** (`main` only): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
-   header of the embeddable file, the CSP, the 404, the FTP state file
+   header of the embeddable file, the CSP, the service worker and the
+   manifest with their media type, the 404, the FTP state file
    refused, the HTTP → HTTPS redirection).
 
 As long as the FTP secrets aren't set, the deployment step is **skipped
@@ -66,10 +68,57 @@ log says which check fails.
 - **Embeddable file**: `/integration/quetes-de-sysadmin.js` is served with
   `Access-Control-Allow-Origin: *`, which another site needs to load it as a
   `<script type="module">`, and revalidated on every visit (its name doesn't
-  change from one version to the next).
+  change from one version to the next). The rest of the game is in
+  `/integration/chunks/` (see "Chunks and budget"), also with the CORS
+  header, and cached for a year (`immutable`): their names carry a hash.
+- **Compression**: Brotli where Apache has `mod_brotli`, gzip
+  (`mod_deflate`) otherwise.
 - **Language at the root**: `/` redirects (302, `Vary: Accept-Language`) to
   `/fr/` when the browser's first language is French, to `/en/` otherwise.
   The old French addresses (`/enseignants/`, `/enseignants/classe/`) redirect
   permanently (301) to `/fr/…`.
+- **Installable game (PWA)**: each language has its manifest
+  (`/en/manifest.webmanifest`, `/fr/manifest.webmanifest`, served as
+  `application/manifest+json`), and the site a service worker, `/sw.js`
+  (scope `/`, so it covers `/en/` and `/fr/` without a
+  `Service-Worker-Allowed` header). `/sw.js` is not in `public/`: at the
+  end of `astro build`, the integration of `src/pwa/build.ts` writes it from
+  the template `src/pwa/service-worker.js`, with the list of files to
+  precache, the game's shell: each language's page and manifest, the
+  icons, the WOFF2 fonts and the files of each page's first visit
+  (`src/pwa/first-load.mjs`, the list the budget weighs; about 44 files,
+  3 MB, 1 MB compressed), and a **version**: a hash of these files. The
+  cache is called `qds-<version>`; a new build gives a new `sw.js`, which
+  precaches the new files and, once active, deletes the older `qds-<…>`
+  caches. The stories, their texts and the manual's pages are not
+  precached: when the game first loads one, the service worker keeps it in
+  `qds-runtime`, a cache that outlives versions (`sw.js` lists every hashed
+  file of the build, `ASSETS`: on activation, a kept file the build no
+  longer has goes, and its new version, same name with a new hash, is
+  fetched in its place). A story opened online thus plays offline.
+  `sw.js` and the manifests are revalidated on every visit (`no-cache`).
+  Astro's hashed files are served from the cache first, the pages from the
+  network first (the cache when offline; a page never visited falls back
+  to the game in its language). Nothing from another
+  origin is cached, nor `/integration/`. The icons (`public/icons/`) are
+  drawn by `node scripts/icons.mjs` (Chromium), not by the build. The
+  embeddable element never registers a service worker in its host page.
+- **Chunks and budget**: the game is not one file. The page (or the
+  embeddable file) loads a small element, which shows an empty frame of the
+  game's size and fetches side by side the game (interface and engine,
+  `game.*.js` and the shared chunk it imports), its core texts and the
+  story it will open. A story's chapters (`src/engine/stories/<id>.ts`, with
+  the code only they use), each group of texts (`texts-<language>--core`,
+  `--shared`, `--manual`, `--story-<id>`, made by `src/texts/plugin.mjs`)
+  are chunks with a hash in their name, in `/_astro/` for the site and
+  `/integration/chunks/` for the embeddable file, which imports them
+  relative to its own address (`import.meta.url`), so from the game's site
+  whatever page embeds it. `npm run build` ends with `tests/budget.mjs`:
+  the JavaScript and CSS of a first visit (`/en/`, `/fr/`, the embeddable
+  file), raw, gzip and Brotli, against a gzip budget (about 15 % over the
+  size measured when it was set). Over budget, the build fails: load the
+  new code lazily, or raise the budget on purpose. On a phone throttled like
+  Lighthouse's mobile profile (150 ms, 1.6 Mbit/s, CPU 4x), the terminal of
+  `/en/` answered after 12.3 s with the single file, 5.7 s split.
 - **Rolling back**: revert the faulty commit (`git revert`) and push to
   `main`; the workflow uploads the previous version again.
