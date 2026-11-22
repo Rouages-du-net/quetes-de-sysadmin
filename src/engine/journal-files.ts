@@ -7,8 +7,11 @@
 // trim it.
 // Sources: https://www.freedesktop.org/software/systemd/man/latest/journald.conf.html,
 // https://www.freedesktop.org/software/systemd/man/latest/journalctl.html#--vacuum-size=
-// Simplifications: only SystemMaxUse= (and SystemKeepFree= is ignored);
-// an archived file's date is in its name; the active file is never removed.
+// MaxRetentionSec= (a time span: 30day, 1month, 4w…) removes, when journald
+// starts, the archived files whose entries are all older than that.
+// Simplifications: only SystemMaxUse= and MaxRetentionSec= (SystemKeepFree=
+// is ignored); an archived file's date (its last entry) is in its name; the
+// active file is never removed.
 
 import { f, type Directory, type File } from './world';
 import type { Game } from './shell';
@@ -81,6 +84,57 @@ export const machineId = (j: Game): string => {
   return root?.type === 'directory' ? (Object.keys(root.children)[0] ?? '') : '';
 };
 
+/** A value of the [Journal] section as journald reads it: journald.conf, then its drop-ins (the last wins). */
+function journalSetting(j: Game, key: string): string | null {
+  const files = [JOURNALD_CONF];
+  const dropins = j.find(`${JOURNALD_CONF}.d`);
+  if (dropins?.type === 'directory') files.push(...Object.keys(dropins.children).filter((n) => n.endsWith('.conf')).sort().map((n) => `${JOURNALD_CONF}.d/${n}`));
+  let value: string | null = null;
+  for (const f of files) {
+    let section = '';
+    for (const raw of (j.read(f) ?? '').split('\n')) {
+      const l = raw.trim();
+      if (/^\[.*\]$/.test(l)) section = l;
+      const m = new RegExp(`^${key}\\s*=\\s*(.*)$`).exec(l);
+      if (m && section === '[Journal]') value = m[1].trim() === '' ? null : m[1].trim();
+    }
+  }
+  return value;
+}
+
+// systemd.time(7)'s time spans: a number and its unit (seconds without one), several added up.
+const SPAN_UNITS: [RegExp, number][] = [
+  [/^(usec|us|µs)$/, 1e-6],
+  [/^(msec|ms)$/, 1e-3],
+  [/^(seconds|second|sec|s|)$/, 1],
+  [/^(minutes|minute|min|m)$/, 60],
+  [/^(hours|hour|hr|h)$/, 3600],
+  [/^(days|day|d)$/, 86_400],
+  [/^(weeks|week|w)$/, 604_800],
+  [/^(months|month|M)$/, 2_629_800],
+  [/^(years|year|y)$/, 31_557_600],
+];
+
+/** A systemd time span in milliseconds ("30day", "1month", "4w 2d", "86400"); null if systemd would refuse it. */
+export function timeSpan(text: string): number | null {
+  const parts = [...text.trim().matchAll(/(\d+(?:\.\d+)?)\s*([a-zA-Zµ]*)/g)];
+  if (!parts.length || parts.map((p) => p[0]).join('').replace(/\s/g, '') !== text.replace(/\s/g, '')) return null;
+  let total = 0;
+  for (const [, n, unit] of parts) {
+    const u = SPAN_UNITS.find(([re]) => re.test(unit));
+    if (!u) return null;
+    total += Number(n) * u[1] * 1000;
+  }
+  return total;
+}
+
+/** MaxRetentionSec= as journald reads it (ms); null: no limit (the default, or 0). */
+export function maxRetention(j: Game): number | null {
+  const v = journalSetting(j, 'MaxRetentionSec');
+  const ms = v === null ? null : timeSpan(v);
+  return ms ? ms : null;
+}
+
 /** SystemMaxUse= as journald reads it: journald.conf, then its drop-ins (the last wins); null: the default. */
 export function systemMaxUse(j: Game): number | null {
   const files = [JOURNALD_CONF];
@@ -108,6 +162,10 @@ export function startJournald(j: Game) {
   const limit = systemMaxUse(j);
   j.state.journalLimit = limit;
   if (limit !== null) vacuum(j, (remaining) => remaining.reduce((t, f) => t + f.size, 0) <= limit);
+  const retention = maxRetention(j);
+  j.state.journalRetention = retention;
+  const now = systemd(j)?.clock ?? 0;
+  if (retention !== null) vacuum(j, (_, f) => f.time >= now - retention);
 }
 
 /** The active file grows (a service writes): bytes added to system.journal. */

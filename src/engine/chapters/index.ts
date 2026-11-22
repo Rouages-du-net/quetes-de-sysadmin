@@ -156,6 +156,9 @@ import { tightFit } from './tight-fit';
 import { noFailover } from './no-failover';
 import { sickServer } from './sick-server';
 import { splitBrain } from './split-brain';
+import { keptForever } from './kept-forever';
+import { accessRequest } from './access-request';
+import { forgetMe } from './forget-me';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -363,6 +366,11 @@ export const STORIES: Story[] = [
     id: 'blood-drive',
     after: ['blue-green', 'dmz'],
     chapters: [noFailover, sickServer, splitBrain],
+  },
+  {
+    id: 'choir',
+    after: ['journal-full', 'database'],
+    chapters: [keptForever, accessRequest, forgetMe],
   },
 ];
 

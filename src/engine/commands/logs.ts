@@ -4,7 +4,10 @@
 // (https://man7.org/linux/man-pages/man8/logrotate.8.html).
 // Differences: lsof only knows the open files described by the game
 // (state.openFiles); logrotate: part of the directives, one state per
-// log, shortened -d and -v outputs.
+// log, shortened -d and -v outputs. Like logrotate, a rotation only
+// removes the log that passes `rotate` (N+1) and, with maxage, the rotated
+// logs 1 to N+1 older than that many days (by their modification time):
+// rotated logs beyond the count, left by a larger rotate before, stay.
 
 import { packedFile } from '../compression';
 import type { File, Node } from '../world';
@@ -85,7 +88,7 @@ function truncate(game: Shell, args: string[]): string {
 
 // ——— logrotate ———
 
-interface Block {
+export interface Block {
   patterns: string[];
   period: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
   rotation: number;
@@ -96,6 +99,8 @@ interface Block {
   copyTruncate: boolean;
   create: { mode?: string; owner?: string; group?: string } | null;
   size: number | null;
+  // maxage N: rotated logs older than N days are removed (at a rotation).
+  maxAge: number | null;
   after: string[];
 }
 
@@ -137,7 +142,7 @@ const WITH_ARGUMENT = [
 ];
 
 /** Reads a logrotate configuration file (and what it includes). */
-function readConfig(game: Shell, file: string, errors: string[], fallback?: Partial<Block>, read: string[] = []): Block[] {
+export function readConfig(game: Shell, file: string, errors: string[], fallback?: Partial<Block>, read: string[] = []): Block[] {
   read.push(file);
   const text = game.read(file);
   if (text === null) {
@@ -168,6 +173,10 @@ function readConfig(game: Shell, file: string, errors: string[], fallback?: Part
     else if (key === 'nocreate') target.create = null;
     else if (key === 'create') target.create = { mode: args[0], owner: args[1], group: args[2] };
     else if (key === 'size' || key === 'maxsize') target.size = bytes(args[0] ?? '') ?? null;
+    else if (key === 'maxage') {
+      if (!/^\d+$/.test(args[0] ?? '')) return errors.push(`error: ${file}:${number} bad maxage '${args[0] ?? ''}'`);
+      target.maxAge = Number(args[0]);
+    }
     else if (key === 'include') {
       const n = game.find(args[0] ?? '');
       const files =
@@ -211,6 +220,7 @@ function readConfig(game: Shell, file: string, errors: string[], fallback?: Part
         copyTruncate: false,
         create: {},
         size: null,
+        maxAge: null,
         ...global,
         after: [],
       } as Block;
@@ -236,7 +246,7 @@ function logs(game: Shell, pattern: string): string[] {
     .map((k) => `${directory}/${k}`);
 }
 
-const PERIODS: Record<string, number> = {
+export const PERIODS: Record<string, number> = {
   hourly: 3600_000,
   daily: 86_400_000,
   weekly: 7 * 86_400_000,
@@ -303,6 +313,15 @@ function logrotate(game: Shell, args: string[]): string {
       }
       const place = parent(path);
       const nameFor = (k: number, gz: boolean) => `${name(path)}.${k}${gz ? '.gz' : ''}`;
+      // maxage: the rotated logs 1 to rotate+1 older than that are removed first.
+      if (b.maxAge !== null)
+        for (let k = 1; k <= b.rotation + 1; k++)
+          for (const gz of [false, true]) {
+            const e = place.children[nameFor(k, gz)];
+            if (e?.type !== 'file' || (e.mtime ?? now) >= now - b.maxAge * 86_400_000) continue;
+            if (verbose) output.push(`removing old log ${path.replace(/[^/]+$/, '')}${nameFor(k, gz)}`);
+            delete place.children[nameFor(k, gz)];
+          }
       // Old logs move up one step; the oldest disappears.
       for (let k = b.rotation; k >= 1; k--)
         for (const gz of [true, false]) {
@@ -316,10 +335,11 @@ function logrotate(game: Shell, args: string[]): string {
         else delete place.children[name(path)];
       } else if (b.copyTruncate) {
         // A copy, then the file emptied: the program keeps writing to the same file.
-        place.children[nameFor(1, false)] = { ...n };
+        place.children[nameFor(1, false)] = { ...n, mtime: n.mtime ?? now };
         Object.assign(n, { content: '', size: 0 });
       } else {
         // Renamed: the program that opened it still writes into it, under its new name.
+        n.mtime ??= now;
         place.children[nameFor(1, false)] = n;
         for (const o of openSet(game)) if (o.node === n) o.path = `${path}.1`;
         if (b.create)
@@ -331,6 +351,7 @@ function logrotate(game: Shell, args: string[]): string {
             owner: b.create.owner ?? n.owner,
             group: b.create.group ?? n.group,
             mode: n.mode,
+            mtime: now,
           };
       }
       state[path] = now;
