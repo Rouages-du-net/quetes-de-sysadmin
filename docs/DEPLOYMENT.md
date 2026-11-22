@@ -11,11 +11,13 @@ Workflow `.github/workflows/deploy.yml`:
 1. **test** (every PR and every push): `npm test` (quests replayed),
    `npm run build`, then `npm run test:browser` in Chromium (1000 and
    375 px, no console error, with the CSP of `.htaccess`, the root's
-   language choice, the 404 page, embedding in another page).
+   language choice, the 404 page, embedding in another page, the installable
+   game: manifests, service worker, offline play, the footer's button).
 2. **deploy** (`main` only): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
-   header of the embeddable file, the CSP, the 404, the FTP state file
+   header of the embeddable file, the CSP, the service worker and the
+   manifest with their media type, the 404, the FTP state file
    refused, the HTTP → HTTPS redirection).
 
 As long as the FTP secrets aren't set, the deployment step is **skipped
@@ -71,5 +73,23 @@ log says which check fails.
   `/fr/` when the browser's first language is French, to `/en/` otherwise.
   The old French addresses (`/enseignants/`, `/enseignants/classe/`) redirect
   permanently (301) to `/fr/…`.
+- **Installable game (PWA)**: each language has its manifest
+  (`/en/manifest.webmanifest`, `/fr/manifest.webmanifest`, served as
+  `application/manifest+json`), and the site a service worker, `/sw.js`
+  (scope `/`, so it covers `/en/` and `/fr/` without a
+  `Service-Worker-Allowed` header). `/sw.js` is not in `public/`: at the
+  end of `astro build`, the integration of `src/pwa/build.ts` writes it from
+  the template `src/pwa/service-worker.js`, with the list of files to
+  precache (each language's page and manifest, the icons, `_astro/*`
+  except the WOFF fonts) and a **version**: a hash of these files. The
+  cache is called `qds-<version>`; a new build gives a new `sw.js`, which
+  precaches the new files and, once active, deletes the older `qds-*`
+  caches. `sw.js` and the manifests are revalidated on every visit
+  (`no-cache`). Astro's hashed files are served from the cache first, the
+  pages from the network first (the cache when offline; a page never
+  visited falls back to the game in its language). Nothing from another
+  origin is cached, nor `/integration/`. The icons (`public/icons/`) are
+  drawn by `node scripts/icons.mjs` (Chromium), not by the build. The
+  embeddable element never registers a service worker in its host page.
 - **Rolling back**: revert the faulty commit (`git revert`) and push to
   `main`; the workflow uploads the previous version again.

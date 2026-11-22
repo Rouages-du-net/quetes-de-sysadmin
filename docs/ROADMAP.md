@@ -854,6 +854,11 @@ them safely.
   `/fr/enseignants/`, generated at build time (`src/engine/sheets.ts`);
   progress exportable with no account, at the top of the downloaded
   notebook.
+- [x] **Install the game** (Progressive Web App), to play on mobile more
+  often: "Install the game" in the site's footer when the browser offers
+  it (Safari's "Add to Home Screen" explained on iOS), a manifest per
+  language, and a service worker that keeps the game playable offline
+  (`src/pwa/`); never in the embeddable element.
 
 ---
 

@@ -15,6 +15,13 @@ const browser = await chromium.launch({
   executablePath: existsSync(CHROMIUM) ? CHROMIUM : undefined,
   args: ['--headless=new'],
 });
+// The site registers a service worker (src/pwa/): requests it answers would
+// escape page.route, and so the CSP added below. Pages and contexts block it,
+// except in the tests about it (serviceWorkers: 'allow').
+const newContext = browser.newContext.bind(browser);
+const newPage = browser.newPage.bind(browser);
+browser.newContext = (options = {}) => newContext({ serviceWorkers: 'block', ...options });
+browser.newPage = (options = {}) => newPage({ serviceWorkers: 'block', ...options });
 
 // The preview server doesn't read .htaccess: we add ourselves the CSP
 // header Apache will send, so that a violation fails the test.
@@ -802,8 +809,116 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
-// Embedding in any page, with only the embeddable file.
-const page = await browser.newPage();
+// The installable game (src/pwa/): the manifest and its icons, the service
+// worker that takes the page and lets it play offline, the footer's
+// "Install the game" (only when the browser offers it).
+{
+  const context = await browser.newContext({ viewport: { width: 1000, height: 900 }, serviceWorkers: 'allow' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/en/`);
+  const href = await page.locator('link[rel="manifest"]').getAttribute('href');
+  check(href === '/en/manifest.webmanifest', 'pwa: the English page links its manifest');
+  const answer = await page.request.get(`${BASE}${href}`);
+  let manifest = {};
+  try {
+    manifest = JSON.parse(await answer.text());
+  } catch {}
+  check(manifest.start_url === '/en/' && manifest.lang === 'en' && manifest.display === 'standalone', 'pwa: the manifest is valid JSON, in English, standalone');
+  let icons = 0;
+  for (const icon of manifest.icons ?? []) {
+    const r = await page.request.get(`${BASE}${icon.src}`);
+    if (r.ok() && r.headers()['content-type'] === 'image/png') icons++;
+  }
+  check(icons === 3 && manifest.icons.some((i) => i.purpose === 'maskable'), 'pwa: the manifest\'s icons exist (192, 512, maskable)');
+  check((await page.request.get(`${BASE}/icons/apple-touch-icon.png`)).ok(), 'pwa: the Apple touch icon exists');
+  const frManifest = await (await page.request.get(`${BASE}/fr/manifest.webmanifest`)).json();
+  check(frManifest.name === 'Quêtes de Sysadmin' && frManifest.start_url === '/fr/', 'pwa: the French manifest');
+  const script = await page.evaluate(() => navigator.serviceWorker.ready.then((r) => r.active?.scriptURL));
+  check(script === `${BASE}/sw.js`, 'pwa: the service worker is registered and active');
+  await page.reload();
+  check(await page.evaluate(() => navigator.serviceWorker.controller !== null), 'pwa: after a reload, the service worker controls the page');
+  const keys = await page.evaluate(() => caches.keys());
+  check(keys.length === 1 && /^qds-[0-9a-f]{12}$/.test(keys[0]), `pwa: one cache, named after the build ${keys.join(' ')}`);
+  // Offline: the game still opens, in each language.
+  await context.setOffline(true);
+  await page.reload();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Welcome to your workstation'), 'pwa: offline, /en/ reloads and the game starts');
+  await page.goto(`${BASE}/fr/`);
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.output pre'));
+  check((await page.locator('quetes-de-sysadmin .output').textContent()).includes('Bienvenue sur ton poste'), 'pwa: offline, /fr/ opens too');
+  await page.goto(`${BASE}/en/teachers/`);
+  check((await page.locator('html').getAttribute('lang')) === 'en' && (await page.locator('quetes-de-sysadmin').count()) === 1, 'pwa: offline, a page never visited falls back to the game');
+  await context.setOffline(false);
+  await page.goto(`${BASE}/en/`);
+  // The footer: nothing until the browser offers to install.
+  const install = page.locator('.install');
+  const button = page.locator('.install-button');
+  check(!(await install.isVisible()), 'pwa: no "Install the game" while the browser does not offer it');
+  const offer = (outcome) =>
+    page.evaluate((outcome) => {
+      const e = new Event('beforeinstallprompt', { cancelable: true });
+      e.prompt = async () => {
+        window.prompted = true;
+      };
+      e.userChoice = Promise.resolve({ outcome: outcome });
+      dispatchEvent(e);
+    }, outcome);
+  await offer('accepted');
+  check(await button.isVisible() && (await button.textContent()) === 'Install the game', 'pwa: the browser offers to install, the footer shows the button');
+  for (const width of [1000, 375]) {
+    await page.setViewportSize({ width: width, height: 900 });
+    check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `pwa ${width} px: the footer's button without horizontal scrolling`);
+    if (process.env.CAPTURES)
+      for (const scheme of ['light', 'dark']) {
+        await page.emulateMedia({ colorScheme: scheme });
+        await page.locator('footer').screenshot({ path: `${process.env.CAPTURES}/install-${width}-${scheme}.png` });
+      }
+  }
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('.install-status')?.textContent);
+  check(await page.evaluate(() => window.prompted === true), 'pwa: the button, with the keyboard, asks the browser\'s question');
+  check(!(await button.isVisible()) && (await page.locator('.install-status').textContent()).includes('being installed'), 'pwa: accepted, the button goes and a message says so');
+  check(await page.evaluate(() => document.activeElement?.classList.contains('install-status')), 'pwa: the focus goes to the message');
+  await page.evaluate(() => dispatchEvent(new Event('appinstalled')));
+  check((await page.locator('.install-status').textContent()) === 'The game is installed.', 'pwa: installed, announced');
+  check(errors.length === 0, `pwa: no console error ${errors.join(' ')}`);
+  await context.close();
+}
+
+// On an iPhone (no beforeinstallprompt): the footer explains Safari's way, in French on /fr/.
+{
+  const context = await browser.newContext({
+    viewport: { width: 375, height: 800 },
+    isMobile: true,
+    hasTouch: true,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const help = page.locator('.install-ios');
+  check(await help.isVisible() && !(await page.locator('.install-button').isVisible()), 'pwa iOS: the instructions instead of the button');
+  await help.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  check((await help.locator('p').textContent()).includes("Sur l'écran d'accueil") && (await help.locator('p').isVisible()), 'pwa iOS: opened with the keyboard, "Add to Home Screen" in French');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'pwa iOS: no horizontal scrolling');
+  if (process.env.CAPTURES) await page.locator('footer').screenshot({ path: `${process.env.CAPTURES}/install-ios-375.png` });
+  check(errors.length === 0, `pwa iOS: no console error ${errors.join(' ')}`);
+  await context.close();
+}
+
+// Embedding in any page, with only the embeddable file (which never
+// registers a service worker in its host page).
+const page = await (await browser.newContext({ serviceWorkers: 'allow' })).newPage();
 await page.route(`${BASE}/autre-site.html`, (r) => r.fulfill({ contentType: 'text/html', body: `<!doctype html><html lang="en"><body style="font-family:serif">
   <h1>Another site</h1>
   <quetes-de-sysadmin histoire="paquet" cle="test" theme="sombre"></quetes-de-sysadmin>
@@ -819,6 +934,10 @@ check(
   (await page.evaluate(() => getComputedStyle(document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('a')).color)) === 'rgb(1, 2, 3)',
   'embedding: colours are set from the page (--qds-accent)',
 );
+
+await page.waitForLoadState('load');
+await page.waitForTimeout(500);
+check((await page.evaluate(() => navigator.serviceWorker.getRegistrations())).length === 0, 'embedding: no service worker registered in the host page');
 
 await browser.close();
 console.log(failures ? `${failures} échec(s)` : 'Tout est bon.');

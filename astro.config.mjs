@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { pwa } from './src/pwa/build.ts';
 
 // The sysadmin.rouages.net site: static pages served by Apache (cPanel).
 // The game itself is the <quetes-de-sysadmin> element (src/element.ts), inserted
@@ -6,6 +7,8 @@ import { defineConfig } from 'astro/config';
 // (vite.integration.config.ts).
 export default defineConfig({
   site: 'https://sysadmin.rouages.net',
+  // The installable game: dist/sw.js written after the build (src/pwa/).
+  integrations: [pwa()],
   output: 'static',
   // As on rouages.net: Astro's HTML compression glues words to tags placed
   // at the start of a line. Apache compresses with gzip (.htaccess).

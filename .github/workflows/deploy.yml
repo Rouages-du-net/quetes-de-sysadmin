@@ -22,7 +22,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - name: Check in Chromium (1000 and 375 px, CSP, embedding)
+      - name: Check in Chromium (1000 and 375 px, CSP, embedding, PWA)
         run: |
           npx playwright install --with-deps chromium
           npm run preview &
@@ -84,6 +84,9 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/enseignants/")" = 301
           curl -fsSI "$SITE/integration/quetes-de-sysadmin.js" | grep -qi '^access-control-allow-origin: \*'
           curl -fsSI "$SITE/en/" | grep -qi '^content-security-policy:'
+          # The installable game: its service worker and its manifest.
+          curl -fsSI "$SITE/sw.js" | grep -qi '^content-type: .*javascript'
+          curl -fsSI "$SITE/en/manifest.webmanifest" | grep -qi '^content-type: application/manifest+json'
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/no-such-page/")" = 404
           test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE/.ftp-deploy-sync-state.json")" = 403
           test "$(curl -s -o /dev/null -w '%{http_code}' "http://sysadmin.rouages.net/")" = 301
