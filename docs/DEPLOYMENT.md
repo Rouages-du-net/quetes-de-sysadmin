@@ -87,7 +87,8 @@ log says which check fails.
   precache, the game's shell: each language's page and manifest, the
   icons, the WOFF2 fonts and the files of each page's first visit
   (`src/pwa/first-load.mjs`, the list the budget weighs; about 44 files,
-  3 MB, 1 MB compressed), and a **version**: a hash of these files. The
+  3 MB, 1 MB compressed), the dialogs' texts (`texts-*--dialog-*`, a few
+  KB, so that a dialog opens offline), and a **version**: a hash of these files. The
   cache is called `qds-<version>`; a new build gives a new `sw.js`, which
   precaches the new files and, once active, deletes the older `qds-<…>`
   caches. The stories, their texts and the manual's pages are not
@@ -109,7 +110,8 @@ log says which check fails.
   `game.*.js` and the shared chunk it imports), its core texts and the
   story it will open. A story's chapters (`src/engine/stories/<id>.ts`, with
   the code only they use), each group of texts (`texts-<language>--core`,
-  `--shared`, `--manual`, `--story-<id>`, made by `src/texts/plugin.mjs`)
+  `--shared`, `--manual`, `--story-<id>`, `--dialog-<name>`, made by
+  `src/texts/plugin.mjs`)
   are chunks with a hash in their name, in `/_astro/` for the site and
   `/integration/chunks/` for the embeddable file, which imports them
   relative to its own address (`import.meta.url`), so from the game's site

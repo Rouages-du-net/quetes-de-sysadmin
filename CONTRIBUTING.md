@@ -56,7 +56,8 @@ agents, but its rules apply to everyone.
   data. Security quests stay defensive: protect, detect, repair.
 - **Accessible**: playable with the keyboard and on a 375 px screen,
   readable by screen readers, AA contrast, `prefers-reduced-motion`
-  respected.
+  respected; WCAG 2.2 AA, checked by `tests/a11y.mjs` (add a new page,
+  dialog or state to its list), see `docs/ACCESSIBILITY.md`.
 - **No trackers, no third-party resources**, and nothing that breaks the
   Content Security Policy in `public/.htaccess` (no inline scripts).
 

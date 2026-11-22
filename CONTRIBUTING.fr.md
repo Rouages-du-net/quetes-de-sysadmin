@@ -44,7 +44,9 @@ texte copié. Le texte est construit par `src/engine/feedback.ts`.
   internes ; RFC 3849 pour IPv6), adresses MAC de documentation (RFC 7042),
   domaines `.example`. Aucune vraie donnée personnelle. Les quêtes de
   sécurité restent défensives : on protège, on détecte, on répare.
-- **Accessible** : jouable au clavier et sur un écran de 375 px.
+- **Accessible** : jouable au clavier et sur un écran de 375 px ; WCAG 2.2 AA,
+  vérifié par `tests/a11y.mjs` (y ajouter toute nouvelle page, fenêtre ou
+  situation), voir `docs/ACCESSIBILITY.md` (en anglais).
 
 ## Le format d'une quête
 

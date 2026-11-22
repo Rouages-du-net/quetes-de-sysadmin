@@ -327,6 +327,7 @@ for (const width of [1000, 375]) {
   await answer.focus();
   await page.keyboard.press('Enter');
   const window = game.locator('dialog.start-window');
+  await game.locator('dialog.start-window[open]').waitFor({ timeout: 3000 }).catch(() => {});
   check(await window.evaluate((d) => d.open), `start ${width} px: the questions open from the keyboard`);
   check((await window.locator('fieldset legend').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Réponds aux quatre questions'), `start ${width} px: four groups of choices, no suggestion before the answers`);
   // Every day, a job, security, about 10 minutes: Space on a group's first choice, the arrows for the others.
@@ -364,6 +365,8 @@ for (const width of [1000, 375]) {
   await page.reload();
   check(await offer.isHidden(), `start ${width} px: no card after a reload`);
   await game.locator('.start-here-button').click();
+  // Its texts load when it first opens (dialog-start-here.ftl).
+  await window.locator('.start-result h3').waitFor({ timeout: 3000 }).catch(() => {});
   check((await window.locator('input[type="radio"]:checked').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Protéger un serveur'), `start ${width} px: the menu's button opens the questions, answers kept`);
   await page.keyboard.press('Escape');
   check(!(await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin') ?? '{}').startHere)), `start ${width} px: the answers are not in the progress`);
@@ -412,11 +415,13 @@ for (const width of [1000, 375]) {
   }
   // From here on, nothing may go out: the dialog only builds a text.
   const requests = [];
-  page.on('request', (r) => requests.push(r.url()));
+  // The dialog's own texts load from the site when it first opens (dialog-*.ftl): nothing else.
+  page.on('request', (r) => !(r.method() === 'GET' && r.url().startsWith(`${BASE}/_astro/texts-fr--dialog-feedback.`)) && requests.push(r.url()));
   const opener = game.locator('.chapter-actions .pill').last();
   await opener.focus();
   await page.keyboard.press('Enter');
   const dialog = game.locator('dialog.feedback-window');
+  await game.locator('dialog.feedback-window[open]').waitFor({ timeout: 3000 }).catch(() => {});
   check(await dialog.evaluate((d) => d.open), `feedback ${width} px: opens from the chapter's actions`);
   check((await game.locator('dialog.feedback-window textarea:focus').count()) === 1, `feedback ${width} px: the focus goes to the message`);
   const preview = dialog.locator('.feedback-preview');
@@ -474,6 +479,7 @@ for (const width of [1000, 375]) {
   await page.goto(`${BASE}/fr/`);
   const dialog = page.locator('quetes-de-sysadmin dialog.feedback-window');
   await page.locator('footer a[data-report]').click();
+  await page.locator('quetes-de-sysadmin dialog.feedback-window[open]').waitFor({ timeout: 3000 }).catch(() => {});
   check(await dialog.evaluate((d) => d.open), 'feedback footer: the footer\'s link opens the game\'s dialog');
   await page.keyboard.press('Escape');
   await page.goto(`${BASE}/fr/enseignants/`);

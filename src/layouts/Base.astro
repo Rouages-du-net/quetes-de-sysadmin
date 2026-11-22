@@ -22,6 +22,8 @@ const appName = en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin';
 // The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
 // on a page without the game, or without JavaScript, the game's page opens it (#report).
 const report = en ? 'Report a problem or an idea' : 'Signaler un problème ou une idée';
+// The first link of every page, shown when it has the focus: past the header, to the content.
+const skip = en ? 'Skip to content' : 'Aller au contenu';
 // The footer's "Install the game" (src/pwa/install.ts): its messages.
 const install = en
   ? {
@@ -60,11 +62,12 @@ const install = en
   {other && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
 </head>
 <body>
+  <a class="skip-link" href="#content">{skip}</a>
   <header>
     <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{appName}<span class="cursor" aria-hidden="true"></span></a></p>
     {other && <p class="language"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
   </header>
-  <main>
+  <main id="content" tabindex="-1">
     <slot />
   </main>
   <footer>
