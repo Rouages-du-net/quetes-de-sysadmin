@@ -710,7 +710,9 @@ export const SYSTEMD: Record<string, Command> = {
           if (r) outputs.push(r);
           continue;
         }
-        const name = unitName(raw);
+        // A unit's Alias= (mariadb.service: mysql.service, mysqld.service).
+        const asked = unitName(raw);
+        const name = sd.services[asked] ? asked : (Object.keys(sd.services).find((k) => sd.services[k].aliases?.includes(asked)) ?? asked);
         // A hand-written unit never loaded: systemd reads it on demand.
         if (!sd.services[name] && game.exists(`/etc/systemd/system/${name}.service`)) reread(game, sd);
         const s = sd.services[name];

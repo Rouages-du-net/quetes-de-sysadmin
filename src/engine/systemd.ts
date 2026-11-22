@@ -40,6 +40,8 @@ export interface Service {
   activeRest?: boolean;
   // When the service stops (e.g. timesyncd: the clock is no longer synchronized).
   stop?: (game: Game) => void;
+  // Other names of the unit (Alias= in its [Install] section): systemctl accepts them.
+  aliases?: string[];
   // How it stopped in failure (exit-code, oom-kill…).
   result?: string;
   // The settings from override files (systemctl edit): MemoryMax=, Restart=.

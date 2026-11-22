@@ -276,6 +276,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | keepalived (`keepalived.ts`, The Blood Drive) | `/etc/keepalived/keepalived.conf` read when keepalived starts and on reload (SIGHUP): `global_defs` (`router_id`, `enable_script_security`, `script_user`), `vrrp_script` (`script`, `interval`, `weight`, `fall`, `rise`), `vrrp_instance` (`state`, `interface`, `virtual_router_id`, `priority`, `advert_int`, `nopreempt`, `authentication` PASS, `virtual_ipaddress`, `track_script` with its own weight, `unicast_src_ip`, `unicast_peer`); its messages for unknown keywords (with the line), invalid VRIDs and priorities, a missing track script, nopreempt with state MASTER; a VRRPv2 election second by second: initial BACKUP state, master down interval (3 × advert_int + skew), adverts to 224.0.0.18 or the unicast peers, priority 0 when a master stops, preemption and `nopreempt`, a tie won by the higher address, FAULT for a failed check of weight 0, the weights of the tracked checks, an advert for the same VRID with other addresses dropped as bogus, the firewall of the receiving node (nftables' input hook) deciding what keepalived hears; the master holds the virtual addresses (`ip a`, secondary) and sends gratuitous ARPs; a reload keeps the state of an instance that kept its VRID and interface; `keepalived -t`, `-v` | one instance per node takes part (the first one), no `vrrp_sync_group`, VRRPv3, `use_vmac`, `notify*` scripts, LVS (`virtual_server`); AH authentication read but not checked; the usual checks (`pidof`, `killall -0`, `pgrep`, `systemctl is-active`) are computed, other scripts run in the game's shell; the exit code of `keepalived -t` is 1 for any error |
 | HAProxy (`haproxy.ts`, The Blood Drive) | `/etc/haproxy/haproxy.cfg` read like HAProxy 3.0 (sections `global`, `defaults`, `frontend`, `backend`, `listen`; `bind`, `default_backend`, `balance` roundrobin/leastconn/first, `server` with `check`, `inter`, `fall`, `rise`, `backup`, `weight`, `maxconn`, `disabled`, `default-server`, `option httpchk [METHOD] URI`, `http-check send`, `http-check expect status|rstatus`, `option allbackups`, `stats socket`); `haproxy -c -f` (ALERT lines with the file and line, "did you mean", a missing default_backend, warnings for http-check rules without httpchk), `-q`, `-v`, `-vv`; the service checks the file before a reload (Debian's ExecReload); a frontend bound to an address the node doesn't hold fails unless `net.ipv4.ip_nonlocal_bind` is 1; health checks every `inter` (L4OK, L4CON, L7OK, L7STS), a server starting UP (one failure marks it DOWN), `fall`/`rise`; the runtime API through `socat` (`show stat`, `show servers state`, `show info`, `show backend`, `enable`/`disable server`, `set server … state ready|drain|maint`, `set server … weight`, `get`/`set weight`, `help`); the HTTP log format in `/var/log/haproxy.log` (Debian's rsyslog rule), check transitions and drain/maintenance messages; a donor's request every two seconds through whoever holds the virtual address; `kill` of haproxy restarted by systemd (`Restart=always`) | `show stat` prints its first 51 fields; sessions are a count that rises and falls with traffic, not real connections; no ACLs, stick tables, SSL, cookies or persistence; a reload starts the servers' states afresh (no `server-state-file`); `/run/haproxy/admin.sock` is a plain file in the world |
 | nginx's access logs (`nginx.ts`, The Choir) | `log_format name [escape=…] 'string' …` (`combined` predefined, a duplicate refused), `access_log path [format]` and `access_log off` at `http` or `server` level (the server's own replace the http block's; Debian's default `/var/log/nginx/access.log combined`), checked by `nginx -t` (`unknown log format`, `unknown "x" variable`); `map $source $variable { … }` in `http`: exact keys, then regular expressions in order (`~`, `~*`, numbered and named captures, PCRE's `(?P<name>…)`), `default`, `hostnames`/`volatile` accepted, `include`, nginx's messages (`invalid number of the map parameters`, `the duplicate "x" variable`); the variables of the log line (`$remote_addr`, `$remote_user`, `$time_local`, `$time_iso8601`, `$request`, `$status`, `$body_bytes_sent`, `$http_referer`, `$http_user_agent`, `$host`, `$request_uri`…, an empty one written `-`); a deleted log is created again at the next line | `buffer=`, `gzip=`, `if=`, `open_log_file_cache`, `error_log`'s format, `map` over strings with `hostnames` matching, a map in `stream` |
+| MariaDB's server (`mariadb.ts`, The Allotments) | MariaDB 11.8 as Debian 13 ships it: `/etc/mysql/my.cnf` and its `!includedir` read at start (the groups `[server]`, `[mysqld]`, `[mariadb]`, `[mariadbd]`, `[mariadb-11.8]`, dashes or underscores, `loose-`, `skip-`; an unknown variable or a bind-address the machine doesn't have stops it, with mariadbd's messages); the variables (`SET GLOBAL` for the dynamic ones, `ERROR 1238` for the others, `SET PERSIST` refused; `wait_timeout` copied into each session when it connects); accounts `'user'@'host'` tried from the most specific host, the named user before the anonymous one, `unix_socket` and `mysql_native_password` (the real hash), `IDENTIFIED VIA … OR …`, Debian's root and `mysql@localhost`, `mariadb.sys`; privileges at the global, database and table levels; `max_connections` and the extra slot of `CONNECTION ADMIN`; `wait_timeout` closing idle sessions ("Aborted connection" in the journal); `read_only` and `READ_ONLY ADMIN`; the slow query log in MariaDB's format; a row-based binary log with GTIDs, a replica's IO and SQL threads, their errors (1062, 1032), `sql_slave_skip_counter`, `Seconds_Behind_Master`; the `mysql` and `mysqld` aliases of the unit | one binary log file, no rotation; only row changes replicate (no DDL, no account statement); no reverse DNS (as with `skip-name-resolve`); no roles, no column privileges, no TLS; the clock moves thirty seconds per command; a dump's consistency is decided from the server's state (writes arriving, locks), not from the rows of a real moment |
+| MariaDB's SQL (`mariadb-sql.ts`) | `SHOW` (DATABASES, TABLES, [FULL] PROCESSLIST, VARIABLES, STATUS, GRANTS, CREATE TABLE, CREATE USER, INDEX, REPLICA/SLAVE STATUS, MASTER/BINLOG STATUS, BINARY LOGS, WARNINGS), `USE`, `SELECT` (columns, `count(*)`, WHERE as `sql-where.ts` reads it, one GROUP BY column, ORDER BY, LIMIT; `@@variables`, `VERSION()`, `CURRENT_USER()`…; `information_schema.PROCESSLIST`, `mysql.user`, `mysql.db`), `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `CREATE/DROP DATABASE` and `TABLE` (as a dump writes them), `CREATE/DROP INDEX`, `ALTER TABLE ADD/DROP INDEX`, `EXPLAIN` (type ALL or ref, rows from the table's size), `CHECKSUM TABLE`, `KILL`, `SET`, account statements, `GRANT`, `REVOKE`, `FLUSH`, `CHANGE MASTER TO`, `START/STOP/RESET SLAVE`; the error codes and SQL states of the KB (1044, 1045, 1046, 1049, 1054, 1062, 1064, 1130, 1142, 1146, 1198, 1227, 1288, 1290, 1396, 1698…) | no joins, subqueries, expressions or functions in the columns; `=` and LIKE compare as `sql-where.ts` does; transactions accepted, writes applied at once; values are text; `mysql.user` is read, never written |
+| `mariadb`, `mariadb-dump`, `mariadb-admin`, `mariadb-check`, `mariadb-secure-installation` (`mariadb-client.ts`, loaded with the story; the entries in `commands/mariadb.ts`) | the client's tables on a terminal, tab-separated rows in a pipe or a file (`-B`, `-N`, `-t`, `-E`, `\G`), `-e` and scripts with "at line N" and `-f`, `-p` asked or glued, `-h` over TCP to the story's machines (bind-address and ufw decide), the interactive monitor (`MariaDB [db]>`, `use`, `source`, `status`, `help`, a statement over several lines, `exit`, the reconnection after a lost connection); `mariadb-dump`'s header and statements as 11.8 writes them (sandbox line, conditional comments, `DROP TABLE`, `CREATE TABLE`, `LOCK TABLES`, extended INSERT), `--single-transaction`, `--lock-tables`, `-x`, `--skip-lock-tables`, `-A`, `-B`, `--master-data`, `--gtid`, `--dump-slave`, `-r`; `mariadb-admin` ping, status, processlist, kill, variables, version, create, drop, shutdown, start-slave/stop-slave; `mariadb-check`; `mariadb-secure-installation`'s questions; the old names `mysql`, `mysqldump`, `mysqladmin`, `mysqlcheck` | no `~/.my.cnf`, no pager, no history; the old names give no deprecation warning; routines and events exist in no database of the story; the monitor ignores Ctrl-C |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4364,6 +4367,122 @@ payments (put back with `INSERT` from the dump), a purge that fails, that
 isn't scheduled, that deletes by the joining date, or forgets the
 attendance; `forget` without `prune`; `--keep-last 1`; trimming the
 repository without changing the script.
+
+## Story 43: The Allotments (three chapters)
+
+The Greenholme Allotments Association books its plots, its shared tools and
+its watering slots through Plotline, a small app on a MariaDB server (Debian
+13's `mariadb-server`, 11.8 LTS: `1:11.8.9+ds-0+deb13u1`,
+https://packages.debian.org/trixie/mariadb-server). `trowel` (192.0.2.131 on
+the office uplink, 198.51.100.131 on the back network) holds the database
+`plots` (members, plots, the waiting list, bookings); the app ran on `shed`
+(198.51.100.133), then on `barrow` (198.51.100.134, an internal host of
+chapter 2); `rake` (198.51.100.132, an internal host of chapter 3) is the
+replica the secretary's reports read. Halima chairs the association, Lwazi
+wrote Plotline, Moana keeps the waiting list, Selin volunteers on the
+computers. Running a database from the sysadmin's side: connections and
+slow queries, accounts and privileges, replication and backups; defensive
+throughout. Engine: `mariadb.ts` (the server: option files, variables,
+accounts and authentication, privileges, connections, binary log,
+replication, dumps' metadata), `mariadb-sql.ts` (the SQL), the client
+programs in `mariadb-client.ts` (loaded with the story, not with the first visit), five explanations for MariaDB's errors in
+the error explainer. The story is built in `chapters/allotments.ts`. It opens
+after "The Database" (pg_dump and psql, The Game Library) and "The Firewall"
+(ufw), and extends the production path (chapters 1 and 3), the security path
+(chapter 2) and the backups path (chapter 3).
+
+### Chapter 1 — Sleeping Connections (done)
+
+Saturday 10 May 2031, 9:20. The site answers "Too many connections": the
+app on shed opens three connections every half minute and never closes
+them, `wait_timeout` keeps each eight hours, the 151 slots are full; each
+plot page reads the 1.8 million rows of `bookings` (38 s).
+
+| Step | Command learnt |
+|---|---|
+| Who holds the slots | `sudo mariadb -e "SHOW PROCESSLIST"`, `grep -c Sleep` |
+| How long they may sleep | `SHOW VARIABLES LIKE '%timeout%'`, `SET GLOBAL wait_timeout = 300` |
+| The old sessions | `SELECT id FROM information_schema.PROCESSLIST WHERE …` with `-N`, `sudo xargs -n1 mariadb-admin kill` (or `KILL id`, or a restart once the file is right) |
+| Kept | `wait_timeout = 300` in `/etc/mysql/mariadb.conf.d/50-server.cnf` |
+| The slow query | `SET GLOBAL slow_query_log = ON`, `long_query_time`, `tail` of the slow log |
+| Why | `EXPLAIN SELECT … WHERE plot_id = 17` (type ALL, 1834212 rows) |
+| The index | `CREATE INDEX idx_plot ON bookings (plot_id)` (or `ALTER TABLE … ADD INDEX`, a composite index starting with `plot_id`) |
+
+Goal checked on the state: the global `wait_timeout` and the one the files
+give at most 900 s, no app connection left with a longer session timeout,
+an index whose first column is `plot_id`, `max_connections` at most 1000 at
+runtime and in the files, the server running. Several solutions: `KILL`,
+`mariadb-admin kill`, a restart after the file; any index name, a composite
+index; the monitor or `-e`. Expected traps: a restart alone (the connections
+come back), `max_connections` at 10000, `SET GLOBAL` alone (the sessions keep
+their eight hours), an index on another column.
+
+### Chapter 2 — Least Privilege (done)
+
+Tuesday 20 May, 18:10. The app moved to barrow; its old account didn't
+match, so Lwazi created `root@'%'`, put it in barrow's `.env`, and set
+`bind-address = 0.0.0.0`. Selin's scan finds 3306 open from the internet;
+the server also keeps anonymous accounts, the test database and the old
+account `plotline@198.51.100.133`.
+
+| Step | Command learnt |
+|---|---|
+| The scan | `cat scan_from_selin.txt`, `ss -tlnp` |
+| The accounts | `SELECT user, host, plugin FROM mysql.user`, `SHOW GRANTS FOR 'root'@'%'`; `mariadb` as you connects as the anonymous `''@'localhost'` |
+| An account for the app | `CREATE USER 'app'@'198.51.100.134' IDENTIFIED BY …`, `GRANT SELECT, INSERT, UPDATE, DELETE ON plots.* TO …` |
+| The app switched | `ssh barrow`, `/srv/plotline/.env`, `systemctl restart plotline`, its log |
+| Root local | `DROP USER 'root'@'%'`; root@localhost on `unix_socket` |
+| The leftovers | `mariadb-secure-installation`, or `DROP USER`, `DROP DATABASE test`, `DELETE FROM mysql.db WHERE Db LIKE 'test%'` |
+| The network | `bind-address = 198.51.100.131` and a restart, or `ufw` allowing 3306 from the back network |
+
+Goal checked on the state: the app works, with an account that isn't root,
+whose host doesn't match 203.0.113.77, with no global privilege and on
+`plots` only what an app needs (at most SELECT, INSERT, UPDATE, DELETE,
+EXECUTE, CREATE TEMPORARY TABLES, LOCK TABLES, SHOW VIEW), all the
+statements the app runs allowed; no root account but on localhost, root@localhost
+with `unix_socket`; no anonymous account, no test database nor its grants,
+no `plotline@198.51.100.133`; `mariadb.sys` kept; 3306 unreachable from
+203.0.113.77 on 192.0.2.131 and reachable from barrow. Several solutions:
+the exact address or `198.51.100.%`, database or table grants,
+`mariadb-secure-installation` or by hand, `bind-address` or `ufw`. Expected
+traps: `GRANT ALL ON *.*`, `'app'@'%'`, the `.env` changed without a restart,
+a password that doesn't match, `bind-address` 0.0.0.0 restarted without a
+firewall, 127.0.0.1 (the app cut off), root@localhost dropped (the anonymous
+account lets the client in as nobody; `sudo -u mysql mariadb` through
+Debian's `mysql@localhost` repairs it), `mariadb.sys` dropped (`mysql.user`
+fails), `DELETE FROM mysql.user` (a view since 10.4).
+
+### Chapter 3 — Broken Replica (done)
+
+Monday 2 June, 8:45. On Saturday at 17:46 Moana added her neighbour Esi to
+the waiting list straight on rake (`read_only` off): id 1043. At 18:12,
+Wairimu signed up on the site and got 1043 on trowel; rake's SQL thread
+stopped on the duplicate key and the replica is two days behind; its
+nightly dump runs with `--skip-lock-tables`.
+
+| Step | Command learnt |
+|---|---|
+| Stopped | `ssh rake`, `SHOW REPLICA STATUS\G` (`Slave_SQL_Running: No`, `Last_SQL_Error`, `Seconds_Behind_Master: NULL`), `journalctl -u mariadb` |
+| The cause | `SELECT * FROM waitlist WHERE id = 1043` on both servers |
+| Read-only | `SET GLOBAL read_only = ON`, `read_only = ON` in rake's `50-server.cnf` |
+| Repaired | `DELETE FROM waitlist WHERE id = 1043` on rake, `START REPLICA`, `Seconds_Behind_Master: 0` |
+| Compared | `CHECKSUM TABLE plots.members, plots.plots, plots.waitlist, plots.bookings` on both |
+| Esi kept | `INSERT INTO waitlist …` on trowel |
+| The backup | `--single-transaction` in `/usr/local/sbin/plots-backup`, run, `CREATE DATABASE restore_check`, `mariadb restore_check < dump`, `CHECKSUM TABLE` |
+
+Goal checked on the state: `read_only` on rake now and in its files; both
+replication threads running, no error, caught up with trowel; the same
+checksums for every table on both servers; Esi once on trowel's waiting
+list; the backup script's `mariadb-dump` line with `--single-transaction`;
+a dump taken on rake with `--single-transaction` while it was healthy and
+identical to trowel; that dump restored into another database with the same
+checksums. Several solutions: repairing the rows by hand (after a skip, the
+primary's row and the lost events put back) or re-seeding rake from a dump
+of trowel with `--master-data --gtid`; the script or `mariadb-dump -r` by
+hand; `mysql`, `mysqldump`, `mariadb-admin create`. Expected traps:
+`sql_slave_skip_counter` (the replica runs again but differs), repeated (a
+booking lost too), a dump with the default locks (the SQL thread waits
+behind it), `--skip-lock-tables` while writes arrive (not consistent).
 
 ## Ideas for later
 

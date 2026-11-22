@@ -59,3 +59,4 @@ machine-anvil = enclume
 machine-hearth = foyer
 machine-lb1 = lb1
 machine-baton = baguette
+machine-trowel = truelle
