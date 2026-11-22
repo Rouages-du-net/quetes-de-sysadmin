@@ -97,6 +97,31 @@ loads a story only when it is opened), and `npm test` fails while it is
 out of date. A chapter's module must not call `t()` when it is imported:
 its texts load with it.
 
+#### Adding a story (or porting one written before the split)
+
+The game loads a story only when it is opened, so a story is wired in three
+places, which `tests/catalogue.test.ts` checks agree:
+
+1. `src/engine/stories/<story>.ts`: imports its chapters from
+   `src/engine/chapters/` and exports them in order,
+   `export const chapters: Chapter[] = [first, second, third];`
+   (copy any story's module).
+2. `src/engine/chapters/index.ts`: one import,
+   `import { chapters as myStory } from '../stories/<story>';`, and one
+   entry in `STORIES`, `{ id: '<story>', after: [...], chapters: myStory }`.
+   A story written the old way imported each chapter here: move those
+   imports into its module.
+3. `npm run catalogue`: rewrites `src/engine/catalogue.json` (the menu, its
+   chapters' commands and size, and the text files that load with the
+   story: its `chapter-*.ftl` and `hints-<story>.ftl`, plus those of other
+   stories its modules name).
+
+Texts shared by the story outside those files (a `<story>.ftl` like
+`blood-drive.ftl`) load with the core texts. Nothing else changes: machines,
+paths, `CODE_ORDER`, tests. `npm run build` then checks the first visit's
+budget: the story's own code must stay in its chunk, so the engine's core
+(shell, commands, `console.ts`) never imports a chapter.
+
 ### The chapter (`Chapter`, in `src/engine/world.ts`)
 
 - `id`, `number`, and the story that holds it.

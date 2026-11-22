@@ -54,6 +54,32 @@ qu'à son ouverture), et `npm test` échoue tant qu'il n'est pas à jour. Le
 module d'un chapitre ne doit pas appeler `t()` quand il est importé : ses
 textes se chargent avec lui.
 
+#### Ajouter une histoire (ou porter une histoire écrite avant le découpage)
+
+Le jeu ne charge une histoire qu'à son ouverture : une histoire se branche
+donc à trois endroits, dont `tests/catalogue.test.ts` vérifie l'accord :
+
+1. `src/engine/stories/<histoire>.ts` : importe ses chapitres depuis
+   `src/engine/chapters/` et les exporte dans l'ordre,
+   `export const chapters: Chapter[] = [premier, deuxieme, troisieme];`
+   (copie le module d'une autre histoire).
+2. `src/engine/chapters/index.ts` : un import,
+   `import { chapters as monHistoire } from '../stories/<histoire>';`, et une
+   entrée dans `STORIES`, `{ id: '<histoire>', after: [...], chapters: monHistoire }`.
+   Une histoire écrite à l'ancienne importait chaque chapitre ici : déplace
+   ces imports dans son module.
+3. `npm run catalogue` : réécrit `src/engine/catalogue.json` (le menu, les
+   commandes et la taille de ses chapitres, et les fichiers de textes qui se
+   chargent avec l'histoire : ses `chapter-*.ftl` et `hints-<histoire>.ftl`,
+   plus ceux d'autres histoires que ses modules nomment).
+
+Les textes partagés par l'histoire hors de ces fichiers (un `<histoire>.ftl`
+comme `blood-drive.ftl`) se chargent avec les textes communs. Rien d'autre ne
+change : machines, parcours, `CODE_ORDER`, tests. `npm run build` vérifie
+ensuite le budget de la première visite : le code propre à l'histoire doit
+rester dans son morceau, donc le cœur du moteur (shell, commandes,
+`console.ts`) n'importe jamais un chapitre.
+
 ### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 
 - `id`, `number`, et l'histoire qui l'accueille (`src/engine/chapters/index.ts`).
