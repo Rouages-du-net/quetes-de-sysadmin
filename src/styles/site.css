@@ -58,6 +58,17 @@ body {
   color: var(--text);
   font: 1rem/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
 }
+/* No ligatures in code nor in the monospace headings: "->" or "!=" stay
+   what one types (see docs/ACCESSIBILITY.md). */
+code, pre, kbd, samp, h1, h2, h3, .name, .language, textarea, .install-button, .install-ios > summary, .class-table thead th {
+  font-variant-ligatures: none !important;
+  font-feature-settings: 'liga' 0, 'clig' 0, 'calt' 0, 'dlig' 0 !important;
+}
+/* Skip link: the first stop of the keyboard, visible only then. */
+.skip-link { position: absolute; left: 1rem; top: -10rem; z-index: 10; padding: 0.5rem 1rem; background: var(--card); color: var(--text); border: 2px solid var(--phosphor); border-radius: 0.35rem; font-weight: 600; }
+.skip-link:focus { top: 0.5rem; }
+main:focus { outline: none; }
+pre:focus-visible, summary:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 header, main, footer { max-width: 62rem; margin: 0 auto; padding: 0 1rem; }
 
 /* The header: a command prompt, with its cursor. */
@@ -76,7 +87,15 @@ header {
 .name .prompt { color: var(--phosphor); }
 .name .cursor { display: inline-block; width: 0.6em; height: 1.1em; margin-left: 0.15em; vertical-align: -0.2em; background: var(--phosphor); animation: blink 1.1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .name .cursor { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .name .cursor { animation: none; }
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .name .cursor { forced-color-adjust: none; background: CanvasText; }
+  .install-button, .install-ios > summary, #class button, .skip-link { border: 1px solid ButtonText; }
+  a:focus-visible, pre:focus-visible, summary:focus-visible, button:focus-visible, textarea:focus-visible, input:focus-visible { outline-color: Highlight; }
+}
 .language { margin: 0; font-family: var(--mono); font-size: 0.9rem; }
 
 h1, h2, h3 { font-family: var(--mono); letter-spacing: -0.02em; }
@@ -143,6 +162,7 @@ footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top
 .class-zone.hover { border-color: var(--phosphor); }
 .class-zone p { margin: 0.25rem 0; }
 #class textarea { box-sizing: border-box; width: 100%; max-width: 40rem; font: 0.9rem var(--mono); background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.5rem; }
+#class input[type="file"] { max-width: 100%; font: inherit; }
 #class button { font: inherit; padding: 0.35rem 0.9rem; border-radius: 0.35rem; border: 1px solid var(--phosphor); background: var(--card); color: var(--text); cursor: pointer; }
 #class button:hover { color: var(--phosphor); }
 .class-state { color: var(--muted); }

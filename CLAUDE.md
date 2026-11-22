@@ -849,10 +849,17 @@ presents them for people.
   `machinesInLanguage()`); `passwords.ftl`: the stories' passwords
   (`password()` of `world.ts`). Every identifier is English (chapters,
   stories, machines, places, accounts, passwords); French is a translation.
+  `dialog-<name>.ftl`: a dialog's texts, their own group loaded when the
+  dialog first opens (`src/texts/plugin.mjs`; in `game.ts`, `lazy()` text
+  nodes filled by `withTexts()`), precached for offline play
+  (`src/pwa/build.ts`); its buttons stay in the core texts.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
   language choice, the 404 page, embedding in another page, the PWA
-  (service workers blocked elsewhere, `serviceWorkers: 'allow'` there).
+  (service workers blocked elsewhere, `serviceWorkers: 'allow'` there);
+  `tests/a11y.mjs` (also run by `npm run test:browser`): axe-core on every
+  page and dialog, light and dark, 1000 and 375 px, and the checks axe
+  cannot make (see `docs/ACCESSIBILITY.md`).
 - Deployment: `.github/workflows/deploy.yml` (tests on each PR, FTPS and a
   check of the live site from `main`, including the root's redirections);
   see `docs/DEPLOYMENT.md`. Every new resource must respect the CSP (no
@@ -946,7 +953,16 @@ The game will be translated into more languages. All code must allow it:
 ## Accessibility and privacy
 
 - Playable with the keyboard; outputs announced to screen readers; AA
-  contrast; `prefers-reduced-motion` respected; usable on mobile.
+  contrast; `prefers-reduced-motion` respected; usable on mobile. Target:
+  WCAG 2.2 AA, see `docs/ACCESSIBILITY.md` and `tests/a11y.mjs` (a new
+  page, dialog or state goes in its axe list). On the command line Tab
+  completes, Shift+Tab and Escape then Tab leave it, Alt+R reads the last
+  output again; what is said besides the log (the follow's digest, a
+  chapter's end) goes through `announce()` in `game.ts`, its logic in
+  `src/engine/announce.ts`. A follow keeps the log quiet. Monospace text
+  has no ligatures; a block that scrolls takes a tab stop; forced colours
+  and reduced motion are handled at the end of `styles.css`; the terminal
+  colours' contrast is checked by `tests/terminal-contrast.test.ts`.
 - No tracker, no ads, no third-party resource (fonts and scripts served by
   the site). Progress in `localStorage`, with no account.
 - Never put real personal data in the quests.

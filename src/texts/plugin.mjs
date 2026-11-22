@@ -10,6 +10,8 @@
 //   <language>/manual        the manual's pages (man-*: man, --help, apropos)
 //   <language>/story-<id>    a story's files (chapter-*.ftl, hints-*.ftl), listed
 //                            in src/engine/catalogue.json (npm run catalogue)
+//   <language>/dialog-<name> a dialog's texts (dialog-<name>.ftl), loaded when it
+//                            first opens (game.ts: lazyText, openWithTexts)
 //
 // `virtual:qds-texts` lists the languages and, for each group, a loader
 // (a dynamic import: Vite makes each group its own chunk, with a hashed name).
@@ -65,6 +67,7 @@ const languages = () => readdirSync(TEXTS, { withFileTypes: true }).filter((d) =
 // into the current one (console.ts).
 const SHARED = ['desk.ftl', 'machines.ftl', 'names.ftl'];
 const storyFile = (f) => /^(chapter|hints)-/.test(f);
+const dialogFile = (f) => /^dialog-[\w-]+\.ftl$/.test(f);
 
 // Groups computed once per language (until a text file changes).
 const cache = new Map();
@@ -87,6 +90,7 @@ function computeGroups(language) {
   const manualOwn = [];
   const summaries = [];
   const pages = [];
+  const dialogs = {};
   for (const f of files) {
     if (f === 'manual.ftl') {
       for (const e of entries(read(f))) {
@@ -97,12 +101,14 @@ function computeGroups(language) {
     } else if (storyFile(f) && claimed.has(f)) {
       const title = f.startsWith('chapter-') && entries(read(f)).find((e) => e.id === f.slice(0, -4));
       if (title) titles.push(title.text);
-    } else (SHARED.includes(f) ? shared : core).push([f, read(f)]);
+    } else if (dialogFile(f)) dialogs[f.slice(0, -4)] = [[f, read(f)]];
+    else (SHARED.includes(f) ? shared : core).push([f, read(f)]);
   }
   const result = {
     core: [...core, ['manual.ftl (own messages)', manualOwn.join('\n')], ['manual.ftl (summaries)', summaries.join('\n')], ['chapter titles', titles.join('\n')]],
     shared,
     manual: [['manual.ftl (pages)', pages.join('\n')]],
+    ...dialogs,
   };
   for (const s of stories) result[`story-${s.id}`] = s.texts.filter((f) => files.includes(f)).map((f) => [f, read(f)]);
   return result;

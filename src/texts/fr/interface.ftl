@@ -442,8 +442,8 @@ display-theme-phosphor = Phosphore
 display-theme-amber = Ambre
 display-theme-contrast = Contraste élevé
 display-theme-paper = Papier
-display-more-small = Texte plus petit
-display-more-big = Texte plus grand
+display-more-small = A− (texte plus petit)
+display-more-big = A+ (texte plus grand)
 display-colours = Couleurs
 display-focus = Plein écran
 display-quit-focus = Quitter le plein écran (Échap)
@@ -497,3 +497,28 @@ tour-tab = Tab complète les noms pour toi : tape les premières lettres, puis T
 # Une histoire se charge la première fois qu'on l'ouvre (ses chapitres et ses textes).
 loading-story = Chargement de {$story}…
 loading-failed = Cette partie du jeu n'a pas pu être chargée : vérifie ta connexion, puis réessaie.
+
+## Lecteurs d'écran (voir docs/ACCESSIBILITY.md et src/engine/announce.ts)
+# Le nom de la sortie du terminal (un journal : chaque nouvelle sortie est lue une fois)
+output-label = Sortie du terminal
+# Lu avec la ligne de commande, après son nom et l'invite
+input-help = Tab complète ; Échap puis Tab quitte la ligne vers la suite, Maj+Tab vers l'arrière ; Alt+R relit la dernière sortie.
+# Un bouton qui apparaît quand il a le focus, en haut du terminal
+reread-button = Relire la dernière sortie (Alt+R)
+reread-empty = La dernière commande n'a rien affiché.
+# Avant une longue sortie relue : seule sa fin est lue
+reread-cut = { $lines } lignes ; voici les { $shown } dernières :
+follow-announce-start = La commande continue et affiche les nouvelles lignes : un résumé toutes les dix secondes. Ctrl-C ou Échap l'arrête.
+follow-announce-watch = L'écran se rafraîchit tout seul : Alt+R le lit. Ctrl-C ou Échap l'arrête.
+follow-announce-lines =
+    { $count ->
+        [one] Une nouvelle ligne : { $line }
+       *[other] { $count } nouvelles lignes ; la dernière : { $line }
+    }
+follow-announce-screen = L'écran a changé : Alt+R le lit.
+chapter-done-announce = Chapitre terminé : { $chapter }. Son bilan est à la fin du terminal ; Échap puis Tab mène aux boutons qui le suivent.
+# La boîte du schéma du réseau (elle défile sur le côté sur un écran étroit) ; sa version texte la suit
+plan-diagram-label = Schéma du réseau (sa version texte suit)
+shortcuts-escape-tab = quitte la ligne de commande, vers ce qui suit le terminal (Tab seul complète)
+shortcuts-shift-tab = quitte la ligne de commande, vers ce qui la précède
+shortcuts-reread = relit la dernière sortie, pour les lecteurs d'écran

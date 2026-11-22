@@ -28,20 +28,23 @@ const shortcut = (key: string, label: string) =>
 
 export function editor(o: EditorOptions): HTMLElement {
   const { t } = o;
-  const modified = el('span', { class: 'nano-modified' });
+  const id = `qds-nano-${Math.random().toString(36).slice(2, 8)}`;
+  const modified = el('span', { class: 'nano-modified', id: `${id}-modified` });
   const zone = el('textarea', {
     class: 'nano-text',
     spellcheck: 'false',
     autocapitalize: 'off',
     autocomplete: 'off',
     'aria-label': t('nano-zone', { path: o.path }),
+    // A screen reader says the shortcuts and the modified state with the field; the status line is announced (role="status").
+    'aria-describedby': `${id}-help ${id}-modified`,
   }) as HTMLTextAreaElement;
   zone.value = o.text;
   const state = el('div', { class: 'nano-status', role: 'status', 'aria-live': 'polite' }, o.message);
 
   const write = shortcut('^O', t('nano-write'));
   const quit = shortcut('^X', t('nano-quit'));
-  const help = el('div', { class: 'nano-help' }, write, quit);
+  const help = el('div', { class: 'nano-help', id: `${id}-help` }, write, quit);
   const yes = shortcut('O', t('nano-yes'));
   const not = shortcut('N', t('nano-not'));
   const cancel = shortcut('^C', t('nano-cancel'));

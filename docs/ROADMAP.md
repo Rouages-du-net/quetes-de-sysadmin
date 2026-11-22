@@ -850,6 +850,23 @@ them safely.
   tour's last step points at it; the menu's button is always there, except
   in exam mode. The answers stay in this browser with the display
   settings, never in the progress code or the save file.
+- [x] **Accessibility pass, WCAG 2.2 AA** (`docs/ACCESSIBILITY.md`,
+  `tests/a11y.mjs`): axe-core on every page and state of the game (light
+  and dark, 1000 and 375 px) fails the browser tests on a serious or
+  critical violation; the command line named with its prompt, Shift+Tab and
+  Escape then Tab to leave it, Alt+R (or a button shown on focus) to read
+  the last output again, a follow's digest every ten seconds instead of
+  every line (`src/engine/announce.ts`), a chapter's end announced
+  politely; wide outputs reachable with the keyboard, a skip link, no
+  ligatures in monospace text, forced colours, reduced motion everywhere,
+  reflow at 320 px with text spacing, the terminal colours' contrast
+  checked in every theme (`tests/terminal-contrast.test.ts`). The texts of
+  "Where do I start?" and "Report a problem" load when their dialog first
+  opens (`dialog-*.ftl`).
+  - [ ] Test with real screen readers (NVDA, JAWS, VoiceOver, TalkBack) and
+    note what they do with the log and the digests.
+  - [ ] A "screen reader mode" that reads tables (ls -l, ps, ss) by rows
+    with their column names.
 - [x] **Command-line highlighting**, like fish or zsh-syntax-highlighting:
   the command in green if the game's shell would run it, in red (with a wavy
   underline) otherwise, options, strings, globs that match something, pipes

@@ -94,7 +94,7 @@ const after = (ids: string[]) =>
           : `${list.length} ${list.length > 1 ? 'chapters' : 'chapter'}, about ${duration}.`}
         {h.after && (fr ? ` S'ouvre dans le jeu après ${after(h.after)}, sauf en ouverture directe :` : ` Opens in the game after ${after(h.after)}, unless opened directly:`)}
       </p>
-      {h.id !== 'eraser' && <pre><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
+      {h.id !== 'eraser' && <pre tabindex="0"><code>{`<quetes-de-sysadmin story="${h.id}"${fr ? ' lang="fr"' : ' lang="en"'}></quetes-de-sysadmin>`}</code></pre>}
       <ol class="sheets">
         {list.map((f) => (
           <li class="sheet" id={`c-${f.chapter.id}`}>

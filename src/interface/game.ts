@@ -10,6 +10,7 @@ import type { Shell } from '../engine/shell';
 // The menu reads the catalogue; a story's chapters load when it is opened (story-registry.ts).
 import { CATALOGUE as STORIES } from '../engine/catalogue';
 import { loadedStory, loadStory } from '../engine/story-registry';
+import { FollowDigest, lastOutput, type Block } from '../engine/announce';
 import { NeedsLoading } from '../engine/loading';
 import { machineDomain, machineName, MACHINES, storyMachine, WORKSTATION, type Machine } from '../engine/machines';
 import { description, inMarkdown, note, type Notebook } from '../engine/notebook';
@@ -86,6 +87,25 @@ const SECONDS_FOLLOW = 3;
 export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const t = translator(options.language);
   const typo = (text: string) => typography(text, t.language);
+  // A dialog's texts (dialog-*.ftl, see src/texts/plugin.mjs) load when it
+  // first opens: its fixed parts are empty text nodes until then, filled by
+  // withTexts() before the dialog shows.
+  const lazyNodes = new Map<string, [Text, string, boolean][]>();
+  const lazy = (group: string, id: string, typographic = false) => {
+    const node = document.createTextNode('');
+    if (!lazyNodes.has(group)) lazyNodes.set(group, []);
+    lazyNodes.get(group)!.push([node, id, typographic]);
+    return node;
+  };
+  const withTexts = (group: string, then: () => void) => {
+    const fill = () => {
+      for (const [node, id, typographic] of lazyNodes.get(group) ?? []) node.textContent = typographic ? typo(t(id)) : t(id);
+      lazyNodes.delete(group);
+      then();
+    };
+    if (textsLoaded(t.language, group)) return fill();
+    loadTexts(t.language, group).then(fill, () => announce(t('loading-failed')));
+  };
   const storyTitle = (h: number) => t(`story-${STORIES[h].id}`);
   const KEY = options.saveKey ?? 'quetes-de-sysadmin';
   const chapters = (h: number) => STORIES[h].chapters;
@@ -194,20 +214,20 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       el(
         'fieldset',
         { class: 'start-question' },
-        el('legend', {}, t(`start-here-${q}`)),
-        ...QUESTIONS[q].map((v) => el('label', {}, el('input', { type: 'radio', name: `${startId}-${q}`, value: v }), ' ', el('span', {}, t(`start-here-${q}-${v}`)))),
+        el('legend', {}, lazy('dialog-start-here', `start-here-${q}`)),
+        ...QUESTIONS[q].map((v) => el('label', {}, el('input', { type: 'radio', name: `${startId}-${q}`, value: v }), ' ', el('span', {}, lazy('dialog-start-here', `start-here-${q}-${v}`)))),
       ),
     ),
   );
   const startResult = el('section', { class: 'start-result', 'aria-labelledby': `${startId}-result` });
   // Announced when the suggestion changes: one sentence, not the whole block.
   const startStatus = el('p', { class: 'visually-hidden', role: 'status' });
-  const closeStart = el('button', { type: 'button', class: 'button' }, t('start-here-close'));
+  const closeStart = el('button', { type: 'button', class: 'button' }, lazy('dialog-start-here', 'start-here-close'));
   const startWindow = el(
     'dialog',
     { class: 'start-window', 'aria-labelledby': startId },
-    el('h2', { id: startId }, t('start-here-title')),
-    el('p', { class: 'map-legend' }, typo(t('start-here-intro'))),
+    el('h2', { id: startId }, lazy('dialog-start-here', 'start-here-title')),
+    el('p', { class: 'map-legend' }, lazy('dialog-start-here', 'start-here-intro', true)),
     startForm,
     startResult,
     startStatus,
@@ -222,8 +242,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const feedbackKinds = el(
     'fieldset',
     { class: 'feedback-kind' },
-    el('legend', {}, t('feedback-kind-legend')),
-    ...FEEDBACK_KINDS.map((k) => el('label', {}, el('input', { type: 'radio', name: `${feedbackId}-kind`, value: k }), ' ', el('span', {}, t(`feedback-kind-${k}`)))),
+    el('legend', {}, lazy('dialog-feedback', 'feedback-kind-legend')),
+    ...FEEDBACK_KINDS.map((k) => el('label', {}, el('input', { type: 'radio', name: `${feedbackId}-kind`, value: k }), ' ', el('span', {}, lazy('dialog-feedback', `feedback-kind-${k}`)))),
   );
   const feedbackMessage = el('textarea', { id: `${feedbackId}-message`, rows: '4', 'aria-describedby': `${feedbackId}-message-help`, spellcheck: 'true' }) as HTMLTextAreaElement;
   const feedbackBoxes = Object.fromEntries(
@@ -237,22 +257,22 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const feedbackCommandsNote = el('p', { class: 'map-legend', id: `${feedbackId}-commands` });
   const feedbackPreview = el('textarea', { id: `${feedbackId}-preview`, class: 'feedback-preview', rows: '10', readonly: '', spellcheck: 'false', wrap: 'off' }) as HTMLTextAreaElement;
   const feedbackTruncated = el('p', { class: 'feedback-truncated', hidden: '' });
-  const feedbackGithub = el('a', { class: 'button feedback-github', target: '_blank', rel: 'noopener noreferrer', href: '#' }, t('feedback-github'), el('span', { class: 'visually-hidden' }, ` ${t('feedback-new-tab')}`));
-  const feedbackCopy = el('button', { type: 'button', class: 'button button-secondary' }, t('feedback-copy'));
+  const feedbackGithub = el('a', { class: 'button feedback-github', target: '_blank', rel: 'noopener noreferrer', href: '#' }, lazy('dialog-feedback', 'feedback-github'), el('span', { class: 'visually-hidden' }, ' ', lazy('dialog-feedback', 'feedback-new-tab')));
+  const feedbackCopy = el('button', { type: 'button', class: 'button button-secondary' }, lazy('dialog-feedback', 'feedback-copy'));
   const feedbackStatus = el('p', { class: 'map-legend', role: 'status' });
-  const closeFeedback = el('button', { type: 'button', class: 'button' }, t('feedback-close'));
+  const closeFeedback = el('button', { type: 'button', class: 'button' }, lazy('dialog-feedback', 'feedback-close'));
   const feedbackWindow = el(
     'dialog',
     { class: 'feedback-window', 'aria-labelledby': feedbackId },
-    el('h2', { id: feedbackId }, t('feedback-title')),
-    el('p', { class: 'map-legend' }, typo(t('feedback-intro'))),
+    el('h2', { id: feedbackId }, lazy('dialog-feedback', 'feedback-title')),
+    el('p', { class: 'map-legend' }, lazy('dialog-feedback', 'feedback-intro', true)),
     feedbackKinds,
-    el('p', { class: 'feedback-field' }, el('label', { for: feedbackMessage.id }, t('feedback-message-label')), el('span', { class: 'map-legend', id: `${feedbackId}-message-help` }, typo(t('feedback-message-help'))), feedbackMessage),
+    el('p', { class: 'feedback-field' }, el('label', { for: feedbackMessage.id }, lazy('dialog-feedback', 'feedback-message-label')), el('span', { class: 'map-legend', id: `${feedbackId}-message-help` }, lazy('dialog-feedback', 'feedback-message-help', true)), feedbackMessage),
     el(
       'fieldset',
       { class: 'feedback-parts' },
-      el('legend', {}, t('feedback-parts-legend')),
-      el('p', { class: 'map-legend' }, typo(t('feedback-parts-help'))),
+      el('legend', {}, lazy('dialog-feedback', 'feedback-parts-legend')),
+      el('p', { class: 'map-legend' }, lazy('dialog-feedback', 'feedback-parts-help', true)),
       el(
         'ul',
         {},
@@ -260,22 +280,22 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
           el(
             'li',
             { 'data-part': p },
-            el('label', {}, feedbackBoxes[p], ' ', el('span', {}, t(`feedback-part-${p}`))),
+            el('label', {}, feedbackBoxes[p], ' ', el('span', {}, lazy('dialog-feedback', `feedback-part-${p}`))),
             ...(p === 'commands'
-              ? [feedbackCommandsNote, el('label', { for: feedbackCommands.id, class: 'visually-hidden' }, t('feedback-commands-label')), feedbackCommands]
+              ? [feedbackCommandsNote, el('label', { for: feedbackCommands.id, class: 'visually-hidden' }, lazy('dialog-feedback', 'feedback-commands-label')), feedbackCommands]
               : [feedbackLines[p]]),
           ),
         ),
       ),
-      el('p', { class: 'map-legend' }, typo(t('feedback-never'))),
+      el('p', { class: 'map-legend' }, lazy('dialog-feedback', 'feedback-never', true)),
     ),
-    el('h3', {}, el('label', { for: feedbackPreview.id }, t('feedback-preview'))),
+    el('h3', {}, el('label', { for: feedbackPreview.id }, lazy('dialog-feedback', 'feedback-preview'))),
     feedbackPreview,
-    el('h3', {}, t('feedback-send')),
-    el('p', { class: 'map-legend' }, typo(t('feedback-github-help'))),
+    el('h3', {}, lazy('dialog-feedback', 'feedback-send')),
+    el('p', { class: 'map-legend' }, lazy('dialog-feedback', 'feedback-github-help', true)),
     feedbackTruncated,
     el('p', { class: 'feedback-actions' }, feedbackGithub, ' ', feedbackCopy),
-    el('p', { class: 'map-legend' }, typo(t('feedback-copy-help'))),
+    el('p', { class: 'map-legend' }, lazy('dialog-feedback', 'feedback-copy-help', true)),
     feedbackStatus,
     el('p', { class: 'map-actions' }, closeFeedback),
   ) as HTMLDialogElement;
@@ -338,7 +358,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const idMission = `qds-mission-${Math.random().toString(36).slice(2, 8)}`;
   const titleMission = el('h2', { id: idMission });
   const goalMission = el('p', { class: 'map-legend' });
-  const instructionsMission = el('pre', { class: 'mission-text' });
+  // It scrolls (max-height): focusable, so the keyboard can scroll it too.
+  const instructionsMission = el('pre', { class: 'mission-text', tabindex: '0' });
   const logMission = el('ol', { class: 'mission-log' });
   const emptyMission = el('p', { class: 'map-legend' }, typo(t('mission-nothing')));
   const closeMission = el('button', { type: 'button', class: 'button' }, t('map-close'));
@@ -398,7 +419,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('map-caption'))),
     treeMap,
   );
-  const planSchema = el('div', { class: 'plan-diagram' });
+  // The drawing scrolls sideways on a narrow screen: focusable, named (its text version follows).
+  const planSchema = el('div', { class: 'plan-diagram', tabindex: '0', role: 'region', 'aria-label': t('plan-diagram-label') });
   const listPlan = el('div', { class: 'map-tree' });
   const textPlan = el('details', { class: 'plan-text' }, el('summary', {}, t('plan-version-text')), listPlan);
   const networkPanel = el(
@@ -417,13 +439,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     networkPanel,
     el('p', { class: 'map-actions' }, closeMap),
   ) as HTMLDialogElement;
-  const output = el('div', { class: 'output', role: 'log', 'aria-live': 'polite' });
+  // The terminal's output: a log, each new output read once by a screen
+  // reader (quiet during a follow, see announce.ts).
+  const output = el('div', { class: 'output', role: 'log', 'aria-live': 'polite', 'aria-label': t('output-label') });
   const id = `qds-input-${Math.random().toString(36).slice(2, 8)}`;
-  const prompt = el('label', { class: 'prompt', for: id });
+  const prompt = el('label', { class: 'prompt', for: id, id: `${id}-prompt` });
+  // The line's name: "Command" and the prompt ("me@box:~$", or a question, a password…).
+  const inputName = el('span', { class: 'visually-hidden', id: `${id}-name` }, t('input-label'));
   const input = el('input', {
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
-    'aria-label': t('input-label'),
+    'aria-labelledby': `${inputName.id} ${prompt.id}`,
+    'aria-describedby': `${id}-help`,
   }) as HTMLInputElement;
+  const inputHelp = el('span', { class: 'visually-hidden', id: `${id}-help` }, t('input-help'));
+  // What the game says to screen readers outside the log (announce.ts): the
+  // last output read again, a follow's digests, a chapter's end. Polite: it never takes the focus.
+  const announcer = el('p', { class: 'visually-hidden', role: 'status', 'aria-live': 'polite' });
+  let announceTimer = 0;
+  function announce(text: string) {
+    // Emptied first: the same text twice is still read twice.
+    announcer.textContent = '';
+    clearTimeout(announceTimer);
+    announceTimer = window.setTimeout(() => (announcer.textContent = text), 60);
+  }
+  // Read the last output again (also Alt+R on the command line): shown when it has the focus.
+  const rereadButton = el('button', { type: 'button', class: 'reread-button' }, t('reread-button'));
   // Ctrl-R: history search, like bash; the command found is shown below the line.
   const match = el('p', { class: 'search', 'aria-live': 'polite' });
   // Highlighting of the line (see highlighting.ts): a coloured copy of the
@@ -431,12 +471,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // (keyboard, completion, screen readers) with its text made transparent.
   const coloration = el('div', { class: 'highlighting', 'aria-hidden': 'true' });
   const field = el('span', { class: 'field' }, coloration, input);
-  const form = el('form', { autocomplete: 'off' }, prompt, field, match);
+  const form = el('form', { autocomplete: 'off' }, prompt, inputName, field, inputHelp, match);
   // tail -f, journalctl -f: the command keeps control until Ctrl-C (this button, the keyboard or the key bar).
   const followStop = el('button', { type: 'button', class: 'stop-follow', hidden: '' }, el('kbd', {}, '^C'), ` ${t('follow-stop')}`);
   // Ctrl-Z: the command stops and becomes a job (jobs, fg, bg).
   const followSuspend = el('button', { type: 'button', class: 'suspend-follow', hidden: '' }, el('kbd', {}, '^Z'), ` ${t('follow-suspend')}`);
-  const terminal = el('div', { class: 'terminal' }, output, form, followStop, followSuspend);
+  const terminal = el('div', { class: 'terminal' }, rereadButton, output, form, followStop, followSuspend);
   const quitFocus = el('button', { type: 'button', class: 'leave-focus' }, t('display-quit-focus'));
   // The keys that phone keyboards lack (shown on touch screens).
   const TOUCHES: [string, string][] = [
@@ -485,6 +525,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     ['Tab', 'shortcuts-tab'],
     ['↑ ↓', 'shortcuts-history'],
     ['Ctrl-C', 'shortcuts-cancel'],
+    ['Esc Tab', 'shortcuts-escape-tab'],
+    ['Shift-Tab', 'shortcuts-shift-tab'],
+    ['Alt-R', 'shortcuts-reread'],
   ];
   const shortcuts = el(
     'section',
@@ -653,7 +696,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow, feedbackWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow, feedbackWindow, announcer);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -667,7 +710,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // so that a phone screen doesn't have to scroll sideways.
   const measure = el('span', { class: 'measure', 'aria-hidden': 'true' }, '0'.repeat(20));
   output.appendChild(measure);
+  // A table wider than the terminal scrolls sideways (pre .columns): the
+  // keyboard must reach it too, so a block that overflows takes a tab stop.
+  const scrollables = () => {
+    for (const pre of [...output.querySelectorAll('pre')].slice(-200)) {
+      if (pre.scrollWidth > pre.clientWidth + 1) pre.setAttribute('tabindex', '0');
+      else pre.removeAttribute('tabindex');
+    }
+  };
   const columnsUpdate = () => {
+    scrollables();
     const character = measure.getBoundingClientRect().width / 20;
     const width = output.clientWidth - parseFloat(getComputedStyle(output).paddingLeft) - parseFloat(getComputedStyle(output).paddingRight);
     if (character > 0 && width > 0) gameTerminal.columns = Math.max(20, Math.floor(width / character));
@@ -988,6 +1040,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const detail = el('button', { type: 'button', class: 'link summary-button', 'aria-haspopup': 'dialog' }, t('summary-button'));
     detail.addEventListener('click', () => openSummary(sh, recap));
     output.appendChild(el('p', { class: 'summary' }, recap, ' ', detail));
+    announce(t('chapter-done-announce', { chapter: t(`chapter-${sh.chapter.id}`) }));
   };
   closeSummary.addEventListener('click', () => summaryWindow.close());
   summaryWindow.addEventListener('close', () => setTimeout(() => input.focus()));
@@ -1005,6 +1058,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // Back to the bottom of the current machine's history (it may have
     // changed: a new command, or a switch of machine through ssh/exit/menu).
     position = machineHistory().length;
+    scrollables();
     terminal.scrollTop = terminal.scrollHeight;
   };
 
@@ -1159,12 +1213,36 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     submitLine(input.value);
   });
 
+  // Read the last output again (announce.ts): the blocks since the last command line.
+  const reread = () => {
+    const blocks: Block[] = [...output.children]
+      .filter((c) => !c.matches('.measure, .explainer'))
+      .map((c) => ({ command: c.matches('pre.cmd'), text: (c as HTMLElement).innerText ?? c.textContent ?? '' }));
+    const last = lastOutput(blocks);
+    if (!last.text) return announce(t('reread-empty'));
+    announce(last.cut ? `${t('reread-cut', { lines: last.lines, shown: last.lines - last.cut })}\n${last.text}` : last.text);
+  };
+  rereadButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    reread();
+  });
+  terminal.addEventListener('keydown', (e) => {
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.code !== 'KeyR' || (e.target as HTMLElement).matches('textarea')) return;
+    e.preventDefault();
+    reread();
+  });
+
   // A follow (tail -f, journalctl -f): the screen makes time pass on the
-  // machine (SECONDS_FOLLOW per real second) and shows what arrives.
+  // machine (SECONDS_FOLLOW per real second) and shows what arrives. The
+  // log goes quiet meanwhile: a digest every few seconds (announce.ts).
   let followTimer: number | null = null;
+  let digest: FollowDigest | null = null;
+  let followSeconds = 0;
   const followEnd = () => {
     if (followTimer !== null) clearInterval(followTimer);
     followTimer = null;
+    digest = null;
+    output.setAttribute('aria-live', 'polite');
     followStop.hidden = true;
     followSuspend.hidden = true;
     form.hidden = false;
@@ -1187,12 +1265,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // watch redraws its screen: the last one is replaced rather than followed by the next.
     const screen = gameTerminal.followsScreen;
     if (screen) output.lastElementChild?.classList.add('watch');
+    output.setAttribute('aria-live', 'off');
+    followSeconds = 0;
+    digest = new FollowDigest(0, { screen, initial: screen ? (output.lastElementChild?.textContent ?? '') : '' });
+    announce(t(screen ? 'follow-announce-watch' : 'follow-announce-start'));
     followTimer = window.setInterval(() => {
       const fresh = gameTerminal.follow(SECONDS_FOLLOW);
-      if (!fresh) return;
-      if (screen) output.querySelectorAll('pre.watch').forEach((p) => p.remove());
-      show(fresh, screen ? 'watch' : 'follow');
-      after();
+      followSeconds++;
+      if (fresh) {
+        if (screen) output.querySelectorAll('pre.watch').forEach((p) => p.remove());
+        show(fresh, screen ? 'watch' : 'follow');
+        digest?.add(withoutColours(fresh));
+        after();
+      }
+      const due = digest?.tick(followSeconds);
+      if (due) announce(due.kind === 'screen' ? t('follow-announce-screen') : t('follow-announce-lines', { count: due.count, line: due.last }));
     }, 1000);
   };
   const suspendFollow = () => {
@@ -1278,7 +1365,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // After a key (Tab, ↑, Ctrl-R…), the line may have changed; the field may have scrolled.
   input.addEventListener('keydown', () => setTimeout(colourInput));
   for (const event of ['scroll', 'select', 'keyup', 'click']) input.addEventListener(event, () => (coloration.scrollLeft = input.scrollLeft));
+  // Leaving the line with the keyboard (Tab completes): Shift+Tab goes back,
+  // Escape then Tab goes forward, as in code editors (no keyboard trap, WCAG 2.1.2).
+  let tabLeaves = false;
   input.addEventListener('keydown', (e) => {
+    const leaving = tabLeaves;
+    tabLeaves = e.key === 'Escape' && !query;
+    if (e.key === 'Tab' && (leaving || e.shiftKey)) return;
     if (gameTerminal.shell.waiting || gameTerminal.shell.question) return;
     if (e.ctrlKey && e.key.toLowerCase() === 'r') {
       e.preventDefault();
@@ -2277,7 +2370,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     );
     startStatus.textContent = typo(t('start-here-announce', { chapter: t(`chapter-${r.main.chapter}`), path: t(`path-${r.main.path}`) }));
   };
-  const openStart = () => {
+  const openStart = () => withTexts('dialog-start-here', showStart);
+  const showStart = () => {
+    if (startWindow.open) return;
     const answers = readAnswers(display.startHere);
     startForm.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((i) => {
       i.checked = answers[i.name.slice(startId.length + 1) as Question] === i.value;
@@ -2343,7 +2438,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     feedbackTruncated.hidden = !report.truncated;
     feedbackTruncated.textContent = report.truncated ? typo(report.messageCut ? t('feedback-link-message-cut') : t('feedback-link-truncated', { count: report.omittedLines })) : '';
   };
-  const openFeedback = (opener: HTMLElement | null) => {
+  const openFeedback = (opener: HTMLElement | null) => withTexts('dialog-feedback', () => showFeedback(opener));
+  const showFeedback = (opener: HTMLElement | null) => {
     if (feedbackWindow.open) return;
     feedbackOpener = opener;
     // What it is about: kept from the last time (a draft), a bug by default.
