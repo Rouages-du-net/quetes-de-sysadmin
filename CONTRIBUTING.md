@@ -136,6 +136,33 @@ paths, `CODE_ORDER`, tests. `npm run build` then checks the first visit's
 budget: the story's own code must stay in its chunk, so the engine's core
 (shell, commands, `console.ts`) never imports a chapter.
 
+#### A story's own commands
+
+A tool that only one story (or a few) uses goes in an **engine family**,
+not in the first visit (`src/engine/families.ts`, see `docs/DEPLOYMENT.md`,
+"Chunks and budget"). Its engine (`src/engine/<tool>.ts`) and its commands
+(`src/engine/commands/<tool>.ts`) stay where they are; then:
+
+1. `src/engine/families/<family>.ts` imports its commands and calls
+   `registerFamily('<family>', { ...MY_COMMANDS }, HOOKS)` (copy
+   `families/cups.ts`); its loader goes in `FAMILIES` and its `HOOKS` type in
+   `Hooks` (`families.ts`).
+2. The story's module imports it: `import '../families/<family>';`
+   (`tests/families.test.ts` checks that every story whose chapters list the
+   family's commands does).
+3. The core (the shell, the other commands) never imports the family's
+   modules: where it must call into the tool, it goes through a hook,
+   `family('<family>').myFunction(…)` (throws `NeedsLoading`: the line runs
+   again once the family is there) or `familyIfLoaded('<family>')?.…` for a
+   question only the story's machines can answer yes to.
+   `tests/families.test.ts` fails if the game reaches a family's module.
+4. Its commands stay in `commands/index.ts`'s table by their entry
+   (options, section, `cmdlet`…), generated into `src/engine/families.json`
+   by `npm run catalogue`; their options and examples go in `pages.ts` and
+   `examples.ts` as for any command.
+
+A command every story may meet (`sleep`, `base64`) stays in the core.
+
 ### The chapter (`Chapter`, in `src/engine/world.ts`)
 
 - `id`, `number`, and the story that holds it.
@@ -210,8 +237,10 @@ A tool (nginx, nftables, slapd…) has its engine in `src/engine/<tool>.ts`
 (no DOM, no displayed text) and its commands in
 `src/engine/commandes/<tool>.ts`. For each command:
 
-- its entry in `src/engine/commands/index.ts`;
-- its options and examples in `src/engine/commands/pages.ts`;
+- its entry in `src/engine/commands/index.ts`, or in an engine family when
+  only some stories use it (see "A story's own commands");
+- its options in `src/engine/commands/pages.ts`, its examples and SEE ALSO
+  in `src/engine/commands/examples.ts` (they load with the manual);
 - its page in `src/texts/en/manual.ftl` and `fr/manual.ftl`
   (`man-<command>`, `.synopsis`, `.option-X`, `.example-N`);
 - a row in the table of differences in `docs/SCENARIOS.md`;

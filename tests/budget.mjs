@@ -14,8 +14,10 @@ import { gzipSync, brotliCompressSync } from 'node:zlib';
 import { embedFirstVisit, pageFirstVisit } from '../src/pwa/first-load.mjs';
 
 // Gzip bytes (what mod_deflate sends), about 15 % over the size measured
-// when the budget was set (820, 888 and 886 KiB); raise it on purpose, not by habit.
-const BUDGET = { '/en/': 960_000, '/fr/': 1_040_000, embed: 1_040_000 };
+// when the budget was set (549, 553 and 588 KiB, once the engine's families,
+// the manual's examples, the chapters' summaries and English's core for
+// another language left the first visit); raise it on purpose, not by habit.
+const BUDGET = { '/en/': 646_000, '/fr/': 652_000, embed: 692_000 };
 
 const report = process.argv.includes('--report');
 const dist = report ? process.argv[process.argv.indexOf('--report') + 1] : 'dist';
@@ -41,6 +43,6 @@ for (const [name, files] of [
 }
 console.log(`First visit (JS + CSS before the terminal answers), ${dist}:\n${rows.join('\n')}`);
 if (failed) {
-  console.error('\nThe first visit is over budget: load the new code lazily (a story module, a text group), or raise BUDGET in tests/budget.mjs on purpose.');
+  console.error('\nThe first visit is over budget: load the new code lazily (a story module, an engine family, a text group), or raise BUDGET in tests/budget.mjs on purpose.');
   process.exit(1);
 }
