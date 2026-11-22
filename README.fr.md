@@ -32,6 +32,10 @@ un système entièrement simulé : rien ne sort du navigateur.
   iOS) ; installé, le jeu s'ouvre en plein écran et marche hors ligne, et ta
   progression reste sur l'appareil.
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Ta progression reste dans ton navigateur, sans compte. Un chapitre en
+  cours est sauvegardé après chaque saisie : si la page se ferme (un
+  téléphone ferme souvent les onglets en arrière-plan), le jeu propose de le
+  reprendre là où tu en étais (le réglage « Sauvegarde auto » le désactive).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

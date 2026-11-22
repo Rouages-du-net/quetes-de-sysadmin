@@ -299,6 +299,11 @@ presents them for people.
   (and the rescue snapshot, `Console.restore`: the engine stays
   deterministic, no `Date.now` nor `Math.random`); you start from the
   workstation and `ssh` to each story's machine (`commands/ssh.ts`).
+  The autosave inside a chapter in `src/engine/autosave.ts` (the inputs,
+  `Console.journal`, kept in `localStorage` under `KEY-autosave-LANGUAGE`,
+  replayed by `Console.replay`; the opening's hash and a `fingerprint` of
+  the machine detect a chapter changed since; the banner and the setting in
+  `game.ts`; tests `tests/autosave.test.ts`).
 - `src/engine/access.ts`: the "real" ssh (machines with `state.realSsh` and
   a story's internal machines, `Chapter.hosts`): `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, passphrase, password;

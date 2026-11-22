@@ -593,6 +593,74 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
+// Autosave inside a chapter: the page reloaded (a tab closed, a phone that
+// killed it), the game offers to resume; resuming replays the inputs and
+// gives back the machine; "start again" forgets them.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 }, colorScheme: width < 500 ? 'dark' : 'light' });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  const game = page.locator('quetes-de-sysadmin');
+  const taper = async (l) => {
+    await game.locator('form input').fill(l);
+    await game.locator('form input').press('Enter');
+  };
+  const kept = () => page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-autosave-fr') ?? 'null'));
+  for (const l of ['ssh royaume', 'yes', 'mv Jetee/filet Port/Hangar', 'cd Port']) await taper(l);
+  check((await kept())?.n === 2 && (await kept())?.chapter === 'lighthouse', `autosave ${width} px: the chapter's inputs are kept in the browser`);
+  await page.reload();
+  const offer = game.locator('.resume-offer');
+  check((await offer.isVisible()) && (await offer.textContent()).includes('après 2 saisies'), `autosave ${width} px: reloaded, the game offers to resume`);
+  check((await game.locator('[role="status"]').first().textContent()).includes('Chapitre en cours'), `autosave ${width} px: the offer is announced`);
+  const box = await offer.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `autosave ${width} px: the offer fits on the screen`);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/autosave-${width}.png`, fullPage: false });
+  await offer.locator('.button', { hasText: 'Reprendre' }).click();
+  check(await offer.isHidden(), `autosave ${width} px: the offer goes away`);
+  check((await game.locator('.output').textContent()).includes('Chapitre repris là où tu en étais : 2 saisies rejouées'), `autosave ${width} px: the chapter is resumed`);
+  check((await game.locator('.output').textContent()).includes('mv Jetee/filet Port/Hangar'), `autosave ${width} px: the end of the terminal is shown again`);
+  check((await game.locator('.prompt').textContent()).includes('~/Port'), `autosave ${width} px: back in the same directory`);
+  await taper('ls Hangar');
+  check((await game.locator('.output pre').last().textContent()).includes('filet'), `autosave ${width} px: the net is still in the boathouse`);
+  check((await kept())?.n === 3, `autosave ${width} px: the autosave goes on after a resume`);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/autosave-resumed-${width}.png` });
+  // The story's chunk and texts slow to come (story-registry.ts): "Resume"
+  // pressed before they are there waits for them, then replays.
+  const slow = async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.fallback().catch(() => {});
+  };
+  await page.route(/\/_astro\/(eraser\.|texts-fr--story-eraser)/, slow);
+  await page.evaluate(() => location.reload());
+  await offer.waitFor({ state: 'visible', timeout: 30000 });
+  check(await page.evaluate(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.qds[aria-busy]') !== null), `autosave ${width} px: the story is still loading when the offer shows`);
+  await offer.locator('.button', { hasText: 'Reprendre' }).click();
+  await waitReady(page);
+  check((await game.locator('.output').textContent()).includes('3 saisies rejouées') && (await game.locator('.prompt').textContent()).includes('~/Port'), `autosave ${width} px: resumed while the story was loading, once it has loaded`);
+  await page.unroute(/\/_astro\/(eraser\.|texts-fr--story-eraser)/, slow);
+  await page.reload();
+  await offer.locator('.button', { hasText: 'Recommencer' }).click();
+  check((await offer.isHidden()) && (await kept()) === null, `autosave ${width} px: "start again" forgets the inputs`);
+  await taper('ls Port/Hangar');
+  check(!(await game.locator('.output pre').last().textContent()).includes('filet'), `autosave ${width} px: the chapter starts again from the beginning`);
+  check((await kept())?.n === 1, `autosave ${width} px: the new start is kept`);
+  // The setting: off, nothing is kept.
+  await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).click();
+  check((await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).getAttribute('aria-pressed')) === 'false' && (await kept()) === null, `autosave ${width} px: turned off, nothing is kept`);
+  await taper('ls');
+  check((await kept()) === null, `autosave ${width} px: turned off, nothing is written`);
+  await game.locator('.setting-button', { hasText: 'Sauvegarde auto' }).click();
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `autosave ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `autosave ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // The class table: two students' files and a code, read in the
 // browser; the downloaded CSV neutralises a booby-trapped name.
 for (const width of [1000, 375]) {
