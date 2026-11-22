@@ -506,3 +506,9 @@ name-message_from_halima-txt = message_de_halima.txt
 name-note_from_lwazi-txt = mot_de_lwazi.txt
 name-scan_from_selin-txt = scan_de_selin.txt
 name-message_from_moana-txt = message_de_moana.txt
+## La Station de sauvetage
+name-message_from_marisol-txt = message_de_marisol.txt
+name-note_from_yerlan-txt = mot_de_yerlan.txt
+name-message_from_leilani-txt = message_de_leilani.txt
+name-sample-booking-eml = exemple-reservation.eml
+name-sample-list-eml = exemple-liste.eml

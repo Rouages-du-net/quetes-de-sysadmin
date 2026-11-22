@@ -696,6 +696,15 @@ them safely.
   `mariadb-dump`, `mariadb-admin`, `mariadb-check`,
   `mariadb-secure-installation`; five MariaDB errors in the error explainer).
 
+- [x] **An inbound mail server** (Postfix receiving, Dovecot 2.4 with
+  Pigeonhole's Sieve, rspamd 3.12): a mailbox over quota, spam thresholds,
+  a whitelist and Bayes, Sieve sorting and a vacation reply. Done: story 44,
+  "The Lifeboat" (`dovecot.ts`: configuration, passwd-file userdb, Maildir,
+  quota and warnings, LMTP; `sieve.ts`; `rspamd.ts`: UCL, actions,
+  multimap, settings, Bayes, greylisting; `inbound.ts`; `doveadm`,
+  `doveconf`, `sievec`, `sieve-test`, `rspamc`, `rspamadm` in the `inbound`
+  family; four errors in the error explainer).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

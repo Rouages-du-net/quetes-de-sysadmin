@@ -110,6 +110,9 @@ export const CODE_ORDER = [
   'sleeping-connections',
   'least-privilege',
   'broken-replica',
+  'mailbox-full',
+  'spam-tide',
+  'sorting-office',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

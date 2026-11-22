@@ -834,6 +834,32 @@ presents them for people.
   connections and writes and the replica's threads each command in
   `passTime`); `sleeping-connections.ts`, `least-privilege.ts`,
   `broken-replica.ts`. Tests: `tests/allotments.test.ts`.
+- An inbound mail server, the `inbound` family (`families/inbound.ts`):
+  Dovecot 2.4 in `src/engine/dovecot.ts` (`state.dovecot`: the
+  configuration read like doveconf, `readConf`, named filters and
+  `!include`, loaded at start and on reload; the passwd-file userdb
+  `/etc/dovecot/users` and its `userdb_*` fields; Maildir++ mailboxes,
+  `messagesOf`; the quota, `quotaRoot`, the count and maildir drivers and
+  `maildirsize`, grace, `quota_warning`; LMTP delivery `lmtpDeliver` with
+  Sieve, `runSieve`, `sieveScripts`: before scripts and the active
+  personal one), Sieve in `src/engine/sieve.ts` (`compile` with
+  Pigeonhole's messages, `execute`, vacation's checks, `printResult` for
+  sieve-test), rspamd in `src/engine/rspamd.ts` (`state.rspamd`: UCL
+  `readUcl`, `readConfig` from local.d and override.d, `scan`: symbols from
+  the story's network `RspamdNet`, multimap, settings, Bayes `learn`, the
+  actions; `logScan`), Postfix receiving in `src/engine/inbound.ts`
+  (`receive`: smtpd, the rspamd milter, greylisting, virtual aliases,
+  LMTP, bounces in mail.log); `doveadm`, `doveconf`, `sievec`,
+  `sieve-test`, `rspamc`, `rspamadm` and the `doveadm-search-query(7)` page
+  in `src/engine/inbound-client.ts`. `chapters/lifeboat.ts`: what the
+  chapters of "The Lifeboat" share (`slipway`, the station's mail server:
+  its Postfix, Dovecot and rspamd files, the users' Maildirs, the mail of
+  the internet `ham`, `spam`, `newsletter`, `listMail`, `direct`, arriving
+  each command in `passTime`; `classify` tells a message's family from its
+  id); `mailbox-full.ts`, `spam-tide.ts` (reference messages scanned with
+  the running configuration), `sorting-office.ts` (each user's scripts
+  tried on reference messages, `runSieve` quiet). Tests:
+  `tests/lifeboat.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

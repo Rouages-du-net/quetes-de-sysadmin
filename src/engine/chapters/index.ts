@@ -48,6 +48,7 @@ import { chapters as healthCentre } from '../stories/health-centre';
 import { chapters as bloodDrive } from '../stories/blood-drive';
 import { chapters as choir } from '../stories/choir';
 import { chapters as allotments } from '../stories/allotments';
+import { chapters as lifeboat } from '../stories/lifeboat';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -95,6 +96,7 @@ export const STORIES: Story[] = [
   { id: 'blood-drive', after: ['blue-green', 'dmz'], chapters: bloodDrive },
   { id: 'choir', after: ['journal-full', 'database'], chapters: choir },
   { id: 'allotments', after: ['database', 'firewall'], chapters: allotments },
+  { id: 'lifeboat', after: ['policy', 'quota'], chapters: lifeboat },
 ];
 
 // All chapters, across all stories (unique identifiers).

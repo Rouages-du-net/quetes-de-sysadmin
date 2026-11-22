@@ -60,3 +60,4 @@ machine-hearth = hearth
 machine-lb1 = lb1
 machine-baton = baton
 machine-trowel = trowel
+machine-slipway = slipway

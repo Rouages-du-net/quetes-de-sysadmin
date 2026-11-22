@@ -1398,6 +1398,24 @@
    "ownOptions": true
   }
  ],
+ "doveadm": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "doveadm-search-query": [
+  "inbound",
+  {
+   "section": 7
+  }
+ ],
+ "doveconf": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
  "driverless": [
   "cups",
   {
@@ -1719,6 +1737,18 @@
    "ownOptions": true
   }
  ],
+ "rspamadm": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "rspamc": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
  "sc.exe": [
   "windows",
   {
@@ -1730,6 +1760,18 @@
   "windows",
   {
    "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "sieve-test": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "sievec": [
+  "inbound",
+  {
    "ownOptions": true
   }
  ],

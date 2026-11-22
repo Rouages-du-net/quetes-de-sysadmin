@@ -93,3 +93,5 @@ password-donor-chair-12 = fauteuil-don-12
 password-choir-loft-31 = tribune-31
 ## Les Jardins
 password-compost-heap-17 = tas-de-compost-17
+## La Station de sauvetage
+password-storm-lantern-24 = lanterne-tempete-24

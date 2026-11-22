@@ -93,3 +93,5 @@ password-donor-chair-12 = donor-chair-12
 password-choir-loft-31 = choir-loft-31
 ## The Allotments
 password-compost-heap-17 = compost-heap-17
+## The Lifeboat
+password-storm-lantern-24 = storm-lantern-24

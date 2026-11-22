@@ -5371,6 +5371,107 @@
      "events": 16
     }
    ]
+  },
+  {
+   "id": "lifeboat",
+   "after": [
+    "policy",
+    "quota"
+   ],
+   "texts": [
+    "chapter-mailbox-full.ftl",
+    "chapter-sorting-office.ftl",
+    "chapter-spam-tide.ftl",
+    "hints-lifeboat.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "mailbox-full",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "sort",
+      "du",
+      "df",
+      "find",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "postconf",
+      "postqueue",
+      "mailq",
+      "doveadm",
+      "doveconf",
+      "exit"
+     ],
+     "events": 11
+    },
+    {
+     "id": "spam-tide",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "sort",
+      "uniq",
+      "find",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "postconf",
+      "postfix",
+      "doveadm",
+      "rspamc",
+      "rspamadm",
+      "exit"
+     ],
+     "events": 11
+    },
+    {
+     "id": "sorting-office",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "mkdir",
+      "ln",
+      "chown",
+      "chmod",
+      "nano",
+      "sudo",
+      "systemctl",
+      "doveadm",
+      "doveconf",
+      "sievec",
+      "sieve-test",
+      "exit"
+     ],
+     "events": 11
+    }
+   ]
   }
  ]
 }

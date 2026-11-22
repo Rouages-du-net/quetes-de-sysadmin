@@ -74,6 +74,24 @@ explainer-db-read-only = The database server is read-only (its read_only variabl
     .match =
         running with the --read-only option
 
+explainer-sieve-compile = The Sieve script could not be compiled, so it can't run. The message gives the script's line and the first problem only: an unknown command is often a typo, or an extension used without being required at the top (require ["fileinto", "vacation"];); "expected end of command ';'" means a semicolon is missing at the end of the line before. Fix it, then compile again with sievec before activating the script.
+    .match =
+        error: validation failed.
+        error: parse failed.
+        Compilation failed
+
+explainer-dovecot-config = Dovecot can't read its configuration: the file and the line are in the message. "Unknown setting" is a misspelled setting (or one from another Dovecot version: 2.4 renamed many), "Missing '{"}"}'" a section left open. As long as the file is wrong, doveadm and doveconf stop, and a reload keeps the old configuration. doveconf -n reads it again once fixed.
+    .match =
+        Error in configuration file
+
+explainer-mail-unknown-user = The user isn't in Dovecot's userdb. Dovecot's users are what its userdb returns (here a passwd-file), not the machine's accounts, and the name is usually the whole address: user@domain. doveadm user '*' lists the users Dovecot knows.
+    .match =
+        User doesn't exist
+
+explainer-search-query = doveadm didn't understand the search query. Each key takes its value just after it (mailbox Trash, savedbefore 2031-01-01, larger 5M); a date is YYYY-MM-DD or an interval such as 30d or 2w (there is no year unit); OR goes between two keys, and parentheses must be escaped from the shell. man doveadm-search-query lists the keys.
+    .match =
+        Invalid search query
+
 explainer-refused = The machine answered, but nothing accepted the connection on that port: no program listens there, or a firewall actively rejects it. On the server, ss -tlnp lists the ports where programs listen, and systemctl status says whether the service runs. Check the address and the port you used, too.
     .match =
         Connection refused

@@ -88,3 +88,5 @@ story-choir = The Choir
     .summary = A community choir keeps its members' data on a small Debian server, and the board once wrote down how long it would keep it. Logs kept since 2027, a member who asks for everything the choir holds about her, another who asks to be forgotten: personal data and its retention, from the sysadmin's side.
 story-allotments = The Allotments
     .summary = An allotments association books its plots, its tools and its watering slots through a small app on a MariaDB server. Connections that never leave and a query that reads millions of rows, an app given the keys to everything, a replica that silently stopped following: running a database, from the sysadmin's side.
+story-lifeboat = The Lifeboat
+    .summary = A volunteer lifeboat station receives its mail on a small Debian server: Postfix, Dovecot and rspamd. A mailbox that bounces everything, a tide of spam that buries the safety bulletin the crew needs, and the winter bookings to sort while the treasurer is away: running the inbound side of mail, from the sysadmin's chair.

@@ -503,3 +503,9 @@ name-message_from_halima-txt = message_from_halima.txt
 name-note_from_lwazi-txt = note_from_lwazi.txt
 name-scan_from_selin-txt = scan_from_selin.txt
 name-message_from_moana-txt = message_from_moana.txt
+## The Lifeboat
+name-message_from_marisol-txt = message_from_marisol.txt
+name-note_from_yerlan-txt = note_from_yerlan.txt
+name-message_from_leilani-txt = message_from_leilani.txt
+name-sample-booking-eml = sample-booking.eml
+name-sample-list-eml = sample-list.eml

@@ -44,6 +44,14 @@ explainer-db-syntax = Le serveur de base n'a pas pu lire l'instruction SQL. Le t
 
 explainer-db-read-only = Le serveur de base est en lecture seule (sa variable read_only est active) : il refuse les écritures des comptes ordinaires. Sur un réplica, c'est voulu : les écritures vont au primaire, et le réplica les reçoit. SELECT @@read_only montre le réglage ; connecte-toi au primaire pour écrire.
 
+explainer-sieve-compile = Le script Sieve n'a pas pu être compilé : il ne peut donc pas tourner. Le message donne la ligne et le premier problème seulement : une commande inconnue est souvent une faute de frappe, ou une extension utilisée sans être demandée en tête (require ["fileinto", "vacation"];) ; « expected end of command ';' » veut dire qu'il manque un point-virgule au bout de la ligne d'avant. Corrige, puis compile de nouveau avec sievec avant d'activer le script.
+
+explainer-dovecot-config = Dovecot n'arrive pas à lire sa configuration : le fichier et la ligne sont dans le message. « Unknown setting » est un réglage mal écrit (ou d'une autre version de Dovecot : la 2.4 en a renommé beaucoup), « Missing '{"}"}' » une section restée ouverte. Tant que le fichier est faux, doveadm et doveconf s'arrêtent, et un reload garde l'ancienne configuration. doveconf -n la relit une fois corrigée.
+
+explainer-mail-unknown-user = Cet utilisateur n'est pas dans la base d'utilisateurs (userdb) de Dovecot. Les utilisateurs de Dovecot sont ce que renvoie sa userdb (ici un passwd-file), pas les comptes de la machine, et le nom est en général l'adresse entière : utilisateur@domaine. doveadm user '*' liste les utilisateurs que Dovecot connaît.
+
+explainer-search-query = doveadm n'a pas compris la requête de recherche. Chaque clé prend sa valeur juste après elle (mailbox Trash, savedbefore 2031-01-01, larger 5M) ; une date s'écrit AAAA-MM-JJ ou comme un intervalle, 30d ou 2w (il n'y a pas d'unité pour l'année) ; OR se place entre deux clés, et les parenthèses doivent être protégées du shell. man doveadm-search-query liste les clés.
+
 explainer-refused = La machine a répondu, mais rien n'a accepté la connexion sur ce port : aucun programme n'y écoute, ou un pare-feu la rejette activement. Sur le serveur, ss -tlnp liste les ports où des programmes écoutent, et systemctl status dit si le service tourne. Vérifie aussi l'adresse et le port utilisés.
 
 explainer-timed-out = Aucune réponse n'est revenue avant que l'outil abandonne. Les paquets ont sans doute été jetés en route, souvent par un pare-feu qui ignore au lieu de rejeter, ou la machine est éteinte, ou l'adresse est fausse. Compare avec « Connection refused », qui veut dire que la machine, elle, a répondu.

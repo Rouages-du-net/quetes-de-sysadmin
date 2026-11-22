@@ -29,6 +29,7 @@ import type * as Directory from './families/directory';
 import type * as Forge from './families/forge';
 import type * as Ha from './families/ha';
 import type * as Ibmi from './families/ibmi';
+import type * as Inbound from './families/inbound';
 import type * as K8s from './families/k8s';
 import type * as Libvirt from './families/libvirt';
 import type * as Mariadb from './families/mariadb';
@@ -45,6 +46,7 @@ export const FAMILIES = {
   forge: () => import('./families/forge'),
   ha: () => import('./families/ha'),
   ibmi: () => import('./families/ibmi'),
+  inbound: () => import('./families/inbound'),
   k8s: () => import('./families/k8s'),
   libvirt: () => import('./families/libvirt'),
   mariadb: () => import('./families/mariadb'),
@@ -62,6 +64,7 @@ interface Hooks {
   forge: typeof Forge.HOOKS;
   ha: typeof Ha.HOOKS;
   ibmi: typeof Ibmi.HOOKS;
+  inbound: typeof Inbound.HOOKS;
   k8s: typeof K8s.HOOKS;
   libvirt: typeof Libvirt.HOOKS;
   mariadb: typeof Mariadb.HOOKS;

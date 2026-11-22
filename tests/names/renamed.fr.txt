@@ -1737,6 +1737,23 @@ broken-replica:rake
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+mailbox-full
+  /home/you → /home/vous
+  /home/you/message_from_marisol.txt → /home/vous/message_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+
+spam-tide
+  /home/you → /home/vous
+  /home/you/message_from_leilani.txt → /home/vous/message_de_leilani.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+
+sorting-office
+  /home/you → /home/vous
+  /home/you/message_from_marisol.txt → /home/vous/message_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+  /home/you/sample-booking.eml → /home/vous/exemple-reservation.eml
+  /home/you/sample-list.eml → /home/vous/exemple-liste.eml
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

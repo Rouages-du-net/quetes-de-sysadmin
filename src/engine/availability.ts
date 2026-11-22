@@ -84,6 +84,8 @@ const MODELS: [string[], string[], string[]][] = [
   [['kubectl', 'k3s'], ['k8s'], ['/etc/rancher']],
   [['psql', 'pg_dump', 'pg_restore', 'createdb', 'dropdb', 'pg_lsclusters', 'pg_ctlcluster', 'pg_isready', 'pg_ctl'], ['postgres'], ['/etc/postgresql']],
   [['mariadb-dump', 'mysqldump', 'mariadb-admin', 'mysqladmin', 'mariadb-check', 'mysqlcheck', 'mariadb-secure-installation', 'mariadb', 'mysql'], ['mariadb'], ['/etc/mysql']],
+  [['doveadm', 'doveconf', 'sievec', 'sieve-test'], ['dovecot'], ['/etc/dovecot']],
+  [['rspamc', 'rspamadm'], ['rspamd'], ['/etc/rspamd']],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],
   [['nginx'], ['nginx'], ['/etc/nginx']],

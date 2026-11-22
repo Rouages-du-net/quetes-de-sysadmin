@@ -279,6 +279,12 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | MariaDB's server (`mariadb.ts`, The Allotments) | MariaDB 11.8 as Debian 13 ships it: `/etc/mysql/my.cnf` and its `!includedir` read at start (the groups `[server]`, `[mysqld]`, `[mariadb]`, `[mariadbd]`, `[mariadb-11.8]`, dashes or underscores, `loose-`, `skip-`; an unknown variable or a bind-address the machine doesn't have stops it, with mariadbd's messages); the variables (`SET GLOBAL` for the dynamic ones, `ERROR 1238` for the others, `SET PERSIST` refused; `wait_timeout` copied into each session when it connects); accounts `'user'@'host'` tried from the most specific host, the named user before the anonymous one, `unix_socket` and `mysql_native_password` (the real hash), `IDENTIFIED VIA … OR …`, Debian's root and `mysql@localhost`, `mariadb.sys`; privileges at the global, database and table levels; `max_connections` and the extra slot of `CONNECTION ADMIN`; `wait_timeout` closing idle sessions ("Aborted connection" in the journal); `read_only` and `READ_ONLY ADMIN`; the slow query log in MariaDB's format; a row-based binary log with GTIDs, a replica's IO and SQL threads, their errors (1062, 1032), `sql_slave_skip_counter`, `Seconds_Behind_Master`; the `mysql` and `mysqld` aliases of the unit | one binary log file, no rotation; only row changes replicate (no DDL, no account statement); no reverse DNS (as with `skip-name-resolve`); no roles, no column privileges, no TLS; the clock moves thirty seconds per command; a dump's consistency is decided from the server's state (writes arriving, locks), not from the rows of a real moment |
 | MariaDB's SQL (`mariadb-sql.ts`) | `SHOW` (DATABASES, TABLES, [FULL] PROCESSLIST, VARIABLES, STATUS, GRANTS, CREATE TABLE, CREATE USER, INDEX, REPLICA/SLAVE STATUS, MASTER/BINLOG STATUS, BINARY LOGS, WARNINGS), `USE`, `SELECT` (columns, `count(*)`, WHERE as `sql-where.ts` reads it, one GROUP BY column, ORDER BY, LIMIT; `@@variables`, `VERSION()`, `CURRENT_USER()`…; `information_schema.PROCESSLIST`, `mysql.user`, `mysql.db`), `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `CREATE/DROP DATABASE` and `TABLE` (as a dump writes them), `CREATE/DROP INDEX`, `ALTER TABLE ADD/DROP INDEX`, `EXPLAIN` (type ALL or ref, rows from the table's size), `CHECKSUM TABLE`, `KILL`, `SET`, account statements, `GRANT`, `REVOKE`, `FLUSH`, `CHANGE MASTER TO`, `START/STOP/RESET SLAVE`; the error codes and SQL states of the KB (1044, 1045, 1046, 1049, 1054, 1062, 1064, 1130, 1142, 1146, 1198, 1227, 1288, 1290, 1396, 1698…) | no joins, subqueries, expressions or functions in the columns; `=` and LIKE compare as `sql-where.ts` does; transactions accepted, writes applied at once; values are text; `mysql.user` is read, never written |
 | `mariadb`, `mariadb-dump`, `mariadb-admin`, `mariadb-check`, `mariadb-secure-installation` (`mariadb-client.ts`, loaded with the story: the `mariadb` family) | the client's tables on a terminal, tab-separated rows in a pipe or a file (`-B`, `-N`, `-t`, `-E`, `\G`), `-e` and scripts with "at line N" and `-f`, `-p` asked or glued, `-h` over TCP to the story's machines (bind-address and ufw decide), the interactive monitor (`MariaDB [db]>`, `use`, `source`, `status`, `help`, a statement over several lines, `exit`, the reconnection after a lost connection); `mariadb-dump`'s header and statements as 11.8 writes them (sandbox line, conditional comments, `DROP TABLE`, `CREATE TABLE`, `LOCK TABLES`, extended INSERT), `--single-transaction`, `--lock-tables`, `-x`, `--skip-lock-tables`, `-A`, `-B`, `--master-data`, `--gtid`, `--dump-slave`, `-r`; `mariadb-admin` ping, status, processlist, kill, variables, version, create, drop, shutdown, start-slave/stop-slave; `mariadb-check`; `mariadb-secure-installation`'s questions; the old names `mysql`, `mysqldump`, `mysqladmin`, `mysqlcheck` | no `~/.my.cnf`, no pager, no history; the old names give no deprecation warning; routines and events exist in no database of the story; the monitor ignores Ctrl-C |
+| Dovecot 2.4 (`dovecot.ts`, The Lifeboat) | Debian 13's `dovecot-core` 2.4.1: `dovecot.conf` and `!include`/`!include_try` read like doveconf (`key = value`, named filters `quota "User quota" {…}`, sections, the last value wins), its errors with the file and line (`Unknown setting`, `Missing '}'`, `Unexpected '}'`), applied at start and on `doveadm reload`/`systemctl reload` (a wrong file keeps the running configuration); the passwd-file userdb (`/etc/dovecot/users`, `userdb_*` extra fields such as `userdb_quota_storage_size`); Maildir++ mailboxes (`cur`, `new`, `tmp`, `.Folder`, files named `time.MusecPpid.host,S=size,W=vsize:2,flags`); the quota plugin (`quota_driver` count or maildir and its `maildirsize` file, `quota_storage_size`, the 10M `quota_storage_grace`, `quota_full_tempfail`, `quota_exceeded_message`, `quota_warning` filters running a service once a percentage is crossed); LMTP delivery with Pigeonhole's Sieve plugin (`sieve_script` storages: before scripts then the active personal one, `~/.dovecot.sieve`), its log lines in `mail.log` (`stored mail into mailbox`, `failed to store into mailbox … Quota exceeded`, `fileinto action`, `sent vacation response`, `discarding vacation response …`) and its replies (`250 2.0.0 <user> id Saved`, `552 5.2.2`, `452 4.2.2`) | no IMAP, POP3 or ManageSieve sessions (no mail client is simulated); only the quota and sieve settings are validated; `maildirsize` is never recalculated on its own past 5120 bytes; a userdb field overrides the quota filter's setting; vacation replies and reject notices are recorded, not sent |
+| Sieve (`sieve.ts`) | RFC 5228 as Pigeonhole compiles it: strings, `text:` blocks, lists, numbers with K/M/G, comments; `require` and the capabilities Pigeonhole announces; `if`/`elsif`/`else`, `stop`, `keep`, `discard`, `fileinto` (`:copy`, `:create`), `redirect`, `reject`, `vacation` (`:days`, `:subject`, `:from`, `:addresses`, `:mime`, `:handle`); tests `address`, `envelope`, `header`, `exists`, `size`, `body`, `allof`, `anyof`, `not`, `true`, `false` with `:is`, `:contains`, `:matches`, `:all`, `:localpart`, `:domain`; errors `NAME: line N: error: …` then `parse failed`/`validation failed`; the implicit keep; vacation's checks (RFC 5230 and Pigeonhole: `<>`, the user's own address, MAILER-DAEMON, owner-, -request, list headers, Auto-Submitted, Precedence, a message not addressed to the user or its `:addresses`, one reply per sender per `:days`, clamped to 1-60 days) | no comparators besides `i;ascii-casemap`, no variables, imap4flags, include, editheader; the `.svbin` is a stand-in, not byte code; `sievec -d` prints the commands and their lines |
+| `doveadm`, `doveconf`, `sievec`, `sieve-test` (`inbound-client.ts`, the `inbound` family) | `doveadm quota get` (table, kilobytes, `-` for no limit) and `recalc`, `expunge [-d]`, `search` (guid and uid), `fetch` (mailbox, uid, date.received, date.saved, size, hdr.*, body, text), `mailbox list/create/delete/rename/status`, `user` (userdb fields, masks), `sieve list/get/put [-a]/activate/deactivate/delete/rename`, `log errors`, `reload`, `-u` masks and `-A`; search queries (`mailbox`, ALL, NOT, OR and parentheses, before/since/on, saved…, sent…, dates and intervals in w/d/h/m/s, larger/smaller, from/to/cc/subject/body/text/header, seen/unseen/deleted/new/old); `doveconf -n`, a setting, a section, `-h`; `sievec` (a file or a directory, `.svbin` next to it, exit codes); `sieve-test` (`-a`, `-r`, `-f`, `-m`, `-s`, the "Performed actions" and "Implicit keep" report) | doveadm's formatters: table, tab and pager only; doveadm needs root (the configuration's permissions); no `doveadm who`, `kick`, `index`, `backup`; `sieve-test -e` stores nothing; vacation is printed by sieve-test without the checks the real delivery makes |
+| rspamd (`rspamd.ts`, The Lifeboat) | rspamd 3.12 (Debian 13): UCL as rspamd reads it (`key = value;`, objects, named objects, lists, comments; `delimiter is missing`), `local.d/` merged over the defaults and `override.d/` over both, read at start and on reload (a wrong file stops a start, a reload keeps the old configuration); the actions and their thresholds (defaults reject 15, add header 6, greylist 4; `null` disables one); the greylist module (a first triplet deferred, its retry after five minutes passes); `multimap` rules of type from (SMTP sender by default, `extract_from` mime or both), rcpt, ip, header with `filter` email:domain/email:user, `score` or `action`; `settings` rules (from, from_mime, rcpt, ip; ANDed kinds; `apply { actions }`, `want_spam`); Bayes in Redis with `min_learns`, learned per message id, relearned in the other class; the milter's answers to Postfix (`5.7.1 Spam message rejected`, `4.7.1 Try again later`, `X-Spam: Yes`); `rspamd_task_write_log` lines in `/var/log/rspamd/rspamd.log` | the symbols come from a set of rules the game knows (reverse DNS, a blocklist, SPF, DKIM and DMARC from the story's network, HTML only, all-caps subject, tracking redirectors, image and short text, list headers), with weights close to rspamd's defaults; Bayes is a naive Bayes on words; no fuzzy storage, neural networks, controller web interface or rspamc's JSON |
+| `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
+| Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4483,6 +4489,108 @@ hand; `mysql`, `mysqldump`, `mariadb-admin create`. Expected traps:
 `sql_slave_skip_counter` (the replica runs again but differs), repeated (a
 booking lost too), a dump with the default locks (the SQL thread waits
 behind it), `--skip-lock-tables` while writes arrive (not consistent).
+
+## Story 44: The Lifeboat (three chapters)
+
+Seaholme Lifeboat, a volunteer-run independent lifeboat station, receives
+the mail of `lifeboat.example` on `slipway` (192.0.2.140, `cale` in
+French): Postfix 3.10 receives it, rspamd 3.12 scores it through the milter,
+Dovecot 2.4.1's LMTP stores it in Maildirs under `/var/vmail` and runs Sieve
+on the way (Debian 13: `postfix 3.10.13-0+deb13u1`, `dovecot-core
+1:2.4.1+dfsg1-6+deb13u7`, `rspamd 3.12.1-1`, checked on
+https://packages.debian.org/trixie/). Marisol chairs the station, Yerlan set
+the server up and left notes, Leilani is the secretary (`bookings@` is an
+alias to her), Aziz the treasurer (`treasurer@`), Saoirse runs the
+fundraising. The inbound side of mail from the sysadmin's chair; defensive
+throughout. Engine: `dovecot.ts`, `sieve.ts`, `rspamd.ts`, `inbound.ts`
+(Postfix receiving, extending `mail.ts`), the tools in `inbound-client.ts`,
+all in the `inbound` engine family (`families/inbound.ts`), loaded with the
+story; four explanations in the error explainer (Sieve compilation,
+Dovecot's configuration, an unknown mail user, a search query). The mail
+contents are data from the internet and stay in English, like the logs.
+The story is built in `chapters/lifeboat.ts`. It opens after "Policy" (Junk
+Mail) and "Quota", and extends the web path (all three chapters) and the
+production path (chapter 1).
+
+### Chapter 1 — Mailbox Full (done)
+
+Tuesday 16 September 2031, 9:10. Since Saturday every message to Saoirse
+bounces: her mailbox is over its 1 GiB Maildir++ quota (an old Trash of
+photos), LMTP answers `552 5.2.2 … Quota exceeded (mailbox for user is
+full)`. The board agreed 2 GiB for her.
+
+| Step | Command learnt |
+|---|---|
+| The bounces | `grep saoirse /var/log/mail.log` |
+| The quota | `doveadm quota get -u saoirse@lifeboat.example` |
+| What takes the room | `doveadm mailbox status -u … "messages vsize" "*"`, `du` |
+| The old Trash | `doveadm search`, then `doveadm expunge -u … mailbox Trash savedbefore 2031-01-01` |
+| Her limit | `userdb_quota_storage_size=2G` in `/etc/dovecot/users`, `doveadm user` |
+| Delivered | `tail /var/log/mail.log` |
+| A warning | the `quota_warning` block of `90-quota.conf`, `doveconf -n`, `doveadm reload` |
+
+Goal checked on the state: Saoirse's limit between 1.5 and 10 GiB and no
+user unlimited, no Trash message from before 2031, her INBOX and Sent whole,
+`maildirsize` agreeing with the files, a message delivered to her since, a
+quota warning between 50 and 99 % running an existing service in the
+configuration Dovecot runs. Several solutions: `savedbefore`, `before`, an
+interval; `doveadm` or files removed then `quota recalc`; `2G` or `2048M`;
+`doveadm reload` or `systemctl reload dovecot`; `quota_warning` or
+`warning`, `quota_storage_percentage` or `storage_percentage`. Expected
+traps: files removed by hand (the quota doesn't notice), a global quota
+unlimited, her Maildir deleted, a misspelled setting.
+
+### Chapter 2 — Spam Tide (done)
+
+Monday 6 October, 8:40. Yerlan's `actions.conf` (reject 8, add_header 12,
+greylist 11) lets the phishing (4.8) and fake invoices (6.9) through
+untagged and rejects the Coastwatch safety bulletin (8.89: sent through
+sendwave.example, a platform the prize spam uses too); Bayes was never
+trained.
+
+| Step | Command learnt |
+|---|---|
+| The scores | `tail /var/log/rspamd/rspamd.log`, `rspamc symbols FILE` |
+| The thresholds | `local.d/actions.conf`, `rspamadm configtest`, `systemctl reload rspamd` |
+| The bulletin in Junk | its symbols in the log |
+| Whitelisted | a `multimap` rule `type = "from"; extract_from = "mime"` with `news@coastwatch.example`, or a `settings` rule `from_mime` |
+| Bayes | `rspamc learn_spam …/.Junk/cur`, `rspamc learn_ham …/.Archive/cur`, `rspamc stat` |
+| Caught | new messages marked `add header` |
+
+Goal checked on the state: Postfix sends incoming mail to rspamd, rspamd runs
+with reject ≥ 12, add_header between 4 and 8 (greylist below), Bayes has
+`min_learns` in each class, a fresh phishing, invoice and prize spam marked
+as spam, a fresh bulletin and fresh bookings with no action, no whitelist
+lowering a spam's score. Several solutions: multimap or settings, any score
+low enough or an action. Expected traps: the milter removed, reject at 1, the
+platform whitelisted (domain or address), the bookings learned as spam (put
+right by learning them again), a syntax error in the UCL.
+
+### Chapter 3 — The Sorting Office (done)
+
+Monday 3 November, 9:05. Leilani wants `bookings@` in a Bookings folder;
+Aziz is away until 24 November and needs a reply for his address and
+`treasurer@`, never for the federation's list; his old `holiday.sieve` uses
+`reject`.
+
+| Step | Command learnt |
+|---|---|
+| The old script | `doveadm sieve list -u aziz@…`, `cat …/sieve/holiday.sieve` |
+| The sorting | `fileinto :create "Bookings"` on `envelope :is "to"` (or `address`/`header` tests, or `doveadm mailbox create`), `sievec`, `sieve-test SCRIPT sample-booking.eml`, `doveadm sieve put -a` |
+| Sorted for real | `grep Bookings /var/log/mail.log` |
+| The vacation | `vacation :days 7 :subject … "…"`, `sieve-test away.sieve sample-list.eml` |
+| The alias | `:addresses ["treasurer@lifeboat.example"]` |
+| Replied for real | `grep "vacation response" /var/log/mail.log` |
+
+Goal checked on the state: Leilani's active scripts file a fresh bookings@
+message into an existing (or `:create`d) Bookings and keep a direct one in
+INBOX; Aziz's answer a direct and a treasurer@ message, not a list's, and
+keep them all; a real booking stored in Bookings and a real vacation reply
+sent. Several solutions: `doveadm sieve put -a`, `activate`, or the
+`~/.dovecot.sieve` link by hand; `envelope`, `address` or `header` tests.
+Expected traps: the old reject script activated (mail refused, the list
+answered), a script not active, a syntax error, a vacation without
+`:addresses`.
 
 ## Ideas for later
 
