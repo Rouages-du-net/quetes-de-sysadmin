@@ -258,6 +258,30 @@ presents them for people.
 - `src/engine/unlocking.ts`: stories open in waves; an added story
   declares in `chapters/index.ts` (`after`) the chapters to finish before
   receiving its key (`prerequisites()` for tests).
+- Lazy loading (fast first load on mobile): the game is split in chunks.
+  `src/element.ts` shows an empty frame, then fetches side by side the
+  game (`interface/game.ts` and the engine), its core texts and the story
+  it will open. Each story's chapters are a module, `src/engine/stories/<id>.ts`,
+  loaded by `src/engine/story-registry.ts` (`loadStory`, `loadedStory`,
+  `storyById`) when the story is opened, its machine named on the line,
+  or its button hovered; the menu, unlocking, difficulty, paths, progress,
+  hints' manual pages and on-call duty read `src/engine/catalogue.json`
+  (`catalogue.ts`: ids, `after`, commands, size, each story's text files),
+  generated from `chapters/index.ts` by `npm run catalogue` and checked by
+  `tests/catalogue.test.ts`. The texts come in groups made by the Vite
+  plugin `src/texts/plugin.mjs` (`<language>/core` with every chapter's
+  title and each manual page's first sentence `man-summary-*`, `shared`
+  read in every language, `manual`, `story-<id>`): `loadTexts()` fetches
+  one, `translator()` stays synchronous. The interface loads what a line
+  needs before running it (`needs()` in `game.ts`); otherwise the engine
+  throws `NeedsLoading` (`src/engine/loading.ts`) and the line runs again.
+  No chapter module may call `t()` when it is imported (its texts load
+  with it). Tests load everything first (`tests/setup.ts`). Adding a story:
+  its chapters, then `src/engine/stories/<id>.ts` (its chapters in order),
+  its entry in `chapters/index.ts`, then `npm run catalogue`; adding a
+  chapter to a story: also `npm run catalogue`. `npm run build` ends with
+  `tests/budget.mjs`, the first visit's weight against a budget (see
+  `docs/DEPLOYMENT.md`, "Chunks and budget").
 - `src/engine/availability.ts`: the commands a chapter has: its own
   `commands`, plus those of the chapters it assumes (`assumed()` in
   `unlocking.ts`, the same as difficulty's) that exist on the machine (its
@@ -751,8 +775,10 @@ presents them for people.
   pages only, never in the embeddable element: the manifests (`manifest.ts`,
   served by `src/pages/<language>/manifest.webmanifest.ts`), the service
   worker (template `service-worker.js`, written to `dist/sw.js` with its
-  precache list and a version hashed from the build by the integration of
-  `build.ts`), its registration and the footer's "Install the game"
+  precache list, the game's shell from `first-load.mjs`, the build's hashed
+  files and a version hashed from the build by the integration of
+  `build.ts`; stories, their texts and the manual kept at runtime in
+  `qds-runtime`), its registration and the footer's "Install the game"
   (`site.ts`, `install.ts`, imported by `Base.astro`, texts in
   `Base.astro`); icons in `public/icons/`, drawn by `scripts/icons.mjs`.
   Tests: `tests/pwa.test.ts`, the PWA part of `tests/browser.mjs`.
@@ -791,7 +817,8 @@ presents them for people.
 npm install
 npm test                    # Vitest
 npm run dev                 # http://localhost:4321
-npm run build               # Astro site (dist/) + embeddable file (dist/integration/) + tsc
+npm run build               # Astro site (dist/) + embeddable file (dist/integration/) + tsc + first-visit budget
+npm run catalogue           # after adding a story or a chapter: src/engine/catalogue.json
 npm run preview &           # http://localhost:4340, then:
 npm run test:browser
 ```

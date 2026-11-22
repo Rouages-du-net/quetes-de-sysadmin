@@ -13,15 +13,19 @@ n'importe quelle page HTML (site statique, CMS, plateforme de cours…).
 <quetes-de-sysadmin></quetes-de-sysadmin>
 ```
 
-Pour ne dépendre d'aucun serveur extérieur, copie le fichier
-`dist/integration/quetes-de-sysadmin.js` (après `npm run build`) sur ton site
-et change l'adresse du script.
+Pour ne dépendre d'aucun serveur extérieur, copie le dossier
+`dist/integration/` (après `npm run build` : `quetes-de-sysadmin.js` et ses
+`chunks/`) sur ton site et change l'adresse du script.
+
+Le fichier est léger : il charge le reste du jeu (son interface et son
+moteur, chaque histoire, chaque groupe de textes) depuis `chunks/`, à côté de
+lui, par rapport à sa propre adresse, et seulement quand il en a besoin.
 
 Le serveur de sysadmin.rouages.net envoie l'en-tête
-`Access-Control-Allow-Origin: *` pour ce fichier (voir `public/.htaccess`) :
-c'est obligatoire pour qu'un script « module » soit chargé depuis un autre
-site. Si tu héberges toi-même le fichier sur un autre domaine que ta page,
-configure le même en-tête.
+`Access-Control-Allow-Origin: *` pour ce fichier et ses morceaux (voir
+`public/.htaccess`) : c'est obligatoire pour qu'un script « module » soit
+chargé depuis un autre site. Si tu les héberges toi-même sur un autre domaine
+que ta page, configure le même en-tête.
 
 ## Attributs
 

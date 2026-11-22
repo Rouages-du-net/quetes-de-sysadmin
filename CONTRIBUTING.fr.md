@@ -35,11 +35,24 @@ machine du réseau simulé. Un chapitre, c'est :
 
 | Fichier | Contenu |
 |---|---|
-| `src/engine/chapitres/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
+| `src/engine/chapters/<id>.ts` | le chapitre : ses commandes, son monde de départ, son état, ses événements |
 | `src/texts/en/chapter-<id>.ftl` (et `fr/`) | tous ses textes : courriel de départ, fichiers, événements, débrief |
 | `src/texts/en/hints-<story>.ftl` (et `fr/`) | ses indices gradués : une piste, puis presque la réponse, pour chaque étape |
 | `tests/<histoire>.test.ts` | la partie rejouée : la solution attendue, une autre solution, les fausses pistes |
 | `docs/SCENARIOS.md` | sa fiche : l'histoire, les commandes apprises, l'objectif, les pièges |
+
+Un nouveau chapitre va aussi dans le module de son histoire
+(`src/engine/stories/<histoire>.ts`, les chapitres dans l'ordre), à la fin de
+`CODE_ORDER` dans `src/engine/progress.ts` et de `tests/progress/order.txt`,
+et dans au moins un parcours (`src/engine/paths.ts`). Une nouvelle histoire
+a son module dans `src/engine/stories/`, déclare dans
+`src/engine/chapters/index.ts` les chapitres qui l'ouvrent (`after`) et
+reçoit une machine dans `src/engine/machines.ts`. Lance ensuite
+`npm run catalogue` : le menu connaît les histoires par
+`src/engine/catalogue.json` sans les charger (le jeu ne charge une histoire
+qu'à son ouverture), et `npm test` échoue tant qu'il n'est pas à jour. Le
+module d'un chapitre ne doit pas appeler `t()` quand il est importé : ses
+textes se chargent avec lui.
 
 ### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 

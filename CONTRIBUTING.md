@@ -79,17 +79,23 @@ simulated network. A chapter is:
 
 | File | Contents |
 |---|---|
-| `src/engine/chapitres/<id>.ts` | the chapter: its commands, starting world, state and events |
+| `src/engine/chapters/<id>.ts` | the chapter: its commands, starting world, state and events |
 | `src/texts/en/chapter-<id>.ftl` (and `fr/`) | all its texts: the starting email, files, events, debrief |
 | `src/texts/en/hints-<story>.ftl` (and `fr/`) | its graduated hints: a lead, then almost the answer, for each step |
 | `tests/<story>.test.ts` | the replayed game: the expected solution, another solution, the false leads |
 | `docs/SCENARIOS.md` | its sheet: the story, the commands learnt, the goal, the traps |
 
-A new chapter also goes at the end of `CODE_ORDER` in
+A new chapter also goes in its story's module (`src/engine/stories/<story>.ts`,
+the chapters in order), at the end of `CODE_ORDER` in
 `src/engine/progress.ts` and of `tests/progress/order.txt`, and in at
-least one learning path (`src/engine/paths.ts`). A new story declares in
-`src/engine/chapters/index.ts` which chapters unlock it (`after`), and gets
-a machine in `src/engine/machines.ts`.
+least one learning path (`src/engine/paths.ts`). A new story gets its
+module in `src/engine/stories/`, declares in `src/engine/chapters/index.ts`
+which chapters unlock it (`after`), and gets a machine in
+`src/engine/machines.ts`. Then run `npm run catalogue`: the menu knows the
+stories from `src/engine/catalogue.json` without loading them (the game
+loads a story only when it is opened), and `npm test` fails while it is
+out of date. A chapter's module must not call `t()` when it is imported:
+its texts load with it.
 
 ### The chapter (`Chapter`, in `src/engine/world.ts`)
 
@@ -176,7 +182,8 @@ A tool (nginx, nftables, slapd…) has its engine in `src/engine/<tool>.ts`
 
 ```bash
 npm test                    # every quest replayed
-npm run build               # the site, the embeddable file, tsc
+npm run build               # the site, the embeddable file, tsc, the first-visit budget
+npm run catalogue           # after adding a story or a chapter
 npm run preview &           # then:
 npm run test:browser     # Chromium, 1000 and 375 px, CSP
 ```

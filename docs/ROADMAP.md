@@ -870,6 +870,12 @@ them safely.
   it (Safari's "Add to Home Screen" explained on iOS), a manifest per
   language, and a service worker that keeps the game playable offline
   (`src/pwa/`); never in the embeddable element.
+- [x] **Fast first load on mobile**: the game in chunks (each story's
+  chapters, each group of texts, the manual's pages) loaded when needed,
+  the menu from a generated catalogue, an empty frame while the game loads,
+  a budget checked by the build (`tests/budget.mjs`); on a throttled phone,
+  the terminal answers in about 5.7 s instead of 12.3 s. The service worker
+  precaches only the shell and keeps the stories played.
 
 ---
 

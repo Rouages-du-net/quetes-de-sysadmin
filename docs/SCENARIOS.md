@@ -4159,7 +4159,7 @@ first is allowed but noted.
 The format of a quest (files, events, debrief, tests) is described in
 [CONTRIBUTING.md](../CONTRIBUTING.md). In short:
 
-1. Create `src/engine/chapitres/<id>.ts`, which exports a `Chapter` (see
+1. Create `src/engine/chapters/<id>.ts`, which exports a `Chapter` (see
    `world.ts`): the commands it teaches (`commands`: only its own; it
    keeps those of the chapters it assumes that exist on its machine, see
    `availability.ts`, and `withhold` keeps one of them gated if it would do
@@ -4168,10 +4168,11 @@ The format of a quest (files, events, debrief, tests) is described in
    events (condition → message, once) and the final event.
 2. Write its texts in `src/texts/en/chapter-<id>.ftl` then
    `src/texts/fr/`, and its hints in `hints-<story>.ftl`.
-3. Add it to a story of `STORIES` in `chapters/index.ts` (or create a
-   new story, with its machine and its `after`), at the end of
-   `CODE_ORDER` and `tests/progress/order.txt`, and in a learning
-   path (`paths.ts`).
+3. Add it to its story's module, `src/engine/stories/<story>.ts` (or create
+   a new story: its module, its entry in `STORIES` of `chapters/index.ts`
+   with its `after`, its machine), at the end of `CODE_ORDER` and
+   `tests/progress/order.txt`, and in a learning path (`paths.ts`); then
+   `npm run catalogue` (the menu's catalogue, `src/engine/catalogue.json`).
 4. Check it can be finished: a test that replays it in every language (the
    solution, another one, the false leads), then in Chromium at 1000 and
    375 px. Give it its section in this document.
