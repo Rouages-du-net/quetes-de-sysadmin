@@ -149,13 +149,15 @@ function tcpdump(game: Shell, args: string[]): string {
   if (onLink && advance) {
     const v = vrrp(game);
     const me = v.nodes[node!];
-    let from = v.packets.length;
+    let from = v.now;
     let last = -1;
     let same = 0;
     for (let s = 0; s < limit && (count === null || captured < count); s++) {
       advance(1);
-      const fresh = vrrp(game).packets.slice(from);
-      from = vrrp(game).packets.length;
+      // What this second carried (older packets leave the model's window).
+      const now = vrrp(game).now;
+      const fresh = vrrp(game).packets.filter((x) => x.time > from && x.time <= now);
+      from = now;
       for (const pk of fresh) {
         if (count !== null && captured >= count) break;
         // A unicast advert only shows on its two ends; multicast and broadcast everywhere.

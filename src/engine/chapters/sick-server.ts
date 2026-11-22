@@ -62,9 +62,9 @@ export const sickServer: Chapter = {
     }),
   afterCommand: (j) => passTime(j),
   events: [
-    { id: 'errors', condition: (j) => seen(j, /be_booking\/web3 \S+ 500 /) || seen(j, 'Server Error (500)') || seen(j, 'x-served-by: web3'), message: (j) => j.t('sick-server-event-errors') },
+    { id: 'errors', condition: (j) => seen(j, /be_booking\/web3 \S+ 500 /) || seen(j, '<h1>Server Error (500)</h1>') || seen(j, 'x-served-by: web3'), message: (j) => j.t('sick-server-event-errors') },
     { id: 'denied', condition: (j) => /socat/.test(typed(j)) && seen(j, 'Permission denied'), message: (j) => j.t('sick-server-event-denied') },
-    { id: 'no-check', condition: (j) => seen(j, ',no check,'), message: (j) => j.t('sick-server-event-no-check') },
+    { id: 'no-check', condition: (j) => seen(j, /,no check(,|$)/m), message: (j) => j.t('sick-server-event-no-check') },
     {
       id: 'tcp-only',
       condition: (j) => {
