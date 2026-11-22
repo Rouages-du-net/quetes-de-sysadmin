@@ -102,6 +102,8 @@ export const MACHINES: Machine[] = [
   machine('hearth', '192.0.2.88', 'health-centre'),
   // The Blood Drive: a blood service's two load balancers (keepalived, HAProxy); lb2 and the web servers are internal machines.
   machine('lb1', '192.0.2.104', 'blood-drive'),
+  // The Choir: a community choir's server (nginx, PostgreSQL, restic) and the personal data it keeps.
+  machine('baton', '192.0.2.112', 'choir'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

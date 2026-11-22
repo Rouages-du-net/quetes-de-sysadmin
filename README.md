@@ -95,7 +95,9 @@ this independent project.
   deliberate difference from a real Linux is documented.
 - **Safe**: addresses and domain names reserved for examples, no real
   target; security quests stay defensive.
-- **Accessible**: keyboard, screen readers, contrast, mobile.
+- **Accessible** (WCAG 2.2 AA, checked by axe-core and by hand on every
+  page and dialog): keyboard, screen readers, contrast, reduced motion,
+  forced colours, mobile; see [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **No trackers**, no ads, no third-party resources.
 - **English first**, French too; more languages will come (German, Spanish,
   Mandarin, Korean…): texts are kept apart from the code.

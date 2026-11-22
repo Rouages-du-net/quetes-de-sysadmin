@@ -494,3 +494,10 @@ name-message_from_zainab-txt = message_de_zainab.txt
 name-note_from_bastien-txt = mot_de_bastien.txt
 name-message_from_teodor-txt = message_de_teodor.txt
 name-message_from_kirsi-txt = message_de_kirsi.txt
+## La Chorale
+name-note_from_ruben-txt = mot_de_ruben.txt
+name-request_from_priya-txt = demande_de_priya.txt
+name-message_from_kenji-txt = message_de_kenji.txt
+name-message_from_tomas-txt = message_de_tomas.txt
+name-retention-policy-txt = politique-de-conservation.txt
+name-gdpr-requests = demandes-rgpd

@@ -58,3 +58,4 @@ machine-booth = booth
 machine-anvil = anvil
 machine-hearth = hearth
 machine-lb1 = lb1
+machine-baton = baton

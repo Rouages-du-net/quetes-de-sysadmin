@@ -152,3 +152,6 @@ tight-fit
 no-failover
 sick-server
 split-brain
+kept-forever
+access-request
+forget-me

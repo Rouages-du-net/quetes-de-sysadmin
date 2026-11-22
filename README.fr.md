@@ -99,7 +99,12 @@ ce projet indépendant.
   chaque écart volontaire avec un vrai Linux est documenté.
 - **Sans danger** : adresses et noms de domaine réservés aux exemples, aucune
   vraie cible ; les quêtes de sécurité restent défensives.
-- **Accessible** : clavier, lecteur d'écran, contraste, mobile.
+- **Accessible** (WCAG 2.2 AA, vérifié par axe-core et à la main sur chaque
+  page et chaque fenêtre) : clavier (Tab complète, Maj+Tab ou Échap puis Tab
+  quitte la ligne de commande), lecteurs d'écran (chaque sortie lue une
+  fois, Alt+R relit la dernière), contraste, mouvements réduits, couleurs
+  forcées, mobile ; détails en anglais dans
+  [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **Sans pisteur**, sans publicité, sans ressource tierce.
 - **En anglais d'abord**, et en français (page `/fr/`, attribut
   `lang="fr"`) ; d'autres langues viendront (allemand, espagnol, mandarin,

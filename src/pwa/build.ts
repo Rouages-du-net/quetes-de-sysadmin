@@ -19,8 +19,9 @@ export const LANGUAGES = ['en', 'fr'] as const;
 // language's page and manifest, the icons, and the files of each page's
 // first visit (first-load.mjs: the game's scripts, its core texts, the
 // styles) with the font (only its WOFF2 version, which every browser with
-// service workers reads). The stories and the manual's pages are not
-// precached: the service worker keeps them when they are first loaded.
+// service workers reads), and the dialogs' texts (texts-*--dialog-*: small,
+// and a dialog must open offline). The stories and the manual's pages are
+// not precached: the service worker keeps them when they are first loaded.
 export function precacheList(dist: string): string[] {
   const paths: string[] = [];
   for (const lang of LANGUAGES) {
@@ -39,7 +40,7 @@ export function precacheList(dist: string): string[] {
   const firstVisit = new Set(
     LANGUAGES.filter((lang) => existsSync(join(dist, lang, 'index.html'))).flatMap((lang) => pageFirstVisit(dist, lang, lang).map((f: string) => relative(join(dist, '_astro'), f))),
   );
-  paths.push(...listed('_astro', '/_astro/', (name) => name.endsWith('.woff2') || firstVisit.has(name)));
+  paths.push(...listed('_astro', '/_astro/', (name) => name.endsWith('.woff2') || firstVisit.has(name) || /^texts-[\w-]+--dialog-/.test(name)));
   return paths;
 }
 

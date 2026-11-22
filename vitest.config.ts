@@ -11,5 +11,13 @@ export default defineConfig({
   // No transform cache on disk: it would keep import.meta.glob's list of
   // story modules (story-registry.ts) and the texts' groups after a story or
   // a text file is added.
-  test: { include: ['tests/**/*.test.ts'], setupFiles: ['tests/setup.ts'], fsModuleCache: false },
+  // Tests that replay every chapter of the game grow with each story and run
+  // side by side with the others: 5 s (Vitest's default) is too short on a
+  // busy machine.
+  test: {
+    include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/setup.ts'],
+    fsModuleCache: false,
+    testTimeout: 30_000,
+  },
 });

@@ -478,8 +478,10 @@
   /* Tabs (nft list ruleset, nftables.conf) take less room on a narrow screen. */
   .qds .output pre, .qds .nano-text { tab-size: 2; }
 }
+/* Reduced motion: no animation nor transition anywhere in the game (the
+   rules above also stop each one; this catches any new one). */
 @media (prefers-reduced-motion: reduce) {
-  .qds * { scroll-behavior: auto !important; transition: none !important; }
+  .qds *, .qds *::before, .qds *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
 
 /* tail -f, journalctl -f: incoming lines follow one another with no gap; the button that does Ctrl-C replaces the command line. */
@@ -614,7 +616,7 @@
   .qds .summary-table tr { border: 1px solid var(--_border); border-radius: 0.35rem; margin-bottom: 0.5rem; }
   .qds .summary-table th, .qds .summary-table td { border: none; }
   .qds .summary-table tbody th { background: var(--_card); }
-  .qds .summary-table td::before { content: attr(data-titre); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_muted); }
+  .qds .summary-table td::before { content: attr(data-title); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_muted); }
 }
 
 /* The rescue snapshot: buttons greyed out when it isn't possible. */
@@ -725,3 +727,40 @@
 .qds.qds-loading { min-height: 40rem; }
 .qds.qds-loading > div { height: 26rem; margin-top: 7rem; border-radius: 0.5rem; background: var(--_terminal-background); }
 @media (max-width: 40rem) { .qds.qds-loading { min-height: 44rem; } .qds.qds-loading > div { margin-top: 10rem; height: 24rem; } }
+
+/* ——— Accessibility (see docs/ACCESSIBILITY.md) ——— */
+/* No ligatures in the terminal nor in any monospace text: "->", "!=",
+   "-->" or "www" stay the characters a command takes (JetBrains Mono and
+   others would draw arrows and ≠). The font shorthand of some rules resets
+   font-variant-ligatures: hence !important. */
+.qds :is(.terminal, .terminal *, pre, code, kbd, samp, textarea, .title, .map-tree, .host, .progress-code, .timer, .on-call-gauge, .score-card, .achievement-name, .on-call-chapter, .node-internet, .plan-diagram .address, .keys button) {
+  font-variant-ligatures: none !important;
+  font-feature-settings: 'liga' 0, 'clig' 0, 'calt' 0, 'dlig' 0 !important;
+}
+/* A visible focus everywhere (at least 3:1 against its background): the
+   game's colours, the terminal's prompt colour inside the terminal. */
+.qds :is(select, summary, textarea, input:not(.field input), [tabindex]):focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
+.qds .terminal :is(pre, button, [tabindex]):focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 2px; }
+/* The command line: the caret, and a line under the field while it has the focus. */
+.qds form:focus-within .field { box-shadow: 0 2px 0 color-mix(in oklab, var(--_terminal-prompt) 80%, transparent); }
+/* "Read the last output again": hidden until it has the focus (keyboard, screen readers). */
+.qds .reread-button { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.qds .reread-button:focus { position: static; width: auto; height: auto; overflow: visible; clip-path: none; display: block; margin: 0 0 0.5rem; min-height: 1.5rem; font: inherit; color: var(--_terminal-prompt); background: none; border: 1px dashed color-mix(in oklab, var(--_terminal-text) 40%, transparent); border-radius: 0.25rem; padding: 0.1rem 0.4rem; cursor: pointer; }
+/* Windows High Contrast and other forced colours: the system's colours,
+   with borders where the game relies on backgrounds, and the states that
+   only a colour showed (pressed, current, selected) drawn in Highlight. */
+@media (forced-colors: active) {
+  .qds :is(button, select, .terminal, dialog, .tour, .start-offer, .resume-offer) { border: 1px solid CanvasText; }
+  .qds :is(button, select) { border-color: ButtonText; }
+  .qds .reread-button:not(:focus) { border: 0; }
+  .qds :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 3px solid Highlight !important; outline-offset: 2px; }
+  .qds form:focus-within .field { box-shadow: none; outline: 2px solid Highlight; }
+  .qds :is([aria-pressed='true'], [aria-current='true'], [aria-selected='true']) { border: 3px solid Highlight; }
+  .qds .tour-target { outline-color: Highlight; }
+  /* The coloured copy under the command line: off, the field shows its own text. */
+  .qds .field.coloured .highlighting { display: none; }
+  .qds .field.coloured input { color: CanvasText; }
+  .qds .diode { forced-color-adjust: none; background: Canvas; border: 1px solid CanvasText; }
+  .qds .diode.lit, .qds .diode.in-progress { background: CanvasText; }
+  .qds .nano-key kbd, .qds .stop-follow kbd, .qds .suspend-follow kbd { forced-color-adjust: none; background: CanvasText; color: Canvas; }
+}
