@@ -116,3 +116,15 @@ explainer-no-such-file = Rien n'existe à ce chemin, tel qu'il est écrit. Un ch
 ## Le réglage, à côté d'Astuces et de Sauvegarde auto.
 display-explainer = Aide aux erreurs
 display-explainer-title = Proposer une courte explication sous les messages d'erreur courants
+
+explainer-s3-date = Le stockage objet a refusé la requête à cause de sa date. Chaque requête S3 est signée avec la date et l'heure de la machine qui l'envoie : Amazon S3 en refuse une à plus de 15 minutes de sa propre horloge (RequestTimeTooSkewed), Garage une datée de plus de 24 heures avant son horloge (« Date is too old ») ; une URL présignée est refusée une fois son X-Amz-Expires passé. Le serveur n'y est pour rien : date et timedatectl montrent l'horloge de cette machine, et si NTP la garde juste.
+
+explainer-s3-region = La requête a été signée pour une autre région que celle du stockage. La région fait partie de la signature (sa portée : date/région/s3/aws4_request), donc une mauvaise région rend la signature invalide même avec la bonne clé. Le message donne la portée qu'attendait le serveur : mets cette région dans la configuration du client (region dans ~/.aws/config ou rclone.conf, ou --region).
+
+explainer-s3-access-denied = Le stockage objet connaît la clé (ou a refusé une requête sans clé) et ne la laisse pas faire cela. « Operation is not allowed for this key » veut dire que la clé n'a pas le droit sur ce bucket (read pour lister et lire, write pour déposer et supprimer, owner pour les réglages du bucket) ; « No such key », un ID de clé qu'il ne connaît pas ; « Invalid signature », un mauvais secret ; « anonymous access », une requête envoyée sans clé. Avec Garage, sudo garage bucket info BUCKET montre les droits de chaque clé ; aws configure list montre quelle clé le client utilise.
+
+explainer-s3-no-bucket = Aucun bucket ne porte ce nom sur ce stockage. Vérifie l'orthographe (les noms de buckets sont en minuscules), et que le client parle au bon point d'accès (--endpoint-url, endpoint_url dans ~/.aws/config, endpoint dans rclone.conf) : un autre stockage a d'autres buckets. aws s3 ls liste les buckets dont cette clé peut se servir ; avec Garage, sudo garage bucket list les liste tous.
+
+explainer-s3-credentials = L'outil AWS n'a trouvé aucune clé pour signer. Il cherche sur la ligne de commande (--profile), dans l'environnement (AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY, AWS_PROFILE), puis dans ~/.aws/credentials et ~/.aws/config, dans le dossier personnel de l'utilisateur qui le lance : sous sudo, c'est celui de root, pas le tien. aws configure list montre ce qu'il a trouvé, et où.
+
+explainer-garage-layout = Garage n'a pas appliqué le changement d'agencement. Un agencement se change en deux temps : les changements sont préparés (garage layout assign, remove), puis appliqués par garage layout apply --version N, N étant la version suivante qu'affiche garage layout show, pour que personne n'applique un agencement qu'il n'a pas lu. Un agencement doit aussi garder au moins autant de nœuds avec une capacité que le facteur de réplication.

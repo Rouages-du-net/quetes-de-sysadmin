@@ -62,3 +62,4 @@ machine-baton = baguette
 machine-trowel = truelle
 machine-slipway = cale
 machine-belay = relais
+machine-wings = coulisses

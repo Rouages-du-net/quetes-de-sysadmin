@@ -97,3 +97,5 @@ password-compost-heap-17 = compost-heap-17
 password-storm-lantern-24 = storm-lantern-24
 ## The Climbing Wall
 password-quickdraw-42 = quickdraw-42
+## The Dance Troupe
+password-spring-gala-58 = spring-gala-58

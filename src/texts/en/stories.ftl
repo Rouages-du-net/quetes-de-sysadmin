@@ -92,3 +92,5 @@ story-lifeboat = The Lifeboat
     .summary = A volunteer lifeboat station receives its mail on a small Debian server: Postfix, Dovecot and rspamd. A mailbox that bounces everything, a tide of spam that buries the safety bulletin the crew needs, and the winter bookings to sort while the treasurer is away: running the inbound side of mail, from the sysadmin's chair.
 story-climbing-wall = The Climbing Wall
     .summary = A community climbing hall keeps its bookings and its door badges on a server behind a UPS, and a storm shows that the UPS protected nothing. A monitor watching the wrong UPS, a NAS that nobody warns, a worn battery and alerts that cry wolf: Network UPS Tools and power cuts, from the sysadmin's side.
+story-dance-troupe = The Dance Troupe
+    .summary = A community dance troupe keeps its website, its members' files and its films in a small self-hosted object store: a Garage cluster with an S3 API, on three machines in three places. Private documents published with the website, a nightly backup that has failed since a power cut, a big film to share for a week while a node lies dead: running object storage, from the sysadmin's side.

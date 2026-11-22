@@ -193,3 +193,35 @@ explainer-no-such-file = Nothing exists at that path, as it was spelled. A path 
 ## The setting, next to Tips and Autosave.
 display-explainer = Error help
 display-explainer-title = Offer a short explanation under common error messages
+
+explainer-s3-date = The object store refused the request because of its date. Every S3 request is signed with the date and time of the machine that sends it: Amazon S3 refuses one more than 15 minutes away from its own clock (RequestTimeTooSkewed), Garage one dated more than 24 hours before its clock ("Date is too old"); a presigned URL is refused once its X-Amz-Expires has passed. The server isn't the problem: date and timedatectl show this machine's clock, and whether NTP keeps it right.
+    .match =
+        Date is too old
+        RequestTimeTooSkewed
+
+explainer-s3-region = The request was signed for another region than the store's. The region is part of the signature (its scope: date/region/s3/aws4_request), so a wrong one makes the signature invalid even with the right key. The message names the scope the server expected: put that region in the client's configuration (region in ~/.aws/config or rclone.conf, or --region).
+    .match =
+        AuthorizationHeaderMalformed
+        unexpected scope
+
+explainer-s3-access-denied = The object store knows the key (or refused a request without one) and won't let it do this. "Operation is not allowed for this key" means the key lacks the permission on that bucket (read to list and get, write to put and delete, owner for the bucket's settings); "No such key" an access key ID it doesn't know; "Invalid signature" a wrong secret; "anonymous access" a request sent without a key. With Garage, sudo garage bucket info BUCKET shows each key's permissions; aws configure list shows which key the client uses.
+    .match =
+        Operation is not allowed for this key
+        Garage does not support anonymous access yet
+        Invalid signature
+        No such key: 
+
+explainer-s3-no-bucket = No bucket has that name for this store. Check the spelling (bucket names are lower case), and that the client talks to the right endpoint (--endpoint-url, endpoint_url in ~/.aws/config, endpoint in rclone.conf): another store has other buckets. aws s3 ls lists the buckets this key may use; with Garage, sudo garage bucket list lists them all.
+    .match =
+        NoSuchBucket
+
+explainer-s3-credentials = The AWS command-line tool found no key to sign with. It looks on the command line (--profile), in the environment (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, AWS_PROFILE), then in ~/.aws/credentials and ~/.aws/config, in the home of the user who runs it: under sudo that is root's home, not yours. aws configure list shows what it found, and where.
+    .match =
+        Unable to locate credentials
+        The config profile (*) could not be found
+
+explainer-garage-layout = Garage didn't apply the layout change. A layout is changed in two steps: changes are staged (garage layout assign, remove), then applied with garage layout apply --version N, N being the next version that garage layout show prints, so that nobody applies a layout they haven't read. A layout must also keep at least as many nodes with a capacity as the replication factor.
+    .match =
+        Please pass the new layout version number
+        Invalid new layout version
+        is smaller than the replication factor

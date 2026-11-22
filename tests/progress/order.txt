@@ -164,3 +164,6 @@ sorting-office
 last-cut
 down-in-order
 old-battery
+public-bucket
+offsite-copy
+big-file

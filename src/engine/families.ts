@@ -34,6 +34,7 @@ import type * as K8s from './families/k8s';
 import type * as Libvirt from './families/libvirt';
 import type * as Mariadb from './families/mariadb';
 import type * as Nut from './families/nut';
+import type * as Objects from './families/objects';
 import type * as Prometheus from './families/prometheus';
 import type * as Windows from './families/windows';
 import entries from './families.json';
@@ -52,6 +53,7 @@ export const FAMILIES = {
   libvirt: () => import('./families/libvirt'),
   mariadb: () => import('./families/mariadb'),
   nut: () => import('./families/nut'),
+  objects: () => import('./families/objects'),
   prometheus: () => import('./families/prometheus'),
   windows: () => import('./families/windows'),
 };
@@ -71,6 +73,7 @@ interface Hooks {
   libvirt: typeof Libvirt.HOOKS;
   mariadb: typeof Mariadb.HOOKS;
   nut: typeof Nut.HOOKS;
+  objects: typeof Objects.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
   windows: typeof Windows.HOOKS;
 }

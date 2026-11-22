@@ -332,6 +332,8 @@ function curlTo({ args, game, input }: { args: string[]; game: Shell; last: bool
       if (pkiNet(game)) return pkiCurl(game, args);
       // A machine with a forge (Forgejo): its API and web routes (forge.ts).
       if (game.state.forge) return family('forge').forgeCurl(game, args, input);
+      // A machine of a story with a Garage cluster: its S3 API, presigned URLs and web endpoint (garage.ts).
+      if (game.state.garage) return family('objects').s3Curl(game, args);
       if (speaks6(game)) return curl6(game, args);
       // The options that take a value; -H "Host: name" chooses the site requested.
       const WITH_VALUE = ['-H', '--header', '-o', '--output', '-X', '--request', '-d', '--data', '-A', '--user-agent', '-u', '--user', '-w', '--write-out', '-e', '--referer'];

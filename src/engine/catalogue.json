@@ -4732,6 +4732,7 @@
    "texts": [
     "chapter-chain-of-trust.ftl",
     "chapter-expiry-date.ftl",
+    "chapter-public-bucket.ftl",
     "chapter-stolen-laptop.ftl",
     "hints-airwaves.ftl"
    ],
@@ -5570,6 +5571,98 @@
       "logger",
       "echo",
       "date",
+      "exit"
+     ],
+     "events": 12
+    }
+   ]
+  },
+  {
+   "id": "dance-troupe",
+   "after": [
+    "clock",
+    "restore-drill"
+   ],
+   "texts": [
+    "chapter-big-file.ftl",
+    "chapter-offsite-copy.ftl",
+    "chapter-public-bucket.ftl",
+    "hints-dance-troupe.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "public-bucket",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "md5sum",
+      "garage",
+      "aws",
+      "rclone",
+      "exit"
+     ],
+     "events": 10
+    },
+    {
+     "id": "offsite-copy",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "diff",
+      "nano",
+      "sudo",
+      "date",
+      "timedatectl",
+      "systemctl",
+      "journalctl",
+      "md5sum",
+      "garage",
+      "aws",
+      "rclone",
+      "exit"
+     ],
+     "events": 13
+    },
+    {
+     "id": "big-file",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "echo",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "garage",
+      "aws",
+      "rclone",
       "exit"
      ],
      "events": 12

@@ -287,6 +287,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
+| Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; the output of `garage bucket info`, `key info`, `layout show` and `status` follows v2's layout without every field |
+| `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4685,6 +4687,107 @@ no deep test running. Several solutions: any timer length, `instcmds = ALL`,
 `CANCEL-TIMER` with or without its command, any accepted date. Expected
 traps: a deep test with the hall open, upssched without PIPEFN and LOCKFN,
 the alerts silenced (IGNORE), an EXECUTE at every ONLINE.
+
+## Story 46: The Dance Troupe (three chapters)
+
+The Kestrel Dance Company, a volunteer-run community dance troupe (classes
+from 4 to 84, a spring gala), keeps its website, its members' files, its
+office backup and its films in Garage (https://garagehq.deuxfleurs.fr/), a
+small geo-distributed S3 server written for self-hosting by the nonprofit
+Deuxfleurs: three nodes in three zones, `wings` (192.0.2.160, the story's
+machine, the studio), `vault` (198.51.100.162, at the Old Mill theatre,
+behind `s3.kestrel.example` and `www.kestrel.example`) and `porch`
+(203.0.113.171, at Siosaia's). Why Garage and not MinIO: MinIO's community
+edition lost its admin console in 2025 and is distributed as source only;
+Garage is made for exactly this kind of association (said in chapter 1's
+debrief). Clients: the AWS CLI v2 (Debian 13's awscli) and rclone 1.60.
+Esperanza is the artistic director, Teodora set the cluster up and left
+notes, Linh helps with the computers, Anahera is the treasurer, Farrukh films
+the shows, Siosaia hosts porch, Zuri produces a partner festival. Defensive
+throughout. Engine: `garage.ts` and `objects-client.ts` (the `objects`
+family, loaded with the story), six explanations in the error explainer
+(dates, regions, AccessDenied, NoSuchBucket, credentials, layouts). The
+story is built in `chapters/dance-troupe.ts`. It opens after "The Clock"
+(NTP) and "Restore Drill" (restic), and extends the security and backups
+paths.
+
+### Chapter 1 — The Public Bucket (done)
+
+Tuesday 9 March 2032, 9:20. A parent found the children's medical contacts
+on the website's address: the documents were in the website's bucket, under
+`members/`, and website access serves every object of a bucket.
+
+| Step | Command learnt |
+|---|---|
+| Seeing it from outside | `curl https://www.kestrel.example/members/…` |
+| Why | `garage bucket list`, `garage bucket info` (Website access, the keys) |
+| A private bucket | `garage bucket create`, `garage bucket allow --read --write [--owner] … --key`, `aws s3 mv … --recursive` |
+| Checked | `curl -i` (404, the error document) |
+| A key per tool | `garage key create`, `garage bucket allow --read --write`, `aws configure set … --profile deploy`, `~/bin/deploy-site`; the same in `/etc/rclone/office.conf`, `rclone ls` |
+
+Goal checked on the state: every member document (by ETag) only in buckets
+without website access; the website still served; a 404 seen on a
+document's public address; the deploy profile's key and the backup
+configuration's key each with read and write on its own bucket only (no
+owner, no other bucket, not the admin key), and each used successfully.
+Several solutions: any private bucket name, `aws s3 mv`, cp then rm, or
+rclone; the keys written with `aws configure` or by hand. Expected traps:
+the documents deleted (Garage has no versioning), the website switched off,
+a key with owner rights or on several buckets.
+
+### Chapter 2 — The Offsite Copy (done)
+
+Monday 12 April, 8:50. Since a power cut on 3 April, wings' clock is three
+days behind with NTP off, and the nightly `rclone sync` to
+`garage:backups/office` fails ("Date is too old"); Linh changed the region
+to us-east-1 and took write away from the backup's key; Anahera saved a
+template over the arts council report.
+
+| Step | Command learnt |
+|---|---|
+| The failure | `journalctl -u office-backup`, `systemctl status office-backup` |
+| The clock | `date`, `timedatectl`, `timedatectl set-ntp true` |
+| The region | `AuthorizationHeaderMalformed` and its expected scope, `region = garage` |
+| Write | `garage bucket info backups`, `garage bucket allow --read --write` |
+| The report | `rclone copyto` (or `aws s3 cp`) from `garage:backups/office` |
+| A safe sync | `--backup-dir garage:backups/office-old/$(date +%F)`, `rclone sync -n` |
+| The run and the check | `systemctl start office-backup`, `rclone check` |
+
+Goal checked on the state: the clock synchronised; the backup key read+write
+on backups only; the script's sync with a `--backup-dir` on the same bucket,
+outside `office/`; the bucket's `office/` the same as the share; the
+report's good text back on wings; no new file lost; an `rclone check`
+without differences; no certificate check turned off in the configuration
+or the script. Several solutions: the service or the script, the report
+restored before the sync or from the backup directory after it, rclone or
+aws. Expected traps: `rclone sync` in the wrong direction (the share loses
+its new files), `--no-check-certificate`, a sync without `--backup-dir`
+before the restore (the last good report overwritten).
+
+### Chapter 3 — The Big File (done)
+
+Thursday 13 May, 10:05. Farrukh must send the 3.8 GB gala film to a
+festival for a week; porch's disk died two days ago and Siosaia's new node
+is connected without a role.
+
+| Step | Command learnt |
+|---|---|
+| The cluster | `garage status` (FAILED NODES, NO ROLE ASSIGNED) |
+| Is the data safe? | `garage layout show` (three copies, a quorum of two) |
+| A read-only key | `garage key create`, `garage bucket allow --read media` |
+| The link | `aws configure set … --profile festival`, `aws s3 presign … --expires-in 604800 > ~/link_for_zuri.txt`, `curl -I` |
+| The replacement | `garage layout assign -z home -c 4T NEW --replace OLD`, `garage layout show`, `garage layout apply --version 4` |
+
+Goal checked on the state: in the link file, a presigned URL for the video
+on the public endpoint, its signature matching its key, expiring after three
+to seven days, signed less than a day ago, by a key that can only read
+media; media without website access; the layout applied with three nodes in
+three zones, all up, the failed node's role gone. Several solutions: any key
+name, a profile or environment variables, `--replace` or remove then
+assign. Expected traps: thirty days (`X-Amz-Expires may not exceed a
+week`), the bucket opened as a website, the admin key or the media team's,
+a localhost URL, the new node in the studio's zone, `apply` without
+`--version`.
 
 ## Ideas for later
 

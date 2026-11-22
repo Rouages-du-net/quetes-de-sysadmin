@@ -1311,6 +1311,12 @@
    "ownOptions": true
   }
  ],
+ "aws": [
+  "objects",
+  {
+   "ownOptions": true
+  }
+ ],
  "caddy": [
   "caddy",
   {
@@ -1444,6 +1450,12 @@
   "directory",
   {
    "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "garage": [
+  "objects",
+  {
    "ownOptions": true
   }
  ],
@@ -1738,6 +1750,12 @@
  ],
  "radtest": [
   "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "rclone": [
+  "objects",
   {
    "ownOptions": true
   }

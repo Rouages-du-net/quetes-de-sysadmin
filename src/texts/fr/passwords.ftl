@@ -97,3 +97,5 @@ password-compost-heap-17 = tas-de-compost-17
 password-storm-lantern-24 = lanterne-tempete-24
 ## Le Mur d'escalade
 password-quickdraw-42 = degaine-42
+## La Troupe de danse
+password-spring-gala-58 = gala-printemps-58

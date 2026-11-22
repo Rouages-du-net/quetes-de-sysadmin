@@ -95,3 +95,4 @@ machine-baton-motd = The Choir — baton, the Riverside Community Choir's server
 machine-trowel-motd = The Allotments — trowel, the Greenholme Allotments Association's database server (MariaDB): Plotline's bookings, members and waiting list. sudo mariadb before anything else.
 machine-slipway-motd = The Lifeboat — slipway, Seaholme Lifeboat's mail server: Postfix receives, rspamd scores, Dovecot stores in /var/vmail. sudo tail /var/log/mail.log before anything else.
 machine-belay-motd = The Climbing Wall — belay, the server of Overhang, the community climbing hall: bookings, memberships, the door's badges. It sits on a UPS in the office rack (Network UPS Tools: upsc, upsmon).
+machine-wings-motd = The Dance Troupe — wings, the Kestrel Dance Company's server and a node of its Garage cluster. sudo garage status before anything else; aws and rclone talk to s3.kestrel.example.

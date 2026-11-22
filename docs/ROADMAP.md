@@ -687,6 +687,14 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **Self-hosted object storage** (Garage, S3 clients): a website
+  bucket that also served private documents, a backup that failed on a
+  clock, a region and a key, a big file shared for a week while a node lay
+  dead. Done: story 46, "The Dance Troupe" (`garage.ts`: nodes, layout,
+  buckets, website access, keys and permissions, Garage's request checks,
+  presigned URLs; `objects-client.ts`: `garage`, `aws`, `rclone` and curl
+  in the `objects` family; six errors in the error explainer).
+
 - [x] **UPS and power cuts** (Network UPS Tools 2.8.1, Debian 13): a
   monitor watching a UPS that no longer exists, a NAS nobody warns, a worn
   battery and alerts that cry wolf. Done: story 45, "The Climbing Wall"

@@ -514,3 +514,11 @@ name-message_from_nkechi-txt = message_from_nkechi.txt
 name-notes_from_haruto-txt = notes_from_haruto.txt
 name-message_from_akosua-txt = message_from_akosua.txt
 name-message_from_thandiwe-txt = message_from_thandiwe.txt
+## The Dance Troupe
+name-message_from_esperanza-txt = message_from_esperanza.txt
+name-notes_from_teodora-txt = notes_from_teodora.txt
+name-message_from_linh-txt = message_from_linh.txt
+name-message_from_anahera-txt = message_from_anahera.txt
+name-message_from_farrukh-txt = message_from_farrukh.txt
+name-message_from_siosaia-txt = message_from_siosaia.txt
+name-link_for_zuri-txt = link_for_zuri.txt

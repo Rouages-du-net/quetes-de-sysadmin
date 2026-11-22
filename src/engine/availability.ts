@@ -88,6 +88,8 @@ const MODELS: [string[], string[], string[]][] = [
   [['rspamc', 'rspamadm'], ['rspamd'], ['/etc/rspamd']],
   [['upsc', 'upscmd', 'upsrw', 'upsmon', 'upsd', 'upsdrvctl', 'upssched'], ['nut'], ['/etc/nut']],
   [['ipmitool'], ['power'], []],
+  [['garage'], ['garage'], ['/etc/garage.toml']],
+  [['aws', 'rclone'], ['garage'], []],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],
   [['nginx'], ['nginx'], ['/etc/nginx']],

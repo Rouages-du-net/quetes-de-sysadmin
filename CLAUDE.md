@@ -878,6 +878,26 @@ presents them for people.
   `drill()`, Ikaika's button; chapter 3's flickering line and `alertTrial`);
   `last-cut.ts`, `down-in-order.ts`, `old-battery.ts`. Tests:
   `tests/climbing-wall.test.ts`.
+- `src/engine/garage.ts`: a Garage cluster, S3 object storage
+  (`state.garage` on the story's machine: nodes, the layout with its roles,
+  zones and staged changes, buckets and their objects (size, ETag, date,
+  text), website access, lifecycle rules, access keys and their per-bucket
+  read/write/owner; `authorize` checks a request in Garage's order (anonymous,
+  "Date is too old" past 24 hours, the region's scope, the key, the
+  signature, the bucket, the permission), `presign`/`readPresigned`/
+  `presignedGet` (X-Amz-Expires at most a week), `webGet` the web endpoint,
+  `liveCopies`/`quorum`); `garage`, `aws` (s3, s3api, configure), `rclone`
+  (ls, lsl, lsd, cat, size, copy, copyto, sync with `--backup-dir`, check,
+  config) and curl towards the cluster (`s3Curl`, the `objects` family's
+  hook) in `src/engine/objects-client.ts`, `state.s3net` the names of the
+  S3 gateway and the website. `chapters/dance-troupe.ts`: what the chapters
+  of "The Dance Troupe" share (`wings`, the troupe's server and one of the
+  three nodes, built by `wingsState()` and `wingsWorld()`: the buckets of
+  each chapter, `~/.aws`, the deploy script, `/etc/rclone/office.conf`, the
+  office share and its nightly backup unit, a clock three days behind in
+  chapter 2, porch failed and its replacement in chapter 3);
+  `public-bucket.ts`, `offsite-copy.ts`, `big-file.ts`. Tests:
+  `tests/dance-troupe.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

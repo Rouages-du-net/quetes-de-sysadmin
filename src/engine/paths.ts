@@ -22,7 +22,7 @@ export const PATH: Path[] = [
       'bulletin', 'priority', 'fix', 'proof', 'routine',
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
       'expiry-date', 'chain-of-trust', 'stolen-laptop', 'who-can-push', 'leaky-pipeline', 'signed-release',
-      'kept-forever', 'access-request', 'forget-me', 'least-privilege',
+      'kept-forever', 'access-request', 'forget-me', 'least-privilege', 'public-bucket',
     ],
   },
   {
@@ -30,7 +30,7 @@ export const PATH: Path[] = [
     chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock', 'expiry-date', 'chain-of-trust', 'mailbox-full', 'spam-tide', 'sorting-office'],
   },
   { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'new-card', 'other-door', 'both-ways', 'new-printer', 'wrong-side', 'split-brain'] },
-  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me', 'broken-replica'] },
+  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me', 'broken-replica', 'offsite-copy', 'big-file'] },
   {
     id: 'deployment',
     chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal', 'wont-start', 'front-desk', 'locker-room', 'deep-end', 'who-can-push', 'leaky-pipeline', 'signed-release'],
