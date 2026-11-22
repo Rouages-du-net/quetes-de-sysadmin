@@ -26,6 +26,9 @@ system: nothing leaves the browser.
   (or "Share → Add to Home Screen" in Safari on iOS); installed, the game
   opens full screen and plays offline, and your progress stays on the device.
 - On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
+- Not sure where to begin? "Where do I start?" asks four quick questions
+  (terminal experience, goal, what interests you, time per session) and
+  suggests a learning path and a first chapter you can play now.
 - Your progress stays in your browser, with no account. A chapter in
   progress is saved after every input: if the page closes (a phone often
   kills background tabs), the game offers to resume it where you left off

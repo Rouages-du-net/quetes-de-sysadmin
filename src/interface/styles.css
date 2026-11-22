@@ -656,6 +656,37 @@
 .qds .resume-offer p { margin: 0; }
 .qds .resume-offer .resume-actions { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
+/* "Where do I start?" (see start-here.ts): a small button of the menu, the
+   first visit's card above it, and the questions in a dialog. */
+.qds .start-here-entry { margin: 0 0 0.75rem; }
+.qds .stories .start-here-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_accent); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
+.qds .stories .start-here-button:hover, .qds .stories .start-here-button:focus-visible { box-shadow: inset 0 0 0 1px var(--_accent); }
+.qds .start-here-entry[hidden], .qds .start-offer[hidden] { display: none; }
+.qds .start-offer { margin: 0 0 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--_accent); border-left-width: 4px; border-radius: 0.5rem; background: var(--_card); color: var(--_text); }
+.qds .start-offer h2 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.qds .start-offer p { margin: 0; }
+.qds .start-offer .start-offer-actions { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qds .start-window { width: min(40rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
+.qds .start-window::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .start-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .start-window h3 { margin: 1rem 0 0.4rem; font-size: 1rem; }
+.qds .start-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.75rem; }
+.qds .start-question { margin: 0; padding: 0.5rem 0.75rem 0.6rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); min-width: 0; }
+.qds .start-question legend { padding: 0 0.3rem; font-weight: 600; }
+.qds .start-question label { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.3rem 0; cursor: pointer; }
+.qds .start-question input { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.15rem 0 0; flex: none; }
+.qds .start-question input:focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
+.qds .start-result { margin-top: 0.75rem; }
+.qds .start-suggestion { padding: 0.75rem 1rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); }
+.qds .start-suggestion.main { border-color: var(--_accent); border-left-width: 4px; }
+.qds .start-suggestion p { margin: 0 0 0.4rem; }
+.qds .start-suggestion .start-path { font-size: 0.85rem; color: var(--_muted); }
+.qds .start-suggestion .start-actions { margin: 0.5rem 0 0; }
+.qds .start-suggestion .difficulty { white-space: nowrap; }
+.qds .start-alternatives { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.qds .start-teachers { margin: 0.75rem 0; }
+.qds .start-teachers a { color: var(--_accent); font-weight: 600; }
+
 /* The frame shown while the game loads (element.ts): about the game's size, so the page does not jump. */
 .qds.qds-loading { min-height: 40rem; }
 .qds.qds-loading > div { height: 26rem; margin-top: 7rem; border-radius: 0.5rem; background: var(--_terminal-background); }

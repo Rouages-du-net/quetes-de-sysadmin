@@ -790,7 +790,12 @@ presents them for people.
   duty and the incident of the day in `src/engine/on-call.ts` (drawn from
   the date by the interface; the engine doesn't read the time), the
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
-  least one path, `tests/paths.test.ts` checks it), the end-of-chapter
+  least one path, `tests/paths.test.ts` checks it), "Where do I start?"
+  in `src/engine/start-here.ts` (four questions, `recommend()`: a path,
+  a chapter playable now or the one that opens the way, alternatives;
+  texts in `start-here.ftl`; the answers kept with the display settings,
+  not the progress; a first visit's card and the tour's last step; hidden
+  in exam mode; `tests/start-here.test.ts`), the end-of-chapter
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
   the error explainer in `src/engine/explainer.ts` (a failed command's
   common error recognised from the messages listed in `explainer.ftl`'s

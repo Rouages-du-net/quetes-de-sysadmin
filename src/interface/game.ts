@@ -22,6 +22,7 @@ import { hint, HINT_LEVELS, type HintLevel } from '../engine/hints';
 import { explain } from '../engine/explainer';
 import { summary } from '../engine/summary';
 import { pathSteps, PATH } from '../engine/paths';
+import { complete, QUESTIONS, readAnswers, recommend, TEACHERS_PAGE, type Answers, type Question, type Suggestion } from '../engine/start-here';
 import { missing } from '../engine/unlocking';
 import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engine/on-call';
 import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } from '../engine/progress';
@@ -88,7 +89,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Display (theme, size, menu view, colours): a setting of this browser only.
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true };
+  // startHere: the answers to "Where do I start?" (see start-here.ts); startOffer: 'done' once its first-visit card is answered or dismissed.
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true, startHere: {} as Partial<Answers>, startOffer: '' };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -161,7 +163,51 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
   const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, incidentBlock, storiesList, lockedBlock, pathBlock);
+  // "Where do I start?" (see start-here.ts): a button of the menu, always there (hidden in exam mode).
+  const startHereButton = el('button', { type: 'button', class: 'start-here-button', 'aria-haspopup': 'dialog' }, t('start-here-button'));
+  const startHereEntry = el('p', { class: 'start-here-entry' }, startHereButton);
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, storiesList, lockedBlock, pathBlock);
+  // On a first visit, the same questions offered by a card above the menu: not a window, it blocks nothing.
+  const startOfferId = `qds-start-offer-${Math.random().toString(36).slice(2, 8)}`;
+  const startOfferAnswer = el('button', { type: 'button', class: 'button', 'aria-haspopup': 'dialog' }, t('start-here-offer-answer'));
+  const startOfferDismiss = el('button', { type: 'button', class: 'button button-secondary' }, t('start-here-offer-dismiss'));
+  const startOffer = el(
+    'section',
+    { class: 'start-offer', 'aria-labelledby': startOfferId, hidden: '' },
+    el('h2', { id: startOfferId }, t('start-here-offer-title')),
+    el('p', {}, typo(t('start-here-offer-text'))),
+    el('p', { class: 'start-offer-actions' }, startOfferAnswer, ' ', startOfferDismiss),
+  );
+  // The questions, in a dialog like the map's: one group of choices each (fieldset and legend, radio buttons).
+  const startId = `qds-start-${Math.random().toString(36).slice(2, 8)}`;
+  const startQuestions = Object.keys(QUESTIONS) as Question[];
+  // Not a <form>: the terminal's form styles stay its own; radio buttons group by name.
+  const startForm = el(
+    'div',
+    { class: 'start-form' },
+    ...startQuestions.map((q) =>
+      el(
+        'fieldset',
+        { class: 'start-question' },
+        el('legend', {}, t(`start-here-${q}`)),
+        ...QUESTIONS[q].map((v) => el('label', {}, el('input', { type: 'radio', name: `${startId}-${q}`, value: v }), ' ', el('span', {}, t(`start-here-${q}-${v}`)))),
+      ),
+    ),
+  );
+  const startResult = el('section', { class: 'start-result', 'aria-labelledby': `${startId}-result` });
+  // Announced when the suggestion changes: one sentence, not the whole block.
+  const startStatus = el('p', { class: 'visually-hidden', role: 'status' });
+  const closeStart = el('button', { type: 'button', class: 'button' }, t('start-here-close'));
+  const startWindow = el(
+    'dialog',
+    { class: 'start-window', 'aria-labelledby': startId },
+    el('h2', { id: startId }, t('start-here-title')),
+    el('p', { class: 'map-legend' }, typo(t('start-here-intro'))),
+    startForm,
+    startResult,
+    startStatus,
+    el('p', { class: 'map-actions' }, closeStart),
+  ) as HTMLDialogElement;
 
   const chaptersNavs = STORIES.map((h, i) =>
     el('nav', { class: 'chapters', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapters': String(i) },
@@ -535,7 +581,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -743,6 +789,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     lockedSummary.textContent = t('stories-locked', { count: locked.length });
     lockedBlock.hidden = locked.length === 0 || display.view === 'paths';
     pathUpdate();
+    startUpdate();
     chaptersNavs.forEach((nav, h) => {
       nav.hidden = h !== story() || chapters(h).length < 2;
       nav.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b, c) => {
@@ -2072,6 +2119,106 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   closeNotebook.addEventListener('click', () => notebookWindow.close());
   notebookWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
+  // ——— "Where do I start?" (see start-here.ts) ———
+  // The menu's button, hidden in exam mode (like the tour and the hints); the
+  // first visit's card, until it is answered or dismissed, never in exam mode
+  // nor when the host page opens a story of its choice. The answers are a
+  // setting of this browser (display), not progress: neither the short code
+  // nor the save file holds them.
+  function startUpdate() {
+    startHereEntry.hidden = gameTerminal.exam;
+    startOffer.hidden = gameTerminal.exam || !!options.story || finished.length > 0 || display.startOffer === 'done' || complete(readAnswers(display.startHere));
+  }
+  const startStory = (id: string) => STORIES.findIndex((x) => x.id === id);
+  const startSuggestion = (s: Suggestion, main: boolean) => {
+    const h = STORIES.findIndex((x) => x.chapters.some((c) => c.id === s.chapter));
+    const c = chapters(h).findIndex((x) => x.id === s.chapter);
+    const title = t(`chapter-${s.chapter}`);
+    return el(
+      main ? 'div' : 'li',
+      { class: main ? 'start-suggestion main' : 'start-suggestion' },
+      el('p', { class: 'start-path' }, typo(t('start-here-path', { path: t(`path-${s.path}`) }))),
+      el('p', { class: 'start-chapter' }, el('strong', {}, typo(t('start-here-chapter', { chapter: title, story: storyTitle(h) }))), ' ', level(difficulty(s.chapter))),
+      el('p', {}, typo(t(s.reason))),
+      ...(s.before ? [el('p', { class: 'map-legend' }, typo(t('start-here-locked', { chapter: t(`chapter-${s.target}`), count: s.before })))] : []),
+      el(
+        'p',
+        { class: 'start-actions' },
+        el('button', { type: 'button', class: main ? 'button' : 'button button-secondary', 'data-h': String(h), 'data-c': String(c), 'data-path': s.path, 'aria-label': typo(t('start-here-start-label', { chapter: title })) }, t('start-here-start')),
+      ),
+    );
+  };
+  // The answers checked in the form, kept, and the suggestion they give from where the player stands.
+  const renderStart = () => {
+    const answers: Partial<Record<Question, string>> = {};
+    for (const q of startQuestions) {
+      const checked = startForm.querySelector<HTMLInputElement>(`input[name="${startId}-${q}"]:checked`);
+      if (checked) answers[q] = checked.value;
+    }
+    display.startHere = readAnswers(answers);
+    applyDisplay();
+    const heading = el('h3', { id: `${startId}-result` }, t('start-here-result'));
+    if (!complete(display.startHere)) {
+      startResult.replaceChildren(el('p', { class: 'map-legend' }, typo(t('start-here-incomplete'))));
+      startStatus.textContent = '';
+      return;
+    }
+    const r = recommend(display.startHere, finished, (id) => accessible(startStory(id)));
+    if (!r) {
+      startResult.replaceChildren(heading, el('p', {}, typo(t('start-here-all-done'))));
+      startStatus.textContent = typo(t('start-here-all-done'));
+      return;
+    }
+    startResult.replaceChildren(
+      heading,
+      startSuggestion(r.main, true),
+      el('p', { class: 'map-legend' }, typo(t(r.note))),
+      ...(r.teacher
+        ? [
+            el(
+              'p',
+              { class: 'start-teachers' },
+              typo(t('start-here-teachers')),
+              ' ',
+              el('a', { href: `https://sysadmin.rouages.net${TEACHERS_PAGE[t.language] ?? TEACHERS_PAGE.en}`, target: '_blank', rel: 'noopener' }, t('start-here-teachers-link')),
+            ),
+          ]
+        : []),
+      ...(r.alternatives.length ? [el('h3', {}, t('start-here-alternatives')), el('ul', { class: 'start-alternatives' }, ...r.alternatives.map((s) => startSuggestion(s, false)))] : []),
+    );
+    startStatus.textContent = typo(t('start-here-announce', { chapter: t(`chapter-${r.main.chapter}`), path: t(`path-${r.main.path}`) }));
+  };
+  const openStart = () => {
+    const answers = readAnswers(display.startHere);
+    startForm.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((i) => {
+      i.checked = answers[i.name.slice(startId.length + 1) as Question] === i.value;
+    });
+    startStatus.textContent = '';
+    renderStart();
+    startWindow.showModal();
+  };
+  startForm.addEventListener('change', renderStart);
+  startHereButton.addEventListener('click', openStart);
+  startOfferAnswer.addEventListener('click', openStart);
+  startOfferDismiss.addEventListener('click', () => {
+    display.startOffer = 'done';
+    applyDisplay();
+    // The card goes: the focus goes to the menu's button, where the questions stay.
+    startHereButton.focus();
+  });
+  // Start: the suggested chapter opens, and its path becomes the one the "Paths" view shows.
+  startResult.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
+    if (!b) return;
+    display.path = b.dataset.path!;
+    display.startOffer = 'done';
+    applyDisplay();
+    startWindow.close();
+    launch(Number(b.dataset.h), Number(b.dataset.c));
+  });
+  closeStart.addEventListener('click', () => startWindow.close());
+  startWindow.addEventListener('close', () => setTimeout(() => input.focus()));
+
   // ——— Tips (see tips.ts): once each, never in exam mode, unless turned off ———
   function showTips(sh: Shell, before: string, said: boolean) {
     if (!display.tips || gameTerminal.exam) return;
@@ -2136,6 +2283,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     [() => mapButton, 'tour-map'],
     [() => notebookButton, 'tour-notebook'],
     [() => field, 'tour-tab'],
+    // Last, where to start (see start-here.ts): the first visit's card, or the menu's button.
+    [() => (startOffer.hidden ? startHereButton : startOfferAnswer), 'tour-start-here'],
   ];
   let tourStep = -1;
   let tourTarget: HTMLElement | null = null;

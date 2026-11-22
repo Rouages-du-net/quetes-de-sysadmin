@@ -828,6 +828,17 @@ them safely.
   production, accounts and identities; each chapter is in at least one
   path; the next one to play is highlighted, and what is waiting says which
   chapter to finish first.
+- [x] **Where do I start?** (`src/engine/start-here.ts`): four quick
+  questions (experience with a terminal, goal, systems of interest, time
+  per session) and a suggestion computed from them and the player's
+  progress: a learning path, the chapter to play first (always one that
+  opens now; when the path's first chapter is locked, how many chapters
+  open it), one or two other ways in, each with its reason and difficulty
+  stars, and a Start button. Teachers are pointed to the quest sheets. A
+  first visit gets a card above the menu (not a window) and the intro
+  tour's last step points at it; the menu's button is always there, except
+  in exam mode. The answers stay in this browser with the display
+  settings, never in the progress code or the save file.
 - [x] **Command-line highlighting**, like fish or zsh-syntax-highlighting:
   the command in green if the game's shell would run it, in red (with a wavy
   underline) otherwise, options, strings, globs that match something, pipes

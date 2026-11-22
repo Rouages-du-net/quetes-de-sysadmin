@@ -32,6 +32,10 @@ un système entièrement simulé : rien ne sort du navigateur.
   iOS) ; installé, le jeu s'ouvre en plein écran et marche hors ligne, et ta
   progression reste sur l'appareil.
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Tu ne sais pas par où commencer ? « Par où commencer ? » pose quatre
+  questions rapides (expérience du terminal, objectif, ce qui t'intéresse,
+  temps par séance) et suggère un parcours et un premier chapitre jouable
+  tout de suite.
 - Ta progression reste dans ton navigateur, sans compte. Un chapitre en
   cours est sauvegardé après chaque saisie : si la page se ferme (un
   téléphone ferme souvent les onglets en arrière-plan), le jeu propose de le

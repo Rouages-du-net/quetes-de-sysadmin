@@ -105,7 +105,10 @@ for (const width of [1000, 375]) {
   check(tourBox && tourBox.x >= 0 && tourBox.x + tourBox.width <= width, `${width} px: the tour's bubble fits on the screen`);
   check((await game.locator('.tour-target').count()) === 1, `${width} px: the tour outlines what it points at`);
   for (let i = 0; i < 4; i++) await tour.locator('.button').click();
-  check((await tour.textContent()).includes('Tab'), `${width} px: the tour's last step is about Tab`);
+  check((await tour.textContent()).includes('Tab'), `${width} px: the tour's fifth step is about Tab`);
+  await tour.locator('.button').click();
+  // Its last step points at "Where do I start?": the first visit's card (see start-here.ts).
+  check((await tour.textContent()).includes('par où commencer') && (await game.locator('.start-offer .tour-target').count()) === 1, `${width} px: the tour's last step points at the first visit's offer`);
   await tour.locator('.button').click();
   check(await tour.isHidden(), `${width} px: the tour ends`);
   // The toolbar: Mission, Map, Notebook, as icons with labels (hidden on a narrow screen, still named).
@@ -302,6 +305,89 @@ for (const width of [1000, 375]) {
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px: sheets without horizontal scrolling`);
   check(errors.length === 0, `${width} px: sheets without console error ${errors.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/enseignants-${width}.png` });
+  await page.close();
+}
+
+// "Where do I start?" (see start-here.ts): a first visit is offered the
+// questions by a card (not a window); answered with the keyboard, they give a
+// suggestion whose Start opens the chapter; the menu's button opens them again
+// with the answers kept; a returning player sees no card, and exam mode hides it all.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  const offer = game.locator('.start-offer');
+  check(await offer.isVisible(), `start ${width} px: a first visit is offered "Par où commencer ?"`);
+  check((await game.locator('dialog[open]').count()) === 0, `start ${width} px: the offer is a card, not a window`);
+  const answer = offer.locator('.button').first();
+  await answer.focus();
+  await page.keyboard.press('Enter');
+  const window = game.locator('dialog.start-window');
+  check(await window.evaluate((d) => d.open), `start ${width} px: the questions open from the keyboard`);
+  check((await window.locator('fieldset legend').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Réponds aux quatre questions'), `start ${width} px: four groups of choices, no suggestion before the answers`);
+  // Every day, a job, security, about 10 minutes: Space on a group's first choice, the arrows for the others.
+  await window.locator('input[type="radio"]').nth(2).focus();
+  await page.keyboard.press('Space');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Space');
+  const result = window.locator('.start-result');
+  const text = await result.textContent();
+  check(text.includes('Protéger un serveur') && text.includes('L’Île du Phare') && text.includes("Autres portes d'entrée"), `start ${width} px: the answers give a path, a chapter that opens now, and other ways in`);
+  check(text.includes("s'ouvre après encore") && (await result.locator('.main .difficulty').count()) === 1, `start ${width} px: what opens the path's chapter, and the difficulty stars`);
+  check((await window.locator('[role="status"]').textContent()).includes('Suggestion'), `start ${width} px: the suggestion is announced`);
+  const box = await window.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `start ${width} px: the questions fit on the screen`);
+  if (width === 375) {
+    await window.locator('input[type="radio"]').nth(6).focus();
+    await page.keyboard.press('Space');
+    check((await result.locator('.start-teachers a').getAttribute('href')).endsWith('/fr/enseignants/'), `start ${width} px: a teacher is pointed to the quest sheets`);
+    await window.locator('input[type="radio"]').nth(5).focus();
+    await page.keyboard.press('Space');
+  }
+  if (process.env.CAPTURES) await window.screenshot({ path: `${process.env.CAPTURES}/start-${width}.png` });
+  await result.locator('.main button').focus();
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
+  check(!(await window.evaluate((d) => d.open)) && (await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `start ${width} px: Start opens the chapter`);
+  check(await offer.isHidden(), `start ${width} px: the card goes once answered`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `start ${width} px: no horizontal scrolling`);
+  // Back later: no card, the menu's button, the answers kept (a setting of this browser, not of the progress).
+  await page.reload();
+  check(await offer.isHidden(), `start ${width} px: no card after a reload`);
+  await game.locator('.start-here-button').click();
+  check((await window.locator('input[type="radio"]:checked').count()) === 4 && (await window.locator('.start-result').textContent()).includes('Protéger un serveur'), `start ${width} px: the menu's button opens the questions, answers kept`);
+  await page.keyboard.press('Escape');
+  check(!(await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin') ?? '{}').startHere)), `start ${width} px: the answers are not in the progress`);
+  check(errors.length === 0, `start ${width} px: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+// A returning player (chapters finished) is not interrupted; exam mode hides the questions.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page, { tour: true });
+  await page.addInitScript(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse'] })));
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  await page.waitForTimeout(500);
+  check(await game.locator('.start-offer').isHidden(), 'start returning: no card for a player who has played');
+  check(await game.locator('.tour').isHidden(), 'start returning: no tour either');
+  check(await game.locator('.start-here-button').isVisible(), 'start returning: the menu still has "Par où commencer ?"');
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
+  await page.locator('#exam-mode').check();
+  check(await game.locator('.start-here-entry').isHidden(), 'start exam: the button is hidden in exam mode');
+  check(errors.length === 0, `start returning: no console error ${errors.join(' ')}`);
   await page.close();
 }
 
