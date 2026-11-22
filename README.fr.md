@@ -32,6 +32,11 @@ un système entièrement simulé : rien ne sort du navigateur.
   iOS) ; installé, le jeu s'ouvre en plein écran et marche hors ligne, et ta
   progression reste sur l'appareil.
 - Sur ton site, en deux lignes : voir [docs/INTEGRER.md](docs/INTEGRER.md).
+- Un bogue, un indice pas clair, une idée ? « Signaler un problème ou une
+  idée » (sous le menu, dans un chapitre, ou en pied de page du site) te
+  montre le signalement exact, avec seulement le contexte que tu coches, et
+  te laisse ouvrir une issue GitHub ou copier le texte toi-même : le jeu
+  n'envoie jamais rien.
 - Tu ne sais pas par où commencer ? « Par où commencer ? » pose quatre
   questions rapides (expérience du terminal, objectif, ce qui t'intéresse,
   temps par séance) et suggère un parcours et un premier chapitre jouable

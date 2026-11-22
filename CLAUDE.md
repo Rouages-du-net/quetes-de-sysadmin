@@ -790,7 +790,14 @@ presents them for people.
   duty and the incident of the day in `src/engine/on-call.ts` (drawn from
   the date by the interface; the engine doesn't read the time), the
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
-  least one path, `tests/paths.test.ts` checks it), "Where do I start?"
+  least one path, `tests/paths.test.ts` checks it), "Report a problem or
+  an idea" in `src/engine/feedback.ts` (`buildReport()`: a pure function,
+  the parts ticked, `partLines`, progress codes removed, the GitHub link
+  under `URL_LIMIT` by dropping the oldest commands; the interface's
+  last steps `recentSteps`, never a password; no commands in exam mode;
+  nothing sent; the version from `src/version.mjs` as `__QDS_VERSION__`;
+  the footer's link `src/pwa/feedback-link.ts`; texts in `feedback.ftl`;
+  `.github/ISSUE_TEMPLATE/feedback.md`; `tests/feedback.test.ts`), "Where do I start?"
   in `src/engine/start-here.ts` (four questions, `recommend()`: a path,
   a chapter playable now or the one that opens the way, alternatives;
   texts in `start-here.ftl`; the answers kept with the display settings,

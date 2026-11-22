@@ -26,6 +26,10 @@ system: nothing leaves the browser.
   (or "Share → Add to Home Screen" in Safari on iOS); installed, the game
   opens full screen and plays offline, and your progress stays on the device.
 - On your own site, in two lines: see [docs/EMBEDDING.md](docs/EMBEDDING.md).
+- Found a bug, an unclear hint, or have an idea? "Report a problem or an
+  idea" (under the menu, in a chapter, or in the site's footer) shows you
+  the exact report, with only the context you tick, and lets you open a
+  GitHub issue or copy the text yourself: the game never sends anything.
 - Not sure where to begin? "Where do I start?" asks four quick questions
   (terminal experience, goal, what interests you, time per session) and
   suggests a learning path and a first chapter you can play now.

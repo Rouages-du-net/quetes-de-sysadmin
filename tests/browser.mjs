@@ -391,6 +391,98 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
+// "Signaler un problème ou une idée" (see feedback.ts): opened from a chapter
+// and from the menu, a context part ticked changes the exact text, the GitHub
+// link carries the title, copying works (or selects the text), Esc closes and
+// gives the focus back, and the dialog makes no request at all.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  const input = game.locator('form input');
+  await game.locator('button[data-story="0"]').click();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
+  for (const c of ['ls', 'pwd']) {
+    await input.fill(c);
+    await input.press('Enter');
+  }
+  // From here on, nothing may go out: the dialog only builds a text.
+  const requests = [];
+  page.on('request', (r) => requests.push(r.url()));
+  const opener = game.locator('.chapter-actions .pill').last();
+  await opener.focus();
+  await page.keyboard.press('Enter');
+  const dialog = game.locator('dialog.feedback-window');
+  check(await dialog.evaluate((d) => d.open), `feedback ${width} px: opens from the chapter's actions`);
+  check((await game.locator('dialog.feedback-window textarea:focus').count()) === 1, `feedback ${width} px: the focus goes to the message`);
+  const preview = dialog.locator('.feedback-preview');
+  await dialog.locator('textarea').first().fill('La commande ls oublie un fichier QDS-ABCD-EFGH');
+  let text = await preview.inputValue();
+  check(text.startsWith('[bug] La commande ls oublie un fichier') && text.includes('- chapter: lighthouse (1, ') && text.includes('- language: fr') && text.includes('### Contexte'), `feedback ${width} px: the exact text, with the parts ticked by default`);
+  check(!text.includes('QDS-ABCD') && text.includes('[code de progression retiré]'), `feedback ${width} px: a progress code is removed`);
+  check(!text.includes('vous@royaume:~$ ls') && !text.includes('user-agent'), `feedback ${width} px: commands and browser stay out until ticked`);
+  check((await dialog.locator('li[data-part="commands"] textarea').inputValue()).includes('vous@royaume:~$ pwd'), `feedback ${width} px: the chapter's last commands are shown, to edit`);
+  await dialog.locator('li[data-part="commands"] input[type="checkbox"]').check();
+  await dialog.locator('li[data-part="commands"] textarea').fill('vous@royaume:~$ ls\nlettre.txt');
+  text = await preview.inputValue();
+  check(text.includes('### Dernières commandes') && text.includes('vous@royaume:~$ ls\nlettre.txt') && !text.includes('pwd'), `feedback ${width} px: ticking the commands adds them to the text, as edited`);
+  const href = await dialog.locator('a.feedback-github').getAttribute('href');
+  const url = new URL(href);
+  check(url.origin + url.pathname === 'https://github.com/Rouages-du-net/quetes-de-sysadmin/issues/new' && url.searchParams.get('title').startsWith('[bug] La commande ls oublie') && url.searchParams.get('body').includes('lettre.txt'), `feedback ${width} px: the GitHub link carries the title and the text`);
+  check((await dialog.locator('a.feedback-github').getAttribute('target')) === '_blank' && (await dialog.locator('a.feedback-github').getAttribute('rel')).includes('noopener'), `feedback ${width} px: the link opens a new tab, without opener`);
+  // Copy: the Clipboard API where it is allowed, otherwise the text selected.
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+  await dialog.locator('.feedback-actions button').click();
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.feedback-window [role="status"]').textContent !== '');
+  const status = await dialog.locator('[role="status"]').textContent();
+  const copied = status.includes('copié') ? await page.evaluate(() => navigator.clipboard.readText()) : '';
+  check((status.includes('copié') && copied.startsWith('[bug] La commande ls')) || status.includes('sélectionné'), `feedback ${width} px: copy works or selects the text (${status})`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `feedback ${width} px: the dialog fits on the screen`);
+  if (process.env.CAPTURES) await dialog.screenshot({ path: `${process.env.CAPTURES}/feedback-${width}.png` });
+  await page.keyboard.press('Escape');
+  check(!(await dialog.evaluate((d) => d.open)), `feedback ${width} px: Esc closes it`);
+  await page.waitForTimeout(100);
+  check(await opener.evaluate((b) => b.getRootNode().activeElement === b), `feedback ${width} px: the focus goes back to its button`);
+  // From the menu: the draft is kept.
+  await game.locator('.feedback-entry button').click();
+  check(await dialog.evaluate((d) => d.open) && (await preview.inputValue()).includes('La commande ls oublie'), `feedback ${width} px: opens from the menu, the draft kept`);
+  await dialog.locator('.map-actions .button').click();
+  check(requests.length === 0, `feedback ${width} px: the dialog makes no request ${requests.join(' ')}`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `feedback ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `feedback ${width} px: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+// The site's footer opens the game's dialog; on another page, it leads to the game with #report; exam mode leaves out the commands.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const dialog = page.locator('quetes-de-sysadmin dialog.feedback-window');
+  await page.locator('footer a[data-report]').click();
+  check(await dialog.evaluate((d) => d.open), 'feedback footer: the footer\'s link opens the game\'s dialog');
+  await page.keyboard.press('Escape');
+  await page.goto(`${BASE}/fr/enseignants/`);
+  await page.locator('footer a[data-report]').click();
+  await page.waitForURL(`${BASE}/fr/`);
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('dialog.feedback-window')?.open);
+  check(await dialog.evaluate((d) => d.open), 'feedback footer: from a page without the game, the game\'s page opens the dialog');
+  await page.keyboard.press('Escape');
+  await page.locator('details:has(#exam-mode)').evaluate((d) => (d.open = true));
+  await page.locator('#exam-mode').check();
+  await page.locator('quetes-de-sysadmin .feedback-entry button').click();
+  check(await dialog.locator('li[data-part="commands"] input').isDisabled() && (await dialog.textContent()).includes('Pas en mode examen'), 'feedback exam: available, without the commands');
+  check(errors.length === 0, `feedback footer: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+
 // The network plan: in La Ruche, the map's "Network" tab shows the
 // diagram (with "you are here" on the router) and its list version.
 for (const width of [1000, 375]) {

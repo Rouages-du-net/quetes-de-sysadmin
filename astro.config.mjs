@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import { qdsTexts } from './src/texts/plugin.mjs';
 import { pwa } from './src/pwa/build.ts';
+import { versionDefine } from './src/version.mjs';
 
 // The sysadmin.rouages.net site: static pages served by Apache (cPanel).
 // The game itself is the <quetes-de-sysadmin> element (src/element.ts), inserted
@@ -20,5 +21,6 @@ export default defineConfig({
   // needed, like each story (src/engine/story-registry.ts). No file inlined
   // as data: (Vite does it under 4 KB, for the font's small pieces): the CSP
   // only allows the site's files.
-  vite: { plugins: [qdsTexts()], build: { assetsInlineLimit: 0 } },
+  // The game's version (src/version.mjs), for the feedback dialog.
+  vite: { plugins: [qdsTexts()], define: versionDefine(), build: { assetsInlineLimit: 0 } },
 });

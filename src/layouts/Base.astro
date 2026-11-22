@@ -19,6 +19,9 @@ const en = lang !== 'fr';
 const home = en ? '/en/' : '/fr/';
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const appName = en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin';
+// The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
+// on a page without the game, or without JavaScript, the game's page opens it (#report).
+const report = en ? 'Report a problem or an idea' : 'Signaler un problème ou une idée';
 // The footer's "Install the game" (src/pwa/install.ts): its messages.
 const install = en
   ? {
@@ -73,6 +76,7 @@ const install = en
       </details>
       <p class="install-status" role="status" tabindex="-1"></p>
     </div>
+    <p class="report"><a href={`${home}#report`} data-report>{report}</a></p>
     {en ? (
       <>
         <p>

@@ -8,6 +8,24 @@ règles complètes sont dans `CLAUDE.md` (elles valent pour tout le monde,
 pas seulement pour l'agent) ; le détail des textes est dans
 [`docs/TRANSLATING.md`](docs/TRANSLATING.md).
 
+## Signaler un problème ou une idée
+
+Le bouton « Signaler un problème ou une idée » du jeu (sous le menu, parmi
+les actions d'un chapitre, et dans le pied de page du site) rédige le
+signalement : on choisit le type (le comportement d'une commande, un texte
+ou un indice pas clair, une idée, autre chose), on écrit un message, on
+coche le contexte à inclure (version, langue, chapitre, les dernières
+commandes et leurs réponses, navigateur, réglages, carnet), on voit le texte
+exact, puis on ouvre soi-même une issue GitHub préremplie ou on copie le
+texte. Le jeu n'envoie rien. Les signalements arrivent comme des issues
+fondées sur `.github/ISSUE_TEMPLATE/feedback.md`, titrées `[bug]`, `[text]`,
+`[idea]` ou `[other]`, et commencent par
+`<!-- sysadmin-quests feedback v1 -->` ; leurs titres de section sont dans
+la langue du joueur ou de la joueuse, les lignes dessous gardent des
+libellés anglais (`version:`, `chapter:`…). Un signalement trop long pour un
+lien perd ses plus anciennes commandes et le dit ; on a proposé de coller le
+texte copié. Le texte est construit par `src/engine/feedback.ts`.
+
 ## Les principes
 
 - **Vraies commandes, vrais comportements.** Noms, options courantes, codes

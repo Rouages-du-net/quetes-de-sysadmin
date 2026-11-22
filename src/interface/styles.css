@@ -687,6 +687,40 @@
 .qds .start-teachers { margin: 0.75rem 0; }
 .qds .start-teachers a { color: var(--_accent); font-weight: 600; }
 
+/* "Report a problem or an idea" (see feedback.ts): a button under the menu,
+   a pill among the chapter's actions, and the report in a dialog. */
+.qds .feedback-entry { margin: 0.75rem 0 0; }
+.qds .stories .feedback-button { display: inline-flex; align-items: center; gap: 0.4rem; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.6rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: transparent; color: var(--_muted); cursor: pointer; }
+.qds .stories .feedback-button:hover, .qds .stories .feedback-button:focus-visible { border-color: var(--_accent); color: var(--_text); }
+.qds .feedback-button .icon { color: var(--_accent); }
+.qds .feedback-window { width: min(44rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }
+.qds .feedback-window::backdrop { background: rgb(0 0 0 / 0.5); }
+.qds .feedback-window h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
+.qds .feedback-window h3 { margin: 1rem 0 0.4rem; font-size: 1rem; }
+.qds .feedback-window fieldset { margin: 0.75rem 0 0; padding: 0.5rem 0.75rem 0.6rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_card); min-width: 0; }
+.qds .feedback-window legend { padding: 0 0.3rem; font-weight: 600; }
+.qds .feedback-window fieldset label { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.25rem 0; cursor: pointer; }
+.qds .feedback-window fieldset label.visually-hidden { position: absolute; }
+.qds .feedback-window input[type="radio"], .qds .feedback-window input[type="checkbox"] { accent-color: var(--_accent); width: 1.1rem; height: 1.1rem; margin: 0.15rem 0 0; flex: none; }
+.qds .feedback-window input:focus-visible, .qds .feedback-window textarea:focus-visible, .qds .feedback-window a:focus-visible { outline: 3px solid var(--_accent); outline-offset: 2px; }
+.qds .feedback-window .feedback-kind { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); column-gap: 0.75rem; }
+.qds .feedback-window .feedback-kind legend { grid-column: 1 / -1; }
+.qds .feedback-field { display: flex; flex-direction: column; gap: 0.25rem; margin: 0.75rem 0 0; }
+.qds .feedback-field label { font-weight: 600; }
+.qds .feedback-window textarea { box-sizing: border-box; width: 100%; font: inherit; font-size: 0.9rem; padding: 0.4rem 0.5rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_card); color: var(--_text); resize: vertical; }
+.qds .feedback-parts ul { list-style: none; margin: 0.25rem 0 0.5rem; padding: 0; display: grid; gap: 0.4rem; }
+.qds .feedback-parts li { min-width: 0; }
+.qds .feedback-lines { margin: 0 0 0 1.6rem; padding: 0.3rem 0.5rem; font-size: 0.8rem; white-space: pre-wrap; overflow-wrap: anywhere; border-left: 2px solid var(--_border); color: var(--_muted); }
+.qds .feedback-lines:empty { display: none; }
+.qds .feedback-parts li .map-legend, .qds .feedback-parts li .feedback-commands { margin: 0.2rem 0 0 1.6rem; width: calc(100% - 1.6rem); }
+.qds .feedback-commands[hidden] { display: none; }
+.qds .feedback-preview, .qds .feedback-commands { min-height: 10rem; font-family: var(--_font-mono); font-size: 0.8rem; font-variant-ligatures: none; }
+.qds .feedback-lines { font-family: var(--_font-mono); font-variant-ligatures: none; }
+.qds .feedback-truncated { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border: 1px solid var(--_accent); border-left-width: 4px; border-radius: 0.4rem; background: var(--_card); }
+.qds .feedback-truncated[hidden] { display: none; }
+.qds .feedback-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+.qds .feedback-actions .button { text-decoration: none; display: inline-flex; align-items: center; }
+
 /* The frame shown while the game loads (element.ts): about the game's size, so the page does not jump. */
 .qds.qds-loading { min-height: 40rem; }
 .qds.qds-loading > div { height: 26rem; margin-top: 7rem; border-radius: 0.5rem; background: var(--_terminal-background); }

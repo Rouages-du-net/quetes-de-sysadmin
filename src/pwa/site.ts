@@ -1,10 +1,11 @@
 // The Progressive Web App on the site's own pages (imported by
 // src/layouts/Base.astro): the service worker that lets the installed game
-// play offline, and the footer's "Install the game".
+// play offline, the footer's "Install the game" and its "Report a problem".
 // Never imported by the embeddable element (src/element.ts): a page that
 // embeds the game keeps its own origin, and its own service workers.
 
 import { wireInstall } from './install';
+import { wireReport } from './feedback-link';
 
 export function registerServiceWorker() {
   // Only the built site has /sw.js (written by src/pwa/build.ts), not `astro dev`.
@@ -16,3 +17,4 @@ export function registerServiceWorker() {
 
 registerServiceWorker();
 wireInstall();
+wireReport();

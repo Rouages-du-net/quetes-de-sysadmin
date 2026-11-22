@@ -23,6 +23,7 @@ import { explain } from '../engine/explainer';
 import { summary } from '../engine/summary';
 import { pathSteps, PATH } from '../engine/paths';
 import { complete, QUESTIONS, readAnswers, recommend, TEACHERS_PAGE, type Answers, type Question, type Suggestion } from '../engine/start-here';
+import { buildReport, DEFAULT_PARTS, FEEDBACK_KINDS, FEEDBACK_PARTS, partLines, reportText, STEPS_KEPT, transcript, type FeedbackContext, type FeedbackKind, type FeedbackPart, type Step } from '../engine/feedback';
 import { missing } from '../engine/unlocking';
 import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engine/on-call';
 import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } from '../engine/progress';
@@ -73,6 +74,8 @@ const ICON_PROGRESS = ['M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0
 const ICON_MISSION = ['M4 22V4', 'M4 4h13l-2.5 4 2.5 4H4'];
 const ICON_MAP = ['M9 3 3 6v15l6-3 6 3 6-3V3l-6 3z', 'M9 3v15', 'M15 6v15'];
 const ICON_NOTEBOOK = ['M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z', 'M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5', 'M8 7h8', 'M8 11h6'];
+// Feedback (a speech bubble).
+const ICON_FEEDBACK = ['M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', 'M8 9h8', 'M8 13h5'];
 const ICON_TROPHY = ['M7 4h10v5a5 5 0 0 1-10 0z', 'M7 6H4v1a4 4 0 0 0 4 4', 'M17 6h3v1a4 4 0 0 0-4 4', 'M9 21h6', 'M12 17v4'];
 
 // The lines kept on screen for a single output.
@@ -166,7 +169,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // "Where do I start?" (see start-here.ts): a button of the menu, always there (hidden in exam mode).
   const startHereButton = el('button', { type: 'button', class: 'start-here-button', 'aria-haspopup': 'dialog' }, t('start-here-button'));
   const startHereEntry = el('p', { class: 'start-here-entry' }, startHereButton);
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, storiesList, lockedBlock, pathBlock);
+  // "Report a problem or an idea" (see feedback.ts): a button under the menu, and one among the chapter's actions.
+  const feedbackMenuButton = el('button', { type: 'button', class: 'feedback-button', 'aria-haspopup': 'dialog' }, icon(...ICON_FEEDBACK), el('span', {}, t('feedback-button')));
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
   // On a first visit, the same questions offered by a card above the menu: not a window, it blocks nothing.
   const startOfferId = `qds-start-offer-${Math.random().toString(36).slice(2, 8)}`;
   const startOfferAnswer = el('button', { type: 'button', class: 'button', 'aria-haspopup': 'dialog' }, t('start-here-offer-answer'));
@@ -207,6 +212,72 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     startResult,
     startStatus,
     el('p', { class: 'map-actions' }, closeStart),
+  ) as HTMLDialogElement;
+
+  // "Report a problem or an idea" (see feedback.ts): what the report is
+  // about, the message, the parts of the context to include (each showing
+  // exactly what it adds), the exact text, and the player's own ways to send
+  // it. Not a <form>: nothing is ever submitted.
+  const feedbackId = `qds-feedback-${Math.random().toString(36).slice(2, 8)}`;
+  const feedbackKinds = el(
+    'fieldset',
+    { class: 'feedback-kind' },
+    el('legend', {}, t('feedback-kind-legend')),
+    ...FEEDBACK_KINDS.map((k) => el('label', {}, el('input', { type: 'radio', name: `${feedbackId}-kind`, value: k }), ' ', el('span', {}, t(`feedback-kind-${k}`)))),
+  );
+  const feedbackMessage = el('textarea', { id: `${feedbackId}-message`, rows: '4', 'aria-describedby': `${feedbackId}-message-help`, spellcheck: 'true' }) as HTMLTextAreaElement;
+  const feedbackBoxes = Object.fromEntries(
+    FEEDBACK_PARTS.map((p) => [p, el('input', { type: 'checkbox', value: p, 'aria-describedby': `${feedbackId}-${p}` }) as HTMLInputElement]),
+  ) as Record<FeedbackPart, HTMLInputElement>;
+  // What each part adds: shown as is; the commands in a field the player may edit.
+  const feedbackLines = Object.fromEntries(
+    FEEDBACK_PARTS.filter((p) => p !== 'commands').map((p) => [p, el('pre', { class: 'feedback-lines', id: `${feedbackId}-${p}` })]),
+  ) as Record<Exclude<FeedbackPart, 'commands'>, HTMLPreElement>;
+  const feedbackCommands = el('textarea', { id: `${feedbackId}-commands-field`, class: 'feedback-commands', rows: '8', spellcheck: 'false', autocapitalize: 'off', wrap: 'off' }) as HTMLTextAreaElement;
+  const feedbackCommandsNote = el('p', { class: 'map-legend', id: `${feedbackId}-commands` });
+  const feedbackPreview = el('textarea', { id: `${feedbackId}-preview`, class: 'feedback-preview', rows: '10', readonly: '', spellcheck: 'false', wrap: 'off' }) as HTMLTextAreaElement;
+  const feedbackTruncated = el('p', { class: 'feedback-truncated', hidden: '' });
+  const feedbackGithub = el('a', { class: 'button feedback-github', target: '_blank', rel: 'noopener noreferrer', href: '#' }, t('feedback-github'), el('span', { class: 'visually-hidden' }, ` ${t('feedback-new-tab')}`));
+  const feedbackCopy = el('button', { type: 'button', class: 'button button-secondary' }, t('feedback-copy'));
+  const feedbackStatus = el('p', { class: 'map-legend', role: 'status' });
+  const closeFeedback = el('button', { type: 'button', class: 'button' }, t('feedback-close'));
+  const feedbackWindow = el(
+    'dialog',
+    { class: 'feedback-window', 'aria-labelledby': feedbackId },
+    el('h2', { id: feedbackId }, t('feedback-title')),
+    el('p', { class: 'map-legend' }, typo(t('feedback-intro'))),
+    feedbackKinds,
+    el('p', { class: 'feedback-field' }, el('label', { for: feedbackMessage.id }, t('feedback-message-label')), el('span', { class: 'map-legend', id: `${feedbackId}-message-help` }, typo(t('feedback-message-help'))), feedbackMessage),
+    el(
+      'fieldset',
+      { class: 'feedback-parts' },
+      el('legend', {}, t('feedback-parts-legend')),
+      el('p', { class: 'map-legend' }, typo(t('feedback-parts-help'))),
+      el(
+        'ul',
+        {},
+        ...FEEDBACK_PARTS.map((p) =>
+          el(
+            'li',
+            { 'data-part': p },
+            el('label', {}, feedbackBoxes[p], ' ', el('span', {}, t(`feedback-part-${p}`))),
+            ...(p === 'commands'
+              ? [feedbackCommandsNote, el('label', { for: feedbackCommands.id, class: 'visually-hidden' }, t('feedback-commands-label')), feedbackCommands]
+              : [feedbackLines[p]]),
+          ),
+        ),
+      ),
+      el('p', { class: 'map-legend' }, typo(t('feedback-never'))),
+    ),
+    el('h3', {}, el('label', { for: feedbackPreview.id }, t('feedback-preview'))),
+    feedbackPreview,
+    el('h3', {}, t('feedback-send')),
+    el('p', { class: 'map-legend' }, typo(t('feedback-github-help'))),
+    feedbackTruncated,
+    el('p', { class: 'feedback-actions' }, feedbackGithub, ' ', feedbackCopy),
+    el('p', { class: 'map-legend' }, typo(t('feedback-copy-help'))),
+    feedbackStatus,
+    el('p', { class: 'map-actions' }, closeFeedback),
   ) as HTMLDialogElement;
 
   const chaptersNavs = STORIES.map((h, i) =>
@@ -444,7 +515,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const achievementsButton = el('button', { type: 'button', class: 'pill', 'aria-haspopup': 'dialog' }, icon(...ICON_TROPHY), achievementsLabel);
   const tips = el('p', { class: 'tips' }, typo(t('tips')));
   // The chapter's actions, as a row of buttons under the tip.
-  const chapterActions = el('p', { class: 'chapter-actions' }, restart, progressButton, achievementsButton);
+  const feedbackButton = el('button', { type: 'button', class: 'pill', 'aria-haspopup': 'dialog' }, icon(...ICON_FEEDBACK), el('span', {}, t('feedback-button')));
+  const chapterActions = el('p', { class: 'chapter-actions' }, restart, progressButton, achievementsButton, feedbackButton);
   const achievementsId = `qds-achievements-${Math.random().toString(36).slice(2, 8)}`;
   const gradeAchievements = el('p', { class: 'achievement-rank' });
   const listAchievements = el('ul', { class: 'achievement-list' });
@@ -581,7 +653,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow);
+  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow, feedbackWindow);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -615,6 +687,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   examCase.checked = gameTerminal.exam;
   // The start of the current chapter, in exam mode (null: no timer).
   let examStart: number | null = null;
+  // The last commands typed in the current chapter and their outputs (the feedback dialog offers them, see feedback.ts).
+  let recentSteps: Step[] = [];
+  let stepsChapter = '';
   // Current story and chapter (-1: on the workstation).
   const story = () => (gameTerminal.remote ? STORIES.findIndex((s) => s.id === gameTerminal.remote!.story.id) : -1);
   const active = () => (gameTerminal.remote ? gameTerminal.remote.story.chapters.indexOf(gameTerminal.remote.shell.chapter) : -1);
@@ -936,6 +1011,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // The menu's shortcuts: a fresh screen, straight on the right machine.
   const goWorkstation = () => {
     followEnd();
+    recentSteps = [];
     examStart = null;
     timerUpdate();
     output.replaceChildren(measure);
@@ -965,6 +1041,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   const launchNow = (h: number, c?: number) => {
     followEnd();
+    recentSteps = [];
     output.replaceChildren(measure);
     const loaded = loadedStory(STORIES[h].id)!;
     const chapter = c === undefined ? undefined : loaded.chapters[c];
@@ -989,6 +1066,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // A password is not displayed and doesn't go into the history.
     const secret = gameTerminal.shell.maskedInput();
     const response = secret || gameTerminal.shell.question !== null;
+    // For the feedback dialog (see feedback.ts): the prompt as shown, before the line runs.
+    const promptBefore = prompt.textContent ?? '';
+    const chapterBefore = gameTerminal.remote?.shell.chapter.id;
     if (secret || line === '\u0004') show(prompt.textContent ?? '', 'cmd');
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
@@ -1016,6 +1096,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     }
     // An answer to a question (a password…) is not a command for the notebook.
     if (!response) note(notebook, shell);
+    // The chapter's last steps, for the feedback dialog: a password never kept (masked), "clear" keeps its line.
+    if (chapterBefore) {
+      if (chapterBefore !== stepsChapter) recentSteps = [];
+      stepsChapter = chapterBefore;
+      recentSteps = [...recentSteps, { prompt: promptBefore, line: secret || line === '\u0004' ? '' : line, masked: secret, output: withoutColours(result ?? '') }].slice(-STEPS_KEPT);
+    }
     const lineFor = response ? null : shell;
     if (result === null) output.replaceChildren(measure);
     else show(result);
@@ -1856,6 +1942,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         if (step.prompt) show(step.masked ? step.prompt : `${step.prompt} ${step.line}`, 'cmd');
         show(step.output);
       }
+      // The feedback dialog's commands (see feedback.ts): those of the chapter so far.
+      recentSteps = result.transcript.map((x) => ({ ...x, output: withoutColours(x.output) })).slice(-STEPS_KEPT);
+      stepsChapter = r.chapter;
       show(t('autosave-resumed', { steps: r.n }), 'achievements');
       // In exam mode, the timer goes on from the chapter's start (closing the page doesn't stop it).
       if (gameTerminal.exam && r.examStart !== undefined) examStart = r.examStart;
@@ -2219,6 +2308,84 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   closeStart.addEventListener('click', () => startWindow.close());
   startWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
+  // ——— "Report a problem or an idea" (see feedback.ts) ———
+  // Nothing leaves the game: the dialog shows the report, and the player
+  // opens a prefilled GitHub issue (a link, in a new tab) or copies the text.
+  // Available in exam mode too (a bug can happen during a test), but without
+  // the commands: a public issue must not carry a test's answers.
+  const VERSION = typeof __QDS_VERSION__ === 'string' ? __QDS_VERSION__ : 'dev';
+  let feedbackOpener: HTMLElement | null = null;
+  const feedbackKind = (): FeedbackKind =>
+    (feedbackKinds.querySelector<HTMLInputElement>('input:checked')?.value as FeedbackKind | undefined) ?? 'bug';
+  const feedbackContext = (): FeedbackContext => {
+    const remote = gameTerminal.remote;
+    const sh = gameTerminal.shell;
+    return {
+      version: VERSION,
+      language: t.language,
+      chapter: remote
+        ? { story: remote.story.id, chapter: remote.shell.chapter.id, number: remote.shell.chapter.number, machine: sh.hostName, directory: sh.cwd, events: remote.shell.log.length, finished: remote.shell.finished }
+        : null,
+      commands: gameTerminal.exam ? '' : feedbackCommands.value,
+      browser: { userAgent: navigator.userAgent, viewport: `${innerWidth}x${innerHeight}`, screen: `${window.screen.width}x${window.screen.height}` },
+      settings: { theme: display.theme, size: SIZES[display.size] ?? 1, colours: display.colours, tips: display.tips, explainer: display.explainer, autosave: display.autosave, exam: gameTerminal.exam },
+      notebook: Object.keys(notebook).sort((a, b) => a.localeCompare(b)),
+    };
+  };
+  // Each box's lines, the exact text, and the link: again after every change.
+  const renderFeedback = () => {
+    const context = feedbackContext();
+    for (const p of FEEDBACK_PARTS) if (p !== 'commands') feedbackLines[p].textContent = partLines(p, context, t).join('\n');
+    const parts = FEEDBACK_PARTS.filter((p) => feedbackBoxes[p].checked);
+    const report = buildReport({ kind: feedbackKind(), message: feedbackMessage.value, parts, context, t });
+    feedbackPreview.value = reportText(report);
+    feedbackGithub.href = report.url;
+    feedbackTruncated.hidden = !report.truncated;
+    feedbackTruncated.textContent = report.truncated ? typo(report.messageCut ? t('feedback-link-message-cut') : t('feedback-link-truncated', { count: report.omittedLines })) : '';
+  };
+  const openFeedback = (opener: HTMLElement | null) => {
+    if (feedbackWindow.open) return;
+    feedbackOpener = opener;
+    // What it is about: kept from the last time (a draft), a bug by default.
+    if (!feedbackKinds.querySelector('input:checked')) feedbackKinds.querySelector<HTMLInputElement>('input[value="bug"]')!.checked = true;
+    if (!feedbackWindow.dataset.opened) for (const p of FEEDBACK_PARTS) feedbackBoxes[p].checked = DEFAULT_PARTS.includes(p);
+    feedbackWindow.dataset.opened = 'yes';
+    // The commands as they are now, to edit; none in exam mode.
+    const exam = gameTerminal.exam;
+    feedbackCommands.value = exam ? '' : transcript(recentSteps, t);
+    feedbackCommands.hidden = exam || !feedbackCommands.value;
+    feedbackCommandsNote.textContent = typo(t(exam ? 'feedback-commands-exam' : feedbackCommands.value ? 'feedback-commands-help' : 'feedback-commands-none'));
+    feedbackBoxes.commands.disabled = exam;
+    if (exam) feedbackBoxes.commands.checked = false;
+    feedbackStatus.textContent = '';
+    renderFeedback();
+    feedbackWindow.showModal();
+    feedbackMessage.focus();
+  };
+  feedbackWindow.addEventListener('input', (e) => {
+    if (e.target !== feedbackPreview) renderFeedback();
+  });
+  feedbackWindow.addEventListener('change', renderFeedback);
+  feedbackMenuButton.addEventListener('click', () => openFeedback(feedbackMenuButton));
+  feedbackButton.addEventListener('click', () => openFeedback(feedbackButton));
+  // Copy: the Clipboard API, or else the text selected for the player to copy.
+  const selectPreview = () => {
+    feedbackPreview.focus();
+    feedbackPreview.select();
+    feedbackStatus.textContent = typo(t('feedback-copy-selected'));
+  };
+  feedbackCopy.addEventListener('click', () => {
+    if (!navigator.clipboard?.writeText) return selectPreview();
+    navigator.clipboard.writeText(feedbackPreview.value).then(() => (feedbackStatus.textContent = t('feedback-copied')), selectPreview);
+  });
+  closeFeedback.addEventListener('click', () => feedbackWindow.close());
+  // Back where the player was: the button that opened it (from the host page, the browser's own choice).
+  feedbackWindow.addEventListener('close', () => {
+    const back = feedbackOpener;
+    feedbackOpener = null;
+    if (back) setTimeout(() => back.focus());
+  });
+
   // ——— Tips (see tips.ts): once each, never in exam mode, unless turned off ———
   function showTips(sh: Shell, before: string, said: boolean) {
     if (!display.tips || gameTerminal.exam) return;
@@ -2361,6 +2528,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     root: game,
     /** Exam mode, on or off. */
     exam: () => gameTerminal.exam,
+    /** Opens "Report a problem or an idea" (the site's footer asks for it, see src/pwa/site.ts). */
+    openFeedback: () => openFeedback(null),
     /** Asks for exam mode, as the checkbox does (a chapter in progress asks for confirmation first). */
     askExam: (yes: boolean) => {
       if (yes === gameTerminal.exam) return;

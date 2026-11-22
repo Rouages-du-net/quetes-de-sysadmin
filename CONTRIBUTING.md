@@ -11,7 +11,20 @@ agents, but its rules apply to everyone.
 
 - **Report a bug**: open an issue with what you typed, what the game
   answered, and what a real Linux would have answered (with a link to the
-  tool's documentation if you can).
+  tool's documentation if you can). The game's "Report a problem or an
+  idea" button (under the menu, among a chapter's actions, and in the
+  site's footer) writes it for you: the player picks the kind (a command's
+  behaviour, an unclear text or hint, an idea, other), writes a message,
+  ticks the context to include (version, language, chapter, the last
+  commands and their outputs, browser, settings, notebook), sees the exact
+  text, then opens a prefilled GitHub issue themselves or copies the text.
+  The game sends nothing. Reports arrive as issues built on
+  `.github/ISSUE_TEMPLATE/feedback.md`, titled `[bug]`, `[text]`, `[idea]`
+  or `[other]`, starting with `<!-- sysadmin-quests feedback v1 -->`;
+  their headings are in the player's language, the lines under them keep
+  English labels (`version:`, `chapter:`…). A report too long for a link
+  lacks its oldest commands and says so; the player was asked to paste the
+  copied text. The text is built by `src/engine/feedback.ts`.
 - **Fix a command's behaviour**: a wrong option, message or exit code is a
   bug; see "A new simulated tool" below for where commands live.
 - **Write a quest**: see "The format of a quest". Propose the idea in an

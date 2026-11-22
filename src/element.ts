@@ -7,7 +7,8 @@
 // save-key="…" (the localStorage key of the save), theme="light" | "dark",
 // lang="fr" (without it: the page's language, otherwise English),
 // exam-control="page" (the page shows its own exam-mode checkbox, wired to
-// the element's `exam` property and its `exam-change` event). The older
+// the element's `exam` property and its `exam-change` event). The method
+// openFeedback() opens "Report a problem or an idea" (the site's footer uses it). The older
 // French names still work: histoire, cle, theme="clair" | "sombre", langue.
 // The game lives in a shadow root (Shadow DOM): its styles do not spill
 // onto the page, and the page's styles do not break it. Colours are set
@@ -54,6 +55,13 @@ export class SysadminQuests extends HTMLElement {
     if (this.game) this.game.askExam(!!yes);
     else this.wantedExam = !!yes;
   }
+  // "Report a problem or an idea" asked for before the game had loaded.
+  private wantedFeedback = false;
+  /** Opens "Report a problem or an idea" (once the game has loaded). Nothing is sent: the player sends the report. */
+  openFeedback() {
+    if (this.game) this.game.openFeedback();
+    else this.wantedFeedback = true;
+  }
   connectedCallback() {
     if (this.shadowRoot) return;
     const root = this.attachShadow({ mode: 'open' });
@@ -94,6 +102,7 @@ export class SysadminQuests extends HTMLElement {
       // The page's own checkbox follows the saved mode.
       if (this.game.exam()) this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam: true }, bubbles: true }));
       if (this.wantedExam !== undefined) this.game.askExam(this.wantedExam);
+      if (this.wantedFeedback) this.game.openFeedback();
     });
   }
 }

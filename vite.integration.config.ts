@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { qdsTexts } from './src/texts/plugin.mjs';
+import { versionDefine } from './src/version.mjs';
 
 // The game to embed in other sites: quetes-de-sysadmin.js, without
 // dependencies, defines the <quetes-de-sysadmin> element; the rest of the
@@ -10,6 +11,7 @@ import { qdsTexts } from './src/texts/plugin.mjs';
 export default defineConfig({
   publicDir: false,
   plugins: [qdsTexts()],
+  define: versionDefine(),
   build: {
     outDir: 'dist/integration',
     emptyOutDir: true,

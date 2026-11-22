@@ -57,6 +57,14 @@ cours, après confirmation s'il est commencé) et son évènement
 `src/exam-control.ts`. Ton script doit être un fichier, pas du code en
 ligne, si ta page a une CSP.
 
+## Signaler un problème
+
+Le jeu a son propre bouton « Signaler un problème ou une idée ». Une page
+peut ouvrir la même fenêtre depuis son propre lien en appelant la méthode
+`openFeedback()` de l'élément, comme le pied de page du site dans
+`src/pwa/feedback-link.ts`. Rien n'est envoyé : le joueur ou la joueuse
+voit le signalement et ouvre une issue GitHub ou copie le texte.
+
 ## Couleurs
 
 Le jeu vit dans une racine fantôme (Shadow DOM) : ses styles ne débordent pas

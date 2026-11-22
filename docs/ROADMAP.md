@@ -828,6 +828,17 @@ them safely.
   production, accounts and identities; each chapter is in at least one
   path; the next one to play is highlighted, and what is waiting says which
   chapter to finish first.
+- [x] **Report a problem or an idea** (`src/engine/feedback.ts`): a dialog
+  under the menu, among a chapter's actions and from the site's footer
+  (`src/pwa/feedback-link.ts`, the element's `openFeedback()`): the kind,
+  a message, the context parts to include, each showing exactly what it
+  adds (the version written at build time by `src/version.mjs`, the
+  language, where the player is, the chapter's last commands and outputs,
+  editable, never a password, the browser, the settings, the notebook's
+  commands), the exact text, then a prefilled GitHub issue (a link in a new
+  tab, under 8 KB: the oldest commands dropped, said) or a copy. Progress
+  codes are removed; nothing is sent. In exam mode, without the commands.
+  Issue template `.github/ISSUE_TEMPLATE/feedback.md`.
 - [x] **Where do I start?** (`src/engine/start-here.ts`): four quick
   questions (experience with a terminal, goal, systems of interest, time
   per session) and a suggestion computed from them and the player's

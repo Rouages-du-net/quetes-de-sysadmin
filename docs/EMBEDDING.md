@@ -56,6 +56,14 @@ the chapter is in progress) and its `exam-change` event
 `src/exam-control.ts`. Your script must be a file, not inline, if your
 page has a CSP.
 
+## Reporting a problem
+
+The game has its own "Report a problem or an idea" button. A page may open
+the same dialog from its own link by calling the element's
+`openFeedback()` method, as the site's footer does in
+`src/pwa/feedback-link.ts`. Nothing is sent: the player sees the report
+and opens a GitHub issue or copies the text themselves.
+
 ## Colours
 
 The game lives in a shadow root (Shadow DOM): its styles don't spill onto
