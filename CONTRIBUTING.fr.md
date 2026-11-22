@@ -142,7 +142,8 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 
 ```bash
 npm test                    # chaque quête rejouée
-npm run build               # le site, le fichier d'intégration, tsc
+npm run build               # le site, le fichier d'intégration, tsc, le budget de la première visite
+npm run catalogue           # après l'ajout d'une histoire ou d'un chapitre
 npm run preview &           # puis :
 npm run test:browser     # Chromium, 1000 et 375 px, CSP
 ```
