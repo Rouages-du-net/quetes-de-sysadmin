@@ -714,7 +714,7 @@
 .qds .feedback-lines:empty { display: none; }
 .qds .feedback-parts li .map-legend, .qds .feedback-parts li .feedback-commands { margin: 0.2rem 0 0 1.6rem; width: calc(100% - 1.6rem); }
 .qds .feedback-commands[hidden] { display: none; }
-.qds .feedback-preview, .qds .feedback-commands { min-height: 10rem; font-family: var(--_font-mono); font-size: 0.8rem; font-variant-ligatures: none; }
+.qds .feedback-window .feedback-preview, .qds .feedback-window .feedback-commands { min-height: 10rem; font-family: var(--_font-mono); font-size: 0.8rem; font-variant-ligatures: none; }
 .qds .feedback-lines { font-family: var(--_font-mono); font-variant-ligatures: none; }
 .qds .feedback-truncated { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border: 1px solid var(--_accent); border-left-width: 4px; border-radius: 0.4rem; background: var(--_card); }
 .qds .feedback-truncated[hidden] { display: none; }

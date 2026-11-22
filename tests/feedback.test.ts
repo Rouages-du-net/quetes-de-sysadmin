@@ -162,6 +162,19 @@ describe('the report', () => {
     expect(b.match(/^### /gm)!.length).toBe(a.match(/^### /gm)!.length);
   });
 
+  it('the marker closes, and the player\'s text is never retouched by typography', () => {
+    for (const t of [en, fr]) {
+      const message = 'Pourquoi ? ls : « erreur » ; vraiment !';
+      const commands = 'vous@royaume:~$ echo "a : b ?"\na : b ?';
+      const r = buildReport({ kind: 'bug', message, parts: ['commands'], context: context(commands), t });
+      expect(r.body.startsWith('<!-- sysadmin-quests feedback v1 -->\n')).toBe(true);
+      expect(r.body).not.toContain('→');
+      expect(r.body).toContain(message);
+      expect(r.body).toContain(commands);
+      expect(r.body).not.toMatch(/[\u00a0\u202f]/);
+    }
+  });
+
   it('every kind has its label in both languages', () => {
     for (const t of [en, fr]) for (const k of FEEDBACK_KINDS) expect(t.exists(`feedback-kind-${k}`)).toBe(true);
     for (const t of [en, fr]) for (const p of FEEDBACK_PARTS) expect(t.exists(`feedback-part-${p}`)).toBe(true);
