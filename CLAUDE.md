@@ -854,7 +854,7 @@ presents them for people.
   in `src/engine/inbound-client.ts`. `chapters/lifeboat.ts`: what the
   chapters of "The Lifeboat" share (`slipway`, the station's mail server:
   its Postfix, Dovecot and rspamd files, the users' Maildirs, the mail of
-  the internet `ham`, `spam`, `newsletter`, `listMail`, `direct`, arriving
+  the internet `ham`, `spam`, `newsletter`, `listMail`, `direct`, their texts in `lifeboat-mail-*` and `lifeboat-words-*` of the story's texts (each language its own mail, which Bayes learns), arriving
   each command in `passTime`; `classify` tells a message's family from its
   id); `mailbox-full.ts`, `spam-tide.ts` (reference messages scanned with
   the running configuration), `sorting-office.ts` (each user's scripts

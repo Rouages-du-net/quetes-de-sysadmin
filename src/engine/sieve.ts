@@ -11,7 +11,10 @@
 // :addresses, one reply per sender per :days).
 // After https://www.rfc-editor.org/rfc/rfc5228, https://www.rfc-editor.org/rfc/rfc5230,
 // https://doc.dovecot.org/2.4.1/core/config/sieve/extensions/vacation.html and
-// https://doc.dovecot.org/2.4.1/core/man/sievec.1.html.
+// https://doc.dovecot.org/2.4.1/core/man/sievec.1.html; the error messages follow
+// Pigeonhole's sources (src/lib-sieve/sieve-validator.c, sieve-parser.c,
+// cmd-require.c, sieve.c: "NAME: line N: error: …", then "parse failed" or
+// "validation failed").
 // Differences: no comparators other than i;ascii-casemap (the default), no
 // variables, no imap4flags, no include; the compiled binary (.svbin) is the
 // script's text checked, not Pigeonhole's byte code.
@@ -125,7 +128,7 @@ function parse(tokens: Token[]): { commands: Command[]; error?: SieveError } {
   let p = 0;
   const peek = () => tokens[p];
   const describe = (t: Token | undefined) =>
-    !t ? 'end of script' : t.t === 'id' ? `identifier '${t.v}'` : t.t === 'str' ? 'string' : t.t === 'num' ? 'number' : t.t === 'tag' ? `tag ':${t.v}'` : `'${t.v}'`;
+    !t ? 'end of file' : t.t === 'id' ? 'identifier' : t.t === 'str' ? 'string' : t.t === 'num' ? 'number' : t.t === 'tag' ? 'tag' : `'${t.v}'`;
   const fail = (message: string): never => {
     throw { line: peek()?.line ?? tokens[tokens.length - 1]?.line ?? 1, message } as SieveError;
   };
@@ -196,7 +199,7 @@ function parse(tokens: Token[]): { commands: Command[]; error?: SieveError } {
     for (;;) {
       const t = peek();
       if (!t) {
-        if (inBlock) fail("expected end of block '}', but found end of script");
+        if (inBlock) fail("expected end of compound block '}', but found end of file");
         return out;
       }
       if (t.t === 'sym' && t.v === '}' && inBlock) return out;
@@ -282,13 +285,13 @@ function validate(commands: Command[], required: Set<string>, top: boolean, prev
   let last: string | null = previous();
   for (const c of commands) {
     const spec = COMMANDS[c.name];
-    if (!spec || (spec.ext && !required.has(spec.ext))) return { line: c.line, message: `unknown command '${c.name}'` };
-    if (!spec.tests && c.tests.length) return { line: c.line, message: `expected end of command ';' or the beginning of a compound block '{', but found identifier '${c.tests[0].name}'` };
+    if (!spec || (spec.ext && !required.has(spec.ext))) return { line: c.line, message: `unknown command '${c.name}' (only reported once at first occurrence)` };
+    if (!spec.tests && c.tests.length) return { line: c.line, message: `the ${c.name} command accepts no sub-tests, but tests are specified` };
     if (c.name === 'require') {
       if (!top || last !== null && last !== 'require') return { line: c.line, message: 'require commands can only be placed at top level at the beginning of the file' };
       const a = c.args[0];
       const caps = a?.kind === 'str' ? [a.v] : a?.kind === 'list' ? a.v : null;
-      if (!caps) return { line: c.line, message: "the require command expects a string list (capabilities) as first positional argument, but none was found" };
+      if (!caps) return { line: c.line, message: 'the require command accepts a single string or string list argument, but nothing was found' };
       for (const cap of caps) {
         if (!CAPABILITIES.includes(cap.toLowerCase())) return { line: c.line, message: `require command: unknown Sieve capability '${cap}'` };
         required.add(cap.toLowerCase());
@@ -297,11 +300,11 @@ function validate(commands: Command[], required: Set<string>, top: boolean, prev
       last = 'require';
       continue;
     }
-    if ((c.name === 'elsif' || c.name === 'else') && last !== 'if' && last !== 'elsif') return { line: c.line, message: `${c.name} command must follow an if or elseif command` };
+    if ((c.name === 'elsif' || c.name === 'else') && last !== 'if' && last !== 'elsif') return { line: c.line, message: `the ${c.name} command must follow an if or elsif command` };
     const e = checkArgs(c.name, 'command', spec, c, required);
     if (e) return e;
-    if (spec.block && !c.block) return { line: c.line, message: `the ${c.name} command requires a command block` };
-    if (!spec.block && c.block) return { line: c.line, message: `the ${c.name} command does not expect a block` };
+    if (spec.block && !c.block) return { line: c.line, message: `the ${c.name} command requires a command block, but it is missing` };
+    if (!spec.block && c.block) return { line: c.line, message: `the ${c.name} command does not accept a command block, but one is specified anyway` };
     if (c.block) {
       const inner = validate(c.block, required, false, () => null);
       if (inner) return inner;
@@ -325,29 +328,24 @@ function checkArgs(name: string, what: 'command' | 'test', spec: Spec, c: Comman
     if (kind !== 'flag') {
       const v = c.args[i + 1];
       const ok = v && ((kind === 'num' && v.kind === 'num') || (kind === 'str' && v.kind === 'str') || (kind === 'list' && (v.kind === 'list' || v.kind === 'str')));
-      if (!ok) return { line: c.line, message: `the :${a.v} tag for the ${name} ${what} requires one ${kind === 'num' ? 'number' : kind === 'list' ? 'string list' : 'string'} argument, but ${v ? 'something else' : 'none'} was found` };
+      if (!ok) return { line: c.line, message: v ? `the :${a.v} tag for the ${name} ${what} requires ${kind === 'num' ? 'a number' : kind === 'list' ? 'a string list' : 'a string'} as parameter, but ${v.kind === 'num' ? 'a number' : v.kind === 'list' ? 'a string list' : v.kind === 'tag' ? 'a tag' : 'a string'} was found` : `the :${a.v} tag for the ${name} ${what} requires ${kind === 'num' ? 'a number' : kind === 'list' ? 'a string list' : 'a string'} as parameter, but no parameters were found` };
       i++;
     }
   }
-  if (positional.length !== spec.positional.length) {
-    const kind = spec.positional[positional.length] ?? spec.positional[spec.positional.length - 1];
-    const label = kind === 'num' ? 'number' : kind === 'str' ? 'string' : 'string list';
-    return positional.length < spec.positional.length
-      ? { line: c.line, message: `the ${name} ${what} expects ${spec.positional.length === 1 ? 'a' : 'more'} ${label} as positional argument${spec.positional.length > 1 ? 's' : ''}, but none was found` }
-      : { line: c.line, message: `the ${name} ${what} expects ${spec.positional.length ? spec.positional.length : 'no'} positional argument${spec.positional.length === 1 ? '' : 's'}, but more were found` };
-  }
+  if (positional.length !== spec.positional.length)
+    return { line: c.line, message: `the ${name} ${what} requires ${spec.positional.length} positional argument(s), but ${positional.length} is/are specified` };
   for (let i = 0; i < positional.length; i++) {
     const want = spec.positional[i];
     const a = positional[i];
     const ok = (want === 'num' && a.kind === 'num') || (want === 'str' && a.kind === 'str') || ((want === 'list' || want === 'strlist') && (a.kind === 'list' || a.kind === 'str'));
-    if (!ok) return { line: c.line, message: `the ${name} ${what} expects a ${want === 'num' ? 'number' : want === 'str' ? 'string' : 'string list'} as positional argument ${i + 1}, but ${a.kind === 'num' ? 'a number' : 'a string list'} was found` };
+    if (!ok) return { line: c.line, message: `the ${name} ${what} expects ${want === 'num' ? 'a number' : want === 'str' ? 'a string' : 'a string list'} as argument ${i + 1}, but ${a.kind === 'num' ? 'a number' : a.kind === 'list' ? 'a string list' : 'a string'} was found` };
   }
-  if (spec.tests === 'one' && c.tests.length !== 1) return { line: c.line, message: `the ${name} ${what} requires one test argument, but ${c.tests.length ? 'more' : 'none'} were found` };
-  if (spec.tests === 'list' && !c.tests.length) return { line: c.line, message: `the ${name} test requires a test list as argument` };
-  if (!spec.tests && c.tests.length) return { line: c.line, message: `the ${name} ${what} accepts no test argument` };
+  if (spec.tests === 'one' && c.tests.length !== 1) return { line: c.line, message: `the ${name} ${what} requires one sub-test, but ${c.tests.length ? 'more are' : 'none is'} specified` };
+  if (spec.tests === 'list' && !c.tests.length) return { line: c.line, message: `the ${name} test requires a list of sub-tests, but none is specified` };
+  if (!spec.tests && c.tests.length) return { line: c.line, message: `the ${name} ${what} accepts no sub-tests, but tests are specified` };
   for (const t of c.tests) {
     const ts = TESTS[t.name];
-    if (!ts || (ts.ext && !required.has(ts.ext))) return { line: t.line, message: `unknown test '${t.name}'` };
+    if (!ts || (ts.ext && !required.has(ts.ext))) return { line: t.line, message: `unknown test '${t.name}' (only reported once at first occurrence)` };
     const e = checkArgs(t.name, 'test', ts, t, required);
     if (e) return e;
   }
@@ -363,12 +361,12 @@ export interface Compiled {
 /** Compiles a script like sievec: the errors, each "name: line N: error: …", then what failed. */
 export function compile(text: string, name: string): Compiled {
   const { tokens, error } = tokenize(text);
-  if (error) return { ok: false, errors: [`${name}: line ${error.line}: error: ${error.message}.`, `${name}: error: parse failed.`] };
+  if (error) return { ok: false, errors: [`${name}: line ${error.line}: error: ${error.message}`, `${name}: error: parse failed`] };
   const parsed = parse(tokens);
-  if (parsed.error) return { ok: false, errors: [`${name}: line ${parsed.error.line}: error: ${parsed.error.message}.`, `${name}: error: parse failed.`] };
+  if (parsed.error) return { ok: false, errors: [`${name}: line ${parsed.error.line}: error: ${parsed.error.message}`, `${name}: error: parse failed`] };
   const required = new Set<string>();
   const v = validate(parsed.commands, required, true, () => null);
-  if (v) return { ok: false, errors: [`${name}: line ${v.line}: error: ${v.message}.`, `${name}: error: validation failed.`] };
+  if (v) return { ok: false, errors: [`${name}: line ${v.line}: error: ${v.message}`, `${name}: error: validation failed`] };
   return { ok: true, program: { commands: parsed.commands, required: [...required] }, errors: [] };
 }
 

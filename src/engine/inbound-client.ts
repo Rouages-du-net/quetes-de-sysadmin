@@ -144,7 +144,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
   const head = (m: Stored, name: string) => header(parseMail(text(m)), name).join(' ').toLowerCase();
   const one = (): Query | { error: string } => {
     const w = words[i++];
-    if (w === undefined) return { error: 'Missing search key' };
+    if (w === undefined) return { error: 'Missing argument' };
     const k = w.toLowerCase();
     const arg = () => words[i++];
     if (k === '(') {
@@ -160,7 +160,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
     }
     if (k === 'mailbox') {
       const name = arg();
-      if (name === undefined) return { error: 'mailbox: Missing parameter' };
+      if (name === undefined) return { error: 'Missing argument' };
       mailbox.push(name);
       const re = new RegExp('^' + name.replace(/[.+^$()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/%/g, '[^/]*') + '$', 'i');
       return (m) => re.test(m.mailbox);
@@ -173,7 +173,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
     if (dates[k]) {
       const raw = arg();
       const at = raw === undefined ? null : dateSpec(raw, now);
-      if (at === null) return { error: `${k}: Invalid date` };
+      if (at === null) return { error: raw === undefined ? 'Missing argument' : `Invalid search date parameter: ${raw}` };
       const [field, how] = dates[k];
       return (m) => {
         const v = m[field] as number;
@@ -182,7 +182,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
     }
     if (k === 'larger' || k === 'smaller') {
       const s = sizeSpec(arg() ?? '');
-      if (s === null) return { error: `${k}: Invalid size` };
+      if (s === null) return { error: `Invalid search size parameter: ${words[i - 1] ?? ''}` };
       return (m) => (k === 'larger' ? m.size > s : m.size < s);
     }
     if (['from', 'to', 'cc', 'subject'].includes(k)) {
@@ -202,7 +202,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
     if (k === 'deleted') return (m) => /:2,[A-Z]*T/.test(m.name);
     if (k === 'new' || k === 'recent') return (m) => m.path.includes('/new/');
     if (k === 'old') return (m) => m.path.includes('/cur/');
-    return { error: `Unknown search key: ${w}` };
+    return { error: `Unknown argument ${w}` };
   };
   const seq = (end?: string): { query: Query } | { error: string } => {
     const all: Query[] = [];
@@ -218,7 +218,7 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
     }
     return { query: (m, u) => all.every((q) => q(m, u)) };
   };
-  if (!words.length) return { error: 'Missing search query' };
+  if (!words.length) return { error: 'Missing argument' };
   const r = seq();
   return 'error' in r ? r : { query: r.query, mailbox };
 }
@@ -227,7 +227,9 @@ function matching(game: Shell, u: MailUser, words: string[], cmd: string): Store
   const now = systemd(game)?.clock ?? 0;
   const q = parseQuery(words, now);
   if ('error' in q) {
-    game.error(`doveadm ${cmd}: Fatal: Invalid search query: ${q.error}`, 64);
+    // doveadm-mail.c: i_fatal("%s", error), the search parser's message (mail-search-build.c).
+    void cmd;
+    game.error(`doveadm(${u.user}): Fatal: ${q.error}`, 89);
     return null;
   }
   return allMessages(game, u).filter((m) => q.query(m, u));
@@ -595,8 +597,7 @@ function sievec(c: Context): string {
     const name = path.split('/').pop()!.replace(/\.sieve$/, '');
     const compiled = compile(game.read(path) ?? '', name);
     if (!compiled.ok) {
-      for (const e of compiled.errors) game.error(e, 0);
-      game.error(`sievec(${game.who}): Fatal: failed to compile sieve script '${path}'`, 1);
+      for (const e of compiled.errors) game.error(e, 1);
       failed = true;
       continue;
     }

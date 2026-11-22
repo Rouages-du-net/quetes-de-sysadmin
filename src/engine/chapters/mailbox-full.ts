@@ -24,7 +24,7 @@ import type { Chapter } from '../world';
 import { f } from '../world';
 import type { Game } from '../shell';
 import { actualUsage, confPath, dovecot, messagesOf, quotaRoot, usage, users } from '../dovecot';
-import { DAY, DOMAIN, HOME, MIN, MX, NOW, PASSWORD, USER, countIn, direct, ham, initialiseStory, mailUser, pastLog, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, story, typed, type Arrival } from './lifeboat';
+import { DAY, DOMAIN, HOME, MIN, MX, NOW, PASSWORD, USER, countIn, direct, ham, initialiseStory, mailUser, pastLog, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, story, tr, typed, type Arrival } from './lifeboat';
 import { machineName } from '../machines';
 
 const GIB = 1024 ** 3;
@@ -53,16 +53,14 @@ const warningOk = (j: Game) => {
 };
 const delivered = (j: Game) => !!dovecot(j)?.deliveries.some((x) => x.user === USER('saoirse') && x.mailbox);
 
-const SPONSORS = ['Your sponsorship pack for the winter appeal', 'Signed form for the boat naming', 'Photos from the summer fair', 'Grant: the documents you asked for', 'Raffle prizes from the chandlery'];
-
-const arrivals: Arrival = (_j, tick, now) => {
+const arrivals: Arrival = (j, tick, now) => {
+  const t = tr(j);
   if (tick % 2 === 1) {
-    const subject = SPONSORS[Math.floor(tick / 2) % SPONSORS.length];
-    const m = direct(`sponsor${tick}`, USER('saoirse'), USER('saoirse'), now, subject, `Hello Saoirse,\n\n${subject}: attached, as promised.\n\n[attachment: documents-${tick}.pdf]`);
+    const m = direct(t, `sponsor${tick}`, USER('saoirse'), USER('saoirse'), now, `sponsor-${Math.floor(tick / 2) % 5}`, { file: `documents-${tick}.pdf` });
     m.mail.size = 1_400_000 + tick * 23_000;
     return [{ kind: 'ham', m }];
   }
-  return [{ kind: 'ham', m: ham(`ch1-${tick}`, tick % 4 ? `bookings@${DOMAIN}` : USER('marisol'), now, tick % 4 ? 'booking' : 'crew') }];
+  return [{ kind: 'ham', m: ham(t, `ch1-${tick}`, tick % 4 ? `bookings@${DOMAIN}` : USER('marisol'), now, tick % 4 ? 'booking' : 'crew') }];
 };
 
 /** mail.log since Saturday: deliveries, and every message to Saoirse bounced. */

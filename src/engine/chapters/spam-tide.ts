@@ -27,23 +27,23 @@ import type { Game } from '../shell';
 import { systemd } from '../systemd';
 import { milterOn } from '../inbound';
 import { rspamd, rspamdRunning, scan, type RspamdConf, type Scan } from '../rspamd';
-import { classify, DOMAIN, HOME, MIN, NOW, PASSWORD, USER, ham, initialiseStory, newsletter, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, spam, story, type Arrival } from './lifeboat';
+import { classify, DOMAIN, HOME, MIN, NOW, PASSWORD, USER, ham, initialiseStory, newsletter, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, spam, story, tr, type Arrival } from './lifeboat';
 import type { Incoming } from '../inbound';
 
 const conf = (j: Game) => rspamd(j)?.loaded ?? null;
-const refs = (): Record<string, Incoming> => ({
-  phish: spam('ref-phish', USER('leilani'), NOW[2], 'phish'),
-  invoice: spam('ref-invoice', USER('leilani'), NOW[2], 'invoice'),
-  prize: spam('ref-prize', USER('leilani'), NOW[2], 'prize'),
-  newsletter: newsletter('ref-bulletin', USER('leilani'), NOW[2]),
-  booking: ham('ref-booking', `bookings@${DOMAIN}`, NOW[2]),
-  crew: ham('ref-crew', USER('leilani'), NOW[2], 'crew'),
+const refs = (j: Game): Record<string, Incoming> => ({
+  phish: spam(tr(j), 'ref-phish', USER('leilani'), NOW[2], 'phish'),
+  invoice: spam(tr(j), 'ref-invoice', USER('leilani'), NOW[2], 'invoice'),
+  prize: spam(tr(j), 'ref-prize', USER('leilani'), NOW[2], 'prize'),
+  newsletter: newsletter(tr(j), 'ref-bulletin', USER('leilani'), NOW[2]),
+  booking: ham(tr(j), 'ref-booking', `bookings@${DOMAIN}`, NOW[2]),
+  crew: ham(tr(j), 'ref-crew', USER('leilani'), NOW[2], 'crew'),
 });
 const scanRef = (j: Game, x: Incoming, c: RspamdConf): Scan => scan(j, x.mail, { ip: x.ip, from: x.from, rcpt: x.rcpt }, c);
 const verdicts = (j: Game) => {
   const c = conf(j);
   if (!c) return null;
-  const r = refs();
+  const r = refs(j);
   return Object.fromEntries(Object.entries(r).map(([k, x]) => [k, scanRef(j, x, c)])) as Record<string, Scan>;
 };
 
@@ -75,7 +75,7 @@ const leak = (j: Game) => {
   const c = conf(j);
   if (!c || (!c.multimap.length && !c.settings.length)) return false;
   const bare: RspamdConf = { ...c, multimap: c.multimap.filter((m) => m.score >= 0 && !m.action), settings: [] };
-  const r = refs();
+  const r = refs(j);
   return ['phish', 'invoice', 'prize'].some((k) => {
     const a = scanRef(j, r[k], c);
     const b = scanRef(j, r[k], bare);
@@ -86,13 +86,14 @@ const poisoned = (j: Game) => Object.entries(rspamd(j)?.learned ?? {}).filter(([
 const bulletinInJunk = (j: Game) => story(j).outcomes.some((o) => o.kind === 'newsletter' && o.outcome.deliveries.some((d) => d.mailbox === 'Junk'));
 
 const FAMILIES = ['phish', 'invoice', 'prize', 'phish', 'invoice'] as const;
-const arrivals: Arrival = (_j, tick, now) => {
+const arrivals: Arrival = (j, tick, now) => {
+  const t = tr(j);
   const out: { kind: string; m: Incoming }[] = [];
   const fam = FAMILIES[tick % FAMILIES.length];
   const to = tick % 3 ? USER('leilani') : tick % 2 ? USER('marisol') : `bookings@${DOMAIN}`;
-  out.push({ kind: fam, m: spam(`tide${tick}`, to, now, fam) });
-  if (tick % 4 === 0) out.push({ kind: 'newsletter', m: newsletter(`bulletin${tick}`, USER('leilani'), now) });
-  else if (tick % 2) out.push({ kind: 'ham', m: ham(`tide-ham${tick}`, `bookings@${DOMAIN}`, now) });
+  out.push({ kind: fam, m: spam(t, `tide${tick}`, to, now, fam) });
+  if (tick % 4 === 0) out.push({ kind: 'newsletter', m: newsletter(t, `bulletin${tick}`, USER('leilani'), now) });
+  else if (tick % 2) out.push({ kind: 'ham', m: ham(t, `tide-ham${tick}`, `bookings@${DOMAIN}`, now) });
   return out;
 };
 

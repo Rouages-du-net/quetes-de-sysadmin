@@ -27,25 +27,28 @@ import type { Chapter } from '../world';
 import { f } from '../world';
 import type { Game } from '../shell';
 import { dovecot, mailText, mailboxes, runSieve, sieveScripts, type MailUser, type SieveRun } from '../dovecot';
-import { DOMAIN, HOME, NOW, PASSWORD, USER, direct, ham, initialiseStory, listMail, mailUser, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, type Arrival } from './lifeboat';
+import { DOMAIN, HOME, NOW, PASSWORD, USER, direct, ham, initialiseStory, listMail, mailUser, passTime, seen, slipwayAccounts, slipwayState, slipwayWorld, tr, type Arrival } from './lifeboat';
 import type { Incoming } from '../inbound';
 
 const TREASURER = `treasurer@${DOMAIN}`;
 const BOOKINGS = `bookings@${DOMAIN}`;
 
-const refs = () => ({
-  booking: ham('ref3-booking', BOOKINGS, NOW[3]),
-  leilani: direct('ref3-leilani', USER('leilani'), USER('leilani'), NOW[3], 'The raffle tickets', 'Hi Leilani,\n\nThe raffle tickets are printed: shall I bring them on Saturday?\n\nThanks'),
-  aziz: direct('ref3-aziz', USER('aziz'), USER('aziz'), NOW[3], 'Invoice for the new tractor tyres', 'Dear Aziz,\n\nPlease find our invoice for the tractor tyres.\n\nBest regards'),
-  treasurer: direct('ref3-treasurer', USER('aziz'), TREASURER, NOW[3], 'Year-end accounts', 'Hello,\n\nCould the treasurer send us the bank statements for the year-end accounts?\n\nKind regards'),
-  list: listMail('ref3-list', USER('aziz'), NOW[3]),
-});
+const refs = (j: Game) => {
+  const t = tr(j);
+  return {
+    booking: ham(t, 'ref3-booking', BOOKINGS, NOW[3]),
+    leilani: direct(t, 'ref3-leilani', USER('leilani'), USER('leilani'), NOW[3], 'raffle'),
+    aziz: direct(t, 'ref3-aziz', USER('aziz'), USER('aziz'), NOW[3], 'tyres'),
+    treasurer: direct(t, 'ref3-treasurer', USER('aziz'), TREASURER, NOW[3], 'year-end'),
+    list: listMail(t, 'ref3-list', USER('aziz'), NOW[3]),
+  };
+};
 /** What the user's scripts would do with a message delivered to them (alias: the original recipient). */
 const trial = (j: Game, u: MailUser, x: Incoming, orig?: string): SieveRun => runSieve(j, u, x.mail, { from: x.from, orig: orig ?? u.user, time: NOW[3] }, {}, true);
 const boxes = (j: Game, u: MailUser) => mailboxes(j, u).map((b) => b.toLowerCase());
 const leilaniOk = (j: Game) => {
   const u = mailUser(j, 'leilani');
-  const r = refs();
+  const r = refs(j);
   const b = trial(j, u, r.booking, BOOKINGS);
   const sorted = b.stores.some((s) => s.toLowerCase() === 'bookings') && (boxes(j, u).includes('bookings') || b.create.some((c) => c.toLowerCase() === 'bookings'));
   const d = trial(j, u, r.leilani);
@@ -56,7 +59,7 @@ const kept = (r: SieveRun) => !r.rejected && (r.stores.includes('INBOX') || (r.k
 const replied = (r: SieveRun) => r.log.some((l) => l.startsWith('vacation:'));
 const aziz = (j: Game) => {
   const u = mailUser(j, 'aziz');
-  const r = refs();
+  const r = refs(j);
   return { direct: trial(j, u, r.aziz), treasurer: trial(j, u, r.treasurer, TREASURER), list: trial(j, u, r.list) };
 };
 const vacationOk = (j: Game) => {
@@ -78,13 +81,14 @@ const written = (j: Game, name: string) => {
 /** A message as a file (what sieve-test reads): its envelope sender as Return-Path. */
 const eml = (x: Incoming) => mailText({ ...x.mail, headers: [['Return-Path', `<${x.from}>`], ...x.mail.headers.filter(([k]) => k !== 'Return-Path')] });
 
-const arrivals: Arrival = (_j, tick, now) => {
+const arrivals: Arrival = (j, tick, now) => {
+  const t = tr(j);
   const k = tick % 5;
-  if (k === 0) return [{ kind: 'ham', m: ham(`ch3-b${tick}`, BOOKINGS, now) }];
-  if (k === 1) return [{ kind: 'ham', m: direct(`ch3-l${tick}`, USER('leilani'), USER('leilani'), now, 'Saturday at the shop', 'Hi Leilani,\n\nCan you open the shop on Saturday morning?\n\nCheers') }];
-  if (k === 2) return [{ kind: 'ham', m: direct(`ch3-a${tick}`, USER('aziz'), USER('aziz'), now, 'Receipt for the fuel', 'Hello Aziz,\n\nHere is the receipt for the fuel of the last launch.\n\nThanks') }];
-  if (k === 3) return [{ kind: 'ham', m: direct(`ch3-t${tick}`, USER('aziz'), TREASURER, now, 'Gift Aid claim', 'Dear treasurer,\n\nThe Gift Aid claim form needs a signature this month.\n\nBest wishes') }];
-  return [{ kind: 'list', m: listMail(`ch3-list${tick}`, USER('aziz'), now) }];
+  if (k === 0) return [{ kind: 'ham', m: ham(t, `ch3-b${tick}`, BOOKINGS, now) }];
+  if (k === 1) return [{ kind: 'ham', m: direct(t, `ch3-l${tick}`, USER('leilani'), USER('leilani'), now, 'shop') }];
+  if (k === 2) return [{ kind: 'ham', m: direct(t, `ch3-a${tick}`, USER('aziz'), USER('aziz'), now, 'fuel') }];
+  if (k === 3) return [{ kind: 'ham', m: direct(t, `ch3-t${tick}`, USER('aziz'), TREASURER, now, 'gift-aid') }];
+  return [{ kind: 'list', m: listMail(t, `ch3-list${tick}`, USER('aziz'), now) }];
 };
 
 export const sortingOffice: Chapter = {
@@ -105,15 +109,15 @@ export const sortingOffice: Chapter = {
       home: {
         'message_from_marisol.txt': f(t('sorting-office-message-marisol')),
         'note_from_yerlan.txt': f(t('sorting-office-note-yerlan')),
-        'sample-booking.eml': f(eml(ham('sample-booking', BOOKINGS, NOW[3] - 3 * 86_400_000)), { lines: true }),
-        'sample-list.eml': f(eml(listMail('sample-list', USER('aziz'), NOW[3] - 2 * 86_400_000)), { lines: true }),
+        'sample-booking.eml': f(eml(ham(t, 'sample-booking', BOOKINGS, NOW[3] - 3 * 86_400_000)), { lines: true }),
+        'sample-list.eml': f(eml(listMail(t, 'sample-list', USER('aziz'), NOW[3] - 2 * 86_400_000)), { lines: true }),
       },
       log: '',
     }),
   afterCommand: (j) => passTime(j, arrivals),
   events: [
-    { id: 'read-old', condition: (j) => seen(j, 'reject "I am away until 25 August'), message: (j) => j.t('sorting-office-event-read-old') },
-    { id: 'syntax', condition: (j) => seen(j, /error: (validation|parse) failed\.|Compilation failed/), message: (j) => j.t('sorting-office-event-syntax') },
+    { id: 'read-old', condition: (j) => seen(j, `reject "${j.t('lifeboat-holiday-reply')}"`), message: (j) => j.t('sorting-office-event-read-old') },
+    { id: 'syntax', condition: (j) => seen(j, /error: (validation|parse) failed|Compilation failed/), message: (j) => j.t('sorting-office-event-syntax') },
     { id: 'reject-live', condition: (j) => rejectedLive(j) || listAnswered(j), message: (j) => j.t('sorting-office-event-reject-live') },
     { id: 'not-active', condition: (j) => written(j, 'leilani') || written(j, 'aziz'), message: (j) => j.t('sorting-office-event-not-active') },
     { id: 'folder', condition: leilaniOk, message: (j) => j.t('sorting-office-event-folder') },

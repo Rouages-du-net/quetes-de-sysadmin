@@ -15,7 +15,8 @@ import { Shell } from '../src/engine/shell';
 import { explain } from '../src/engine/explainer';
 import { parseSize, readConf, quotaRoot, lookup, mailText } from '../src/engine/dovecot';
 import { compile, execute } from '../src/engine/sieve';
-import { readUcl, readConfig } from '../src/engine/rspamd';
+import { readUcl, readConfig, scan, rspamd } from '../src/engine/rspamd';
+import { spam, ham, newsletter, NOW, USER, DOMAIN } from '../src/engine/chapters/lifeboat';
 
 const PASSWORD = 'storm-lantern-24';
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
@@ -44,11 +45,11 @@ describe('The Lifeboat: the engine', () => {
   });
 
   it('compiles and runs Sieve like Pigeonhole: errors with their line, vacation and its checks', () => {
-    expect(compile('require "fileinto";\nfilein "x";', 'a').errors).toEqual(["a: line 2: error: unknown command 'filein'.", 'a: error: validation failed.']);
-    expect(compile('fileinto "x";', 'b').errors[0]).toBe("b: line 1: error: unknown command 'fileinto'.");
-    expect(compile('require "fileinto"\nkeep;', 'c').errors[0]).toContain('line 1: error: expected end of command');
+    expect(compile('require "fileinto";\nfilein "x";', 'a').errors).toEqual(["a: line 2: error: unknown command 'filein' (only reported once at first occurrence)", 'a: error: validation failed']);
+    expect(compile('fileinto "x";', 'b').errors[0]).toBe("b: line 1: error: unknown command 'fileinto' (only reported once at first occurrence)");
+    expect(compile('require "fileinto"\nkeep;', 'c').errors[0]).toBe('c: line 1: error: the require command accepts no sub-tests, but tests are specified');
     expect(compile('require ["vacation"];\nvacation :adresses ["x@y"] "away";', 'd').errors[0]).toContain("unknown tagged argument ':adresses' for the vacation command");
-    expect(compile('if true { keep; ', 'e').errors[1]).toBe('e: error: parse failed.');
+    expect(compile('if true { keep; ', 'e').errors[1]).toBe('e: error: parse failed');
     const p = compile('require ["vacation"];\nvacation :days 3 :addresses ["treasurer@lifeboat.example"] "Away";', 'v').program!;
     const mail = (to: string, extra: [string, string][] = []) => ({ headers: [['From', 'a@mail.example'], ['To', to], ['Subject', 'Hi'], ...extra] as [string, string][], body: 'x' });
     const env = (dupes: Record<string, number> = {}) => ({ from: 'a@mail.example', to: 'aziz@lifeboat.example', user: 'aziz@lifeboat.example', now: 0, dupes });
@@ -71,6 +72,35 @@ describe('The Lifeboat: the engine', () => {
     const sh = new Shell(chapter('spam-tide'), 'en');
     expect(readConfig(sh).conf.actions).toMatchObject({ reject: 8, add_header: 12, greylist: 11 });
     expect(readConfig(sh).conf.minLearns).toBe(200);
+  });
+
+  it('scores the mail the same way in every language: each language learns its own words', () => {
+    const verdicts = (language: (typeof LANGUAGES)[number], trained: boolean) => {
+      const c = new Console({ language, finished: [...STORIES[0].chapters.map((x) => x.id), ...prerequisites('lifeboat'), 'mailbox-full'] });
+      const t = translator(language);
+      const run = (l: string) => {
+        c.execute(machinesInLanguage(t, l));
+        if (c.shell.waiting) c.execute(inLanguage(t, PASSWORD));
+        if (c.shell.question) c.execute('yes');
+      };
+      run('ssh slipway');
+      run('sudo nano /etc/rspamd/local.d/actions.conf');
+      c.shell.saveEdition('reject = 15;\nadd_header = 6;\ngreylist = 4;');
+      c.shell.quitEdition();
+      run('sudo systemctl reload rspamd');
+      const box = '/var/vmail/lifeboat.example/leilani/Maildir';
+      if (trained) run(`sudo rspamc learn_spam ${box}/.Junk/cur > /dev/null`), run(`sudo rspamc learn_ham ${box}/.Archive/cur > /dev/null`);
+      const sh = c.remote!.shell;
+      const tr = sh.t as never;
+      const refs = [spam(tr, 'p', USER('leilani'), NOW[2], 'phish'), spam(tr, 'i', USER('leilani'), NOW[2], 'invoice'), spam(tr, 'z', USER('leilani'), NOW[2], 'prize'), newsletter(tr, 'n', USER('leilani'), NOW[2]), ham(tr, 'b', `bookings@${DOMAIN}`, NOW[2]), ham(tr, 'c', USER('leilani'), NOW[2], 'crew')];
+      expect(rspamd(sh)!.counts).toEqual(trained ? { spam: 214, ham: 236 } : { spam: 0, ham: 0 });
+      return refs.map((x) => scan(sh, x.mail, { ip: x.ip, from: x.from, rcpt: x.rcpt }).action);
+    };
+    for (const trained of [false, true]) {
+      const en = verdicts('en', trained);
+      expect(en).toEqual(trained ? ['add header', 'add header', 'add header', 'add header', 'no action', 'no action'] : ['greylist', 'add header', 'add header', 'add header', 'no action', 'no action']);
+      for (const language of LANGUAGES) expect(verdicts(language, trained), `${language}, trained: ${trained}`).toEqual(en);
+    }
   });
 });
 
@@ -262,7 +292,7 @@ for (const language of LANGUAGES)
       expect(all).toMatch(/^holiday$/m);
       contains(all, 'reject ne répond pas en gardant le message');
       all = run("printf 'require [\"fileinto\"]\\nif header :contains \"to\" \"bookings\" { filein \"Bookings\"; }\\n' > broken.sieve", 'sievec broken.sieve; echo "exit $?"');
-      expect(all).toContain("broken: line 1: error: expected end of command ';' or the beginning of a compound block '{', but found identifier 'if'.");
+      expect(all).toContain('broken: line 1: error: the require command accepts no sub-tests, but tests are specified');
       expect(all).toContain('exit 1');
       contains(all, 'Le compilateur s\'est arrêté à la ligne qu\'il donne');
       all = run(`printf '${SORTING}' > sorting.sieve`, 'sievec sorting.sieve', 'sieve-test sorting.sieve sample-booking.eml');

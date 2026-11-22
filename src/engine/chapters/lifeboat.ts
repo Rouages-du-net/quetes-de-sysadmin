@@ -12,8 +12,9 @@
 // an old Trash expunged, a quota warning); chapter 2: rspamd's thresholds, a
 // newsletter whitelisted, Bayes trained; chapter 3: Sieve sorting and a
 // vacation reply that answers neither mailing lists nor aliases wrongly.
-// The mail contents are data from the internet: they stay in English, like
-// the logs (the characters' messages are in the texts).
+// The mail's subjects and bodies, and the words each kind of mail is made
+// of, are in the story's texts (lifeboat-mail-*, lifeboat-words-*): the
+// station receives mail in the player's language, and Bayes learns it.
 // Sources: https://doc.dovecot.org/2.4.1/, https://docs.rspamd.com/,
 // https://www.postfix.org/VIRTUAL_README.html, RFC 5228 and RFC 5230.
 
@@ -141,22 +142,31 @@ export const NET: RspamdNet = {
 
 const received = (helo: string, rdns: string | undefined, ip: string, date: number): [string, string] => ['Received', `from ${helo} (${rdns ?? 'unknown'} [${ip}]) by ${helo}; ${rfcDate(date)}`];
 
+// The mail's texts (subjects, bodies, the words of each kind of mail) are in
+// the story's texts (lifeboat-mail-*, lifeboat-words-*): each language gets
+// its own mail, and rspamd's Bayes learns that language's words.
+export type Tr = (id: string, variables?: Record<string, string | number>) => string;
+const list = (t: Tr, id: string) => t(id).split('|').map((x) => x.trim()).filter(Boolean);
 const FRIENDS = ['amara.okafor', 'tom.whitlock', 'mei.chen', 'rafael.duarte', 'ingrid.solberg', 'kofi.mensah', 'nadia.haddad', 'oisin.kelly', 'priya.raman', 'tane.walker', 'zeynep.arslan', 'lucia.moreno'];
-const SCHOOLS = ['Harbour Primary', 'St Brendan\'s', 'Northcliff Scouts', 'Seaholme Sea Cadets', 'Westbay Academy', 'the Rockpool Nursery', 'Cliffside Rangers'];
-const HAM_WORDS = ['visit', 'station', 'group', 'children', 'saturday', 'boathouse', 'crew', 'training', 'launch', 'rota', 'volunteers', 'donation', 'raffle', 'tour', 'teachers', 'lunch', 'parking', 'harbour', 'lifejackets', 'drill', 'tide', 'thanks', 'morning', 'afternoon', 'tickets', 'gift', 'shop', 'coffee', 'minibus'];
+const nameOf = (who: string) => who.split('.').map((x) => x[0].toUpperCase() + x.slice(1)).join(' ');
+const monthOf = (t: Tr, ms: number) => list(t, 'lifeboat-month-names')[new Date(ms).getUTCMonth()];
 
-/** A friendly message: a booking, the crew rota, a donation (ham). */
-export function ham(seed: string, to: string, date: number, kind: 'booking' | 'crew' = 'booking'): Incoming {
+/** A friendly message: a booking, the crew rota (ham). */
+export function ham(t: Tr, seed: string, to: string, date: number, kind: 'booking' | 'crew' = 'booking'): Incoming {
   const who = pick(FRIENDS, `${seed}:who`);
-  const name = who.split('.').map((x) => x[0].toUpperCase() + x.slice(1)).join(' ');
-  const school = pick(SCHOOLS, `${seed}:school`);
-  const words = Array.from({ length: 6 }, (_, i) => pick(HAM_WORDS, `${seed}:w${i}`));
-  const day = 1 + (hash(`${seed}:day`) % 27);
-  const subject = kind === 'booking' ? `Visit request: ${school}, ${day} ${pick(['November', 'December', 'March', 'April'], `${seed}:m`)}` : `Crew rota: ${pick(['launch', 'training', 'drill', 'tractor'], `${seed}:r`)} on ${pick(['Saturday', 'Sunday', 'Wednesday'], `${seed}:d`)}`;
+  const name = nameOf(who);
+  const school = pick(list(t, 'lifeboat-schools'), `${seed}:school`);
+  const words = list(t, 'lifeboat-words-ham');
+  const notes = Array.from({ length: 6 }, (_, i) => pick(words, `${seed}:w${i}`)).join(', ');
+  const day = String(1 + (hash(`${seed}:day`) % 27));
+  const subject =
+    kind === 'booking'
+      ? t('lifeboat-mail-booking-subject', { school, day, month: pick(list(t, 'lifeboat-visit-months'), `${seed}:m`) })
+      : t('lifeboat-mail-crew-subject', { what: pick(list(t, 'lifeboat-crew-whats'), `${seed}:r`), day: pick(list(t, 'lifeboat-crew-days'), `${seed}:d`) });
   const body =
     kind === 'booking'
-      ? `Hello,\n\nWe would love to bring a group from ${school} to visit the station and the boathouse, around ${12 + (hash(seed) % 30)} children and four teachers. Could we book a tour on the ${day}th, in the morning if the tide allows? We can bring our own lunch.\n\nNotes: ${words.join(', ')}.\n\nThanks so much,\n${name}`
-      : `Hi all,\n\nThe rota for the next ${pick(['launch', 'training'], `${seed}:t`)} is up on the board at the station. Please check your lifejackets and tell me if you can't make it.\n\nNotes: ${words.join(', ')}.\n\n${name}`;
+      ? t('lifeboat-mail-booking-body', { school, children: String(12 + (hash(seed) % 30)), day, notes, name })
+      : t('lifeboat-mail-crew-body', { what: pick(list(t, 'lifeboat-crew-whats'), `${seed}:t`), notes, name });
   const id = `${(hash(seed) >>> 0).toString(36)}.${Math.floor(date / 1000)}@mail.example`;
   const from = `${who}@mail.example`;
   return {
@@ -169,23 +179,22 @@ export function ham(seed: string, to: string, date: number, kind: 'booking' | 'c
   };
 }
 
-const PHISH_WORDS = ['verify', 'account', 'suspended', 'mailbox', 'password', 'immediately', 'confirm', 'login', 'security', 'deactivation', 'storage', 'quota', 'upgrade', 'validate', 'credentials', 'restore', 'access', 'expire'];
-const INVOICE_WORDS = ['invoice', 'payment', 'overdue', 'outstanding', 'remittance', 'transfer', 'settle', 'amount', 'balance', 'penalty', 'reference', 'urgent', 'accounts', 'final', 'notice'];
-const PRIZE_WORDS = ['winner', 'prize', 'claim', 'reward', 'crypto', 'wallet', 'bonus', 'jackpot', 'lucky', 'draw', 'selected', 'congratulations', 'exclusive', 'voucher', 'free'];
-
 /** A spam of one of the flood's three families. */
-export function spam(seed: string, to: string, date: number, family: 'phish' | 'invoice' | 'prize'): Incoming {
-  const words = (list: string[], n: number) => Array.from({ length: n }, (_, i) => pick(list, `${seed}:${i}`));
+export function spam(t: Tr, seed: string, to: string, date: number, family: 'phish' | 'invoice' | 'prize'): Incoming {
+  const words = (id: string, n: number) => {
+    const l = list(t, id);
+    return Array.from({ length: n }, (_, i) => pick(l, `${seed}:${i}`)).join(' ');
+  };
   const n = hash(seed);
   if (family === 'prize') {
     const ip = n % 2 ? SENDWAVE.a : SENDWAVE.b;
     const rdns = NET.senders[ip].rdns!;
     const code = (n % 1_000_000).toString(36).toUpperCase().padStart(12, 'Q');
-    const body = `<html><body><img src="https://cdn.sendwave.example/i/${code}.png"><p>Congratulations! You were selected in our ${words(PRIZE_WORDS, 3).join(' ')} draw.</p><p><a href="https://t.sendwave.example/r/${code}">Claim your reward now</a></p><p>${words(PRIZE_WORDS, 8).join(' ')}</p><p><a href="https://t.sendwave.example/u/${code}">Unsubscribe</a></p></body></html>`;
+    const body = t('lifeboat-mail-prize-body', { image: `https://cdn.sendwave.example/i/${code}.png`, draw: words('lifeboat-words-prize', 3), words: words('lifeboat-words-prize', 8), claim: `https://t.sendwave.example/r/${code}`, unsubscribe: `https://t.sendwave.example/u/${code}` });
     const from = `bounces+${code.toLowerCase()}@sendwave.example`;
     return {
       mail: message({
-        from: `Lucky Draw <win@prize-vault.example>`, to, subject: pick(['You have WON!', 'Claim your crypto bonus now!', 'Your exclusive reward is waiting!'], seed), date, body, id: `${code}@sendwave.example`, html: true,
+        from: `${t('lifeboat-mail-prize-name')} <win@prize-vault.example>`, to, subject: pick(list(t, 'lifeboat-mail-prize-subjects'), seed), date, body, id: `${code}@sendwave.example`, html: true,
         extra: [received(rdns, rdns, ip, date), received('relay.sendwave.example', 'relay.sendwave.example', '198.51.100.17', date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=sendwave.example; s=s1; bh=cHJp; b=emU='], ['List-Unsubscribe', `<https://t.sendwave.example/u/${code}>`], ['Return-Path', `<${from}>`]],
       }),
       ip, rdns, helo: rdns, from, rcpt: [to],
@@ -194,32 +203,33 @@ export function spam(seed: string, to: string, date: number, family: 'phish' | '
   const ip = PHISH_IPS[n % PHISH_IPS.length];
   const host = `vps${n % 900}.cloud.example`;
   if (family === 'phish') {
-    const body = `<html><body><p>Dear ${to.split('@')[0]},</p><p>Your ${DOMAIN} mailbox has reached its storage limit and will be suspended. ${words(PHISH_WORDS, 10).join(' ')}.</p><p><a href="https://webmail-${DOMAIN.replace('.', '-')}.cloud.example/login">Verify your account</a></p><p>${DOMAIN} Mail Administrator</p></body></html>`;
+    const body = t('lifeboat-mail-phish-body', { name: to.split('@')[0], domain: DOMAIN, words: words('lifeboat-words-phish', 10), link: `https://webmail-${DOMAIN.replace('.', '-')}.cloud.example/login` });
     const from = `no-reply@mailadmin-${n % 97}.cloud.example`;
     return {
-      mail: message({ from: `Mail Administrator <${from}>`, to, subject: pick(['Action required: your mailbox will be suspended', 'Mailbox storage limit reached', 'Confirm your account to avoid deactivation'], seed), date, body, id: `${n.toString(16)}.${Math.floor(date / 1000)}@${host}`, html: true, extra: [received(host, undefined, ip, date)] }),
+      mail: message({ from: `${t('lifeboat-mail-phish-name')} <${from}>`, to, subject: pick(list(t, 'lifeboat-mail-phish-subjects'), seed), date, body, id: `${n.toString(16)}.${Math.floor(date / 1000)}@${host}`, html: true, extra: [received(host, undefined, ip, date)] }),
       ip, helo: host, from, rcpt: [to],
     };
   }
-  const body = `<html><body><p>Hello,</p><p>Please find attached the final notice for the overdue invoice ${10_000 + (n % 89_999)}. ${words(INVOICE_WORDS, 10).join(' ')}.</p><p>Accounts Department</p></body></html>`;
+  const body = t('lifeboat-mail-invoice-body', { number: String(10_000 + (n % 89_999)), words: words('lifeboat-words-invoice', 10) });
   const from = `accounts@billing-${n % 89}.cloud.example`;
   return {
-    mail: message({ from: `Accounts <${from}>`, to, subject: pick(['INVOICE OVERDUE - FINAL NOTICE', 'PAYMENT REMINDER - URGENT ACTION', 'OUTSTANDING BALANCE NOTICE'], seed), date, body, id: `${n.toString(16)}.${Math.floor(date / 1000)}@${host}`, html: true, extra: [received(host, undefined, ip, date)] }),
+    mail: message({ from: `${t('lifeboat-mail-invoice-name')} <${from}>`, to, subject: pick(list(t, 'lifeboat-mail-invoice-subjects'), seed), date, body, id: `${n.toString(16)}.${Math.floor(date / 1000)}@${host}`, html: true, extra: [received(host, undefined, ip, date)] }),
     ip, helo: host, from, rcpt: [to],
   };
 }
 
 /** The Coastwatch safety bulletin: a legitimate newsletter sent through sendwave.example, the same platform as the prize spam. */
-export function newsletter(seed: string, to: string, date: number): Incoming {
+export function newsletter(t: Tr, seed: string, to: string, date: number): Incoming {
   const code = (hash(seed) % 1_000_000).toString(36).toUpperCase().padStart(12, 'C');
   const ip = SENDWAVE.a;
   const rdns = NET.senders[ip].rdns!;
   const from = `bounces+cw-${code.toLowerCase()}@sendwave.example`;
-  const day = new Date(date).getUTCDate();
-  const body = `<html><body><img src="https://cdn.sendwave.example/i/coastwatch-logo.png"><p>Coastwatch safety bulletin, ${day} ${MONTHS[new Date(date).getUTCMonth()]}: gale warning for the outer bay from tonight, spring tides at the weekend, the forecast for the harbour.</p><p><a href="https://t.sendwave.example/r/${code}">Read the full bulletin</a></p><p><a href="https://t.sendwave.example/u/${code}">Unsubscribe</a></p></body></html>`;
+  const day = String(new Date(date).getUTCDate());
+  const month = monthOf(t, date);
+  const body = t('lifeboat-mail-bulletin-body', { day, month, image: 'https://cdn.sendwave.example/i/coastwatch-logo.png', link: `https://t.sendwave.example/r/${code}`, unsubscribe: `https://t.sendwave.example/u/${code}` });
   return {
     mail: message({
-      from: 'Coastwatch <news@coastwatch.example>', to, subject: `Coastwatch safety bulletin: weather and tides, ${day} ${MONTHS[new Date(date).getUTCMonth()]}`, date, body, id: `${code}.${Math.floor(date / 1000)}@sendwave.example`, html: true,
+      from: 'Coastwatch <news@coastwatch.example>', to, subject: t('lifeboat-mail-bulletin-subject', { day, month }), date, body, id: `${code}.${Math.floor(date / 1000)}@sendwave.example`, html: true,
       extra: [received(rdns, rdns, ip, date), received('relay.sendwave.example', 'relay.sendwave.example', '198.51.100.17', date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=sendwave.example; s=s1; bh=Y3c=; b=Y3c='], ['List-Unsubscribe', `<https://t.sendwave.example/u/${code}>`], ['Precedence', 'bulk'], ['Return-Path', `<${from}>`]],
     }),
     ip, rdns, helo: rdns, from, rcpt: [to],
@@ -227,25 +237,27 @@ export function newsletter(seed: string, to: string, date: number): Incoming {
 }
 
 /** A message from the federation's mailing list (List-Id, Precedence: list). */
-export function listMail(seed: string, to: string, date: number): Incoming {
+export function listMail(t: Tr, seed: string, to: string, date: number): Incoming {
   const from = 'stations-bounces@lists.coastfed.example';
-  const topic = pick(['winter training dates', 'the new pagers', 'insurance renewal', 'the regional open day', 'fuel prices'], seed);
+  const topic = pick(list(t, 'lifeboat-list-topics'), seed);
   return {
     mail: message({
-      from: pick(['Hamid Rahimi <hamid@coastfed.example>', 'Elin Johansson <elin@coastfed.example>', 'Ruth Mbeki <ruth@coastfed.example>'], `${seed}:w`), to: 'stations@lists.coastfed.example', subject: `[stations] About ${topic}`, date,
-      body: `Dear stations,\n\nA short note about ${topic}: details at the next meeting.\n\n-- \nstations mailing list\nstations@lists.coastfed.example`, id: `${(hash(seed) >>> 0).toString(36)}@coastfed.example`,
-      extra: [received('mx.coastfed.example', 'mx.coastfed.example', '198.51.100.60', date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=coastfed.example; s=s1; bh=bGk=; b=bGk='], ['List-Id', 'Federation of coastal stations <stations.lists.coastfed.example>'], ['List-Post', '<mailto:stations@lists.coastfed.example>'], ['Precedence', 'list'], ['Return-Path', `<${from}>`]],
+      from: pick(['Hamid Rahimi <hamid@coastfed.example>', 'Elin Johansson <elin@coastfed.example>', 'Ruth Mbeki <ruth@coastfed.example>'], `${seed}:w`), to: 'stations@lists.coastfed.example', subject: t('lifeboat-mail-list-subject', { topic }), date,
+      body: t('lifeboat-mail-list-body', { topic }), id: `${(hash(seed) >>> 0).toString(36)}@coastfed.example`,
+      extra: [received('mx.coastfed.example', 'mx.coastfed.example', '198.51.100.60', date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=coastfed.example; s=s1; bh=bGk=; b=bGk='], ['List-Id', `${t('lifeboat-mail-list-name')} <stations.lists.coastfed.example>`], ['List-Post', '<mailto:stations@lists.coastfed.example>'], ['Precedence', 'list'], ['Return-Path', `<${from}>`]],
     }),
     ip: '198.51.100.60', rdns: 'mx.coastfed.example', helo: 'mx.coastfed.example', from, rcpt: [to],
   };
 }
 
-/** A direct message to someone of the station (a supplier, the accountant…). */
-export function direct(seed: string, to: string, headerTo: string, date: number, subject: string, body: string): Incoming {
+/** A direct message to someone of the station (a supplier, the accountant…): its subject and body from lifeboat-mail-<kind>-subject and -body. */
+export function direct(t: Tr, seed: string, to: string, headerTo: string, date: number, kind: string, variables: Record<string, string> = {}): Incoming {
   const who = pick(FRIENDS, `${seed}:who`);
   const from = `${who}@mail.example`;
+  const subject = t(`lifeboat-mail-${kind}-subject`, variables);
+  const body = t(`lifeboat-mail-${kind}-body`, { ...variables, subject, name: nameOf(who) });
   return {
-    mail: message({ from: `${who.split('.').map((x) => x[0].toUpperCase() + x.slice(1)).join(' ')} <${from}>`, to: headerTo, subject, date, body, id: `${(hash(seed) >>> 0).toString(36)}.${Math.floor(date / 1000)}@mail.example`, extra: [received('smtp.mail.example', 'smtp.mail.example', FRIENDLY, date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=mail.example; s=s1; bh=Zm9v; b=YmFy']] }),
+    mail: message({ from: `${nameOf(who)} <${from}>`, to: headerTo, subject, date, body, id: `${(hash(seed) >>> 0).toString(36)}.${Math.floor(date / 1000)}@mail.example`, extra: [received('smtp.mail.example', 'smtp.mail.example', FRIENDLY, date), ['DKIM-Signature', 'v=1; a=rsa-sha256; d=mail.example; s=s1; bh=Zm9v; b=YmFy']] }),
     ip: FRIENDLY, rdns: 'smtp.mail.example', helo: 'smtp.mail.example', from, rcpt: [to],
   };
 }
@@ -571,19 +583,19 @@ function maildir(host: string, seeds: Seed[], folders: string[], limit: number |
 
 const photo = (seed: string) => 3_800_000 + (hash(seed) % 1_700_000);
 /** Saoirse's mailbox in chapter 1: photos of the open day, sponsors, and an old Trash full of attachments. */
-function saoirseSeeds(): Seed[] {
+function saoirseSeeds(t: Tr): Seed[] {
   const seeds: Seed[] = [];
   const mk = (mailbox: string, i: number, at: number, subject: string, from: string, size: number) =>
-    seeds.push({ mailbox, received: at, mail: message({ from, to: USER('saoirse'), subject, date: at, body: `Hi Saoirse,\n\n${subject}: the files are attached.\n\n[attachment: photos-${i}.zip]`, id: `s${i}.${Math.floor(at / 1000)}@mail.example`, size }) });
-  for (let i = 0; i < 128; i++) mk('Trash', i, Date.UTC(2029, 10, 2) + i * 3 * DAY + (i % 5) * 3_600_000, `Open day photos, batch ${i + 1}`, 'Tom Whitlock <tom.whitlock@mail.example>', photo(`t${i}`));
-  for (let i = 0; i < 6; i++) mk('Trash', 200 + i, Date.UTC(2031, 8, 1) + i * 2 * DAY, `Draft poster ${i + 1}`, 'Mei Chen <mei.chen@mail.example>', 1_200_000 + i * 90_000);
-  for (let i = 0; i < 40; i++) mk('INBOX', 300 + i, Date.UTC(2031, 2, 1) + i * 4 * DAY, pick(['Sponsorship form', 'Raffle prizes', 'Summer fair photos', 'Grant application', 'Boat naming ceremony'], `i${i}`), pick(['Amara Okafor <amara.okafor@mail.example>', 'Rafael Duarte <rafael.duarte@mail.example>', 'Ingrid Solberg <ingrid.solberg@mail.example>'], `f${i}`), 7_700_000 + (hash(`i${i}`) % 1_200_000));
-  for (let i = 0; i < 25; i++) mk('Sent', 400 + i, Date.UTC(2031, 2, 3) + i * 6 * DAY, `Re: Summer fair, part ${i + 1}`, `Saoirse <${USER('saoirse')}>`, 5_600_000 + (hash(`s${i}`) % 900_000));
+    seeds.push({ mailbox, received: at, mail: message({ from, to: USER('saoirse'), subject, date: at, body: t('lifeboat-mail-attachment-body', { subject, file: `photos-${i}.zip` }), id: `s${i}.${Math.floor(at / 1000)}@mail.example`, size }) });
+  for (let i = 0; i < 128; i++) mk('Trash', i, Date.UTC(2029, 10, 2) + i * 3 * DAY + (i % 5) * 3_600_000, t('lifeboat-mail-photos-subject', { n: String(i + 1) }), 'Tom Whitlock <tom.whitlock@mail.example>', photo(`t${i}`));
+  for (let i = 0; i < 6; i++) mk('Trash', 200 + i, Date.UTC(2031, 8, 1) + i * 2 * DAY, t('lifeboat-mail-poster-subject', { n: String(i + 1) }), 'Mei Chen <mei.chen@mail.example>', 1_200_000 + i * 90_000);
+  for (let i = 0; i < 40; i++) mk('INBOX', 300 + i, Date.UTC(2031, 2, 1) + i * 4 * DAY, pick(list(t, 'lifeboat-mail-saoirse-subjects'), `i${i}`), pick(['Amara Okafor <amara.okafor@mail.example>', 'Rafael Duarte <rafael.duarte@mail.example>', 'Ingrid Solberg <ingrid.solberg@mail.example>'], `f${i}`), 7_700_000 + (hash(`i${i}`) % 1_200_000));
+  for (let i = 0; i < 25; i++) mk('Sent', 400 + i, Date.UTC(2031, 2, 3) + i * 6 * DAY, t('lifeboat-mail-sent-subject', { n: String(i + 1) }), `Saoirse <${USER('saoirse')}>`, 5_600_000 + (hash(`s${i}`) % 900_000));
   return seeds.sort((a, b) => a.received - b.received);
 }
 
 /** Leilani's mailbox in chapter 2: her INBOX, the spam she moved to Junk, the archive of bookings. */
-function leilaniSeeds(n: ChapterNo, family: Record<string, string>): Seed[] {
+function leilaniSeeds(t: Tr, n: ChapterNo, family: Record<string, string>): Seed[] {
   const seeds: Seed[] = [];
   const add = (mailbox: string, x: Incoming, kind: string, at: number) => {
     seeds.push({ mailbox, received: at, mail: x.mail });
@@ -594,31 +606,31 @@ function leilaniSeeds(n: ChapterNo, family: Record<string, string>): Seed[] {
     const families = ['phish', 'invoice', 'prize'] as const;
     for (let i = 0; i < 214; i++) {
       const fam = families[i % 3];
-      add('Junk', spam(`junk${i}`, to, Date.UTC(2031, 6, 1) + i * 7 * 3_600_000, fam), fam, Date.UTC(2031, 6, 1) + i * 7 * 3_600_000);
+      add('Junk', spam(t, `junk${i}`, to, Date.UTC(2031, 6, 1) + i * 7 * 3_600_000, fam), fam, Date.UTC(2031, 6, 1) + i * 7 * 3_600_000);
     }
-    for (let i = 0; i < 236; i++) add('Archive', ham(`arch${i}`, i % 4 ? `bookings@${DOMAIN}` : to, Date.UTC(2030, 8, 1) + i * 30 * 3_600_000, i % 3 ? 'booking' : 'crew'), 'ham', Date.UTC(2030, 8, 1) + i * 30 * 3_600_000);
+    for (let i = 0; i < 236; i++) add('Archive', ham(t, `arch${i}`, i % 4 ? `bookings@${DOMAIN}` : to, Date.UTC(2030, 8, 1) + i * 30 * 3_600_000, i % 3 ? 'booking' : 'crew'), 'ham', Date.UTC(2030, 8, 1) + i * 30 * 3_600_000);
     for (let i = 0; i < 26; i++) {
       const at = NOW[2] - (26 - i) * 2 * 3_600_000;
-      if (i % 3 === 0) add('INBOX', ham(`inbox${i}`, `bookings@${DOMAIN}`, at), 'ham', at);
-      else add('INBOX', spam(`flood${i}`, to, at, i % 3 === 1 ? 'phish' : 'invoice'), i % 3 === 1 ? 'phish' : 'invoice', at);
+      if (i % 3 === 0) add('INBOX', ham(t, `inbox${i}`, `bookings@${DOMAIN}`, at), 'ham', at);
+      else add('INBOX', spam(t, `flood${i}`, to, at, i % 3 === 1 ? 'phish' : 'invoice'), i % 3 === 1 ? 'phish' : 'invoice', at);
     }
   } else {
-    for (let i = 0; i < 18; i++) add('INBOX', ham(`l${n}-${i}`, i % 2 ? `bookings@${DOMAIN}` : to, NOW[n] - (18 - i) * 9 * 3_600_000), 'ham', NOW[n] - (18 - i) * 9 * 3_600_000);
+    for (let i = 0; i < 18; i++) add('INBOX', ham(t, `l${n}-${i}`, i % 2 ? `bookings@${DOMAIN}` : to, NOW[n] - (18 - i) * 9 * 3_600_000), 'ham', NOW[n] - (18 - i) * 9 * 3_600_000);
   }
   return seeds;
 }
 
-function plainSeeds(name: string, n: ChapterNo): Seed[] {
+function plainSeeds(t: Tr, name: string, n: ChapterNo): Seed[] {
   return Array.from({ length: 8 }, (_, i) => {
     const at = NOW[n] - (8 - i) * 15 * 3_600_000;
-    return { mailbox: 'INBOX', received: at, mail: ham(`${name}${n}-${i}`, USER(name), at, 'crew').mail };
+    return { mailbox: 'INBOX', received: at, mail: ham(t, `${name}${n}-${i}`, USER(name), at, 'crew').mail };
   });
 }
 
 // The old reject script of Aziz's last holiday (chapter 3): not active, and it would refuse every message.
-export const HOLIDAY_SIEVE = `# Aziz, August 2030 (written by Yerlan): "tell them I'm away"
+export const holidaySieve = (t: Tr) => `# ${t('lifeboat-holiday-comment')}
 require ["reject"];
-reject "I am away until 25 August. For anything urgent, write to Marisol.";`;
+reject "${t('lifeboat-holiday-reply')}";`;
 
 // ——— The machine ———
 
@@ -699,10 +711,10 @@ export function slipwayWorld(t: Translate, n: ChapterNo, o: WorldOptions): Direc
   fileCounter = n * 10_000;
   const people: Record<string, Node> = {};
   for (const p of PEOPLE) {
-    const seeds = p === 'saoirse' && n === 1 ? saoirseSeeds() : p === 'leilani' ? leilaniSeeds(n, family) : plainSeeds(p, n);
+    const seeds = p === 'saoirse' && n === 1 ? saoirseSeeds(t) : p === 'leilani' ? leilaniSeeds(t, n, family) : plainSeeds(t, p, n);
     const folders = ['Drafts', 'Junk', 'Sent', 'Trash', ...(p === 'leilani' && n === 2 ? ['Archive'] : [])];
     const home: Record<string, Node> = { Maildir: maildir(host, seeds, folders, 1024 ** 3) };
-    if (p === 'aziz' && n === 3) home.sieve = vdir({ 'holiday.sieve': f(HOLIDAY_SIEVE, { lines: true, ...vm, mode: 'rw-------', mtime: Date.UTC(2030, 7, 2) }) });
+    if (p === 'aziz' && n === 3) home.sieve = vdir({ 'holiday.sieve': f(holidaySieve(t), { lines: true, ...vm, mode: 'rw-------', mtime: Date.UTC(2030, 7, 2) }) });
     people[p] = vdir(home);
   }
   return dir({
@@ -791,6 +803,7 @@ export { countIn };
 // ——— Time passing: the mail keeps arriving ———
 
 export type Arrival = (j: Game, tick: number, now: number) => { kind: string; m: Incoming }[];
+export const tr = (j: Game): Tr => j.t as Tr;
 
 /** Each command: a minute or two pass, the mail of that time arrives (and what greylisting deferred comes back). */
 export function passTime(j: Game, arrivals: Arrival) {

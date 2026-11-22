@@ -4717,7 +4717,7 @@ man-doveconf = montre la configuration de Dovecot telle que Dovecot la lit : dov
     .example-3 = la valeur d'un réglage
     .example-4 = un service
     .example-5 = les avertissements de quota, avec leurs lignes
-man-sievec = compile un script Sieve (Pigeonhole, le Sieve de Dovecot) : vérifie sa syntaxe, son require et ses commandes, et écrit le binaire compilé à côté (NOM.svbin), ou dans FICHIER-SORTIE. Une erreur l'arrête avec la ligne du script (« NOM: line 3: error: unknown command 'filein'. », puis « error: validation failed. » ou « error: parse failed. ») et le code de sortie 1. Un répertoire compile chaque fichier .sieve qu'il contient. Dovecot compile les scripts tout seul à la remise ; sievec est ce qui te dit qu'un script est faux avant qu'il serve.
+man-sievec = compile un script Sieve (Pigeonhole, le Sieve de Dovecot) : vérifie sa syntaxe, son require et ses commandes, et écrit le binaire compilé à côté (NOM.svbin), ou dans FICHIER-SORTIE. Une erreur l'arrête avec la ligne du script (« NOM: line 3: error: unknown command 'filein' (only reported once at first occurrence) », puis « error: validation failed » ou « error: parse failed ») et le code de sortie 1. Un répertoire compile chaque fichier .sieve qu'il contient. Dovecot compile les scripts tout seul à la remise ; sievec est ce qui te dit qu'un script est faux avant qu'il serve.
     .synopsis = sievec [-c CONFIG] [-d] [-D] [-o RÉGLAGE=VALEUR] [-u PERSONNE] FICHIER-SCRIPT [FICHIER-SORTIE]
     .option-c = un autre fichier de configuration de Dovecot.
     .option-d = écrit un vidage du script compilé au lieu du binaire (sur la sortie standard sans FICHIER-SORTIE).
