@@ -669,6 +669,17 @@ them safely.
   `virsh`, `qemu-img`, `virt-install`, `virt-clone`, `growpart`,
   `systemd-machine-id-setup`).
 
+- [x] **High availability with keepalived and HAProxy** (a virtual address
+  shared by two load balancers): a failover that didn't happen because
+  nothing watched the service, a sick backend still receiving traffic and a
+  server to take out for maintenance, a split brain after a firewall change
+  and another VRRP group on the link. Done: story 41, "The Blood Drive"
+  (`keepalived.ts`: the configuration, the VRRP election second by second,
+  tracked checks, preemption, unicast, bogus adverts, the firewall between
+  the nodes; `haproxy.ts`: the configuration and `haproxy -c`, health
+  checks, balancing, the runtime API, the HTTP log; `keepalived`,
+  `haproxy`, `socat`, `tcpdump`, `pidof`).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a

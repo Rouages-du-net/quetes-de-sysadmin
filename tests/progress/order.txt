@@ -149,3 +149,6 @@ signed-release
 cold-start
 wrong-side
 tight-fit
+no-failover
+sick-server
+split-brain

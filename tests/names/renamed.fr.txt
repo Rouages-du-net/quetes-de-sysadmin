@@ -1581,6 +1581,102 @@ tight-fit:agenda-training
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+no-failover
+  /home/you → /home/vous
+  /home/you/message_from_zainab.txt → /home/vous/message_de_zainab.txt
+  /home/you/note_from_bastien.txt → /home/vous/mot_de_bastien.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+no-failover:lb2
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+no-failover:web1
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+no-failover:web2
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+no-failover:web3
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+sick-server
+  /home/you → /home/vous
+  /home/you/message_from_zainab.txt → /home/vous/message_de_zainab.txt
+  /home/you/message_from_teodor.txt → /home/vous/message_de_teodor.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+sick-server:lb2
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+sick-server:web1
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+sick-server:web2
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+sick-server:web3
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+split-brain
+  /home/you → /home/vous
+  /home/you/message_from_kirsi.txt → /home/vous/message_de_kirsi.txt
+  /home/you/message_from_zainab.txt → /home/vous/message_de_zainab.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+split-brain:lb2
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+split-brain:web1
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+split-brain:web2
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+split-brain:web3
+  /srv/booking/README.txt → /srv/booking/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

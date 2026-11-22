@@ -79,6 +79,8 @@ import { POWERSHELL } from './powershell';
 import { LINE_ENDINGS } from './line-endings';
 import { CRYPTSETUP } from './cryptsetup';
 import { VIRT } from './libvirt';
+import { KEEPALIVED_COMMANDS } from './keepalived';
+import { HAPROXY_COMMANDS } from './haproxy';
 import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
 import { PROMETHEUS_COMMANDS } from './prometheus';
@@ -216,6 +218,8 @@ function build(): Record<string, Command> {
     ...LINE_ENDINGS,
     ...CRYPTSETUP,
     ...VIRT,
+    ...KEEPALIVED_COMMANDS,
+    ...HAPROXY_COMMANDS,
     ...CHECKSUMS,
     ...ENVIRONMENT,
     ...PROMETHEUS_COMMANDS,

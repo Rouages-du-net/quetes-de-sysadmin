@@ -87,3 +87,5 @@ password-mixing-desk-30 = mixing-desk-30
 password-pegboard-47 = pegboard-47
 ## The Health Centre
 password-waiting-room-30 = waiting-room-30
+## The Blood Drive
+password-donor-chair-12 = donor-chair-12

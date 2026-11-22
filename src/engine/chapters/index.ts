@@ -153,6 +153,9 @@ import { signedRelease } from './signed-release';
 import { coldStart } from './cold-start';
 import { wrongSide } from './wrong-side';
 import { tightFit } from './tight-fit';
+import { noFailover } from './no-failover';
+import { sickServer } from './sick-server';
+import { splitBrain } from './split-brain';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -355,6 +358,11 @@ export const STORIES: Story[] = [
     id: 'health-centre',
     after: ['more-room', 'dhcp'],
     chapters: [coldStart, wrongSide, tightFit],
+  },
+  {
+    id: 'blood-drive',
+    after: ['blue-green', 'dmz'],
+    chapters: [noFailover, sickServer, splitBrain],
   },
 ];
 

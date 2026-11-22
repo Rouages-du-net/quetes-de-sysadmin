@@ -273,6 +273,9 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `virsh` snapshots and block jobs | internal snapshots inside the qcow2 image (with the memory when the domain runs, `qemu-img info`'s snapshot list), external disk-only ones (an overlay named after the snapshot, `snapshot-list --tree`); `snapshot-delete` of an external snapshot merges its overlay into the image it froze and removes the file (libvirt 9.0 and later), `--metadata` only forgets it; `blockcommit` (`--active`, `--top`, `--base`, `--shallow`, `--pivot`, `--delete`, `--wait`, `--verbose`), `blockjob --pivot/--abort/--info`; a commit needs room for what the base gains (`Commit failed`); `blockresize` grows only (QEMU's refusal for a shrink) | the job's real progress, `blockcopy`, `blockpull`, checkpoints, `--reuse-external`, `--diskspec` and `--memspec` read but ignored; the error for a snapshot-delete whose overlay left the chain is approximated |
 | `qemu-img` | `info` (`--backing-chain`, `-U`; sizes as QEMU's `size_to_str` writes them), `create` (`-f`, `-b`, `-F`), `resize` (`+`/`-`, `--shrink` required to shrink, data then lost), `convert -O` (the chain flattened), `commit` (the top image emptied), `check`, `snapshot -l/-c/-d`; the lock of a running QEMU ("Failed to get shared "write" lock") | `--output=json`, `amend`, `map`, `measure`, `rebase`, `bench`, encryption, compression, preallocation; a qcow2's size is an estimate (what was written), not its clusters |
 | `virt-install`, `virt-clone`, `growpart`, `systemd-machine-id-setup` | `virt-install` defines and starts a domain (`--name`, `--memory`, `--vcpus`, `--disk path=…,size=…`, `--network network=…\|bridge=…`, `--import`/`--cdrom`/`--location`/`--pxe`, `--noautoconsole`), no installer runs; `virt-clone` (`--original`, `--name`, `--auto-clone`, `--file`) with the source shut off or paused: a new uuid, new MACs, the disk copied (its machine-id and hostname with it); `growpart DISK N` (`-N`) and `resize2fs` on a guest's single partition; `systemd-machine-id-setup` fills a missing or empty `/etc/machine-id` from the VM's UUID (and the guest's next boot does too) | `virt-sysprep`, `virt-customize`, `virt-df`, `virt-viewer`, `virt-manager`; `growpart` on other disks or partition layouts |
+| keepalived (`keepalived.ts`, The Blood Drive) | `/etc/keepalived/keepalived.conf` read when keepalived starts and on reload (SIGHUP): `global_defs` (`router_id`, `enable_script_security`, `script_user`), `vrrp_script` (`script`, `interval`, `weight`, `fall`, `rise`), `vrrp_instance` (`state`, `interface`, `virtual_router_id`, `priority`, `advert_int`, `nopreempt`, `authentication` PASS, `virtual_ipaddress`, `track_script` with its own weight, `unicast_src_ip`, `unicast_peer`); its messages for unknown keywords (with the line), invalid VRIDs and priorities, a missing track script, nopreempt with state MASTER; a VRRPv2 election second by second: initial BACKUP state, master down interval (3 × advert_int + skew), adverts to 224.0.0.18 or the unicast peers, priority 0 when a master stops, preemption and `nopreempt`, a tie won by the higher address, FAULT for a failed check of weight 0, the weights of the tracked checks, an advert for the same VRID with other addresses dropped as bogus, the firewall of the receiving node (nftables' input hook) deciding what keepalived hears; the master holds the virtual addresses (`ip a`, secondary) and sends gratuitous ARPs; a reload keeps the state of an instance that kept its VRID and interface; `keepalived -t`, `-v` | one instance per node takes part (the first one), no `vrrp_sync_group`, VRRPv3, `use_vmac`, `notify*` scripts, LVS (`virtual_server`); AH authentication read but not checked; the usual checks (`pidof`, `killall -0`, `pgrep`, `systemctl is-active`) are computed, other scripts run in the game's shell; the exit code of `keepalived -t` is 1 for any error |
+| HAProxy (`haproxy.ts`, The Blood Drive) | `/etc/haproxy/haproxy.cfg` read like HAProxy 3.0 (sections `global`, `defaults`, `frontend`, `backend`, `listen`; `bind`, `default_backend`, `balance` roundrobin/leastconn/first, `server` with `check`, `inter`, `fall`, `rise`, `backup`, `weight`, `maxconn`, `disabled`, `default-server`, `option httpchk [METHOD] URI`, `http-check send`, `http-check expect status|rstatus`, `option allbackups`, `stats socket`); `haproxy -c -f` (ALERT lines with the file and line, "did you mean", a missing default_backend, warnings for http-check rules without httpchk), `-q`, `-v`, `-vv`; the service checks the file before a reload (Debian's ExecReload); a frontend bound to an address the node doesn't hold fails unless `net.ipv4.ip_nonlocal_bind` is 1; health checks every `inter` (L4OK, L4CON, L7OK, L7STS), a server starting UP (one failure marks it DOWN), `fall`/`rise`; the runtime API through `socat` (`show stat`, `show servers state`, `show info`, `show backend`, `enable`/`disable server`, `set server … state ready|drain|maint`, `set server … weight`, `get`/`set weight`, `help`); the HTTP log format in `/var/log/haproxy.log` (Debian's rsyslog rule), check transitions and drain/maintenance messages; a donor's request every two seconds through whoever holds the virtual address; `kill` of haproxy restarted by systemd (`Restart=always`) | `show stat` prints its first 51 fields; sessions are a count that rises and falls with traffic, not real connections; no ACLs, stick tables, SSL, cookies or persistence; a reload starts the servers' states afresh (no `server-state-file`); `/run/haproxy/admin.sock` is a plain file in the world |
+| `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
 | `kubectl` (The Pool) | kubectl 1.31 against a single-node k3s: `get` (pods, deployments, replicasets, services, endpoints, endpointslices, ingresses, ingressclasses, configmaps, secrets, events, nodes, namespaces, `all`; `-o wide/yaml/json/name/jsonpath`, `-A`, `-n`, `-l`, `--show-labels`, `-w`), `describe`, `logs` (`--previous`, `-c`, `--tail`, `-f`, `-l`, `deploy/NAME`), `apply -f` (files, directories, `-R`, `--dry-run`), `create` (`-f`, `configmap`, `secret generic`, `deployment`, `namespace`), `delete`, `edit` (nano on the live object), `rollout status/history/undo/restart/pause/resume`, `scale`, `set image`, `exec` (BusyBox's `sh` and a few applets), `port-forward` (holds the terminal until Ctrl-C, forwards nothing), `run`, `expose`, `top`, `explain` (a few fields), `cluster-info`, `version`, `config` (`view`, `get-contexts`, `current-context`, `set-context --current --namespace`), `api-resources`; strict decoding of the manifests against a schema per kind; `kubectl apply`'s three-way merge replaces lists wholesale; like the upstream kubectl, k3s's kubectl reads `~/.kube/config` when `KUBECONFIG` is not set | `patch`, `label`, `annotate`, `cp`, `proxy`, `auth`, `wait`, `diff`, kustomize, plugins; the strategic merge by key; k3s's kubectl only reads `/etc/rancher/k3s/k3s.yaml` unless `KUBECONFIG` is set |
@@ -4147,6 +4150,106 @@ records runs (QEMU's write lock), a shrink (refused, or data lost with
 `--shrink`), `setmem --config` alone (still swapping), a size above the
 maximum memory, `setmaxmem` on a running domain; growing without a snapshot
 first is allowed but noted.
+
+## Story 41: The Blood Drive (three chapters)
+
+The Lindenvale Blood Service books its donors' appointments online, at
+`donate.lindenvale.example` (192.0.2.108). Two Debian 13 load balancers share
+that address with keepalived (VRRP): `lb1` (the story's machine,
+192.0.2.104) and `lb2` (an internal host, 192.0.2.105), on the service
+network 192.0.2.0/24 (gateway 192.0.2.254). Each runs HAProxy in front of
+three web servers on the back network 198.51.100.0/24: `web1`, `web2`,
+`web3` (internal hosts, 198.51.100.21-23), where the booking app (gunicorn)
+answers on port 8080, with a `/health` page. Donors (203.0.113.0/24) book
+every two seconds; each command lets five seconds pass, second by second
+(keepalived's election, HAProxy's checks, the donors). Bastien built it in
+2029 and left; Zainab runs the donor service, Teodor writes the booking app,
+Kirsi runs the network. Engine: `src/engine/keepalived.ts` (the
+configuration, the VRRP election, the advertisements and ARP on the link),
+`src/engine/haproxy.ts` (the configuration and its check, the health checks,
+the balancing, the runtime API, the log), `commands/keepalived.ts`
+(`keepalived`, `tcpdump`, `pidof`), `commands/haproxy.ts` (`haproxy`,
+`socat`, and curl on the story's network); nftables knows VRRP (`ip protocol
+vrrp`, `112`); `ip a` shows a second address of a network as `secondary`.
+The story is built in `chapters/blood-drive.ts`. It opens after "Blue and
+green" (nginx balancing between two servers, The Gazette) and "The DMZ" (an
+nftables firewall, The Community Centre), and extends the production path
+(chapter 3 the network path too).
+
+### Chapter 1 — The Failover That Didn't Happen (done)
+
+Monday 13 May 2030, 7:40. haproxy's worker aborted on lb1 at 6:58 until
+systemd's start limit; keepalived, which only watches its peer, kept the
+virtual address on lb1, and lb2 waited.
+
+| Step | Command learnt |
+|---|---|
+| The site is down | `systemctl status haproxy` (`Start request repeated too quickly`), `curl -s http://donate.lindenvale.example/` |
+| Who holds the address | `ip a` (`192.0.2.108/24 … secondary eth0`), `ssh lb2` |
+| What keepalived watches | `cat /etc/keepalived/keepalived.conf`, `sudo journalctl -u keepalived` |
+| The design | a `vrrp_script` checking haproxy (`killall -0`, `pidof`, `systemctl is-active`) with a weight (or 0), `track_script` in the instance, `sudo keepalived -t`, `sudo systemctl reload keepalived` |
+| The failover | the check fails, the priority drops (or FAULT), lb2 takes the address: `journalctl`, `ip a`, `curl` |
+| Back, and both ways | `sudo systemctl restart haproxy` on lb1; the same tracking on lb2; a deliberate test (`systemctl stop haproxy`, `sleep`, `curl`, `start`) |
+
+Goal checked on the state: haproxy and keepalived running on both nodes,
+the loaded configurations moving the address both ways if haproxy dies
+(the failing node's priority below its peer's and the peer allowed to
+preempt, or a weight of 0), a failover seen (lb2 holding the address and
+serving while lb1's haproxy was down), one master, the donors served.
+Several solutions: any check of haproxy, a negative weight, a positive one
+on both or a weight of 0; preemption or nopreempt (the debrief explains
+both). Expected traps: restarting haproxy only (it works today), state
+MASTER on both with the same priority, `nopreempt` on the backup with a
+weighted check (the address stays on a master that still advertises), a
+file edited but not reloaded.
+
+### Chapter 2 — The Sick Server (done)
+
+Wednesday 22 May, 10:05. One donor in three gets an error page: web3's app
+answers 500 to everything (its database refuses connections), and HAProxy
+has no health check at all. A technician waits to replace web2's memory.
+
+| Step | Command learnt |
+|---|---|
+| Which server | `sudo tail /var/log/haproxy.log` (`be_booking/web3 … 500`), `curl -si` (`x-served-by`) |
+| How HAProxy sees them | `echo "show stat" \| sudo socat stdio /run/haproxy/admin.sock \| cut -d, -f1,2,5,18,37` (`no check`; without sudo, `Permission denied`) |
+| An HTTP check | `option httpchk GET /health`, `http-check expect status 200`, `check inter 2s fall 3 rise 2`, `sudo haproxy -c -f …`, `sudo systemctl reload haproxy`; the same on lb2 |
+| Maintenance | `set server be_booking/web2 state drain` (or `disable server`), watch `scur`; the technician switches web2 off and back on |
+| Back | `set server be_booking/web2 state ready` (or `enable server`) |
+
+Goal checked on the state: an HTTP check loaded on both load balancers,
+web3 DOWN on the master, the technician's visit done, web2 ready and UP
+and still in both configuration files, the donors served. Several
+solutions: drain or maint, `set server` or `enable`/`disable server`, any
+`expect` that refuses 500 (the default 2xx/3xx too). Expected traps: `check`
+without httpchk (L4OK, web3 stays UP), removing web2's server line, stopping
+web2's app or rebooting it while donors are on it, draining on the backup
+load balancer.
+
+### Chapter 3 — Split Brain (done)
+
+Wednesday 5 June, 9:20. On Tuesday night the network team installed a VRRP
+pair of edge routers for the gateway (VRID 51, their vendor's default) and
+applied their nftables baseline to lb2, whose input chain drops VRRP. lb2
+no longer hears lb1: both hold the address, the gateway's ARP entry swings,
+every other donor's connection is reset.
+
+| Step | Command learnt |
+|---|---|
+| Two masters | `ip a` on both |
+| What they hear | `sudo journalctl -u keepalived` (lb1: `lower priority … forcing new election`, `bogus VRRP packet received`) |
+| On the wire | on lb2, `sudo tcpdump -i eth0 -c 10 vrrp` (lb1's adverts arrive) |
+| The firewall | `sudo nft list ruleset` (`policy drop`), `nft add rule inet filter input ip protocol vrrp accept`, then `/etc/nftables.conf`, `nft -c -f`, `systemctl restart nftables` |
+| The other group | `tcpdump` (`192.0.2.252 … vrid 51, prio 120`), a new `virtual_router_id` on both nodes, or `unicast_peer` on both |
+
+Goal checked on the state: keepalived running on both, one MASTER and one
+BACKUP, lb2's firewall letting lb1's adverts in now and in the ruleset the
+next boot loads, the pair no longer sharing the routers' VRID on multicast,
+the donors served. Several solutions: `ip protocol vrrp`, `112`, `ip daddr
+224.0.0.18` or a rule for lb1's address; a new VRID or unicast. Expected
+traps: stopping keepalived on lb2 (no redundancy), changing priorities, a
+rule only added with `nft` (lost at the next boot), a new VRID on one node
+only (two groups, two masters again).
 
 ## Ideas for later
 
