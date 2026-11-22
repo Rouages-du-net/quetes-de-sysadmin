@@ -39,3 +39,28 @@ psql-interactive = (In this game, psql does not open in interactive mode: give t
 pg-restore-input =
     pg_restore: error: one of -d/--dbname and -f/--file must be specified
     Try "pg_restore --help" for more information.
+
+## MariaDB (the mariadb monitor's help, mariadb-admin without a command): the tool's own output, in English.
+
+mariadb-monitor-help =
+    General information about MariaDB can be found at
+    https://mariadb.org
+
+    List of all client commands:
+    Note that all text commands must be first on line and end with ';'
+    ?         (\?) Synonym for `help'.
+    clear     (\c) Clear the current input statement.
+    ego       (\G) Send command to MariaDB server, display result vertically.
+    exit      (\q) Exit mysql. Same as quit.
+    go        (\g) Send command to MariaDB server.
+    help      (\h) Display this help.
+    quit      (\q) Quit mysql.
+    source    (\.) Execute an SQL script file. Takes a file name as an argument.
+    status    (\s) Get status information from the server.
+    use       (\u) Use another database. Takes database name as argument.
+
+    For server side help, type 'help contents'
+mariadb-admin-usage =
+    { $program }  Ver 10.0 Distrib 11.8.9-MariaDB, for debian-linux-gnu on x86_64
+    Usage: { $program } [OPTIONS] command command....
+    Where command is one or more of: ping, status, processlist, kill id,id,..., variables, extended-status, version, flush-privileges, create databasename, drop databasename, shutdown, start-slave, stop-slave

@@ -104,6 +104,8 @@ export const MACHINES: Machine[] = [
   machine('lb1', '192.0.2.104', 'blood-drive'),
   // The Choir: a community choir's server (nginx, PostgreSQL, restic) and the personal data it keeps.
   machine('baton', '192.0.2.112', 'choir'),
+  // The Allotments: an allotments association's MariaDB server (trowel) and, behind it, the app's server and the replica.
+  machine('trowel', '192.0.2.131', 'allotments'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

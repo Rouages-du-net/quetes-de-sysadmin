@@ -790,6 +790,31 @@ presents them for people.
   export holds and whether it leaks), `forget-me.ts` (`purgeVerdict`: the
   scheduled purge run once on a copy of the database). Tests:
   `tests/choir.test.ts`.
+- `src/engine/mariadb.ts`: a machine's MariaDB 11.8 (`state.mariadb`:
+  `/etc/mysql/my.cnf` and its `!includedir` read at start (`readOptions`,
+  `fileValue`, `startErrors`), the variables (`vars`, `DYNAMIC`), accounts
+  `'user'@'host'` (`sortedAccounts`, `authenticate`: unix_socket,
+  mysql_native_password's real hash `nativeHash`), privileges (`allowed`),
+  connections and `max_connections` (`connect`, `reapIdle` for
+  `wait_timeout`), tables and indexes, `writeRow` and the row-based binary
+  log with GTIDs, a replica's threads (`replicate`, `secondsBehind`,
+  `healthy`), dumps' metadata (`dumps`, `restores`), `look` for what an
+  administrator looked at; the story's network `state.mariaNet`,
+  `machineAt`, `sourceFor`, `linkOf`); its SQL in `src/engine/mariadb-sql.ts`
+  (`run`, `statements`, `cost` and `slowLog`); `mariadb`/`mysql` (and its
+  monitor), `mariadb-dump`/`mysqldump`, `mariadb-admin`/`mysqladmin`,
+  `mariadb-check`/`mysqlcheck`, `mariadb-secure-installation` in
+  `src/engine/mariadb-client.ts`, loaded with the story (its module calls
+  `setMariadbPrograms`; `commands/mariadb.ts` holds only the entries, for
+  the manual and Tab); a unit's `aliases` (mariadb: mysql, mysqld) in
+  `systemd.ts`. `chapters/allotments.ts`: what the chapters of "The
+  Allotments" share (`trowel`, the association's database server, and its
+  `plots` database; `barrow`, the app's server, an internal host whose
+  `plotline` service reads `/srv/plotline/.env` at start; `rake`, the
+  replica, an internal host; the weekend replayed by `weekend`; the app's
+  connections and writes and the replica's threads each command in
+  `passTime`); `sleeping-connections.ts`, `least-privilege.ts`,
+  `broken-replica.ts`. Tests: `tests/allotments.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

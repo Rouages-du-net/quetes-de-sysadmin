@@ -92,3 +92,4 @@ machine-anvil-motd = L'Outilthèque — la forge de Lendshed : Forgejo (https://
 machine-hearth-motd = La Maison de santé — l'hyperviseur de la maison de santé de Millbrook (KVM, libvirt) : ledger, agenda, records et leurs ami·es vivent ici. virsh list --all avant toute chose.
 machine-lb1-motd = La Collecte — lb1, le premier répartiteur de charge de l'établissement du sang de Lindenvale (keepalived, HAProxy) devant donate.lindenvale.example. Son jumeau est lb2. ip a avant toute chose.
 machine-baton-motd = La Chorale — baguette, le serveur de la Chorale des Berges : le site, l'espace choristes et sa base, et les données des choristes. La politique de conservation est dans /srv/choir/docs.
+machine-trowel-motd = Les Jardins — truelle, le serveur de base de données de l'association des Jardins de Greenholme (MariaDB) : les réservations, les membres et la liste d'attente de Plotline. sudo mariadb avant toute chose.

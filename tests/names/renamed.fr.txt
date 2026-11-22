@@ -1701,6 +1701,42 @@ forget-me
   /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
   /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
 
+sleeping-connections
+  /home/you → /home/vous
+  /home/you/message_from_halima.txt → /home/vous/message_de_halima.txt
+  /home/you/note_from_lwazi.txt → /home/vous/mot_de_lwazi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+least-privilege
+  /home/you → /home/vous
+  /home/you/message_from_halima.txt → /home/vous/message_de_halima.txt
+  /home/you/scan_from_selin.txt → /home/vous/scan_de_selin.txt
+  /home/you/note_from_lwazi.txt → /home/vous/mot_de_lwazi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+least-privilege:barrow
+  /srv/plotline/README.txt → /srv/plotline/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+broken-replica
+  /home/you → /home/vous
+  /home/you/message_from_moana.txt → /home/vous/message_de_moana.txt
+  /home/you/note_from_lwazi.txt → /home/vous/mot_de_lwazi.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+broken-replica:rake
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -498,3 +498,8 @@ name-message_from_kenji-txt = message_from_kenji.txt
 name-message_from_tomas-txt = message_from_tomas.txt
 name-retention-policy-txt = retention-policy.txt
 name-gdpr-requests = gdpr-requests
+## The Allotments
+name-message_from_halima-txt = message_from_halima.txt
+name-note_from_lwazi-txt = note_from_lwazi.txt
+name-scan_from_selin-txt = scan_from_selin.txt
+name-message_from_moana-txt = message_from_moana.txt

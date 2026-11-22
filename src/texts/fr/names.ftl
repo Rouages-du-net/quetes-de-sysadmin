@@ -501,3 +501,8 @@ name-message_from_kenji-txt = message_de_kenji.txt
 name-message_from_tomas-txt = message_de_tomas.txt
 name-retention-policy-txt = politique-de-conservation.txt
 name-gdpr-requests = demandes-rgpd
+## Les Jardins
+name-message_from_halima-txt = message_de_halima.txt
+name-note_from_lwazi-txt = mot_de_lwazi.txt
+name-scan_from_selin-txt = scan_de_selin.txt
+name-message_from_moana-txt = message_de_moana.txt
