@@ -5,7 +5,7 @@
 // path only says which way to go, and shows what remains to do.
 // Texts: path-<id> and its .description attribute (interface.ftl).
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 
 export interface Path {
   id: string;

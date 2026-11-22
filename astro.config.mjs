@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { qdsTexts } from './src/texts/plugin.mjs';
 
 // The sysadmin.rouages.net site: static pages served by Apache (cPanel).
 // The game itself is the <quetes-de-sysadmin> element (src/element.ts), inserted
@@ -14,5 +15,7 @@ export default defineConfig({
   build: { format: 'directory' },
   // No file inlined as data: (Vite does it under 4 KB, for the font's small
   // pieces): the CSP only allows the site's files.
-  vite: { build: { assetsInlineLimit: 0 } },
+  // The texts come in groups (src/texts/plugin.mjs), each a chunk loaded when
+  // needed, like each story (src/engine/story-registry.ts).
+  vite: { plugins: [qdsTexts()], build: { assetsInlineLimit: 0 } },
 });

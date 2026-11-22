@@ -2,7 +2,7 @@
 // there (or pastes their codes); everything is read in their browser,
 // nothing is sent. The logic is in src/engine/classroom.ts.
 
-import { STORIES } from '../engine/chapters';
+import { CATALOGUE as STORIES } from '../engine/catalogue';
 import { progress, fileStudent, codesStudents, inCsv, gradeFor, bestTime, chaptersTotal, type Student, type ClassError } from '../engine/classroom';
 import { translator, type Language } from '../texts';
 

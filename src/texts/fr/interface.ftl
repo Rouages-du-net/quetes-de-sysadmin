@@ -468,3 +468,7 @@ tour-mission = Mission : ce que tu dois faire dans ce chapitre, ce qui s'est dé
 tour-map = Carte : les lieux déjà visités, pour retrouver ton chemin.
 tour-notebook = Carnet : chaque commande que tu lances y est notée, avec ce qu'elle fait. Ton aide-mémoire.
 tour-tab = Tab complète les noms pour toi : tape les premières lettres, puis Tab. Deux fois, il liste les choix.
+
+# Une histoire se charge la première fois qu'on l'ouvre (ses chapitres et ses textes).
+loading-story = Chargement de {$story}…
+loading-failed = Cette partie du jeu n'a pas pu être chargée : vérifie ta connexion, puis réessaie.

@@ -7,7 +7,7 @@
 // A step with no message has no hint (a false lead, a warning).
 
 import type { Shell } from './shell';
-import { allSheets } from './sheets';
+import { freshCommands } from './catalogue';
 
 export type HintLevel = 'manual' | 'lead' | 'solution';
 export const HINT_LEVELS: HintLevel[] = ['manual', 'lead', 'solution'];
@@ -21,11 +21,13 @@ export interface Hint {
   solution: string | null;
 }
 
+let FRESH: Map<string, string[]> | null = null;
+
 /** The current hint for this session (its chapter, its steps already passed). */
 export function hint(sh: Shell): Hint {
   const c = sh.chapter;
-  const sheet = allSheets().find((f) => f.chapter === c);
-  const manual = sheet?.fresh.length ? sheet.fresh : c.commands.filter((x) => !['ls', 'cd', 'pwd', 'cat', 'less'].includes(x)).slice(0, 4);
+  const fresh = (FRESH ??= freshCommands()).get(c.id);
+  const manual = fresh?.length ? fresh : c.commands.filter((x) => !['ls', 'cd', 'pwd', 'cat', 'less'].includes(x)).slice(0, 4);
   const order = c.steps ?? c.events.map((e) => e.id);
   const step = order.find((e) => !sh.flags.has(e) && sh.t.exists(`hint-${c.id}-${e}.lead`));
   if (!step) return { step: null, manual, lead: null, solution: null };

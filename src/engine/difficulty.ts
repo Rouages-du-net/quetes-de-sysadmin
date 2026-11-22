@@ -26,9 +26,9 @@
 // - a story's first chapter is at most one level easier than the hardest
 //   chapter its story opens after (`after`), which it builds on.
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES, eventCount } from './catalogue';
 import { assumed } from './unlocking';
-import type { Story } from './world';
+import type { StoryInfo as Story } from './catalogue';
 
 export type Level = 1 | 2 | 3 | 4 | 5;
 
@@ -52,7 +52,7 @@ export function levelsOf(stories: readonly Story[] = STORIES): Map<string, Level
     const assumedHere = new Set(assumed(id, stories));
     const seen = new Set([...assumedHere].flatMap((c) => commands.get(c) ?? []));
     const fresh = chapter.commands.filter((c) => !seen.has(c)).length;
-    const factor = Math.min(MAX_SIZE_FACTOR, Math.max(1, (chapter.events.length + fresh) / ORDINARY_SIZE));
+    const factor = Math.min(MAX_SIZE_FACTOR, Math.max(1, (eventCount(chapter) + fresh) / ORDINARY_SIZE));
     const weight = (assumedHere.size + 1) * factor;
     let result = 1 + LEVELS.filter((t) => weight >= t).length;
     if (index > 0) result = Math.max(result, level(story.chapters[index - 1].id));

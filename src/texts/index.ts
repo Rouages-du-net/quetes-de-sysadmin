@@ -14,14 +14,20 @@
 // Plurals, numbers and dates go through Fluent, which relies on Intl. A
 // number passed as a variable is formatted for the language ("1,234"):
 // pass as text (String(pid)) what must stay as is.
+//
+// The texts load in groups (see plugin.mjs): a language's core texts first
+// (interface, commands, chapter titles), its manual's pages and each story's
+// texts when they are needed. loadTexts() fetches a group; translator() is
+// synchronous and reads what has been loaded. Tests and the build load
+// everything (loadAllTexts(), tests/setup.ts).
 
 import { FluentBundle, FluentResource, type FluentVariable } from '@fluent/bundle';
-
-const SOURCES = import.meta.glob('./*/*.ftl', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+import { GROUPS, LANGUAGES as KNOWN } from 'virtual:qds-texts';
+import { NeedsLoading } from '../engine/loading';
 
 export const REFERENCE_LANGUAGE = 'en';
 export const LANGUAGE_BY_DEFAULT = 'en';
-export const LANGUAGES = [...new Set(Object.keys(SOURCES).map((f) => f.split('/')[1]))].sort();
+export const LANGUAGES: string[] = [...KNOWN];
 export type Language = string;
 export type Variables = Record<string, FluentVariable>;
 export type Translate = ((id: string, variables?: Variables) => string) & {
@@ -31,6 +37,9 @@ export type Translate = ((id: string, variables?: Variables) => string) & {
 };
 
 const packages = new Map<Language, FluentBundle>();
+// The groups loaded ("en/core", "fr/story-eraser"…), and those on their way.
+const loaded = new Set<string>();
+const loading = new Map<string, Promise<void>>();
 
 function pkg(language: Language): FluentBundle {
   let b = packages.get(language);
@@ -38,21 +47,67 @@ function pkg(language: Language): FluentBundle {
     // useIsolating : pas de caractères d'isolement Unicode autour des
     // variables (ils s'afficheraient dans le terminal).
     b = new FluentBundle(language, { useIsolating: false });
-    for (const [file, source] of Object.entries(SOURCES).sort())
-      if (file.startsWith(`./${language}/`)) {
-        const errors = b.addResource(new FluentResource(source));
-        if (errors.length) throw new Error(`${file} : ${errors.join(' ; ')}`);
-      }
     packages.set(language, b);
   }
   return b;
 }
 
+// A group's files, added to its language's bundle. A chapter's title is in
+// its language's core group and again in its story's: the same text.
+function add(key: string, files: [string, string][]) {
+  const b = pkg(key.split('/')[0]);
+  for (const [file, source] of files) {
+    const errors = b.addResource(new FluentResource(source), { allowOverrides: true });
+    if (errors.length) throw new Error(`${key}, ${file} : ${errors.join(' ; ')}`);
+  }
+  loaded.add(key);
+}
+
+function loadGroup(key: string): Promise<void> {
+  if (loaded.has(key) || !GROUPS[key]) return Promise.resolve();
+  let p = loading.get(key);
+  if (!p) {
+    p = GROUPS[key]().then((files) => add(key, files));
+    // A failed download (offline) can be tried again.
+    p.catch(() => loading.delete(key));
+    loading.set(key, p);
+  }
+  return p;
+}
+
+/** The languages a translator reads, in order (English after every other one). */
+const fallbacks = (language: Language) => [...new Set([language, LANGUAGE_BY_DEFAULT, REFERENCE_LANGUAGE])];
+
+/**
+ * Loads a group of texts (core, manual, story-<id>) in this language. The
+ * core group also loads English's (the fallback of a text a translation
+ * lacks); the other groups are whole in every language, file by file
+ * (tests/texts.test.ts). Load a language's core before anything else.
+ */
+export function loadTexts(language: Language | undefined, group: string): Promise<void> {
+  const chosen = gameLanguage(language);
+  const keys =
+    group === 'core'
+      ? // …and every language's shared texts: a save from another language is translated (console.ts).
+        [...fallbacks(chosen).map((l) => `${l}/core`), ...LANGUAGES.map((l) => `${l}/shared`)]
+      : [`${chosen}/${group}`];
+  return Promise.all(keys.map(loadGroup)).then(() => undefined);
+}
+
+/** Is this group loaded in this language? */
+export const textsLoaded = (language: Language | undefined, group: string) => {
+  const key = `${gameLanguage(language)}/${group}`;
+  return loaded.has(key) || !GROUPS[key];
+};
+
+/** Every text of every language (tests, the build's pages). */
+export const loadAllTexts = () => Promise.all(Object.keys(GROUPS).map(loadGroup)).then(() => undefined);
+
 // Typographie propre à chaque langue, appliquée aux textes du jeu au moment
 // de l'affichage. En français : espaces insécables avant : ; ! ? » et après «,
 // pour qu'un signe ne se retrouve jamais seul en début de ligne.
 const TYPOGRAPHY: Record<Language, (text: string) => string> = {
-  fr: (text) => text.replace(/« /g, '«\u00a0').replace(/ ([:;!?»])/g, '\u00a0$1'),
+  fr: (text) => text.replace(/« /g, '« ').replace(/ ([:;!?»])/g, ' $1'),
 };
 export const typography = (text: string, language: Language) => TYPOGRAPHY[language]?.(text) ?? text;
 
@@ -66,7 +121,7 @@ export function gameLanguage(language?: string | null): Language {
 
 export function translator(language?: Language): Translate {
   const chosen = gameLanguage(language);
-  const order = [...new Set([chosen, LANGUAGE_BY_DEFAULT, REFERENCE_LANGUAGE])].map(pkg);
+  const order = fallbacks(chosen).map(pkg);
   const find = (id: string) => {
     const [name, attribute] = id.split('.');
     for (const b of order) {
@@ -78,7 +133,15 @@ export function translator(language?: Language): Translate {
   };
   const t = (id: string, variables?: Variables) => {
     const found = find(id);
-    if (!found) throw new Error(`Texte manquant : « ${id} »`);
+    if (!found) {
+      // A text of a group not loaded yet: the manual's pages first, otherwise the rest.
+      const missing = Object.keys(GROUPS).filter((k) => fallbacks(chosen).includes(k.split('/')[0]) && !loaded.has(k));
+      if (missing.length) {
+        const manual = missing.filter((k) => k.endsWith('/manual'));
+        throw new NeedsLoading(`text ${id}`, () => Promise.all((manual.length ? manual : missing).map(loadGroup)));
+      }
+      throw new Error(`Texte manquant : « ${id} »`);
+    }
     const errors: Error[] = [];
     const text = found.b.formatPattern(found.pattern, variables, errors);
     if (errors.length) throw new Error(`Texte « ${id} » : ${errors.join(' ; ')}`);

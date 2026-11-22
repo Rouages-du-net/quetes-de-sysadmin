@@ -13,7 +13,7 @@
 // onto the page, and the page's styles do not break it. Colours are set
 // from outside with the --qds-* variables (see styles.css).
 
-import { mount } from './interface/game';
+import type { mount } from './interface/game';
 
 // The stories' French ids, from before they were English: a page that
 // still uses them opens the same story.
@@ -36,14 +36,23 @@ const OLD_STORY_IDS: Record<string, string> = {
 };
 import styles from './interface/styles.css?inline';
 
+// The element itself is small: it shows an empty game frame at once, then
+// fetches, side by side, the game (interface and engine), its texts in the
+// page's language and the story it will open, each a separate file
+// (chunk) next to this one: their addresses are resolved from this module's
+// own URL, so they load from the game's site even when another site embeds
+// it (docs/EMBEDDING.md). See docs/DEPLOYMENT.md, "Chunks".
 export class SysadminQuests extends HTMLElement {
   private game?: ReturnType<typeof mount>;
+  // Exam mode asked for before the game had loaded.
+  private wantedExam?: boolean;
   /** Exam mode: no hints, a timer. Setting it restarts the current chapter (after confirmation if it is in progress). */
   get exam(): boolean {
-    return this.game?.exam() ?? false;
+    return this.game?.exam() ?? this.wantedExam ?? false;
   }
   set exam(yes: boolean) {
-    this.game?.askExam(!!yes);
+    if (this.game) this.game.askExam(!!yes);
+    else this.wantedExam = !!yes;
   }
   connectedCallback() {
     if (this.shadowRoot) return;
@@ -51,16 +60,40 @@ export class SysadminQuests extends HTMLElement {
     const style = document.createElement('style');
     style.textContent = `:host { display: block; }\n${styles}`;
     root.append(style);
+    // The game's frame while it loads: the same size, so the page doesn't jump.
+    const frame = document.createElement('div');
+    frame.className = 'qds qds-loading';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.append(document.createElement('div'));
+    root.append(frame);
+    this.setAttribute('aria-busy', 'true');
     // The English attribute first, then its older French name.
     const attribute = (name: string, old: string) => this.getAttribute(name) ?? this.getAttribute(old) ?? undefined;
-    const story = attribute('story', 'histoire');
-    this.game = mount(root, {
-      story: story && Object.hasOwn(OLD_STORY_IDS, story) ? OLD_STORY_IDS[story] : story,
-      saveKey: attribute('save-key', 'usb'),
-      // lang on the element, then langue, then the page's language (lang), otherwise English.
-      language: this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined,
-      examOutside: this.getAttribute('exam-control') === 'page',
-      onExam: (exam) => this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam }, bubbles: true })),
+    const asked = attribute('story', 'histoire');
+    const story = asked && Object.hasOwn(OLD_STORY_IDS, asked) ? OLD_STORY_IDS[asked] : asked;
+    const saveKey = attribute('save-key', 'usb');
+    // lang on the element, then langue, then the page's language (lang), otherwise English.
+    const language = this.getAttribute('lang') ?? this.getAttribute('langue') ?? this.closest('[lang]')?.getAttribute('lang') ?? undefined;
+    // The story the game will open (the attribute's, otherwise where the player stopped): fetched with the rest.
+    let departure = story;
+    try {
+      departure ??= JSON.parse(localStorage.getItem(saveKey ?? 'quetes-de-sysadmin') ?? '{}')?.story ?? undefined;
+    } catch {}
+    const texts = import('./texts').then((m) => m.loadTexts(language, 'core'));
+    if (typeof departure === 'string') import('./engine/story-registry').then((r) => r.loadStory(departure, language)).catch(() => {});
+    Promise.all([import('./interface/game'), texts]).then(([{ mount }]) => {
+      frame.remove();
+      this.removeAttribute('aria-busy');
+      this.game = mount(root, {
+        story,
+        saveKey,
+        language,
+        examOutside: this.getAttribute('exam-control') === 'page',
+        onExam: (exam) => this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam }, bubbles: true })),
+      });
+      // The page's own checkbox follows the saved mode.
+      if (this.game.exam()) this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam: true }, bubbles: true }));
+      if (this.wantedExam !== undefined) this.game.askExam(this.wantedExam);
     });
   }
 }

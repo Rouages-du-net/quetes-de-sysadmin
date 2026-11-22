@@ -7,8 +7,11 @@
 import { difficulty, stars, storyDifficulty, type Level } from '../engine/difficulty';
 import { Console } from '../engine/console';
 import type { Shell } from '../engine/shell';
-import { STORIES } from '../engine/chapters';
-import { machineDomain, storyMachine, WORKSTATION, type Machine } from '../engine/machines';
+// The menu reads the catalogue; a story's chapters load when it is opened (story-registry.ts).
+import { CATALOGUE as STORIES } from '../engine/catalogue';
+import { loadedStory, loadStory } from '../engine/story-registry';
+import { NeedsLoading } from '../engine/loading';
+import { machineDomain, machineName, MACHINES, storyMachine, WORKSTATION, type Machine } from '../engine/machines';
 import { description, inMarkdown, note, type Notebook } from '../engine/notebook';
 import { newMemory, newTips, type TipMemory } from '../engine/tips';
 import { rouagesLinks } from '../engine/rouages';
@@ -24,7 +27,7 @@ import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } 
 import { colourise, type Token } from '../engine/highlighting';
 import { chunks, withoutColours } from '../engine/colours';
 import { editor } from './editor';
-import { translator, typography, type Language } from '../texts';
+import { loadTexts, textsLoaded, translator, typography, type Language } from '../texts';
 
 export interface Options {
   language?: Language;
@@ -545,7 +548,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // The start of the current chapter, in exam mode (null: no timer).
   let examStart: number | null = null;
   // Current story and chapter (-1: on the workstation).
-  const story = () => (gameTerminal.remote ? STORIES.indexOf(gameTerminal.remote.story) : -1);
+  const story = () => (gameTerminal.remote ? STORIES.findIndex((s) => s.id === gameTerminal.remote!.story.id) : -1);
   const active = () => (gameTerminal.remote ? gameTerminal.remote.story.chapters.indexOf(gameTerminal.remote.shell.chapter) : -1);
   const backupState = (): Backup => ({
     finished,
@@ -871,11 +874,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     show(gameTerminal.resetWorkstation());
     after();
   };
-  const launch = (h: number, c?: number) => {
+  // A story's chapters and texts load the first time it is opened (story-registry.ts):
+  // meanwhile the terminal says so and waits. Only the last story asked for opens.
+  let launching = 0;
+  const launch = (h: number, c?: number): Promise<void> => {
+    const id = STORIES[h].id;
+    const ticket = ++launching;
+    if (loadedStory(id) && textsLoaded(t.language, `story-${id}`)) {
+      launchNow(h, c);
+      return Promise.resolve();
+    }
     followEnd();
     output.replaceChildren(measure);
-    const chapter = c === undefined ? undefined : chapters(h)[c];
-    if (gameTerminal.remote?.story === STORIES[h] && chapter) show(gameTerminal.open(chapter));
+    show(t('loading-story', { story: storyTitle(h) }));
+    return waitFor(loadStory(id, t.language)).then((ok) => {
+      if (ticket !== launching) return;
+      if (ok) launchNow(h, c);
+      else show(t('loading-failed'), 'error');
+    });
+  };
+  const launchNow = (h: number, c?: number) => {
+    followEnd();
+    output.replaceChildren(measure);
+    const loaded = loadedStory(STORIES[h].id)!;
+    const chapter = c === undefined ? undefined : loaded.chapters[c];
+    if (gameTerminal.remote?.story === loaded && chapter) show(gameTerminal.open(chapter));
     else show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
     // In exam mode, a chapter that (re)starts starts the timer; an already finished chapter doesn't.
     examStart = gameTerminal.exam && !gameTerminal.remote?.shell.finished ? Date.now() : null;
@@ -885,7 +908,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
 
   // A line typed (Enter), or Ctrl-D (sent as the end-of-transmission character, shown as nothing).
+  // What it may need is loaded first (needs()); the terminal waits meanwhile.
   const submitLine = (line: string) => {
+    if (loadingNow) return;
+    const pending = needs(line);
+    if (!pending) return submitNow(line);
+    waitFor(pending).then((ok) => (ok ? submitNow(line) : show(t('loading-failed'), 'error')));
+  };
+  const submitNow = (line: string) => {
     // A password is not displayed and doesn't go into the history.
     const secret = gameTerminal.shell.maskedInput();
     const response = secret || gameTerminal.shell.question !== null;
@@ -896,7 +926,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const cwdBefore = shell.cwd;
     // The text size may have changed (A+, A−): so has the width in characters.
     columnsUpdate();
-    const result = gameTerminal.execute(line);
+    let result: string | null;
+    try {
+      result = gameTerminal.execute(line);
+    } catch (e) {
+      // Something was still missing (a story reached in an unexpected way, a
+      // manual page): loaded, then the line runs again.
+      if (!(e instanceof NeedsLoading) || retried) throw e;
+      waitFor(e.load()).then((ok) => {
+        retried = ok;
+        if (ok) submitNow(line);
+        else show(t('loading-failed'), 'error');
+        retried = false;
+      });
+      return;
+    }
     // An answer to a question (a password…) is not a command for the notebook.
     if (!response) note(notebook, shell);
     const lineFor = response ? null : shell;
@@ -910,6 +954,42 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     after(lineFor);
     openEditor();
     openFollow();
+  };
+  let retried = false;
+
+  // ——— Loading the parts of the game a line needs ———
+  // Waiting for a part to load: the line stays as typed, read-only. Resolves to false if it failed (offline).
+  let loadingNow = false;
+  const waitFor = (p: Promise<unknown>): Promise<boolean> => {
+    loadingNow = true;
+    input.readOnly = true;
+    game.setAttribute('aria-busy', 'true');
+    const done = (ok: boolean) => {
+      loadingNow = false;
+      input.readOnly = false;
+      game.removeAttribute('aria-busy');
+      return ok;
+    };
+    return p.then(
+      () => done(true),
+      () => done(false),
+    );
+  };
+  // The manual's pages: man, apropos, whatis, --help, Get-Help, help, /?.
+  const MANUAL = /(^|[\s;&|(`])(man|apropos|whatis|help|get-help)(\s|$)|--help|\s-\?|\/\?/i;
+  // The stories whose machine the line names (name, domain or address), not loaded yet.
+  const named = (line: string) =>
+    MACHINES.filter((m) => m.story && !loadedStory(m.story))
+      .filter((m) => [machineName(t, m.name), m.name, m.address].some((n) => new RegExp(`(^|[^\\w.-])${n.replace(/\./g, '\\.')}(?![\\w-])`).test(line)))
+      .map((m) => m.story!);
+  const needs = (line: string): Promise<unknown> | null => {
+    const parts: Promise<unknown>[] = [...new Set(named(line))].map((id) => loadStory(id, t.language));
+    if (!textsLoaded(t.language, 'manual') && MANUAL.test(line)) parts.push(loadTexts(t.language, 'manual'));
+    return parts.length ? Promise.all(parts) : null;
+  };
+  // Prefetch: a story's chunk while the pointer is on its button (or the button has the focus).
+  const prefetch = (h: number) => {
+    if (h >= 0 && h < STORIES.length && accessible(h)) loadStory(STORIES[h].id, t.language).catch(() => {});
   };
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -1073,7 +1153,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       e.preventDefault();
       tabUsed = true;
       const before = input.value;
-      input.value = gameTerminal.complete(before);
+      try {
+        input.value = gameTerminal.complete(before);
+      } catch (e) {
+        if (!(e instanceof NeedsLoading)) throw e;
+        e.load().catch(() => {});
+        return;
+      }
       // Like bash: a second Tab with nothing more to complete shows the possibilities.
       if (input.value === before && previousTab === before) {
         const listing = gameTerminal.suggestions(before);
@@ -1143,6 +1229,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   terminal.addEventListener('click', () => {
     if (!form.hidden && !selection()) input.focus();
   });
+  pathList.addEventListener('pointerover', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
+    if (b && !b.disabled) prefetch(Number(b.dataset.h));
+  });
   pathList.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
     if (!b || b.disabled) return;
@@ -1157,12 +1247,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     goWorkstation();
     input.focus();
   });
-  storiesBoutons.forEach((b, h) =>
+  storiesBoutons.forEach((b, h) => {
     b.addEventListener('click', () => {
       launch(h);
       input.focus();
-    }),
-  );
+    });
+    b.addEventListener('pointerenter', () => prefetch(h));
+    b.addEventListener('focus', () => prefetch(h));
+  });
   chaptersNavs.forEach((nav, h) =>
     nav.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b, c) =>
       b.addEventListener('click', () => {
@@ -1241,13 +1333,18 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     gameTerminal.exam = false;
     options.onExam?.(false);
     const { h, c } = placeFor(chapter);
-    launch(h, c);
-    onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
     // During on-call duty, no second on-call: the button comes back at the end (or on giving up).
     incidentButton.disabled = true;
-    show(t('on-call-start'), 'achievements');
-    onCallUpdate();
-    input.focus();
+    launch(h, c).then(() => {
+      if (gameTerminal.remote?.story.id !== STORIES[h].id) {
+        incidentUpdate();
+        return;
+      }
+      onCall = { date, chapter, start: Date.now(), sh: gameTerminal.remote?.shell ?? null, epuise: false };
+      show(t('on-call-start'), 'achievements');
+      onCallUpdate();
+      input.focus();
+    });
   });
   // Every second and after each command: the gauge, giving up, the end.
   const onCallUpdate = () => {
@@ -1856,6 +1953,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const departure = STORIES.findIndex((h) => h.id === (options.story ?? saved.story));
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();
+  // In the background, once the game is shown: the manual's pages, and on
+  // the workstation the first open story not finished (where `ssh` leads next).
+  const idle = (f: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 3000 }) : setTimeout(f, 1500));
+  idle(() => {
+    loadTexts(t.language, 'manual').catch(() => {});
+    if (departure < 0 || !accessible(departure)) prefetch(STORIES.findIndex((s, h) => accessible(h) && s.chapters.some((c) => !finished.includes(c.id))));
+  });
   // A first visit (nothing played yet): the tour, once the page is laid out.
   if (display.tour !== 'done' && !finished.length && !Object.keys(notebook).length && !gameTerminal.exam) setTimeout(startTour, 300);
   return {

@@ -5,7 +5,7 @@
 // succes-<id>.description. A "hidden" achievement only shows its name once
 // earned (the easter eggs).
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import type { Shell } from './shell';
 import type { Notebook } from './notebook';
 

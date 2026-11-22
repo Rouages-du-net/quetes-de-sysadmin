@@ -4,7 +4,7 @@
 // achievements, exam-mode records, and progress in each story. It isn't
 // proof of work (a file can be edited, a code copied): a status check.
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { grade } from './achievements';
 import { readCode, readFile } from './progress';
 

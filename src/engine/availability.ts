@@ -23,11 +23,12 @@
 // - `Chapter.withhold`: commands a chapter keeps gated although it assumes
 //   them, when one would do the lesson for the player.
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { assumed } from './unlocking';
 import { MACHINES } from './machines';
 import { COMMANDS } from './commands';
-import type { Chapter, Story } from './world';
+import type { Chapter } from './world';
+import type { StoryInfo as Story } from './catalogue';
 import type { Game } from './shell';
 
 export type Platform = 'linux' | 'freebsd' | 'solaris' | 'ibmi' | 'windows';

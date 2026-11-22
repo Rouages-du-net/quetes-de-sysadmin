@@ -5,7 +5,8 @@
 // the SSH keys of the other machines: you learn them by playing.
 
 import { Shell } from './shell';
-import { STORIES } from './chapters';
+import { CATALOGUE } from './catalogue';
+import { storyById } from './story-registry';
 import { isOpen, FIRST } from './unlocking';
 import { f, player, type Chapter, type Story } from './world';
 import { machineDomain, MACHINES, machineName, WORKSTATION, translateHosts, type Machine } from './machines';
@@ -190,7 +191,7 @@ export class Console {
   // The chapter a connection to this machine will find (see connect).
   private connectionChapter(name: string): Chapter {
     const machine = MACHINES.find((m) => m.name === name)!;
-    const c = this.currentChapter(STORIES.find((h) => h.id === machine.story)!);
+    const c = this.currentChapter(storyById(machine.story!, this.t.language));
     const old = this.sessions.get(name);
     return old && (old.chapter === c || !old.finished) ? old.chapter : c;
   }
@@ -210,7 +211,7 @@ export class Console {
     }
     this.inside = [];
     const machine = MACHINES.find((m) => m.name === name)!;
-    const story = STORIES.find((h) => h.id === machine.story)!;
+    const story = storyById(machine.story!, this.t.language);
     const c = chapter ?? this.currentChapter(story);
     const old = this.sessions.get(name);
     // The banner gives the running kernel (the session's, if it has one).
@@ -440,7 +441,7 @@ export class Console {
   // A chapter has just ended: progress, and keys if any.
   private noteEnd(sh: Shell, alreadyFinished: boolean): string {
     if (alreadyFinished || !sh.finished || sh === this.workstation) return '';
-    const openOnes = STORIES.filter((h) => this.isOpen(h.id)).map((h) => h.id);
+    const openOnes = CATALOGUE.filter((h) => this.isOpen(h.id)).map((h) => h.id);
     if (!this.finished.includes(sh.chapter.id)) this.finished.push(sh.chapter.id);
     return this.giveKeys(openOnes);
   }

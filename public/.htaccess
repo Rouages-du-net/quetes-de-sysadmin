@@ -29,9 +29,16 @@ ErrorDocument 404 /404.html
   Require all denied
 </Files>
 
-# Compression
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+# Compression: Brotli where the server has it (smaller), gzip otherwise; each
+# filter leaves alone a response the other already compressed
+# (https://httpd.apache.org/docs/2.4/mod/mod_brotli.html).
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS;DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+</IfModule>
+<IfModule !mod_brotli.c>
+  <IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/plain application/javascript application/json image/svg+xml
+  </IfModule>
 </IfModule>
 
 <IfModule mod_headers.c>
@@ -45,6 +52,12 @@ ErrorDocument 404 /404.html
   <If "%{REQUEST_URI} =~ m#^/integration/#">
     Header set Access-Control-Allow-Origin "*"
     Header set Cache-Control "no-cache"
+  </If>
+  # Its chunks (the game, each story, each group of texts) have a hash in
+  # their name: they never change, the file to embed points to new ones.
+  <If "%{REQUEST_URI} =~ m#^/integration/chunks/#">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </If>
   <FilesMatch "\.html$">
     Header set Cache-Control "no-cache"

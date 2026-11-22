@@ -468,3 +468,7 @@ tour-mission = Mission: what you have to do in this chapter, what has already ha
 tour-map = Map: the places you have already visited, to find your way back.
 tour-notebook = Notebook: every command you run is written here, with what it does. Your cheat sheet.
 tour-tab = Tab completes names for you: type the first letters, then Tab. Pressed twice, it lists the choices.
+
+# A story loads the first time it is opened (its chapters and texts).
+loading-story = Loading {$story}…
+loading-failed = This part of the game could not be loaded: check your connection, then try again.

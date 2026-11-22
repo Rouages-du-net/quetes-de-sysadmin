@@ -7,7 +7,7 @@ import type { Shell } from './shell';
 import type { Translate } from '../texts';
 import { COMMANDS } from './commands';
 import { page, recap } from './commands/manual';
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { grade } from './achievements';
 
 export interface NotebookInput {

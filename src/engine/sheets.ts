@@ -6,6 +6,7 @@
 
 import { STORIES } from './chapters';
 import type { Chapter, Story } from './world';
+import { freshCommands } from './catalogue';
 
 export interface Sheet {
   story: Story;
@@ -17,19 +18,14 @@ export interface Sheet {
   duration: number;
 }
 
-// Everyday commands, no longer introduced after the Eraser.
-const CURRENT = ['ls', 'cd', 'pwd', 'cat', 'less', 'id', 'whoami', 'clear', 'exit', 'help', 'man'];
-
 /** The sheets of all the stories, in the game's order. */
 export function allSheets(): Sheet[] {
-  const views = new Set<string>();
+  const fresh = freshCommands(STORIES);
   return STORIES.flatMap((story) =>
     story.chapters.map((chapter, i) => {
-      const fresh = chapter.commands.filter((c) => !views.has(c) && (story.id === 'eraser' || !CURRENT.includes(c)));
-      chapter.commands.forEach((c) => views.add(c));
       // About ten minutes to read and settle in, then about three per checked step.
       const duration = Math.max(15, Math.round((10 + 3 * chapter.events.length) / 5) * 5);
-      return { story, chapter, before: i > 0 ? story.chapters[i - 1] : null, fresh, duration };
+      return { story, chapter, before: i > 0 ? story.chapters[i - 1] : null, fresh: fresh.get(chapter.id)!, duration };
     }),
   );
 }

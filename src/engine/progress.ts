@@ -5,7 +5,7 @@
 //   - a file, the browser's whole save (notebook, keys created…).
 // Neither one is a proof: they can be copied and modified.
 
-import { STORIES } from './chapters';
+import { CATALOGUE as STORIES } from './catalogue';
 import { ACHIEVEMENTS } from './achievements';
 import { TIPS } from './tips';
 

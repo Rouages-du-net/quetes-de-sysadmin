@@ -4,8 +4,8 @@
 // A player thus moves forward in waves, instead of seeing everything
 // open after La Racine.
 
-import { STORIES } from './chapters';
-import type { Story } from './world';
+import { CATALOGUE as STORIES } from './catalogue';
+import type { StoryInfo as Story } from './catalogue';
 
 export const FIRST = 'eraser';
 
