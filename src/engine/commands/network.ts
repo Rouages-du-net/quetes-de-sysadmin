@@ -28,6 +28,7 @@ import { curl6, ping6, speaks6 } from './ipv6';
 import { metricsCurl } from './prometheus';
 import { pkiCurl, pkiNet } from './openssl';
 import { forgeCurl } from './forge';
+import { haCurl } from './haproxy';
 
 // What curl adds when certificate verification fails (curl 8).
 export const SSL_HELP = `More details here: https://curl.se/docs/sslcerts.html
@@ -328,6 +329,8 @@ function curlTo({ args, game, input }: { args: string[]; game: Shell; last: bool
     {
       // A story that models its network for metrics (Prometheus, exporters): its own curl.
       if (game.state.metricsHere) return metricsCurl(game, args);
+      // A story with load balancers and a virtual address (keepalived, HAProxy): who holds it answers.
+      if (game.principal.state.haHttp) return haCurl(game, args);
       // A story with an internal PKI: its services, its trust store (openssl.ts).
       if (pkiNet(game)) return pkiCurl(game, args);
       // A machine with a forge (Forgejo): its API and web routes (forge.ts).

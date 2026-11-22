@@ -263,6 +263,8 @@ export interface Packet {
 }
 
 export interface Vrrp {
+  // The node that is the story's main machine (the others are its internal machines).
+  main: string;
   nodes: Record<string, Node>;
   runs: Record<string, Run | undefined>;
   speakers: Speaker[];
@@ -289,7 +291,7 @@ export function nodeOf(j: Game): string | null {
 /** A node's shell (the main machine, or an internal machine created on first use). */
 export function shellOf(j: Game, name: string): Shell {
   const p = (j as Shell).principal;
-  return p.host === name ? p : (p.internal(name) as Shell);
+  return (p.state.vrrp as Vrrp).main === name ? p : (p.internal(name) as Shell);
 }
 
 const ip = (a: string) => a.split('/')[0];
@@ -383,8 +385,7 @@ export function startKeepalived(j: Game, name: string) {
   const sh = shellOf(j, name);
   v.now = Math.max(v.now, systemd(sh)?.clock ?? 0);
   const conf = parseKeepalived(sh.read(CONF_FILE) ?? '');
-  const pid = v.runs[name]?.pid ?? v.nextPid;
-  if (!v.runs[name]) v.nextPid += 7;
+  const pid = systemd(sh)?.services.keepalived?.process[0]?.pid ?? v.nextPid;
   const r = newRun(j, name, conf, pid);
   v.runs[name] = r;
   log(j, name, `Starting Keepalived ${VERSION}`, false);
