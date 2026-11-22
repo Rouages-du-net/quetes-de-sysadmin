@@ -22,7 +22,7 @@ export const PATH: Path[] = [
       'bulletin', 'priority', 'fix', 'proof', 'routine',
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
       'expiry-date', 'chain-of-trust', 'stolen-laptop', 'who-can-push', 'leaky-pipeline', 'signed-release',
-      'kept-forever', 'access-request', 'forget-me',
+      'kept-forever', 'access-request', 'forget-me', 'least-privilege',
     ],
   },
   {
@@ -30,12 +30,12 @@ export const PATH: Path[] = [
     chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock', 'expiry-date', 'chain-of-trust'],
   },
   { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'new-card', 'other-door', 'both-ways', 'new-printer', 'wrong-side', 'split-brain'] },
-  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me'] },
+  { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me', 'broken-replica'] },
   {
     id: 'deployment',
     chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal', 'wont-start', 'front-desk', 'locker-room', 'deep-end', 'who-can-push', 'leaky-pipeline', 'signed-release'],
   },
-  { id: 'production', chapters: ['portable-script', 'rc-services', 'last-rule', 'read-first', 'byte-order', 'switch-over', 'copybook', 'return-code', 'late-file', 'inquiry', 'spooled', 'save-file', 'line-endings', 'service-logon', 'log-flood', 'reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot', 'boot-order', 'restart-loop', 'slow-boot', 'late-disk', 'heavy-load', 'quota', 'too-many-files', 'stuck-process', 'too-many-clients', 'slow-query', 'read-only', 'failover', 'central-logs', 'journal-full', 'ssh-alerts', 'blind-spot', 'threshold', 'quiet-hours', 'stuck-queue', 'paper-trail', 'cold-start', 'wrong-side', 'tight-fit', 'no-failover', 'sick-server', 'split-brain'] },
+  { id: 'production', chapters: ['portable-script', 'rc-services', 'last-rule', 'read-first', 'byte-order', 'switch-over', 'copybook', 'return-code', 'late-file', 'inquiry', 'spooled', 'save-file', 'line-endings', 'service-logon', 'log-flood', 'reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot', 'boot-order', 'restart-loop', 'slow-boot', 'late-disk', 'heavy-load', 'quota', 'too-many-files', 'stuck-process', 'too-many-clients', 'slow-query', 'read-only', 'failover', 'central-logs', 'journal-full', 'ssh-alerts', 'blind-spot', 'threshold', 'quiet-hours', 'stuck-queue', 'paper-trail', 'cold-start', 'wrong-side', 'tight-fit', 'no-failover', 'sick-server', 'split-brain', 'sleeping-connections', 'broken-replica'] },
   { id: 'identities', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi', 'nfs-export', 'nfs-owners', 'samba-share', 'smb-mount', 'full-volume', 'two-locks', 'service-logon', 'comings-and-goings', 'stale-password', 'unapplied-policy', 'dormant-accounts'] },
 ];
 

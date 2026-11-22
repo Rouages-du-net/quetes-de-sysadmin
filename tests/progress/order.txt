@@ -155,3 +155,6 @@ split-brain
 kept-forever
 access-request
 forget-me
+sleeping-connections
+least-privilege
+broken-replica

@@ -51,6 +51,29 @@ explainer-unit-failed = systemd started the service and the program stopped with
     .match =
         Job for * failed
 
+explainer-db-access-denied = The database server answered, and refused this account. A MariaDB or MySQL account is a user name AND the address it comes from ('app'@'198.51.100.134'): the same name from another address is another account, or none ("is not allowed to connect"). "using password: NO" means no password was sent (-p asks for it); for root on Debian, sudo mariadb logs in through the socket without one. "command denied" means the account got in but lacks that privilege on that table. SELECT user, host, plugin FROM mysql.user and SHOW GRANTS FOR 'user'@'host' show what exists.
+    .match =
+        Access denied for user
+        command denied to user
+        is not allowed to connect to this MariaDB server
+
+explainer-db-unreachable = The database client could not reach a server. Through the socket (no -h, or -h localhost), the server is probably not running: systemctl status mariadb, then journalctl -u mariadb for why it stopped. Over the network (-h an address), nothing listens there or a firewall is in the way: on the server, ss -tlnp shows where mariadbd listens (bind-address in its configuration), and the firewall's rules who may reach port 3306.
+    .match =
+        Can't connect to local server through socket
+        Can't connect to server on
+
+explainer-db-too-many = Every connection slot of the database server is taken (max_connections). Before raising the limit, look at who holds them: SHOW PROCESSLIST (as root, who keeps one extra slot) shows each connection, where it comes from and whether it sleeps. Many sleeping connections from one app usually mean the app doesn't close them; wait_timeout decides how long the server waits before closing them itself.
+    .match =
+        Too many connections
+
+explainer-db-syntax = The database server could not read the SQL statement. The text after "near" is where it stopped understanding: the mistake is just before it, often a missing comma or quote, a word misspelt, or a statement this server doesn't know. A statement typed in the shell between double quotes keeps its single quotes intact: mariadb -e "SELECT … WHERE name = 'x'".
+    .match =
+        You have an error in your SQL syntax
+
+explainer-db-read-only = The database server is read-only (its read_only variable is on): it refuses writes from ordinary accounts. On a replica that is on purpose: writes go to the primary, and the replica receives them. SELECT @@read_only shows the setting; connect to the primary to write.
+    .match =
+        running with the --read-only option
+
 explainer-refused = The machine answered, but nothing accepted the connection on that port: no program listens there, or a firewall actively rejects it. On the server, ss -tlnp lists the ports where programs listen, and systemctl status says whether the service runs. Check the address and the port you used, too.
     .match =
         Connection refused

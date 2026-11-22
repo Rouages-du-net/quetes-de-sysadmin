@@ -107,6 +107,9 @@ export const CODE_ORDER = [
   'kept-forever',
   'access-request',
   'forget-me',
+  'sleeping-connections',
+  'least-privilege',
+  'broken-replica',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

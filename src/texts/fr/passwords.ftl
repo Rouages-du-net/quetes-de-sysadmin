@@ -91,3 +91,5 @@ password-waiting-room-30 = salle-d-attente-30
 password-donor-chair-12 = fauteuil-don-12
 ## La Chorale
 password-choir-loft-31 = tribune-31
+## Les Jardins
+password-compost-heap-17 = tas-de-compost-17
