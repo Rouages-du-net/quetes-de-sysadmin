@@ -90,3 +90,4 @@ machine-chalk-motd = The Staff Room — the primary school's print server (CUPS)
 machine-mast-motd = The Airwaves — the community radio federation's Debian server: the intranet, the archive, the contribution portal, and the federation's certificate authority in /srv/ca.
 machine-anvil-motd = The Tool Library — Lendshed's forge: Forgejo (https://forge.lendshed.example), its Actions runner, and the documentation and downloads sites. Be kind to contributors.
 machine-hearth-motd = The Health Centre — Millbrook Health Centre's hypervisor (KVM, libvirt): ledger, agenda, records and their friends live here. virsh list --all before anything else.
+machine-lb1-motd = The Blood Drive — lb1, the Lindenvale Blood Service's first load balancer (keepalived, HAProxy) in front of donate.lindenvale.example. Its twin is lb2. ip a before anything else.

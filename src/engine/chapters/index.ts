@@ -45,6 +45,7 @@ import { chapters as staffRoom } from '../stories/staff-room';
 import { chapters as airwaves } from '../stories/airwaves';
 import { chapters as toolLibrary } from '../stories/tool-library';
 import { chapters as healthCentre } from '../stories/health-centre';
+import { chapters as bloodDrive } from '../stories/blood-drive';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -89,6 +90,7 @@ export const STORIES: Story[] = [
   { id: 'airwaves', after: ['padlock', 'restore-drill'], chapters: airwaves },
   { id: 'tool-library', after: ['bare-repo', 'eradication'], chapters: toolLibrary },
   { id: 'health-centre', after: ['more-room', 'dhcp'], chapters: healthCentre },
+  { id: 'blood-drive', after: ['blue-green', 'dmz'], chapters: bloodDrive },
 ];
 
 // All chapters, across all stories (unique identifiers).

@@ -489,3 +489,8 @@ name-note_from_ilse-txt = mot_d_ilse.txt
 name-message_from_priya-txt = message_de_priya.txt
 name-note_from_hamid-txt = mot_de_hamid.txt
 name-note_from_joon-txt = mot_de_joon.txt
+## La Collecte
+name-message_from_zainab-txt = message_de_zainab.txt
+name-note_from_bastien-txt = mot_de_bastien.txt
+name-message_from_teodor-txt = message_de_teodor.txt
+name-message_from_kirsi-txt = message_de_kirsi.txt

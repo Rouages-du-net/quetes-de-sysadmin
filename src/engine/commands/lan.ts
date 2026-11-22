@@ -52,10 +52,12 @@ function inet6Lines(game: Game, l: Lan, i: Interface): string[] {
 
 function addressesLines(game: Game, l: Lan, i: Interface, family: 4 | 6 | null): string[] {
   const [first, ...rest] = linkLines(l, i, false);
-  const inet = i.addresses.flatMap((a) => {
+  const inet = i.addresses.flatMap((a, k) => {
     const c = cidr(a)!;
-    const brd = i.name === 'lo' || i.wireguard ? '' : ` brd ${toIp(c.broadcast)}`;
-    return [`    inet ${a}${brd} scope ${i.name === 'lo' ? 'host' : 'global'} ${i.name}`, '       valid_lft forever preferred_lft forever'];
+    // A /32 has no broadcast; a second address in the same network is "secondary" (a VRRP virtual address, see keepalived.ts).
+    const brd = i.name === 'lo' || i.wireguard || c.length === 32 ? '' : ` brd ${toIp(c.broadcast)}`;
+    const secondary = i.addresses.slice(0, k).some((b) => cidr(b)?.network === c.network && cidr(b)?.length === c.length) ? ' secondary' : '';
+    return [`    inet ${a}${brd} scope ${i.name === 'lo' ? 'host' : 'global'}${secondary} ${i.name}`, '       valid_lft forever preferred_lft forever'];
   });
   const inet6 = inet6Lines(game, l, i);
   // With -4 or -6, ip shows only the interfaces with an address of that family, without the link line.

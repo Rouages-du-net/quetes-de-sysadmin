@@ -463,7 +463,9 @@ const ipValid = (v: string) => {
 const portValid = (v: string) => v in SERVICES || /^\d+(-\d+)?$/.test(v);
 const ip6Valid = (v: string) => !!cidr6(v);
 // meta l4proto, ip6 nexthdr: the protocol names of /etc/protocols the game knows.
-const L4 = ['tcp', 'udp', 'icmp', 'icmpv6', 'ipv6-icmp'];
+const L4 = ['tcp', 'udp', 'icmp', 'icmpv6', 'ipv6-icmp', 'vrrp'];
+// A protocol written by its number (/etc/protocols): nft shows it by its name (ip protocol 112 → vrrp, see keepalived.ts).
+const PROTOCOL_NUMBERS: Record<string, string> = { '1': 'icmp', '6': 'tcp', '17': 'udp', '58': 'ipv6-icmp', '112': 'vrrp' };
 // The ICMP and ICMPv6 types nft knows by name (nft describe icmpv6 type).
 const ICMP_TYPES = ['echo-reply', 'destination-unreachable', 'source-quench', 'redirect', 'echo-request', 'router-advertisement', 'router-solicitation', 'time-exceeded', 'parameter-problem', 'timestamp-request', 'timestamp-reply'];
 export const ICMPV6_TYPES = [
@@ -498,7 +500,7 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
     const start = l.see();
     const { values: v, set } = values(l);
     if (controle) for (const x of v) if (!controle(x)) throw new NftError(message ? message(x) : `syntax error, unexpected string`, start);
-    rule.conditions.push({ field, negation, values: v, set });
+    rule.conditions.push({ field, negation, values: field === 'ip protocol' || field === 'l4proto' ? v.map((x) => PROTOCOL_NUMBERS[x] ?? x) : v, set });
   };
   if (l.lineEnd()) throw unexpected(l.see());
   while (!l.lineEnd()) {
@@ -508,13 +510,13 @@ function readRule(l: Reader, t: Table, c?: String): Rule {
     else if (m === 'meta') {
       const k = l.word();
       if (['iifname', 'oifname'].includes(k.t)) condition(k.t);
-      else if (k.t === 'l4proto') condition('l4proto', (v) => L4.includes(v));
+      else if (k.t === 'l4proto') condition('l4proto', (v) => L4.includes(PROTOCOL_NUMBERS[v] ?? v));
       else if (k.t === 'nfproto') condition('nfproto', (v) => ['ipv4', 'ipv6'].includes(v));
       else throw unexpected(k);
     } else if (m === 'ip') {
       const k = l.word();
       if (k.t === 'saddr' || k.t === 'daddr') condition(`ip ${k.t}`, ipValid, (v) => `Could not resolve hostname: Name or service not known (${v})`);
-      else if (k.t === 'protocol') condition('ip protocol', (v) => ['tcp', 'udp', 'icmp'].includes(v));
+      else if (k.t === 'protocol') condition('ip protocol', (v) => ['tcp', 'udp', 'icmp', 'vrrp'].includes(PROTOCOL_NUMBERS[v] ?? v));
       else throw unexpected(k);
     } else if (m === 'ip6') {
       // An IPv6 rule: it never sees the game's IPv4 packets.
@@ -637,7 +639,7 @@ export interface Package {
   oif: string;
   saddr: string;
   daddr: string;
-  proto: 'tcp' | 'udp' | 'icmp' | 'icmpv6';
+  proto: 'tcp' | 'udp' | 'icmp' | 'icmpv6' | 'vrrp';
   // For ICMP and ICMPv6: the message's type (echo-request, nd-neighbor-solicit…).
   icmpType?: string;
   sport: number;

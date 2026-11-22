@@ -100,6 +100,8 @@ export const MACHINES: Machine[] = [
   machine('anvil', '192.0.2.80', 'tool-library'),
   // The Health Centre: a rural practice's Debian hypervisor (KVM, libvirt) and its virtual machines.
   machine('hearth', '192.0.2.88', 'health-centre'),
+  // The Blood Drive: a blood service's two load balancers (keepalived, HAProxy); lb2 and the web servers are internal machines.
+  machine('lb1', '192.0.2.104', 'blood-drive'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

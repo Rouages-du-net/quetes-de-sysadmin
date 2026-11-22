@@ -5046,6 +5046,113 @@
      "events": 15
     }
    ]
+  },
+  {
+   "id": "blood-drive",
+   "after": [
+    "blue-green",
+    "dmz"
+   ],
+   "texts": [
+    "chapter-no-failover.ftl",
+    "chapter-sick-server.ftl",
+    "chapter-split-brain.ftl",
+    "hints-blood-drive.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "no-failover",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "diff",
+      "cp",
+      "nano",
+      "sudo",
+      "ssh",
+      "exit",
+      "ps",
+      "kill",
+      "killall",
+      "pidof",
+      "systemctl",
+      "journalctl",
+      "ip",
+      "ping",
+      "curl",
+      "sleep",
+      "keepalived"
+     ],
+     "events": 12
+    },
+    {
+     "id": "sick-server",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "cut",
+      "diff",
+      "cp",
+      "nano",
+      "sudo",
+      "ssh",
+      "exit",
+      "echo",
+      "systemctl",
+      "journalctl",
+      "ip",
+      "curl",
+      "sleep",
+      "haproxy",
+      "socat"
+     ],
+     "events": 13
+    },
+    {
+     "id": "split-brain",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "cut",
+      "diff",
+      "cp",
+      "nano",
+      "sudo",
+      "ssh",
+      "exit",
+      "echo",
+      "systemctl",
+      "journalctl",
+      "ip",
+      "curl",
+      "sleep",
+      "tcpdump",
+      "nft"
+     ],
+     "events": 12
+    }
+   ]
   }
  ]
 }

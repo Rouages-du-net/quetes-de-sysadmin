@@ -107,6 +107,8 @@ const MODELS: [string[], string[], string[]][] = [
   [['lpstat', 'lp', 'lpr', 'lpq', 'cancel', 'lprm', 'cupsenable', 'cupsdisable', 'cupsaccept', 'cupsreject', 'lpadmin', 'lpoptions', 'lpinfo', 'cupsctl', 'cupsd', 'driverless'], ['cups'], ['/etc/cups']],
   [['lynis'], ['lynis'], ['/etc/lynis']],
   [['virsh', 'qemu-img', 'virt-install', 'virt-clone'], ['libvirt'], ['/etc/libvirt']],
+  [['keepalived'], ['vrrp'], ['/etc/keepalived']],
+  [['haproxy'], ['haproxy'], ['/etc/haproxy']],
   [['promtool', 'prometheus'], ['prometheus'], ['/etc/prometheus']],
   [['amtool', 'alertmanager'], ['alertmanager'], ['/etc/alertmanager']],
 ];

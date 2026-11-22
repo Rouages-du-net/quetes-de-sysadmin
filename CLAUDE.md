@@ -744,6 +744,30 @@ presents them for people.
   libvirt), `reception` the reception's PC; each machine's view of the
   network, `networkView`, `resolve`, `reach`); `cold-start.ts`,
   `wrong-side.ts`, `tight-fit.ts`. Tests: `tests/health-centre.test.ts`.
+- `src/engine/keepalived.ts`: keepalived's VRRP (`state.vrrp` on the
+  story's main machine: the nodes, each one's `keepalived.conf` read at
+  start and reload, `vrrp_script` checks run as root (`runCheck`), the
+  election second by second `tick` (master down interval, preemption,
+  `nopreempt`, FAULT, weights, priority 0, unicast peers, bogus adverts
+  from another group with the same VRID), the receiving node's nftables
+  input hook deciding what it hears (`ip protocol vrrp`/`112` in
+  `nftables.ts`), the virtual addresses on the master (`syncAddresses`,
+  `ip a`'s `secondary`), the packets on the link for tcpdump);
+  `src/engine/haproxy.ts`: a machine's HAProxy (`state.haproxy`:
+  `haproxy.cfg` read and checked like `haproxy -c`, health checks with
+  `inter`/`fall`/`rise`, L4/L7, balancing, the runtime API `runtime()`,
+  the HTTP log in `/var/log/haproxy.log`; backends declared by the story,
+  `state.haBackends`); `keepalived`, `tcpdump`, `pidof` in
+  `commands/keepalived.ts`, `haproxy`, `socat` and curl on such a story
+  (`haCurl`, `state.haHttp`) in `commands/haproxy.ts`.
+  `chapters/blood-drive.ts`: what the chapters of "The Blood Drive" share
+  (`lb1`, the main machine, and `lb2`, `web1`-`web3` as internal hosts
+  created at start; the configurations of each chapter, the past replayed
+  by `initialiseStory` (boot, the routers' VRRP group and lb2's firewall in
+  chapter 3), five seconds per command in `passTime`, a donor's request
+  every two seconds, web2's maintenance, `wouldFailOver`);
+  `no-failover.ts`, `sick-server.ts`, `split-brain.ts`. Tests:
+  `tests/blood-drive.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

@@ -101,6 +101,9 @@ export const CODE_ORDER = [
   'cold-start',
   'wrong-side',
   'tight-fit',
+  'no-failover',
+  'sick-server',
+  'split-brain',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

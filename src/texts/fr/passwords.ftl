@@ -87,3 +87,5 @@ password-mixing-desk-30 = table-de-mixage-30
 password-pegboard-47 = etabli-47
 ## La Maison de santé
 password-waiting-room-30 = salle-d-attente-30
+## La Collecte
+password-donor-chair-12 = fauteuil-don-12
