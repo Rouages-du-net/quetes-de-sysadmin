@@ -19,6 +19,7 @@ import { map, type Place } from '../engine/map';
 import { layOut, landmarks as planLandmarks, type ElementPlan } from '../engine/plan';
 import { grade, GRADES, newAchievements, ACHIEVEMENTS } from '../engine/achievements';
 import { hint, HINT_LEVELS, type HintLevel } from '../engine/hints';
+import { explain } from '../engine/explainer';
 import { summary } from '../engine/summary';
 import { pathSteps, PATH } from '../engine/paths';
 import { missing } from '../engine/unlocking';
@@ -87,7 +88,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Display (theme, size, menu view, colours): a setting of this browser only.
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -198,9 +199,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // Tips (see tips.ts) on or off, and the intro tour, to see again.
   const tipsButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true' }, t('display-tips'));
   const tourButton = el('button', { type: 'button', class: 'setting-button' }, t('display-tour'));
+  // The error explainer (see explainer.ts) on or off.
+  const explainerButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true', title: t('display-explainer-title') }, t('display-explainer'));
   // The autosave inside a chapter (see autosave.ts), on or off.
   const autosaveButton = el('button', { type: 'button', class: 'setting-button', 'aria-pressed': 'true', title: t('display-autosave-title') }, t('display-autosave'));
-  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, tipsButton, autosaveButton, tourButton, focusButton);
+  const settings = el('span', { class: 'settings' }, themeChoice, moreSmall, moreGrand, coloursButton, tipsButton, explainerButton, autosaveButton, tourButton, focusButton);
   // The mission: the chapter's objective, its instructions, and what has already happened.
   const missionButton = toolButton('mission-button', ICON_MISSION, t('mission-button'));
   const onCallGauge = el('span', { class: 'on-call-gauge', role: 'timer', hidden: '' });
@@ -943,6 +946,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
+    // To tell whether the line failed, and its own error messages (see explainer.ts).
+    const inErrorBefore = shell.commandsInError;
+    const lastBefore = shell.last;
     const cwdBefore = shell.cwd;
     // The text size may have changed (A+, A−): so has the width in characters.
     columnsUpdate();
@@ -967,6 +973,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (result === null) output.replaceChildren(measure);
     else show(result);
     if (!response) showTips(shell, cwdBefore, !!result);
+    // A password answered: sudo still asking (a wrong one), or the command that ran failed.
+    const failed = shell.commandsInError > inErrorBefore || (secret && (shell.waiting !== null || shell.lastStatus !== 0));
+    if (result) offerExplanation(shell, result, failed, shell.last !== lastBefore);
     tabUsed = false;
     // The staging: connecting to another machine, rebooting.
     if (gameTerminal.shell.host !== hostBefore) putInScene(shell.last.commands.some((c) => c.includes('reboot')) ? 'reboot' : 'connection');
@@ -1869,6 +1878,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     coloursButton.setAttribute('aria-pressed', String(display.colours));
     display.tips = display.tips !== false;
     tipsButton.setAttribute('aria-pressed', String(display.tips));
+    display.explainer = display.explainer !== false;
+    explainerButton.setAttribute('aria-pressed', String(display.explainer));
     display.autosave = display.autosave !== false;
     autosaveButton.setAttribute('aria-pressed', String(display.autosave));
     colourInput();
@@ -1895,6 +1906,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   tipsButton.addEventListener('click', () => {
     display.tips = !display.tips;
+    applyDisplay();
+  });
+  explainerButton.addEventListener('click', () => {
+    display.explainer = !display.explainer;
     applyDisplay();
   });
   tourButton.addEventListener('click', () => startTour());
@@ -2066,6 +2081,39 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       shownTips.push(tip);
       output.appendChild(el('p', { class: 'tip', role: 'note' }, el('strong', {}, t('tip-label')), ' ', typo(t(`tip-${tip}`))));
     }
+  }
+
+  // ——— The error explainer (see explainer.ts): never in exam mode, unless turned off ———
+  // Under the output of a line that failed with a message beginners often
+  // misread, a button that unfolds a short explanation. The output (a log
+  // read by screen readers) announces neither the button nor the
+  // explanation: the button is added inside a part where announcements are
+  // off, and the explanation is announced only when the player opens it.
+  let explanations = 0;
+  function offerExplanation(sh: Shell, printed: string, failed: boolean, fresh: boolean) {
+    if (!display.explainer || gameTerminal.exam) return;
+    // The line's own error messages, those shown on the screen (not those sent to a file or /dev/null).
+    const errors = fresh ? sh.last.errors.filter((e) => e && printed.includes(e)) : null;
+    const found = explain({ failed, output: withoutColours(printed), errors }, t);
+    if (!found) return;
+    const id = `${examId}-explained-${++explanations}`;
+    const text = el('div', { class: 'explanation', id, 'aria-live': 'polite', hidden: '' });
+    const button = el('button', { type: 'button', class: 'explainer-button', 'aria-expanded': 'false', 'aria-controls': id }, t('explainer-button'));
+    const block = el('div', { class: 'explainer', 'aria-live': 'off', 'data-explanation': found });
+    // Added empty, then filled: nothing for the log to announce.
+    output.appendChild(block);
+    block.append(button, text);
+    button.addEventListener('click', (e) => {
+      const open = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(open));
+      text.hidden = !open;
+      // Filled when opened (announced then), emptied when closed.
+      text.replaceChildren(...(open ? [el('strong', {}, t('explainer-label')), ' ', typo(t(`explainer-${found}`))] : []));
+      // Opened at the bottom of the terminal: brought into view (without animation).
+      if (open) text.scrollIntoView({ block: 'nearest' });
+      // From the keyboard, the focus stays on the button (a click elsewhere in the terminal goes back to the command line).
+      if (e.detail === 0) e.stopPropagation();
+    });
   }
 
   // ——— The intro tour: a few bubbles pointing at the real interface ———

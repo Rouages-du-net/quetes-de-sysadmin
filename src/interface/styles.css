@@ -445,6 +445,15 @@
 }
 /* A tip (see tips.ts), between the outputs: set apart, without breaking the story. */
 .qds .output .tip { margin: 0.4rem 0; padding: 0.3rem 0.6rem; border-left: 3px solid currentColor; font-family: var(--_font); font-size: 0.85em; opacity: 0.9; white-space: normal; }
+/* The error explainer (see explainer.ts): a discreet button under a failed command's output, which unfolds the explanation. */
+.qds .output .explainer { margin: -0.35rem 0 0.5rem; font-family: var(--_font); font-size: 0.85em; white-space: normal; }
+.qds .output .explainer-button { font: inherit; background: none; border: none; padding: 0.15rem 0; min-height: 1.5rem; color: var(--_terminal-prompt); text-decoration: underline dotted; text-underline-offset: 0.2em; cursor: pointer; text-align: left; }
+.qds .output .explainer-button::before { content: '?' / ''; font-weight: 700; text-decoration: none; display: inline-block; margin-right: 0.25em; }
+.qds .output .explainer-button[aria-expanded='true'] { text-decoration-style: solid; }
+.qds .output .explainer-button:hover { text-decoration-style: solid; }
+.qds .output .explainer-button:focus-visible { outline: 2px solid var(--_terminal-prompt); outline-offset: 2px; }
+.qds .output .explanation { margin: 0.25rem 0 0; padding: 0.3rem 0.6rem; border-left: 3px solid var(--_terminal-prompt); max-width: 70ch; overflow-wrap: anywhere; }
+.qds .output .explanation[hidden] { display: none; }
 /* The intro tour: a bubble under the element it points at, which is outlined. */
 .qds { position: relative; }
 .qds .tour { position: absolute; z-index: 20; max-width: 100%; padding: 0.75rem 0.9rem; border: 2px solid var(--_accent); border-radius: 0.5rem; background: var(--_card); color: var(--_text); box-shadow: 0 0.4rem 1.2rem rgb(0 0 0 / 0.25); font-size: 0.95rem; }

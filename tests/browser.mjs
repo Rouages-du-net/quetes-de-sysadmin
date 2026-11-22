@@ -139,6 +139,34 @@ for (const width of [1000, 375]) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }
+  // The error explainer: a button under a failed command, which unfolds a short explanation (see explainer.ts).
+  const explainers = game.locator('.output .explainer');
+  await tape('cat nulle-part.txt');
+  const explainerButton = explainers.last().locator('button');
+  check((await explainers.count()) === 1 && (await explainerButton.textContent()) === 'Que veut dire cette erreur ?', `${width} px: a failed cat offers its explanation`);
+  check((await explainerButton.getAttribute('aria-expanded')) === 'false' && (await explainers.last().locator('.explanation').isHidden()), `${width} px: the explanation starts folded`);
+  await explainerButton.focus();
+  check(await explainerButton.evaluate((b) => b.getRootNode().activeElement === b), `${width} px: the explainer's button takes the focus`);
+  await explainerButton.press('Enter');
+  const explanation = explainers.last().locator('.explanation');
+  check(
+    (await explainerButton.getAttribute('aria-expanded')) === 'true' && (await explanation.isVisible()) && (await explanation.textContent()).includes('pwd') && (await explanation.getAttribute('aria-live')) === 'polite',
+    `${width} px: Enter unfolds the explanation, announced politely`,
+  );
+  check(await explainerButton.evaluate((b) => b.getRootNode().activeElement === b), `${width} px: the focus stays on the button after Enter`);
+  const explained = await explanation.boundingBox();
+  check(explained && explained.x >= 0 && explained.x + explained.width <= width, `${width} px: the explanation fits on the screen`);
+  if (process.env.CAPTURES) await game.locator('.terminal').screenshot({ path: `${process.env.CAPTURES}/explainer-${width}.png` });
+  await explainerButton.press('Enter');
+  check((await explanation.isHidden()) && (await explanation.textContent()) === '', `${width} px: Enter folds it again`);
+  await input.focus();
+  await tape('ls');
+  check((await explainers.count()) === 1, `${width} px: no explanation offered after a command that succeeds`);
+  const explainerSetting = game.locator('.setting-button', { hasText: 'Aide aux erreurs' });
+  await explainerSetting.click();
+  await tape('cat nulle-part.txt');
+  check((await explainerSetting.getAttribute('aria-pressed')) === 'false' && (await explainers.count()) === 1, `${width} px: the explainer turned off offers nothing`);
+  await explainerSetting.click();
   await tape('mv Jetee/filet Port/Hangar');
   check((await game.locator('.output .tip').count()) === 0, `${width} px: no tip when the story already answers`);
   await tape('mv Port/Hangar/filet Port');

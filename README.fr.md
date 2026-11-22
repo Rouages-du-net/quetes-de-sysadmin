@@ -36,6 +36,11 @@ un système entièrement simulé : rien ne sort du navigateur.
   cours est sauvegardé après chaque saisie : si la page se ferme (un
   téléphone ferme souvent les onglets en arrière-plan), le jeu propose de le
   reprendre là où tu en étais (le réglage « Sauvegarde auto » le désactive).
+- Bloqué·e sur un message d'erreur ? Sous une commande qui a échoué sur une
+  erreur courante (« Permission denied », « aucun fichier ou dossier de ce
+  nom », « Connection refused »…), « Que veut dire cette erreur ? »
+  l'explique simplement et dit où regarder, sans donner la réponse (le
+  réglage « Aide aux erreurs » le désactive ; jamais en mode examen).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

@@ -792,6 +792,10 @@ presents them for people.
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
   least one path, `tests/paths.test.ts` checks it), the end-of-chapter
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
+  the error explainer in `src/engine/explainer.ts` (a failed command's
+  common error recognised from the messages listed in `explainer.ftl`'s
+  `.match`, explained on demand under the output, never in exam mode, an
+  "Error help" setting),
   graduated hints in `src/engine/hints.ts`, their texts in
   `src/texts/<language>/hints-<story>.ftl`: every new chapter has some,
   `tests/hints.test.ts` checks it), one-time tips earned by what the

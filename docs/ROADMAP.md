@@ -807,6 +807,22 @@ them safely.
   through the workstation (exit, a reboot, a resumed session) or a 5250
   session is not recorded: the autosave keeps its last replayable point. A
   setting turns it off; capped at 4,000 inputs or 1 MB.
+- [x] **Error explainer** (`src/engine/explainer.ts`): under the output of
+  a command that failed with a message beginners often misread ("Permission
+  denied", "No such file or directory", "command not found", "Connection
+  refused" or "timed out", "Could not resolve host", "Address already in
+  use", a systemd unit not found or failed, `nginx -t`, a shell syntax
+  error, YAML, sudo, PowerShell's "is not recognized"…), a discreet "What
+  does this error mean?" button unfolds 2–4 sentences in plain words: what
+  the message means and which manual page or diagnostic command to turn to,
+  never the chapter's answer. The output itself never changes. The messages
+  it recognises are listed in `explainer.ftl` (`.match`), as the game
+  prints them in each language, English's always read too; only the line's
+  own errors are read (a log shown by `cat` is never explained). Announced
+  to screen readers only when opened. Never in exam mode (like hints and
+  tips: the exam measures what the player knows alone); a setting ("Error
+  help") turns it off. No `explain` command: the game's commands are real
+  ones.
 - [x] **Learning paths** (`src/engine/paths.ts`, the menu's third view):
   first steps, security, web, networks, backups, containers and deployment,
   production, accounts and identities; each chapter is in at least one

@@ -30,6 +30,11 @@ system: nothing leaves the browser.
   progress is saved after every input: if the page closes (a phone often
   kills background tabs), the game offers to resume it where you left off
   (the "Autosave" setting turns this off).
+- Stuck on an error message? Under a command that failed with a common
+  error ("Permission denied", "No such file or directory", "Connection
+  refused"…), "What does this error mean?" explains it in plain words and
+  says where to look, without giving the answer (the "Error help" setting
+  turns this off; never in exam mode).
 
 ## Develop
 

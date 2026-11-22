@@ -21,6 +21,7 @@ language, like bash's builtin; each language adds its own name for it
 | `stories.ftl` | each story's title and summary |
 | `chapter-<id>.ftl` | a chapter: its title, the texts of its places and objects, its events |
 | `shell.ftl` | prompt, sudo, pipes, common error messages |
+| `explainer.ftl` | the error explainer: each explanation, and in `.match` the error messages it answers, as the game prints them in this language (list only those not in English) |
 | `manual.ftl` | each command's `man` page, and `--help` |
 | `commands-*.ftl` | the commands' messages (`ls`, `tar`, `git`…) |
 | `names.ftl` | the names of places, objects and accounts that you type |
