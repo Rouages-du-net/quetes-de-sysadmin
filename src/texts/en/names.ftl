@@ -491,3 +491,10 @@ name-message_from_zainab-txt = message_from_zainab.txt
 name-note_from_bastien-txt = note_from_bastien.txt
 name-message_from_teodor-txt = message_from_teodor.txt
 name-message_from_kirsi-txt = message_from_kirsi.txt
+## The Choir
+name-note_from_ruben-txt = note_from_ruben.txt
+name-request_from_priya-txt = request_from_priya.txt
+name-message_from_kenji-txt = message_from_kenji.txt
+name-message_from_tomas-txt = message_from_tomas.txt
+name-retention-policy-txt = retention-policy.txt
+name-gdpr-requests = gdpr-requests

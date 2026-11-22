@@ -1677,6 +1677,30 @@ split-brain:web3
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+kept-forever
+  /home/you → /home/vous
+  /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
+  /home/you/note_from_ruben.txt → /home/vous/mot_de_ruben.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+access-request
+  /home/you → /home/vous
+  /home/you/message_from_amara.txt → /home/vous/message_de_amara.txt
+  /home/you/request_from_priya.txt → /home/vous/demande_de_priya.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+forget-me
+  /home/you → /home/vous
+  /home/you/message_from_kenji.txt → /home/vous/message_de_kenji.txt
+  /home/you/message_from_tomas.txt → /home/vous/message_de_tomas.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -89,3 +89,5 @@ password-pegboard-47 = pegboard-47
 password-waiting-room-30 = waiting-room-30
 ## The Blood Drive
 password-donor-chair-12 = donor-chair-12
+## The Choir
+password-choir-loft-31 = choir-loft-31

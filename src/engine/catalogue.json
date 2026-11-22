@@ -5153,6 +5153,113 @@
      "events": 12
     }
    ]
+  },
+  {
+   "id": "choir",
+   "after": [
+    "journal-full",
+    "database"
+   ],
+   "texts": [
+    "chapter-access-request.ftl",
+    "chapter-forget-me.ftl",
+    "chapter-kept-forever.ftl",
+    "hints-choir.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "kept-forever",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "zcat",
+      "zgrep",
+      "wc",
+      "du",
+      "df",
+      "find",
+      "rm",
+      "cp",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "logrotate",
+      "nginx",
+      "curl",
+      "date",
+      "exit"
+     ],
+     "events": 15
+    },
+    {
+     "id": "access-request",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "zcat",
+      "zgrep",
+      "find",
+      "mkdir",
+      "cp",
+      "mv",
+      "rm",
+      "tee",
+      "echo",
+      "nano",
+      "sudo",
+      "psql",
+      "tar",
+      "exit"
+     ],
+     "events": 10
+    },
+    {
+     "id": "forget-me",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "find",
+      "rm",
+      "rmdir",
+      "cp",
+      "mv",
+      "nano",
+      "chmod",
+      "sudo",
+      "psql",
+      "systemctl",
+      "journalctl",
+      "crontab",
+      "restic",
+      "date",
+      "sh",
+      "exit"
+     ],
+     "events": 16
+    }
+   ]
   }
  ]
 }

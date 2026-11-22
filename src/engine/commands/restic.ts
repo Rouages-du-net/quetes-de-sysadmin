@@ -182,10 +182,23 @@ const POLITIQUES: { option: string; name: string; bucket: (ms: number, i: number
   { option: '--keep-yearly', name: 'yearly', bucket: (ms) => date(ms).slice(0, 4) },
 ];
 
-/** The snapshots kept by a policy, with their reasons (like restic). */
-export function applyPolicy(snapshotList: Snapshot[], policy: Record<string, number>) {
+/** --keep-within's duration (1y6m, 3m, 30d, 12h): years, months, days and hours; null if unreadable. */
+export function readWithin(text: string): { y: number; m: number; d: number; h: number } | null {
+  const m = /^(?:(\d+)y)?(?:(\d+)m)?(?:(\d+)d)?(?:(\d+)h)?$/.exec(text);
+  if (!m || !text) return null;
+  return { y: Number(m[1] ?? 0), m: Number(m[2] ?? 0), d: Number(m[3] ?? 0), h: Number(m[4] ?? 0) };
+}
+
+/** The snapshots kept by a policy, with their reasons (like restic); `within`: --keep-within, from the latest snapshot. */
+export function applyPolicy(snapshotList: Snapshot[], policy: Record<string, number>, within?: { text: string; y: number; m: number; d: number; h: number }) {
   const reasons = new Map<string, string[]>();
   const recent = [...snapshotList].sort((a, b) => b.time - a.time);
+  if (within && recent.length) {
+    const d = new Date(recent[0].time);
+    d.setUTCFullYear(d.getUTCFullYear() - within.y, d.getUTCMonth() - within.m, d.getUTCDate() - within.d);
+    const limit = d.getTime() - within.h * 3_600_000;
+    for (const s of recent) if (s.time > limit) reasons.set(s.id, [`within ${within.text}`]);
+  }
   for (const p of POLITIQUES) {
     const n = policy[p.name];
     if (!n) continue;
@@ -303,7 +316,7 @@ function launch(c: Context, action: string, args: string[]): string {
     return listing;
   };
   // The arguments that are not options (nor their values).
-  const withValue = ['--target', '--include', '-i', '--exclude', '-e', '--host', '--tag', '--path', ...POLITIQUES.map((p) => p.option), '--mode'];
+  const withValue = ['--target', '--include', '-i', '--exclude', '-e', '--host', '--tag', '--path', ...POLITIQUES.map((p) => p.option), '--keep-within', '--mode'];
   const positional = args.filter((a, i) => !a.startsWith('-') && !withValue.includes(args[i - 1] ?? ''));
 
   if (action === 'snapshots') return snapshots(c);
@@ -477,6 +490,9 @@ function launch(c: Context, action: string, args: string[]): string {
         policy[p.name] = Number(v);
       }
     }
+    const withinText = values('--keep-within')[0];
+    const within = withinText === undefined ? undefined : readWithin(withinText);
+    if (withinText !== undefined && !within) return game.error(`Fatal: invalid argument "${withinText}" for "--keep-within" flag: invalid duration "${withinText}"`);
     const ids = positional;
     const trial = options.has('--dry-run') || options.has('-n');
     let removed: Snapshot[];
@@ -488,14 +504,21 @@ function launch(c: Context, action: string, args: string[]): string {
       removed = found as Snapshot[];
       output.push(...removed.map((s) => `removed snapshot ${short(s.id)}`));
     } else {
-      if (!Object.keys(policy).length) return [...output, 'no policy was specified, no snapshots will be removed'].join('\n');
-      const reasons = applyPolicy(repo.snapshotList, policy);
+      if (!Object.keys(policy).length && !within) return [...output, 'no policy was specified, no snapshots will be removed'].join('\n');
+      const reasons = applyPolicy(repo.snapshotList, policy, within ? { text: withinText!, ...within } : undefined);
       const kept = repo.snapshotList.filter((s) => reasons.has(s.id));
       removed = repo.snapshotList.filter((s) => !reasons.has(s.id));
       output.push(
-        `Applying Policy: keep ${Object.entries(policy)
-          .map(([k, v]) => `${v} ${k}`)
-          .join(', ')} snapshots`,
+        `Applying Policy: ${[
+          ...(Object.keys(policy).length
+            ? [
+                `keep ${Object.entries(policy)
+                  .map(([k, v]) => `${v} ${k}`)
+                  .join(', ')} snapshots`,
+              ]
+            : []),
+          ...(within ? [`keep snapshots within ${withinText} of the newest`] : []),
+        ].join(', ')}`,
         `keep ${toPlural(kept.length, 'snapshot')}:`,
         'ID        Time                 Host          Reasons           Paths',
         ...grid(kept, reasons),
