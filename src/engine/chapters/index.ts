@@ -51,6 +51,7 @@ import { chapters as allotments } from '../stories/allotments';
 import { chapters as lifeboat } from '../stories/lifeboat';
 import { chapters as climbingWall } from '../stories/climbing-wall';
 import { chapters as danceTroupe } from '../stories/dance-troupe';
+import { chapters as shelter } from '../stories/shelter';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -101,6 +102,7 @@ export const STORIES: Story[] = [
   { id: 'lifeboat', after: ['policy', 'quota'], chapters: lifeboat },
   { id: 'climbing-wall', after: ['boot-order', 'firewall'], chapters: climbingWall },
   { id: 'dance-troupe', after: ['clock', 'restore-drill'], chapters: danceTroupe },
+  { id: 'shelter', after: ['restore-drill', 'zones'], chapters: shelter },
 ];
 
 // All chapters, across all stories (unique identifiers).

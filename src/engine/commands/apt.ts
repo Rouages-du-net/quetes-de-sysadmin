@@ -205,6 +205,28 @@ export const PACKAGES: Record<string, Package> = {
     put: (game) =>
       put(game, '/usr/lib/python3/dist-packages', d({ certbot_nginx: d({ '__init__.py': f('', { owner: 'root' }) }, undefined, root) }, undefined, root)),
   },
+  // PostgreSQL 17, Debian 13's (https://packages.debian.org/trixie/postgresql): the package makes the
+  // postgres account and the main cluster (an empty server, its postgres database), then starts it.
+  postgresql: {
+    version: '17+278',
+    architecture: 'all',
+    download: 15,
+    installed: 72,
+    dependencies: ['postgresql-17', 'postgresql-common'],
+    put: (game) => {
+      const users = game.accounts.users;
+      if (!users.postgres) {
+        game.accounts.groups.postgres ??= { gid: 113, members: [] };
+        users.postgres = { uid: 108, group: 'postgres', home: '/var/lib/postgresql', shell: '/bin/bash' };
+      }
+      game.state.postgres ??= { bases: { postgres: { owner: 'postgres', tables: {} } }, roles: ['postgres'], archives: {} };
+      put(game, '/var/lib', d({ postgresql: d({ '17': d({ main: d({}, undefined, { owner: 'postgres', group: 'postgres', mode: 'rwx------' }) }, undefined, { owner: 'postgres', group: 'postgres' }) }, undefined, { owner: 'postgres', group: 'postgres', mode: 'rwxr-xr-x' }) }, undefined, root));
+      const sd = systemd(game)!;
+      sd.services.postgresql ??= { description: 'PostgreSQL RDBMS', state: 'inactive', active: false, executable: 'postgres', since: sd.clock, process: [{ pid: 2511, user: 'postgres', cpu: 0, mem: 1.1, command: '/usr/lib/postgresql/17/bin/postgres -D /var/lib/postgresql/17/main -c config_file=/etc/postgresql/17/main/postgresql.conf' }] };
+    },
+  },
+  'postgresql-17': { version: '17.6-0+deb13u1', architecture: 'amd64', download: 18_120, installed: 63_204 },
+  'postgresql-common': { version: '278', architecture: 'all', download: 196, installed: 760 },
   curl: { version: '8.14.1-2', architecture: 'amd64', download: 269, installed: 497 },
   rsync: { version: '3.4.1+ds1-5', architecture: 'amd64', download: 445, installed: 806 },
   tar: { version: '1.35+dfsg-3.1', architecture: 'amd64', download: 846, installed: 3234 },

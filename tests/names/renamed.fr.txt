@@ -1850,6 +1850,44 @@ big-file
   /home/you/site/images/gala-2031.jpg → /home/vous/site/images/gala-2031.jpg
   /home/you/site/images/studio.jpg → /home/vous/site/images/studio.jpg
 
+what-we-have
+  /home/you → /home/vous
+  /home/you/message_from_teuila.txt → /home/vous/message_de_teuila.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+what-we-have:paddock
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+rebuild
+  /home/you → /home/vous
+  /home/you/message_from_teuila.txt → /home/vous/message_de_teuila.txt
+  /home/you/envelope.txt → /home/vous/enveloppe.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+rebuild:haven
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+switch-and-learn
+  /home/you → /home/vous
+  /home/you/message_from_teuila.txt → /home/vous/message_de_teuila.txt
+  /home/you/review.md → /home/vous/retour.md
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+switch-and-learn:haven
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

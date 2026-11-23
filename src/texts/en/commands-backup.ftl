@@ -16,6 +16,7 @@ restic-usage =
     Usage:
       restic [command]
     (Here: restic -r repository --password-file file init|snapshots|ls|find|diff|dump|restore|backup|forget|prune|check|stats|key; see man restic)
+restic-sftp-init = (The game doesn't create a repository over sftp: run restic init on the machine that will hold it.)
 
 ## cryptsetup, mkfs.ext4, dd
 

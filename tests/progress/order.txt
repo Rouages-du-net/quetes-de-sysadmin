@@ -167,3 +167,6 @@ old-battery
 public-bucket
 offsite-copy
 big-file
+what-we-have
+rebuild
+switch-and-learn

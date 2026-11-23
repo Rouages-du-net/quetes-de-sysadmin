@@ -324,6 +324,11 @@ function progressMeter(bytes: number): string {
 function curlTo({ args, game, input }: { args: string[]; game: Shell; last: boolean; input: string | null }): string {
   {
     {
+      // A story that routes requests between its machines itself (state.storyCurl on its main
+      // machine): it answers for the addresses and names it knows, null leaves curl to the machine.
+      const storyCurl = game.principal.state.storyCurl as ((from: Shell, args: string[]) => string | null) | undefined;
+      const routed = storyCurl?.(game, args);
+      if (typeof routed === 'string') return routed;
       // A story that models its network for metrics (Prometheus, exporters): its own curl.
       if (game.state.metricsHere) return family('prometheus').metricsCurl(game, args);
       // A story with load balancers and a virtual address (keepalived, HAProxy): who holds it answers.

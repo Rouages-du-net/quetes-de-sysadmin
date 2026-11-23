@@ -63,3 +63,6 @@ machine-trowel = trowel
 machine-slipway = slipway
 machine-belay = belay
 machine-wings = wings
+machine-meadow = meadow
+machine-paddock = paddock
+machine-haven = haven
