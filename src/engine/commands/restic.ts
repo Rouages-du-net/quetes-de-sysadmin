@@ -21,6 +21,7 @@ import type { File, Node } from '../world';
 import type { Shell } from '../shell';
 import { wildcard } from '../tools';
 import type { Command } from './index';
+import { MACHINES } from '../machines';
 
 export interface Version {
   content: string;
@@ -220,6 +221,8 @@ export function applyPolicy(snapshotList: Snapshot[], policy: Record<string, num
 
 interface Context {
   game: Shell;
+  // The machine that holds the repository (game itself, or the other end of an sftp: repository).
+  store: Shell;
   path: string;
   repo: Repo;
   // The key the password opened.
@@ -241,10 +244,35 @@ function findSnapshot(repo: Repo, id: string | undefined): Snapshot | string {
 const snapshotLine = (s: Snapshot) =>
   `${short(s.id)}  ${date(s.time)}  ${s.host.padEnd(12)}  ${s.paths.join(', ').padEnd(16)}  ${size(Object.values(s.files).reduce((t, v) => t + v.size, 0)).padStart(11)}`;
 
-function snapshots({ repo }: Context): string {
+// --path, --host (repeated: any of them), --latest N (the N latest per host and paths), --json.
+function snapshots({ game, repo }: Context, args: string[]): string {
+  const values = (name: string) => args.flatMap((a, i) => (a === name ? [args[i + 1] ?? ''] : a.startsWith(`${name}=`) ? [a.slice(name.length + 1)] : []));
+  const paths = values('--path').map((p) => p.replace(/\/$/, ''));
+  const hosts = values('--host');
+  const latest = values('--latest')[0];
+  if (latest !== undefined && !/^\d+$/.test(latest)) return game.error(`Error: invalid argument "${latest}" for "--latest" flag: strconv.ParseInt: parsing "${latest}": invalid syntax`);
+  let list = repo.snapshotList.filter((s) => (!paths.length || paths.every((p) => s.paths.includes(p))) && (!hosts.length || hosts.includes(s.host)));
+  if (latest !== undefined) {
+    const groups = new Map<string, Snapshot[]>();
+    for (const s of list) groups.set(`${s.host}|${s.paths.join()}`, [...(groups.get(`${s.host}|${s.paths.join()}`) ?? []), s]);
+    const kept = new Set([...groups.values()].flatMap((g) => g.slice(-Number(latest))));
+    list = list.filter((s) => kept.has(s));
+  }
+  if (args.includes('--json'))
+    return JSON.stringify(
+      list.map((s) => ({
+        time: new Date(s.time).toISOString().replace('Z', '+00:00'),
+        tree: hex(`tree-${s.id}`),
+        paths: s.paths,
+        hostname: s.host,
+        username: 'root',
+        id: s.id,
+        short_id: short(s.id),
+      })),
+    );
   const title = `ID        Time                 Host          Paths             ${'Size'.padStart(11)}`;
   const trait = '-'.repeat(title.length);
-  return [HEADER(repo), title, trait, ...repo.snapshotList.map(snapshotLine), trait, `${repo.snapshotList.length} snapshots`].join('\n');
+  return [HEADER(repo), title, trait, ...list.map(snapshotLine), trait, `${list.length} snapshots`].join('\n');
 }
 
 function toPlural(n: number, word: string) {
@@ -282,7 +310,7 @@ function prune(c: Context): string[] {
   repo.pruneNeeded = false;
   repo.checked = false;
   c.game.state.resticPruned = true;
-  writeRepo(c.game, c.path, repo);
+  writeRepo(c.store, c.path, repo);
   return [
     'loading indexes...',
     'loading all snapshots...',
@@ -316,10 +344,10 @@ function launch(c: Context, action: string, args: string[]): string {
     return listing;
   };
   // The arguments that are not options (nor their values).
-  const withValue = ['--target', '--include', '-i', '--exclude', '-e', '--host', '--tag', '--path', ...POLITIQUES.map((p) => p.option), '--keep-within', '--mode'];
+  const withValue = ['--target', '--include', '-i', '--exclude', '-e', '--host', '--tag', '--path', '--latest', ...POLITIQUES.map((p) => p.option), '--keep-within', '--mode'];
   const positional = args.filter((a, i) => !a.startsWith('-') && !withValue.includes(args[i - 1] ?? ''));
 
-  if (action === 'snapshots') return snapshots(c);
+  if (action === 'snapshots') return snapshots(c, args);
 
   if (action === 'ls') {
     const s = findSnapshot(repo, positional[0]);
@@ -466,7 +494,7 @@ function launch(c: Context, action: string, args: string[]): string {
     game.state.resticClock = clock + 60_000;
     const i: Snapshot = { id: hex(`instantane-${repo.snapshotList.length}-${clock}`), time: clock, host: game.hostName, paths, files };
     const r = addSnapshot(repo, i);
-    writeRepo(game, c.path, repo);
+    writeRepo(c.store, c.path, repo);
     const total = Object.values(files).reduce((t, v) => t + v.size, 0);
     return [
       HEADER(repo),
@@ -537,7 +565,7 @@ function launch(c: Context, action: string, args: string[]): string {
     repo.checked = false;
     if (removed.length) repo.pruneNeeded = true;
     game.state.resticForgotten = true;
-    writeRepo(game, c.path, repo);
+    writeRepo(c.store, c.path, repo);
     if (removed.length) output.push(`[0:00] 100.00%  ${removed.length} / ${removed.length} files deleted`);
     if (options.has('--prune')) output.push(...prune(c));
     return output.join('\n');
@@ -657,7 +685,7 @@ function key(c: Context, positional: string[], values: (name: string) => string[
   if (sub === 'add')
     return newPassword(c, values('--new-password-file')[0], (password) => {
       const k = made(password);
-      writeRepo(game, c.path, repo);
+      writeRepo(c.store, c.path, repo);
       game.state.resticKeyAdded = true;
       return [HEADER(repo), `saved new key with ID ${k.id}`].join('\n');
     });
@@ -665,7 +693,7 @@ function key(c: Context, positional: string[], values: (name: string) => string[
     return newPassword(c, values('--new-password-file')[0], (password) => {
       const k = made(password);
       repo.keys = keys.filter((x) => x !== c.key);
-      writeRepo(game, c.path, repo);
+      writeRepo(c.store, c.path, repo);
       game.state.resticKeyChanged = true;
       return [HEADER(repo), `saved new key as ${k.id}`].join('\n');
     });
@@ -680,7 +708,7 @@ function key(c: Context, positional: string[], values: (name: string) => string[
     }
     repo.keys = keys.filter((k) => k !== found[0]);
     repo.checked = false;
-    writeRepo(game, c.path, repo);
+    writeRepo(c.store, c.path, repo);
     game.state.resticKeyRemoved = true;
     return [HEADER(repo), `removed key ${found[0].id}`].join('\n');
   }
@@ -748,6 +776,16 @@ function init(game: Shell, path: string, given: string, passwordFile: string, en
   return '';
 }
 
+/** The machine of the story an sftp: repository names (its name, its .internal name or its address). */
+function sftpStore(game: Shell, host: string): Shell | null {
+  const p = game.principal;
+  const h = host.toLowerCase();
+  const main = MACHINES.find((m) => m.name === p.host);
+  if ([p.hostName.toLowerCase(), `${p.hostName.toLowerCase()}.internal`, main?.address].includes(h)) return p;
+  const inner = p.internal_().find((x) => [x.domain.toLowerCase(), x.domain.toLowerCase().replace(/\.internal$/, ''), x.address].includes(h));
+  return inner ? p.internal(inner.name) : null;
+}
+
 const ACTIONS = ['snapshots', 'ls', 'find', 'diff', 'dump', 'restore', 'backup', 'forget', 'prune', 'check', 'stats', 'init', 'key'];
 
 export const RESTIC: Record<string, Command> = {
@@ -777,20 +815,44 @@ export const RESTIC: Record<string, Command> = {
       mdpFile ||= env.RESTIC_PASSWORD_FILE ?? '';
       const envPassword = mdpFile ? undefined : env.RESTIC_PASSWORD;
       if (!pathRepo) return game.error('Fatal: Please specify repository location (-r or --repository-file)');
-      const path = game.resolve(pathRepo).replace(/\/$/, '');
-      const depots: Record<string, Repo> = (game.state.restic ??= {});
+      // sftp:user@host:/path: the repository is on another machine of the story, reached over ssh
+      // (the account's key is assumed to be in place: see sftpStore).
+      const sftp = /^sftp:(?:([^@:/]+)@)?([^:/]+):(.*)$/.exec(pathRepo);
+      let store: Shell = game;
+      let account = game.who;
+      if (sftp) {
+        const remote = sftpStore(game, sftp[2]);
+        if (!remote)
+          return game.error(
+            `ssh: Could not resolve hostname ${sftp[2]}: Name or service not known\nFatal: unable to open repository at ${pathRepo}: unable to start the sftp session, error: error receiving version packet from server: server unexpectedly closed connection: unexpected EOF`,
+          );
+        store = remote;
+        account = sftp[1] ?? game.who;
+        if (!store.accounts.users[account])
+          return game.error(
+            `${account}@${sftp[2]}: Permission denied (publickey).\nFatal: unable to open repository at ${pathRepo}: unable to start the sftp session, error: error receiving version packet from server: server unexpectedly closed connection: unexpected EOF`,
+          );
+        if (action === 'init') return game.error(game.t('restic-sftp-init'));
+      }
+      const path = sftp ? (sftp[3].startsWith('/') ? sftp[3] : `/home/${account}/${sftp[3]}`).replace(/\/$/, '') : game.resolve(pathRepo).replace(/\/$/, '');
+      const depots: Record<string, Repo> = (store.state.restic ??= {});
       // A repository is recognised by its config file, wherever it is mounted (a USB key, for example).
-      const repo = depots[path] ?? Object.values(depots).find((d) => game.read(`${path}/config`) === digit(`config-${d.id}`).content);
+      const repo = depots[path] ?? Object.values(depots).find((d) => store.read(`${path}/config`) === digit(`config-${d.id}`).content);
       if (action === 'init') {
         if (repo || game.exists(`${path}/config`))
           return game.error(`Fatal: create repository at ${pathRepo} failed: config file already exists`);
         return init(game, path, pathRepo, mdpFile, envPassword);
       }
-      if (!repo || !game.exists(`${path}/config`))
+      if (!repo || !store.exists(`${path}/config`))
         return game.error(
           `Fatal: repository does not exist: unable to open config file: stat ${path}/config: no such file or directory\nIs there a repository at the following location?\n${pathRepo}`,
         );
-      if (!game.traverses(`${path}/config`))
+      // Over sftp, the files are read as the account of the URL.
+      const before = store.who;
+      if (sftp) store.who = account;
+      const readable = store.traverses(`${path}/config`);
+      store.who = before;
+      if (!readable)
         return game.error(`Fatal: unable to open config file: open ${path}/config: permission denied\nIs there a repository at the following location?\n${pathRepo}`);
       const execute = (mdp: string) => {
         const k = keysOf(repo).find((x) => x.password === mdp);
@@ -802,7 +864,7 @@ export const RESTIC: Record<string, Command> = {
         game.state.resticKeysUsed = [...new Set([...((game.state.resticKeysUsed as string[] | undefined) ?? []), k.id])];
         // What was run, with which subcommand (key list…): the chapters read it (an answer to a prompt is not in game.last).
         const done = action === 'key' ? `key ${next.find((a) => !a.startsWith('-')) ?? 'list'}` : action;
-        const output = launch({ game, path, repo, key: k }, action, next);
+        const output = launch({ game, store, path, repo, key: k }, action, next);
         game.state.resticDone = [...((game.state.resticDone as string[] | undefined) ?? []), done];
         return output;
       };

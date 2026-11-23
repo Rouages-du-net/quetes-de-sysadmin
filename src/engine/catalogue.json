@@ -5668,6 +5668,113 @@
      "events": 12
     }
    ]
+  },
+  {
+   "id": "shelter",
+   "after": [
+    "restore-drill",
+    "zones"
+   ],
+   "texts": [
+    "chapter-firewall.ftl",
+    "chapter-rebuild.ftl",
+    "chapter-switch-and-learn.ftl",
+    "chapter-what-we-have.ftl",
+    "hints-shelter.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "what-we-have",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "tee",
+      "nano",
+      "cp",
+      "mv",
+      "mkdir",
+      "diff",
+      "sudo",
+      "ssh",
+      "date",
+      "restic",
+      "exit"
+     ],
+     "events": 16
+    },
+    {
+     "id": "rebuild",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "tee",
+      "nano",
+      "cp",
+      "mv",
+      "mkdir",
+      "diff",
+      "sudo",
+      "ssh",
+      "date",
+      "restic",
+      "exit"
+     ],
+     "events": 19
+    },
+    {
+     "id": "switch-and-learn",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "tee",
+      "nano",
+      "cp",
+      "mv",
+      "mkdir",
+      "diff",
+      "sudo",
+      "ssh",
+      "date",
+      "restic",
+      "exit",
+      "dig",
+      "host",
+      "named-checkzone",
+      "rndc",
+      "systemctl",
+      "journalctl",
+      "crontab",
+      "curl",
+      "sha256sum",
+      "sh"
+     ],
+     "events": 19
+    }
+   ]
   }
  ]
 }

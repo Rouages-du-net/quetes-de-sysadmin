@@ -119,6 +119,9 @@ export const CODE_ORDER = [
   'public-bucket',
   'offsite-copy',
   'big-file',
+  'what-we-have',
+  'rebuild',
+  'switch-and-learn',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

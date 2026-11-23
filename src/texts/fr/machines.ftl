@@ -63,3 +63,6 @@ machine-trowel = truelle
 machine-slipway = cale
 machine-belay = relais
 machine-wings = coulisses
+machine-meadow = prairie
+machine-paddock = enclos
+machine-haven = abri

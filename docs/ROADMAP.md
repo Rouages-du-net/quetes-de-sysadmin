@@ -687,6 +687,14 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **The disaster recovery plan** (the series' finale, on existing
+  models): a written plan made true (RPO, RTO, owners, backups within
+  their RPO), a rebuild on a spare machine after a flood, the switch, the
+  review and the next drill. Done: story 47, "The Shelter" (restic's
+  `sftp:` repositories and `snapshots --path/--host/--latest/--json`, the
+  `postgresql` package, a story's own curl between its machines through
+  `state.storyCurl`).
+
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a
   clock, a region and a key, a big file shared for a week while a node lay

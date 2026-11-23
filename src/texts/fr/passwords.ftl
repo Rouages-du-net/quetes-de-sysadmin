@@ -99,3 +99,6 @@ password-storm-lantern-24 = lanterne-tempete-24
 password-quickdraw-42 = degaine-42
 ## La Troupe de danse
 password-spring-gala-58 = gala-printemps-58
+## Le Refuge
+password-kibble-2031 = croquettes-2031
+password-lantern-thistle-otter-64 = lanterne-chardon-loutre-64

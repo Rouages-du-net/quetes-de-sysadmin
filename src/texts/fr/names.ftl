@@ -525,3 +525,7 @@ name-message_from_anahera-txt = message_d_anahera.txt
 name-message_from_farrukh-txt = message_de_farrukh.txt
 name-message_from_siosaia-txt = message_de_siosaia.txt
 name-link_for_zuri-txt = lien_pour_zuri.txt
+## Le Refuge
+name-message_from_teuila-txt = message_de_teuila.txt
+name-envelope-txt = enveloppe.txt
+name-review-md = retour.md
