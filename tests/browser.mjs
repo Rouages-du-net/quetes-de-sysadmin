@@ -1066,6 +1066,141 @@ for (const width of [1000, 375]) {
   await context.close();
 }
 
+// Replay and compare (see runs.ts): a previous run of the first chapter kept
+// in the browser, the chapter finished again, the comparison in the
+// summary's dialog (a table of measures, the commands diff-like), then
+// "Replay this chapter" starts it afresh, both runs kept.
+const SHOTS = process.env.SHOTS;
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  await page.evaluate(() => {
+    const lines = ['ls', 'cd Port', 'ls -a', 'cat nulle-part', 'cd Remise', 'ls -a'];
+    const run = { chapter: 'lighthouse', date: '2026-11-20T10:00:00.000Z', time: 400000, commands: 6, errors: 1, hints: 1, distinct: 3, exam: false, lines };
+    localStorage.setItem('quetes-de-sysadmin-runs', JSON.stringify({ lighthouse: [run] }));
+  });
+  await page.reload();
+  const game = page.locator('quetes-de-sysadmin');
+  const tape = async (l) => {
+    await game.locator('form input').fill(l);
+    await game.locator('form input').press('Enter');
+  };
+  await game.locator('button[data-story="0"]').click();
+  await waitReady(page);
+  await tape('ls');
+  await tape('mv Jetee/filet Port/Hangar');
+  await tape('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
+  const line = (await game.locator('.output .summary').textContent()).replace(/\s/g, ' ');
+  check(line.includes('La dernière fois : 6 commandes') && line.includes('Rejouer ce chapitre'), `compare ${width} px: the summary recalls the previous run and offers a replay (${line})`);
+  await game.locator('.output .summary-button').click();
+  const dialog = game.locator('dialog.summary-window');
+  await dialog.locator('.compare h3').first().waitFor();
+  const heads = await dialog.locator('.compare-table thead th').allTextContents();
+  check(heads.length === 3 && heads[2] === 'Cette partie' && heads[1].includes('20 nov'), `compare ${width} px: a column per run (${heads.join(' | ')})`);
+  const rows = await dialog.locator('.compare-table tbody tr').allTextContents();
+  check(rows.length === 5 && /Commandes tapées\s*6\s*\d\s/.test(rows[0]) && rows[0].includes('en baisse') && /Indices demandés\s*1\s*0/.test(rows[3]), `compare ${width} px: the measures, with the trend (${rows[0]})`);
+  const added = await dialog.locator('.compare-diff li.compare-after').allTextContents();
+  const removed = await dialog.locator('.compare-diff li.compare-before').count();
+  check(added.some((l) => l.includes('Seulement cette fois') && l.includes('mv Port/Remise')) && removed === 5, `compare ${width} px: the commands, diff-like, with words for screen readers`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `compare ${width} px: the dialog fits on the screen`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `compare ${width} px: no horizontal scrolling`);
+  if (SHOTS) await dialog.locator('.compare').screenshot({ path: `${SHOTS}/engagement-compare-${width}.png` });
+  await dialog.locator('button', { hasText: 'Rejouer ce chapitre' }).click();
+  await waitReady(page);
+  check(!(await dialog.evaluate((d) => d.open)) && !(await game.locator('.output .summary').count()) && (await game.locator('.output').textContent()).includes('chapitre 1'), `compare ${width} px: the replay starts the chapter afresh`);
+  const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-runs')).lighthouse.map((r) => r.commands));
+  check(kept.length === 2 && kept[0] === 6, `compare ${width} px: both runs are kept (${kept.join()})`);
+  check(errors.length === 0, `compare ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
+// Reminders and new-content notices, static only: the Atom feeds and their
+// links, the daily reminder's calendar file, the "New" badges since the last
+// visit and, in the installed app only, the app badge (stubbed here: the
+// headless browser is never "installed").
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 }, acceptDownloads: true });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await page.addInitScript(() => {
+    // An installed app with the Badging API, and a visibility the test controls.
+    window.__badge = { events: [], app: null };
+    document.addEventListener('qds-badge', (e) => window.__badge.events.push(e.detail.count));
+    const media = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q === '(display-mode: standalone)' ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : media(q));
+    navigator.setAppBadge = (n) => ((window.__badge.app = n), Promise.resolve());
+    navigator.clearAppBadge = () => ((window.__badge.app = 0), Promise.resolve());
+    Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true });
+    if (!localStorage.getItem('quetes-de-sysadmin-whats-new')) localStorage.setItem('quetes-de-sysadmin-whats-new', JSON.stringify({ until: '2026-10-17', fresh: {} }));
+  });
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  // The feed: announced in <head>, linked in the footer, well-formed Atom with one entry per story.
+  const alternate = await page.locator('head link[rel="alternate"][type="application/atom+xml"]').getAttribute('href');
+  const footer = page.locator('footer a[href="/fr/feed.xml"]');
+  check(alternate === '/fr/feed.xml' && (await footer.isVisible()) && (await footer.textContent()).includes('Suivre les nouvelles histoires'), `feed ${width} px: the page announces its feed and the footer links to it`);
+  const stories = await game.locator('button[data-story]').count();
+  for (const lang of ['en', 'fr']) {
+    const feed = await page.evaluate(async (url) => {
+      const text = await (await fetch(url)).text();
+      const xml = new DOMParser().parseFromString(text, 'application/xml');
+      return { ok: !xml.querySelector('parsererror'), root: xml.documentElement.namespaceURI, entries: xml.querySelectorAll('entry').length, first: xml.querySelector('entry title')?.textContent, ids: [...xml.querySelectorAll('entry id')].map((e) => e.textContent) };
+    }, `${BASE}/${lang}/feed.xml`);
+    check(feed.ok && feed.root === 'http://www.w3.org/2005/Atom' && feed.entries === stories && new Set(feed.ids).size === stories, `feed ${width} px: /${lang}/feed.xml, Atom, one entry per story (${feed.entries}/${stories}, newest: ${feed.first})`);
+  }
+  // "New": every story was released after the date seen; the badge event counts them (and today's incident, none yet).
+  const badge = game.locator('button[data-story="0"] .new-badge');
+  check((await badge.isVisible()) && (await badge.textContent()).includes('Nouveau') && (await game.locator('button[data-story="0"]').textContent()).includes('Nouveau'), `whats-new ${width} px: a story released since the last visit shows "New", in its button's name`);
+  const sent = await page.evaluate(() => window.__badge.events.at(-1));
+  check(sent === stories, `whats-new ${width} px: the game tells how many things are new (${sent})`);
+  await page.evaluate(() => {
+    window.__hidden = true;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  check((await page.evaluate(() => window.__badge.app)) === stories, `whats-new ${width} px: the installed app shows the count on its icon once hidden`);
+  await page.evaluate(() => {
+    window.__hidden = false;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  check((await page.evaluate(() => window.__badge.app)) === 0, `whats-new ${width} px: the app badge clears when the game is seen`);
+  if (SHOTS) await game.locator('.stories').screenshot({ path: `${SHOTS}/engagement-new-${width}.png` });
+  await game.locator('button[data-story="0"]').click();
+  await waitReady(page);
+  check(await badge.isHidden(), `whats-new ${width} px: opened, the story is no longer new`);
+  check((await page.evaluate(() => window.__badge.events.at(-1))) === stories - 1, `whats-new ${width} px: the count goes down`);
+  await page.reload();
+  check((await badge.isHidden()) && !(await game.locator('button[data-story="1"] .new-badge').evaluate((b) => b.hidden)), `whats-new ${width} px: kept across visits`);
+  // The daily reminder: a time, then a calendar file made in the browser.
+  await game.locator('.reminder-button').click();
+  const dialog = game.locator('dialog.reminder-window');
+  await dialog.locator('h2').filter({ hasText: 'Un rappel' }).waitFor();
+  check((await dialog.evaluate((d) => d.open)) && (await dialog.textContent()).includes('Rien n’est envoyé') || (await dialog.textContent()).includes("Rien n'est envoyé"), `reminder ${width} px: the dialog says nothing is sent`);
+  await dialog.locator('input[type="time"]').fill('07:30');
+  const [download] = await Promise.all([page.waitForEvent('download'), dialog.locator('button', { hasText: 'Télécharger' }).click()]);
+  const ics = readFileSync(await download.path(), 'utf8');
+  check(download.suggestedFilename() === 'rappel-quetes-de-sysadmin.ics' && /^BEGIN:VCALENDAR\r\n/.test(ics) && /\r\nDTSTART:\d{8}T073000\r\n/.test(ics) && ics.includes('RRULE:FREQ=DAILY') && ics.includes('BEGIN:VALARM') && ics.includes('https://sysadmin.rouages.net/fr/'), `reminder ${width} px: the .ics file, daily at 07:30 local time, with an alarm`);
+  check((await dialog.locator('[role="status"]').textContent()).includes('ouvre-le'), `reminder ${width} px: the dialog says what to do with the file`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `reminder ${width} px: the dialog fits on the screen`);
+  if (SHOTS) await dialog.screenshot({ path: `${SHOTS}/engagement-reminder-${width}.png` });
+  await page.keyboard.press('Escape');
+  await game.locator('.reminder-button').click();
+  check((await dialog.locator('input[type="time"]').inputValue()) === '07:30', `reminder ${width} px: the time chosen is offered again`);
+  await page.keyboard.press('Escape');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `reminder ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `notices ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // On-call duty: the incident of the day, drawn among the chapters open after
 // L'Effaceur (fixed date: 10 January 2027, "First day"),
 // the budget that melts, the score card at the end, the result kept.
@@ -1077,10 +1212,17 @@ for (const width of [1000, 375]) {
   await page.clock.install({ time: new Date('2027-01-10T10:00:00') });
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
-  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] })));
+  await page.evaluate(() => {
+    localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] }));
+    // Two days on call already (the 8th and 9th): a streak going (see streak.ts).
+    const day = { chapter: 'first-day', remaining: 900000, time: 600000, hints: 0, errors: 0 };
+    localStorage.setItem('quetes-de-sysadmin-on-call', JSON.stringify({ '2027-01-08': day, '2027-01-09': day }));
+  });
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   check((await game.locator('.incident-text').textContent()).includes('Premier jour'), `on-call ${width} px: the incident of the day is announced`);
+  const streakLine = (await game.locator('.stories .streak').textContent()).replace(/\s/g, ' ');
+  check(/2 jours d.astreinte d.affilée/.test(streakLine) && streakLine.includes('repos'), `on-call ${width} px: the streak and the rest day, kindly (${streakLine})`);
   // The clock is stopped: time only moves with runFor (otherwise a second may pass before the gauge is read).
   await page.clock.pauseAt(new Date('2027-01-10T10:00:10'));
   await game.locator('.incident-button').click();
@@ -1103,6 +1245,10 @@ for (const width of [1000, 375]) {
   check(map.includes('astreinte du 2027-01-10') && map.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(map) && map.includes('une erreur'), `on-call ${width} px: the score card`);
   const box = await end.boundingBox();
   check(box.x >= 0 && box.x + box.width <= width, `on-call ${width} px: the dialog fits on the screen`);
+  check((await end.locator('.streak').textContent()).includes('3 jours'), `on-call ${width} px: the streak grows to three days`);
+  check(/Trois nuits d.astreinte/.test(await game.locator('.output').textContent()), `on-call ${width} px: the three-day achievement`);
+  const file = await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-on-call')));
+  check(Object.keys(file).sort().join() === '2027-01-08,2027-01-09,2027-01-10', `on-call ${width} px: today's result joins the days kept`);
   await page.keyboard.press('Escape');
   check((await game.locator('.on-call-gauge').isHidden()) && (await game.locator('.incident-text').textContent()).includes('Fait aujourd’hui') || (await game.locator('.incident-text').textContent()).includes("Fait aujourd'hui"), `on-call ${width} px: the day's result is kept`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `on-call ${width} px: no horizontal scrolling`);

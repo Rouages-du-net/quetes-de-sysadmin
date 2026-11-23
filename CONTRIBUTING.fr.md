@@ -67,7 +67,10 @@ Un nouveau chapitre va aussi dans le module de son histoire
 et dans au moins un parcours (`src/engine/paths.ts`). Une nouvelle histoire
 a son module dans `src/engine/stories/`, déclare dans
 `src/engine/chapters/index.ts` les chapitres qui l'ouvrent (`after`) et
-reçoit une machine dans `src/engine/machines.ts`. Lance ensuite
+reçoit une machine dans `src/engine/machines.ts`, et une date de sortie
+dans `src/engine/releases.ts` (le jour où elle arrive sur `main` : le flux
+des nouvelles histoires et les badges « Nouveau » du menu la lisent ;
+`tests/releases.test.ts` échoue tant qu'elle manque). Lance ensuite
 `npm run catalogue` : le menu connaît les histoires par
 `src/engine/catalogue.json` sans les charger (le jeu ne charge une histoire
 qu'à son ouverture), et `npm test` échoue tant qu'il n'est pas à jour. Le

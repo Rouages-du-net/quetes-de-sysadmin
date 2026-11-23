@@ -56,6 +56,14 @@ the chapter is in progress) and its `exam-change` event
 `src/exam-control.ts`. Your script must be a file, not inline, if your
 page has a CSP.
 
+## The app badge event
+
+When what deserves attention changes (stories released since the last
+visit, today's incident not solved yet), the game dispatches a `qds-badge`
+event (`event.detail.count`), which bubbles out of the element. The site
+shows it on the installed app's icon (`src/pwa/badge.ts`); a host page may
+ignore it, or use it as it likes.
+
 ## Reporting a problem
 
 The game has its own "Report a problem or an idea" button. A page may open
@@ -110,10 +118,18 @@ Pratusevich).
 
 The game sends nothing: no data leaves the browser. Progress is kept in the
 `localStorage` of the host page, under the chosen key. Next to it, the same
-key with a suffix keeps the display settings (`KEY-display`), on-call results
-(`KEY-on-call`) and the chapter in progress, one per language
-(`KEY-autosave-en`, `KEY-autosave-fr`): the inputs typed since the chapter
-opened, so the game can offer to resume it after the page was closed. They
-may hold the story's passwords as the player typed them: fictional game
-passwords, which stay in the browser like the rest. The player can turn this
-autosave off in the settings.
+key with a suffix keeps the display settings (`KEY-display`), on-call
+results (`KEY-on-call`, from which the on-call streak is computed), the last
+runs of each finished chapter, to compare a replay with (`KEY-runs`: numbers
+and the commands typed), what's new since the last visit (`KEY-whats-new`:
+the newest release seen, the stories still marked "New") and the chapter in
+progress, one per language (`KEY-autosave-en`, `KEY-autosave-fr`): the
+inputs typed since the chapter opened, so the game can offer to resume it
+after the page was closed. They may hold the story's passwords as the player
+typed them: fictional game passwords, which stay in the browser like the
+rest. The player can turn this autosave off in the settings.
+
+The daily reminder's calendar file is made in the browser and downloaded:
+nothing leaves it, and only the player's calendar app keeps the reminder.
+The feed of new stories is a static file that feed readers fetch: the site
+learns nothing about them.

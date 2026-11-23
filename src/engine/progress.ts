@@ -230,6 +230,43 @@ export interface Backup {
   achievements?: Record<string, string>;
   // The tips already shown (see tips.ts): each one only once.
   tips?: string[];
+  // The incidents of the day solved (see on-call.ts), the best of each day
+  // (YYYY-MM-DD, local time): the on-call streak (streak.ts) is computed
+  // from them, so it travels with the file. Kept apart in the browser
+  // (KEY-on-call), only put in the file.
+  onCall?: Record<string, OnCallResult>;
+}
+
+/** An incident of the day solved: its chapter, what remained of the budget, the time, hints and errors. */
+export interface OnCallResult {
+  chapter: string;
+  remaining: number;
+  time: number;
+  hints: number;
+  errors: number;
+}
+
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+const count = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x) && x >= 0;
+
+/** On-call results, cleaned: real days, known chapters, numbers. */
+export function cleanOnCall(x: unknown, chapters: Set<string> = new Set(STORIES.flatMap((h) => h.chapters.map((c) => c.id)))): Record<string, OnCallResult> {
+  if (!x || typeof x !== 'object' || Array.isArray(x)) return {};
+  const out: Record<string, OnCallResult> = {};
+  for (const [day, r] of Object.entries(x as Record<string, unknown>)) {
+    if (!DAY.test(day) || !r || typeof r !== 'object') continue;
+    const { chapter, remaining, time, hints, errors } = r as Record<string, unknown>;
+    if (typeof chapter === 'string' && chapters.has(chapter) && count(remaining) && count(time) && count(hints) && count(errors))
+      out[day] = { chapter, remaining, time, hints, errors };
+  }
+  return out;
+}
+
+/** Two on-call histories together: the best result of each day. */
+export function mergeOnCall(a: Record<string, OnCallResult>, b: Record<string, OnCallResult>): Record<string, OnCallResult> {
+  const out = { ...a };
+  for (const [day, r] of Object.entries(b)) if (!out[day] || r.remaining > out[day].remaining) out[day] = r;
+  return out;
 }
 
 const FORMAT = 'quetes-de-sysadmin';
@@ -281,6 +318,7 @@ export function readFile(text: string): { backup: Backup } | { error: FileError 
       ...(dictionary(s.achievements)
         ? { achievements: Object.fromEntries(Object.entries(s.achievements).filter(([id, date]) => ACHIEVEMENTS.some((x) => x.id === id) && string(date))) as Record<string, string> }
         : {}),
+      ...(dictionary(s.onCall) ? { onCall: cleanOnCall(s.onCall, chapters) } : {}),
       ...(Array.isArray(s.tips) ? { tips: s.tips.filter((x): x is string => string(x) && (TIPS as readonly string[]).includes(x)) } : {}),
     },
   };

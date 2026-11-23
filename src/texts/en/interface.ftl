@@ -297,6 +297,13 @@ summary-encourage = { $hints ->
         [0] No hints: well done. Replay it in exam mode to beat your time?
        *[other] Next time, with fewer hints?
     }
+# Replay and compare (see src/engine/runs.ts); the comparison itself is in dialog-compare.ftl.
+replay-button = Replay this chapter
+# { $before }: the commands of the previous run of this chapter
+summary-compare = Last time: { $before ->
+        [one] one command
+       *[other] { $before } commands
+    }. The details compare both runs.
 ## The restore point (Mission panel; see Console.restaurer)
 rescue-title = Restore point
 rescue-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.
@@ -407,6 +414,33 @@ on-call-map =
        *[other] { $errors } errors
     }
     { $address }
+# The daily reminder (see src/engine/reminder.ts): the menu's button; its dialog is in dialog-reminder.ftl.
+reminder-button = 📅 Daily reminder
+# A story released since the last visit (see src/engine/releases.ts): its badge in the menu.
+story-new = New
+## The on-call streak (see src/engine/streak.ts): kind, never a guilt trip.
+# { $days }: the current streak, in days; { $best }: the best one
+streak-today = 🔥 { $days ->
+        [one] One day on call
+       *[other] { $days } days on call in a row
+    } (best: { $best }). See you tomorrow, if you feel like it.
+streak-going = 🔥 { $days ->
+        [one] One day on call
+       *[other] { $days } days on call in a row
+    } (best: { $best }). Today's incident keeps it going.
+# Shown with streak-going when a missed day would not break the streak.
+streak-rest-ready = No pressure: one rest day a week doesn't break it.
+streak-rest-used = Yesterday was your rest day for the week.
+streak-best = Best streak: { $best ->
+        [one] one day
+       *[other] { $best } days
+    }. A new one starts with today's incident.
+achievements-streak-3 = Three nights on call
+    .description = Solve the incident of the day three days in a row (a rest day a week doesn't break the streak).
+achievements-streak-7 = A week on call
+    .description = Solve the incident of the day seven days in a row (a rest day a week doesn't break the streak).
+achievements-streak-30 = A month on call
+    .description = Solve the incident of the day thirty days in a row (a rest day a week doesn't break the streak).
 achievements-without-hint = No safety net
     .description = Finish a chapter without asking for a hint.
 

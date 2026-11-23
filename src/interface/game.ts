@@ -22,12 +22,16 @@ import { grade, GRADES, newAchievements, ACHIEVEMENTS } from '../engine/achievem
 import { hint, HINT_LEVELS, type HintLevel } from '../engine/hints';
 import { explain } from '../engine/explainer';
 import { summary } from '../engine/summary';
+import { addRun, compare, makeRun, readRuns, type Comparison, type Runs } from '../engine/runs';
 import { pathSteps, PATH } from '../engine/paths';
 import { complete, QUESTIONS, readAnswers, recommend, TEACHERS_PAGE, type Answers, type Question, type Suggestion } from '../engine/start-here';
 import { buildReport, DEFAULT_PARTS, FEEDBACK_KINDS, FEEDBACK_PARTS, partLines, reportText, STEPS_KEPT, transcript, type FeedbackContext, type FeedbackKind, type FeedbackPart, type Step } from '../engine/feedback';
 import { missing } from '../engine/unlocking';
 import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engine/on-call';
-import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } from '../engine/progress';
+import { localDate, streak } from '../engine/streak';
+import { readTime, reminderIcs } from '../engine/reminder';
+import { markSeen, readSeen, whatsNew, type Seen } from '../engine/releases';
+import { progressCode, backupFile, readCode, readFile, cleanName, cleanOnCall, mergeOnCall, type Backup, type OnCallResult } from '../engine/progress';
 import { colourise, type Token } from '../engine/highlighting';
 import { chunks, withoutColours } from '../engine/colours';
 import { autosaveKey, clearAutosave, readAutosave, recordOf, resume as resumeAutosave, writeAutosave, type AutosaveRecord } from '../engine/autosave';
@@ -115,7 +119,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
   // startHere: the answers to "Where do I start?" (see start-here.ts); startOffer: 'done' once its first-visit card is answered or dismissed.
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true, startHere: {} as Partial<Answers>, startOffer: '' };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true, startHere: {} as Partial<Answers>, startOffer: '', reminder: '' };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -133,7 +137,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     );
   const storiesBoutons = STORIES.map((h, i) =>
     el('button', { type: 'button', 'data-story': String(i) },
-      el('span', { class: 'title' }, storyTitle(i)),
+      el('span', { class: 'title' }, storyTitle(i), el('span', { class: 'new-badge', hidden: '' }, ' ', el('span', {}, t('story-new')))),
       host(storyMachine(h.id)),
       el('span', { class: 'abstract' }, typo(t(`story-${h.id}.summary`))),
       level(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
@@ -188,12 +192,33 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
   const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
+  // The on-call streak (see streak.ts), under the incident: kind words, never a reproach.
+  const streakLine = el('p', { class: 'streak', hidden: '' });
+  // The daily reminder (see reminder.ts): a calendar file the player adds to their own calendar app.
+  const reminderButton = el('button', { type: 'button', class: 'reminder-button', 'aria-haspopup': 'dialog' }, t('reminder-button'));
+  const reminderEntry = el('p', { class: 'reminder-entry' }, reminderButton);
+  const reminderId = `qds-reminder-${Math.random().toString(36).slice(2, 8)}`;
+  const reminderTime = el('input', { type: 'time', id: `${reminderId}-time`, required: '', value: '18:30' }) as HTMLInputElement;
+  const reminderDownload = el('button', { type: 'button', class: 'button' }, lazy('dialog-reminder', 'reminder-download'));
+  const reminderStatus = el('p', { class: 'map-legend', role: 'status' });
+  const closeReminder = el('button', { type: 'button', class: 'button button-secondary' }, lazy('dialog-reminder', 'reminder-close'));
+  const reminderWindow = el(
+    'dialog',
+    { class: 'reminder-window', 'aria-labelledby': reminderId },
+    el('h2', { id: reminderId }, lazy('dialog-reminder', 'reminder-title')),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-intro', true)),
+    el('p', { class: 'reminder-field' }, el('label', { for: reminderTime.id }, lazy('dialog-reminder', 'reminder-time')), ' ', reminderTime),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-floating', true)),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-private', true)),
+    reminderStatus,
+    el('p', { class: 'map-actions' }, closeReminder, ' ', reminderDownload),
+  ) as HTMLDialogElement;
   // "Where do I start?" (see start-here.ts): a button of the menu, always there (hidden in exam mode).
   const startHereButton = el('button', { type: 'button', class: 'start-here-button', 'aria-haspopup': 'dialog' }, t('start-here-button'));
   const startHereEntry = el('p', { class: 'start-here-entry' }, startHereButton);
   // "Report a problem or an idea" (see feedback.ts): a button under the menu, and one among the chapter's actions.
   const feedbackMenuButton = el('button', { type: 'button', class: 'feedback-button', 'aria-haspopup': 'dialog' }, icon(...ICON_FEEDBACK), el('span', {}, t('feedback-button')));
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, streakLine, reminderEntry, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
   // On a first visit, the same questions offered by a card above the menu: not a window, it blocks nothing.
   const startOfferId = `qds-start-offer-${Math.random().toString(36).slice(2, 8)}`;
   const startOfferAnswer = el('button', { type: 'button', class: 'button', 'aria-haspopup': 'dialog' }, t('start-here-offer-answer'));
@@ -590,6 +615,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('on-call-rules'))),
     el('p', { class: 'map-actions' }, cancelOnCall, ' ', takeOnCall),
   ) as HTMLDialogElement;
+  const streakEnd = el('p', { class: 'streak' });
   const onCallEndId = `qds-on-call-end-${Math.random().toString(36).slice(2, 8)}`;
   const scoreMap = el('pre', { class: 'score-card' });
   const copyMap = el('button', { type: 'button', class: 'button' }, t('on-call-copy'));
@@ -601,6 +627,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('h2', { id: onCallEndId }, t('on-call-end-title')),
     el('p', { class: 'map-legend' }, typo(t('on-call-end-intro'))),
     scoreMap,
+    streakEnd,
     mapState,
     el('p', { class: 'map-actions' }, closeOnCallEnd, ' ', copyMap),
   ) as HTMLDialogElement;
@@ -610,6 +637,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const mapCaption = el('p', { class: 'map-legend' });
   const tableSummary = el('div', { class: 'summary-table', tabindex: '0', role: 'region', 'aria-labelledby': summaryId });
   const encourageSummary = el('p', { class: 'map-legend' });
+  // Replay and compare (see runs.ts): the earlier runs next to this one, filled when the dialog opens.
+  const compareSection = el('section', { class: 'compare', hidden: '' });
+  const replaySummary = el('button', { type: 'button', class: 'button button-secondary' }, t('replay-button'));
   const closeSummary = el('button', { type: 'button', class: 'button' }, t('map-close'));
   const summaryWindow = el(
     'dialog',
@@ -619,7 +649,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('summary-intro'))),
     tableSummary,
     encourageSummary,
-    el('p', { class: 'map-actions' }, closeSummary),
+    compareSection,
+    el('p', { class: 'map-actions' }, replaySummary, ' ', closeSummary),
   ) as HTMLDialogElement;
   const progressId = `qds-progress-${Math.random().toString(36).slice(2, 8)}`;
   const nameField = el('input', { type: 'text', id: `${progressId}-name`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
@@ -699,7 +730,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow, feedbackWindow, announcer);
+  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, reminderWindow, examWindow, startWindow, feedbackWindow, announcer);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -731,6 +762,26 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const finished = gameTerminal.finished;
   const notebook: Notebook = saved.notebook && typeof saved.notebook === 'object' ? saved.notebook : {};
   const records: Record<string, number> = saved.records && typeof saved.records === 'object' ? saved.records : {};
+  // ——— On-call results ———
+  // The results of past days, in this browser (the best of each day).
+  const ON_CALL_KEY = `${KEY}-on-call`;
+  type Result = OnCallResult;
+  let results: Record<string, Result> = {};
+  try {
+    results = cleanOnCall(JSON.parse(localStorage.getItem(ON_CALL_KEY) ?? '{}'));
+  } catch {}
+  // Today's date (YYYY-MM-DD, the player's local time): the same everywhere on the same day.
+  const today = () => localDate(new Date());
+  // ——— Finished runs, to compare a replay with (see runs.ts) ———
+  // Kept in this browser only (not in the save file: a log of commands, not progress).
+  const RUNS_KEY = `${KEY}-runs`;
+  let runs: Runs = {};
+  try {
+    runs = readRuns(JSON.parse(localStorage.getItem(RUNS_KEY) ?? '{}'));
+  } catch {}
+  // The lines typed in the current chapter (an answer to a question is not one), and that chapter.
+  let runLines: string[] = [];
+  let runChapter = '';
   let playerName = typeof saved.name === 'string' ? cleanName(saved.name) : '';
   const achievements: Record<string, string> = saved.achievements && typeof saved.achievements === 'object' ? { ...saved.achievements } : {};
   // The tips already shown (see tips.ts), and what each session remembers for them.
@@ -992,7 +1043,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   // The achievements earned by the last line (sh: its session; null: outside a line).
   const checkAchievements = (sh: Shell | null) => {
-    for (const id of newAchievements({ sh, finished, notebook, records }, achievements)) {
+    for (const id of newAchievements({ sh, finished, notebook, records, streak: streak(Object.keys(results), today()).best }, achievements)) {
       achievements[id] = new Date().toISOString();
       show(t('achievements-obtained', { name: t(`achievements-${id}`) }), 'achievements');
     }
@@ -1009,7 +1060,67 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const b = summary(sh);
     return t('summary-summary', { time: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commands: b.commands, errors: b.errors, hints: b.hints });
   };
+  // Each finished run's comparison with the runs before it (null: a first run).
+  const comparisons = new WeakMap<Shell, Comparison | null>();
+  const longDay = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'medium' }).format(new Date(iso));
+  // The comparison, in the summary's dialog: a table of measures (a column per run), then the commands diff-like.
+  const fillComparison = (c: Comparison) => {
+    const id = `${summaryId}-compare`;
+    const last = c.runs.length - 1;
+    const head = (i: number) => {
+      const r = c.runs[i];
+      const name = i === last ? t('compare-col-this') : t('compare-col-run', { date: longDay(r.date) });
+      return el('th', { scope: 'col' }, name, ...(r.exam ? [' ', el('span', { class: 'compare-exam' }, t('compare-exam'))] : []));
+    };
+    const value = (metric: string, v: number | null) => (v === null ? t('compare-not-measured') : metric === 'time' ? minutes(v) : new Intl.NumberFormat(t.language).format(v));
+    const kinds = { both: [' ', 'compare-both'], before: ['−', 'compare-only-before'], after: ['+', 'compare-only-after'] } as const;
+    compareSection.replaceChildren(
+      el('h3', { id }, t('compare-title')),
+      el('p', { class: 'map-legend' }, typo(t('compare-intro'))),
+      el(
+        'div',
+        { class: 'compare-table', tabindex: '0', role: 'region', 'aria-labelledby': id },
+        el(
+          'table',
+          {},
+          el('caption', { class: 'visually-hidden' }, t('compare-caption')),
+          el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, t('compare-col-measure')), ...c.runs.map((_, i) => head(i)))),
+          el(
+            'tbody',
+            {},
+            ...c.rows.map((row) =>
+              el(
+                'tr',
+                {},
+                el('th', { scope: 'row' }, t(`compare-${row.metric}`)),
+                ...row.values.map((v, i) =>
+                  el('td', {}, value(row.metric, v), ...(i === last && row.trend ? [' ', el('span', { class: `compare-trend compare-${row.trend}` }, `(${t(`compare-${row.trend}`)})`)] : [])),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      el('h3', {}, t('compare-diff-title')),
+      el('p', { class: 'map-legend' }, typo(t('compare-diff-intro'))),
+      c.diff.length
+        ? el(
+            'ol',
+            { class: 'compare-diff', tabindex: '0', 'aria-label': t('compare-diff-title') },
+            ...c.diff.map((d) =>
+              el('li', { class: `compare-${d.kind}` }, el('span', { class: 'compare-mark', 'aria-hidden': 'true' }, kinds[d.kind][0]), el('span', { class: 'visually-hidden' }, t(kinds[d.kind][1]), ' '), el('code', {}, d.line)),
+            ),
+          )
+        : el('p', { class: 'map-legend' }, t('compare-diff-empty')),
+    );
+  };
+  let summaryShell: Shell | null = null;
   const openSummary = (sh: Shell, recap: string) => {
+    const c = comparisons.get(sh) ?? null;
+    if (c && !textsLoaded(t.language, 'dialog-compare')) return withTexts('dialog-compare', () => openSummary(sh, recap));
+    summaryShell = sh;
+    compareSection.hidden = !c;
+    if (c) fillComparison(c);
     const b = summary(sh);
     titleSummary.textContent = t('summary-title', { chapter: t(`chapter-${sh.chapter.id}`) });
     mapCaption.textContent = recap;
@@ -1045,12 +1156,41 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!sh.finished || !inCourse.has(sh) || doneSummary.has(sh)) return;
     doneSummary.add(sh);
     const recap = summaryText(sh);
+    // This run, kept with the chapter's last ones; compared with them (see runs.ts).
+    const b = summary(sh);
+    const id = sh.chapter.id;
+    const run = makeRun({
+      chapter: id,
+      date: new Date().toISOString(),
+      time: debuts.has(sh) ? Date.now() - debuts.get(sh)! : null,
+      commands: b.commands,
+      errors: b.errors,
+      hints: b.hints,
+      exam: gameTerminal.exam,
+      lines: runChapter === id ? runLines : [],
+    });
+    const earlier = runs[id] ?? [];
+    comparisons.set(sh, compare(earlier, run));
+    runs = addRun(runs, run);
+    try {
+      localStorage.setItem(RUNS_KEY, JSON.stringify(runs));
+    } catch {}
     const detail = el('button', { type: 'button', class: 'link summary-button', 'aria-haspopup': 'dialog' }, t('summary-button'));
     detail.addEventListener('click', () => openSummary(sh, recap));
-    output.appendChild(el('p', { class: 'summary' }, recap, ' ', detail));
+    const again = el('button', { type: 'button', class: 'link replay-button' }, t('replay-button'));
+    again.addEventListener('click', () => replay(id));
+    const before = earlier.at(-1);
+    output.appendChild(el('p', { class: 'summary' }, recap, ' ', ...(before ? ['· ', t('summary-compare', { before: before.commands }), ' '] : []), detail, ' · ', again));
     announce(t('chapter-done-announce', { chapter: t(`chapter-${sh.chapter.id}`) }));
   };
   closeSummary.addEventListener('click', () => summaryWindow.close());
+  // Replay: the same chapter from the start, on a fresh machine (the run just finished is kept for the comparison).
+  const replay = (id: string) => {
+    if (summaryWindow.open) summaryWindow.close();
+    const { h, c } = placeFor(id);
+    launch(h, c).then(() => input.focus());
+  };
+  replaySummary.addEventListener('click', () => summaryShell && replay(summaryShell.chapter.id));
   summaryWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
   const after = (sh: Shell | null = null) => {
@@ -1104,9 +1244,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const launchNow = (h: number, c?: number) => {
     followEnd();
     recentSteps = [];
+    runLines = [];
+    runChapter = '';
     output.replaceChildren(measure);
     const loaded = loadedStory(STORIES[h].id)!;
     const chapter = c === undefined ? undefined : loaded.chapters[c];
+    storySeen(h);
     if (gameTerminal.remote?.story === loaded && chapter) show(gameTerminal.open(chapter));
     else show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
     // In exam mode, a chapter that (re)starts starts the timer; an already finished chapter doesn't.
@@ -1163,6 +1306,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       if (chapterBefore !== stepsChapter) recentSteps = [];
       stepsChapter = chapterBefore;
       recentSteps = [...recentSteps, { prompt: promptBefore, line: secret || line === '\u0004' ? '' : line, masked: secret, output: withoutColours(result ?? '') }].slice(-STEPS_KEPT);
+    }
+    // The lines of this run of the chapter, for the comparison after a replay.
+    if (chapterBefore && !response && line.trim() && line !== '\u0004') {
+      if (chapterBefore !== runChapter) runLines = [];
+      runChapter = chapterBefore;
+      runLines.push(line);
     }
     const lineFor = response ? null : shell;
     if (result === null) output.replaceChildren(measure);
@@ -1553,18 +1702,60 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .then(() => (stateNotebook.textContent = t('notebook-copy')))
       .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
   }));
-  // ——— On-call duty ———
-  // The results of past days, in this browser (the best of each day).
-  const ON_CALL_KEY = `${KEY}-on-call`;
-  type Result = { chapter: string; remaining: number; time: number; hints: number; errors: number };
-  let results: Record<string, Result> = {};
+  // ——— What's new since the last visit (see releases.ts) ———
+  // A setting of this browser (KEY-whats-new), not progress: the newest
+  // release seen, and the stories marked "New" until opened.
+  const SEEN_KEY = `${KEY}-whats-new`;
+  let seen: Required<Seen> = { until: '', fresh: {} };
   try {
-    results = JSON.parse(localStorage.getItem(ON_CALL_KEY) ?? '{}') ?? {};
+    seen = whatsNew(readSeen(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}')), today());
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
   } catch {}
-  // Today's date (YYYY-MM-DD, local time): the same everywhere on the same day.
-  const today = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const freshUpdate = () => {
+    storiesBoutons.forEach((b, h) => {
+      (b.querySelector('.new-badge') as HTMLElement).hidden = !(STORIES[h].id in seen.fresh);
+    });
+  };
+  // A story opened: no longer new.
+  const storySeen = (h: number) => {
+    if (!(STORIES[h].id in seen.fresh)) return;
+    seen = markSeen(seen, STORIES[h].id);
+    try {
+      localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+    } catch {}
+    freshUpdate();
+    badgeUpdate();
+  };
+  // What would deserve the installed app's badge (src/pwa/site.ts shows it, never the
+  // embedded game): the new stories, and today's incident not solved yet. An event
+  // from the game, which a host page may ignore.
+  let badgeSent = -1;
+  const badgeUpdate = () => {
+    const count = Object.keys(seen.fresh).length + (incident() && !results[today()] ? 1 : 0);
+    if (count === badgeSent) return;
+    badgeSent = count;
+    game.dispatchEvent(new CustomEvent('qds-badge', { bubbles: true, composed: true, detail: { count } }));
+  };
+
+  // ——— On-call duty ———
+  // The streak's words: the menu's line and the end of on-call's.
+  const streakWords = () => {
+    const s = streak(Object.keys(results), today());
+    if (s.best === 0) return '';
+    if (s.current === 0) return t('streak-best', { best: s.best });
+    if (s.today) return t('streak-today', { days: s.current, best: s.best });
+    const yesterday = s.rests.at(-1) === dayBefore(today());
+    return [t('streak-going', { days: s.current, best: s.best }), yesterday ? t('streak-rest-used') : s.restReady ? t('streak-rest-ready') : ''].filter(Boolean).join(' ');
+  };
+  const dayBefore = (iso: string) => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() - 1);
+    return localDate(d);
+  };
+  const streakUpdate = () => {
+    const words = streakWords();
+    streakLine.textContent = words ? typo(words) : '';
+    streakLine.hidden = !words || incidentBlock.hidden;
   };
   const longDate = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
   let onCall: { date: string; chapter: string; start: number; sh: Shell | null; epuise: boolean } | null = null;
@@ -1586,6 +1777,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       : done
         ? t('on-call-already', { percent: percent(done.remaining) })
         : t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
+    streakUpdate();
+    badgeUpdate();
   };
   incidentButton.addEventListener('click', () => {
     const id = incident();
@@ -1668,6 +1861,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       address: 'https://sysadmin.rouages.net',
     });
     mapState.textContent = '';
+    streakEnd.textContent = typo(streakWords());
     onCall = null;
     onCallUpdate();
     onCallEndWindow.showModal();
@@ -1679,6 +1873,46 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .catch(() => {});
   });
   closeOnCallEnd.addEventListener('click', () => onCallEndWindow.close());
+  freshUpdate();
+
+  // ——— The daily reminder (see reminder.ts) ———
+  // A calendar file made here and downloaded: the player's calendar app does the reminding.
+  reminderButton.addEventListener('click', () =>
+    withTexts('dialog-reminder', () => {
+      reminderTime.value = readTime(display.reminder) ? display.reminder : '18:30';
+      reminderStatus.textContent = '';
+      reminderWindow.showModal();
+    }),
+  );
+  reminderDownload.addEventListener('click', () => {
+    const url = `https://sysadmin.rouages.net/${t.language}/`;
+    const ics = reminderIcs({
+      time: reminderTime.value,
+      start: today(),
+      now: new Date(),
+      language: t.language,
+      url,
+      title: t('reminder-event-title'),
+      description: t('reminder-event-description', { url }),
+      alarm: t('reminder-event-alarm'),
+    });
+    if (!ics) {
+      reminderStatus.textContent = t('reminder-invalid');
+      reminderTime.focus();
+      return;
+    }
+    // The time chosen, offered again next time (a setting of this browser).
+    display.reminder = reminderTime.value;
+    try {
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify(display));
+    } catch {}
+    const link = el('a', { href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })), download: t('reminder-file') });
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    reminderStatus.textContent = t('reminder-ready');
+  });
+  closeReminder.addEventListener('click', () => reminderWindow.close());
+  reminderWindow.addEventListener('close', () => setTimeout(() => reminderButton.focus()));
   onCallEndWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
   const applyExam = (yes: boolean) => {
@@ -2052,6 +2286,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       // The feedback dialog's commands (see feedback.ts): those of the chapter so far.
       recentSteps = result.transcript.map((x) => ({ ...x, output: withoutColours(x.output) })).slice(-STEPS_KEPT);
       stepsChapter = r.chapter;
+      runLines = result.transcript.filter((x) => x.prompt && !x.masked && x.line.trim()).map((x) => x.line);
+      runChapter = r.chapter;
       show(t('autosave-resumed', { steps: r.n }), 'achievements');
       // In exam mode, the timer goes on from the chapter's start (closing the page doesn't stop it).
       if (gameTerminal.exam && r.examStart !== undefined) examStart = r.examStart;
@@ -2226,9 +2462,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   achievementsWindow.addEventListener('close', () => setTimeout(() => input.focus()));
   // ——— My progress ———
   // A restored save (code or file): it is written, then the game restarts from it.
-  const resume = (s: Backup) => {
+  const resume = ({ onCall: days, ...s }: Backup) => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
+      // The file's on-call days join this browser's (the best of each day): the streak follows.
+      if (days) localStorage.setItem(ON_CALL_KEY, JSON.stringify(mergeOnCall(results, days)));
     } catch {}
     progressWindow.close();
     clearInterval(timer);
@@ -2279,7 +2517,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   download.addEventListener('click', () => {
     const link = el('a', {
-      href: URL.createObjectURL(new Blob([backupFile(backupState(), new Date())], { type: 'application/json' })),
+      href: URL.createObjectURL(new Blob([backupFile({ ...backupState(), onCall: results }, new Date())], { type: 'application/json' })),
       download: t('progress-name-file'),
     });
     link.click();

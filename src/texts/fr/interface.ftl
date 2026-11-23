@@ -297,6 +297,13 @@ summary-encourage = { $hints ->
         [0] Sans indice : bravo. Rejoue-le en mode examen pour battre ton temps ?
        *[other] La prochaine fois, avec moins d'indices ?
     }
+# Rejouer et comparer (voir src/engine/runs.ts) ; la comparaison elle-même est dans dialog-compare.ftl.
+replay-button = Rejouer ce chapitre
+# { $before } : les commandes de la partie précédente de ce chapitre
+summary-compare = La dernière fois : { $before ->
+        [one] une commande
+       *[other] { $before } commandes
+    }. Le détail compare les deux parties.
 ## L'instantané de secours (panneau Mission ; voir Console.restaurer)
 rescue-title = Instantané de secours
 rescue-intro = Comme l'instantané d'une machine virtuelle avant une opération risquée : prends-en un, tente ta manœuvre, et reviens-y si ça tourne mal. Le chapitre est rejoué jusqu'à ce point, sans rien perdre d'autre.
@@ -407,6 +414,33 @@ on-call-map =
        *[other] { $errors } erreurs
     }
     { $address }
+# Le rappel quotidien (voir src/engine/reminder.ts) : le bouton du menu ; sa fenêtre est dans dialog-reminder.ftl.
+reminder-button = 📅 Rappel quotidien
+# Une histoire sortie depuis la dernière visite (voir src/engine/releases.ts) : son badge dans le menu.
+story-new = Nouveau
+## La série d'astreintes (voir src/engine/streak.ts) : bienveillante, jamais culpabilisante.
+# { $days } : la série en cours, en jours ; { $best } : la meilleure
+streak-today = 🔥 { $days ->
+        [one] Un jour d'astreinte
+       *[other] { $days } jours d'astreinte d'affilée
+    } (record : { $best }). À demain, si le cœur t'en dit.
+streak-going = 🔥 { $days ->
+        [one] Un jour d'astreinte
+       *[other] { $days } jours d'astreinte d'affilée
+    } (record : { $best }). L'incident du jour la prolonge.
+# Avec streak-going, quand un jour manqué ne casserait pas la série.
+streak-rest-ready = Aucune pression : un jour de repos par semaine ne la casse pas.
+streak-rest-used = Hier était ton jour de repos de la semaine.
+streak-best = Meilleure série : { $best ->
+        [one] un jour
+       *[other] { $best } jours
+    }. Une nouvelle commence avec l'incident du jour.
+achievements-streak-3 = Trois nuits d'astreinte
+    .description = Régler l'incident du jour trois jours d'affilée (un jour de repos par semaine ne casse pas la série).
+achievements-streak-7 = Une semaine d'astreinte
+    .description = Régler l'incident du jour sept jours d'affilée (un jour de repos par semaine ne casse pas la série).
+achievements-streak-30 = Un mois d'astreinte
+    .description = Régler l'incident du jour trente jours d'affilée (un jour de repos par semaine ne casse pas la série).
 achievements-without-hint = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 

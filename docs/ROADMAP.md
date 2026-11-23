@@ -832,10 +832,64 @@ them safely.
   one); an error budget of 30 minutes that melts with time (−3 min per
   hint, −20 s per failed command); at the end, a score card as text to copy
   (a five-box gauge); the day's best result is kept in the browser.
+- [x] **On-call streak** (`src/engine/streak.ts`): the consecutive days
+  whose incident was solved, counted on calendar dates in the player's
+  time zone (the interface passes them; a 23- or 25-hour day is one day),
+  one rest day in any seven that doesn't break it, today never counted
+  against the player before it ends, dates after today (a clock set back)
+  ignored until they come. Shown under the menu's entry and at the end of
+  on-call, in kind words; achievements at 3, 7 and 30 days. Computed from
+  the on-call results (`KEY-on-call`), which the save file now carries
+  (`onCall`, the best of each day, merged on import) so the streak follows
+  a player to another device; not in the short code (it holds finished
+  chapters only and must stay short).
 - [x] **End-of-chapter summary** (`src/engine/summary.ts`): time spent,
   commands typed (and failed), hints; the detail compares, step by step,
   the command that passed it with the reference solution (the hints'), and
   reminds that another way is just as right.
+- [x] **Replay and compare** (`src/engine/runs.ts`): the summary offers
+  "Replay this chapter" (the same chapter from the start, on a fresh
+  machine); each finished run is kept in the browser (`KEY-runs`: the last
+  three per chapter, the 30 chapters played last, 60 lines of 120
+  characters per run at most), and a run that has earlier ones gets a
+  comparison in the summary's dialog: a table (a column per run) of
+  commands, distinct commands, failed commands, hints and time, with the
+  trend since the last run, then both runs' commands diff-like (−/+, words
+  for screen readers). The expected route stays the summary's reference
+  solution (the hints'): nothing more. In exam mode, runs are recorded
+  (marked "exam mode") and compared like the others, only once the chapter
+  is finished, as the summary itself: nothing is shown during a chapter,
+  so a run kept on a shared computer can't serve as a crib. Not in the save
+  file (a log of commands, not progress).
+- [x] **Reminders and new-content notices, static only** (no server, no
+  push):
+  - a **daily reminder** (`src/engine/reminder.ts`): "📅 Daily reminder"
+    in the menu makes an iCalendar file (RFC 5545) in the browser, a daily
+    event (`RRULE:FREQ=DAILY`) with an alert (`VALARM`), at a floating
+    local time (no `TZID`: it would need a `VTIMEZONE` the browser can't
+    write faithfully; a UTC time would move with daylight saving time),
+    a stable `UID` per language (importing again updates the event in the
+    calendars that honour it), a link to the game; downloaded as a Blob
+    (the dialog's texts in `dialog-reminder.ftl`);
+  - **Atom feeds** of new stories, `/en/feed.xml` and `/fr/feed.xml`
+    (`src/engine/feed.ts`, `src/feeds.ts`), written by the build from a
+    release date per story (`src/engine/releases.ts`, written when a
+    story is added, checked by `tests/releases.test.ts`: deterministic,
+    unlike dates read from git in a shallow clone), announced by `<link
+    rel="alternate">` on every page and linked in the footer;
+  - **"New" badges** in the menu (`whatsNew`, `KEY-whats-new`): the stories
+    released after the newest date seen at the last visit, until opened or
+    for 30 days; nothing on a first visit; and, in the installed game only,
+    the **app badge** (`src/pwa/badge.ts`, Badging API, feature-detected):
+    the new stories plus today's incident not solved yet, shown once the
+    app is in the background, cleared when it is seen;
+  - **no background check** (Periodic Background Sync): Chromium only, for
+    installed apps with enough engagement, at an interval the browser
+    chooses (often a day or more, sometimes never); the service worker
+    would also need a copy of the game's state (localStorage is out of its
+    reach). It could only refresh a badge the game already sets when it is
+    left, while the calendar reminder covers the daily nudge on every
+    platform: not worth the complexity for now.
 - [x] **Rescue snapshot** (Mission panel, `Console.restore`): take a
   snapshot, go back to it, undo the last input. The engine is
   deterministic: reopening the chapter and replaying the inputs (commands,
