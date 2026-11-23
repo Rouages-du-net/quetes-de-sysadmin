@@ -535,6 +535,8 @@ loading-failed = Cette partie du jeu n'a pas pu être chargée : vérifie ta con
 ## Lecteurs d'écran (voir docs/ACCESSIBILITY.md et src/engine/announce.ts)
 # Le nom de la sortie du terminal (un journal : chaque nouvelle sortie est lue une fois)
 output-label = Sortie du terminal
+# Un titre pour les lecteurs d'écran (masqué à l'écran) avant le terminal
+terminal-heading = Terminal
 # Lu avec la ligne de commande, après son nom et l'invite
 input-help = Tab complète ; Échap puis Tab quitte la ligne vers la suite, Maj+Tab vers l'arrière ; Alt+R relit la dernière sortie.
 # Un bouton qui apparaît quand il a le focus, en haut du terminal
@@ -551,6 +553,7 @@ follow-announce-lines =
     }
 follow-announce-screen = L'écran a changé : Alt+R le lit.
 chapter-done-announce = Chapitre terminé : { $chapter }. Son bilan est à la fin du terminal ; Échap puis Tab mène aux boutons qui le suivent.
+continuation-announce = La commande n'est pas finie : tapez sa ligne suivante, ou Ctrl-C pour l'abandonner.
 # La boîte du schéma du réseau (elle défile sur le côté sur un écran étroit) ; sa version texte la suit
 plan-diagram-label = Schéma du réseau (sa version texte suit)
 shortcuts-escape-tab = quitte la ligne de commande, vers ce qui suit le terminal (Tab seul complète)

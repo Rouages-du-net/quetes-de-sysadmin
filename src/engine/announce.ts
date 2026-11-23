@@ -13,6 +13,46 @@
 // No DOM here: the interface (src/interface/game.ts) gives the texts and
 // the clock, and puts what comes out in a polite live region.
 
+/**
+ * What a screen reader should not spell out, character by character: the
+ * box-drawing of trees and tables (lsblk's `└─`, systemctl's `●` and `├─`),
+ * status marks (`✔`, `✓`), rules made of one repeated character standing
+ * alone (`--------`, `======`, `^~~~~`, never `-rw-------`, which says
+ * something), a pictograph that opens a line (the achievement's trophy)
+ * and an arrow that ends one ("Next chapter →").
+ * The text around them says the same in words. The interface keeps them on
+ * the screen and hides them from assistive technology (`aria-hidden`).
+ */
+export const DECORATION = /(?<!\S)[-=_~#*]{4,}(?!\S)|\^~+|[─-▟]+|[●○◆◇■□✔✓✗✘]|^[\p{Extended_Pictographic}↺▶←]️?(?=\s)|(?<=\s)→$/gmu;
+
+/**
+ * Splits a text into what is read and what is decoration, in order (see
+ * DECORATION): `[text, decorative?]` pairs, adjacent texts never split.
+ */
+export function decorations(text: string): { text: string; decoration: boolean }[] {
+  const parts: { text: string; decoration: boolean }[] = [];
+  let at = 0;
+  for (const m of text.matchAll(DECORATION)) {
+    if (!m[0]) continue;
+    if (m.index! > at) parts.push({ text: text.slice(at, m.index), decoration: false });
+    parts.push({ text: m[0], decoration: true });
+    at = m.index! + m[0].length;
+  }
+  if (at < text.length) parts.push({ text: text.slice(at), decoration: false });
+  return parts;
+}
+
+/** A text as a screen reader should hear it: decorations removed, lines left empty dropped. */
+export function spoken(text: string): string {
+  const out: string[] = [];
+  for (const line of text.split('\n')) {
+    const quiet = line.replace(DECORATION, '');
+    if (quiet === line) out.push(line);
+    else if (quiet.trim()) out.push(quiet.trimEnd());
+  }
+  return out.join('\n');
+}
+
 /** One block of the terminal's output: a command line typed, or what came out. */
 export interface Block {
   command: boolean;
@@ -23,13 +63,14 @@ export const REREAD_LINES = 60;
 export const DIGEST_SECONDS = 10;
 
 /**
- * The last output: the blocks after the last command line, joined. Empty
+ * The last output: the blocks after the last command line, joined, without
+ * their decorations (spoken). Empty
  * when the last command printed nothing. `cut` is the number of lines left
  * out at the start (only the last `max` are kept).
  */
 export function lastOutput(blocks: Block[], max = REREAD_LINES): { text: string; lines: number; cut: number } {
   const after: string[] = [];
-  for (let i = blocks.length - 1; i >= 0 && !blocks[i].command; i--) after.unshift(blocks[i].text.replace(/\n+$/, ''));
+  for (let i = blocks.length - 1; i >= 0 && !blocks[i].command; i--) after.unshift(spoken(blocks[i].text).replace(/\n+$/, ''));
   const lines = after
     .join('\n')
     .split('\n')
@@ -72,7 +113,7 @@ export class FollowDigest {
       this.screenText = text;
       return;
     }
-    const lines = text.split('\n').filter((l) => l.trim());
+    const lines = spoken(text).split('\n').filter((l) => l.trim());
     if (!lines.length) return;
     this.count += lines.length;
     this.last = lines[lines.length - 1].trim();

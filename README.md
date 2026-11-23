@@ -110,8 +110,12 @@ this independent project.
 - **Safe**: addresses and domain names reserved for examples, no real
   target; security quests stay defensive.
 - **Accessible** (WCAG 2.2 AA, checked by axe-core and by hand on every
-  page and dialog): keyboard, screen readers, contrast, reduced motion,
-  forced colours, mobile; see [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
+  page and dialog): keyboard, screen readers (what they are given to say is
+  recorded and checked, see
+  [docs/screen-reader-walkthrough.md](docs/screen-reader-walkthrough.md);
+  reports from real NVDA, VoiceOver or TalkBack users are welcome),
+  contrast, reduced motion, forced colours, mobile; see
+  [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **No trackers**, no ads, no third-party resources.
 - **English first**, French too; more languages will come (German, Spanish,
   Mandarin, Korean…): texts are kept apart from the code.

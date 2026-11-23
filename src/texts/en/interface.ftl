@@ -535,6 +535,8 @@ loading-failed = This part of the game could not be loaded: check your connectio
 ## Screen readers (see docs/ACCESSIBILITY.md and src/engine/announce.ts)
 # The name of the terminal's output (a log: each new output is read once)
 output-label = Terminal output
+# A heading for screen readers (visually hidden) before the terminal
+terminal-heading = Terminal
 # Read with the command line, after its name and the prompt
 input-help = Tab completes; Escape then Tab leaves the line forward, Shift+Tab backward; Alt+R reads the last output again.
 # A button shown when it has the focus, at the top of the terminal
@@ -551,6 +553,7 @@ follow-announce-lines =
     }
 follow-announce-screen = The screen changed: Alt+R reads it.
 chapter-done-announce = Chapter finished: { $chapter }. Its summary is at the end of the terminal; Escape then Tab reaches the buttons that follow it.
+continuation-announce = The command is not finished: type its next line, or Ctrl-C to drop it.
 # The network diagram's box (it scrolls sideways on a narrow screen); its text version follows it
 plan-diagram-label = Network diagram (its text version follows)
 shortcuts-escape-tab = leaves the command line, to what follows the terminal (Tab alone completes)
