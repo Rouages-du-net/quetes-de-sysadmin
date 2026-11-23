@@ -468,6 +468,17 @@ class-col-grade = Grade
 class-col-achievements = Succès
 class-col-exam = Meilleur examen
 class-col-date = Sauvegarde
+class-col-streak = Série d'astreinte
+class-col-best-streak = Meilleure série d'astreinte
+class-separator = Séparateur :
+class-separator-comma = virgule (,)
+class-separator-semicolon = point-virgule (;)
+class-print = Imprimer le tableau
+class-local = Le fichier CSV et l'impression sont faits dans ce navigateur, à partir du tableau ci-dessous : rien n'est envoyé nulle part.
+# En-têtes du CSV : les chapitres terminés (un nombre), ceux d'une histoire (un nombre), un chapitre (1 terminé, 0 non).
+class-csv-chapters = Chapitres terminés (sur { $total })
+class-csv-story = { $story } (sur { $total })
+class-csv-chapter = { $story } { $number } : { $chapter } (1 = terminé)
 
 ## L'affichage du terminal
 

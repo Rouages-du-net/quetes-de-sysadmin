@@ -71,6 +71,23 @@ un système entièrement simulé : rien ne sort du navigateur.
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).
 
+## Enseigner
+
+- **Pour les enseignant·es** (`/fr/enseignants/`, `/en/teachers/`) : une
+  fiche par chapitre (objectif, prérequis, commandes découvertes,
+  difficulté, durée indicative), et pour chaque histoire une **fiche à
+  imprimer** : les objectifs des chapitres sans les solutions, les pages du
+  manuel à lire, la documentation officielle, des questions pour vérifier
+  ce qu'on a appris et, repliée, une version enseignant·e avec le chemin de
+  solution (elle ne s'imprime que si tu l'ouvres). A4 ou Letter, noir et
+  blanc, liens écrits en entier.
+- **Le tableau de classe** (`/fr/enseignants/classe/`) : glisse les
+  fichiers de sauvegarde de tes élèves ou colle leurs codes ; télécharge le
+  tableau en CSV (une colonne par chapitre, la dernière sauvegarde, la
+  série d'astreinte ; séparé par des points-virgules en français, par des
+  virgules en anglais, comme l'attendent les tableurs, et modifiable) ou
+  imprime-le. Tout se passe dans ton navigateur : rien n'est envoyé.
+
 ## Développer
 
 ```bash
