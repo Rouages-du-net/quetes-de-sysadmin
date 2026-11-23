@@ -96,6 +96,19 @@ describe('useradd and adduser', () => {
   });
 });
 
+describe('sudo -k', () => {
+  it('alone: forgets the cached password silently; the next sudo asks again', () => {
+    const s = shell();
+    expect(s.execute('sudo whoami')).toBe('root');
+    expect(s.execute('sudo -k')).toBe('');
+    expect(s.lastStatus).toBe(0);
+    expect(s.execute('sudo -K')).toBe('');
+    s.execute('sudo whoami');
+    expect(s.prompt()).toContain('password for you');
+    expect(s.execute('sunflower')).toBe('root');
+  });
+});
+
 describe('passwd and su', () => {
   it("one's own password: the current one first; then sudo takes the new one", () => {
     const s = shell();

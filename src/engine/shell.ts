@@ -1518,6 +1518,14 @@ export class Shell implements Game {
         ].join('\n');
       }
     }
+    // sudo -k or -K alone forgets the cached password and asks for nothing
+    // (sudo(8): "-k … When used without a command, invalidates the user's
+    // cached credentials").
+    if (withSudo && this.known().includes('sudo') && /^\s*sudo\s+-[kK]\s*$/.test(line)) {
+      this.authenticated = false;
+      this.status = 0;
+      return '';
+    }
     if (withSudo && this.known().includes('sudo') && !this.authenticated && this.who !== 'root') {
       this.waiting = { line, attempts: 0, stdin, capture };
       const lecture = this.doneLecture ? '' : this.t('sudo-lecture');
