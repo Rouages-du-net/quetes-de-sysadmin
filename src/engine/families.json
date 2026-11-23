@@ -1,0 +1,1963 @@
+{
+ "Add-ADGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Add-ADPrincipalGroupMembership": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Add-Content": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Add-LocalGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Block-SmbShareAccess": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "CALL": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "CHGDTAARA": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "CLROUTQ": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "CPYTOIMPF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "CRTSAVF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "Clear-Host": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "ConvertTo-Csv": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "ConvertTo-SecureString": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Copy-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "DLTSPLF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPDTAARA": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPJOBLOG": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPLIB": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPLOG": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPMSG": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPRCDLCK": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "DSPSAVF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "Disable-ADAccount": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Disable-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Disable-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Disable-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "ENDJOB": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "ENDSBS": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "Enable-ADAccount": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Enable-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Enable-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Enable-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Export-Csv": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "ForEach-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Format-List": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Format-Table": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADComputer": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADDefaultDomainPasswordPolicy": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADDomain": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADDomainController": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADObject": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADOptionalFeature": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADOrganizationalUnit": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADPrincipalGroupMembership": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ADUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Acl": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Alias": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ChildItem": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-CimInstance": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Command": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ComputerInfo": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Content": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Date": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-EventLog": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-GPInheritance": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-GPO": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-GPOReport": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-GPPermission": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-GPResultantSetOfPolicy": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Help": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-History": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ItemProperty": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ItemPropertyValue": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-LocalGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-LocalGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Location": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Member": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Module": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetConnectionProfile": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetFirewallAddressFilter": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetFirewallPortFilter": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetFirewallProfile": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-NetIPAddress": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-PSDrive": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Process": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-ScheduledTaskInfo": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Service": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-SmbShare": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-SmbShareAccess": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Variable": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-Volume": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-WinEvent": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Get-WmiObject": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Grant-SmbShareAccess": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Group-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Import-Csv": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Import-Module": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Invoke-GPUpdate": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Measure-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Move-ADObject": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Move-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ADGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ADOrganizationalUnit": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ADUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-GPLink": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-GPO": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ItemProperty": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-LocalGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ScheduledTaskAction": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ScheduledTaskPrincipal": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-ScheduledTaskTrigger": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "New-SmbShare": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Out-File": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Out-Host": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Out-Null": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Out-String": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Pop-Location": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Push-Location": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Read-Host": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Register-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ADGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ADGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ADOrganizationalUnit": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ADPrincipalGroupMembership": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ADUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-GPLink": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-GPO": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-ItemProperty": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-LocalGroupMember": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Remove-SmbShare": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Rename-Item": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Restart-Service": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Restore-ADObject": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Revoke-SmbShareAccess": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "SAVLIB": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "SBMJOB": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "SIGNOFF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "STRSBS": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "Search-ADAccount": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Select-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Select-String": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ADAccountPassword": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ADDefaultDomainPasswordPolicy": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ADGroup": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ADOrganizationalUnit": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ADUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-Acl": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-Content": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-GPInheritance": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-GPLink": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-GPPermission": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ItemProperty": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-LocalUser": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-Location": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-NetConnectionProfile": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-NetFirewallProfile": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-NetFirewallRule": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Set-Service": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Sort-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Start-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Start-Service": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Start-Sleep": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Stop-Process": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Stop-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Stop-Service": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Test-NetConnection": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Test-Path": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Unblock-SmbShareAccess": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Unlock-ADAccount": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Unregister-ScheduledTask": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "WRKACTJOB": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKJOBQ": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKMSGQ": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKOBJLCK": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKOUTQ": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKSBS": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKSPLF": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "WRKSYSSTS": [
+  "ibmi",
+  {
+   "cl": true
+  }
+ ],
+ "Where-Object": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Write-Error": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Write-Host": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Write-Output": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "Write-Warning": [
+  "windows",
+  {
+   "cmdlet": true,
+   "ownOptions": true
+  }
+ ],
+ "amtool": [
+  "prometheus",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ansible": [
+  "ansible",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ansible-doc": [
+  "ansible",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ansible-inventory": [
+  "ansible",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ansible-playbook": [
+  "ansible",
+  {
+   "ownOptions": true
+  }
+ ],
+ "aws": [
+  "objects",
+  {
+   "ownOptions": true
+  }
+ ],
+ "caddy": [
+  "caddy",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cancel": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "cmd": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "cobc": [
+  "cobol",
+  {
+   "ownOptions": true
+  }
+ ],
+ "compact": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "cupsaccept": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cupsctl": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cupsd": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cupsd.conf": [
+  "cups",
+  {
+   "section": 5
+  }
+ ],
+ "cupsdisable": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cupsenable": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cupsreject": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "db2": [
+  "ibmi",
+  {
+   "ownOptions": true
+  }
+ ],
+ "doveadm": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "doveadm-search-query": [
+  "inbound",
+  {
+   "section": 7
+  }
+ ],
+ "doveconf": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "driverless": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "forgejo": [
+  "forge",
+  {
+   "ownOptions": true
+  }
+ ],
+ "forgejo-api": [
+  "forge",
+  {
+   "section": 7
+  }
+ ],
+ "forgejo-runner": [
+  "forge",
+  {
+   "ownOptions": true
+  }
+ ],
+ "freeradius": [
+  "directory",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "garage": [
+  "objects",
+  {
+   "ownOptions": true
+  }
+ ],
+ "gpresult": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "gpupdate": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "growpart": [
+  "libvirt",
+  {
+   "ownOptions": true
+  }
+ ],
+ "haproxy": [
+  "ha",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "icacls": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "ipconfig": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "ipmitool": [
+  "nut",
+  {
+   "ownOptions": true
+  }
+ ],
+ "k3s": [
+  "k8s",
+  {
+   "ownOptions": true,
+   "section": 1
+  }
+ ],
+ "keepalived": [
+  "ha",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "keepalived.conf": [
+  "ha",
+  {
+   "section": 5
+  }
+ ],
+ "kubectl": [
+  "k8s",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldapadd": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldapdelete": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldapmodify": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldappasswd": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldapsearch": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldapwhoami": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ldif": [
+  "directory",
+  {
+   "section": 5
+  }
+ ],
+ "lp": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "lpadmin": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "lpinfo": [
+  "cups",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "lpoptions": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "lpq": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "lpr": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "lprm": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "lpstat": [
+  "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mariadb": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mariadb-admin": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mariadb-check": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mariadb-dump": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mariadb-secure-installation": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mysql": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mysqladmin": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mysqlcheck": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "mysqldump": [
+  "mariadb",
+  {
+   "ownOptions": true
+  }
+ ],
+ "net": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "netsh": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "nut.conf": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "pidof": [
+  "ha",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "powershell": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "printers.conf": [
+  "cups",
+  {
+   "section": 5
+  }
+ ],
+ "prometheus": [
+  "prometheus",
+  {
+   "ownOptions": true
+  }
+ ],
+ "prometheus-alertmanager": [
+  "prometheus",
+  {
+   "ownOptions": true
+  }
+ ],
+ "prometheus-node-exporter": [
+  "prometheus",
+  {
+   "ownOptions": true
+  }
+ ],
+ "promtool": [
+  "prometheus",
+  {
+   "ownOptions": true
+  }
+ ],
+ "qemu-img": [
+  "libvirt",
+  {
+   "ownOptions": true
+  }
+ ],
+ "radtest": [
+  "directory",
+  {
+   "ownOptions": true
+  }
+ ],
+ "rclone": [
+  "objects",
+  {
+   "ownOptions": true
+  }
+ ],
+ "reg": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "rspamadm": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "rspamc": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "sc.exe": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "schtasks": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "sieve-test": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "sievec": [
+  "inbound",
+  {
+   "ownOptions": true
+  }
+ ],
+ "slapcat": [
+  "directory",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "slappasswd": [
+  "directory",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "socat": [
+  "ha",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "system": [
+  "ibmi",
+  {
+   "ownOptions": true
+  }
+ ],
+ "systemd-machine-id-setup": [
+  "libvirt",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "takeown": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "tcpdump": [
+  "ha",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "tn5250": [
+  "ibmi",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ups.conf": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "upsc": [
+  "nut",
+  {
+   "ownOptions": true
+  }
+ ],
+ "upscmd": [
+  "nut",
+  {
+   "ownOptions": true
+  }
+ ],
+ "upsd": [
+  "nut",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "upsd.conf": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "upsd.users": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "upsdrvctl": [
+  "nut",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "upsmon": [
+  "nut",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "upsmon.conf": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "upsrw": [
+  "nut",
+  {
+   "ownOptions": true
+  }
+ ],
+ "upssched": [
+  "nut",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "upssched.conf": [
+  "nut",
+  {
+   "section": 5
+  }
+ ],
+ "virsh": [
+  "libvirt",
+  {
+   "ownOptions": true
+  }
+ ],
+ "virt-clone": [
+  "libvirt",
+  {
+   "ownOptions": true
+  }
+ ],
+ "virt-install": [
+  "libvirt",
+  {
+   "ownOptions": true
+  }
+ ],
+ "wevtutil": [
+  "windows",
+  {
+   "winexe": true,
+   "ownOptions": true
+  }
+ ]
+}

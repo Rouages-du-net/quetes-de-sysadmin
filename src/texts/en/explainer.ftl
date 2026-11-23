@@ -66,6 +66,22 @@ explainer-db-too-many = Every connection slot of the database server is taken (m
     .match =
         Too many connections
 
+explainer-ups-unknown = upsd answered, but it serves no UPS by that name. A UPS's name is its section in the server's /etc/nut/ups.conf, written NAME@HOST (localhost by default): upsc -l HOST lists the names that server knows. In upsmon.conf, a MONITOR line naming a UPS that doesn't exist watches nothing: upsmon will never see it go on battery.
+    .match =
+        Unknown UPS
+        does not exist on server
+
+explainer-ups-denied = upsd refused this account. Each account in the server's /etc/nut/upsd.users says what it may do: instcmds (the instant commands for upscmd, or ALL), actions = SET (to change variables with upsrw), upsmon primary or secondary (for upsmon). A wrong user name or password gives the same answer. upsd rereads upsd.users when it is reloaded (systemctl reload nut-server).
+    .match =
+        Instant command failed: Access denied
+        Set variable failed: Access denied
+        Can't login to UPS
+
+explainer-ups-driver = upsd knows this UPS, but its driver isn't running, or lost the UPS: upsd has no data to give. The driver is a service of its own on Debian (systemctl status nut-driver@NAME, journalctl -u nut-driver@NAME), started from the UPS's section in /etc/nut/ups.conf; check the USB cable too.
+    .match =
+        Driver not connected
+        Data stale
+
 explainer-db-syntax = The database server could not read the SQL statement. The text after "near" is where it stopped understanding: the mistake is just before it, often a missing comma or quote, a word misspelt, or a statement this server doesn't know. A statement typed in the shell between double quotes keeps its single quotes intact: mariadb -e "SELECT … WHERE name = 'x'".
     .match =
         You have an error in your SQL syntax
@@ -73,6 +89,26 @@ explainer-db-syntax = The database server could not read the SQL statement. The 
 explainer-db-read-only = The database server is read-only (its read_only variable is on): it refuses writes from ordinary accounts. On a replica that is on purpose: writes go to the primary, and the replica receives them. SELECT @@read_only shows the setting; connect to the primary to write.
     .match =
         running with the --read-only option
+
+explainer-sieve-compile = The Sieve script could not be compiled, so it can't run. The message gives the script's line and the first problem only: an unknown command is often a typo, or an extension used without being required at the top (require ["fileinto", "vacation"];); "expected end of command ';'" means a semicolon is missing at the end of the line before. Fix it, then compile again with sievec before activating the script.
+    .match =
+        error: validation failed
+        error: parse failed
+        Compilation failed
+
+explainer-dovecot-config = Dovecot can't read its configuration: the file and the line are in the message. "Unknown setting" is a misspelled setting (or one from another Dovecot version: 2.4 renamed many), "Missing '{"}"}'" a section left open. As long as the file is wrong, doveadm and doveconf stop, and a reload keeps the old configuration. doveconf -n reads it again once fixed.
+    .match =
+        Error in configuration file
+
+explainer-mail-unknown-user = The user isn't in Dovecot's userdb. Dovecot's users are what its userdb returns (here a passwd-file), not the machine's accounts, and the name is usually the whole address: user@domain. doveadm user '*' lists the users Dovecot knows.
+    .match =
+        User doesn't exist
+
+explainer-search-query = doveadm didn't understand the search query. Each key takes its value just after it (mailbox Trash, savedbefore 2031-01-01, larger 5M); a date is YYYY-MM-DD or an interval such as 30d or 2w (there is no year unit); OR goes between two keys, and parentheses must be escaped from the shell. man doveadm-search-query lists the keys.
+    .match =
+        Invalid search date parameter
+        Fatal: *Unknown argument
+        Fatal: *Missing argument
 
 explainer-refused = The machine answered, but nothing accepted the connection on that port: no program listens there, or a firewall actively rejects it. On the server, ss -tlnp lists the ports where programs listen, and systemctl status says whether the service runs. Check the address and the port you used, too.
     .match =
@@ -157,3 +193,35 @@ explainer-no-such-file = Nothing exists at that path, as it was spelled. A path 
 ## The setting, next to Tips and Autosave.
 display-explainer = Error help
 display-explainer-title = Offer a short explanation under common error messages
+
+explainer-s3-date = The object store refused the request because of its date. Every S3 request is signed with the date and time of the machine that sends it: Amazon S3 refuses one more than 15 minutes away from its own clock (RequestTimeTooSkewed), Garage one dated more than 24 hours before its clock ("Date is too old"); a presigned URL is refused once its X-Amz-Expires has passed. The server isn't the problem: date and timedatectl show this machine's clock, and whether NTP keeps it right.
+    .match =
+        Date is too old
+        RequestTimeTooSkewed
+
+explainer-s3-region = The request was signed for another region than the store's. The region is part of the signature (its scope: date/region/s3/aws4_request), so a wrong one makes the signature invalid even with the right key. The message names the scope the server expected: put that region in the client's configuration (region in ~/.aws/config or rclone.conf, or --region).
+    .match =
+        AuthorizationHeaderMalformed
+        unexpected scope
+
+explainer-s3-access-denied = The object store knows the key (or refused a request without one) and won't let it do this. "Operation is not allowed for this key" means the key lacks the permission on that bucket (read to list and get, write to put and delete, owner for the bucket's settings); "No such key" an access key ID it doesn't know; "Invalid signature" a wrong secret; "anonymous access" a request sent without a key. With Garage, sudo garage bucket info BUCKET shows each key's permissions; aws configure list shows which key the client uses.
+    .match =
+        Operation is not allowed for this key
+        Garage does not support anonymous access yet
+        Invalid signature
+        No such key: 
+
+explainer-s3-no-bucket = No bucket has that name for this store. Check the spelling (bucket names are lower case), and that the client talks to the right endpoint (--endpoint-url, endpoint_url in ~/.aws/config, endpoint in rclone.conf): another store has other buckets. aws s3 ls lists the buckets this key may use; with Garage, sudo garage bucket list lists them all.
+    .match =
+        NoSuchBucket
+
+explainer-s3-credentials = The AWS command-line tool found no key to sign with. It looks on the command line (--profile), in the environment (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, AWS_PROFILE), then in ~/.aws/credentials and ~/.aws/config, in the home of the user who runs it: under sudo that is root's home, not yours. aws configure list shows what it found, and where.
+    .match =
+        Unable to locate credentials
+        The config profile (*) could not be found
+
+explainer-garage-layout = Garage didn't apply the layout change. A layout is changed in two steps: changes are staged (garage layout assign, remove), then applied with garage layout apply --version N, N being the next version that garage layout show prints, so that nobody applies a layout they haven't read. A layout must also keep at least as many nodes with a capacity as the replication factor.
+    .match =
+        Please pass the new layout version number
+        Invalid new layout version
+        is smaller than the replication factor

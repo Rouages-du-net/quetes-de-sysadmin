@@ -607,6 +607,23 @@ function ssSummary(game: Shell): string {
 }
 
 export const SMALL_TOOLS: Record<string, Command> = {
+  // sleep: the story decides what the wait means (state.slept: The Bike Share's Prometheus, The Pool's cluster).
+  sleep: {
+    ownOptions: true,
+    launch: ({ args, game }) => {
+      if (!args.length) return game.error("sleep: missing operand\nTry 'sleep --help' for more information.");
+      let total = 0;
+      for (const a of args) {
+        const m = /^(\d+(?:\.\d+)?)([smhd]?)$/.exec(a);
+        if (!m) return game.error(`sleep: invalid time interval '${a}'\nTry 'sleep --help' for more information.`);
+        total += Number(m[1]) * { '': 1, s: 1, m: 60, h: 3600, d: 86400 }[m[2]]! * 1000;
+      }
+      // The story decides what the wait means (state.onSleep: time passes); elsewhere, it returns at once.
+      game.state.slept = (game.state.slept ?? 0) + total;
+      return '';
+    },
+  },
+
   basename: { ownOptions: true, launch: basename },
   dirname: { ownOptions: true, launch: dirname },
   realpath: { ownOptions: true, launch: realpath },

@@ -11,6 +11,26 @@ import { COMMANDS, type Command } from './index';
 import { player } from '../world';
 import { LINUX_ONLY } from '../freebsd';
 import { NOT_ON_SOLARIS } from '../solaris';
+import { NeedsLoading } from '../loading';
+import type { EXAMPLES } from './examples';
+
+// A page's examples and SEE ALSO (examples.ts) load with the manual's texts:
+// the interface fetches both before a line that reads the manual (needs() in
+// game.ts) and in the background once the terminal is ready.
+let extras: typeof EXAMPLES | null = null;
+export const examplesLoaded = () => extras !== null;
+export const loadExamples = (): Promise<void> =>
+  extras
+    ? Promise.resolve()
+    : import('./examples').then((m) => {
+        extras = m.EXAMPLES;
+      });
+/** A page's examples and SEE ALSO (its command's own when examples.ts has none). */
+function extra(name: string, c: Command): { examples: string[]; see: string[] } {
+  if (!extras) throw new NeedsLoading('the manual\'s examples', loadExamples);
+  const e = extras[name];
+  return { examples: e?.examples ?? c.examples ?? [], see: e?.see ?? c.see ?? [] };
+}
 
 // The page's Fluent identifier: the dot is reserved for attributes
 // ("jail.conf" → man-jail_conf).
@@ -32,7 +52,7 @@ function texts(name: string, t: Translate, flavour: Flavour = '') {
   const options = (name: string, c: Command): [string, string][] => (k !== page(name) ? bsdOptions(k, t) : (c.options ?? []).map((o) => [o, t(`${page(name)}.option-${optionKey(o)}`)]));
   // A language can adapt the command of an example that contains words (.command-N): grep "my password".
   const examples = (name: string, c: Command): [string, string][] =>
-    (c.examples ?? []).map((e, i) => {
+    extra(name, c).examples.map((e, i) => {
       const own = `${page(name)}.command-${i + 1}`;
       // The player's account (vous@wiki, /home/vous) and the machines (ssh royaume) take their name in the language (you@wiki, ssh kingdom).
       const command = t.exists(own) ? t(own) : translateHosts(e.replace(/\byou\b/g, player(t)), t, [translator('en')]);
@@ -86,7 +106,7 @@ export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour
   const ex = examples(name, c);
   if (ex.length) sections.push([t('manual-section-examples'), ex.map(([cmd, d]) => indent(cmd) + '\n' + indent(majuscule(d), 14)).join('\n\n')]);
   // On FreeBSD, no pointer to a Debian-only command (systemctl, apt…).
-  const see = (c.see ?? []).filter((v) => !(flavour === 'bsd' && LINUX_ONLY.includes(v)) && !(flavour === 'solaris' && NOT_ON_SOLARIS.includes(v)));
+  const see = extra(name, c).see.filter((v) => !(flavour === 'bsd' && LINUX_ONLY.includes(v)) && !(flavour === 'solaris' && NOT_ON_SOLARIS.includes(v)));
   if (see.length) sections.push([t('manual-section-see-also'), indent(see.map((v) => `${v}(${section(v)})`).join(', '))]);
   return [`${title}${' '.repeat(white)}${middle}${' '.repeat(white)}${title}`, ...sections.map(([s, x]) => `${s}\n${x}`)].join('\n\n');
 }
@@ -95,7 +115,7 @@ export function pageMan(name: string, c: Command, t: Translate, flavour: Flavour
 export function manualParts(name: string, t: Translate) {
   const c = COMMANDS[name];
   const x = texts(name, t);
-  return { synopsis: x.synopsis, description: x.description, options: x.options(name, c), examples: x.examples(name, c), see: c.see ?? [] };
+  return { synopsis: x.synopsis, description: x.description, options: x.options(name, c), examples: x.examples(name, c), see: extra(name, c).see };
 }
 
 export function help(name: string, c: Command, t: Translate): string {

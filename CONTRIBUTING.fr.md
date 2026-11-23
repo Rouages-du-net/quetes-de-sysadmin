@@ -100,6 +100,36 @@ ensuite le budget de la première visite : le code propre à l'histoire doit
 rester dans son morceau, donc le cœur du moteur (shell, commandes,
 `console.ts`) n'importe jamais un chapitre.
 
+#### Les commandes propres à une histoire
+
+Un outil qu'une seule histoire (ou quelques-unes) utilise va dans une
+**famille du moteur**, pas dans la première visite (`src/engine/families.ts`,
+voir `docs/DEPLOYMENT.md`, « Chunks and budget »). Son moteur
+(`src/engine/<outil>.ts`) et ses commandes (`src/engine/commands/<outil>.ts`)
+restent où ils sont ; ensuite :
+
+1. `src/engine/families/<famille>.ts` importe ses commandes et appelle
+   `registerFamily('<famille>', { ...MES_COMMANDES }, HOOKS)` (copie
+   `families/cups.ts`) ; son chargeur va dans `FAMILIES` et le type de ses
+   `HOOKS` dans `Hooks` (`families.ts`).
+2. Le module de l'histoire l'importe : `import '../families/<famille>';`
+   (`tests/families.test.ts` vérifie que chaque histoire dont les chapitres
+   listent les commandes de la famille le fait).
+3. Le cœur (le shell, les autres commandes) n'importe jamais les modules de
+   la famille : là où il doit appeler l'outil, il passe par un crochet,
+   `family('<famille>').maFonction(…)` (lève `NeedsLoading` : la ligne
+   repart une fois la famille là) ou `familyIfLoaded('<famille>')?.…` pour
+   une question à laquelle seules les machines de l'histoire peuvent
+   répondre oui. `tests/families.test.ts` échoue si le jeu atteint un module
+   d'une famille.
+4. Ses commandes restent dans la table de `commands/index.ts` par leur
+   entrée (options, section, `cmdlet`…), générée dans
+   `src/engine/families.json` par `npm run catalogue` ; leurs options et
+   exemples vont dans `pages.ts` et `examples.ts` comme pour toute commande.
+
+Une commande que toute histoire peut croiser (`sleep`, `base64`) reste dans
+le cœur.
+
 ### Le chapitre (`Chapter`, dans `src/engine/world.ts`)
 
 - `id`, `number`, et l'histoire qui l'accueille (`src/engine/chapters/index.ts`).
@@ -177,8 +207,12 @@ Un outil (nginx, nftables, slapd…) a son moteur dans `src/engine/<outil>.ts`
 (sans DOM, sans texte affiché) et ses commandes dans
 `src/engine/commandes/<outil>.ts`. Pour chaque commande :
 
-- son entrée dans `src/engine/commands/index.ts` ;
-- ses options et exemples dans `src/engine/commands/pages.ts` ;
+- son entrée dans `src/engine/commands/index.ts`, ou dans une famille du
+  moteur quand seules quelques histoires l'utilisent (voir « Les commandes
+  propres à une histoire ») ;
+- ses options dans `src/engine/commands/pages.ts`, ses exemples et son VOIR
+  AUSSI dans `src/engine/commands/examples.ts` (ils se chargent avec le
+  manuel) ;
 - sa page dans `src/texts/en/manual.ftl` et `fr/manual.ftl`
   (`man-<commande>`, `.synopsis`, `.option-X`, `.example-N`) ;
 - une ligne dans le tableau des écarts de `SCENARIOS.md` ;

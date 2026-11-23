@@ -93,3 +93,6 @@ machine-hearth-motd = The Health Centre — Millbrook Health Centre's hypervisor
 machine-lb1-motd = The Blood Drive — lb1, the Lindenvale Blood Service's first load balancer (keepalived, HAProxy) in front of donate.lindenvale.example. Its twin is lb2. ip a before anything else.
 machine-baton-motd = The Choir — baton, the Riverside Community Choir's server: the site, the members' area and its database, and the members' data. The retention policy is in /srv/choir/docs.
 machine-trowel-motd = The Allotments — trowel, the Greenholme Allotments Association's database server (MariaDB): Plotline's bookings, members and waiting list. sudo mariadb before anything else.
+machine-slipway-motd = The Lifeboat — slipway, Seaholme Lifeboat's mail server: Postfix receives, rspamd scores, Dovecot stores in /var/vmail. sudo tail /var/log/mail.log before anything else.
+machine-belay-motd = The Climbing Wall — belay, the server of Overhang, the community climbing hall: bookings, memberships, the door's badges. It sits on a UPS in the office rack (Network UPS Tools: upsc, upsmon).
+machine-wings-motd = The Dance Troupe — wings, the Kestrel Dance Company's server and a node of its Garage cluster. sudo garage status before anything else; aws and rclone talk to s3.kestrel.example.

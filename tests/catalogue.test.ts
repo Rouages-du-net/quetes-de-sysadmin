@@ -9,8 +9,10 @@ import { join } from 'node:path';
 import { STORIES } from '../src/engine/chapters';
 import { CATALOGUE } from '../src/engine/catalogue';
 import { loadStory, STORY_MODULES } from '../src/engine/story-registry';
+import { FAMILIES, familyCommands, type Family } from '../src/engine/families';
 
 const FILE = 'src/engine/catalogue.json';
+const FAMILY_FILE = 'src/engine/families.json';
 const TEXTS = 'src/texts/en';
 const CHAPTERS = 'src/engine/chapters';
 
@@ -71,11 +73,26 @@ const generated = () => ({
   })),
 });
 
+// families.json: each family command's family and entry, without its
+// implementation (what the table of commands holds before the family loads).
+const familyEntries = () => {
+  const out: [string, [string, unknown]][] = [];
+  for (const f of Object.keys(FAMILIES) as Family[])
+    for (const [name, { launch: _, ...entry }] of Object.entries(familyCommands(f))) out.push([name, [f, entry]]);
+  return Object.fromEntries(out.sort(([a], [b]) => (a < b ? -1 : 1)));
+};
+
 describe('The catalogue', () => {
   it('is up to date with chapters/index.ts (npm run catalogue)', () => {
     const json = `${JSON.stringify(generated(), null, 1)}\n`;
     if (process.env.UPDATE_CATALOGUE) writeFileSync(FILE, json);
     expect(readFileSync(FILE, 'utf8'), 'catalogue.json is out of date: run `npm run catalogue`').toBe(json);
+  });
+
+  it('knows each engine family\'s commands (families.json, npm run catalogue)', () => {
+    const json = `${JSON.stringify(familyEntries(), null, 1)}\n`;
+    if (process.env.UPDATE_CATALOGUE) writeFileSync(FAMILY_FILE, json);
+    expect(readFileSync(FAMILY_FILE, 'utf8'), 'families.json is out of date: run `npm run catalogue`').toBe(json);
   });
 
   it('has a story module per story, with the same chapters', async () => {

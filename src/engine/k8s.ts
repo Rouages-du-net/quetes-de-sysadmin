@@ -320,21 +320,9 @@ export function tabwrite(text: string, minwidth: number, padding: number): strin
   return out.join('\n');
 }
 
-const b64 = (s: string) => {
-  const bytes = new TextEncoder().encode(s);
-  let bin = '';
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin);
-};
-export const base64Encode = b64;
-export function base64Decode(s: string): string | null {
-  try {
-    const bin = atob(s.replace(/\s/g, ''));
-    return new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
-  } catch {
-    return null;
-  }
-}
+import { base64Decode, base64Encode } from './base64';
+export { base64Decode, base64Encode };
+const b64 = base64Encode;
 
 // ——— Quantities (https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/quantity/) ———
 

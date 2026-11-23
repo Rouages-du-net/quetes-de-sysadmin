@@ -106,6 +106,12 @@ export const MACHINES: Machine[] = [
   machine('baton', '192.0.2.112', 'choir'),
   // The Allotments: an allotments association's MariaDB server (trowel) and, behind it, the app's server and the replica.
   machine('trowel', '192.0.2.131', 'allotments'),
+  // The Lifeboat: a volunteer lifeboat station's inbound mail server (Postfix, Dovecot with Sieve, rspamd).
+  machine('slipway', '192.0.2.140', 'lifeboat'),
+  // The Climbing Wall: the hall's server (belay) behind a UPS, and the NAS (harness) on the office network.
+  machine('belay', '192.0.2.141', 'climbing-wall'),
+  // The Dance Troupe: a community dance troupe's server, a node of its Garage cluster (S3 object storage).
+  machine('wings', '192.0.2.160', 'dance-troupe'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

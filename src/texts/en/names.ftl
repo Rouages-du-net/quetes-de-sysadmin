@@ -503,3 +503,22 @@ name-message_from_halima-txt = message_from_halima.txt
 name-note_from_lwazi-txt = note_from_lwazi.txt
 name-scan_from_selin-txt = scan_from_selin.txt
 name-message_from_moana-txt = message_from_moana.txt
+## The Lifeboat
+name-message_from_marisol-txt = message_from_marisol.txt
+name-note_from_yerlan-txt = note_from_yerlan.txt
+name-message_from_leilani-txt = message_from_leilani.txt
+name-sample-booking-eml = sample-booking.eml
+name-sample-list-eml = sample-list.eml
+## The Climbing Wall
+name-message_from_nkechi-txt = message_from_nkechi.txt
+name-notes_from_haruto-txt = notes_from_haruto.txt
+name-message_from_akosua-txt = message_from_akosua.txt
+name-message_from_thandiwe-txt = message_from_thandiwe.txt
+## The Dance Troupe
+name-message_from_esperanza-txt = message_from_esperanza.txt
+name-notes_from_teodora-txt = notes_from_teodora.txt
+name-message_from_linh-txt = message_from_linh.txt
+name-message_from_anahera-txt = message_from_anahera.txt
+name-message_from_farrukh-txt = message_from_farrukh.txt
+name-message_from_siosaia-txt = message_from_siosaia.txt
+name-link_for_zuri-txt = link_for_zuri.txt

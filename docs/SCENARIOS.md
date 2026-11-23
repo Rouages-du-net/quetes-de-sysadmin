@@ -278,7 +278,17 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | nginx's access logs (`nginx.ts`, The Choir) | `log_format name [escape=…] 'string' …` (`combined` predefined, a duplicate refused), `access_log path [format]` and `access_log off` at `http` or `server` level (the server's own replace the http block's; Debian's default `/var/log/nginx/access.log combined`), checked by `nginx -t` (`unknown log format`, `unknown "x" variable`); `map $source $variable { … }` in `http`: exact keys, then regular expressions in order (`~`, `~*`, numbered and named captures, PCRE's `(?P<name>…)`), `default`, `hostnames`/`volatile` accepted, `include`, nginx's messages (`invalid number of the map parameters`, `the duplicate "x" variable`); the variables of the log line (`$remote_addr`, `$remote_user`, `$time_local`, `$time_iso8601`, `$request`, `$status`, `$body_bytes_sent`, `$http_referer`, `$http_user_agent`, `$host`, `$request_uri`…, an empty one written `-`); a deleted log is created again at the next line | `buffer=`, `gzip=`, `if=`, `open_log_file_cache`, `error_log`'s format, `map` over strings with `hostnames` matching, a map in `stream` |
 | MariaDB's server (`mariadb.ts`, The Allotments) | MariaDB 11.8 as Debian 13 ships it: `/etc/mysql/my.cnf` and its `!includedir` read at start (the groups `[server]`, `[mysqld]`, `[mariadb]`, `[mariadbd]`, `[mariadb-11.8]`, dashes or underscores, `loose-`, `skip-`; an unknown variable or a bind-address the machine doesn't have stops it, with mariadbd's messages); the variables (`SET GLOBAL` for the dynamic ones, `ERROR 1238` for the others, `SET PERSIST` refused; `wait_timeout` copied into each session when it connects); accounts `'user'@'host'` tried from the most specific host, the named user before the anonymous one, `unix_socket` and `mysql_native_password` (the real hash), `IDENTIFIED VIA … OR …`, Debian's root and `mysql@localhost`, `mariadb.sys`; privileges at the global, database and table levels; `max_connections` and the extra slot of `CONNECTION ADMIN`; `wait_timeout` closing idle sessions ("Aborted connection" in the journal); `read_only` and `READ_ONLY ADMIN`; the slow query log in MariaDB's format; a row-based binary log with GTIDs, a replica's IO and SQL threads, their errors (1062, 1032), `sql_slave_skip_counter`, `Seconds_Behind_Master`; the `mysql` and `mysqld` aliases of the unit | one binary log file, no rotation; only row changes replicate (no DDL, no account statement); no reverse DNS (as with `skip-name-resolve`); no roles, no column privileges, no TLS; the clock moves thirty seconds per command; a dump's consistency is decided from the server's state (writes arriving, locks), not from the rows of a real moment |
 | MariaDB's SQL (`mariadb-sql.ts`) | `SHOW` (DATABASES, TABLES, [FULL] PROCESSLIST, VARIABLES, STATUS, GRANTS, CREATE TABLE, CREATE USER, INDEX, REPLICA/SLAVE STATUS, MASTER/BINLOG STATUS, BINARY LOGS, WARNINGS), `USE`, `SELECT` (columns, `count(*)`, WHERE as `sql-where.ts` reads it, one GROUP BY column, ORDER BY, LIMIT; `@@variables`, `VERSION()`, `CURRENT_USER()`…; `information_schema.PROCESSLIST`, `mysql.user`, `mysql.db`), `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `CREATE/DROP DATABASE` and `TABLE` (as a dump writes them), `CREATE/DROP INDEX`, `ALTER TABLE ADD/DROP INDEX`, `EXPLAIN` (type ALL or ref, rows from the table's size), `CHECKSUM TABLE`, `KILL`, `SET`, account statements, `GRANT`, `REVOKE`, `FLUSH`, `CHANGE MASTER TO`, `START/STOP/RESET SLAVE`; the error codes and SQL states of the KB (1044, 1045, 1046, 1049, 1054, 1062, 1064, 1130, 1142, 1146, 1198, 1227, 1288, 1290, 1396, 1698…) | no joins, subqueries, expressions or functions in the columns; `=` and LIKE compare as `sql-where.ts` does; transactions accepted, writes applied at once; values are text; `mysql.user` is read, never written |
-| `mariadb`, `mariadb-dump`, `mariadb-admin`, `mariadb-check`, `mariadb-secure-installation` (`mariadb-client.ts`, loaded with the story; the entries in `commands/mariadb.ts`) | the client's tables on a terminal, tab-separated rows in a pipe or a file (`-B`, `-N`, `-t`, `-E`, `\G`), `-e` and scripts with "at line N" and `-f`, `-p` asked or glued, `-h` over TCP to the story's machines (bind-address and ufw decide), the interactive monitor (`MariaDB [db]>`, `use`, `source`, `status`, `help`, a statement over several lines, `exit`, the reconnection after a lost connection); `mariadb-dump`'s header and statements as 11.8 writes them (sandbox line, conditional comments, `DROP TABLE`, `CREATE TABLE`, `LOCK TABLES`, extended INSERT), `--single-transaction`, `--lock-tables`, `-x`, `--skip-lock-tables`, `-A`, `-B`, `--master-data`, `--gtid`, `--dump-slave`, `-r`; `mariadb-admin` ping, status, processlist, kill, variables, version, create, drop, shutdown, start-slave/stop-slave; `mariadb-check`; `mariadb-secure-installation`'s questions; the old names `mysql`, `mysqldump`, `mysqladmin`, `mysqlcheck` | no `~/.my.cnf`, no pager, no history; the old names give no deprecation warning; routines and events exist in no database of the story; the monitor ignores Ctrl-C |
+| `mariadb`, `mariadb-dump`, `mariadb-admin`, `mariadb-check`, `mariadb-secure-installation` (`mariadb-client.ts`, loaded with the story: the `mariadb` family) | the client's tables on a terminal, tab-separated rows in a pipe or a file (`-B`, `-N`, `-t`, `-E`, `\G`), `-e` and scripts with "at line N" and `-f`, `-p` asked or glued, `-h` over TCP to the story's machines (bind-address and ufw decide), the interactive monitor (`MariaDB [db]>`, `use`, `source`, `status`, `help`, a statement over several lines, `exit`, the reconnection after a lost connection); `mariadb-dump`'s header and statements as 11.8 writes them (sandbox line, conditional comments, `DROP TABLE`, `CREATE TABLE`, `LOCK TABLES`, extended INSERT), `--single-transaction`, `--lock-tables`, `-x`, `--skip-lock-tables`, `-A`, `-B`, `--master-data`, `--gtid`, `--dump-slave`, `-r`; `mariadb-admin` ping, status, processlist, kill, variables, version, create, drop, shutdown, start-slave/stop-slave; `mariadb-check`; `mariadb-secure-installation`'s questions; the old names `mysql`, `mysqldump`, `mysqladmin`, `mysqlcheck` | no `~/.my.cnf`, no pager, no history; the old names give no deprecation warning; routines and events exist in no database of the story; the monitor ignores Ctrl-C |
+| Dovecot 2.4 (`dovecot.ts`, The Lifeboat) | Debian 13's `dovecot-core` 2.4.1: `dovecot.conf` and `!include`/`!include_try` read like doveconf (`key = value`, named filters `quota "User quota" {…}`, sections, the last value wins), its errors with the file and line (`Unknown setting`, `Missing '}'`, `Unexpected '}'`), applied at start and on `doveadm reload`/`systemctl reload` (a wrong file keeps the running configuration); the passwd-file userdb (`/etc/dovecot/users`, `userdb_*` extra fields such as `userdb_quota_storage_size`); Maildir++ mailboxes (`cur`, `new`, `tmp`, `.Folder`, files named `time.MusecPpid.host,S=size,W=vsize:2,flags`); the quota plugin (`quota_driver` count or maildir and its `maildirsize` file, `quota_storage_size`, the 10M `quota_storage_grace`, `quota_full_tempfail`, `quota_exceeded_message`, `quota_warning` filters running a service once a percentage is crossed); LMTP delivery with Pigeonhole's Sieve plugin (`sieve_script` storages: before scripts then the active personal one, `~/.dovecot.sieve`), its log lines in `mail.log` (`stored mail into mailbox`, `failed to store into mailbox … Quota exceeded`, `fileinto action`, `sent vacation response`, `discarding vacation response …`) and its replies (`250 2.0.0 <user> id Saved`, `552 5.2.2`, `452 4.2.2`) | no IMAP, POP3 or ManageSieve sessions (no mail client is simulated); only the quota and sieve settings are validated; `maildirsize` is never recalculated on its own past 5120 bytes; a userdb field overrides the quota filter's setting; vacation replies and reject notices are recorded, not sent |
+| Sieve (`sieve.ts`) | RFC 5228 as Pigeonhole compiles it: strings, `text:` blocks, lists, numbers with K/M/G, comments; `require` and the capabilities Pigeonhole announces; `if`/`elsif`/`else`, `stop`, `keep`, `discard`, `fileinto` (`:copy`, `:create`), `redirect`, `reject`, `vacation` (`:days`, `:subject`, `:from`, `:addresses`, `:mime`, `:handle`); tests `address`, `envelope`, `header`, `exists`, `size`, `body`, `allof`, `anyof`, `not`, `true`, `false` with `:is`, `:contains`, `:matches`, `:all`, `:localpart`, `:domain`; errors `NAME: line N: error: …` then `NAME: error: parse failed`/`validation failed`, with Pigeonhole's wording (`unknown command 'x' (only reported once at first occurrence)`, `unknown tagged argument …`, `the X command accepts no sub-tests, but tests are specified`, `expected end of command ';' or the beginning of a compound block '{', but found identifier`, `requires N positional argument(s)`, checked against Pigeonhole's sieve-validator.c, sieve-parser.c and cmd-require.c); sievec exits 1 without a message of its own; the implicit keep; vacation's checks (RFC 5230 and Pigeonhole: `<>`, the user's own address, MAILER-DAEMON, owner-, -request, list headers, Auto-Submitted, Precedence, a message not addressed to the user or its `:addresses`, one reply per sender per `:days`, clamped to 1-60 days) | no comparators besides `i;ascii-casemap`, no variables, imap4flags, include, editheader; the type names in a few argument errors (`a string list`) and the wording of the lexer's errors are approximations; the `.svbin` is a stand-in, not byte code; `sievec -d` prints the commands and their lines |
+| `doveadm`, `doveconf`, `sievec`, `sieve-test` (`inbound-client.ts`, the `inbound` family) | `doveadm quota get` (table, kilobytes, `-` for no limit) and `recalc`, `expunge [-d]`, `search` (guid and uid), `fetch` (mailbox, uid, date.received, date.saved, size, hdr.*, body, text), `mailbox list/create/delete/rename/status`, `user` (userdb fields, masks), `sieve list/get/put [-a]/activate/deactivate/delete/rename`, `log errors`, `reload`, `-u` masks and `-A`; search query errors as doveadm's `i_fatal` prints the parser's (`Fatal: Invalid search date parameter: X`, `Unknown argument X`, `Missing argument`, from Dovecot's mail-search-build.c and mail-search-register-human.c; exit 89); search queries (`mailbox`, ALL, NOT, OR and parentheses, before/since/on, saved…, sent…, dates and intervals in w/d/h/m/s, larger/smaller, from/to/cc/subject/body/text/header, seen/unseen/deleted/new/old); `doveconf -n`, a setting, a section, `-h`; `sievec` (a file or a directory, `.svbin` next to it, exit codes); `sieve-test` (`-a`, `-r`, `-f`, `-m`, `-s`, the "Performed actions" and "Implicit keep" report) | doveadm's formatters: table, tab and pager only; an invalid size gives `Invalid search size parameter`, an approximation; doveadm needs root (the configuration's permissions); no `doveadm who`, `kick`, `index`, `backup`; `sieve-test -e` stores nothing; vacation is printed by sieve-test without the checks the real delivery makes |
+| rspamd (`rspamd.ts`, The Lifeboat) | rspamd 3.12 (Debian 13): UCL as rspamd reads it (`key = value;`, objects, named objects, lists, comments; `delimiter is missing`), `local.d/` merged over the defaults and `override.d/` over both, read at start and on reload (a wrong file stops a start, a reload keeps the old configuration); the actions and their thresholds (defaults reject 15, add header 6, greylist 4; `null` disables one); the greylist module (a first triplet deferred, its retry after five minutes passes); `multimap` rules of type from (SMTP sender by default, `extract_from` mime or both), rcpt, ip, header with `filter` email:domain/email:user, `score` or `action`; `settings` rules (from, from_mime, rcpt, ip; ANDed kinds; `apply { actions }`, `want_spam`); Bayes in Redis with `min_learns`, learned per message id, relearned in the other class; the milter's answers to Postfix (`5.7.1 Spam message rejected`, `4.7.1 Try again later`, `X-Spam: Yes`); `rspamd_task_write_log` lines in `/var/log/rspamd/rspamd.log` | the symbols come from a set of rules the game knows (reverse DNS, a blocklist, SPF, DKIM and DMARC from the story's network, HTML only, all-caps subject, tracking redirectors, image and short text, list headers), with weights close to rspamd's defaults; Bayes is a naive Bayes on the words of the subject and body (four letters or more, any alphabet), so it learns whatever language the mail is in: the story's mail is written in the player's language and its word lists keep spam and ham apart in each language; no fuzzy storage, neural networks, controller web interface or rspamc's JSON |
+| `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
+| Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
+| NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
+| `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
+| Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; the output of `garage bucket info`, `key info`, `layout show` and `status` follows v2's layout without every field |
+| `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4483,6 +4493,301 @@ hand; `mysql`, `mysqldump`, `mariadb-admin create`. Expected traps:
 `sql_slave_skip_counter` (the replica runs again but differs), repeated (a
 booking lost too), a dump with the default locks (the SQL thread waits
 behind it), `--skip-lock-tables` while writes arrive (not consistent).
+
+## Story 44: The Lifeboat (three chapters)
+
+Seaholme Lifeboat, a volunteer-run independent lifeboat station, receives
+the mail of `lifeboat.example` on `slipway` (192.0.2.140, `cale` in
+French): Postfix 3.10 receives it, rspamd 3.12 scores it through the milter,
+Dovecot 2.4.1's LMTP stores it in Maildirs under `/var/vmail` and runs Sieve
+on the way (Debian 13: `postfix 3.10.13-0+deb13u1`, `dovecot-core
+1:2.4.1+dfsg1-6+deb13u7`, `rspamd 3.12.1-1`, checked on
+https://packages.debian.org/trixie/). Marisol chairs the station, Yerlan set
+the server up and left notes, Leilani is the secretary (`bookings@` is an
+alias to her), Aziz the treasurer (`treasurer@`), Saoirse runs the
+fundraising. The inbound side of mail from the sysadmin's chair; defensive
+throughout. Engine: `dovecot.ts`, `sieve.ts`, `rspamd.ts`, `inbound.ts`
+(Postfix receiving, extending `mail.ts`), the tools in `inbound-client.ts`,
+all in the `inbound` engine family (`families/inbound.ts`), loaded with the
+story; four explanations in the error explainer (Sieve compilation,
+Dovecot's configuration, an unknown mail user, a search query). The mail
+contents (subjects, bodies, the words of each kind of mail) are in the story's texts (`lifeboat-mail-*`, `lifeboat-words-*`): the station receives its mail in the player's language, and a test checks that every language gets the same verdicts, before and after Bayes is trained.
+The story is built in `chapters/lifeboat.ts`. It opens after "Policy" (Junk
+Mail) and "Quota", and extends the web path (all three chapters) and the
+production path (chapter 1).
+
+### Chapter 1 — Mailbox Full (done)
+
+Tuesday 16 September 2031, 9:10. Since Saturday every message to Saoirse
+bounces: her mailbox is over its 1 GiB Maildir++ quota (an old Trash of
+photos), LMTP answers `552 5.2.2 … Quota exceeded (mailbox for user is
+full)`. The board agreed 2 GiB for her.
+
+| Step | Command learnt |
+|---|---|
+| The bounces | `grep saoirse /var/log/mail.log` |
+| The quota | `doveadm quota get -u saoirse@lifeboat.example` |
+| What takes the room | `doveadm mailbox status -u … "messages vsize" "*"`, `du` |
+| The old Trash | `doveadm search`, then `doveadm expunge -u … mailbox Trash savedbefore 2031-01-01` |
+| Her limit | `userdb_quota_storage_size=2G` in `/etc/dovecot/users`, `doveadm user` |
+| Delivered | `tail /var/log/mail.log` |
+| A warning | the `quota_warning` block of `90-quota.conf`, `doveconf -n`, `doveadm reload` |
+
+Goal checked on the state: Saoirse's limit between 1.5 and 10 GiB and no
+user unlimited, no Trash message from before 2031, her INBOX and Sent whole,
+`maildirsize` agreeing with the files, a message delivered to her since, a
+quota warning between 50 and 99 % running an existing service in the
+configuration Dovecot runs. Several solutions: `savedbefore`, `before`, an
+interval; `doveadm` or files removed then `quota recalc`; `2G` or `2048M`;
+`doveadm reload` or `systemctl reload dovecot`; `quota_warning` or
+`warning`, `quota_storage_percentage` or `storage_percentage`. Expected
+traps: files removed by hand (the quota doesn't notice), a global quota
+unlimited, her Maildir deleted, a misspelled setting.
+
+### Chapter 2 — Spam Tide (done)
+
+Monday 6 October, 8:40. Yerlan's `actions.conf` (reject 8, add_header 12,
+greylist 11) lets the phishing (4.8) and fake invoices (6.9) through
+untagged and rejects the Coastwatch safety bulletin (8.89: sent through
+sendwave.example, a platform the prize spam uses too); Bayes was never
+trained.
+
+| Step | Command learnt |
+|---|---|
+| The scores | `tail /var/log/rspamd/rspamd.log`, `rspamc symbols FILE` |
+| The thresholds | `local.d/actions.conf`, `rspamadm configtest`, `systemctl reload rspamd` |
+| The bulletin in Junk | its symbols in the log |
+| Whitelisted | a `multimap` rule `type = "from"; extract_from = "mime"` with `news@coastwatch.example`, or a `settings` rule `from_mime` |
+| Bayes | `rspamc learn_spam …/.Junk/cur`, `rspamc learn_ham …/.Archive/cur`, `rspamc stat` |
+| Caught | new messages marked `add header` |
+
+Goal checked on the state: Postfix sends incoming mail to rspamd, rspamd runs
+with reject ≥ 12, add_header between 4 and 8 (greylist below), Bayes has
+`min_learns` in each class, a fresh phishing, invoice and prize spam marked
+as spam, a fresh bulletin and fresh bookings with no action, no whitelist
+lowering a spam's score. Several solutions: multimap or settings, any score
+low enough or an action. Expected traps: the milter removed, reject at 1, the
+platform whitelisted (domain or address), the bookings learned as spam (put
+right by learning them again), a syntax error in the UCL.
+
+### Chapter 3 — The Sorting Office (done)
+
+Monday 3 November, 9:05. Leilani wants `bookings@` in a Bookings folder;
+Aziz is away until 24 November and needs a reply for his address and
+`treasurer@`, never for the federation's list; his old `holiday.sieve` uses
+`reject`.
+
+| Step | Command learnt |
+|---|---|
+| The old script | `doveadm sieve list -u aziz@…`, `cat …/sieve/holiday.sieve` |
+| The sorting | `fileinto :create "Bookings"` on `envelope :is "to"` (or `address`/`header` tests, or `doveadm mailbox create`), `sievec`, `sieve-test SCRIPT sample-booking.eml`, `doveadm sieve put -a` |
+| Sorted for real | `grep Bookings /var/log/mail.log` |
+| The vacation | `vacation :days 7 :subject … "…"`, `sieve-test away.sieve sample-list.eml` |
+| The alias | `:addresses ["treasurer@lifeboat.example"]` |
+| Replied for real | `grep "vacation response" /var/log/mail.log` |
+
+Goal checked on the state: Leilani's active scripts file a fresh bookings@
+message into an existing (or `:create`d) Bookings and keep a direct one in
+INBOX; Aziz's answer a direct and a treasurer@ message, not a list's, and
+keep them all; a real booking stored in Bookings and a real vacation reply
+sent. Several solutions: `doveadm sieve put -a`, `activate`, or the
+`~/.dovecot.sieve` link by hand; `envelope`, `address` or `header` tests.
+Expected traps: the old reject script activated (mail refused, the list
+answered), a script not active, a syntax error, a vacation without
+`:addresses`.
+## Story 45: The Climbing Wall (three chapters)
+
+Overhang, a community climbing hall run by its members, keeps its bookings,
+memberships and the door's badges on `belay` (192.0.2.141 on the uplink,
+198.51.100.141 on the office network), a small server behind an APC
+Back-UPS in the office rack, with Network UPS Tools as Debian 13 ships it
+(`nut-server`, `nut-client` 2.8.1-5+deb13u1,
+https://packages.debian.org/trixie/nut-server). `harness` (198.51.100.142,
+an internal host from chapter 2) is the NAS with the photos and the signed
+waivers. Nkechi chairs the association, Haruto set up NUT in 2028 before
+moving to Sapporo, Ikaika is the volunteer electrician, Akosua looks after
+the NAS, Thandiwe runs the front desk. Power cuts from the sysadmin's side:
+the monitor, the shutdown order, the battery and the alerts; defensive
+throughout. Engine: `nut.ts` (the physical world: mains, UPS, battery,
+kill timers, the machines' halts, crashes, boots and power restore policy;
+each machine's driver, upsd and upsmon; upssched), its commands in
+`commands/nut.ts` (the `nut` family, loaded with the story), three
+explanations for NUT's errors in the error explainer. The story is built in
+`chapters/climbing-wall.ts`. It opens after "Boot Order" (systemd units,
+The Canteen) and "The Firewall" (ufw), and extends the production path.
+
+### Chapter 1 — The Last Cut (done)
+
+Thursday 18 November 2032, 21:40, after closing time. On Tuesday a storm cut
+the street's power for 83 minutes; belay ran on the UPS for 49, then died.
+Its upsmon watched `eaton@localhost`, the name of a UPS replaced in 2030 (the
+section is now `[hallups]`): "does not exist on server localhost", throttled
+in the journal by Haruto.
+
+| Step | Command learnt |
+|---|---|
+| What upsmon said | `journalctl --list-boots`, `journalctl -u nut-monitor -b -1` |
+| The UPS's real name | `upsc -l`, `upsc hallups`, `/etc/nut/ups.conf` |
+| Watching it | `MONITOR hallups@localhost 1 upsmon … primary` in `upsmon.conf`, `systemctl reload nut-monitor` (or `upsmon -c reload`), `upsc -c hallups` |
+| The drill | `upsdrvctl -t shutdown`, `sudo upsmon -c fsd`, `journalctl -b -1` |
+| Coming back alone | `ipmitool chassis status`, `ipmitool sel list`, `ipmitool chassis policy always-on`, a second drill |
+
+Goal checked on the state: upsmon logged into hallups as a primary with a
+power value of at least 1, `MINSUPPLIES` at least 1, a `SHUTDOWNCMD` that
+halts, the power restore policy always-on, and a drill since upsmon was
+watching where belay halted cleanly and came back by itself. Several
+solutions: the MONITOR line fixed, or the section renamed back to `eaton`
+(driver and upsd restarted); reload or restart. Expected traps:
+`MINSUPPLIES 0`, a `SHUTDOWNCMD` that doesn't halt, nut-monitor stopped, a
+drill while upsmon is still blind (it halts all the same: the drill doesn't
+test the detection), `upsdrvctl shutdown` by hand.
+
+### Chapter 2 — Down in Order (done)
+
+Friday 26 November, 21:45. Since the storm, the NAS is on the same UPS but
+knows nothing about it. It takes two and a half minutes to stop.
+
+| Step | Command learnt |
+|---|---|
+| upsd on the office network | `ss -tlnp`, `LISTEN 198.51.100.141 3493` in `upsd.conf`, `systemctl restart nut-server` (a reload doesn't read LISTEN) |
+| An account for the NAS | `[harness]`, `password`, `upsmon secondary` in `upsd.users`, a reload |
+| The firewall | `ufw allow from 198.51.100.142 to any port 3493 proto tcp` |
+| The secondary | on harness: `MONITOR hallups@belay 1 harness … secondary`, `MODE=netclient`, `systemctl enable --now nut-monitor`, `upsc hallups@belay` |
+| The order | a drill; harness cut mid-shutdown; `offdelay = 180`, `ondelay = 240` in `ups.conf`; a drill again |
+
+Goal checked on the state: harness logged into hallups as a secondary; 3493
+unreachable from the internet; no second primary; `ondelay` greater than
+`offdelay`; a drill where both machines halted cleanly, came back by
+themselves, and harness's upsmon logged in again. Several solutions:
+`LISTEN 0.0.0.0` with a firewall rule for harness only, or the office
+address; any offdelay long enough; harness named by address or by name.
+Expected traps: LISTEN 0.0.0.0 with 3493 open to all, a reload after
+changing LISTEN, harness as a primary, nut-monitor started but not enabled,
+ondelay not greater than offdelay.
+
+### Chapter 3 — Old Battery (done)
+
+Monday 17 January 2033, 10:20, the hall open. The battery (2028) gives ten
+minutes instead of fifty; the line flickers for a few seconds every few
+minutes and `NOTIFYCMD` mails each ONBATT and ONLINE to the front desk.
+
+| Step | Command learnt |
+|---|---|
+| The battery | `upsc hallups` (battery.runtime, battery.mfr.date, ups.test.result), `upscmd -l hallups` |
+| Allowed to test | `instcmds = test.battery.start.quick` in `upsd.users`, a reload, `upscmd -u admin hallups test.battery.start.quick` (password asked) |
+| The verdict | `upsc hallups ups.test.result` ("Done and warning"), `ups.status` (RB); Ikaika swaps the cartridge |
+| The new battery | `upsrw -l hallups`, `upsrw -s battery.mfr.date=2032/12/02 …`, a quick test again ("Done and passed") |
+| Alerts that wait | `NOTIFYCMD /usr/sbin/upssched`; `upssched.conf`: `CMDSCRIPT`, `PIPEFN`, `LOCKFN`, `AT ONBATT * START-TIMER onbatt 60`, `AT ONLINE * CANCEL-TIMER onbatt online`; a reload |
+
+Goal checked on the state: a quick test passed after the swap,
+`battery.mfr.date` between December 2032 and today, upssched wired and a
+trial on the running configuration (an 8-second blip mails nothing, a
+5-minute outage mails at least once; tried on the real scripts, then undone),
+no deep test running. Several solutions: any timer length, `instcmds = ALL`,
+`CANCEL-TIMER` with or without its command, any accepted date. Expected
+traps: a deep test with the hall open, upssched without PIPEFN and LOCKFN,
+the alerts silenced (IGNORE), an EXECUTE at every ONLINE.
+
+## Story 46: The Dance Troupe (three chapters)
+
+The Kestrel Dance Company, a volunteer-run community dance troupe (classes
+from 4 to 84, a spring gala), keeps its website, its members' files, its
+office backup and its films in Garage (https://garagehq.deuxfleurs.fr/), a
+small geo-distributed S3 server written for self-hosting by the nonprofit
+Deuxfleurs: three nodes in three zones, `wings` (192.0.2.160, the story's
+machine, the studio), `vault` (198.51.100.162, at the Old Mill theatre,
+behind `s3.kestrel.example` and `www.kestrel.example`) and `porch`
+(203.0.113.171, at Siosaia's). Why Garage and not MinIO: MinIO's community
+edition lost its admin console in 2025 and is distributed as source only;
+Garage is made for exactly this kind of association (said in chapter 1's
+debrief). Clients: the AWS CLI v2 (Debian 13's awscli) and rclone 1.60.
+Esperanza is the artistic director, Teodora set the cluster up and left
+notes, Linh helps with the computers, Anahera is the treasurer, Farrukh films
+the shows, Siosaia hosts porch, Zuri produces a partner festival. Defensive
+throughout. Engine: `garage.ts` and `objects-client.ts` (the `objects`
+family, loaded with the story), six explanations in the error explainer
+(dates, regions, AccessDenied, NoSuchBucket, credentials, layouts). The
+story is built in `chapters/dance-troupe.ts`. It opens after "The Clock"
+(NTP) and "Restore Drill" (restic), and extends the security and backups
+paths.
+
+### Chapter 1 — The Public Bucket (done)
+
+Tuesday 9 March 2032, 9:20. A parent found the children's medical contacts
+on the website's address: the documents were in the website's bucket, under
+`members/`, and website access serves every object of a bucket.
+
+| Step | Command learnt |
+|---|---|
+| Seeing it from outside | `curl https://www.kestrel.example/members/…` |
+| Why | `garage bucket list`, `garage bucket info` (Website access, the keys) |
+| A private bucket | `garage bucket create`, `garage bucket allow --read --write [--owner] … --key`, `aws s3 mv … --recursive` |
+| Checked | `curl -i` (404, the error document) |
+| A key per tool | `garage key create`, `garage bucket allow --read --write`, `aws configure set … --profile deploy`, `~/bin/deploy-site`; the same in `/etc/rclone/office.conf`, `rclone ls` |
+
+Goal checked on the state: every member document (by ETag) only in buckets
+without website access; the website still served; a 404 seen on a
+document's public address; the deploy profile's key and the backup
+configuration's key each with read and write on its own bucket only (no
+owner, no other bucket, not the admin key), and each used successfully.
+Several solutions: any private bucket name, `aws s3 mv`, cp then rm, or
+rclone; the keys written with `aws configure` or by hand. Expected traps:
+the documents deleted (Garage has no versioning), the website switched off,
+a key with owner rights or on several buckets.
+
+### Chapter 2 — The Offsite Copy (done)
+
+Monday 12 April, 8:50. Since a power cut on 3 April, wings' clock is three
+days behind with NTP off, and the nightly `rclone sync` to
+`garage:backups/office` fails ("Date is too old"); Linh changed the region
+to us-east-1 and took write away from the backup's key; Anahera saved a
+template over the arts council report.
+
+| Step | Command learnt |
+|---|---|
+| The failure | `journalctl -u office-backup`, `systemctl status office-backup` |
+| The clock | `date`, `timedatectl`, `timedatectl set-ntp true` |
+| The region | `AuthorizationHeaderMalformed` and its expected scope, `region = garage` |
+| Write | `garage bucket info backups`, `garage bucket allow --read --write` |
+| The report | `rclone copyto` (or `aws s3 cp`) from `garage:backups/office` |
+| A safe sync | `--backup-dir garage:backups/office-old/$(date +%F)`, `rclone sync -n` |
+| The run and the check | `systemctl start office-backup`, `rclone check` |
+
+Goal checked on the state: the clock synchronised; the backup key read+write
+on backups only; the script's sync with a `--backup-dir` on the same bucket,
+outside `office/`; the bucket's `office/` the same as the share; the
+report's good text back on wings; no new file lost; an `rclone check`
+without differences; no certificate check turned off in the configuration
+or the script. Several solutions: the service or the script, the report
+restored before the sync or from the backup directory after it, rclone or
+aws. Expected traps: `rclone sync` in the wrong direction (the share loses
+its new files), `--no-check-certificate`, a sync without `--backup-dir`
+before the restore (the last good report overwritten).
+
+### Chapter 3 — The Big File (done)
+
+Thursday 13 May, 10:05. Farrukh must send the 3.8 GB gala film to a
+festival for a week; porch's disk died two days ago and Siosaia's new node
+is connected without a role.
+
+| Step | Command learnt |
+|---|---|
+| The cluster | `garage status` (FAILED NODES, NO ROLE ASSIGNED) |
+| Is the data safe? | `garage layout show` (three copies, a quorum of two) |
+| A read-only key | `garage key create`, `garage bucket allow --read media` |
+| The link | `aws configure set … --profile festival`, `aws s3 presign … --expires-in 604800 > ~/link_for_zuri.txt`, `curl -I` |
+| The replacement | `garage layout assign -z home -c 4T NEW --replace OLD`, `garage layout show`, `garage layout apply --version 4` |
+
+Goal checked on the state: in the link file, a presigned URL for the video
+on the public endpoint, its signature matching its key, expiring after three
+to seven days, signed less than a day ago, by a key that can only read
+media; media without website access; the layout applied with three nodes in
+three zones, all up, the failed node's role gone. Several solutions: any key
+name, a profile or environment variables, `--replace` or remove then
+assign. Expected traps: thirty days (`X-Amz-Expires may not exceed a
+week`), the bucket opened as a website, the admin key or the media team's,
+a localhost URL, the new node in the studio's zone, `apply` without
+`--version`.
 
 ## Ideas for later
 

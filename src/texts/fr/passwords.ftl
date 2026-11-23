@@ -93,3 +93,9 @@ password-donor-chair-12 = fauteuil-don-12
 password-choir-loft-31 = tribune-31
 ## Les Jardins
 password-compost-heap-17 = tas-de-compost-17
+## La Station de sauvetage
+password-storm-lantern-24 = lanterne-tempete-24
+## Le Mur d'escalade
+password-quickdraw-42 = degaine-42
+## La Troupe de danse
+password-spring-gala-58 = gala-printemps-58

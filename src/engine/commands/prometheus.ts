@@ -4,8 +4,8 @@
 // daemons' own binaries (prometheus, prometheus-alertmanager,
 // prometheus-node-exporter: --version), the Alertmanager's HTTP API
 // (/api/v2/…) and curl on a machine of a story with metrics
-// (state.metricsNet: its names, firewalls and services), plus sleep (time
-// passes for the story).
+// (state.metricsNet: its names, firewalls and services); sleep (time passes
+// for the story) is in small-tools.ts.
 // Sources: https://prometheus.io/docs/prometheus/latest/command-line/promtool/,
 // https://github.com/prometheus/alertmanager#amtool,
 // https://prometheus.io/docs/alerting/latest/clients/ (API v2),
@@ -634,21 +634,6 @@ export const PROMETHEUS_COMMANDS: Record<string, Command> = {
     launch: ({ args, game }) => (args.includes('--version') ? BUILD('node_exporter', '1.9.0') : game.error(`ts=${new Date(clock(game)).toISOString()} caller=node_exporter.go:247 level=error err="listen tcp :9100: bind: address already in use"`, 1)),
   },
 
-  sleep: {
-    ownOptions: true,
-    launch: ({ args, game }) => {
-      if (!args.length) return game.error("sleep: missing operand\nTry 'sleep --help' for more information.");
-      let total = 0;
-      for (const a of args) {
-        const m = /^(\d+(?:\.\d+)?)([smhd]?)$/.exec(a);
-        if (!m) return game.error(`sleep: invalid time interval '${a}'\nTry 'sleep --help' for more information.`);
-        total += Number(m[1]) * { '': 1, s: 1, m: 60, h: 3600, d: 86400 }[m[2]]! * 1000;
-      }
-      // The story decides what the wait means (state.onSleep: time passes); elsewhere, it returns at once.
-      game.state.slept = (game.state.slept ?? 0) + total;
-      return '';
-    },
-  },
 };
 
 function resultFor(v: import('../promql').Value, t: number) {
