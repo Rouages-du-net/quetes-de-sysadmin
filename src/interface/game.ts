@@ -33,6 +33,8 @@ import { chunks, withoutColours } from '../engine/colours';
 import { autosaveKey, clearAutosave, readAutosave, recordOf, resume as resumeAutosave, writeAutosave, type AutosaveRecord } from '../engine/autosave';
 import { editor } from './editor';
 import { loadTexts, textsLoaded, translator, typography, type Language } from '../texts';
+import { familiesNamed, loadFamily } from '../engine/families';
+import { examplesLoaded, loadExamples } from '../engine/commands/manual';
 
 export interface Options {
   language?: Language;
@@ -306,7 +308,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         el('li', {}, el('button', { type: 'button', 'data-chapter': String(j) },
           el('span', { class: 'num' }, t('chapter-number', { number: c.number })),
           el('span', { class: 'title' }, t(`chapter-${c.id}`)),
-          el('span', { class: 'abstract' }, typo(t(`chapter-${c.id}.summary`))),
+          // Its summary comes with the summaries' texts, once the terminal is ready (see the end of mount).
+          el('span', { class: 'abstract' }, lazy('summaries', `chapter-${c.id}.summary`, true)),
           level(difficulty(c.id)),
           el('span', { class: 'state' })))))),
   );
@@ -948,10 +951,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     accountNotebook.textContent = t('notebook-account', { count: names.length });
     emptyNotebook.hidden = names.length > 0;
     actionsNotebook.hidden = names.length === 0;
+    // Each command's sentence comes from the manual's pages: until they have
+    // loaded (in the background once the terminal is ready), the command and
+    // its example alone, then the list again.
+    const manual = textsLoaded(t.language, 'manual');
+    if (!manual && names.length) loadTexts(t.language, 'manual').then(notebookUpdate, () => {});
     listNotebook.replaceChildren(
       ...names.flatMap((name) => [
         el('dt', {}, el('code', {}, name)),
-        el('dd', {}, typo(description(name, t)), ' ', el('code', { class: 'example' }, notebook[name].line)),
+        el('dd', {}, ...(manual ? [typo(description(name, t)), ' '] : []), el('code', { class: 'example' }, notebook[name].line)),
       ]),
     );
   };
@@ -1200,7 +1208,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .map((m) => m.story!);
   const needs = (line: string): Promise<unknown> | null => {
     const parts: Promise<unknown>[] = [...new Set(named(line))].map((id) => loadStory(id, t.language));
-    if (!textsLoaded(t.language, 'manual') && MANUAL.test(line)) parts.push(loadTexts(t.language, 'manual'));
+    // A command of an engine family not loaded yet (its stories bring it; see families.ts).
+    parts.push(...familiesNamed(line).map(loadFamily));
+    if (MANUAL.test(line)) {
+      if (!textsLoaded(t.language, 'manual')) parts.push(loadTexts(t.language, 'manual'));
+      if (!examplesLoaded()) parts.push(loadExamples());
+    }
     return parts.length ? Promise.all(parts) : null;
   };
   // Prefetch: a story's chunk while the pointer is on its button (or the button has the focus).
@@ -1529,17 +1542,17 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   // The notebook can be taken away: a Markdown file, or the clipboard.
   const markdown = () => inMarkdown(notebook, t, finished, playerName);
-  exported.addEventListener('click', () => {
+  exported.addEventListener('click', () => withTexts('manual', () => {
     const link = el('a', { href: URL.createObjectURL(new Blob([markdown()], { type: 'text/markdown' })), download: t('notebook-file') });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-  });
-  copyNotebook.addEventListener('click', () => {
+  }));
+  copyNotebook.addEventListener('click', () => withTexts('manual', () => {
     navigator.clipboard
       ?.writeText(markdown())
       .then(() => (stateNotebook.textContent = t('notebook-copy')))
       .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
-  });
+  }));
   // ——— On-call duty ———
   // The results of past days, in this browser (the best of each day).
   const ON_CALL_KEY = `${KEY}-on-call`;
@@ -1845,7 +1858,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     input.focus();
   });
   // The current chapter's mission.
-  missionButton.addEventListener('click', () => {
+  missionButton.addEventListener('click', () => withTexts('summaries', showMission));
+  const showMission = () => {
     const sh = gameTerminal.remote?.shell;
     const c = sh?.chapter;
     titleMission.textContent = c ? t('mission-title', { chapter: t('chapter-number', { number: c.number }), title: t(`chapter-${c.id}`) }) : t('workstation-title');
@@ -1857,7 +1871,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     helpUpdate();
     rescueUpdate();
     missionWindow.showModal();
-  });
+  };
   closeMission.addEventListener('click', () => missionWindow.close());
   // The snapshot taken: its series (the chapter's opening) and the number of inputs replayed.
   let snapshot: { serial: number; not: number } | null = null;
@@ -1994,8 +2008,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const { h, c } = placeOf(r);
     hideResume();
     // The chapter reopened fresh (nothing written meanwhile), then replayed,
-    // once its story and the manual's pages (a `man` among the inputs) have loaded.
-    const manual = navigator.onLine === false ? Promise.resolve() : loadTexts(t.language, 'manual').catch(() => {});
+    // once its story and the manual's pages and examples (a `man` among the inputs) have loaded.
+    const manual = navigator.onLine === false ? Promise.resolve() : Promise.all([loadTexts(t.language, 'manual'), loadExamples()]).catch(() => {});
     pendingResume = r;
     Promise.all([launch(h, c), manual]).then(() => {
       pendingResume = null;
@@ -2314,7 +2328,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const startStory = (id: string) => STORIES.findIndex((x) => x.id === id);
   const startSuggestion = (s: Suggestion, main: boolean) => {
     const h = STORIES.findIndex((x) => x.chapters.some((c) => c.id === s.chapter));
-    const c = chapters(h).findIndex((x) => x.id === s.chapter);
     const title = t(`chapter-${s.chapter}`);
     return el(
       main ? 'div' : 'li',
@@ -2323,11 +2336,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       el('p', { class: 'start-chapter' }, el('strong', {}, typo(t('start-here-chapter', { chapter: title, story: storyTitle(h) }))), ' ', level(difficulty(s.chapter))),
       el('p', {}, typo(t(s.reason))),
       ...(s.before ? [el('p', { class: 'map-legend' }, typo(t('start-here-locked', { chapter: t(`chapter-${s.target}`), count: s.before })))] : []),
-      el(
-        'p',
-        { class: 'start-actions' },
-        el('button', { type: 'button', class: main ? 'button' : 'button button-secondary', 'data-h': String(h), 'data-c': String(c), 'data-path': s.path, 'aria-label': typo(t('start-here-start-label', { chapter: title })) }, t('start-here-start')),
-      ),
     );
   };
   // The answers checked in the form, kept, and the suggestion they give from where the player stands.
@@ -2346,6 +2354,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       return;
     }
     const r = recommend(display.startHere, finished, (id) => accessible(startStory(id)));
+    // A suggestion, not a shortcut: the player goes on from the menu (the
+    // first steps stay first). Its path becomes the one the "Paths" view
+    // shows, and the first visit's card has done its job.
+    if (r) {
+      display.path = r.main.path;
+      display.startOffer = 'done';
+      applyDisplay();
+    }
     if (!r) {
       startResult.replaceChildren(heading, el('p', {}, typo(t('start-here-all-done'))));
       startStatus.textContent = typo(t('start-here-all-done'));
@@ -2389,16 +2405,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     applyDisplay();
     // The card goes: the focus goes to the menu's button, where the questions stay.
     startHereButton.focus();
-  });
-  // Start: the suggested chapter opens, and its path becomes the one the "Paths" view shows.
-  startResult.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
-    if (!b) return;
-    display.path = b.dataset.path!;
-    display.startOffer = 'done';
-    applyDisplay();
-    startWindow.close();
-    launch(Number(b.dataset.h), Number(b.dataset.c));
   });
   closeStart.addEventListener('click', () => startWindow.close());
   startWindow.addEventListener('close', () => setTimeout(() => input.focus()));
@@ -2610,12 +2616,17 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   if (departure >= 0 && accessible(departure)) launch(departure);
   else goWorkstation();
   if (left) offerResume(left);
-  // In the background, once the game is shown: the manual's pages, and on
-  // the workstation the first open story not finished (where `ssh` leads next).
+  // In the background, once the game is shown: the chapters' summaries and
+  // English's core texts (the fallback; both precached for offline play),
+  // the manual's pages, and on the workstation the first open story not
+  // finished (where `ssh` leads next).
   const idle = (f: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 3000 }) : setTimeout(f, 1500));
   idle(() => {
+    loadTexts(t.language, 'summaries').then(() => withTexts('summaries', () => {}), () => {});
+    loadTexts(t.language, 'fallbacks').catch(() => {});
     if (navigator.onLine === false) return;
     loadTexts(t.language, 'manual').catch(() => {});
+    loadExamples().catch(() => {});
     if (departure < 0 || !accessible(departure)) prefetch(STORIES.findIndex((s, h) => accessible(h) && s.chapters.some((c) => !finished.includes(c.id))));
   });
   // A first visit (nothing played yet): the tour, once the page is laid out.

@@ -683,7 +683,6 @@
 .qds .start-suggestion.main { border-color: var(--_accent); border-left-width: 4px; }
 .qds .start-suggestion p { margin: 0 0 0.4rem; }
 .qds .start-suggestion .start-path { font-size: 0.85rem; color: var(--_muted); }
-.qds .start-suggestion .start-actions { margin: 0.5rem 0 0; }
 .qds .start-suggestion .difficulty { white-space: nowrap; }
 .qds .start-alternatives { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .qds .start-teachers { margin: 0.75rem 0; }

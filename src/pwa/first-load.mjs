@@ -6,9 +6,11 @@
 // What counts: the page's scripts and styles, the modules they import
 // statically, and what the element fetches at once (src/element.ts): the
 // game (game-*.js, game.*.js and its imports), the core texts of the page's
-// language and of English (the fallback), and every language's shared texts.
-// Not counted: the stories and the manual's pages, which load later
-// (src/engine/story-registry.ts, src/texts/index.ts).
+// language, and every language's shared texts. Not counted: what loads once
+// the terminal is ready or later (src/texts/index.ts, src/interface/game.ts):
+// English's core for another language (the fallback), the chapters'
+// summaries, the manual's pages, the stories and the engine families they
+// bring (src/engine/families.ts).
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -35,7 +37,7 @@ export function elementChunks(dir, language) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => /^game[.-]/.test(f) || new RegExp(`^texts-(${language}|en)--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
+    .filter((f) => /^game[.-]/.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
     .sort()
     .map((f) => join(dir, f));
 }

@@ -32,7 +32,6 @@ start-here-incomplete = Answer the four questions to see a suggestion.
 start-here-result = Our suggestion
 # { $path }: the learning path's name
 start-here-path = Path: { $path }
-start-here-start = Start
 # { $chapter }: the chapter's title; { $story }: its story's title
 start-here-chapter = { $chapter }, in "{ $story }"
 # { $chapter }: the title of the path's first chapter, still locked; { $count }: the chapters to finish before it opens
@@ -65,7 +64,5 @@ start-here-note-medium = Half an hour is enough for one or two chapters, and the
 start-here-note-long = With an hour or more, you can play a whole story from start to finish.
 
 ## For screen readers
-# { $chapter }: the chapter's title (the Start button's accessible name)
-start-here-start-label = Start "{ $chapter }"
 # { $chapter }: the suggested chapter's title; { $path }: its path's name
 start-here-announce = Suggestion: "{ $chapter }", in the path "{ $path }".

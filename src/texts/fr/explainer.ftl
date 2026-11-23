@@ -40,9 +40,23 @@ explainer-db-unreachable = Le client de la base n'a pu joindre aucun serveur. Pa
 
 explainer-db-too-many = Toutes les places de connexion du serveur de base sont prises (max_connections). Avant de monter la limite, regarde qui les tient : SHOW PROCESSLIST (en root, qui garde une place de plus) montre chaque connexion, d'où elle vient et si elle dort. Beaucoup de connexions endormies d'une même appli veulent souvent dire que l'appli ne les ferme pas ; wait_timeout décide combien de temps le serveur attend avant de les fermer lui-même.
 
+explainer-ups-unknown = upsd a répondu, mais il ne sert aucun onduleur de ce nom. Le nom d'un onduleur est sa section dans /etc/nut/ups.conf du serveur, écrit NOM@HÔTE (localhost par défaut) : upsc -l HÔTE liste les noms que connaît ce serveur. Dans upsmon.conf, une ligne MONITOR qui nomme un onduleur inexistant ne surveille rien : upsmon ne le verra jamais passer sur batterie.
+
+explainer-ups-denied = upsd a refusé ce compte. Chaque compte de /etc/nut/upsd.users du serveur dit ce qu'il peut faire : instcmds (les commandes instantanées pour upscmd, ou ALL), actions = SET (pour changer des variables avec upsrw), upsmon primary ou secondary (pour upsmon). Un nom de compte ou un mot de passe faux donne la même réponse. upsd relit upsd.users quand on le recharge (systemctl reload nut-server).
+
+explainer-ups-driver = upsd connaît cet onduleur, mais son pilote ne tourne pas, ou a perdu l'onduleur : upsd n'a aucune donnée à donner. Le pilote est un service à part sur Debian (systemctl status nut-driver@NOM, journalctl -u nut-driver@NOM), démarré depuis la section de l'onduleur dans /etc/nut/ups.conf ; vérifie aussi le câble USB.
+
 explainer-db-syntax = Le serveur de base n'a pas pu lire l'instruction SQL. Le texte après « near » est l'endroit où il a cessé de comprendre : l'erreur est juste avant, souvent une virgule ou un guillemet oublié, un mot mal écrit, ou une instruction que ce serveur ne connaît pas. Une instruction tapée dans le shell entre guillemets doubles garde ses apostrophes intactes : mariadb -e "SELECT … WHERE name = 'x'".
 
 explainer-db-read-only = Le serveur de base est en lecture seule (sa variable read_only est active) : il refuse les écritures des comptes ordinaires. Sur un réplica, c'est voulu : les écritures vont au primaire, et le réplica les reçoit. SELECT @@read_only montre le réglage ; connecte-toi au primaire pour écrire.
+
+explainer-sieve-compile = Le script Sieve n'a pas pu être compilé : il ne peut donc pas tourner. Le message donne la ligne et le premier problème seulement : une commande inconnue est souvent une faute de frappe, ou une extension utilisée sans être demandée en tête (require ["fileinto", "vacation"];) ; « expected end of command ';' » veut dire qu'il manque un point-virgule au bout de la ligne d'avant. Corrige, puis compile de nouveau avec sievec avant d'activer le script.
+
+explainer-dovecot-config = Dovecot n'arrive pas à lire sa configuration : le fichier et la ligne sont dans le message. « Unknown setting » est un réglage mal écrit (ou d'une autre version de Dovecot : la 2.4 en a renommé beaucoup), « Missing '{"}"}' » une section restée ouverte. Tant que le fichier est faux, doveadm et doveconf s'arrêtent, et un reload garde l'ancienne configuration. doveconf -n la relit une fois corrigée.
+
+explainer-mail-unknown-user = Cet utilisateur n'est pas dans la base d'utilisateurs (userdb) de Dovecot. Les utilisateurs de Dovecot sont ce que renvoie sa userdb (ici un passwd-file), pas les comptes de la machine, et le nom est en général l'adresse entière : utilisateur@domaine. doveadm user '*' liste les utilisateurs que Dovecot connaît.
+
+explainer-search-query = doveadm n'a pas compris la requête de recherche. Chaque clé prend sa valeur juste après elle (mailbox Trash, savedbefore 2031-01-01, larger 5M) ; une date s'écrit AAAA-MM-JJ ou comme un intervalle, 30d ou 2w (il n'y a pas d'unité pour l'année) ; OR se place entre deux clés, et les parenthèses doivent être protégées du shell. man doveadm-search-query liste les clés.
 
 explainer-refused = La machine a répondu, mais rien n'a accepté la connexion sur ce port : aucun programme n'y écoute, ou un pare-feu la rejette activement. Sur le serveur, ss -tlnp liste les ports où des programmes écoutent, et systemctl status dit si le service tourne. Vérifie aussi l'adresse et le port utilisés.
 
@@ -102,3 +116,15 @@ explainer-no-such-file = Rien n'existe à ce chemin, tel qu'il est écrit. Un ch
 ## Le réglage, à côté d'Astuces et de Sauvegarde auto.
 display-explainer = Aide aux erreurs
 display-explainer-title = Proposer une courte explication sous les messages d'erreur courants
+
+explainer-s3-date = Le stockage objet a refusé la requête à cause de sa date. Chaque requête S3 est signée avec la date et l'heure de la machine qui l'envoie : Amazon S3 en refuse une à plus de 15 minutes de sa propre horloge (RequestTimeTooSkewed), Garage une datée de plus de 24 heures avant son horloge (« Date is too old ») ; une URL présignée est refusée une fois son X-Amz-Expires passé. Le serveur n'y est pour rien : date et timedatectl montrent l'horloge de cette machine, et si NTP la garde juste.
+
+explainer-s3-region = La requête a été signée pour une autre région que celle du stockage. La région fait partie de la signature (sa portée : date/région/s3/aws4_request), donc une mauvaise région rend la signature invalide même avec la bonne clé. Le message donne la portée qu'attendait le serveur : mets cette région dans la configuration du client (region dans ~/.aws/config ou rclone.conf, ou --region).
+
+explainer-s3-access-denied = Le stockage objet connaît la clé (ou a refusé une requête sans clé) et ne la laisse pas faire cela. « Operation is not allowed for this key » veut dire que la clé n'a pas le droit sur ce bucket (read pour lister et lire, write pour déposer et supprimer, owner pour les réglages du bucket) ; « No such key », un ID de clé qu'il ne connaît pas ; « Invalid signature », un mauvais secret ; « anonymous access », une requête envoyée sans clé. Avec Garage, sudo garage bucket info BUCKET montre les droits de chaque clé ; aws configure list montre quelle clé le client utilise.
+
+explainer-s3-no-bucket = Aucun bucket ne porte ce nom sur ce stockage. Vérifie l'orthographe (les noms de buckets sont en minuscules), et que le client parle au bon point d'accès (--endpoint-url, endpoint_url dans ~/.aws/config, endpoint dans rclone.conf) : un autre stockage a d'autres buckets. aws s3 ls liste les buckets dont cette clé peut se servir ; avec Garage, sudo garage bucket list les liste tous.
+
+explainer-s3-credentials = L'outil AWS n'a trouvé aucune clé pour signer. Il cherche sur la ligne de commande (--profile), dans l'environnement (AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY, AWS_PROFILE), puis dans ~/.aws/credentials et ~/.aws/config, dans le dossier personnel de l'utilisateur qui le lance : sous sudo, c'est celui de root, pas le tien. aws configure list montre ce qu'il a trouvé, et où.
+
+explainer-garage-layout = Garage n'a pas appliqué le changement d'agencement. Un agencement se change en deux temps : les changements sont préparés (garage layout assign, remove), puis appliqués par garage layout apply --version N, N étant la version suivante qu'affiche garage layout show, pour que personne n'applique un agencement qu'il n'a pas lu. Un agencement doit aussi garder au moins autant de nœuds avec une capacité que le facteur de réplication.

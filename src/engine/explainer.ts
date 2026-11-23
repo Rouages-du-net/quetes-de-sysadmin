@@ -32,6 +32,19 @@ export const EXPLANATIONS = [
   'db-too-many',
   'db-syntax',
   'db-read-only',
+  'sieve-compile',
+  'dovecot-config',
+  'mail-unknown-user',
+  'search-query',
+  'ups-unknown',
+  'ups-denied',
+  'ups-driver',
+  's3-date',
+  's3-region',
+  's3-access-denied',
+  's3-no-bucket',
+  's3-credentials',
+  'garage-layout',
   'refused',
   'timed-out',
   'no-route',
@@ -91,7 +104,8 @@ const markersOf = (t: Translate): Map<Explanation, RegExp[]> => {
         return [e, [...new Set(all)].map(markerPattern)];
       }),
     );
-    cache.set(t.language, m);
+    // English's markers come with its core texts, loaded after a translation's: kept once they are there.
+    if (!english || english.exists('explainer-button')) cache.set(t.language, m);
   }
   return m;
 };

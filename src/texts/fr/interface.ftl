@@ -26,7 +26,7 @@ stories-locked = { $count ->
 }
 button-next = Chapitre suivant →
 button-restart = Recommencer ce chapitre
-tips = Astuces : Tab complète les noms, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
+tips = Astuces : Tab complète les noms de commandes, de dossiers et de fichiers, ↑ rappelle les commandes, « aide » liste celles que tu connais, « man commande » ouvre le manuel, « exit » ramène à ton poste. Comme dans la plupart des terminaux Linux, sélectionner du texte le copie et le clic droit le colle. Ta progression est gardée dans ce navigateur.
 # { $lines } : nombre de lignes non affichées
 output-cut =
     { $lines ->
@@ -492,7 +492,7 @@ tour-input = Tape tes commandes ici, puis Entrée. C'est un vrai terminal : le t
 tour-mission = Mission : ce que tu dois faire dans ce chapitre, ce qui s'est déjà passé, et des indices si tu bloques.
 tour-map = Carte : les lieux déjà visités, pour retrouver ton chemin.
 tour-notebook = Carnet : chaque commande que tu lances y est notée, avec ce qu'elle fait. Ton aide-mémoire.
-tour-tab = Tab complète les noms pour toi : tape les premières lettres, puis Tab. Deux fois, il liste les choix.
+tour-tab = Tab complète pour toi les noms de commandes, de dossiers et de fichiers : tape leurs premières lettres, puis Tab. Deux fois, il liste les choix.
 
 # Une histoire se charge la première fois qu'on l'ouvre (ses chapitres et ses textes).
 loading-story = Chargement de {$story}…

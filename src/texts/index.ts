@@ -53,11 +53,14 @@ function pkg(language: Language): FluentBundle {
 }
 
 // A group's files, added to its language's bundle. A chapter's title is in
-// its language's core group and again in its story's: the same text.
+// its language's core group (the title alone), in its summaries group and in
+// its story's (the whole message, with .summary): those replace the core's,
+// which never replaces theirs, whatever order the groups arrive in.
 function add(key: string, files: [string, string][]) {
   const b = pkg(key.split('/')[0]);
+  const core = key.endsWith('/core');
   for (const [file, source] of files) {
-    const errors = b.addResource(new FluentResource(source), { allowOverrides: true });
+    const errors = b.addResource(new FluentResource(source), { allowOverrides: !core }).filter((e) => !(core && /override/.test(String(e))));
     if (errors.length) throw new Error(`${key}, ${file} : ${errors.join(' ; ')}`);
   }
   loaded.add(key);
@@ -79,25 +82,31 @@ function loadGroup(key: string): Promise<void> {
 const fallbacks = (language: Language) => [...new Set([language, LANGUAGE_BY_DEFAULT, REFERENCE_LANGUAGE])];
 
 /**
- * Loads a group of texts (core, manual, story-<id>) in this language. The
- * core group also loads English's (the fallback of a text a translation
- * lacks); the other groups are whole in every language, file by file
- * (tests/texts.test.ts). Load a language's core before anything else.
+ * Loads a group of texts (core, summaries, manual, story-<id>) in this
+ * language. The core group also loads every language's shared texts; the
+ * groups are whole in every language, file by file (tests/texts.test.ts), so
+ * a translation's core doesn't wait for English's: `fallbacks` loads it
+ * afterwards (the interface asks once the terminal is ready), for the
+ * explainer's English markers and a text a translation would lack. Load a
+ * language's core before anything else.
  */
 export function loadTexts(language: Language | undefined, group: string): Promise<void> {
   const chosen = gameLanguage(language);
   const keys =
     group === 'core'
       ? // …and every language's shared texts: a save from another language is translated (console.ts).
-        [...fallbacks(chosen).map((l) => `${l}/core`), ...LANGUAGES.map((l) => `${l}/shared`)]
-      : [`${chosen}/${group}`];
+        [`${chosen}/core`, ...LANGUAGES.map((l) => `${l}/shared`)]
+      : group === 'fallbacks'
+        ? fallbacks(chosen).map((l) => `${l}/core`)
+        : [`${chosen}/${group}`];
   return Promise.all(keys.map(loadGroup)).then(() => undefined);
 }
 
 /** Is this group loaded in this language? */
 export const textsLoaded = (language: Language | undefined, group: string) => {
-  const key = `${gameLanguage(language)}/${group}`;
-  return loaded.has(key) || !GROUPS[key];
+  const chosen = gameLanguage(language);
+  const keys = group === 'fallbacks' ? fallbacks(chosen).map((l) => `${l}/core`) : [`${chosen}/${group}`];
+  return keys.every((key) => loaded.has(key) || !GROUPS[key]);
 };
 
 /** Every text of every language (tests, the build's pages). */
@@ -134,11 +143,13 @@ export function translator(language?: Language): Translate {
   const t = (id: string, variables?: Variables) => {
     const found = find(id);
     if (!found) {
-      // A text of a group not loaded yet: the manual's pages first, otherwise the rest.
+      // A text of a group not loaded yet: a chapter's summary in the
+      // summaries, otherwise the manual's pages first, otherwise the rest.
       const missing = Object.keys(GROUPS).filter((k) => fallbacks(chosen).includes(k.split('/')[0]) && !loaded.has(k));
       if (missing.length) {
-        const manual = missing.filter((k) => k.endsWith('/manual'));
-        throw new NeedsLoading(`text ${id}`, () => Promise.all((manual.length ? manual : missing).map(loadGroup)));
+        const first = (g: string) => missing.filter((k) => k.endsWith(`/${g}`));
+        const likely = [id.endsWith('.summary') ? first('summaries') : [], first('manual')].find((l) => l.length);
+        throw new NeedsLoading(`text ${id}`, () => Promise.all((likely ?? missing).map(loadGroup)));
       }
       throw new Error(`Texte manquant : « ${id} »`);
     }

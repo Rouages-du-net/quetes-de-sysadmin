@@ -44,7 +44,11 @@ import { colourise, readColour, sgr } from '../colours';
 import { publicFor } from '../access';
 import { keyFingerprint } from '../machines';
 import { allowedFor, isPrivateKey, principalsFor } from '../sshsig';
-import { forgeReceive, forgeReceived, forgeRemote, type RefUpdate } from '../forge';
+import type { RefUpdate } from '../forge';
+import { family, familyIfLoaded } from '../families';
+
+// A forge's URL (forge.ts, loaded with its story): its bare repository on this machine.
+const forgeRemote = (game: Shell, url: string) => familyIfLoaded('forge')?.forgeRemote(game, url) ?? null;
 
 export interface Commit {
   id: string;
@@ -1233,7 +1237,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     const prefix = () => remoteRefs.map((l) => `remote: ${l}`.trimEnd());
     // The forge's own pre-receive hook: protected branches, who may push.
     if (forge) {
-      const refused = forgeReceive(game, forge.key, updates);
+      const refused = family('forge').forgeReceive(game, forge.key, updates);
       if (refused) {
         remoteRefs.push(...refused);
         return game.error([...lines, ...prefix(), refusal('pre-receive hook declined')].join('\n'));
@@ -1288,7 +1292,7 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
     }
     game.state.gitPushes = (game.state.gitPushes ?? 0) + 1;
     hook('post-receive');
-    if (forge) remoteRefs.push(...forgeReceived(game, forge.key, updates));
+    if (forge) remoteRefs.push(...family('forge').forgeReceived(game, forge.key, updates));
     return [...lines, ...prefix(), to, ...results, ...rejected, ...(rejected.length ? [impossible] : []), ...(follow ? [game.t('git-push-follow', { remote: name })] : [])].join('\n');
   },
 

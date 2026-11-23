@@ -138,7 +138,7 @@ for (const width of [1000, 375]) {
   check(!recalled.includes('ssh royaume'), `${width} px: the up arrow ignores the workstation's history`);
   await input.fill('');
   // Every group of commands is in the bundle (a module loaded too early used to leave some out).
-  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat', 'svcs', 'zfs', 'iconv', 'file', 'cobc', 'dd', 'xxd', 'od', 'hexdump', 'tn5250', 'system', 'db2', 'DSPMSG', 'SAVLIB', 'dos2unix', 'tr', 'Get-Help', 'promtool', 'amtool', 'jq', 'lpstat', 'lpadmin', 'forgejo', 'virsh', 'qemu-img', 'haproxy', 'socat', 'tcpdump', 'openssl', 'kubectl', 'k3s', 'base64']) {
+  for (const c of ['mount', 'unattended-upgrade', 'exportfs', 'smbclient', 'gpg', 'netstat', 'killall', 'iptables', 'sed', 'stat', 'pkg', 'pfctl', 'sockstat', 'svcs', 'zfs', 'iconv', 'file', 'cobc', 'dd', 'xxd', 'od', 'hexdump', 'tn5250', 'system', 'db2', 'DSPMSG', 'SAVLIB', 'dos2unix', 'tr', 'Get-Help', 'promtool', 'amtool', 'jq', 'lpstat', 'lpadmin', 'forgejo', 'virsh', 'qemu-img', 'haproxy', 'socat', 'tcpdump', 'openssl', 'kubectl', 'k3s', 'base64', 'garage', 'aws', 'rclone']) {
     await tape(`man ${c}`);
     check((await game.locator('.output').textContent()).includes(`${c.toUpperCase()}(`), `${width} px: man ${c} is displayed (the command is in the bundle)`);
   }
@@ -310,7 +310,7 @@ for (const width of [1000, 375]) {
 
 // "Where do I start?" (see start-here.ts): a first visit is offered the
 // questions by a card (not a window); answered with the keyboard, they give a
-// suggestion whose Start opens the chapter; the menu's button opens them again
+// suggestion (no shortcut into a chapter: the first steps stay first); the menu's button opens them again
 // with the answers kept; a returning player sees no card, and exam mode hides it all.
 for (const width of [1000, 375]) {
   const page = await browser.newPage({ viewport: { width: width, height: 900 } });
@@ -355,10 +355,9 @@ for (const width of [1000, 375]) {
     await page.keyboard.press('Space');
   }
   if (process.env.CAPTURES) await window.screenshot({ path: `${process.env.CAPTURES}/start-${width}.png` });
-  await result.locator('.main button').focus();
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
-  check(!(await window.evaluate((d) => d.open)) && (await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `start ${width} px: Start opens the chapter`);
+  check((await result.locator('button').count()) === 0, `start ${width} px: a suggestion, no shortcut into a chapter`);
+  await page.keyboard.press('Escape');
+  check(!(await window.evaluate((d) => d.open)), `start ${width} px: Escape closes the questions`);
   check(await offer.isHidden(), `start ${width} px: the card goes once answered`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `start ${width} px: no horizontal scrolling`);
   // Back later: no card, the menu's button, the answers kept (a setting of this browser, not of the progress).
@@ -1017,7 +1016,7 @@ for (const width of [1000, 375]) {
   await game.locator('.view-choice button', { hasText: 'Parcours' }).click();
   await game.locator('.paths select').selectOption('security');
   const maps = game.locator('.paths-list button');
-  check((await maps.count()) === 37 && (await game.locator('.paths-progress').textContent()).includes('1 sur 37'), `paths ${width} px: the path and its progress`);
+  check((await maps.count()) === 38 && (await game.locator('.paths-progress').textContent()).includes('1 sur 38'), `paths ${width} px: the path and its progress`);
   const next = game.locator('.paths-list button[data-next]');
   check((await next.textContent()).includes('Le pare-feu') && (await game.locator('.paths-list button[data-state="locked"]').first().textContent()).includes('D\'abord'), `paths ${width} px: the next one, and what is waiting`);
   await next.click();

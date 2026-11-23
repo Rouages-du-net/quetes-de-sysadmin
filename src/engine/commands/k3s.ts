@@ -1,13 +1,11 @@
 // k3s, the single binary of a lightweight Kubernetes (https://docs.k3s.io/):
 // `k3s kubectl` (the same kubectl), `k3s --version`, `k3s check-config`
-// (a short summary); and base64 (GNU coreutils: encode, -d, -w), which a
-// Secret's values need.
-// Sources: https://docs.k3s.io/cli, https://docs.k3s.io/cli/kubectl,
-// https://www.gnu.org/software/coreutils/manual/html_node/base64-invocation.html.
+// (a short summary); base64, which a Secret's values need, in base64.ts.
+// Sources: https://docs.k3s.io/cli, https://docs.k3s.io/cli/kubectl.
 
 import type { Command } from './index';
 import { kubectl } from './kubectl';
-import { K3S_VERSION, base64Decode, base64Encode } from '../k8s';
+import { K3S_VERSION } from '../k8s';
 
 export const K3S: Record<string, Command> = {
   k3s: {
@@ -48,42 +46,6 @@ export const K3S: Record<string, Command> = {
       if (!sub)
         return 'NAME:\n   k3s - Kubernetes, but small and simple\n\nUSAGE:\n   k3s [global options] command [command options] [arguments...]\n\nVERSION:\n   ' + K3S_VERSION + ' (6ab750f9)\n\nCOMMANDS:\n   server        Run management server\n   agent         Run node agent\n   kubectl       Run kubectl\n   crictl        Run crictl\n   ctr           Run ctr\n   check-config  Run config check\n   etcd-snapshot\n   secrets-encrypt   Control secrets encryption and keys rotation\n   certificate   Manage K3s certificates\n   completion    Install shell completion script\n   help, h       Shows a list of commands or help for one command';
       return game.error(`${game.t('k3s-not-simulated', { command: sub })}`, 1);
-    },
-  },
-  base64: {
-    ownOptions: true,
-    launch: ({ args, game, input }) => {
-      let decode = false;
-      let wrap = 76;
-      const files: string[] = [];
-      for (let i = 0; i < args.length; i++) {
-        const a = args[i];
-        if (a === '-d' || a === '--decode') decode = true;
-        else if (a === '-w' || a === '--wrap') wrap = Number(args[++i] ?? 76);
-        else if (a.startsWith('--wrap=')) wrap = Number(a.slice(7));
-        else if (/^-w\d+$/.test(a)) wrap = Number(a.slice(2));
-        else if (a === '-i' || a === '--ignore-garbage') continue;
-        else if (a.startsWith('-') && a !== '-') return game.error(`base64: invalid option -- '${a.replace(/^-+/, '')[0]}'\nTry 'base64 --help' for more information.`, 1);
-        else files.push(a);
-      }
-      if (files.length > 1) return game.error(`base64: extra operand '${files[1]}'\nTry 'base64 --help' for more information.`, 1);
-      let text: string | null = input ?? '';
-      if (files.length && files[0] !== '-') {
-        text = game.readFor('base64', files[0]);
-        if (text === null) return '';
-        text += '\n';
-      }
-      if (decode) {
-        const clean = text.replace(/\s/g, '');
-        const v = base64Decode(clean);
-        if (v === null) return game.error('base64: invalid input', 1);
-        return v.replace(/\n$/, '');
-      }
-      // A pipe's input ends with its newline (echo adds one, not echo -n): it is encoded too, like the real one.
-      const noNewline = /\becho\s+-n\b[^|]*\|\s*base64\b/.test(game.commandLine);
-      const enc = base64Encode(input !== null && !files.length && !noNewline ? text + (text.endsWith('\n') ? '' : '\n') : text);
-      if (!wrap) return enc;
-      return enc.match(new RegExp(`.{1,${wrap}}`, 'g'))?.join('\n') ?? '';
     },
   },
 };

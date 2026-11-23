@@ -687,6 +687,21 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **Self-hosted object storage** (Garage, S3 clients): a website
+  bucket that also served private documents, a backup that failed on a
+  clock, a region and a key, a big file shared for a week while a node lay
+  dead. Done: story 46, "The Dance Troupe" (`garage.ts`: nodes, layout,
+  buckets, website access, keys and permissions, Garage's request checks,
+  presigned URLs; `objects-client.ts`: `garage`, `aws`, `rclone` and curl
+  in the `objects` family; six errors in the error explainer).
+
+- [x] **UPS and power cuts** (Network UPS Tools 2.8.1, Debian 13): a
+  monitor watching a UPS that no longer exists, a NAS nobody warns, a worn
+  battery and alerts that cry wolf. Done: story 45, "The Climbing Wall"
+  (`nut.ts`: the mains, the UPS and its battery, the machines' halts and
+  power restore policy, upsd, upsmon, upssched; `upsc`, `upscmd`, `upsrw`,
+  `upsmon`, `upsd`, `upsdrvctl`, `ipmitool` in the `nut` family).
+
 - [x] **Running MariaDB** (Debian 13's 11.8 LTS): connections that pile up
   and a query without an index, an app given root over the network, a
   replica stopped on a duplicate key and backups nobody restored. Done:
@@ -695,6 +710,15 @@ them safely.
   the binary log and a replica's threads; `mariadb-sql.ts`; `mariadb`,
   `mariadb-dump`, `mariadb-admin`, `mariadb-check`,
   `mariadb-secure-installation`; five MariaDB errors in the error explainer).
+
+- [x] **An inbound mail server** (Postfix receiving, Dovecot 2.4 with
+  Pigeonhole's Sieve, rspamd 3.12): a mailbox over quota, spam thresholds,
+  a whitelist and Bayes, Sieve sorting and a vacation reply. Done: story 44,
+  "The Lifeboat" (`dovecot.ts`: configuration, passwd-file userdb, Maildir,
+  quota and warnings, LMTP; `sieve.ts`; `rspamd.ts`: UCL, actions,
+  multimap, settings, Bayes, greylisting; `inbound.ts`; `doveadm`,
+  `doveconf`, `sievec`, `sieve-test`, `rspamc`, `rspamadm` in the `inbound`
+  family; four errors in the error explainer).
 
 ### Other ideas
 

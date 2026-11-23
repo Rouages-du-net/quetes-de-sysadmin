@@ -1737,6 +1737,119 @@ broken-replica:rake
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+mailbox-full
+  /home/you → /home/vous
+  /home/you/message_from_marisol.txt → /home/vous/message_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+
+spam-tide
+  /home/you → /home/vous
+  /home/you/message_from_leilani.txt → /home/vous/message_de_leilani.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+
+sorting-office
+  /home/you → /home/vous
+  /home/you/message_from_marisol.txt → /home/vous/message_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/vous/mot_de_yerlan.txt
+  /home/you/sample-booking.eml → /home/vous/exemple-reservation.eml
+  /home/you/sample-list.eml → /home/vous/exemple-liste.eml
+
+last-cut
+  /home/you → /home/vous
+  /home/you/message_from_nkechi.txt → /home/vous/message_de_nkechi.txt
+  /home/you/notes_from_haruto.txt → /home/vous/notes_de_haruto.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+down-in-order
+  /home/you → /home/vous
+  /home/you/message_from_akosua.txt → /home/vous/message_de_akosua.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+down-in-order:harness
+  /srv/archive/README.txt → /srv/archive/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+old-battery
+  /home/you → /home/vous
+  /home/you/message_from_thandiwe.txt → /home/vous/message_de_thandiwe.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+old-battery:harness
+  /srv/archive/README.txt → /srv/archive/LISEZMOI.txt
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+public-bucket
+  /home/you → /home/vous
+  /home/you/message_from_esperanza.txt → /home/vous/message_d_esperanza.txt
+  /home/you/notes_from_teodora.txt → /home/vous/notes_de_teodora.txt
+  /home/you/.aws → /home/vous/.aws
+  /home/you/.aws/credentials → /home/vous/.aws/credentials
+  /home/you/.aws/config → /home/vous/.aws/config
+  /home/you/bin → /home/vous/bin
+  /home/you/bin/deploy-site → /home/vous/bin/deploy-site
+  /home/you/site → /home/vous/site
+  /home/you/site/index.html → /home/vous/site/index.html
+  /home/you/site/agenda.html → /home/vous/site/agenda.html
+  /home/you/site/classes.html → /home/vous/site/classes.html
+  /home/you/site/404.html → /home/vous/site/404.html
+  /home/you/site/css → /home/vous/site/css
+  /home/you/site/css/style.css → /home/vous/site/css/style.css
+  /home/you/site/images → /home/vous/site/images
+  /home/you/site/images/gala-2031.jpg → /home/vous/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/vous/site/images/studio.jpg
+
+offsite-copy
+  /home/you → /home/vous
+  /home/you/message_from_linh.txt → /home/vous/message_de_linh.txt
+  /home/you/message_from_anahera.txt → /home/vous/message_d_anahera.txt
+  /home/you/notes_from_teodora.txt → /home/vous/notes_de_teodora.txt
+  /home/you/.aws → /home/vous/.aws
+  /home/you/.aws/credentials → /home/vous/.aws/credentials
+  /home/you/.aws/config → /home/vous/.aws/config
+  /home/you/bin → /home/vous/bin
+  /home/you/bin/deploy-site → /home/vous/bin/deploy-site
+  /home/you/site → /home/vous/site
+  /home/you/site/index.html → /home/vous/site/index.html
+  /home/you/site/agenda.html → /home/vous/site/agenda.html
+  /home/you/site/classes.html → /home/vous/site/classes.html
+  /home/you/site/404.html → /home/vous/site/404.html
+  /home/you/site/css → /home/vous/site/css
+  /home/you/site/css/style.css → /home/vous/site/css/style.css
+  /home/you/site/images → /home/vous/site/images
+  /home/you/site/images/gala-2031.jpg → /home/vous/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/vous/site/images/studio.jpg
+
+big-file
+  /home/you → /home/vous
+  /home/you/message_from_farrukh.txt → /home/vous/message_de_farrukh.txt
+  /home/you/message_from_siosaia.txt → /home/vous/message_de_siosaia.txt
+  /home/you/notes_from_teodora.txt → /home/vous/notes_de_teodora.txt
+  /home/you/.aws → /home/vous/.aws
+  /home/you/.aws/credentials → /home/vous/.aws/credentials
+  /home/you/.aws/config → /home/vous/.aws/config
+  /home/you/bin → /home/vous/bin
+  /home/you/bin/deploy-site → /home/vous/bin/deploy-site
+  /home/you/site → /home/vous/site
+  /home/you/site/index.html → /home/vous/site/index.html
+  /home/you/site/agenda.html → /home/vous/site/agenda.html
+  /home/you/site/classes.html → /home/vous/site/classes.html
+  /home/you/site/404.html → /home/vous/site/404.html
+  /home/you/site/css → /home/vous/site/css
+  /home/you/site/css/style.css → /home/vous/site/css/style.css
+  /home/you/site/images → /home/vous/site/images
+  /home/you/site/images/gala-2031.jpg → /home/vous/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/vous/site/images/studio.jpg
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -2,9 +2,12 @@
 // into the pieces the game loads, each when it needs it (see index.ts):
 //
 //   <language>/core          every file but the stories' and the manual's pages,
-//                            plus each chapter's title (`chapter-<id>` and its
-//                            .summary, for the menu) and the manual's own
-//                            messages (headers, option errors)
+//                            plus each chapter's title (`chapter-<id>`, for the
+//                            menu) and the manual's own messages (headers,
+//                            option errors)
+//   <language>/summaries     each chapter's title with its .summary (the menu's
+//                            and the mission's abstract), fetched once the
+//                            terminal is ready (game.ts: lazy, withTexts)
 //   <language>/shared        machines.ftl, names.ftl, desk.ftl: loaded for
 //                            every language with any language's core
 //   <language>/manual        the manual's pages (man-*: man, --help, apropos)
@@ -50,17 +53,6 @@ export function entries(source) {
   return out.map((e) => ({ id: e.id, text: e.lines.join('\n').replace(/\n+$/, '') }));
 }
 
-// A manual page's first sentence (what whatis and the notebook show, see
-// commands/manual.ts's recap), kept in the core texts as man-summary-<page>:
-// the notebook shows it before the manual's pages have loaded. None for a
-// sentence with a placeable.
-function summary(text) {
-  const lines = text.split('\n').filter((l) => !l.startsWith('#'));
-  const first = lines[0].slice(lines[0].indexOf('=') + 1).trim() || (lines.slice(1).find((l) => l.trim() && !l.trim().startsWith('.')) ?? '').trim();
-  const sentence = first.split(/(?<=\.)\s|(?<=。)/)[0];
-  return sentence && !/[{}]/.test(sentence) ? sentence : null;
-}
-
 const languages = () => readdirSync(TEXTS, { withFileTypes: true }).filter((d) => d.isDirectory() && readdirSync(join(TEXTS, d.name)).some((f) => f.endsWith('.ftl'))).map((d) => d.name).sort();
 // Read in every language at once: a save made in another language (machine
 // names, the player's account, the workstation's ssh config) is translated
@@ -87,25 +79,26 @@ function computeGroups(language) {
   const core = [];
   const shared = [];
   const titles = [];
-  const manualOwn = [];
   const summaries = [];
+  const manualOwn = [];
   const pages = [];
   const dialogs = {};
   for (const f of files) {
     if (f === 'manual.ftl') {
-      for (const e of entries(read(f))) {
-        (e.id.startsWith('man-') ? pages : manualOwn).push(e.text);
-        const line = e.id.startsWith('man-') && summary(e.text);
-        if (line) summaries.push(`${e.id.replace(/^man-/, 'man-summary-')} = ${line}`);
-      }
+      for (const e of entries(read(f))) (e.id.startsWith('man-') ? pages : manualOwn).push(e.text);
     } else if (storyFile(f) && claimed.has(f)) {
       const title = f.startsWith('chapter-') && entries(read(f)).find((e) => e.id === f.slice(0, -4));
-      if (title) titles.push(title.text);
+      // The title alone in the core (its line), the whole message (with .summary) in summaries.
+      if (title) {
+        titles.push(title.text.split('\n').find((l) => l.startsWith(title.id)));
+        summaries.push(title.text);
+      }
     } else if (dialogFile(f)) dialogs[f.slice(0, -4)] = [[f, read(f)]];
     else (SHARED.includes(f) ? shared : core).push([f, read(f)]);
   }
   const result = {
-    core: [...core, ['manual.ftl (own messages)', manualOwn.join('\n')], ['manual.ftl (summaries)', summaries.join('\n')], ['chapter titles', titles.join('\n')]],
+    core: [...core, ['manual.ftl (own messages)', manualOwn.join('\n')], ['chapter titles', titles.join('\n')]],
+    summaries: [['chapter summaries', summaries.join('\n')]],
     shared,
     manual: [['manual.ftl (pages)', pages.join('\n')]],
     ...dialogs,
