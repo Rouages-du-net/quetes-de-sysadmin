@@ -407,6 +407,29 @@ on-call-map =
        *[other] { $errors } erreurs
     }
     { $address }
+## La série d'astreintes (voir src/engine/streak.ts) : bienveillante, jamais culpabilisante.
+# { $days } : la série en cours, en jours ; { $best } : la meilleure
+streak-today = 🔥 { $days ->
+        [one] Un jour d'astreinte
+       *[other] { $days } jours d'astreinte d'affilée
+    } (record : { $best }). À demain, si le cœur t'en dit.
+streak-going = 🔥 { $days ->
+        [one] Un jour d'astreinte
+       *[other] { $days } jours d'astreinte d'affilée
+    } (record : { $best }). L'incident du jour la prolonge.
+# Avec streak-going, quand un jour manqué ne casserait pas la série.
+streak-rest-ready = Aucune pression : un jour de repos par semaine ne la casse pas.
+streak-rest-used = Hier était ton jour de repos de la semaine.
+streak-best = Meilleure série : { $best ->
+        [one] un jour
+       *[other] { $best } jours
+    }. Une nouvelle commence avec l'incident du jour.
+achievements-streak-3 = Trois nuits d'astreinte
+    .description = Régler l'incident du jour trois jours d'affilée (un jour de repos par semaine ne casse pas la série).
+achievements-streak-7 = Une semaine d'astreinte
+    .description = Régler l'incident du jour sept jours d'affilée (un jour de repos par semaine ne casse pas la série).
+achievements-streak-30 = Un mois d'astreinte
+    .description = Régler l'incident du jour trente jours d'affilée (un jour de repos par semaine ne casse pas la série).
 achievements-without-hint = Sans filet
     .description = Terminer un chapitre sans demander d'indice.
 

@@ -112,7 +112,7 @@ inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich).
 Le jeu n'envoie rien : aucune donnée ne quitte le navigateur. La progression
 est gardée dans le `localStorage` de la page qui l'accueille, sous la clé
 choisie. À côté, la même clé suivie d'un suffixe garde les réglages
-d'affichage (`CLE-display`), les résultats d'astreinte (`CLE-on-call`) et le
+d'affichage (`CLE-display`), les résultats d'astreinte (`CLE-on-call`, d'où se calcule la série d'astreintes) et le
 chapitre en cours, un par langue (`CLE-autosave-en`, `CLE-autosave-fr`) : les
 saisies tapées depuis l'ouverture du chapitre, pour proposer de le reprendre
 après la fermeture de la page. Elles peuvent contenir les mots de passe de

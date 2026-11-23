@@ -407,6 +407,29 @@ on-call-map =
        *[other] { $errors } errors
     }
     { $address }
+## The on-call streak (see src/engine/streak.ts): kind, never a guilt trip.
+# { $days }: the current streak, in days; { $best }: the best one
+streak-today = 🔥 { $days ->
+        [one] One day on call
+       *[other] { $days } days on call in a row
+    } (best: { $best }). See you tomorrow, if you feel like it.
+streak-going = 🔥 { $days ->
+        [one] One day on call
+       *[other] { $days } days on call in a row
+    } (best: { $best }). Today's incident keeps it going.
+# Shown with streak-going when a missed day would not break the streak.
+streak-rest-ready = No pressure: one rest day a week doesn't break it.
+streak-rest-used = Yesterday was your rest day for the week.
+streak-best = Best streak: { $best ->
+        [one] one day
+       *[other] { $best } days
+    }. A new one starts with today's incident.
+achievements-streak-3 = Three nights on call
+    .description = Solve the incident of the day three days in a row (a rest day a week doesn't break the streak).
+achievements-streak-7 = A week on call
+    .description = Solve the incident of the day seven days in a row (a rest day a week doesn't break the streak).
+achievements-streak-30 = A month on call
+    .description = Solve the incident of the day thirty days in a row (a rest day a week doesn't break the streak).
 achievements-without-hint = No safety net
     .description = Finish a chapter without asking for a hint.
 

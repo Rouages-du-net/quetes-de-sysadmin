@@ -930,6 +930,11 @@ presents them for people.
   event condition reads `last.output`, already without colours; on-call
   duty and the incident of the day in `src/engine/on-call.ts` (drawn from
   the date by the interface; the engine doesn't read the time), the
+  on-call streak in `src/engine/streak.ts` (`streak()` on the days solved,
+  `localDate()` given the interface's Date: a rest day in any seven, a
+  clock set back; the results in `KEY-on-call` and the save file's
+  `onCall`, `cleanOnCall`/`mergeOnCall` of `progress.ts`;
+  `tests/streak.test.ts`), the
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
   least one path, `tests/paths.test.ts` checks it), "Report a problem or
   an idea" in `src/engine/feedback.ts` (`buildReport()`: a pure function,

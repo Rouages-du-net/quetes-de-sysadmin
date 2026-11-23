@@ -644,6 +644,9 @@
 .qds .incident-button:hover:not(:disabled), .qds .incident-button:focus-visible { box-shadow: inset 0 0 0 1px var(--_amber); }
 .qds .incident-button:disabled { cursor: default; border-style: dashed; border-color: var(--_border); color: var(--_muted); }
 .qds .incident-text { font-size: 0.9rem; color: var(--_muted); }
+/* The on-call streak (see src/engine/streak.ts), under the entry and in the end of on-call's window. */
+.qds .streak { margin: -0.4rem 0 0.75rem; font-size: 0.9rem; color: var(--_muted); }
+.qds .on-call-window .streak { margin: 0.5rem 0; color: var(--_text); }
 .qds .on-call-gauge { font-family: var(--_font-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--_amber); }
 .qds .on-call-gauge.low { text-decoration: underline wavy; text-underline-offset: 0.25em; }
 .qds .on-call-window { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100vh - 4rem); overflow: auto; padding: 1rem 1.25rem; border: 1px solid var(--_border); border-radius: 0.5rem; background: var(--_background); color: var(--_text); font-family: var(--_font); }

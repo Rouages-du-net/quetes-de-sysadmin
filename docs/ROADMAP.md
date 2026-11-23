@@ -832,6 +832,17 @@ them safely.
   one); an error budget of 30 minutes that melts with time (−3 min per
   hint, −20 s per failed command); at the end, a score card as text to copy
   (a five-box gauge); the day's best result is kept in the browser.
+- [x] **On-call streak** (`src/engine/streak.ts`): the consecutive days
+  whose incident was solved, counted on calendar dates in the player's
+  time zone (the interface passes them; a 23- or 25-hour day is one day),
+  one rest day in any seven that doesn't break it, today never counted
+  against the player before it ends, dates after today (a clock set back)
+  ignored until they come. Shown under the menu's entry and at the end of
+  on-call, in kind words; achievements at 3, 7 and 30 days. Computed from
+  the on-call results (`KEY-on-call`), which the save file now carries
+  (`onCall`, the best of each day, merged on import) so the streak follows
+  a player to another device; not in the short code (it holds finished
+  chapters only and must stay short).
 - [x] **End-of-chapter summary** (`src/engine/summary.ts`): time spent,
   commands typed (and failed), hints; the detail compares, step by step,
   the command that passed it with the reference solution (the hints'), and

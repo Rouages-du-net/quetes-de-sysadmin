@@ -50,6 +50,10 @@ un système entièrement simulé : rien ne sort du navigateur.
   nom », « Connection refused »…), « Que veut dire cette erreur ? »
   l'explique simplement et dit où regarder, sans donner la réponse (le
   réglage « Aide aux erreurs » le désactive ; jamais en mode examen).
+- L'incident du jour, en astreinte : règle-le plusieurs jours d'affilée pour
+  une série (un jour de repos par semaine ne la casse pas ; manquer un jour
+  ne fait rien perdre, la meilleure série reste), avec des succès à 3, 7 et
+  30 jours.
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

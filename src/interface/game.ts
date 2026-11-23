@@ -27,7 +27,8 @@ import { complete, QUESTIONS, readAnswers, recommend, TEACHERS_PAGE, type Answer
 import { buildReport, DEFAULT_PARTS, FEEDBACK_KINDS, FEEDBACK_PARTS, partLines, reportText, STEPS_KEPT, transcript, type FeedbackContext, type FeedbackKind, type FeedbackPart, type Step } from '../engine/feedback';
 import { missing } from '../engine/unlocking';
 import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engine/on-call';
-import { progressCode, backupFile, readCode, readFile, cleanName, type Backup } from '../engine/progress';
+import { localDate, streak } from '../engine/streak';
+import { progressCode, backupFile, readCode, readFile, cleanName, cleanOnCall, mergeOnCall, type Backup, type OnCallResult } from '../engine/progress';
 import { colourise, type Token } from '../engine/highlighting';
 import { chunks, withoutColours } from '../engine/colours';
 import { autosaveKey, clearAutosave, readAutosave, recordOf, resume as resumeAutosave, writeAutosave, type AutosaveRecord } from '../engine/autosave';
@@ -188,12 +189,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
   const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
+  // The on-call streak (see streak.ts), under the incident: kind words, never a reproach.
+  const streakLine = el('p', { class: 'streak', hidden: '' });
   // "Where do I start?" (see start-here.ts): a button of the menu, always there (hidden in exam mode).
   const startHereButton = el('button', { type: 'button', class: 'start-here-button', 'aria-haspopup': 'dialog' }, t('start-here-button'));
   const startHereEntry = el('p', { class: 'start-here-entry' }, startHereButton);
   // "Report a problem or an idea" (see feedback.ts): a button under the menu, and one among the chapter's actions.
   const feedbackMenuButton = el('button', { type: 'button', class: 'feedback-button', 'aria-haspopup': 'dialog' }, icon(...ICON_FEEDBACK), el('span', {}, t('feedback-button')));
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, streakLine, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
   // On a first visit, the same questions offered by a card above the menu: not a window, it blocks nothing.
   const startOfferId = `qds-start-offer-${Math.random().toString(36).slice(2, 8)}`;
   const startOfferAnswer = el('button', { type: 'button', class: 'button', 'aria-haspopup': 'dialog' }, t('start-here-offer-answer'));
@@ -590,6 +593,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('on-call-rules'))),
     el('p', { class: 'map-actions' }, cancelOnCall, ' ', takeOnCall),
   ) as HTMLDialogElement;
+  const streakEnd = el('p', { class: 'streak' });
   const onCallEndId = `qds-on-call-end-${Math.random().toString(36).slice(2, 8)}`;
   const scoreMap = el('pre', { class: 'score-card' });
   const copyMap = el('button', { type: 'button', class: 'button' }, t('on-call-copy'));
@@ -601,6 +605,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('h2', { id: onCallEndId }, t('on-call-end-title')),
     el('p', { class: 'map-legend' }, typo(t('on-call-end-intro'))),
     scoreMap,
+    streakEnd,
     mapState,
     el('p', { class: 'map-actions' }, closeOnCallEnd, ' ', copyMap),
   ) as HTMLDialogElement;
@@ -731,6 +736,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const finished = gameTerminal.finished;
   const notebook: Notebook = saved.notebook && typeof saved.notebook === 'object' ? saved.notebook : {};
   const records: Record<string, number> = saved.records && typeof saved.records === 'object' ? saved.records : {};
+  // ——— On-call results ———
+  // The results of past days, in this browser (the best of each day).
+  const ON_CALL_KEY = `${KEY}-on-call`;
+  type Result = OnCallResult;
+  let results: Record<string, Result> = {};
+  try {
+    results = cleanOnCall(JSON.parse(localStorage.getItem(ON_CALL_KEY) ?? '{}'));
+  } catch {}
+  // Today's date (YYYY-MM-DD, the player's local time): the same everywhere on the same day.
+  const today = () => localDate(new Date());
   let playerName = typeof saved.name === 'string' ? cleanName(saved.name) : '';
   const achievements: Record<string, string> = saved.achievements && typeof saved.achievements === 'object' ? { ...saved.achievements } : {};
   // The tips already shown (see tips.ts), and what each session remembers for them.
@@ -992,7 +1007,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   // The achievements earned by the last line (sh: its session; null: outside a line).
   const checkAchievements = (sh: Shell | null) => {
-    for (const id of newAchievements({ sh, finished, notebook, records }, achievements)) {
+    for (const id of newAchievements({ sh, finished, notebook, records, streak: streak(Object.keys(results), today()).best }, achievements)) {
       achievements[id] = new Date().toISOString();
       show(t('achievements-obtained', { name: t(`achievements-${id}`) }), 'achievements');
     }
@@ -1554,17 +1569,24 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
   }));
   // ——— On-call duty ———
-  // The results of past days, in this browser (the best of each day).
-  const ON_CALL_KEY = `${KEY}-on-call`;
-  type Result = { chapter: string; remaining: number; time: number; hints: number; errors: number };
-  let results: Record<string, Result> = {};
-  try {
-    results = JSON.parse(localStorage.getItem(ON_CALL_KEY) ?? '{}') ?? {};
-  } catch {}
-  // Today's date (YYYY-MM-DD, local time): the same everywhere on the same day.
-  const today = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  // The streak's words: the menu's line and the end of on-call's.
+  const streakWords = () => {
+    const s = streak(Object.keys(results), today());
+    if (s.best === 0) return '';
+    if (s.current === 0) return t('streak-best', { best: s.best });
+    if (s.today) return t('streak-today', { days: s.current, best: s.best });
+    const yesterday = s.rests.at(-1) === dayBefore(today());
+    return [t('streak-going', { days: s.current, best: s.best }), yesterday ? t('streak-rest-used') : s.restReady ? t('streak-rest-ready') : ''].filter(Boolean).join(' ');
+  };
+  const dayBefore = (iso: string) => {
+    const d = new Date(`${iso}T12:00:00`);
+    d.setDate(d.getDate() - 1);
+    return localDate(d);
+  };
+  const streakUpdate = () => {
+    const words = streakWords();
+    streakLine.textContent = words ? typo(words) : '';
+    streakLine.hidden = !words || incidentBlock.hidden;
   };
   const longDate = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
   let onCall: { date: string; chapter: string; start: number; sh: Shell | null; epuise: boolean } | null = null;
@@ -1586,6 +1608,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       : done
         ? t('on-call-already', { percent: percent(done.remaining) })
         : t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
+    streakUpdate();
   };
   incidentButton.addEventListener('click', () => {
     const id = incident();
@@ -1668,6 +1691,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       address: 'https://sysadmin.rouages.net',
     });
     mapState.textContent = '';
+    streakEnd.textContent = typo(streakWords());
     onCall = null;
     onCallUpdate();
     onCallEndWindow.showModal();
@@ -2226,9 +2250,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   achievementsWindow.addEventListener('close', () => setTimeout(() => input.focus()));
   // ——— My progress ———
   // A restored save (code or file): it is written, then the game restarts from it.
-  const resume = (s: Backup) => {
+  const resume = ({ onCall: days, ...s }: Backup) => {
     try {
       localStorage.setItem(KEY, JSON.stringify(s));
+      // The file's on-call days join this browser's (the best of each day): the streak follows.
+      if (days) localStorage.setItem(ON_CALL_KEY, JSON.stringify(mergeOnCall(results, days)));
     } catch {}
     progressWindow.close();
     clearInterval(timer);
@@ -2279,7 +2305,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   });
   download.addEventListener('click', () => {
     const link = el('a', {
-      href: URL.createObjectURL(new Blob([backupFile(backupState(), new Date())], { type: 'application/json' })),
+      href: URL.createObjectURL(new Blob([backupFile({ ...backupState(), onCall: results }, new Date())], { type: 'application/json' })),
       download: t('progress-name-file'),
     });
     link.click();

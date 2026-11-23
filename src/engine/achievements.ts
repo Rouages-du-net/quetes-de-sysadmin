@@ -16,6 +16,8 @@ export interface Context {
   notebook: Notebook;
   // Best times in exam mode, per chapter (ms).
   records: Record<string, number>;
+  // The best on-call streak, in days (see streak.ts).
+  streak?: number;
 }
 
 export interface Achievements {
@@ -42,6 +44,10 @@ export const ACHIEVEMENTS: Achievements[] = [
   { id: 'fifty-commands', obtained: (c) => Object.keys(c.notebook).length >= 50 },
   { id: 'without-hint', obtained: (c) => !!c.sh?.finished && c.sh.chapter.id !== 'desk' && c.sh.requestsHints.size === 0 },
   { id: 'exam', obtained: (c) => Object.keys(c.records).length > 0 },
+  // On call several days in a row (rest days included, see streak.ts).
+  { id: 'streak-3', obtained: (c) => (c.streak ?? 0) >= 3 },
+  { id: 'streak-7', obtained: (c) => (c.streak ?? 0) >= 7 },
+  { id: 'streak-30', obtained: (c) => (c.streak ?? 0) >= 30 },
   { id: 'exam-lightning', obtained: (c) => Object.values(c.records).some((ms) => ms < 5 * 60_000) },
   // The easter eggs: one very precise line (see EGGS in shell.ts).
   { id: 'xyzzy', cache: true, obtained: (c) => !!c.sh?.eggs.has('xyzzy') },

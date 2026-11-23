@@ -1077,10 +1077,17 @@ for (const width of [1000, 375]) {
   await page.clock.install({ time: new Date('2027-01-10T10:00:00') });
   await withCsp(page);
   await page.goto(`${BASE}/fr/`);
-  await page.evaluate(() => localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] })));
+  await page.evaluate(() => {
+    localStorage.setItem('quetes-de-sysadmin', JSON.stringify({ finished: ['lighthouse', 'village', 'root', 'backup'] }));
+    // Two days on call already (the 8th and 9th): a streak going (see streak.ts).
+    const day = { chapter: 'first-day', remaining: 900000, time: 600000, hints: 0, errors: 0 };
+    localStorage.setItem('quetes-de-sysadmin-on-call', JSON.stringify({ '2027-01-08': day, '2027-01-09': day }));
+  });
   await page.reload();
   const game = page.locator('quetes-de-sysadmin');
   check((await game.locator('.incident-text').textContent()).includes('Premier jour'), `on-call ${width} px: the incident of the day is announced`);
+  const streakLine = (await game.locator('.stories .streak').textContent()).replace(/\s/g, ' ');
+  check(/2 jours d.astreinte d.affilée/.test(streakLine) && streakLine.includes('repos'), `on-call ${width} px: the streak and the rest day, kindly (${streakLine})`);
   // The clock is stopped: time only moves with runFor (otherwise a second may pass before the gauge is read).
   await page.clock.pauseAt(new Date('2027-01-10T10:00:10'));
   await game.locator('.incident-button').click();
@@ -1103,6 +1110,10 @@ for (const width of [1000, 375]) {
   check(map.includes('astreinte du 2027-01-10') && map.includes('« Premier jour »') && /[🟩🟨⬜]{5} \d+ % du budget/.test(map) && map.includes('une erreur'), `on-call ${width} px: the score card`);
   const box = await end.boundingBox();
   check(box.x >= 0 && box.x + box.width <= width, `on-call ${width} px: the dialog fits on the screen`);
+  check((await end.locator('.streak').textContent()).includes('3 jours'), `on-call ${width} px: the streak grows to three days`);
+  check(/Trois nuits d.astreinte/.test(await game.locator('.output').textContent()), `on-call ${width} px: the three-day achievement`);
+  const file = await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-on-call')));
+  check(Object.keys(file).sort().join() === '2027-01-08,2027-01-09,2027-01-10', `on-call ${width} px: today's result joins the days kept`);
   await page.keyboard.press('Escape');
   check((await game.locator('.on-call-gauge').isHidden()) && (await game.locator('.incident-text').textContent()).includes('Fait aujourd’hui') || (await game.locator('.incident-text').textContent()).includes("Fait aujourd'hui"), `on-call ${width} px: the day's result is kept`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `on-call ${width} px: no horizontal scrolling`);
