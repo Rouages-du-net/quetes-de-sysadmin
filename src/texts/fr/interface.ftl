@@ -297,6 +297,13 @@ summary-encourage = { $hints ->
         [0] Sans indice : bravo. Rejoue-le en mode examen pour battre ton temps ?
        *[other] La prochaine fois, avec moins d'indices ?
     }
+# Rejouer et comparer (voir src/engine/runs.ts) ; la comparaison elle-même est dans dialog-compare.ftl.
+replay-button = Rejouer ce chapitre
+# { $before } : les commandes de la partie précédente de ce chapitre
+summary-compare = La dernière fois : { $before ->
+        [one] une commande
+       *[other] { $before } commandes
+    }. Le détail compare les deux parties.
 ## L'instantané de secours (panneau Mission ; voir Console.restaurer)
 rescue-title = Instantané de secours
 rescue-intro = Comme l'instantané d'une machine virtuelle avant une opération risquée : prends-en un, tente ta manœuvre, et reviens-y si ça tourne mal. Le chapitre est rejoué jusqu'à ce point, sans rien perdre d'autre.

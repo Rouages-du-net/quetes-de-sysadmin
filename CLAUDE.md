@@ -950,6 +950,10 @@ presents them for people.
   not the progress; a first visit's card and the tour's last step; hidden
   in exam mode; `tests/start-here.test.ts`), the end-of-chapter
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
+  replay and compare in `src/engine/runs.ts` (`makeRun`, `addRun`,
+  `compare`, `diffLines`; the runs in `KEY-runs`, the lines typed kept by
+  `game.ts`; the dialog's texts in `dialog-compare.ftl`;
+  `tests/runs.test.ts`),
   the error explainer in `src/engine/explainer.ts` (a failed command's
   common error recognised from the messages listed in `explainer.ftl`'s
   `.match`, explained on demand under the output, never in exam mode, an

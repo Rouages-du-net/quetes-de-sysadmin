@@ -1066,6 +1066,60 @@ for (const width of [1000, 375]) {
   await context.close();
 }
 
+// Replay and compare (see runs.ts): a previous run of the first chapter kept
+// in the browser, the chapter finished again, the comparison in the
+// summary's dialog (a table of measures, the commands diff-like), then
+// "Replay this chapter" starts it afresh, both runs kept.
+const SHOTS = process.env.SHOTS;
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  await page.evaluate(() => {
+    const lines = ['ls', 'cd Port', 'ls -a', 'cat nulle-part', 'cd Remise', 'ls -a'];
+    const run = { chapter: 'lighthouse', date: '2026-11-20T10:00:00.000Z', time: 400000, commands: 6, errors: 1, hints: 1, distinct: 3, exam: false, lines };
+    localStorage.setItem('quetes-de-sysadmin-runs', JSON.stringify({ lighthouse: [run] }));
+  });
+  await page.reload();
+  const game = page.locator('quetes-de-sysadmin');
+  const tape = async (l) => {
+    await game.locator('form input').fill(l);
+    await game.locator('form input').press('Enter');
+  };
+  await game.locator('button[data-story="0"]').click();
+  await waitReady(page);
+  await tape('ls');
+  await tape('mv Jetee/filet Port/Hangar');
+  await tape('mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
+  const line = (await game.locator('.output .summary').textContent()).replace(/\s/g, ' ');
+  check(line.includes('La dernière fois : 6 commandes') && line.includes('Rejouer ce chapitre'), `compare ${width} px: the summary recalls the previous run and offers a replay (${line})`);
+  await game.locator('.output .summary-button').click();
+  const dialog = game.locator('dialog.summary-window');
+  await dialog.locator('.compare h3').first().waitFor();
+  const heads = await dialog.locator('.compare-table thead th').allTextContents();
+  check(heads.length === 3 && heads[2] === 'Cette partie' && heads[1].includes('20 nov'), `compare ${width} px: a column per run (${heads.join(' | ')})`);
+  const rows = await dialog.locator('.compare-table tbody tr').allTextContents();
+  check(rows.length === 5 && /Commandes tapées\s*6\s*\d\s/.test(rows[0]) && rows[0].includes('en baisse') && /Indices demandés\s*1\s*0/.test(rows[3]), `compare ${width} px: the measures, with the trend (${rows[0]})`);
+  const added = await dialog.locator('.compare-diff li.compare-after').allTextContents();
+  const removed = await dialog.locator('.compare-diff li.compare-before').count();
+  check(added.some((l) => l.includes('Seulement cette fois') && l.includes('mv Port/Remise')) && removed === 5, `compare ${width} px: the commands, diff-like, with words for screen readers`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `compare ${width} px: the dialog fits on the screen`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `compare ${width} px: no horizontal scrolling`);
+  if (SHOTS) await dialog.locator('.compare').screenshot({ path: `${SHOTS}/engagement-compare-${width}.png` });
+  await dialog.locator('button', { hasText: 'Rejouer ce chapitre' }).click();
+  await waitReady(page);
+  check(!(await dialog.evaluate((d) => d.open)) && !(await game.locator('.output .summary').count()) && (await game.locator('.output').textContent()).includes('chapitre 1'), `compare ${width} px: the replay starts the chapter afresh`);
+  const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('quetes-de-sysadmin-runs')).lighthouse.map((r) => r.commands));
+  check(kept.length === 2 && kept[0] === 6, `compare ${width} px: both runs are kept (${kept.join()})`);
+  check(errors.length === 0, `compare ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // On-call duty: the incident of the day, drawn among the chapters open after
 // L'Effaceur (fixed date: 10 January 2027, "First day"),
 // the budget that melts, the score card at the end, the result kept.

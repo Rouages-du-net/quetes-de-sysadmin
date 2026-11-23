@@ -297,6 +297,13 @@ summary-encourage = { $hints ->
         [0] No hints: well done. Replay it in exam mode to beat your time?
        *[other] Next time, with fewer hints?
     }
+# Replay and compare (see src/engine/runs.ts); the comparison itself is in dialog-compare.ftl.
+replay-button = Replay this chapter
+# { $before }: the commands of the previous run of this chapter
+summary-compare = Last time: { $before ->
+        [one] one command
+       *[other] { $before } commands
+    }. The details compare both runs.
 ## The restore point (Mission panel; see Console.restaurer)
 rescue-title = Restore point
 rescue-intro = Like a virtual machine snapshot before a risky operation: take one, try your move, and come back to it if things go wrong. The chapter is replayed up to that point, without losing anything else.

@@ -22,6 +22,7 @@ import { grade, GRADES, newAchievements, ACHIEVEMENTS } from '../engine/achievem
 import { hint, HINT_LEVELS, type HintLevel } from '../engine/hints';
 import { explain } from '../engine/explainer';
 import { summary } from '../engine/summary';
+import { addRun, compare, makeRun, readRuns, type Comparison, type Runs } from '../engine/runs';
 import { pathSteps, PATH } from '../engine/paths';
 import { complete, QUESTIONS, readAnswers, recommend, TEACHERS_PAGE, type Answers, type Question, type Suggestion } from '../engine/start-here';
 import { buildReport, DEFAULT_PARTS, FEEDBACK_KINDS, FEEDBACK_PARTS, partLines, reportText, STEPS_KEPT, transcript, type FeedbackContext, type FeedbackKind, type FeedbackPart, type Step } from '../engine/feedback';
@@ -615,6 +616,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const mapCaption = el('p', { class: 'map-legend' });
   const tableSummary = el('div', { class: 'summary-table', tabindex: '0', role: 'region', 'aria-labelledby': summaryId });
   const encourageSummary = el('p', { class: 'map-legend' });
+  // Replay and compare (see runs.ts): the earlier runs next to this one, filled when the dialog opens.
+  const compareSection = el('section', { class: 'compare', hidden: '' });
+  const replaySummary = el('button', { type: 'button', class: 'button button-secondary' }, t('replay-button'));
   const closeSummary = el('button', { type: 'button', class: 'button' }, t('map-close'));
   const summaryWindow = el(
     'dialog',
@@ -624,7 +628,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('summary-intro'))),
     tableSummary,
     encourageSummary,
-    el('p', { class: 'map-actions' }, closeSummary),
+    compareSection,
+    el('p', { class: 'map-actions' }, replaySummary, ' ', closeSummary),
   ) as HTMLDialogElement;
   const progressId = `qds-progress-${Math.random().toString(36).slice(2, 8)}`;
   const nameField = el('input', { type: 'text', id: `${progressId}-name`, maxlength: '60', autocomplete: 'name', spellcheck: 'false' }) as HTMLInputElement;
@@ -746,6 +751,16 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   } catch {}
   // Today's date (YYYY-MM-DD, the player's local time): the same everywhere on the same day.
   const today = () => localDate(new Date());
+  // ——— Finished runs, to compare a replay with (see runs.ts) ———
+  // Kept in this browser only (not in the save file: a log of commands, not progress).
+  const RUNS_KEY = `${KEY}-runs`;
+  let runs: Runs = {};
+  try {
+    runs = readRuns(JSON.parse(localStorage.getItem(RUNS_KEY) ?? '{}'));
+  } catch {}
+  // The lines typed in the current chapter (an answer to a question is not one), and that chapter.
+  let runLines: string[] = [];
+  let runChapter = '';
   let playerName = typeof saved.name === 'string' ? cleanName(saved.name) : '';
   const achievements: Record<string, string> = saved.achievements && typeof saved.achievements === 'object' ? { ...saved.achievements } : {};
   // The tips already shown (see tips.ts), and what each session remembers for them.
@@ -1024,7 +1039,67 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const b = summary(sh);
     return t('summary-summary', { time: minutes(Date.now() - (debuts.get(sh) ?? Date.now())), commands: b.commands, errors: b.errors, hints: b.hints });
   };
+  // Each finished run's comparison with the runs before it (null: a first run).
+  const comparisons = new WeakMap<Shell, Comparison | null>();
+  const longDay = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'medium' }).format(new Date(iso));
+  // The comparison, in the summary's dialog: a table of measures (a column per run), then the commands diff-like.
+  const fillComparison = (c: Comparison) => {
+    const id = `${summaryId}-compare`;
+    const last = c.runs.length - 1;
+    const head = (i: number) => {
+      const r = c.runs[i];
+      const name = i === last ? t('compare-col-this') : t('compare-col-run', { date: longDay(r.date) });
+      return el('th', { scope: 'col' }, name, ...(r.exam ? [' ', el('span', { class: 'compare-exam' }, t('compare-exam'))] : []));
+    };
+    const value = (metric: string, v: number | null) => (v === null ? t('compare-not-measured') : metric === 'time' ? minutes(v) : new Intl.NumberFormat(t.language).format(v));
+    const kinds = { both: [' ', 'compare-both'], before: ['−', 'compare-only-before'], after: ['+', 'compare-only-after'] } as const;
+    compareSection.replaceChildren(
+      el('h3', { id }, t('compare-title')),
+      el('p', { class: 'map-legend' }, typo(t('compare-intro'))),
+      el(
+        'div',
+        { class: 'compare-table', tabindex: '0', role: 'region', 'aria-labelledby': id },
+        el(
+          'table',
+          {},
+          el('caption', { class: 'visually-hidden' }, t('compare-caption')),
+          el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, t('compare-col-measure')), ...c.runs.map((_, i) => head(i)))),
+          el(
+            'tbody',
+            {},
+            ...c.rows.map((row) =>
+              el(
+                'tr',
+                {},
+                el('th', { scope: 'row' }, t(`compare-${row.metric}`)),
+                ...row.values.map((v, i) =>
+                  el('td', {}, value(row.metric, v), ...(i === last && row.trend ? [' ', el('span', { class: `compare-trend compare-${row.trend}` }, `(${t(`compare-${row.trend}`)})`)] : [])),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      el('h3', {}, t('compare-diff-title')),
+      el('p', { class: 'map-legend' }, typo(t('compare-diff-intro'))),
+      c.diff.length
+        ? el(
+            'ol',
+            { class: 'compare-diff', tabindex: '0', 'aria-label': t('compare-diff-title') },
+            ...c.diff.map((d) =>
+              el('li', { class: `compare-${d.kind}` }, el('span', { class: 'compare-mark', 'aria-hidden': 'true' }, kinds[d.kind][0]), el('span', { class: 'visually-hidden' }, t(kinds[d.kind][1]), ' '), el('code', {}, d.line)),
+            ),
+          )
+        : el('p', { class: 'map-legend' }, t('compare-diff-empty')),
+    );
+  };
+  let summaryShell: Shell | null = null;
   const openSummary = (sh: Shell, recap: string) => {
+    const c = comparisons.get(sh) ?? null;
+    if (c && !textsLoaded(t.language, 'dialog-compare')) return withTexts('dialog-compare', () => openSummary(sh, recap));
+    summaryShell = sh;
+    compareSection.hidden = !c;
+    if (c) fillComparison(c);
     const b = summary(sh);
     titleSummary.textContent = t('summary-title', { chapter: t(`chapter-${sh.chapter.id}`) });
     mapCaption.textContent = recap;
@@ -1060,12 +1135,41 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!sh.finished || !inCourse.has(sh) || doneSummary.has(sh)) return;
     doneSummary.add(sh);
     const recap = summaryText(sh);
+    // This run, kept with the chapter's last ones; compared with them (see runs.ts).
+    const b = summary(sh);
+    const id = sh.chapter.id;
+    const run = makeRun({
+      chapter: id,
+      date: new Date().toISOString(),
+      time: debuts.has(sh) ? Date.now() - debuts.get(sh)! : null,
+      commands: b.commands,
+      errors: b.errors,
+      hints: b.hints,
+      exam: gameTerminal.exam,
+      lines: runChapter === id ? runLines : [],
+    });
+    const earlier = runs[id] ?? [];
+    comparisons.set(sh, compare(earlier, run));
+    runs = addRun(runs, run);
+    try {
+      localStorage.setItem(RUNS_KEY, JSON.stringify(runs));
+    } catch {}
     const detail = el('button', { type: 'button', class: 'link summary-button', 'aria-haspopup': 'dialog' }, t('summary-button'));
     detail.addEventListener('click', () => openSummary(sh, recap));
-    output.appendChild(el('p', { class: 'summary' }, recap, ' ', detail));
+    const again = el('button', { type: 'button', class: 'link replay-button' }, t('replay-button'));
+    again.addEventListener('click', () => replay(id));
+    const before = earlier.at(-1);
+    output.appendChild(el('p', { class: 'summary' }, recap, ' ', ...(before ? ['· ', t('summary-compare', { before: before.commands }), ' '] : []), detail, ' · ', again));
     announce(t('chapter-done-announce', { chapter: t(`chapter-${sh.chapter.id}`) }));
   };
   closeSummary.addEventListener('click', () => summaryWindow.close());
+  // Replay: the same chapter from the start, on a fresh machine (the run just finished is kept for the comparison).
+  const replay = (id: string) => {
+    if (summaryWindow.open) summaryWindow.close();
+    const { h, c } = placeFor(id);
+    launch(h, c).then(() => input.focus());
+  };
+  replaySummary.addEventListener('click', () => summaryShell && replay(summaryShell.chapter.id));
   summaryWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
   const after = (sh: Shell | null = null) => {
@@ -1119,6 +1223,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const launchNow = (h: number, c?: number) => {
     followEnd();
     recentSteps = [];
+    runLines = [];
+    runChapter = '';
     output.replaceChildren(measure);
     const loaded = loadedStory(STORIES[h].id)!;
     const chapter = c === undefined ? undefined : loaded.chapters[c];
@@ -1178,6 +1284,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       if (chapterBefore !== stepsChapter) recentSteps = [];
       stepsChapter = chapterBefore;
       recentSteps = [...recentSteps, { prompt: promptBefore, line: secret || line === '\u0004' ? '' : line, masked: secret, output: withoutColours(result ?? '') }].slice(-STEPS_KEPT);
+    }
+    // The lines of this run of the chapter, for the comparison after a replay.
+    if (chapterBefore && !response && line.trim() && line !== '\u0004') {
+      if (chapterBefore !== runChapter) runLines = [];
+      runChapter = chapterBefore;
+      runLines.push(line);
     }
     const lineFor = response ? null : shell;
     if (result === null) output.replaceChildren(measure);
@@ -2076,6 +2188,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       // The feedback dialog's commands (see feedback.ts): those of the chapter so far.
       recentSteps = result.transcript.map((x) => ({ ...x, output: withoutColours(x.output) })).slice(-STEPS_KEPT);
       stepsChapter = r.chapter;
+      runLines = result.transcript.filter((x) => x.prompt && !x.masked && x.line.trim()).map((x) => x.line);
+      runChapter = r.chapter;
       show(t('autosave-resumed', { steps: r.n }), 'achievements');
       // In exam mode, the timer goes on from the chapter's start (closing the page doesn't stop it).
       if (gameTerminal.exam && r.examStart !== undefined) examStart = r.examStart;

@@ -36,15 +36,17 @@ const READY = () => {
 const waitReady = async (page) => {
   for (let i = 0; i < 300 && !(await page.evaluate(READY).catch(() => true)); i++) await new Promise((r) => setTimeout(r, 100));
 };
-const open = async ({ width = 1000, scheme = 'dark', save, motion, forced } = {}) => {
+const open = async ({ width = 1000, scheme = 'dark', save, motion, forced, extra } = {}) => {
   const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme, serviceWorkers: 'block', reducedMotion: motion, forcedColors: forced });
   // The intro tour marked as seen; a save given by the test.
   await context.addInitScript((s) => {
     try {
       localStorage.setItem('quetes-de-sysadmin-display', JSON.stringify({ tour: 'done', startOffer: 'done' }));
-      if (s) localStorage.setItem('quetes-de-sysadmin', JSON.stringify(s));
+      if (s.save) localStorage.setItem('quetes-de-sysadmin', JSON.stringify(s.save));
+      // Other keys (on-call results, runs…), written once.
+      for (const [k, v] of Object.entries(s.extra ?? {})) if (localStorage.getItem(k) === null) localStorage.setItem(k, JSON.stringify(v));
     } catch {}
-  }, save);
+  }, { save, extra });
   const page = await context.newPage();
   page.errors = [];
   page.on('pageerror', (e) => page.errors.push(e.message));
@@ -169,6 +171,33 @@ for (const scheme of process.env.A11Y_SKIP_AXE ? [] : ['dark', 'light'])
     await game(hive).locator('[role="tab"]', { hasText: 'Réseau' }).click();
     await audit(hive, `${tag} map, Network tab`);
     await hive.context().close();
+    // The on-call streak under the menu's entry (streak.ts): two days solved, up to yesterday.
+    const day = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const result = { chapter: 'first-day', remaining: 900000, time: 600000, hints: 0, errors: 0 };
+    const onCall = await open({ width, scheme, save: { finished: ['lighthouse', 'village', 'root', 'backup'] }, extra: { 'quetes-de-sysadmin-on-call': { [day(2)]: result, [day(1)]: result } } });
+    await onCall.go('/fr/');
+    await game(onCall).locator('.stories .streak').waitFor();
+    await audit(onCall, `${tag} menu with the on-call streak`);
+    await onCall.context().close();
+    // Replay and compare (runs.ts): a run kept, the chapter finished again, the summary's comparison.
+    const earlier = { chapter: 'lighthouse', date: '2026-11-20T10:00:00.000Z', time: 400000, commands: 3, errors: 1, hints: 0, distinct: 2, exam: false, lines: ['ls', 'cd Port', 'ls -a'] };
+    const replay = await open({ width, scheme, extra: { 'quetes-de-sysadmin-runs': { lighthouse: [earlier] } } });
+    await replay.go('/fr/');
+    await game(replay).locator('button[data-story="0"]').click();
+    await waitReady(replay);
+    await type(replay, 'mv Jetee/filet Port/Hangar');
+    await type(replay, 'mv Port/Remise/.ampoule_de_secours Jetee/Phare/Escalier/Lanterne/ampoule');
+    await audit(replay, `${tag} chapter finished, summary with replay`);
+    await game(replay).locator('.output .summary-button').click();
+    await game(replay).locator('dialog.summary-window .compare h3').first().waitFor();
+    await audit(replay, `${tag} summary dialog with the comparison`);
+    await shot(replay, `compare-${scheme}-${width}`);
+    check(replay.errors.length === 0, `${tag}: no console error (replay) ${replay.errors.join(' ')}`);
+    await replay.context().close();
   }
 
 // ——— What axe cannot check ———

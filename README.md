@@ -45,6 +45,10 @@ system: nothing leaves the browser.
 - The incident of the day, on call: solve it on consecutive days for a
   streak (one rest day a week doesn't break it; nothing is lost by missing
   one, the best streak stays), with achievements at 3, 7 and 30 days.
+- Finished a chapter? "Replay this chapter" starts it afresh, and the next
+  summary compares the runs: commands, distinct commands, failed commands,
+  hints, time, and your two lists of commands side by side (the last three
+  runs of each chapter stay in your browser).
 
 ## Develop
 

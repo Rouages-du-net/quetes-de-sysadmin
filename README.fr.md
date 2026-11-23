@@ -54,6 +54,11 @@ un système entièrement simulé : rien ne sort du navigateur.
   une série (un jour de repos par semaine ne la casse pas ; manquer un jour
   ne fait rien perdre, la meilleure série reste), avec des succès à 3, 7 et
   30 jours.
+- Un chapitre fini ? « Rejouer ce chapitre » le recommence à neuf, et le
+  bilan suivant compare les parties : commandes, commandes différentes,
+  commandes en erreur, indices, temps, et tes deux listes de commandes côte
+  à côte (les trois dernières parties de chaque chapitre restent dans ton
+  navigateur).
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

@@ -847,6 +847,20 @@ them safely.
   commands typed (and failed), hints; the detail compares, step by step,
   the command that passed it with the reference solution (the hints'), and
   reminds that another way is just as right.
+- [x] **Replay and compare** (`src/engine/runs.ts`): the summary offers
+  "Replay this chapter" (the same chapter from the start, on a fresh
+  machine); each finished run is kept in the browser (`KEY-runs`: the last
+  three per chapter, the 30 chapters played last, 60 lines of 120
+  characters per run at most), and a run that has earlier ones gets a
+  comparison in the summary's dialog: a table (a column per run) of
+  commands, distinct commands, failed commands, hints and time, with the
+  trend since the last run, then both runs' commands diff-like (−/+, words
+  for screen readers). The expected route stays the summary's reference
+  solution (the hints'): nothing more. In exam mode, runs are recorded
+  (marked "exam mode") and compared like the others, only once the chapter
+  is finished, as the summary itself: nothing is shown during a chapter,
+  so a run kept on a shared computer can't serve as a crib. Not in the save
+  file (a log of commands, not progress).
 - [x] **Rescue snapshot** (Mission panel, `Console.restore`): take a
   snapshot, go back to it, undo the last input. The engine is
   deterministic: reopening the chapter and replaying the inputs (commands,

@@ -619,6 +619,24 @@
   .qds .summary-table td::before { content: attr(data-title); display: block; font-size: 0.8rem; font-weight: 700; color: var(--_muted); }
 }
 
+/* Replay and compare (see src/engine/runs.ts): a table of measures, a
+   column per run, that scrolls sideways if it must; then the commands,
+   diff-like, the marks doubled by words for screen readers. */
+.qds .compare h3 { margin: 1rem 0 0.25rem; font-size: 1rem; }
+.qds .compare-table { overflow-x: auto; margin: 0.5rem 0; }
+.qds .compare-table table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+.qds .compare-table th, .qds .compare-table td { border: 1px solid var(--_border); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+.qds .compare-table thead th, .qds .compare-table tbody th { background: var(--_card); }
+.qds .compare-table td { font-variant-numeric: tabular-nums; }
+.qds .compare-exam, .qds .compare-trend { font-size: 0.8rem; font-weight: 400; color: var(--_muted); }
+.qds .compare-diff { list-style: none; margin: 0.5rem 0; padding: 0.35rem 0; max-height: 16rem; overflow: auto; border: 1px solid var(--_border); border-radius: 0.35rem; font-family: var(--_font-mono); font-size: 0.85rem; }
+.qds .compare-diff li { display: flex; gap: 0.5rem; padding: 0 0.5rem; }
+.qds .compare-diff code { overflow-wrap: anywhere; }
+.qds .compare-mark { flex: none; width: 1ch; font-weight: 700; }
+.qds .compare-before { background: var(--_card); }
+.qds .compare-before code { text-decoration: line-through; text-decoration-thickness: 1px; }
+.qds .compare-after .compare-mark { color: var(--_accent); }
+
 /* The rescue snapshot: buttons greyed out when it isn't possible. */
 .qds .rescue-button:disabled { cursor: default; color: var(--_muted); border-style: dashed; }
 

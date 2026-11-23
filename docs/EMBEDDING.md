@@ -111,7 +111,9 @@ Pratusevich).
 The game sends nothing: no data leaves the browser. Progress is kept in the
 `localStorage` of the host page, under the chosen key. Next to it, the same
 key with a suffix keeps the display settings (`KEY-display`), on-call results
-(`KEY-on-call`, from which the on-call streak is computed) and the chapter in progress, one per language
+(`KEY-on-call`, from which the on-call streak is computed), the last runs
+of each finished chapter, to compare a replay with (`KEY-runs`: numbers and
+the commands typed) and the chapter in progress, one per language
 (`KEY-autosave-en`, `KEY-autosave-fr`): the inputs typed since the chapter
 opened, so the game can offer to resume it after the page was closed. They
 may hold the story's passwords as the player typed them: fictional game
