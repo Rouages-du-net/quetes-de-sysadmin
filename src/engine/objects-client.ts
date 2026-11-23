@@ -1280,31 +1280,45 @@ class GarageFail {
   constructor(public text: string) {}
 }
 
-/** Columns aligned like Garage's format_table (two spaces between). */
+// The CLI's outputs follow Garage v2.1.0's sources (https://git.deuxfleurs.fr/Deuxfleurs/garage,
+// tag v2.1.0): src/garage/cli/remote/{cluster,layout,bucket,key}.rs for what is printed,
+// src/format-table/lib.rs for the columns, and the admin API's errors, which the CLI
+// prints as "Error: <Request> returned <code> (<http status>): <message>"
+// (src/garage/cli/remote/mod.rs, api_request; codes and messages in
+// src/api/common/common_error.rs and src/api/admin/error.rs).
+
+/** Columns aligned like Garage's format_table: every column but the last padded to the widest cell, plus two spaces; rows may be ragged. */
 const table = (rows: string[][]) => {
-  const widths = rows[0].map((_, c) => Math.max(...rows.map((r) => (r[c] ?? '').length)));
+  const widths: number[] = [];
+  for (const r of rows) r.forEach((v, c) => (widths[c] = Math.max(widths[c] ?? 0, v.length)));
   return rows.map((r) => r.map((v, c) => (c === r.length - 1 ? v : v.padEnd(widths[c]))).join('  ').trimEnd()).join('\n');
 };
-const garageDate = (ms: number) => `${new Date(ms).toISOString().slice(0, 23).replace('T', ' ')} +00:00`;
+/** An admin API error as the CLI prints it. */
+const apiError = (request: string, code: string, http: number, message: string) => new GarageFail(`Error: ${request} returned ${code} (${http}): ${message}`);
+/** chrono's Display for a DateTime: fractional seconds only when there are some (milliseconds here). */
+const garageDate = (ms: number) => `${new Date(ms).toISOString().slice(0, 23).replace('T', ' ').replace(/\.000$/, '')} +00:00`;
+/** timeago 0.4's default formatter (one unit, rounded down, plural with an s; "now" under a second). */
 const ago = (ms: number) => {
-  const m = Math.round(ms / 60_000);
-  if (m < 60) return `${m} minutes ago`;
-  const h = Math.round(m / 60);
-  if (h < 48) return `${h} hours ago`;
-  return `${Math.round(h / 24)} days ago`;
+  const units: [string, number][] = [['year', 12 * 2_628_003], ['month', 2_628_003], ['week', 604_800], ['day', 86_400], ['hour', 3600], ['minute', 60], ['second', 1]];
+  const s = Math.floor(ms / 1000);
+  for (const [word, size] of units) {
+    const n = Math.floor(s / size);
+    if (n >= 1) return `${n} ${word}${n > 1 ? 's' : ''} ago`;
+  }
+  return 'now';
 };
 const permText = (p: { read: boolean; write: boolean; owner: boolean }) => `${p.read ? 'R' : ' '}${p.write ? 'W' : ' '}${p.owner ? 'O' : ' '}`;
 
 function bucketOrFail(g: Garage, name: string): Bucket {
   if (!name) throw new GarageFail('error: the following required arguments were not provided:\n  <NAME>');
   const b = bucketByName(g, name);
-  if (!b) throw new GarageFail(`Error: Bucket not found: ${name}`);
+  if (!b) throw apiError('GetBucketInfo', 'NoSuchBucket', 404, `Bucket not found: ${name}`);
   return b;
 }
 function keyOrFail(g: Garage, pattern: string): AccessKey {
   if (!pattern) throw new GarageFail('error: the following required arguments were not provided:\n  <KEY_PATTERN>');
   const found = keysMatching(g, pattern);
-  if (found.length !== 1) throw new GarageFail(`Error: ${found.length} matching keys`);
+  if (found.length !== 1) throw apiError('GetKeyInfo', 'InvalidRequest', 400, `Bad request: ${found.length} matching keys`);
   return found[0];
 }
 
@@ -1322,28 +1336,34 @@ function keyInfo(g: Garage, k: AccessKey, secret: boolean): string {
     `Can create buckets:  ${k.createBucket}`,
     '',
     '==== BUCKETS FOR THIS KEY ====',
-    table([['Permissions', 'ID', 'Global aliases', 'Local aliases'], ...buckets.map((b) => [permText(permOf(k, b)), b.id.slice(0, 16), b.aliases.join(', '), ''])]),
+    table([['Permissions', 'ID', 'Global aliases', 'Local aliases'], ...buckets.map((b) => [permText(permOf(k, b)), b.id.slice(0, 16), listAbbr(b.aliases), ''])]),
   ].join('\n');
 }
 
+/** table_list_abbr: the first value, then ", ... (N)" when there are more. */
+const listAbbr = (values: string[]) => (values.length > 1 ? `${values[0]}, ... (${values.length})` : (values[0] ?? ''));
+
+/** print_bucket_info of src/garage/cli/remote/bucket.rs. */
 function bucketInfo(g: Garage, b: Bucket): string {
   const keys = g.keys.filter((k) => anyPerm(permOf(k, b)));
   const size = bucketSize(b);
+  const info: string[][] = [
+    ['Bucket:', b.id],
+    ['Created:', garageDate(b.created)],
+    [''],
+    ['Size:', `${bytes(size, true)} (${bytes(size)})`],
+    ['Objects:', String(Object.keys(b.objects).length)],
+    [''],
+    ['Website access:', String(!!b.website)],
+    ...(b.website ? [['  index document:', b.website.index], ['  error document:', b.website.error ?? '(not defined)']] : []),
+    ...(b.aliases.length ? [[''], ...b.aliases.map((a, i) => [i ? '' : b.aliases.length > 1 ? 'Global aliases:' : 'Global alias:', a])] : []),
+  ];
   return [
     '==== BUCKET INFORMATION ====',
-    `Bucket:          ${b.id}`,
-    `Created:         ${garageDate(b.created)}`,
-    '',
-    `Size:            ${bytes(size, true)} (${bytes(size)})`,
-    `Objects:         ${Object.keys(b.objects).length}`,
-    '',
-    `Website access:  ${!!b.website}`,
-    ...(b.website ? [`  index document:  ${b.website.index}`, `  error document:  ${b.website.error ?? '(not defined)'}`] : []),
-    '',
-    `Global alias:    ${b.aliases.join(', ')}`,
+    table(info),
     '',
     '==== KEYS FOR THIS BUCKET ====',
-    table([['Permissions', 'Access key', 'Name', 'Local aliases'], ...keys.map((k) => [permText(permOf(k, b)), k.id, k.name, ''])]),
+    table([['Permissions', 'Access key', '', 'Local aliases'], ...keys.map((k) => [permText(permOf(k, b)), k.id, k.name, ''])]),
   ].join('\n');
 }
 
@@ -1360,7 +1380,7 @@ function status(game: Shell, g: Garage): string {
       ...healthy.map((n) =>
         roles[n.id]
           ? [n.id.slice(0, 16), n.hostname, n.address, `[${roles[n.id].tags.join(',')}]`, roles[n.id].zone, capacity(n.id), `${bytes(n.avail)} (${((n.avail * 100) / n.disk).toFixed(1)}%)`, VERSION]
-          : [n.id.slice(0, 16), n.hostname, n.address, '', 'NO ROLE ASSIGNED', '', '', VERSION],
+          : [n.id.slice(0, 16), n.hostname, n.address, '', '', 'NO ROLE ASSIGNED', '', VERSION],
       ),
     ]),
   ];
@@ -1368,7 +1388,7 @@ function status(game: Shell, g: Garage): string {
     out.push(
       '',
       '==== FAILED NODES ====',
-      table([['ID', 'Hostname', 'Address', 'Tags', 'Zone', 'Capacity', 'Last seen'], ...failed.map((n) => [n.id.slice(0, 16), n.hostname, n.address, `[${roles[n.id].tags.join(',')}]`, roles[n.id].zone, capacity(n.id), n.lastSeen ? ago(now - n.lastSeen) : 'never seen'])]),
+      table([['ID', 'Hostname', 'Tags', 'Zone', 'Capacity', 'Last seen'], ...failed.map((n) => [n.id.slice(0, 16), n.hostname, `[${roles[n.id].tags.join(',')}]`, roles[n.id].zone, capacity(n.id), n.lastSeen ? ago(now - n.lastSeen) : 'never seen'])]),
     );
   return out.join('\n');
 }
@@ -1379,21 +1399,18 @@ function layoutShow(g: Garage): string {
   const cur = g.layout.roles;
   const out = ['==== CURRENT CLUSTER LAYOUT ====', table([['ID', 'Tags', 'Zone', 'Capacity', 'Usable capacity'], ...roleRows(Object.keys(cur), cur).map((r) => [...r, `${r[3]} (100.0%)`])]), '', `Zone redundancy: maximum`, '', `Current cluster layout version: ${g.layout.version}`];
   const staged = Object.entries(g.layout.staged);
-  if (!staged.length) {
-    out.push('', 'No staged role changes.');
-    return out.join('\n');
-  }
-  out.push('', '==== STAGED ROLE CHANGES ====', table([['ID', 'Tags', 'Zone', 'Capacity'], ...staged.map(([id, r]) => (r ? [id.slice(0, 16), `[${r.tags.join(',')}]`, r.zone, bytes(r.capacity)] : [id.slice(0, 16), 'REMOVED', '', '']))]));
+  if (!staged.length) return out.join('\n');
+  out.push('', '==== STAGED ROLE CHANGES ====', table([['ID', 'Tags', 'Zone', 'Capacity'], ...staged.map(([id, r]) => (r ? [id.slice(0, 16), `[${r.tags.join(',')}]`, r.zone, bytes(r.capacity)] : [id.slice(0, 16), 'REMOVED']))]), '');
   const next = nextRoles(g);
   const problem = layoutProblem(g, next);
-  out.push('', '==== NEW CLUSTER LAYOUT AFTER APPLYING CHANGES ====');
-  if (problem) out.push(`Error while trying to compute the assignment: ${problem}`, '', 'This new layout cannot yet be applied.', 'You can also revert all proposed changes with: garage layout revert');
+  if (problem) out.push(`Error while trying to compute the assignment: ${problem}`, 'This new layout cannot yet be applied.', 'You can also revert all proposed changes with: garage layout revert');
   else {
-    const zones = zonesOf(g, next);
     out.push(
+      '',
+      '==== NEW CLUSTER LAYOUT AFTER APPLYING CHANGES ====',
       table([['ID', 'Tags', 'Zone', 'Capacity', 'Usable capacity'], ...roleRows(Object.keys(next), next).map((r) => [...r, `${r[3]} (100.0%)`])]),
       '',
-      `Zone redundancy: maximum (${Math.min(zones.size, g.replication)} zones)`,
+      'Zone redundancy: maximum',
       '',
       'To enact the staged role changes, type:',
       '',
@@ -1422,8 +1439,7 @@ function layoutProblem(g: Garage, roles: Record<string, Role>): string | null {
 function findNode(g: Garage, prefix: string): string {
   if (!prefix) throw new GarageFail('error: the following required arguments were not provided:\n  <NODE_IDS>...');
   const ids = [...new Set([...Object.keys(g.nodes), ...Object.keys(g.layout.roles)])].filter((id) => id.startsWith(prefix.toLowerCase()));
-  if (ids.length === 0) throw new GarageFail(`Error: No node matching ${prefix}`);
-  if (ids.length > 1) throw new GarageFail(`Error: Several nodes match ${prefix}: ${ids.map((x) => x.slice(0, 16)).join(', ')}`);
+  if (ids.length !== 1) throw new GarageFail(`Error: ${ids.length} nodes match '${prefix}'`);
   return ids[0];
 }
 
@@ -1470,22 +1486,23 @@ function layout(game: Shell, g: Garage, args: string[]): string {
     case 'remove': {
       const id = findNode(g, rest.find((a) => !a.startsWith('-')) ?? '');
       g.layout.staged[id] = null;
-      return STAGED;
+      return 'Role removal is staged but not yet committed.\nUse `garage layout show` to view staged role changes,\nand `garage layout apply` to enact staged changes.';
     }
     case 'revert': {
-      if (!rest.includes('--yes')) throw new GarageFail('Error: Add `--yes` to really revert the staged changes.');
+      if (!rest.includes('--yes')) throw new GarageFail('Error: Please add the --yes flag to run the layout revert operation');
       g.layout.staged = {};
       return 'All proposed role changes in cluster layout have been canceled.';
     }
     case 'apply': {
       const v = opt(['--version']);
       if (v === undefined)
-        throw new GarageFail('Error: Please pass the new layout version number to ensure that you are writing the correct version of the cluster layout.\nTo know the correct value of the new layout version, invoke `garage layout show` and review the proposed changes.');
-      if (Number(v) !== g.layout.version + 1) throw new GarageFail(`Error: Invalid new layout version: expected ${g.layout.version + 1}, got ${v}`);
-      if (!Object.keys(g.layout.staged).length) throw new GarageFail('Error: No changes to apply: the staged layout is the same as the current one.');
+        throw new GarageFail('Error: \nPlease pass the new layout version number to ensure that you are writing the correct version of the cluster layout.\nTo know the correct value of the new layout version, invoke `garage layout show` and review the proposed changes.');
+      // src/rpc/layout/history.rs (apply_staged_changes), version.rs: errors of the layout
+      // reach the CLI as the admin API's InternalError. Nothing refuses an empty change.
+      if (Number(v) !== g.layout.version + 1) throw apiError('ApplyClusterLayout', 'InternalError', 500, 'Internal error: Invalid new layout version');
       const next = nextRoles(g);
       const problem = layoutProblem(g, next);
-      if (problem) throw new GarageFail(`Error: ${problem}`);
+      if (problem) throw apiError('ApplyClusterLayout', 'InternalError', 500, `Internal error: ${problem}`);
       g.layout = { version: g.layout.version + 1, roles: next, staged: {} };
       const zones = zonesOf(g);
       return [
@@ -1513,27 +1530,28 @@ function bucketCmd(game: Shell, g: Garage, args: string[]): string {
     return i < 0 ? undefined : rest[i + 1];
   };
   const keyArg = value(['--key']);
-  const names = rest.filter((a, i) => !a.startsWith('-') && !['--key', '--index-document', '--error-document'].includes(rest[i - 1]));
+  const names = rest.filter((a, i) => !a.startsWith('-') && !['--key', '-i', '--index-document', '-e', '--error-document'].includes(rest[i - 1]));
   switch (sub) {
     case 'list':
-      return table([['ID', 'Created', 'Global aliases', 'Local aliases'], ...g.buckets.map((b) => [b.id.slice(0, 16), new Date(b.created).toISOString().slice(0, 10), b.aliases.join(', '), ''])]);
+      return table([['ID', 'Created', 'Global aliases', 'Local aliases'], ...[...g.buckets].sort((a, b) => a.created - b.created).map((b) => [b.id.slice(0, 16), new Date(b.created).toISOString().slice(0, 10), listAbbr(b.aliases), ''])]);
     case 'info':
       return bucketInfo(g, bucketOrFail(g, names[0] ?? ''));
     case 'create': {
       const name = names[0];
       if (!name) throw new GarageFail('error: the following required arguments were not provided:\n  <NAME>');
-      if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(name)) throw new GarageFail(`Error: Invalid bucket name: ${name}`);
-      if (bucketByName(g, name)) throw new GarageFail(`Error: Bucket ${name} already exists`);
+      if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(name))
+        throw apiError('CreateBucket', 'InvalidRequest', 400, `Bad request: ${name}: Invalid bucket name. See AWS documentation for constraints on S3 bucket names:\nhttps://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html`);
+      if (bucketByName(g, name)) throw apiError('CreateBucket', 'BucketAlreadyExists', 409, 'Bucket already exists');
       g.buckets.push({ id: newBucketId(`${name}:${g.counter++}`), aliases: [name], created: realNow(game), website: null, objects: {} });
-      return `==== BUCKET INFORMATION ====\nBucket:          ${g.buckets.at(-1)!.id}\nCreated:         ${garageDate(realNow(game))}\n\nSize:            0 B (0 B)\nObjects:         0\n\nWebsite access:  false\n\nGlobal alias:    ${name}\n\n==== KEYS FOR THIS BUCKET ====\nPermissions  Access key  Local aliases`;
+      return bucketInfo(g, g.buckets.at(-1)!);
     }
     case 'delete': {
       const b = bucketOrFail(g, names[0] ?? '');
-      if (!has('--yes')) throw new GarageFail('Error: Add --yes flag to really perform this operation');
-      if (Object.keys(b.objects).length) throw new GarageFail('Error: Bucket is not empty');
+      if (!has('--yes')) throw new GarageFail(`About to delete bucket ${b.id}.\nError: Add --yes flag to really perform this operation`);
+      if (Object.keys(b.objects).length) throw apiError('DeleteBucket', 'BucketNotEmpty', 409, 'Tried to delete a non-empty bucket');
       g.buckets = g.buckets.filter((x) => x !== b);
       for (const k of g.keys) delete k.perms[b.id];
-      return `Bucket ${names[0]} has been deleted.`;
+      return `Bucket ${b.id} has been deleted.`;
     }
     case 'allow':
     case 'deny': {
@@ -1544,26 +1562,22 @@ function bucketCmd(game: Shell, g: Garage, args: string[]): string {
       const r = has('--read');
       const w = has('--write');
       const o = has('--owner');
-      if (!r && !w && !o) throw new GarageFail('Error: Please specify --read, --write and/or --owner');
       const v = sub === 'allow';
       if (r) p.read = v;
       if (w) p.write = v;
       if (o) p.owner = v;
       if (anyPerm(p)) k.perms[b.id] = p;
       else delete k.perms[b.id];
-      return `New permissions for ${k.id} on ${bucketName(b)}: read ${p.read}, write ${p.write}, owner ${p.owner}.`;
+      return bucketInfo(g, b);
     }
     case 'website': {
       const b = bucketOrFail(g, names[0] ?? '');
+      if (has('--allow') === has('--deny')) throw new GarageFail('Error: You must specify exactly one flag, either --allow or --deny');
       if (has('--allow')) {
-        b.website = { index: value(['--index-document']) ?? b.website?.index ?? 'index.html', ...((value(['--error-document']) ?? b.website?.error) ? { error: value(['--error-document']) ?? b.website?.error } : {}) };
-        return `Website access allowed for ${names[0]}`;
-      }
-      if (has('--deny')) {
-        b.website = null;
-        return `Website access denied for ${names[0]}`;
-      }
-      throw new GarageFail('Error: You must specify exactly one flag, either --allow or --deny');
+        const error = value(['-e', '--error-document']) ?? b.website?.error;
+        b.website = { index: value(['-i', '--index-document']) ?? 'index.html', ...(error ? { error } : {}) };
+      } else b.website = null;
+      return bucketInfo(g, b);
     }
   }
   throw new GarageFail(`error: unrecognized subcommand '${sub ?? ''}'\n\nUsage: garage bucket <COMMAND>\n\nFor more information, try '--help'.`);
@@ -1574,7 +1588,7 @@ function keyCmd(game: Shell, g: Garage, args: string[]): string {
   const names = rest.filter((a) => !a.startsWith('-'));
   switch (sub) {
     case 'list':
-      return table([['ID', 'Created', 'Name', 'Expiration'], ...g.keys.map((k) => [k.id, new Date(k.created).toISOString().slice(0, 10), k.name, 'never'])]);
+      return table([['ID', 'Created', 'Name', 'Expiration'], ...[...g.keys].sort((a, b) => a.created - b.created).map((k) => [k.id, new Date(k.created).toISOString().slice(0, 10), k.name, 'never'])]);
     case 'info':
       return keyInfo(g, keyOrFail(g, names[0] ?? ''), rest.includes('--show-secret'));
     case 'create': {
@@ -1586,7 +1600,7 @@ function keyCmd(game: Shell, g: Garage, args: string[]): string {
     }
     case 'delete': {
       const k = keyOrFail(g, names[0] ?? '');
-      if (!rest.includes('--yes')) throw new GarageFail('Error: Add --yes flag to really perform this operation');
+      if (!rest.includes('--yes')) throw new GarageFail(`About to delete key ${k.id}...\nError: Add --yes flag to really perform this operation`);
       g.keys = g.keys.filter((x) => x !== k);
       return `Access key ${k.id} has been deleted.`;
     }
@@ -1599,8 +1613,7 @@ function keyCmd(game: Shell, g: Garage, args: string[]): string {
     case 'allow':
     case 'deny': {
       const k = keyOrFail(g, names[0] ?? '');
-      if (!rest.includes('--create-bucket')) throw new GarageFail('Error: Please specify --create-bucket');
-      k.createBucket = sub === 'allow';
+      if (rest.includes('--create-bucket')) k.createBucket = sub === 'allow';
       return keyInfo(g, k, false);
     }
   }

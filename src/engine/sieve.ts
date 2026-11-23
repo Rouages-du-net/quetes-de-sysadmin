@@ -40,6 +40,10 @@ function tokenize(text: string): { tokens: Token[]; error?: SieveError } {
   const tokens: Token[] = [];
   let i = 0;
   let line = 1;
+  // Pigeonhole's lexer reports an error at the line it is reading: for an unfinished comment
+  // or string, the end of the file (src/lib-sieve/sieve-lexer.c, sieve_lexer_error, 2.4.1).
+  const eof = text.split('\n').length;
+  const sanitize = (ch: string) => (ch.charCodeAt(0) > 31 && ch.charCodeAt(0) < 127 ? `'${ch}'` : `0x${ch.charCodeAt(0).toString(16).padStart(2, '0')}`);
   while (i < text.length) {
     const c = text[i];
     if (c === '\n') {
@@ -50,7 +54,7 @@ function tokenize(text: string): { tokens: Token[]; error?: SieveError } {
       while (i < text.length && text[i] !== '\n') i++;
     } else if (c === '/' && text[i + 1] === '*') {
       const end = text.indexOf('*/', i + 2);
-      if (end < 0) return { tokens, error: { line, message: 'end of file before end of bracket comment ("/* ... */") started at line ' + line } };
+      if (end < 0) return { tokens, error: { line: eof, message: `end of file before end of bracket comment ('/* ... */') started at line ${line}` } };
       line += text.slice(i, end).split('\n').length - 1;
       i = end + 2;
     } else if (c === '"') {
@@ -62,13 +66,13 @@ function tokenize(text: string): { tokens: Token[]; error?: SieveError } {
         if (text[i] === '\n') line++;
         s += text[i++];
       }
-      if (i >= text.length) return { tokens, error: { line: start, message: 'end of file before end of quoted string' } };
+      if (i >= text.length) return { tokens, error: { line: eof, message: `end of file before end of quoted string started at line ${start}` } };
       i++;
       tokens.push({ t: 'str', v: s, line: start });
     } else if (/^text:/i.test(text.slice(i, i + 5))) {
       const start = line;
       const nl = text.indexOf('\n', i);
-      if (nl < 0) return { tokens, error: { line, message: 'end of file before end of multi-line string' } };
+      if (nl < 0) return { tokens, error: { line: eof, message: 'end of file before end of multi-line string' } };
       i = nl + 1;
       line++;
       const lines: string[] = [];
@@ -80,7 +84,7 @@ function tokenize(text: string): { tokens: Token[]; error?: SieveError } {
           line++;
           break;
         }
-        if (e < 0) return { tokens, error: { line: start, message: 'end of file before end of multi-line string' } };
+        if (e < 0) return { tokens, error: { line: eof, message: 'end of file before end of multi-line string' } };
         lines.push(l.startsWith('..') ? l.slice(1) : l);
         i = e + 1;
         line++;
@@ -102,7 +106,7 @@ function tokenize(text: string): { tokens: Token[]; error?: SieveError } {
     } else if ('[](),;{}'.includes(c)) {
       tokens.push({ t: 'sym', v: c, line });
       i++;
-    } else return { tokens, error: { line, message: `unexpected character(s) starting with '${c}'` } };
+    } else return { tokens, error: { line, message: `unexpected character(s) starting with ${sanitize(c)}` } };
   }
   return { tokens };
 }
@@ -314,6 +318,22 @@ function validate(commands: Command[], required: Set<string>, top: boolean, prev
   return null;
 }
 
+// The positional arguments' names in Pigeonhole's errors (sieve_validate_positional_argument
+// in cmd-redirect.c, tst-address.c, tst-header.c, tst-exists.c, tst-size.c, ext-fileinto.c,
+// ext-reject.c, ext-envelope.c, plugins/body/tst-body.c, plugins/vacation/cmd-vacation.c).
+const ARG_NAMES: Record<string, string[]> = {
+  fileinto: ['folder'],
+  redirect: ['address'],
+  reject: ['reason'],
+  vacation: ['reason'],
+  address: ['header list', 'key list'],
+  envelope: ['envelope part', 'key list'],
+  header: ['header names', 'key list'],
+  exists: ['header names'],
+  size: ['limit'],
+  body: ['key list'],
+};
+
 function checkArgs(name: string, what: 'command' | 'test', spec: Spec, c: Command | Test, required: Set<string>): SieveError | null {
   const positional: Arg[] = [];
   for (let i = 0; i < c.args.length; i++) {
@@ -338,7 +358,7 @@ function checkArgs(name: string, what: 'command' | 'test', spec: Spec, c: Comman
     const want = spec.positional[i];
     const a = positional[i];
     const ok = (want === 'num' && a.kind === 'num') || (want === 'str' && a.kind === 'str') || ((want === 'list' || want === 'strlist') && (a.kind === 'list' || a.kind === 'str'));
-    if (!ok) return { line: c.line, message: `the ${name} ${what} expects ${want === 'num' ? 'a number' : want === 'str' ? 'a string' : 'a string list'} as argument ${i + 1}, but ${a.kind === 'num' ? 'a number' : a.kind === 'list' ? 'a string list' : 'a string'} was found` };
+    if (!ok) return { line: c.line, message: `the ${name} ${what} expects ${want === 'num' ? 'a number' : want === 'str' ? 'a string' : 'a string list'} as argument ${i + 1} (${ARG_NAMES[name]?.[i] ?? ''}), but ${a.kind === 'num' ? 'a number' : a.kind === 'list' ? 'a string list' : 'a string'} was found` };
   }
   if (spec.tests === 'one' && c.tests.length !== 1) return { line: c.line, message: `the ${name} ${what} requires one sub-test, but ${c.tests.length ? 'more are' : 'none is'} specified` };
   if (spec.tests === 'list' && !c.tests.length) return { line: c.line, message: `the ${name} test requires a list of sub-tests, but none is specified` };

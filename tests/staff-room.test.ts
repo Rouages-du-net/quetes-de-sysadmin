@@ -101,7 +101,7 @@ for (const language of LANGUAGES)
       const { run, finished, chalk } = play([]);
       let all = run('cat message_from_ines.txt', 'cat note_from_joe.txt', 'lpstat -t');
       expect(all).toContain('printer office disabled since Fri Nov 16 16:12:33 2029 -\n\tPrinter stopped due to backend errors; please consult the error_log file for details.');
-      expect(all).toMatch(/office-117 +sven +3650000000   Fri Nov 16 16:05:02 2029/);
+      expect(all).toMatch(/office-117 +sven +3650000896   Fri Nov 16 16:05:02 2029/);
       contains(all, 'ErrorPolicy');
       contains(all, 'Sven');
       all = run('tail -n 8 /var/log/cups/error_log');
@@ -109,7 +109,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('E [16/Nov/2029:16:12:33 +0000] [Job 117] End of messages');
       contains(all, 'LogDebugHistory');
       all = run('lpq -P office', 'df -h');
-      expect(all).toContain('office is not ready\nRank    Owner   Job     File(s)                         Total Size\n1st     sven    117     yearbook-2029-proofs.pdf        3650000000 bytes');
+      expect(all).toContain('office is not ready\nRank    Owner   Job     File(s)                         Total Size\n1st     sven    117     yearbook-2029-proofs.pdf        3650000896 bytes');
       expect(all).toMatch(/\/dev\/vda3 +5[.,]0G +4[.,]5G +\d+M +90% \/var/);
       contains(all, 'spool');
       all = run('cancel 117', 'sudo ls /var/spool/cups');

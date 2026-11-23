@@ -395,6 +395,37 @@ export function learn(st: RspamdState, m: Mail, cls: 'spam' | 'ham'): 'ok' | 'al
 const domainOf = (a: string) => (/@([^>\s]+)>?\s*$/.exec(a)?.[1] ?? '').toLowerCase();
 const addrOf = (v: string) => (/<([^>]*)>/.exec(v)?.[1] ?? v.trim()).toLowerCase();
 const orgOf = (d: string) => d.split('.').slice(-2).join('.');
+
+/** Levenshtein distance with a replacement costing 2, as rspamd_strings_levenshtein_distance(…, 2). */
+function levenshtein(a: string, b: string, replace = 2): number {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : replace));
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/**
+ * The phishing module's weight for a link to `tld` shown as `ptld` (src/plugins/lua/phishing.lua,
+ * rspamd 3.12.1): the common last label dropped, the distance normalised by the lengths; a close
+ * look-alike weighs 1, a fairly different name tanh(3 × (1.1 − distance)), a wholly different one 0.5.
+ */
+function phishingWeight(tld: string, ptld: string): number {
+  let a = tld;
+  let b = ptld;
+  const last = (x: string) => x.slice(x.lastIndexOf('.'));
+  if (a.includes('.') && b.includes('.') && last(a) === last(b)) {
+    a = a.slice(0, a.lastIndexOf('.'));
+    b = b.slice(0, b.lastIndexOf('.'));
+  }
+  const dist = a === b ? 0 : (2 * levenshtein(a, b)) / (a.length + b.length);
+  if (dist === 0) return 0;
+  if (dist > 0.3 && dist <= 1) return Math.tanh(3 * (1 - dist + 0.1));
+  if (dist > 1) return 0.5;
+  return 1;
+}
 const inNet = (ip: string, cidr: string) => {
   const [base, bits = '32'] = cidr.split('/');
   const n = (x: string) => x.split('.').reduce((t, o) => t * 256 + Number(o), 0);
@@ -428,7 +459,8 @@ export function scan(game: Game, m: Mail, env: Envelope = {}, conf = rspamd(game
   const sender = ip ? net.senders[ip] : undefined;
   if (ip && !sender?.rdns) add('RDNS_NONE', 2.0);
   if (ip && !sender?.rdns) add('HFILTER_HOSTNAME_UNKNOWN', 2.5);
-  for (const bl of sender?.listed ?? []) add(bl, bl === 'RBL_SPAMCOP' ? 2.0 : 1.0, [`${ip?.split('.').reverse().join('.')}.bl.spamcop.example`]);
+  // An RBL hit's option is "<address>:<what was looked up>" (src/plugins/lua/rbl.lua, make_option).
+  for (const bl of sender?.listed ?? []) add(bl, bl === 'RBL_SPAMCOP' ? 2.0 : 1.0, [`${ip}:from`]);
   if (header(m, 'Received').length <= 1) add('ONCE_RECEIVED', 0.1);
   // SPF, DKIM, DMARC (with the story's DNS).
   const envDomain = domainOf(smtpFrom);
@@ -448,24 +480,31 @@ export function scan(game: Game, m: Mail, env: Envelope = {}, conf = rspamd(game
   const aligned = (spf === 'allow' && orgOf(envDomain) === orgOf(fromDomain)) || (dkim === 'allow' && orgOf(d) === orgOf(fromDomain));
   if (!policy) add('DMARC_NA', 0.0, [fromDomain]);
   else if (aligned) add('DMARC_POLICY_ALLOW', -0.5, [fromDomain, policy]);
-  else add(policy === 'reject' ? 'DMARC_POLICY_REJECT' : policy === 'quarantine' ? 'DMARC_POLICY_QUARANTINE' : 'DMARC_POLICY_SOFTFAIL', policy === 'none' ? 0.1 : 2.0, [fromDomain, policy]);
+  else add(policy === 'reject' ? 'DMARC_POLICY_REJECT' : policy === 'quarantine' ? 'DMARC_POLICY_QUARANTINE' : 'DMARC_POLICY_SOFTFAIL', policy === 'none' ? 0.1 : policy === 'quarantine' ? 1.5 : 2.0, [fromDomain, policy]);
   if (mimeFrom && smtpFrom && mimeFrom !== smtpFrom) add('FROM_NEQ_ENVFROM', 0.0, [mimeFrom, smtpFrom]);
   // Content.
   const subject = header(m, 'Subject')[0] ?? '';
   const type = (header(m, 'Content-Type')[0] ?? 'text/plain').toLowerCase();
   if (type.startsWith('text/html')) add('MIME_HTML_ONLY', 0.2);
-  if (subject.length > 10 && subject === subject.toUpperCase() && /[A-Z]{4}/.test(subject)) add('SUBJ_ALL_CAPS', 2.1);
+  // SUBJ_ALL_CAPS (rules/subject_checks.lua): 3.0 times min(1, length / 40), the length as option,
+  // after Re:/Fwd: prefixes.
+  const bare = /^(?:(?:Re|Fwd|Fw|Aw|Antwort|Sv):\s*)+(.+)$/i.exec(subject)?.[1] ?? subject;
+  if (bare.length > 10 && bare === bare.toUpperCase() && /[A-Z]{4}/.test(bare)) {
+    const length = [...bare].length;
+    add('SUBJ_ALL_CAPS', Math.round(3.0 * Math.min(1, length / 40) * 100) / 100, [String(length)]);
+  }
   if (/!\s*$/.test(subject)) add('SUBJECT_ENDS_EXCLAIM', 0.0);
   const links = [...m.body.matchAll(/<a href="([^"]+)"[^>]*>([^<]*)<\/a>/gi)];
   for (const [, href, label] of links) {
     const target = (/^https?:\/\/([^/]+)/.exec(href)?.[1] ?? '').toLowerCase();
     const shown = (/(?:https?:\/\/)?([a-z0-9.-]+\.[a-z]{2,})/i.exec(label)?.[1] ?? '').toLowerCase();
     if (shown && target && orgOf(shown) !== orgOf(target) && /\./.test(label)) {
-      add('PHISHING', 4.0, [`${shown}->${target}`]);
+      add('PHISHING', Math.round(4.0 * phishingWeight(orgOf(target), orgOf(shown)) * 100) / 100, [`${orgOf(shown)}->${orgOf(target)}`]);
       break;
     }
   }
-  if (links.some(([, href]) => /\/r\/[A-Za-z0-9]{12,}/.test(href))) add('R_SUSPICIOUS_URL', 5.0, ['redirector']);
+  const redirector = links.find(([, href]) => /\/r\/[A-Za-z0-9]{12,}/.test(href));
+  if (redirector) add('R_SUSPICIOUS_URL', 5.0, [(/^https?:\/\/([^/]+)/.exec(redirector[1])?.[1] ?? '').toLowerCase()]);
   if (/<img[^>]+>/i.test(m.body) && links.length > 0 && m.body.replace(/<[^>]+>/g, '').trim().length < 400) add('HTML_SHORT_LINK_IMG_1', 2.0);
   if (header(m, 'List-Unsubscribe').length) add('HAS_LIST_UNSUB', -0.01);
   if (/^bulk$/i.test((header(m, 'Precedence')[0] ?? '').trim())) add('PRECEDENCE_BULK', 0.0);
@@ -524,7 +563,8 @@ export function scan(game: Game, m: Mail, env: Envelope = {}, conf = rspamd(game
     }
   }
   const required = (actions.reject as number | null) ?? 15;
-  return { symbols: symbols.sort((a, b) => a.name.localeCompare(b.name)), score, required, action, isSpam: ['reject', 'add header', 'rewrite subject'].includes(action), ...(p !== null ? { bayes: p } : {}), msgid: header(m, 'Message-ID')[0] ?? '' };
+  // rspamc sorts the symbols by name with strcmp (src/client/rspamc.cxx, sort_map).
+  return { symbols: symbols.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)), score, required, action, isSpam: ['reject', 'add header', 'rewrite subject'].includes(action), ...(p !== null ? { bayes: p } : {}), msgid: header(m, 'Message-ID')[0] ?? '' };
 }
 
 export const scanText = (game: Game, text: string, env: Envelope = {}) => scan(game, parseMail(text), env);

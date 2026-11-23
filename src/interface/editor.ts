@@ -45,10 +45,12 @@ export function editor(o: EditorOptions): HTMLElement {
   const write = shortcut('^O', t('nano-write'));
   const quit = shortcut('^X', t('nano-quit'));
   const help = el('div', { class: 'nano-help', id: `${id}-help` }, write, quit);
-  const yes = shortcut('O', t('nano-yes'));
+  // nano's own letter for yes: Y in English, O (oui) in French; both work.
+  const yes = shortcut(t('nano-yes-key'), t('nano-yes'));
   const not = shortcut('N', t('nano-not'));
   const cancel = shortcut('^C', t('nano-cancel'));
-  const question = el('div', { class: 'nano-help', hidden: '' }, yes, not, cancel);
+  // A group named by its question: the focus lands on Yes, and the question is read with it.
+  const question = el('div', { class: 'nano-help', role: 'group', 'aria-label': t('nano-save'), hidden: '' }, yes, not, cancel);
 
   const root = el(
     'div',
@@ -69,12 +71,16 @@ export function editor(o: EditorOptions): HTMLElement {
   const save = () => {
     const { message, written } = o.save(zone.value);
     if (written) saves = zone.value;
+    state.removeAttribute('aria-hidden');
     state.textContent = message;
     modifiedUpdate();
   };
   const ask = (yes: boolean) => {
     help.hidden = yes;
     question.hidden = !yes;
+    // The question is read with the focus, on its group: not a second time by the status line.
+    if (yes) state.setAttribute('aria-hidden', 'true');
+    else state.removeAttribute('aria-hidden');
     state.textContent = yes ? t('nano-save') : '';
     (yes ? question.querySelector('button')! : zone).focus();
     // On a small screen, the question must be visible.

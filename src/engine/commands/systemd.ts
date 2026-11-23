@@ -768,7 +768,8 @@ export const SYSTEMD: Record<string, Command> = {
                 `Job for ${name}.service failed because start of the service was attempted too often.\nSee "systemctl status ${name}.service" and "journalctl -xeu ${name}.service" for details.\nTo force a start use "systemctl reset-failed ${name}.service"\nfollowed by "systemctl start ${name}.service" again.`,
               );
           } else if (action === 'reload') {
-            if (s.state !== 'active') game.error(`${name}.service is not active, cannot reload.`);
+            if (s.noReload) game.error(`Failed to reload ${name}.service: Job type reload is not applicable for unit ${name}.service.`);
+            else if (s.state !== 'active') game.error(`${name}.service is not active, cannot reload.`);
             else if (!reload(game, sd, name))
               game.error(
                 `Job for ${name}.service failed because the control process exited with error code.\nSee "systemctl status ${name}.service" and "journalctl -xeu ${name}.service" for details.`,

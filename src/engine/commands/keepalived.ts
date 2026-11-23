@@ -23,13 +23,17 @@ function keepalived(game: Shell, args: string[]): string {
   const unknown = args.find((a, i) => a.startsWith('-') && !['-t', '-f', '--use-file', '-l', '--log-console', '-D', '--log-detail', '-n', '--dont-fork'].includes(a) && !a.startsWith('--config-test') && !a.startsWith('--use-file=') && args[i - 1] !== '-f');
   if (unknown) return game.error(`keepalived: unrecognized option '${unknown}'\n${game.t('keepalived-usage')}`, 1);
   if (!test) return game.error(game.t('keepalived-not-by-hand'), 1);
+  // keepalived 2.3.3 (keepalived/core/main.c, config_test_exit; lib/scheduler.h): -t exits 0
+  // without a problem, 4 when the file can't be used (lib/parser.c, check_conf_file), 6 for
+  // script security, 5 for any other error or warning of the configuration.
   const n = game.find(file);
-  if (!n || n.type !== 'file') return game.error(`Configuration file '${file}' is not a regular non-executable file`, 1);
-  if (!game.can(n, 'r')) return game.error(`Configuration file '${file}' cannot be read: Permission denied`, 1);
+  if (!n) return game.error(`Config files missing '${file}'.`, 4);
+  if (n.type === 'directory') return game.error(`Configuration file '${file}/' is a directory - skipping`, 4);
+  if (n.type !== 'file') return game.error(`Configuration file '${file}' is not a regular non-executable file - skipping`, 4);
+  if (!game.can(n, 'r')) return game.error(`Unable to read configuration file ${file}`, 4);
   const problems = configTest(game.read(file) ?? '', file);
   if (!problems.length) return '';
-  const errors = problems.filter((p) => !p.includes('Warning'));
-  return game.error(problems.join('\n'), errors.length ? 1 : 0);
+  return game.error(problems.join('\n'), 5);
 }
 
 // ——— tcpdump ———

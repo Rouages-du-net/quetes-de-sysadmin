@@ -907,10 +907,62 @@ for (const width of [1000, 375]) {
   check((await page.locator('#class tbody').textContent()).includes('Lina') && (await page.locator('#class tbody').textContent()).includes('Admin junior'), `class ${width} px: chapters and rank`);
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#class button', { hasText: 'CSV' }).click()]);
   const csv = readFileSync(await download.path(), 'utf8');
-  check(csv.includes("'=1+1") && csv.includes('Lina;5/'), `class ${width} px: the CSV, without formulas`);
+  check(csv.includes("'=1+1") && csv.includes('\r\nLina;5;'), `class ${width} px: the CSV, without formulas, ; in French`);
+  check(csv.startsWith('\uFEFFÉlève;Chapitres terminés (sur ') && csv.includes("Série d'astreinte"), `class ${width} px: the CSV starts with a BOM, accents kept`);
+  const csvLines = csv.split('\r\n');
+  check(csvLines.length === 4 && csvLines.every((l) => l.split(';').length === csvLines[0].split(';').length), `class ${width} px: the CSV, one line per student, one column per chapter`);
+  check((await page.locator('#class .class-actions').textContent()).includes("rien n'est envoyé"), `class ${width} px: the page says nothing is sent`);
+  // The separator can be changed: a comma, as in English.
+  await page.locator('#class select').selectOption(',');
+  const [download2] = await Promise.all([page.waitForEvent('download'), page.locator('#class button', { hasText: 'CSV' }).click()]);
+  check(readFileSync(await download2.path(), 'utf8').includes('\r\nLina,5,'), `class ${width} px: the CSV with commas`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `class ${width} px: no horizontal scrolling of the page`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/classe-${width}.png` });
+  // Printed: only the title and the table, without the site's header and footer.
+  await page.emulateMedia({ media: 'print' });
+  const shown = (selector) => page.locator(selector).first().evaluate((e) => getComputedStyle(e).display !== 'none');
+  check(!(await shown('header')) && !(await shown('footer')) && !(await shown('.class-zone')) && !(await shown('.class-actions')), `class ${width} px: printed without the header, footer, fields and buttons`);
+  check((await shown('#class table')) && (await shown('h1')), `class ${width} px: printed, the title and the table`);
+  await page.emulateMedia({ media: null });
   check(errors.length === 0, `class ${width} px: no console error ${errors.join(' ')}`);
+  await page.close();
+}
+
+// The printable story sheets: a page per story, linked from the quest
+// sheets; printed without the site around them, the links written out,
+// the teacher's version only once opened; the quest sheets one story per page.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/en/teachers/`);
+  check(await page.locator('.print-button').isVisible(), `story sheet ${width} px: the quest sheets' Print button`);
+  await page.emulateMedia({ media: 'print' });
+  check((await page.locator('.sheet-story').nth(1).evaluate((e) => getComputedStyle(e).breakBefore)) === 'page', `story sheet ${width} px: the quest sheets print one story per page`);
+  await page.emulateMedia({ media: null });
+  await page.locator('a[href="/en/teachers/sheets/letters/"]').click();
+  await page.waitForURL(/\/en\/teachers\/sheets\/letters\/$/);
+  check((await page.locator('.sheet').count()) >= 3 && (await page.locator('.question-block').count()) === (await page.locator('.sheet').count()), `story sheet ${width} px: chapters and questions`);
+  check((await page.locator('#c-firewall').textContent()).includes('man ufw'), `story sheet ${width} px: the manual pages to read`);
+  check(!(await page.locator('.teacher-route').evaluate((d) => d.open)) && (await page.locator('.print-button').isVisible()), `story sheet ${width} px: the teacher's version folded, a Print button`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `story sheet ${width} px: no horizontal scrolling`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/story-sheet-${width}.png` });
+  await page.emulateMedia({ media: 'print' });
+  const display = (selector) => page.locator(selector).first().evaluate((e) => getComputedStyle(e).display);
+  check((await display('header')) === 'none' && (await display('footer')) === 'none' && (await display('.print-actions')) === 'none', `story sheet ${width} px: printed without header, footer or buttons`);
+  check((await display('.teacher-route')) === 'none', `story sheet ${width} px: the closed teacher's version is not printed`);
+  check((await display('.handout-name')) !== 'none', `story sheet ${width} px: a line for the student's name on paper`);
+  check((await page.locator('.documentation a').first().evaluate((a) => getComputedStyle(a, '::after').content)).includes('https://'), `story sheet ${width} px: printed links show their address`);
+  check((await page.locator('.questions').evaluate((e) => getComputedStyle(e).breakBefore)) === 'page', `story sheet ${width} px: the questions start a new page`);
+  await page.locator('.teacher-route').evaluate((d) => (d.open = true));
+  check((await display('.teacher-route')) !== 'none' && (await page.locator('.route pre').count()) > 0, `story sheet ${width} px: the teacher's version opened, printed`);
+  await page.emulateMedia({ media: null });
+  await page.locator('.language a').click();
+  await page.waitForURL(/\/fr\/enseignants\/fiches\/letters\/$/);
+  check((await page.locator('h2#questions').textContent()).includes('Vérifier'), `story sheet ${width} px: the sheet in French`);
+  check(errors.length === 0, `story sheet ${width} px: no console error ${errors.join(' ')}`);
   await page.close();
 }
 

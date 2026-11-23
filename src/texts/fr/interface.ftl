@@ -468,6 +468,17 @@ class-col-grade = Grade
 class-col-achievements = Succès
 class-col-exam = Meilleur examen
 class-col-date = Sauvegarde
+class-col-streak = Série d'astreinte
+class-col-best-streak = Meilleure série d'astreinte
+class-separator = Séparateur :
+class-separator-comma = virgule (,)
+class-separator-semicolon = point-virgule (;)
+class-print = Imprimer le tableau
+class-local = Le fichier CSV et l'impression sont faits dans ce navigateur, à partir du tableau ci-dessous : rien n'est envoyé nulle part.
+# En-têtes du CSV : les chapitres terminés (un nombre), ceux d'une histoire (un nombre), un chapitre (1 terminé, 0 non).
+class-csv-chapters = Chapitres terminés (sur { $total })
+class-csv-story = { $story } (sur { $total })
+class-csv-chapter = { $story } { $number } : { $chapter } (1 = terminé)
 
 ## L'affichage du terminal
 
@@ -535,6 +546,8 @@ loading-failed = Cette partie du jeu n'a pas pu être chargée : vérifie ta con
 ## Lecteurs d'écran (voir docs/ACCESSIBILITY.md et src/engine/announce.ts)
 # Le nom de la sortie du terminal (un journal : chaque nouvelle sortie est lue une fois)
 output-label = Sortie du terminal
+# Un titre pour les lecteurs d'écran (masqué à l'écran) avant le terminal
+terminal-heading = Terminal
 # Lu avec la ligne de commande, après son nom et l'invite
 input-help = Tab complète ; Échap puis Tab quitte la ligne vers la suite, Maj+Tab vers l'arrière ; Alt+R relit la dernière sortie.
 # Un bouton qui apparaît quand il a le focus, en haut du terminal
@@ -551,6 +564,7 @@ follow-announce-lines =
     }
 follow-announce-screen = L'écran a changé : Alt+R le lit.
 chapter-done-announce = Chapitre terminé : { $chapter }. Son bilan est à la fin du terminal ; Échap puis Tab mène aux boutons qui le suivent.
+continuation-announce = La commande n'est pas finie : tapez sa ligne suivante, ou Ctrl-C pour l'abandonner.
 # La boîte du schéma du réseau (elle défile sur le côté sur un écran étroit) ; sa version texte la suit
 plan-diagram-label = Schéma du réseau (sa version texte suit)
 shortcuts-escape-tab = quitte la ligne de commande, vers ce qui suit le terminal (Tab seul complète)

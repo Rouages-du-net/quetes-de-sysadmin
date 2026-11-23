@@ -34,6 +34,7 @@ nano-write = Écrire
 nano-quit = Quitter
 nano-save = Sauver le tampon modifié ?
 nano-yes = Oui
+nano-yes-key = O
 nano-not = Non
 nano-cancel = Annuler
 nano-zone = Contenu de { $path }

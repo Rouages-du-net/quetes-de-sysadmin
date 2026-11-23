@@ -1000,6 +1000,18 @@ them safely.
   their codes); chapters, rank, achievements, best exam, progress per
   story; CSV export (with no injectable formula); everything stays in the
   browser.
+- [x] **Teachers' printouts**: the class table's CSV with one column per
+  chapter (1 finished, 0 not), each story's count, the last save and the
+  on-call streak, a byte order mark for spreadsheets and the separator
+  they expect in the page's language (`,` in English, `;` in French, which
+  the teacher can change); a print view of the table (landscape). A
+  printable sheet per story (`/en/teachers/sheets/<story>/`,
+  `/fr/enseignants/fiches/<story>/`): goals without solutions, new
+  commands, the manual pages to read, the debrief's documentation,
+  questions to check what was learnt, and, folded, a teacher's version
+  with the solution route (the game's own third hints), printed only when
+  opened; A4 and Letter, black and white, links written out. Still
+  possible: questions written for each chapter from its debrief.
 - [x] **Graduated hints**, in the Mission: the manual first, then a lead,
   then almost the answer, for the first step not yet passed
   (`hints-<story>.ftl`); the debrief counts the hints asked for; none in

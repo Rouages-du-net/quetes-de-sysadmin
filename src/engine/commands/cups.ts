@@ -109,10 +109,15 @@ function printerLine(game: Shell, p: Printer, long: boolean): string {
   return lines.join('\n');
 }
 
+// lpstat and lpq (systemv/lpstat.c, berkeley/lpq.c of cups 2.4.10) print a job's size as
+// 1024 × job-k-octets (the scheduler rounds the bytes up to a kilobyte), and "unknown" for an
+// owner the policy keeps private (the scheduler leaves the attribute out).
+const kSize = (bytes: number) => 1024 * Math.ceil(bytes / 1024);
+
 function jobLines(game: Shell, jobs: Job[]): string[] {
   return jobs.map((j) => {
-    const user = sees(game, game.who, j, 'job-originating-user-name') ? j.user : '';
-    return `${`${j.printer}-${j.id}`.padEnd(23)} ${user.padEnd(13)} ${String(j.size).padStart(8)}   ${cDate(j.completed !== undefined && FINISHED.includes(j.state) ? j.completed : j.created)}`;
+    const user = sees(game, game.who, j, 'job-originating-user-name') ? j.user : 'unknown';
+    return `${`${j.printer}-${j.id}`.padEnd(23)} ${user.padEnd(13)} ${String(kSize(j.size)).padStart(8)}   ${cDate(j.completed !== undefined && FINISHED.includes(j.state) ? j.completed : j.created)}`;
   });
 }
 
@@ -271,7 +276,7 @@ function lpq(game: Shell, args: string[]): string {
     const r = j.state === 'processing' ? 'active' : ORDINAL(++rank);
     const owner = sees(game, game.who, j, 'job-originating-user-name') ? j.user : 'unknown';
     const title = sees(game, game.who, j, 'job-name') ? j.title : 'unknown';
-    out.push(`${r.padEnd(7)} ${owner.slice(0, 7).padEnd(7)} ${String(j.id).padEnd(7)} ${title.slice(0, 31).padEnd(31)} ${j.size} bytes`);
+    out.push(`${r.padEnd(7)} ${owner.slice(0, 7).padEnd(7)} ${String(j.id).padEnd(7)} ${title.slice(0, 31).padEnd(31)} ${kSize(j.size)} bytes`);
   }
   return out.join('\n');
 }
@@ -511,7 +516,11 @@ function lpadmin(game: Shell, args: string[]): string {
       p.makeModel = 'Local Raw Printer';
     } else {
       const m = models(game).find((x) => x.name === model);
-      if (!m) return game.error('lpadmin: Unable to copy PPD file.', 1);
+      // scheduler/ipp.c (copy_model) of cups 2.4.10: cups-driverd finds no such model.
+      if (!m) {
+        log(game, 'error', 'copy_model: empty PPD file');
+        return game.error('lpadmin: cups-driverd failed to get PPD file - see error_log for details.', 1);
+      }
       warnings.push('lpadmin: Printer drivers are deprecated and will stop working in a future version of CUPS.');
       p.driver = m.name;
       p.makeModel = m.makeModel;

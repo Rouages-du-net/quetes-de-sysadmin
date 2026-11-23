@@ -870,7 +870,7 @@ function set(s: Session, sql: string): Result | null {
   if (name === 'gtid_slave_pos') {
     if (srv.replica?.io || srv.replica?.sql) return err(1198, 'HY000', "This operation cannot be performed as you have a running slave ''; run STOP SLAVE '' first");
     const g = /^(\d+)-(\d+)-(\d+)$/.exec(value);
-    if (value && !g) return err(1941, 'HY000', `Could not parse GTID list for GTID_SLAVE_POS`);
+    if (value && !g) return err(1941, 'HY000', 'Could not parse GTID list');
     srv.gtidSlavePos = value;
     if (srv.replica && g) srv.replica.applied = srv.replica.read = Number(g[3]);
     return ok(0);

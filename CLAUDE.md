@@ -995,10 +995,19 @@ presents them for people.
 - `src/pages/en/teachers.astro` and `src/pages/fr/enseignants.astro`: the
   quest sheets (component `src/components/Sheets.astro`), computed by
   `src/engine/sheets.ts` (new commands, prerequisites, time) and
-  `src/engine/difficulty.ts`. The class table (`/en/teachers/class/`,
-  `/fr/enseignants/classe/`, component `Classroom.astro`,
-  `src/interface/classroom.ts`, logic in `src/engine/classroom.ts`) reads the
-  students' saves in the browser.
+  `src/engine/difficulty.ts`. A story's printable sheet
+  (`src/pages/en/teachers/sheets/[story].astro`,
+  `src/pages/fr/enseignants/fiches/[story].astro`, component
+  `StorySheet.astro`; `storySheets`, `manualPages`, `documentation` read
+  from the debrief, `solutionRoute` from the hints for the folded teacher's
+  version, in `sheets.ts`); the Print buttons (`data-print`) in
+  `src/interface/print.ts`, the print styles at the end of `site.css`. The
+  class table (`/en/teachers/class/`, `/fr/enseignants/classe/`, component
+  `Classroom.astro`, `src/interface/classroom.ts`, logic in
+  `src/engine/classroom.ts`: `exportTable`, `csvCell`, `csvSeparator` by
+  language, `csvFile` with a BOM, `streakFor`) reads the students' saves in
+  the browser, exports them as CSV and prints them; tests
+  `tests/classroom.test.ts`, `tests/sheets.test.ts`.
 - `src/texts/<language>/*.ftl`: every text (Fluent), loaded by
   `src/texts/index.ts` (`translator()`, `typography()`); `names.ftl`: the
   names of places and objects of chapters with `names: true` (in the code,

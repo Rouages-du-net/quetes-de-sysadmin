@@ -32,6 +32,8 @@ export interface Service {
   // reload first checks the configuration with `check` (like
   // ExecReload=/usr/sbin/sshd -t); otherwise, it reloads without checking.
   checkToReload?: boolean;
+  // A unit without ExecReload= (cups.service on Debian 13): systemctl reload refuses the job.
+  noReload?: boolean;
   // Type=oneshot: the service does its work then stops (e.g. certbot,
   // started by a timer); it doesn't stay "active (running)".
   oneshot?: boolean;

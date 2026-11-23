@@ -3,7 +3,8 @@
 // nothing is sent. The logic is in src/engine/classroom.ts.
 
 import { CATALOGUE as STORIES } from '../engine/catalogue';
-import { progress, fileStudent, codesStudents, inCsv, gradeFor, bestTime, chaptersTotal, type Student, type ClassError } from '../engine/classroom';
+import { progress, fileStudent, codesStudents, gradeFor, bestTime, chaptersTotal, streakFor, csvSeparator, csvFile, exportTable, type Student, type ClassError } from '../engine/classroom';
+import { localDate } from '../engine/streak';
 import { translator, type Language } from '../texts';
 
 function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string, string> = {}, ...children: (Node | string)[]) {
@@ -24,12 +25,28 @@ export function mountClass(root: HTMLElement, language: Language) {
   const addCodes = el('button', { type: 'button' }, t('class-codes-add'));
   const codes = el('p', {}, el('label', { for: codesField.id }, t('class-codes')), el('br'), codesField, el('br'), addCodes);
   const state = el('p', { class: 'class-state', role: 'status' });
-  const exported = el('button', { type: 'button' }, t('class-export'));
+  const exported = el('button', { type: 'button', class: 'class-export' }, t('class-export'));
+  // The separator spreadsheets expect in the page's language (, in English,
+  // ; in French), which the teacher can change.
+  const separator = el(
+    'select',
+    { id: 'class-separator' },
+    el('option', { value: ',' }, t('class-separator-comma')),
+    el('option', { value: ';' }, t('class-separator-semicolon')),
+  ) as HTMLSelectElement;
+  separator.value = csvSeparator(language);
+  const printed = el('button', { type: 'button', class: 'class-print' }, t('class-print'));
   const empty = el('button', { type: 'button' }, t('class-empty'));
-  const actions = el('p', { class: 'class-actions' }, exported, ' ', empty);
+  const actions = el(
+    'div',
+    { class: 'class-actions' },
+    el('p', {}, el('label', { for: separator.id }, t('class-separator')), ' ', separator, ' ', exported, ' ', printed, ' ', empty),
+    el('p', { class: 'muted' }, t('class-local')),
+  );
   const grid = el('div', { class: 'class-table', tabindex: '0', role: 'region', 'aria-label': t('class-table') });
   root.replaceChildren(zone, codes, state, actions, grid);
 
+  const today = () => localDate(new Date());
   const minutes = (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}`;
   const date = (iso: string | null) => (iso ? new Intl.DateTimeFormat(t.language, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)) : '');
   const HEADERS = () => [
@@ -39,6 +56,7 @@ export function mountClass(root: HTMLElement, language: Language) {
     t('class-col-achievements'),
     t('class-col-exam'),
     t('class-col-date'),
+    t('class-col-streak'),
     ...STORIES.map((h) => t(`story-${h.id}`)),
   ];
   const line = (e: Student) => [
@@ -48,6 +66,7 @@ export function mountClass(root: HTMLElement, language: Language) {
     e.achievements,
     bestTime(e) === null ? '' : minutes(bestTime(e)!),
     date(e.date),
+    streakFor(e, today())?.current ?? '',
     ...STORIES.map((h) => {
       const a = progress(e, h.id);
       return `${a.done}/${a.total}`;
@@ -76,7 +95,7 @@ export function mountClass(root: HTMLElement, language: Language) {
               'tr',
               {},
               ...line(e).map((x, i) => {
-                const story = i - 6;
+                const story = i - 7;
                 const finished = story >= 0 && progress(e, STORIES[story].id).done === STORIES[story].chapters.length;
                 return i === 0 ? el('th', { scope: 'row' }, String(x)) : el('td', finished ? { class: 'finished' } : {}, String(x));
               }),
@@ -121,14 +140,41 @@ export function mountClass(root: HTMLElement, language: Language) {
     add(codesStudents(codesField.value));
     codesField.value = '';
   });
+  // The export: made here, from the table already in the page; the file is
+  // a Blob handed to the browser, nothing leaves it.
+  const exportRows = () =>
+    exportTable(
+      students,
+      {
+        student: t('class-col-student'),
+        chapters: t('class-csv-chapters', { total: chaptersTotal() }),
+        grade: t('class-col-grade'),
+        achievements: t('class-col-achievements'),
+        exam: t('class-col-exam'),
+        date: t('class-col-date'),
+        streak: t('class-col-streak'),
+        bestStreak: t('class-col-best-streak'),
+        story: (id, total) => t('class-csv-story', { story: t(`story-${id}`), total }),
+        chapter: (story, id, number) => t('class-csv-chapter', { story: t(`story-${story}`), number, chapter: t(`chapter-${id}`) }),
+        gradeName: (g) => t(`grade-${g}`),
+        when: (iso) => {
+          // Year first, local time: a spreadsheet sorts it and reads it as a date.
+          const d = new Date(iso);
+          return `${localDate(d)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        },
+        time: minutes,
+      },
+      today(),
+    );
   exported.addEventListener('click', () => {
     const link = el('a', {
-      href: URL.createObjectURL(new Blob([`﻿${inCsv(students, HEADERS(), line)}`], { type: 'text/csv' })),
+      href: URL.createObjectURL(new Blob([csvFile(exportRows(), separator.value)], { type: 'text/csv;charset=utf-8' })),
       download: t('class-name-file'),
     });
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   });
+  printed.addEventListener('click', () => window.print());
   empty.addEventListener('click', () => {
     students.length = 0;
     errors.length = 0;
