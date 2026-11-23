@@ -26,7 +26,7 @@ stories-locked = { $count ->
 }
 button-next = Next chapter →
 button-restart = Restart this chapter
-tips = Tips: Tab completes names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
+tips = Tips: Tab completes command, folder and file names, ↑ recalls commands, "help" lists the ones you know, "man command" opens the manual, "exit" takes you back to your workstation. As in most Linux terminals, selecting text copies it and right-clicking pastes it. Your progress is saved in this browser.
 # { $lines }: number of lines not shown
 output-cut =
     { $lines ->
@@ -492,7 +492,7 @@ tour-input = Type your commands here, then press Enter. It's a real terminal: th
 tour-mission = Mission: what you have to do in this chapter, what has already happened, and hints if you are stuck.
 tour-map = Map: the places you have already visited, to find your way back.
 tour-notebook = Notebook: every command you run is written here, with what it does. Your cheat sheet.
-tour-tab = Tab completes names for you: type the first letters, then Tab. Pressed twice, it lists the choices.
+tour-tab = Tab completes the names of commands, folders and files for you: type their first letters, then Tab. Pressed twice, it lists the choices.
 
 # A story loads the first time it is opened (its chapters and texts).
 loading-story = Loading {$story}…

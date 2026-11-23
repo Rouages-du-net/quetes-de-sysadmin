@@ -31,7 +31,6 @@ start-here-time-long = Une heure ou plus
 start-here-incomplete = Réponds aux quatre questions pour voir une suggestion.
 start-here-result = Notre suggestion
 start-here-path = Parcours : { $path }
-start-here-start = Commencer
 start-here-chapter = { $chapter }, dans « { $story } »
 start-here-locked =
     { $count ->
@@ -62,5 +61,4 @@ start-here-note-medium = Une demi-heure suffit pour un ou deux chapitres, et le 
 start-here-note-long = Avec une heure ou plus, tu peux jouer une histoire entière du début à la fin.
 
 ## Pour les lecteurs d'écran
-start-here-start-label = Commencer « { $chapter } »
 start-here-announce = Suggestion : « { $chapter } », dans le parcours « { $path } ».

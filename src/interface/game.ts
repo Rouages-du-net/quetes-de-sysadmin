@@ -2328,7 +2328,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const startStory = (id: string) => STORIES.findIndex((x) => x.id === id);
   const startSuggestion = (s: Suggestion, main: boolean) => {
     const h = STORIES.findIndex((x) => x.chapters.some((c) => c.id === s.chapter));
-    const c = chapters(h).findIndex((x) => x.id === s.chapter);
     const title = t(`chapter-${s.chapter}`);
     return el(
       main ? 'div' : 'li',
@@ -2337,11 +2336,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       el('p', { class: 'start-chapter' }, el('strong', {}, typo(t('start-here-chapter', { chapter: title, story: storyTitle(h) }))), ' ', level(difficulty(s.chapter))),
       el('p', {}, typo(t(s.reason))),
       ...(s.before ? [el('p', { class: 'map-legend' }, typo(t('start-here-locked', { chapter: t(`chapter-${s.target}`), count: s.before })))] : []),
-      el(
-        'p',
-        { class: 'start-actions' },
-        el('button', { type: 'button', class: main ? 'button' : 'button button-secondary', 'data-h': String(h), 'data-c': String(c), 'data-path': s.path, 'aria-label': typo(t('start-here-start-label', { chapter: title })) }, t('start-here-start')),
-      ),
     );
   };
   // The answers checked in the form, kept, and the suggestion they give from where the player stands.
@@ -2360,6 +2354,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       return;
     }
     const r = recommend(display.startHere, finished, (id) => accessible(startStory(id)));
+    // A suggestion, not a shortcut: the player goes on from the menu (the
+    // first steps stay first). Its path becomes the one the "Paths" view
+    // shows, and the first visit's card has done its job.
+    if (r) {
+      display.path = r.main.path;
+      display.startOffer = 'done';
+      applyDisplay();
+    }
     if (!r) {
       startResult.replaceChildren(heading, el('p', {}, typo(t('start-here-all-done'))));
       startStatus.textContent = typo(t('start-here-all-done'));
@@ -2403,16 +2405,6 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     applyDisplay();
     // The card goes: the focus goes to the menu's button, where the questions stay.
     startHereButton.focus();
-  });
-  // Start: the suggested chapter opens, and its path becomes the one the "Paths" view shows.
-  startResult.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-h]');
-    if (!b) return;
-    display.path = b.dataset.path!;
-    display.startOffer = 'done';
-    applyDisplay();
-    startWindow.close();
-    launch(Number(b.dataset.h), Number(b.dataset.c));
   });
   closeStart.addEventListener('click', () => startWindow.close());
   startWindow.addEventListener('close', () => setTimeout(() => input.focus()));

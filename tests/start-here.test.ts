@@ -132,7 +132,7 @@ describe('Where do I start?', () => {
   for (const language of LANGUAGES)
     it(`every text in ${language}`, () => {
       const t = translator(language);
-      const keys = new Set(['start-here-title', 'start-here-intro', 'start-here-offer-title', 'start-here-offer-text', 'start-here-offer-answer', 'start-here-offer-dismiss', 'start-here-button', 'start-here-result', 'start-here-incomplete', 'start-here-start', 'start-here-alternatives', 'start-here-teachers', 'start-here-teachers-link', 'start-here-all-done', 'start-here-locked', 'start-here-close', 'tour-start-here', 'start-here-start-label', 'start-here-announce', 'start-here-path', 'start-here-chapter']);
+      const keys = new Set(['start-here-title', 'start-here-intro', 'start-here-offer-title', 'start-here-offer-text', 'start-here-offer-answer', 'start-here-offer-dismiss', 'start-here-button', 'start-here-result', 'start-here-incomplete', 'start-here-alternatives', 'start-here-teachers', 'start-here-teachers-link', 'start-here-all-done', 'start-here-locked', 'start-here-close', 'tour-start-here', 'start-here-announce', 'start-here-path', 'start-here-chapter']);
       for (const q of Object.keys(QUESTIONS) as (keyof typeof QUESTIONS)[]) {
         keys.add(`start-here-${q}`);
         for (const v of QUESTIONS[q]) keys.add(`start-here-${q}-${v}`);

@@ -310,7 +310,7 @@ for (const width of [1000, 375]) {
 
 // "Where do I start?" (see start-here.ts): a first visit is offered the
 // questions by a card (not a window); answered with the keyboard, they give a
-// suggestion whose Start opens the chapter; the menu's button opens them again
+// suggestion (no shortcut into a chapter: the first steps stay first); the menu's button opens them again
 // with the answers kept; a returning player sees no card, and exam mode hides it all.
 for (const width of [1000, 375]) {
   const page = await browser.newPage({ viewport: { width: width, height: 900 } });
@@ -355,10 +355,9 @@ for (const width of [1000, 375]) {
     await page.keyboard.press('Space');
   }
   if (process.env.CAPTURES) await window.screenshot({ path: `${process.env.CAPTURES}/start-${width}.png` });
-  await result.locator('.main button').focus();
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin').shadowRoot.querySelector('.output').textContent.includes('chapitre 1'));
-  check(!(await window.evaluate((d) => d.open)) && (await game.locator('.output').textContent()).includes('L’Effaceur — chapitre 1'), `start ${width} px: Start opens the chapter`);
+  check((await result.locator('button').count()) === 0, `start ${width} px: a suggestion, no shortcut into a chapter`);
+  await page.keyboard.press('Escape');
+  check(!(await window.evaluate((d) => d.open)), `start ${width} px: Escape closes the questions`);
   check(await offer.isHidden(), `start ${width} px: the card goes once answered`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `start ${width} px: no horizontal scrolling`);
   // Back later: no card, the menu's button, the answers kept (a setting of this browser, not of the progress).
