@@ -29,6 +29,8 @@ import { buildReport, DEFAULT_PARTS, FEEDBACK_KINDS, FEEDBACK_PARTS, partLines, 
 import { missing } from '../engine/unlocking';
 import { remainingBudget, dayIncident, gauge, placeFor, percent } from '../engine/on-call';
 import { localDate, streak } from '../engine/streak';
+import { readTime, reminderIcs } from '../engine/reminder';
+import { markSeen, readSeen, whatsNew, type Seen } from '../engine/releases';
 import { progressCode, backupFile, readCode, readFile, cleanName, cleanOnCall, mergeOnCall, type Backup, type OnCallResult } from '../engine/progress';
 import { colourise, type Token } from '../engine/highlighting';
 import { chunks, withoutColours } from '../engine/colours';
@@ -117,7 +119,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const DISPLAY_KEY = `${KEY}-display`;
   const SIZES = [0.8, 0.9, 1, 1.15, 1.3, 1.5];
   // startHere: the answers to "Where do I start?" (see start-here.ts); startOffer: 'done' once its first-visit card is answered or dismissed.
-  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true, startHere: {} as Partial<Answers>, startOffer: '' };
+  let display = { theme: 'phosphor', size: 2, view: 'network', colours: true, path: PATH[0].id, tips: true, tour: '', autosave: true, explainer: true, startHere: {} as Partial<Answers>, startOffer: '', reminder: '' };
   try {
     display = { ...display, ...JSON.parse(localStorage.getItem(DISPLAY_KEY) ?? '{}') };
   } catch {}
@@ -135,7 +137,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     );
   const storiesBoutons = STORIES.map((h, i) =>
     el('button', { type: 'button', 'data-story': String(i) },
-      el('span', { class: 'title' }, storyTitle(i)),
+      el('span', { class: 'title' }, storyTitle(i), el('span', { class: 'new-badge', hidden: '' }, ' ', el('span', {}, t('story-new')))),
       host(storyMachine(h.id)),
       el('span', { class: 'abstract' }, typo(t(`story-${h.id}.summary`))),
       level(storyDifficulty(h.id).min, storyDifficulty(h.id).max),
@@ -192,12 +194,31 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
   // The on-call streak (see streak.ts), under the incident: kind words, never a reproach.
   const streakLine = el('p', { class: 'streak', hidden: '' });
+  // The daily reminder (see reminder.ts): a calendar file the player adds to their own calendar app.
+  const reminderButton = el('button', { type: 'button', class: 'reminder-button', 'aria-haspopup': 'dialog' }, t('reminder-button'));
+  const reminderEntry = el('p', { class: 'reminder-entry' }, reminderButton);
+  const reminderId = `qds-reminder-${Math.random().toString(36).slice(2, 8)}`;
+  const reminderTime = el('input', { type: 'time', id: `${reminderId}-time`, required: '', value: '18:30' }) as HTMLInputElement;
+  const reminderDownload = el('button', { type: 'button', class: 'button' }, lazy('dialog-reminder', 'reminder-download'));
+  const reminderStatus = el('p', { class: 'map-legend', role: 'status' });
+  const closeReminder = el('button', { type: 'button', class: 'button button-secondary' }, lazy('dialog-reminder', 'reminder-close'));
+  const reminderWindow = el(
+    'dialog',
+    { class: 'reminder-window', 'aria-labelledby': reminderId },
+    el('h2', { id: reminderId }, lazy('dialog-reminder', 'reminder-title')),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-intro', true)),
+    el('p', { class: 'reminder-field' }, el('label', { for: reminderTime.id }, lazy('dialog-reminder', 'reminder-time')), ' ', reminderTime),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-floating', true)),
+    el('p', { class: 'map-legend' }, lazy('dialog-reminder', 'reminder-private', true)),
+    reminderStatus,
+    el('p', { class: 'map-actions' }, closeReminder, ' ', reminderDownload),
+  ) as HTMLDialogElement;
   // "Where do I start?" (see start-here.ts): a button of the menu, always there (hidden in exam mode).
   const startHereButton = el('button', { type: 'button', class: 'start-here-button', 'aria-haspopup': 'dialog' }, t('start-here-button'));
   const startHereEntry = el('p', { class: 'start-here-entry' }, startHereButton);
   // "Report a problem or an idea" (see feedback.ts): a button under the menu, and one among the chapter's actions.
   const feedbackMenuButton = el('button', { type: 'button', class: 'feedback-button', 'aria-haspopup': 'dialog' }, icon(...ICON_FEEDBACK), el('span', {}, t('feedback-button')));
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, streakLine, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, streakLine, reminderEntry, storiesList, lockedBlock, pathBlock, el('p', { class: 'feedback-entry' }, feedbackMenuButton));
   // On a first visit, the same questions offered by a card above the menu: not a window, it blocks nothing.
   const startOfferId = `qds-start-offer-${Math.random().toString(36).slice(2, 8)}`;
   const startOfferAnswer = el('button', { type: 'button', class: 'button', 'aria-haspopup': 'dialog' }, t('start-here-offer-answer'));
@@ -709,7 +730,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     textExam,
     el('p', { class: 'map-actions' }, notExam, ' ', yesExam),
   ) as HTMLDialogElement;
-  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, examWindow, startWindow, feedbackWindow, announcer);
+  const game = el('div', { class: 'qds', lang: t.language }, startOffer, storiesNav, ...chaptersNavs, examBar, resumeBanner, resumeStatus, screen, end, forUnderstand, tips, chapterActions, examChoice, credit, mapWindow, notebookWindow, progressWindow, missionWindow, achievementsWindow, summaryWindow, onCallWindow, onCallEndWindow, reminderWindow, examWindow, startWindow, feedbackWindow, announcer);
   root.append(game);
 
   // ——— Progress kept in this browser ———
@@ -1228,6 +1249,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     output.replaceChildren(measure);
     const loaded = loadedStory(STORIES[h].id)!;
     const chapter = c === undefined ? undefined : loaded.chapters[c];
+    storySeen(h);
     if (gameTerminal.remote?.story === loaded && chapter) show(gameTerminal.open(chapter));
     else show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
     // In exam mode, a chapter that (re)starts starts the timer; an already finished chapter doesn't.
@@ -1680,6 +1702,41 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .then(() => (stateNotebook.textContent = t('notebook-copy')))
       .catch(() => (stateNotebook.textContent = t('notebook-copy-impossible')));
   }));
+  // ——— What's new since the last visit (see releases.ts) ———
+  // A setting of this browser (KEY-whats-new), not progress: the newest
+  // release seen, and the stories marked "New" until opened.
+  const SEEN_KEY = `${KEY}-whats-new`;
+  let seen: Required<Seen> = { until: '', fresh: {} };
+  try {
+    seen = whatsNew(readSeen(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}')), today());
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+  } catch {}
+  const freshUpdate = () => {
+    storiesBoutons.forEach((b, h) => {
+      (b.querySelector('.new-badge') as HTMLElement).hidden = !(STORIES[h].id in seen.fresh);
+    });
+  };
+  // A story opened: no longer new.
+  const storySeen = (h: number) => {
+    if (!(STORIES[h].id in seen.fresh)) return;
+    seen = markSeen(seen, STORIES[h].id);
+    try {
+      localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+    } catch {}
+    freshUpdate();
+    badgeUpdate();
+  };
+  // What would deserve the installed app's badge (src/pwa/site.ts shows it, never the
+  // embedded game): the new stories, and today's incident not solved yet. An event
+  // from the game, which a host page may ignore.
+  let badgeSent = -1;
+  const badgeUpdate = () => {
+    const count = Object.keys(seen.fresh).length + (incident() && !results[today()] ? 1 : 0);
+    if (count === badgeSent) return;
+    badgeSent = count;
+    game.dispatchEvent(new CustomEvent('qds-badge', { bubbles: true, composed: true, detail: { count } }));
+  };
+
   // ——— On-call duty ———
   // The streak's words: the menu's line and the end of on-call's.
   const streakWords = () => {
@@ -1721,6 +1778,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
         ? t('on-call-already', { percent: percent(done.remaining) })
         : t('on-call-today', { chapter: t(`chapter-${id}`), story: storyTitle(placeFor(id).h) });
     streakUpdate();
+    badgeUpdate();
   };
   incidentButton.addEventListener('click', () => {
     const id = incident();
@@ -1815,6 +1873,46 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       .catch(() => {});
   });
   closeOnCallEnd.addEventListener('click', () => onCallEndWindow.close());
+  freshUpdate();
+
+  // ——— The daily reminder (see reminder.ts) ———
+  // A calendar file made here and downloaded: the player's calendar app does the reminding.
+  reminderButton.addEventListener('click', () =>
+    withTexts('dialog-reminder', () => {
+      reminderTime.value = readTime(display.reminder) ? display.reminder : '18:30';
+      reminderStatus.textContent = '';
+      reminderWindow.showModal();
+    }),
+  );
+  reminderDownload.addEventListener('click', () => {
+    const url = `https://sysadmin.rouages.net/${t.language}/`;
+    const ics = reminderIcs({
+      time: reminderTime.value,
+      start: today(),
+      now: new Date(),
+      language: t.language,
+      url,
+      title: t('reminder-event-title'),
+      description: t('reminder-event-description', { url }),
+      alarm: t('reminder-event-alarm'),
+    });
+    if (!ics) {
+      reminderStatus.textContent = t('reminder-invalid');
+      reminderTime.focus();
+      return;
+    }
+    // The time chosen, offered again next time (a setting of this browser).
+    display.reminder = reminderTime.value;
+    try {
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify(display));
+    } catch {}
+    const link = el('a', { href: URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })), download: t('reminder-file') });
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    reminderStatus.textContent = t('reminder-ready');
+  });
+  closeReminder.addEventListener('click', () => reminderWindow.close());
+  reminderWindow.addEventListener('close', () => setTimeout(() => reminderButton.focus()));
   onCallEndWindow.addEventListener('close', () => setTimeout(() => input.focus()));
 
   const applyExam = (yes: boolean) => {

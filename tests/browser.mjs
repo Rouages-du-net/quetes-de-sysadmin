@@ -1120,6 +1120,87 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
+// Reminders and new-content notices, static only: the Atom feeds and their
+// links, the daily reminder's calendar file, the "New" badges since the last
+// visit and, in the installed app only, the app badge (stubbed here: the
+// headless browser is never "installed").
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 }, acceptDownloads: true });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await page.addInitScript(() => {
+    // An installed app with the Badging API, and a visibility the test controls.
+    window.__badge = { events: [], app: null };
+    document.addEventListener('qds-badge', (e) => window.__badge.events.push(e.detail.count));
+    const media = window.matchMedia.bind(window);
+    window.matchMedia = (q) => (q === '(display-mode: standalone)' ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : media(q));
+    navigator.setAppBadge = (n) => ((window.__badge.app = n), Promise.resolve());
+    navigator.clearAppBadge = () => ((window.__badge.app = 0), Promise.resolve());
+    Object.defineProperty(document, 'visibilityState', { get: () => window.__hidden ? 'hidden' : 'visible', configurable: true });
+    if (!localStorage.getItem('quetes-de-sysadmin-whats-new')) localStorage.setItem('quetes-de-sysadmin-whats-new', JSON.stringify({ until: '2026-10-17', fresh: {} }));
+  });
+  await withCsp(page);
+  await page.goto(`${BASE}/fr/`);
+  const game = page.locator('quetes-de-sysadmin');
+  // The feed: announced in <head>, linked in the footer, well-formed Atom with one entry per story.
+  const alternate = await page.locator('head link[rel="alternate"][type="application/atom+xml"]').getAttribute('href');
+  const footer = page.locator('footer a[href="/fr/feed.xml"]');
+  check(alternate === '/fr/feed.xml' && (await footer.isVisible()) && (await footer.textContent()).includes('Suivre les nouvelles histoires'), `feed ${width} px: the page announces its feed and the footer links to it`);
+  const stories = await game.locator('button[data-story]').count();
+  for (const lang of ['en', 'fr']) {
+    const feed = await page.evaluate(async (url) => {
+      const text = await (await fetch(url)).text();
+      const xml = new DOMParser().parseFromString(text, 'application/xml');
+      return { ok: !xml.querySelector('parsererror'), root: xml.documentElement.namespaceURI, entries: xml.querySelectorAll('entry').length, first: xml.querySelector('entry title')?.textContent, ids: [...xml.querySelectorAll('entry id')].map((e) => e.textContent) };
+    }, `${BASE}/${lang}/feed.xml`);
+    check(feed.ok && feed.root === 'http://www.w3.org/2005/Atom' && feed.entries === stories && new Set(feed.ids).size === stories, `feed ${width} px: /${lang}/feed.xml, Atom, one entry per story (${feed.entries}/${stories}, newest: ${feed.first})`);
+  }
+  // "New": every story was released after the date seen; the badge event counts them (and today's incident, none yet).
+  const badge = game.locator('button[data-story="0"] .new-badge');
+  check((await badge.isVisible()) && (await badge.textContent()).includes('Nouveau') && (await game.locator('button[data-story="0"]').textContent()).includes('Nouveau'), `whats-new ${width} px: a story released since the last visit shows "New", in its button's name`);
+  const sent = await page.evaluate(() => window.__badge.events.at(-1));
+  check(sent === stories, `whats-new ${width} px: the game tells how many things are new (${sent})`);
+  await page.evaluate(() => {
+    window.__hidden = true;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  check((await page.evaluate(() => window.__badge.app)) === stories, `whats-new ${width} px: the installed app shows the count on its icon once hidden`);
+  await page.evaluate(() => {
+    window.__hidden = false;
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  check((await page.evaluate(() => window.__badge.app)) === 0, `whats-new ${width} px: the app badge clears when the game is seen`);
+  if (SHOTS) await game.locator('.stories').screenshot({ path: `${SHOTS}/engagement-new-${width}.png` });
+  await game.locator('button[data-story="0"]').click();
+  await waitReady(page);
+  check(await badge.isHidden(), `whats-new ${width} px: opened, the story is no longer new`);
+  check((await page.evaluate(() => window.__badge.events.at(-1))) === stories - 1, `whats-new ${width} px: the count goes down`);
+  await page.reload();
+  check((await badge.isHidden()) && !(await game.locator('button[data-story="1"] .new-badge').evaluate((b) => b.hidden)), `whats-new ${width} px: kept across visits`);
+  // The daily reminder: a time, then a calendar file made in the browser.
+  await game.locator('.reminder-button').click();
+  const dialog = game.locator('dialog.reminder-window');
+  await dialog.locator('h2').filter({ hasText: 'Un rappel' }).waitFor();
+  check((await dialog.evaluate((d) => d.open)) && (await dialog.textContent()).includes('Rien n’est envoyé') || (await dialog.textContent()).includes("Rien n'est envoyé"), `reminder ${width} px: the dialog says nothing is sent`);
+  await dialog.locator('input[type="time"]').fill('07:30');
+  const [download] = await Promise.all([page.waitForEvent('download'), dialog.locator('button', { hasText: 'Télécharger' }).click()]);
+  const ics = readFileSync(await download.path(), 'utf8');
+  check(download.suggestedFilename() === 'rappel-quetes-de-sysadmin.ics' && /^BEGIN:VCALENDAR\r\n/.test(ics) && /\r\nDTSTART:\d{8}T073000\r\n/.test(ics) && ics.includes('RRULE:FREQ=DAILY') && ics.includes('BEGIN:VALARM') && ics.includes('https://sysadmin.rouages.net/fr/'), `reminder ${width} px: the .ics file, daily at 07:30 local time, with an alarm`);
+  check((await dialog.locator('[role="status"]').textContent()).includes('ouvre-le'), `reminder ${width} px: the dialog says what to do with the file`);
+  const box = await dialog.boundingBox();
+  check(box.x >= 0 && box.x + box.width <= width, `reminder ${width} px: the dialog fits on the screen`);
+  if (SHOTS) await dialog.screenshot({ path: `${SHOTS}/engagement-reminder-${width}.png` });
+  await page.keyboard.press('Escape');
+  await game.locator('.reminder-button').click();
+  check((await dialog.locator('input[type="time"]').inputValue()) === '07:30', `reminder ${width} px: the time chosen is offered again`);
+  await page.keyboard.press('Escape');
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `reminder ${width} px: no horizontal scrolling`);
+  check(errors.length === 0, `notices ${width} px: no console error ${errors.join(' ')}`);
+  await page.evaluate(() => localStorage.clear());
+  await page.close();
+}
+
 // On-call duty: the incident of the day, drawn among the chapters open after
 // L'Effaceur (fixed date: 10 January 2027, "First day"),
 // the budget that melts, the score card at the end, the result kept.

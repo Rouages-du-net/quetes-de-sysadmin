@@ -122,6 +122,10 @@ for (const scheme of process.env.A11Y_SKIP_AXE ? [] : ['dark', 'light'])
     await audit(page, `${tag} feedback dialog`);
     await shot(page, `feedback-${scheme}-${width}`);
     await closeDialog(page);
+    await g.locator('.reminder-button').click();
+    await g.locator('dialog.reminder-window[open] h2').filter({ hasText: /\S/ }).waitFor();
+    await audit(page, `${tag} daily reminder dialog`);
+    await closeDialog(page);
     // A chapter in play.
     await type(page, 'ssh royaume');
     await type(page, 'yes');
@@ -178,10 +182,11 @@ for (const scheme of process.env.A11Y_SKIP_AXE ? [] : ['dark', 'light'])
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
     const result = { chapter: 'first-day', remaining: 900000, time: 600000, hints: 0, errors: 0 };
-    const onCall = await open({ width, scheme, save: { finished: ['lighthouse', 'village', 'root', 'backup'] }, extra: { 'quetes-de-sysadmin-on-call': { [day(2)]: result, [day(1)]: result } } });
+    const onCall = await open({ width, scheme, save: { finished: ['lighthouse', 'village', 'root', 'backup'] }, extra: { 'quetes-de-sysadmin-on-call': { [day(2)]: result, [day(1)]: result }, 'quetes-de-sysadmin-whats-new': { until: '2026-11-01', fresh: {} } } });
     await onCall.go('/fr/');
     await game(onCall).locator('.stories .streak').waitFor();
-    await audit(onCall, `${tag} menu with the on-call streak`);
+    await game(onCall).locator('.new-badge:not([hidden])').first().waitFor({ state: 'attached' });
+    await audit(onCall, `${tag} menu with the on-call streak and "New" badges`);
     await onCall.context().close();
     // Replay and compare (runs.ts): a run kept, the chapter finished again, the summary's comparison.
     const earlier = { chapter: 'lighthouse', date: '2026-11-20T10:00:00.000Z', time: 400000, commands: 3, errors: 1, hints: 0, distinct: 2, exam: false, lines: ['ls', 'cd Port', 'ls -a'] };
@@ -361,6 +366,7 @@ for (const scheme of ['dark', 'light']) {
     ['.chapter-actions .pill >> nth=1', 'my progress'],
     ['.chapter-actions .pill >> nth=2', 'achievements'],
     ['.chapter-actions .pill >> nth=3', 'feedback'],
+    ['.reminder-button', 'daily reminder'],
   ]) {
     await g.locator(opener).focus();
     await page.keyboard.press('Enter');

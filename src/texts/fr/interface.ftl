@@ -414,6 +414,10 @@ on-call-map =
        *[other] { $errors } erreurs
     }
     { $address }
+# Le rappel quotidien (voir src/engine/reminder.ts) : le bouton du menu ; sa fenêtre est dans dialog-reminder.ftl.
+reminder-button = 📅 Rappel quotidien
+# Une histoire sortie depuis la dernière visite (voir src/engine/releases.ts) : son badge dans le menu.
+story-new = Nouveau
 ## La série d'astreintes (voir src/engine/streak.ts) : bienveillante, jamais culpabilisante.
 # { $days } : la série en cours, en jours ; { $best } : la meilleure
 streak-today = 🔥 { $days ->

@@ -296,8 +296,8 @@ presents them for people.
   options. No chapter module may call `t()` when it is imported (its texts
   load with it). Tests load everything first (`tests/setup.ts`). Adding a
   story: its chapters, then `src/engine/stories/<id>.ts` (its chapters in
-  order, and the families it uses), its entry in `chapters/index.ts`, then
-  `npm run catalogue`; adding a chapter to a story: also `npm run
+  order, and the families it uses), its entry in `chapters/index.ts`, its
+  release date in `releases.ts`, then `npm run catalogue`; adding a chapter to a story: also `npm run
   catalogue`. A story's own tool goes in a family (see `CONTRIBUTING.md`,
   "A story's own commands"). `npm run build` ends with `tests/budget.mjs`,
   the first visit's weight against a budget (see `docs/DEPLOYMENT.md`,
@@ -934,7 +934,16 @@ presents them for people.
   `localDate()` given the interface's Date: a rest day in any seven, a
   clock set back; the results in `KEY-on-call` and the save file's
   `onCall`, `cleanOnCall`/`mergeOnCall` of `progress.ts`;
-  `tests/streak.test.ts`), the
+  `tests/streak.test.ts`), reminders and new-content notices, static
+  only: the release date of each story in `src/engine/releases.ts`
+  (`RELEASES`, set when a story is added, `tests/releases.test.ts`; the
+  menu's "New" badges `whatsNew`/`markSeen`, `KEY-whats-new`), the Atom
+  feeds `/en/feed.xml` and `/fr/feed.xml` (`src/engine/feed.ts`,
+  `src/feeds.ts`, `src/pages/<language>/feed.xml.ts`, `<link
+  rel="alternate">` and the footer's link in `Base.astro`), the daily
+  reminder's calendar file in `src/engine/reminder.ts` (RFC 5545, floating
+  time; its dialog's texts in `dialog-reminder.ftl`), the `qds-badge`
+  event shown on the installed app's icon by `src/pwa/badge.ts`, the
   learning paths in `src/engine/paths.ts` (an added chapter goes in at
   least one path, `tests/paths.test.ts` checks it), "Report a problem or
   an idea" in `src/engine/feedback.ts` (`buildReport()`: a pure function,

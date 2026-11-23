@@ -861,6 +861,35 @@ them safely.
   is finished, as the summary itself: nothing is shown during a chapter,
   so a run kept on a shared computer can't serve as a crib. Not in the save
   file (a log of commands, not progress).
+- [x] **Reminders and new-content notices, static only** (no server, no
+  push):
+  - a **daily reminder** (`src/engine/reminder.ts`): "📅 Daily reminder"
+    in the menu makes an iCalendar file (RFC 5545) in the browser, a daily
+    event (`RRULE:FREQ=DAILY`) with an alert (`VALARM`), at a floating
+    local time (no `TZID`: it would need a `VTIMEZONE` the browser can't
+    write faithfully; a UTC time would move with daylight saving time),
+    a stable `UID` per language (importing again updates the event in the
+    calendars that honour it), a link to the game; downloaded as a Blob
+    (the dialog's texts in `dialog-reminder.ftl`);
+  - **Atom feeds** of new stories, `/en/feed.xml` and `/fr/feed.xml`
+    (`src/engine/feed.ts`, `src/feeds.ts`), written by the build from a
+    release date per story (`src/engine/releases.ts`, written when a
+    story is added, checked by `tests/releases.test.ts`: deterministic,
+    unlike dates read from git in a shallow clone), announced by `<link
+    rel="alternate">` on every page and linked in the footer;
+  - **"New" badges** in the menu (`whatsNew`, `KEY-whats-new`): the stories
+    released after the newest date seen at the last visit, until opened or
+    for 30 days; nothing on a first visit; and, in the installed game only,
+    the **app badge** (`src/pwa/badge.ts`, Badging API, feature-detected):
+    the new stories plus today's incident not solved yet, shown once the
+    app is in the background, cleared when it is seen;
+  - **no background check** (Periodic Background Sync): Chromium only, for
+    installed apps with enough engagement, at an interval the browser
+    chooses (often a day or more, sometimes never); the service worker
+    would also need a copy of the game's state (localStorage is out of its
+    reach). It could only refresh a badge the game already sets when it is
+    left, while the calendar reminder covers the daily nudge on every
+    platform: not worth the complexity for now.
 - [x] **Rescue snapshot** (Mission panel, `Console.restore`): take a
   snapshot, go back to it, undo the last input. The engine is
   deterministic: reopening the chapter and replaying the inputs (commands,

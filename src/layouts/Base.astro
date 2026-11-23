@@ -22,6 +22,10 @@ const appName = en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin';
 // The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
 // on a page without the game, or without JavaScript, the game's page opens it (#report).
 const report = en ? 'Report a problem or an idea' : 'Signaler un problème ou une idée';
+// The Atom feed of new stories in the page's language (src/feeds.ts): announced in <head>, linked in the footer.
+const feed = en
+  ? { href: '/en/feed.xml', title: 'Sysadmin Quests: new stories', label: 'Follow new stories (RSS/Atom)' }
+  : { href: '/fr/feed.xml', title: 'Quêtes de Sysadmin : nouvelles histoires', label: 'Suivre les nouvelles histoires (RSS/Atom)' };
 // The first link of every page, shown when it has the focus: past the header, to the content.
 const skip = en ? 'Skip to content' : 'Aller au contenu';
 // The footer's "Install the game" (src/pwa/install.ts): its messages.
@@ -57,6 +61,7 @@ const install = en
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="manifest" href={`${home}manifest.webmanifest`} />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="alternate" type="application/atom+xml" href={feed.href} title={feed.title} />
   <meta name="apple-mobile-web-app-title" content={appName} />
   {other && <link rel="alternate" hreflang={other.lang} href={new URL(other.href, Astro.site)} />}
   {other && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
@@ -80,6 +85,7 @@ const install = en
       <p class="install-status" role="status" tabindex="-1"></p>
     </div>
     <p class="report"><a href={`${home}#report`} data-report>{report}</a></p>
+    <p class="feed"><a href={feed.href} type="application/atom+xml">{feed.label}</a></p>
     {en ? (
       <>
         <p>

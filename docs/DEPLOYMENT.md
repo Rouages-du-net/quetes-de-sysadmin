@@ -77,6 +77,11 @@ log says which check fails.
   `/fr/` when the browser's first language is French, to `/en/` otherwise.
   The old French addresses (`/enseignants/`, `/enseignants/classe/`) redirect
   permanently (301) to `/fr/…`.
+- **Feeds of new stories**: `/en/feed.xml` and `/fr/feed.xml`, Atom,
+  written by the build (`src/pages/<language>/feed.xml.ts`, from the
+  release dates of `src/engine/releases.ts`), served as
+  `application/atom+xml` (a `ForceType` in `.htaccess`), compressed, and
+  revalidated on every visit (`no-cache`) like the manifests.
 - **Installable game (PWA)**: each language has its manifest
   (`/en/manifest.webmanifest`, `/fr/manifest.webmanifest`, served as
   `application/manifest+json`), and the site a service worker, `/sw.js`

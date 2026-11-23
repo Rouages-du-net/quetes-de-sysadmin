@@ -59,6 +59,14 @@ un système entièrement simulé : rien ne sort du navigateur.
   commandes en erreur, indices, temps, et tes deux listes de commandes côte
   à côte (les trois dernières parties de chaque chapitre restent dans ton
   navigateur).
+- Un rappel quotidien, dans ton propre agenda : « 📅 Rappel quotidien »
+  prépare un fichier d'agenda (.ics) à l'heure que tu choisis, à ouvrir
+  avec ton application d'agenda ; rien n'est envoyé nulle part.
+- Les nouvelles histoires : suis-les avec le flux Atom (`/fr/feed.xml`, en
+  lien en pied de page du site, pour n'importe quel lecteur de flux) ; dans
+  le jeu, les histoires sorties depuis ta dernière visite disent
+  « Nouveau », et le jeu installé en affiche le nombre (et l'incident du
+  jour pas encore réglé) sur son icône.
 
 Pour écrire une quête, corriger un bogue ou traduire le jeu :
 [CONTRIBUTING.fr.md](CONTRIBUTING.fr.md).

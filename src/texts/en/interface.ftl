@@ -414,6 +414,10 @@ on-call-map =
        *[other] { $errors } errors
     }
     { $address }
+# The daily reminder (see src/engine/reminder.ts): the menu's button; its dialog is in dialog-reminder.ftl.
+reminder-button = 📅 Daily reminder
+# A story released since the last visit (see src/engine/releases.ts): its badge in the menu.
+story-new = New
 ## The on-call streak (see src/engine/streak.ts): kind, never a guilt trip.
 # { $days }: the current streak, in days; { $best }: the best one
 streak-today = 🔥 { $days ->

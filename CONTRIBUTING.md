@@ -105,7 +105,10 @@ the chapters in order), at the end of `CODE_ORDER` in
 least one learning path (`src/engine/paths.ts`). A new story gets its
 module in `src/engine/stories/`, declares in `src/engine/chapters/index.ts`
 which chapters unlock it (`after`), and gets a machine in
-`src/engine/machines.ts`. Then run `npm run catalogue`: the menu knows the
+`src/engine/machines.ts`, and a release date in `src/engine/releases.ts`
+(the day it reaches `main`: the feed of new stories and the menu's "New"
+badges read it; `tests/releases.test.ts` fails while one is missing).
+Then run `npm run catalogue`: the menu knows the
 stories from `src/engine/catalogue.json` without loading them (the game
 loads a story only when it is opened), and `npm test` fails while it is
 out of date. A chapter's module must not call `t()` when it is imported:

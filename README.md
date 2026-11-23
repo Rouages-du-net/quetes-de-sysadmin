@@ -49,6 +49,13 @@ system: nothing leaves the browser.
   summary compares the runs: commands, distinct commands, failed commands,
   hints, time, and your two lists of commands side by side (the last three
   runs of each chapter stay in your browser).
+- A daily reminder, in your own calendar: "📅 Daily reminder" makes a
+  calendar file (.ics) at the time you choose, to open with your calendar
+  app; nothing is sent anywhere.
+- New stories: follow them with the Atom feed (`/en/feed.xml`, linked in the
+  site's footer, for any feed reader); in the game, the stories released
+  since your last visit say "New", and the installed game shows their
+  number (and today's incident, not solved yet) on its icon.
 
 ## Develop
 
