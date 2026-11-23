@@ -34,6 +34,7 @@ nano-write = Write Out
 nano-quit = Exit
 nano-save = Save modified buffer?
 nano-yes = Yes
+nano-yes-key = Y
 nano-not = No
 nano-cancel = Cancel
 nano-zone = Contents of { $path }

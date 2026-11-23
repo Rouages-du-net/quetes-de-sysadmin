@@ -119,7 +119,10 @@ ce projet indépendant.
 - **Accessible** (WCAG 2.2 AA, vérifié par axe-core et à la main sur chaque
   page et chaque fenêtre) : clavier (Tab complète, Maj+Tab ou Échap puis Tab
   quitte la ligne de commande), lecteurs d'écran (chaque sortie lue une
-  fois, Alt+R relit la dernière), contraste, mouvements réduits, couleurs
+  fois, Alt+R relit la dernière, les questions annoncées, les traits de
+  tableau tus ; ce qu'ils reçoivent est enregistré et vérifié, mais pas
+  encore essayé avec un vrai NVDA, VoiceOver ou TalkBack : vos retours sont
+  les bienvenus), contraste, mouvements réduits, couleurs
   forcées, mobile ; détails en anglais dans
   [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **Sans pisteur**, sans publicité, sans ressource tierce.

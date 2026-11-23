@@ -408,6 +408,153 @@ for (const scheme of ['dark', 'light']) {
   await page.context().close();
 }
 
+// What a screen reader is given to say (docs/screen-reader-walkthrough.md):
+// every text added to a live region (log, status, aria-live), in order,
+// without what is aria-hidden, recorded by a MutationObserver on the page
+// and the game's shadow root. Not a real screen reader: the order and the
+// texts it receives, not how it speaks them.
+function recordSpoken() {
+  window.__spoken = [];
+  const hidden = (e) => e.nodeType === 1 && (e.hasAttribute('hidden') || e.getAttribute('aria-hidden') === 'true' || getComputedStyle(e).display === 'none');
+  const text = (n) => {
+    if (n.nodeType === 3) return n.data;
+    if (n.nodeType !== 1 || hidden(n)) return '';
+    return [...n.childNodes].map(text).join('') + (/^(P|DIV|PRE|LI)$/.test(n.tagName) ? '\n' : '');
+  };
+  const region = (n) => {
+    for (let e = n.nodeType === 1 ? n : n.parentNode; e?.nodeType === 1; e = e.parentNode) {
+      if (hidden(e)) return null;
+      const live = e.getAttribute('aria-live') ?? { log: 'polite', status: 'polite', alert: 'assertive' }[e.getAttribute('role')];
+      if (!live) continue;
+      for (let a = e.parentNode; a?.nodeType === 1; a = a.parentNode) if (hidden(a)) return null;
+      if (live === 'off') return null;
+      const atomic = e.getAttribute('aria-atomic') ? e.getAttribute('aria-atomic') === 'true' : /^(status|alert)$/.test(e.getAttribute('role'));
+      return { e, atomic, role: e.getAttribute('role') ?? live };
+    }
+    return null;
+  };
+  const watch = (root) =>
+    new MutationObserver((ms) => {
+      const done = new Set();
+      for (const m of ms)
+        for (const n of m.type === 'characterData' ? [m.target] : m.addedNodes) {
+          const r = region(n);
+          if (!r || (r.atomic && done.has(r.e))) continue;
+          done.add(r.e);
+          const s = text(r.atomic ? r.e : n).replace(/\s*\n\s*/g, '\n').trim();
+          if (s) window.__spoken.push({ role: r.role, text: s });
+        }
+    }).observe(root, { childList: true, subtree: true, characterData: true });
+  const attach = Element.prototype.attachShadow;
+  Element.prototype.attachShadow = function (o) {
+    const r = attach.call(this, o);
+    watch(r);
+    return r;
+  };
+}
+{
+  // Chapter 1 still to play; The Root finished, so the datacenter's key is there.
+  const page = await open({ save: { finished: ['village', 'root', 'backup'] } });
+  await page.context().addInitScript(recordSpoken);
+  await page.go('/fr/');
+  const g = game(page);
+  const input = g.locator('form input');
+  const heard = () => page.evaluate(() => window.__spoken.splice(0));
+  const say = async (line) => {
+    await input.focus();
+    await page.keyboard.type(line);
+    await page.keyboard.press('Enter');
+    await waitReady(page);
+    await page.waitForTimeout(200);
+    return heard();
+  };
+  const show = (said) => said.map((a) => `${a.role}: ${a.text.slice(0, 60)}`).join(' | ');
+  await heard();
+  // The echo: the command, never the prompt ("vous@poste:~$"), which the line's name already says.
+  const all = [];
+  let said = await say('ssh royaume');
+  all.push(...said);
+  check(said[0]?.role === 'log' && said[0].text === 'ssh royaume', `echo: the command alone, without the prompt (${show(said.slice(0, 1))})`);
+  // A question changes the line's name without moving the focus: it is announced, once.
+  const question = said.filter((a) => a.role === 'status' && /continue connecting/.test(a.text));
+  check(question.length === 1 && said.at(-1) === question[0], `ssh's question announced once, after the output (${show(said)})`);
+  said = await say('yes');
+  check(said[0]?.text === 'yes' && !said.some((a) => /continue connecting/.test(a.text)), `the answer read alone, the question not again (${show(said.slice(0, 2))})`);
+  check(said.some((a) => a.text.includes('chapitre 1')), 'the chapter opens: its welcome is in the log');
+  // Every command: no text announced twice, no prompt, no decoration.
+  const DECOR = /[─-▟●○✔✓\u{1F3C6}]|(?<!\S)-{4,}(?!\S)/u;
+  for (const line of ['ls', 'cd Port/Remise', 'ls -a', 'cat absent.txt', 'cd', 'for i in 1 2']) {
+    said = await say(line);
+    all.push(...said);
+    const texts = said.map((a) => a.text);
+    check(new Set(texts).size === texts.length, `${line}: nothing announced twice (${show(said)})`);
+    check(said[0]?.text === line && !texts.some((x) => /vous@royaume/.test(x)), `${line}: the echo is the command alone`);
+  }
+  check(all.some((a) => a.role === 'log' && /no such file|aucun fichier/i.test(a.text)), 'an error is announced in the log');
+  check(all.at(-1)?.role === 'status' && /pas finie/.test(all.at(-1).text), `the secondary prompt (>) is announced (${show(all.slice(-1))})`);
+  said = await say('do pwd; done');
+  check(said[0]?.text === 'do pwd; done' && said.length === 2 && said[1].text.split('\n').length === 2, `the loop's end: its line, then its output (${show(said)})`);
+  // The chapter's end: its debrief in the log, then the polite status, each once.
+  for (const line of ['mv Jetee/filet Port/Hangar', 'cd Port/Remise']) await say(line);
+  said = await say('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule');
+  const done = said.filter((a) => a.text.includes('Chapitre terminé'));
+  check(done.length === 1 && done[0].role === 'status' && said.indexOf(done[0]) === said.length - 1, `chapter's end: announced once, after the log (${show(said)})`);
+  all.push(...said);
+  const trophies = all.filter((a) => /Succès/.test(a.text));
+  check(trophies.length > 0 && !trophies.some((a) => DECOR.test(a.text)), `an achievement is read without its trophy (${show(trophies)})`);
+  // Decorations: systemctl's bullet stays on the screen, not in what is read.
+  for (const line of ['exit', 'ssh datacenter', 'yes']) await say(line);
+  said = await say('systemctl status nginx');
+  const screen = await g.locator('.output pre').last().textContent();
+  check(screen.includes('●') && said.some((a) => a.text.startsWith('nginx.service')) && !said.some((a) => DECOR.test(a.text)), `systemctl status: "●" shown, not read (${show(said.slice(1, 2))})`);
+  all.push(...said);
+  check(!all.some((a) => DECOR.test(a.text)), 'no box-drawing, status mark, rule nor trophy in any announcement');
+  // Alt+R reads the output again, without its decorations.
+  await input.press('Alt+r');
+  await page.waitForTimeout(200);
+  said = await heard();
+  check(said.length === 1 && said[0].text.startsWith('nginx.service') && !DECOR.test(said[0].text), `Alt+R: the output again, without "●" (${show(said)})`);
+  // The hints: the level opened is announced, the focus moves on (the button pressed disappears).
+  await g.locator('.mission-button').click();
+  await page.waitForTimeout(150);
+  await heard();
+  for (const expected of [/man /, /./, /./]) {
+    const button = g.locator('.hint-button:not([hidden])').first();
+    if (!(await button.count())) break;
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(150);
+    said = await heard();
+    const a = await activeInfo(page);
+    check(said.length === 1 && said[0].role === 'status' && expected.test(said[0].text) && a?.tag === 'button' && a.visible, `a hint: announced once, the focus on "${a?.text}" (${show(said)})`);
+  }
+  await closeDialog(page);
+  // The landmarks and the heading that lead to the terminal.
+  check((await g.getByRole('heading', { name: 'Terminal', level: 2 }).count()) === 1, 'the terminal has a heading (H)');
+  check((await g.getByRole('navigation', { name: /Histoires/ }).count()) === 1, 'the stories menu is a named navigation landmark');
+  // Pictographs in the menu: "🔒 Terminez…" read without the padlock.
+  const lockNames = await g.locator('nav button[data-chapter]').evaluateAll((bs) => bs.map((b) => b.textContent));
+  check(lockNames.length > 0 && (await g.getByRole('button', { name: /🔒|✓/ }).count()) === 0, 'menu: chapter states read without their pictograph');
+  check(page.errors.length === 0, `what is announced: no console error ${page.errors.join(' ')}`);
+  await page.context().close();
+}
+
+// nano's question: its own letter for yes (French: O), read with the focus.
+{
+  const page = await open();
+  await page.go('/fr/');
+  const g = game(page);
+  await type(page, 'nano essai.txt');
+  await g.locator('.nano-text').press('a');
+  await g.locator('.nano-text').press('Control+x');
+  await page.waitForTimeout(100);
+  const a = await activeInfo(page);
+  const group = await g.locator('.nano [role="group"][aria-label]:not([hidden])').last().getAttribute('aria-label');
+  check(a?.text === 'O Oui' && /Sauver/.test(group) && (await g.locator('.nano-status').getAttribute('aria-hidden')) === 'true', `nano: "Save modified buffer?" read with the focus on "${a?.text}", not twice`);
+  await page.keyboard.press('n');
+  await page.context().close();
+}
+
 // Reflow and text spacing (WCAG 1.4.10, 1.4.12): at 320 px, with the
 // spacing a reader may force, no horizontal page scroll (the terminal's
 // wide tables scroll inside their own block).

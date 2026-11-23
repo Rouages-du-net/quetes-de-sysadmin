@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIGEST_SECONDS, FollowDigest, lastOutput } from '../src/engine/announce';
+import { decorations, DIGEST_SECONDS, FollowDigest, lastOutput, spoken } from '../src/engine/announce';
 
 describe('lastOutput: what Alt+R reads again', () => {
   it('reads the blocks after the last command line', () => {
@@ -58,5 +58,35 @@ describe('FollowDigest: tail -f without flooding the screen reader', () => {
     expect(d.tick(4)).toEqual({ kind: 'screen' });
     d.add('Every 2.0s: df\n/ 41%');
     expect(d.tick(8)).toBeNull();
+  });
+});
+
+describe('spoken: what a screen reader should not spell out', () => {
+  it('drops box-drawing, status bullets and check marks', () => {
+    expect(spoken('sda      8:0    0   20G  0 disk\n└─sda1   8:0    0   20G  0 part /')).toBe('sda      8:0    0   20G  0 disk\nsda1   8:0    0   20G  0 part /');
+    expect(spoken('● nginx.service - A high performance web server')).toBe(' nginx.service - A high performance web server');
+    expect(spoken('     CGroup: /system.slice/nginx.service\n             ├─612 nginx: master\n             └─613 nginx: worker')).toBe('     CGroup: /system.slice/nginx.service\n             612 nginx: master\n             613 nginx: worker');
+    expect(spoken(' ✔ Container web  Started')).toBe('  Container web  Started');
+  });
+  it('drops rules standing alone, never permissions nor options', () => {
+    expect(spoken('To                         Action      From\n--                         ------      ----\n22/tcp                     ALLOW       Anywhere')).toBe('To                         Action      From\n--\n22/tcp                     ALLOW       Anywhere');
+    expect(spoken('-rw------- 1 you you 91 Jan  1 00:00 key\ndrwx------ 2 root root')).toBe('-rw------- 1 you you 91 Jan  1 00:00 key\ndrwx------ 2 root root');
+    expect(spoken('ls --color=auto\n=========\n    ^~~~~')).toBe('ls --color=auto');
+  });
+  it('drops a pictograph that opens a line, not one inside it', () => {
+    expect(spoken('🏆 Achievement: First step')).toBe(' Achievement: First step');
+    expect(spoken('↺ Machine put back')).toBe(' Machine put back');
+    expect(spoken('a → b')).toBe('a → b');
+  });
+  it('keeps every character on the screen: decorations are only marked', () => {
+    const text = '├─612 nginx\n🔒 Locked';
+    expect(decorations(text).map((p) => p.text).join('')).toBe(text);
+    expect(decorations(text).filter((p) => p.decoration).map((p) => p.text)).toEqual(['├─', '🔒']);
+  });
+  it('is applied to what Alt+R reads again and to a follow\'s digest', () => {
+    expect(lastOutput([{ command: true, text: '$ lsblk' }, { command: false, text: 'sda\n└─sda1' }]).text).toBe('sda\nsda1');
+    const d = new FollowDigest(0);
+    d.add('a\n└─b\n────────');
+    expect(d.tick(DIGEST_SECONDS)).toEqual({ kind: 'lines', count: 2, last: 'b' });
   });
 });

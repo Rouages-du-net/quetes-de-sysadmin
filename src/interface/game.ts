@@ -10,7 +10,7 @@ import type { Shell } from '../engine/shell';
 // The menu reads the catalogue; a story's chapters load when it is opened (story-registry.ts).
 import { CATALOGUE as STORIES } from '../engine/catalogue';
 import { loadedStory, loadStory } from '../engine/story-registry';
-import { FollowDigest, lastOutput, type Block } from '../engine/announce';
+import { decorations, FollowDigest, lastOutput, type Block } from '../engine/announce';
 import { NeedsLoading } from '../engine/loading';
 import { machineDomain, machineName, MACHINES, storyMachine, WORKSTATION, type Machine } from '../engine/machines';
 import { description, inMarkdown, note, type Notebook } from '../engine/notebook';
@@ -58,6 +58,13 @@ function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string
   for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
   e.append(...children);
   return e;
+}
+
+// What a screen reader should not spell out (box-drawing, status marks,
+// rules, a pictograph opening a text: see announce.ts): kept on the screen,
+// hidden from assistive technology. "🔒 Locked" is read "Locked".
+function quiet(text: string): (Node | string)[] {
+  return decorations(text).map((p) => (p.decoration ? el('span', { 'aria-hidden': 'true' }, p.text) : p.text));
 }
 
 // A small inline line-icon (stroke follows the text colour, so it works in
@@ -146,7 +153,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       el('span', { class: 'diodes', 'aria-hidden': 'true' }, ...h.chapters.map(() => el('span', { class: 'diode' })))),
   );
   const workstationButton = el('button', { type: 'button', 'data-workstation': '' }, el('span', { class: 'title' }, t('workstation-title')), host(WORKSTATION));
-  const keyHelp = el('p', { class: 'key-help' }, typo(t('key-help')));
+  const keyHelp = el('p', { class: 'key-help' }, ...quiet(typo(t('key-help'))));
   // Two views of the menu: the network map (the workstation, the internet, then
   // one machine per open story, plugged into the same cable, lighting up as the
   // player progresses) and the learning paths. The stories still locked wait
@@ -189,13 +196,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     pathList,
   );
   // The incident of the day (see on-call.ts): the same chapter for everyone, to replay on call.
-  const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, t('on-call-button'));
+  const incidentButton = el('button', { type: 'button', class: 'incident-button', 'aria-haspopup': 'dialog' }, ...quiet(t('on-call-button')));
   const incidentText = el('span', { class: 'incident-text' });
   const incidentBlock = el('p', { class: 'incident' }, incidentButton, ' ', incidentText);
   // The on-call streak (see streak.ts), under the incident: kind words, never a reproach.
   const streakLine = el('p', { class: 'streak', hidden: '' });
   // The daily reminder (see reminder.ts): a calendar file the player adds to their own calendar app.
-  const reminderButton = el('button', { type: 'button', class: 'reminder-button', 'aria-haspopup': 'dialog' }, t('reminder-button'));
+  const reminderButton = el('button', { type: 'button', class: 'reminder-button', 'aria-haspopup': 'dialog' }, ...quiet(t('reminder-button')));
   const reminderEntry = el('p', { class: 'reminder-entry' }, reminderButton);
   const reminderId = `qds-reminder-${Math.random().toString(36).slice(2, 8)}`;
   const reminderTime = el('input', { type: 'time', id: `${reminderId}-time`, required: '', value: '18:30' }) as HTMLInputElement;
@@ -387,7 +394,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const titleMission = el('h2', { id: idMission });
   const goalMission = el('p', { class: 'map-legend' });
   // It scrolls (max-height): focusable, so the keyboard can scroll it too.
-  const instructionsMission = el('pre', { class: 'mission-text', tabindex: '0' });
+  // A region named by its heading: a screen reader says "Instructions" when the window opens on it.
+  const instructionsHeading = el('h3', { id: `${idMission}-instructions` }, t('mission-instructions'));
+  const instructionsMission = el('pre', { class: 'mission-text', tabindex: '0', role: 'region', 'aria-labelledby': instructionsHeading.id });
   const logMission = el('ol', { class: 'mission-log' });
   const emptyMission = el('p', { class: 'map-legend' }, typo(t('mission-nothing')));
   const closeMission = el('button', { type: 'button', class: 'button' }, t('map-close'));
@@ -395,7 +404,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   const hintBoutons = Object.fromEntries(
     HINT_LEVELS.map((n) => [n, el('button', { type: 'button', class: 'hint-button', 'data-level': n }, t(`hint-button-${n}`))]),
   ) as Record<HintLevel, HTMLButtonElement>;
-  const hintText = el('div', { class: 'hint-text', 'aria-live': 'polite' });
+  // Not a live region: only the level just opened is announced (hintSaid,
+  // inside the window: what is outside a modal window is not read), not the
+  // ones above it again.
+  const hintText = el('div', { class: 'hint-text' });
+  const hintSaid = el('p', { class: 'visually-hidden', role: 'status' });
   const help = el(
     'section',
     { class: 'help' },
@@ -403,6 +416,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('p', { class: 'map-legend' }, typo(t('hint-intro'))),
     el('p', { class: 'hint-buttons' }, ...HINT_LEVELS.map((n) => hintBoutons[n])),
     hintText,
+    hintSaid,
   );
   // The rescue snapshot (see Console.restore): like a virtual machine's.
   const takeSnapshot = el('button', { type: 'button', class: 'rescue-button' }, t('rescue-take'));
@@ -422,7 +436,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     { class: 'mission-window', 'aria-labelledby': idMission },
     titleMission,
     goalMission,
-    el('h3', {}, t('mission-instructions')),
+    instructionsHeading,
     instructionsMission,
     el('h3', {}, t('mission-journal')),
     emptyMission,
@@ -471,24 +485,33 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   // reader (quiet during a follow, see announce.ts).
   const output = el('div', { class: 'output', role: 'log', 'aria-live': 'polite', 'aria-label': t('output-label') });
   const id = `qds-input-${Math.random().toString(36).slice(2, 8)}`;
-  const prompt = el('label', { class: 'prompt', for: id, id: `${id}-prompt` });
+  // The prompt, the line's name and its keys are read with the field (its
+  // name and description), not a second time as text around it.
+  const prompt = el('label', { class: 'prompt', for: id, id: `${id}-prompt`, 'aria-hidden': 'true' });
   // The line's name: "Command" and the prompt ("me@box:~$", or a question, a password…).
-  const inputName = el('span', { class: 'visually-hidden', id: `${id}-name` }, t('input-label'));
+  const inputName = el('span', { class: 'visually-hidden', id: `${id}-name`, 'aria-hidden': 'true' }, t('input-label'));
   const input = el('input', {
     id, type: 'text', spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off', autocomplete: 'off',
     'aria-labelledby': `${inputName.id} ${prompt.id}`,
     'aria-describedby': `${id}-help`,
   }) as HTMLInputElement;
-  const inputHelp = el('span', { class: 'visually-hidden', id: `${id}-help` }, t('input-help'));
+  const inputHelp = el('span', { class: 'visually-hidden', id: `${id}-help`, 'aria-hidden': 'true' }, t('input-help'));
   // What the game says to screen readers outside the log (announce.ts): the
   // last output read again, a follow's digests, a chapter's end. Polite: it never takes the focus.
   const announcer = el('p', { class: 'visually-hidden', role: 'status', 'aria-live': 'polite' });
   let announceTimer = 0;
+  let announcing: string[] = [];
   function announce(text: string) {
-    // Emptied first: the same text twice is still read twice.
+    // Emptied first: the same text twice is still read twice. Texts given
+    // together (a chapter's end, then the question that follows) are read
+    // one after the other, none replaces another.
+    if (!announcing.includes(text)) announcing.push(text);
     announcer.textContent = '';
     clearTimeout(announceTimer);
-    announceTimer = window.setTimeout(() => (announcer.textContent = text), 60);
+    announceTimer = window.setTimeout(() => {
+      announcer.textContent = announcing.join('\n');
+      announcing = [];
+    }, 60);
   }
   // Read the last output again (also Alt+R on the command line): shown when it has the focus.
   const rereadButton = el('button', { type: 'button', class: 'reread-button' }, t('reread-button'));
@@ -531,7 +554,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('button', { type: 'button', class: 'for-nano', 'data-key': 'ctrl-o' }, `^O ${t('nano-write')}`),
     el('button', { type: 'button', class: 'for-nano', 'data-key': 'ctrl-x' }, `^X ${t('nano-quit')}`),
   );
-  const following = el('button', { type: 'button', class: 'button primary' }, t('button-next'));
+  const following = el('button', { type: 'button', class: 'button primary' }, ...quiet(t('button-next')));
   const end = el('div', { class: 'end', hidden: '' }, following);
   // After a chapter: the Les rouages du net page that explains its concept.
   const rouagesList = el('ul', {});
@@ -700,7 +723,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-link-original')));
 
   // The terminal and its key bar: together in full screen.
-  const screen = el('div', { class: 'screen' }, quitFocus, terminal, touchesBar);
+  // A heading for screen readers' heading navigation (H): the menus are landmarks, the terminal has this.
+  const terminalHeading = el('h2', { class: 'visually-hidden' }, t('terminal-heading'));
+  const screen = el('div', { class: 'screen' }, terminalHeading, quitFocus, terminal, touchesBar);
   // The offer to resume a chapter left in progress (see autosave.ts): a
   // banner above the terminal, not a modal window (the game may be embedded
   // in a page the player is reading); its text is announced when it appears.
@@ -850,13 +875,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // A line underlined by ^~~~ (sudo, compilers): the line and its underline don't wrap.
     const underlined = (i: number) => /^\s*\^~*\s*$/.test(lines[i] ?? '');
     // The tools' colours (ANSI sequences, see colours.ts) become spans.
+    // Box-drawing, status marks and rules stay on the screen, hidden from screen readers (announce.ts).
     const inColours = (line: string): (Node | string)[] =>
       line.includes('\x1b')
-        ? chunks(line).map((m) => {
+        ? chunks(line).flatMap((m) => {
             const classes = [m.bold ? 'a-bold' : '', m.before !== null ? `a-${m.before}` : '', m.background !== null ? `a-${m.background}` : ''].filter(Boolean);
-            return classes.length ? el('span', { class: classes.join(' ') }, m.text) : m.text;
+            return classes.length ? [el('span', { class: classes.join(' ') }, ...quiet(m.text))] : quiet(m.text);
           })
-        : [line];
+        : quiet(line);
     lines.forEach((line, i) => {
       const end = i < lines.length - 1 ? '\n' : '';
       const visible = withoutColours(line);
@@ -869,10 +895,19 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
 
   // Ctrl-R: null outside a search; otherwise what the line held before, and the command found.
   let query: { before: string; match: string } | null = null;
+  // A question (ssh's "continue connecting?", a password, adduser's
+  // questions) or the secondary prompt (>) changes the line's name, but the
+  // focus stays on it, so most screen readers say nothing: it is announced.
+  let asked = '';
   const promptUpdate = () => {
-    prompt.textContent = gameTerminal.prompt();
-    input.type = gameTerminal.shell.maskedInput() ? 'password' : 'text';
+    const sh = gameTerminal.shell;
+    const text = gameTerminal.prompt();
+    prompt.textContent = text;
+    input.type = sh.maskedInput() ? 'password' : 'text';
     colourInput();
+    const asking = sh.maskedInput() || sh.question !== null ? text : sh.continuation !== null ? t('continuation-announce') : '';
+    if (asking && asking !== asked) announce(asking);
+    asked = asking;
   };
 
   // The coloured tokens of a line; nothing for an answer to a question
@@ -892,10 +927,14 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     coloration.scrollLeft = input.scrollLeft;
   };
   // The command copied above its output, coloured as while typing.
-  const showCommand = (line: string, js: Token[] | null) => {
-    if (!js) return show(`${prompt.textContent} ${line}`, 'cmd');
-    output.appendChild(el('pre', { class: 'cmd' }, `${prompt.textContent} `, ...inSpans(js)));
-  };
+  // The prompt is hidden from screen readers: they already heard it as the
+  // line's name, and "you@kingdom:~/Pier/Lighthouse$" before every output
+  // is noise. The command stays, so the log still says which command each
+  // output belongs to (after a completion or a recalled line, it confirms
+  // what ran); a question's answer is read alone, after the question.
+  const echo = (promptText: string, ...line: (Node | string)[]) =>
+    output.appendChild(el('pre', { class: 'cmd' }, el('span', { 'aria-hidden': 'true' }, line.length ? `${promptText} ` : promptText), ...line));
+  const showCommand = (line: string, js: Token[] | null) => echo(prompt.textContent ?? '', ...(js ? inSpans(js) : [line]));
 
   // The chosen path: each chapter, its story, its state; the next one to do is highlighted.
   const pathUpdate = () => {
@@ -903,7 +942,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const { steps, next } = pathSteps(p, finished, (id) => accessible(STORIES.findIndex((x) => x.id === id)));
     const done = steps.filter((e) => e.state === 'done').length;
     descriptionPath.textContent = typo(t(`path-${p.id}.description`));
-    progressPath.textContent = done === steps.length ? t('path-finished') : t('path-progress', { finished: done, total: steps.length });
+    progressPath.replaceChildren(...quiet(done === steps.length ? t('path-finished') : t('path-progress', { finished: done, total: steps.length })));
     pathList.replaceChildren(
       ...steps.map((e, i) => {
         const state =
@@ -922,7 +961,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
           el('span', { class: 'title' }, t(`chapter-${e.chapter}`)),
           el('span', { class: 'abstract' }, t('path-in', { story: storyTitle(e.h) })),
           level(difficulty(e.chapter)),
-          el('span', { class: 'state' }, state),
+          el('span', { class: 'state' }, ...quiet(state)),
         );
         b.disabled = e.state === 'locked' || e.state === 'no-key';
         b.toggleAttribute('data-next', i === next);
@@ -950,7 +989,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       b.parentElement!.dataset.state = !accessible(h) ? 'locked' : done === chapters(h).length ? 'finished' : done > 0 || h === story() ? 'in-progress' : 'open';
       // Locked: the chapters still missing to receive its key.
       const rest = missing(STORIES[h].id, finished);
-      b.querySelector('.state')!.textContent = !accessible(h)
+      b.querySelector('.state')!.replaceChildren(...quiet(!accessible(h)
         ? rest.length
           ? t('state-key-after', { chapters: new Intl.ListFormat(t.language, { type: 'conjunction' }).format(rest.map((c) => t('state-key-chapter', { title: t(`chapter-${c}`) }))) })
           : t('state-key-missing')
@@ -958,7 +997,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
           ? t('state-story-finished')
           : total > 1
             ? t('state-chapters-done', { finished: done, total })
-            : '';
+            : ''));
     });
     // Open stories on the map (alternating sides of the cable), locked ones in the folded list.
     const locked = storyItems.filter((li) => li.dataset.state === 'locked');
@@ -967,7 +1006,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       storiesList.append(li);
     });
     lockedList.replaceChildren(...locked);
-    lockedSummary.textContent = t('stories-locked', { count: locked.length });
+    lockedSummary.replaceChildren(...quiet(t('stories-locked', { count: locked.length })));
     lockedBlock.hidden = locked.length === 0 || display.view === 'paths';
     pathUpdate();
     startUpdate();
@@ -976,11 +1015,11 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       nav.querySelectorAll<HTMLButtonElement>('[data-chapter]').forEach((b, c) => {
         b.disabled = !open(h, c);
         b.setAttribute('aria-current', String(h === story() && c === active()));
-        b.querySelector('.state')!.textContent = finished.includes(chapters(h)[c].id)
+        b.querySelector('.state')!.replaceChildren(...quiet(finished.includes(chapters(h)[c].id)
           ? t('state-chapter-finished')
           : open(h, c)
             ? ''
-            : t('state-locked');
+            : t('state-locked')));
       });
     });
     // "Next chapter": after a finished chapter, if one remains.
@@ -1274,7 +1313,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // For the feedback dialog (see feedback.ts): the prompt as shown, before the line runs.
     const promptBefore = prompt.textContent ?? '';
     const chapterBefore = gameTerminal.remote?.shell.chapter.id;
-    if (secret || line === '\u0004') show(prompt.textContent ?? '', 'cmd');
+    if (secret || line === '\u0004') echo(prompt.textContent ?? '');
     else showCommand(line, response ? null : tokens(line));
     const shell = gameTerminal.shell;
     const hostBefore = shell.host;
@@ -1557,7 +1596,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     // Ctrl-C with nothing selected: the line is abandoned, as in bash.
     if (e.ctrlKey && e.key.toLowerCase() === 'c' && input.selectionStart === input.selectionEnd) {
       e.preventDefault();
-      show(`${prompt.textContent} ${input.value}^C`, 'cmd');
+      echo(prompt.textContent ?? '', `${input.value}^C`);
       input.value = '';
       position = machineHistory().length;
       // At the secondary prompt (>), the whole input is dropped.
@@ -1586,7 +1625,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       if (input.value === before && previousTab === before) {
         const listing = gameTerminal.suggestions(before);
         if (listing) {
-          show(`${prompt.textContent} ${before}`, 'cmd');
+          echo(prompt.textContent ?? '', before);
           show(listing, 'suggestions');
           terminal.scrollTop = terminal.scrollHeight;
         }
@@ -1754,7 +1793,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   };
   const streakUpdate = () => {
     const words = streakWords();
-    streakLine.textContent = words ? typo(words) : '';
+    streakLine.replaceChildren(...quiet(words ? typo(words) : ''));
     streakLine.hidden = !words || incidentBlock.hidden;
   };
   const longDate = (iso: string) => new Intl.DateTimeFormat(t.language, { dateStyle: 'long' }).format(new Date(`${iso}T12:00:00`));
@@ -1861,7 +1900,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       address: 'https://sysadmin.rouages.net',
     });
     mapState.textContent = '';
-    streakEnd.textContent = typo(streakWords());
+    streakEnd.replaceChildren(...quiet(typo(streakWords())));
     onCall = null;
     onCallUpdate();
     onCallEndWindow.showModal();
@@ -1953,7 +1992,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       { class: [l.visit ? 'visited' : 'preview', l.here ? 'here' : ''].join(' ').trim(), ...(l.here ? { 'aria-current': 'location' } : {}) },
       el('span', { class: 'name' }, l.name === '/' ? '/' : `${l.name}/`),
       ...(landmarks ? [' ', el('span', { class: 'markers' }, `(${landmarks})`)] : []),
-      ...(l.here ? [' ', el('strong', { class: 'you-are-here' }, t('map-here'))] : []),
+      ...(l.here ? [' ', el('strong', { class: 'you-are-here' }, ...quiet(t('map-here')))] : []),
       ...(l.children.length ? [el('ul', {}, ...l.children.map(drawPlace))] : []),
     );
   };
@@ -2119,13 +2158,15 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     takeSnapshot.disabled = !possible;
     goBackSnapshot.disabled = !possible || !snapshot || snapshot.not > not!;
     cancelInput.disabled = !possible || not === 0;
-    rescueState.textContent = gameTerminal.exam
+    const state = gameTerminal.exam
       ? t('rescue-exam')
       : not === null
         ? t('rescue-impossible')
         : snapshot
           ? t('rescue-taken', { steps: snapshot.not })
           : t('rescue-none');
+    // A status: announced when it changes (a snapshot taken), not each time the window opens.
+    if (rescueState.textContent !== state) rescueState.textContent = state;
   };
   takeSnapshot.addEventListener('click', () => {
     const not = gameTerminal.not;
@@ -2280,7 +2321,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
       const hidden = result.transcript.filter((x) => x.prompt).length - shown.filter((x) => x.prompt).length;
       if (hidden > 0) output.appendChild(el('p', { class: 'cut' }, t('autosave-earlier', { steps: hidden })));
       for (const step of shown) {
-        if (step.prompt) show(step.masked ? step.prompt : `${step.prompt} ${step.line}`, 'cmd');
+        if (step.prompt) echo(step.prompt, ...(step.masked ? [] : [step.line]));
         show(step.output);
       }
       // The feedback dialog's commands (see feedback.ts): those of the chapter so far.
@@ -2316,9 +2357,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const i = hint(sh);
     const openSet = HINT_LEVELS.filter((n) => sh.requestsHints.has(`${i.step ?? ''}:${n}`) || (n === 'manual' && sh.requestsHints.has(`:${n}`)));
     const blocks: HTMLElement[] = [];
-    if (openSet.includes('manual')) blocks.push(el('p', {}, t('hint-manual', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
-    if (openSet.includes('lead') && i.lead) blocks.push(el('p', {}, typo(i.lead)));
-    if (openSet.includes('solution') && i.solution) blocks.push(el('pre', { class: 'mission-text' }, i.solution));
+    if (openSet.includes('manual')) blocks.push(el('p', { 'data-level': 'manual' }, t('hint-manual', { pages: i.manual.map((c) => `man ${c}`).join(', ') })));
+    if (openSet.includes('lead') && i.lead) blocks.push(el('p', { 'data-level': 'lead' }, typo(i.lead)));
+    if (openSet.includes('solution') && i.solution) blocks.push(el('pre', { class: 'mission-text', 'data-level': 'solution' }, i.solution));
     if (!i.step && openSet.length < 3) blocks.push(el('p', { class: 'map-legend' }, typo(t('hint-more-nothing'))));
     hintText.replaceChildren(...blocks);
     // One level at a time: the next opens once the previous one has been read.
@@ -2335,6 +2376,12 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     helpUpdate();
     autosave();
     hintText.lastElementChild?.scrollIntoView({ block: 'nearest' });
+    // The button pressed is now hidden: the focus goes to the next level's
+    // button, or to the window's Close button, never lost on the page; the
+    // hint just opened is announced.
+    const opened = hintText.querySelector(`[data-level="${n}"]`);
+    hintSaid.textContent = opened?.textContent ?? '';
+    (HINT_LEVELS.map((l) => hintBoutons[l]).find((b) => !b.hidden) ?? closeMission).focus();
   });
   missionWindow.addEventListener('close', () => setTimeout(() => input.focus()));
   // ——— The terminal's display ———
@@ -2733,7 +2780,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (!memory) tipMemories.set(sh, (memory = newMemory()));
     for (const tip of newTips({ sh, before, tab: tabUsed, said }, memory, shownTips)) {
       shownTips.push(tip);
-      output.appendChild(el('p', { class: 'tip', role: 'note' }, el('strong', {}, t('tip-label')), ' ', typo(t(`tip-${tip}`))));
+      output.appendChild(el('p', { class: 'tip', role: 'note' }, el('strong', {}, t('tip-label'), el('span', { class: 'visually-hidden' }, '.')), ' ', typo(t(`tip-${tip}`))));
     }
   }
 
