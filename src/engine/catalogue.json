@@ -5260,6 +5260,117 @@
      "events": 16
     }
    ]
+  },
+  {
+   "id": "allotments",
+   "after": [
+    "database",
+    "firewall"
+   ],
+   "texts": [
+    "chapter-broken-replica.ftl",
+    "chapter-firewall.ftl",
+    "chapter-least-privilege.ftl",
+    "chapter-sleeping-connections.ftl",
+    "hints-allotments.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "sleeping-connections",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "sort",
+      "uniq",
+      "cut",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "xargs",
+      "mariadb",
+      "mysql",
+      "mariadb-admin",
+      "mysqladmin",
+      "exit"
+     ],
+     "events": 12
+    },
+    {
+     "id": "least-privilege",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "ip",
+      "ssh",
+      "ufw",
+      "chmod",
+      "chown",
+      "mariadb",
+      "mysql",
+      "mariadb-admin",
+      "mysqladmin",
+      "mariadb-secure-installation",
+      "exit"
+     ],
+     "events": 16
+    },
+    {
+     "id": "broken-replica",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "wc",
+      "diff",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ssh",
+      "sh",
+      "find",
+      "date",
+      "mariadb",
+      "mysql",
+      "mariadb-admin",
+      "mysqladmin",
+      "mariadb-dump",
+      "mysqldump",
+      "mariadb-check",
+      "mysqlcheck",
+      "exit"
+     ],
+     "events": 16
+    }
+   ]
   }
  ]
 }

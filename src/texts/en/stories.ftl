@@ -86,3 +86,5 @@ story-blood-drive = The Blood Drive
     .summary = A regional blood service books its donors online through two load balancers that share one address. The spare doesn't take over when the service dies, a sick web server keeps receiving donors, and after a night of network work both load balancers think they are in charge: learn how keepalived (VRRP) and HAProxy really keep a site up, and how they fail.
 story-choir = The Choir
     .summary = A community choir keeps its members' data on a small Debian server, and the board once wrote down how long it would keep it. Logs kept since 2027, a member who asks for everything the choir holds about her, another who asks to be forgotten: personal data and its retention, from the sysadmin's side.
+story-allotments = The Allotments
+    .summary = An allotments association books its plots, its tools and its watering slots through a small app on a MariaDB server. Connections that never leave and a query that reads millions of rows, an app given the keys to everything, a replica that silently stopped following: running a database, from the sysadmin's side.

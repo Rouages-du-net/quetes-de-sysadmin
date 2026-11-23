@@ -687,6 +687,15 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **Running MariaDB** (Debian 13's 11.8 LTS): connections that pile up
+  and a query without an index, an app given root over the network, a
+  replica stopped on a duplicate key and backups nobody restored. Done:
+  story 43, "The Allotments" (`mariadb.ts`: option files, variables,
+  accounts and unix_socket, privileges, connections, the slow query log,
+  the binary log and a replica's threads; `mariadb-sql.ts`; `mariadb`,
+  `mariadb-dump`, `mariadb-admin`, `mariadb-check`,
+  `mariadb-secure-installation`; five MariaDB errors in the error explainer).
+
 ### Other ideas
 
 - [ ] **Everyday commands still missing.** A review of about 400 forms a
