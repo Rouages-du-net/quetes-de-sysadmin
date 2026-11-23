@@ -57,6 +57,22 @@ system: nothing leaves the browser.
   since your last visit say "New", and the installed game shows their
   number (and today's incident, not solved yet) on its icon.
 
+## Teach
+
+- **For teachers** (`/en/teachers/`, `/fr/enseignants/`): a sheet per
+  chapter (goal, prerequisites, new commands, difficulty, approximate
+  time), and for each story a **printable handout**: the chapters' goals
+  without the solutions, the manual pages to read, the official
+  documentation, questions to check what was learnt, and, folded, a
+  teacher's version with the solution route (it prints only if you open
+  it). A4 or Letter, black and white, links written out.
+- **The class table** (`/en/teachers/class/`): drop your students' save
+  files or paste their codes; download the table as CSV (one column per
+  chapter, the last save, the on-call streak; comma-separated in English,
+  semicolon-separated in French, as spreadsheets expect, and you can
+  change it) or print it. Everything happens in your browser: nothing is
+  sent anywhere.
+
 ## Develop
 
 ```bash

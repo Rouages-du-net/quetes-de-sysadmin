@@ -173,4 +173,86 @@ footer { margin-top: 3rem; padding-top: 0.5rem; padding-bottom: 2rem; border-top
 .class-table th, .class-table td { border: 1px solid var(--border); padding: 0.3rem 0.5rem; white-space: nowrap; text-align: left; }
 .class-table thead th { background: var(--background-2); font-family: var(--mono); font-size: 0.8rem; }
 .class-table td.finished { color: var(--phosphor); font-weight: 700; }
+.class-actions p { margin: 0.5rem 0; }
+#class select { font: inherit; padding: 0.3rem 0.4rem; border-radius: 0.3rem; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+#class button:focus-visible, #class select:focus-visible, .print-button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+/* The printable story sheets (StorySheet.astro) and the Print buttons
+   (data-print, shown by src/interface/print.ts). */
+.crumbs { margin: 1rem 0 0; font-size: 0.9rem; color: var(--muted); }
+.print-only { display: none; }
+.print-actions[hidden] { display: none; }
+.print-button { font: 600 0.95rem var(--mono); padding: 0.45rem 0.9rem; min-height: 2.75rem; border-radius: 0.35rem; border: 1px solid var(--phosphor); background: var(--card); color: var(--text); cursor: pointer; }
+.print-button:hover { color: var(--phosphor); }
+.story-handout { margin: 0.25rem 0 0.75rem; }
+.manual-pages, .documentation { margin: 0; padding-left: 1.1rem; }
+.documentation a { overflow-wrap: anywhere; }
+.question-block h3 { font-size: 1rem; margin: 1.25rem 0 0.25rem; }
+.question-block ol { margin: 0; padding-left: 1.4rem; max-width: 42rem; }
+.question-block li { margin: 0.25rem 0; }
+.teacher-route { margin: 3rem 0 1rem; padding: 0.75rem 1rem; border: 1px dashed var(--amber); border-radius: 0.4rem; }
+.teacher-route > summary { cursor: pointer; font: 700 1rem var(--mono); color: var(--amber); }
+.teacher-route > summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.route h3 { font-size: 1rem; margin: 1.5rem 0 0.25rem; }
+.route ol { padding-left: 1.4rem; }
+.route li p { margin: 0.5rem 0 0.25rem; }
+.route pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Printing (the teachers' pages): black on white, without the site's
+   header, footer and buttons; links written out; one story per page on
+   the quest sheets; the class table on landscape pages. Margins fit A4 and
+   US Letter alike (the page size is the printer's). */
+@media print {
+  :root {
+    --background: #fff;
+    --background-2: #fff;
+    --card: #fff;
+    --text: #000;
+    --muted: #222;
+    --border: #666;
+    --phosphor: #000;
+    --amber: #000;
+    --alert: #000;
+    color-scheme: light;
+  }
+  @page { margin: 15mm 14mm; }
+  @page class { size: landscape; margin: 10mm; }
+  body { background: #fff; color: #000; font-size: 11pt; line-height: 1.45; }
+  header, footer, .skip-link, .no-print, .print-actions, .story-handout, noscript { display: none !important; }
+  header, main, footer { max-width: none; padding: 0; }
+  .print-only { display: block; }
+  h1 { margin-top: 0; }
+  h1::before, h2::before { content: none; }
+  h2, h3 { break-after: avoid; }
+  strong { color: inherit; }
+  code { color: inherit; }
+  a { color: #000; text-decoration: underline; }
+  /* Paper has no links: the address is written after each one. */
+  main a[href^="http"]::after { content: " <" attr(href) ">"; font-size: 0.85em; overflow-wrap: anywhere; }
+  main a[href^="/"]::after { content: " <https://sysadmin.rouages.net" attr(href) ">"; font-size: 0.85em; overflow-wrap: anywhere; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; overflow: visible; border: 1px solid #666; break-inside: avoid; }
+  .intro { max-width: none; }
+  .sheet { border: 1px solid #666; border-left: 3px solid #000; break-inside: avoid; }
+  .sheet-story { break-before: page; margin-top: 0; }
+  .handout-name { font-family: var(--mono); margin: 0 0 1rem; }
+  .questions { break-before: page; }
+  .question-block { break-inside: avoid; }
+  .question-block li { margin-bottom: 2.6em; }
+  /* The teacher's version prints only when open (a closed <details> never does), on its own pages. */
+  .teacher-route:not([open]) { display: none; }
+  .teacher-route { break-before: page; border: none; padding: 0; margin: 0; }
+  .teacher-route > summary { list-style: none; font-size: 1.2rem; color: #000; }
+  .teacher-route > summary::-webkit-details-marker { display: none; }
+  .route { break-inside: avoid-page; }
+  /* The class table: only the table, landscape, story names written upwards. */
+  #class > :not(.class-table) { display: none; }
+  main:has(#class) { page: class; }
+  .class-table { overflow: visible; margin: 0; }
+  .class-table table { font-size: 7.5pt; min-width: 0; width: 100%; }
+  .class-table th, .class-table td { padding: 0.1rem 0.15rem; white-space: normal; border-color: #666; }
+  .class-table thead th { background: #fff; font-size: 7pt; vertical-align: bottom; }
+  .class-table thead th:nth-child(n + 8) { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; max-height: 9rem; }
+  .class-table tr { break-inside: avoid; }
+  .class-table td.finished { color: #000; font-weight: 700; text-decoration: underline; }
+}
 

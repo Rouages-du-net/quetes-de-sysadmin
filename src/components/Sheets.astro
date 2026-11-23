@@ -5,7 +5,7 @@
 // The stories' texts come from src/texts/<language>/; the page's own,
 // from here (one page per language, like the rest of the site).
 import { STORIES } from '../engine/chapters';
-import { allSheets } from '../engine/sheets';
+import { allSheets, hours as duration } from '../engine/sheets';
 import { difficulty, stars } from '../engine/difficulty';
 import { loadAllTexts, translator, typography } from '../texts';
 
@@ -18,14 +18,7 @@ const t = translator(lang);
 const typo = (text: string) => typography(text, lang);
 const sheets = allSheets();
 const total = sheets.reduce((s, f) => s + f.duration, 0);
-const hours = (minutes: number) =>
-  lang === 'en'
-    ? minutes < 60
-      ? `${minutes} min`
-      : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')} min` : ''}`
-    : minutes < 60
-      ? `${minutes} min`
-      : `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${String(minutes % 60).padStart(2, '0')}` : ''}`;
+const hours = (minutes: number) => duration(minutes, lang);
 const fr = lang === 'fr';
 // The chapters to finish before a story opens, with the title of their story.
 const storyOf = (c: string) => STORIES.find((h) => h.chapters.some((x) => x.id === c))!;
@@ -64,7 +57,8 @@ const after = (ids: string[]) =>
       <li><strong>L'Effaceur d'abord</strong> : il apprend à se déplacer et donne les clés SSH des autres histoires. Pour ouvrir directement une autre histoire (un TP ciblé), intégrez le jeu avec son attribut <code>story</code> (voir chaque histoire ci-dessous).</li>
       <li><strong>Rendre son travail</strong> : sous le terminal, le « carnet du sysadmin » se télécharge en Markdown. Il contient la progression (chapitres terminés) et les commandes utilisées, avec la première ligne tapée.</li>
       <li><strong>Changer de machine</strong> : « Ma progression », sous le terminal, donne un code court à recopier (les chapitres terminés) ou un fichier qui emporte tout (carnet compris), et un nom facultatif qui s'inscrit en tête du carnet. Ni l'un ni l'autre n'est une preuve : un code se recopie, un fichier se modifie.</li>
-      <li><strong>Suivre la classe</strong> : le <a href="/fr/enseignants/classe/">tableau de classe</a> lit les fichiers ou les codes de tes élèves, dans ton navigateur, et les exporte en CSV.</li>
+      <li><strong>Suivre la classe</strong> : le <a href="/fr/enseignants/classe/">tableau de classe</a> lit les fichiers ou les codes de tes élèves, dans ton navigateur, les exporte en CSV (pour un tableur) ou les imprime.</li>
+      <li><strong>Imprimer</strong> : chaque histoire a sa <strong>fiche à distribuer</strong> (lien sous son titre) : objectifs, commandes, pages du manuel à lire, questions pour vérifier ce qu'on a appris, et, repliée, une version enseignant·e avec le chemin de solution. Le bouton « Imprimer » ci-dessous imprime toutes les fiches de cette page, une histoire par page.</li>
       <li><strong>En évaluation</strong> : le mode examen recommence un chapitre sans aucun indice, avec un chrono.</li>
       <li><strong>Bloqué·e ?</strong> Le jeu renvoie vers <code>man</code>, <code>--help</code> et <code>man -k</code> plutôt que de donner la réponse : c'est le réflexe à faire prendre.</li>
     </ul>
@@ -74,11 +68,13 @@ const after = (ids: string[]) =>
       <li><strong>The Eraser first</strong>: it teaches how to move around and gives the SSH keys to the other stories. To open another story directly (a focused lab), embed the game with its <code>story</code> attribute (see each story below), and <code>lang="en"</code>.</li>
       <li><strong>Handing in work</strong>: under the terminal, the "sysadmin notebook" downloads as Markdown. It contains the progress (finished chapters) and the commands used, with the first line typed.</li>
       <li><strong>Changing machines</strong>: "My progress", under the terminal, gives a short code to copy down (the finished chapters) or a file that takes everything (notebook included), and an optional name that goes at the top of the notebook. Neither is proof: a code can be copied, a file can be edited.</li>
-      <li><strong>Following the class</strong>: the <a href="/en/teachers/class/">class table</a> reads your students' files or codes, in your browser, and exports them as CSV.</li>
+      <li><strong>Following the class</strong>: the <a href="/en/teachers/class/">class table</a> reads your students' files or codes, in your browser, and exports them as CSV (for a spreadsheet) or prints them.</li>
+      <li><strong>Printing</strong>: each story has a <strong>handout</strong> (link under its title): goals, commands, the manual pages to read, questions to check what was learnt, and, folded, a teacher's version with the solution route. The "Print" button below prints every sheet of this page, one story per page.</li>
       <li><strong>For assessment</strong>: exam mode restarts a chapter with no hints at all, and a timer.</li>
       <li><strong>Stuck?</strong> The game points to <code>man</code>, <code>--help</code> and <code>man -k</code> rather than giving the answer: that is the habit to build.</li>
     </ul>
   )}
+  <p class="print-actions" hidden><button type="button" class="print-button" data-print>{fr ? 'Imprimer les fiches' : 'Print the sheets'}</button></p>
 </section>
 
 {STORIES.map((h) => {
@@ -87,6 +83,7 @@ const after = (ids: string[]) =>
   return (
     <section class="sheet-story" aria-labelledby={`h-${h.id}`}>
       <h2 id={`h-${h.id}`}>{t(`story-${h.id}`)}</h2>
+      <p class="story-handout"><a href={fr ? `/fr/enseignants/fiches/${h.id}/` : `/en/teachers/sheets/${h.id}/`}>{fr ? `Fiche à imprimer : ${t(`story-${h.id}`)}` : `Printable sheet: ${t(`story-${h.id}`)}`}</a></p>
       <p>{typo(t(`story-${h.id}.summary`))}</p>
       <p class="muted">
         {fr
@@ -128,3 +125,6 @@ const after = (ids: string[]) =>
   );
 })}
 "
+<script>
+  import '../interface/print';
+</script>

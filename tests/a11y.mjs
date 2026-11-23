@@ -107,6 +107,16 @@ for (const scheme of process.env.A11Y_SKIP_AXE ? [] : ['dark', 'light'])
     await audit(page, `${tag} teachers' sheets (en)`);
     await page.go('/fr/enseignants/classe/');
     await audit(page, `${tag} class table (fr)`);
+    await page.locator('#class textarea').fill('Lina QDS-041H-R');
+    await page.locator('#class button', { hasText: 'Ajouter' }).click();
+    await page.locator('#class table').waitFor();
+    await audit(page, `${tag} class table with a student, export and print (fr)`);
+    await page.go('/en/teachers/sheets/letters/');
+    await audit(page, `${tag} printable story sheet (en)`);
+    await page.locator('.teacher-route > summary').click();
+    await audit(page, `${tag} printable story sheet, teacher's version open (en)`);
+    await page.go('/fr/enseignants/fiches/eraser/');
+    await audit(page, `${tag} printable story sheet (fr)`);
     await page.go('/en/');
     await audit(page, `${tag} home en (menu)`);
     await page.go('/fr/');

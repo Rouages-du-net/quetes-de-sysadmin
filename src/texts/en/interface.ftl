@@ -468,6 +468,17 @@ class-col-grade = Rank
 class-col-achievements = Achievements
 class-col-exam = Best exam
 class-col-date = Saved
+class-col-streak = On-call streak
+class-col-best-streak = Best on-call streak
+class-separator = Separator:
+class-separator-comma = comma (,)
+class-separator-semicolon = semicolon (;)
+class-print = Print the table
+class-local = The CSV file and the printout are made in this browser, from the table below: nothing is sent anywhere.
+# CSV headers: the chapters finished (a number), a story's (a number), a chapter's (1 finished, 0 not).
+class-csv-chapters = Chapters finished (out of { $total })
+class-csv-story = { $story } (out of { $total })
+class-csv-chapter = { $story } { $number }: { $chapter } (1 = finished)
 
 ## The terminal display
 
