@@ -112,6 +112,8 @@ export const MACHINES: Machine[] = [
   machine('belay', '192.0.2.141', 'climbing-wall'),
   // The Dance Troupe: a community dance troupe's server, a node of its Garage cluster (S3 object storage).
   machine('wings', '192.0.2.160', 'dance-troupe'),
+  // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
+  machine('meadow', '192.0.2.164', 'shelter'),
 ];
 
 /** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */

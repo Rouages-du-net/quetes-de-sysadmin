@@ -898,6 +898,22 @@ presents them for people.
   chapter 2, porch failed and its replacement in chapter 3);
   `public-bucket.ts`, `offsite-copy.ts`, `big-file.ts`. Tests:
   `tests/dance-troupe.test.ts`.
+- `chapters/shelter.ts`: what the chapters of "The Shelter" share
+  (`meadow`, the shelters' offsite server: the restic repository in
+  `/srv/restic`, the plan `/srv/drp/plan.md` read by `planRows`
+  (`duration`, `serviceOf`, `interval` from a timer's calendar), the
+  hidden primary DNS of chapter 3; `paddock`, the server in the cellar, an
+  internal host built by `paddockHost()`; `haven`, the spare, fresh or
+  rebuilt, built by `havenHost()`: its machine-specific files
+  `machineFiles`, `clobbered` after a restore over /, the app `adopt`
+  modelled once its unit is loaded; the database `referenceTables`, its
+  dump, checksum and counts; `storyCurl`, the requests between the
+  machines through `state.storyCurl` of `commands/network.ts`; one clock
+  for all, `passTime`); `what-we-have.ts`, `rebuild.ts`,
+  `switch-and-learn.ts` (`drill()`: the cron jobs and timers run once and
+  undone). restic's `sftp:` repositories (`sftpStore`) and `snapshots`'
+  filters in `commands/restic.ts`; the `postgresql` package in
+  `commands/apt.ts`. Tests: `tests/shelter.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

@@ -289,6 +289,8 @@ points to `man ls`, and the lighthouse keeper points to the EXAMPLES of
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; the output of `garage bucket info`, `key info`, `layout show` and `status` follows v2's layout without every field |
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
+| restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
+| The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4788,6 +4790,108 @@ assign. Expected traps: thirty days (`X-Amz-Expires may not exceed a
 week`), the bucket opened as a website, the admin key or the media team's,
 a localhost URL, the new node in the studio's zone, `apply` without
 `--version`.
+
+## Story 47: The Shelter (three chapters)
+
+The closing story of the series: a disaster recovery plan, from the page
+to the night it is needed. Hillside Animal Shelters (les Refuges des
+Coteaux), two sites, Hillside and Riverbend, keep their adoption site,
+their adoption app (Adopt, gunicorn) and its PostgreSQL database on
+`paddock` (192.0.2.165, an internal host) in the cellar of an old barn.
+Every night a job dumps the database (with its SHA-256 and row counts) and
+backs up to a restic repository on `meadow` (192.0.2.164, the story's
+machine, a small server at a hosting cooperative) over sftp. meadow also
+keeps the written plan (`/srv/drp/plan.md`, Dariusz's, 2029) and is the
+hidden primary DNS server of `hillsideshelters.example`. Teuila
+coordinates, Mirela (a vet nurse) added the hourly vet records sync
+(vetlink), Rahel keeps the sealed envelope with the repository's recovery
+password, Wiremu brings `haven` (192.0.2.166), a donated machine. No new
+engine family: the story reuses restic (with `sftp:` repositories, added
+for it), PostgreSQL, nginx, systemd units and timers, BIND's zones and the
+resolver's cache, ufw, the internal hosts. Built in `chapters/shelter.ts`;
+it opens after "The Restore Drill" and "Zones", and extends the backups
+and production paths. Sources: NIST SP 800-34 Rev. 1
+(https://csrc.nist.gov/pubs/sp/800/34/r1/upd1/final), restic's and
+PostgreSQL's documentation, BIND 9's, RFC 1034, the Google SRE book's
+postmortem chapter.
+
+### Chapter 1 — What Do We Have? (done)
+
+Monday 3 November 2031, 9:30. The plan describes paddock as it was in 2029.
+
+| Step | Command learnt |
+|---|---|
+| The plan | `cat /srv/drp/plan.md` (a table: Service, RPO, RTO, Backup, Owner) |
+| What runs | `ssh paddock`, `systemctl list-units --type=service`, `systemctl list-timers`, `systemctl cat` |
+| What listens | `ss -tlnp` |
+| What is backed up | the job (`/usr/local/sbin/shelter-backup`), `restic -r sftp:restic@meadow.internal:/srv/restic snapshots` (`--latest`, `--path`, `--json`) |
+| The table | `nano`: phpList gone, vetlink added, RPOs the nightly job can keep, owners who are still here |
+| The gap | `/srv/vetlink` in the job's `restic backup` line, a backup now |
+
+Goal checked on the state: rows for the site, the app and its database and
+vetlink, each with an RPO and an RTO the game can read (30min, 4h, 1d, 1w;
+j and sem in French), a backup and an owner other than Dariusz; no phpList
+row; every RPO at least the interval of `shelter-backup.timer`'s
+`OnCalendar=` (read with the timers' calendar); each service's latest
+snapshot (its data's path) younger than its RPO; the job backs up
+`/srv/vetlink` (or `/srv`). Several solutions: the columns in any order,
+hourly backups with RPOs of an hour, the job or `restic backup` by hand.
+Expected traps: the old rows kept (phpList, Dariusz), an RPO of one hour
+for a nightly backup, vetlink in the plan but in no snapshot.
+
+### Chapter 2 — Rebuild on the Spare (done)
+
+Friday 14 November, 8:40. The river flooded the cellar at 2:45; paddock is
+gone (`ssh: connect to host paddock port 22: No route to host`). haven is a
+fresh Debian 13 with restic; the envelope is in `envelope.txt`.
+
+| Step | Command learnt |
+|---|---|
+| The outage | `tail /var/log/sitewatch.log` (last good check 2:45, last backup 2:00) |
+| Packages | `apt update`, `apt install nginx postgresql` |
+| The repository | `restic -r sftp:… snapshots` with the envelope's password |
+| Restore beside | `restic restore latest --target /srv/restore` |
+| Copy back | `cp -r` the site, the app, vetlink's records, nginx's site, the unit |
+| The database | `createdb shelter`, `psql shelter -f …/shelter.sql`, `sha256sum -c shelter.sha256`, `SELECT count(*)` against `shelter.counts` |
+| In order | `systemctl daemon-reload`, `enable --now adopt`, `nginx -t`, `reload nginx` |
+| Locally | `curl -H "Host: www.hillsideshelters.example" http://localhost/adopt/animals` |
+
+Goal checked on the state: on haven, nginx serves www's home page and
+`/adopt/animals` (the app answers from its database); every row of the
+night's dump in `shelter`; the dump checked (sha256sum's OK or two count
+queries); vetlink's records back; the site tested with curl on haven; haven's
+own fstab, machine-id, hostname, interfaces and SSH host keys. Expected
+traps: `restore … --target /` (paddock's machine-specific files replace
+haven's: the event names them and Wiremu puts haven's back), the app
+started before its database (gunicorn's psycopg error in the journal), apt
+before `apt update`, a wrong password, nginx's default site.
+
+### Chapter 3 — Switch and Learn (done)
+
+The same day, 13:20. Riverbend's router forwards 203.0.113.163:80 to haven,
+whose ufw only lets ssh in; www still points at Hillside's drowned
+198.51.100.163 with a TTL of 300 s; the public resolver remembers it.
+
+| Step | Command learnt |
+|---|---|
+| From outside | `curl -H "Host: …" http://203.0.113.163/` from meadow (a timeout) |
+| The firewall | `ufw allow 80/tcp` on haven |
+| The zone | `nano /etc/bind/db.hillsideshelters.example` (the A record, the serial), `named-checkzone`, `rndc reload` |
+| The switch | `dig @ns1.registrar.example`, `dig` through the resolver (the TTL counting down) |
+| The review | `review.md`: summary, timeline, impact, what went well, what to improve, actions with owners |
+| The next drill | `/usr/local/sbin/restore-drill` (restore beside, `sha256sum -c`), `crontab -e` or a timer |
+
+Goal checked on the state: the registrar's server answers 203.0.113.163;
+visitors reach haven's app (firewall, nginx, database); a request from
+meadow reached haven through the public address or the name; the review's
+sections filled (no "to be completed"), its timeline with the first failed
+check (02:50) and at least three times, at least two actions each naming an
+owner, no blaming words; a cron job (crontab or `/etc/cron.d`) or an active
+timer whose run, done once on meadow and undone (world, clock, restic's
+memory), restores a snapshot beside and verifies it. Expected traps: the
+name switched while haven's port is closed, an unchanged serial (the
+secondary keeps the old zone), Mirela's draft that only lists snapshots, a
+drill that restores over /, a review that blames.
 
 ## Ideas for later
 
