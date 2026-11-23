@@ -36,9 +36,9 @@ describe('keepalived and HAProxy: their files read like the real tools', () => {
     expect(c.scripts.chk_haproxy).toMatchObject({ script: '/usr/bin/killall -0 haproxy', interval: 2, weight: -20, fall: 2, rise: 2 });
     expect(c.errors).toEqual([]);
     const bad = parseKeepalived(keepalivedConf('lb1', 1).replace('priority 101', 'priorty 101').replace('virtual_router_id 51', 'virtual_router_id 300') + '\nvrrp_instance VI_2 {\n    interface eth0\n    virtual_router_id 52\n    track_script {\n        chk_none\n    }\n}');
-    expect(bad.errors).toContain("(/etc/keepalived/keepalived.conf: Line 12) Unknown keyword 'priorty'");
+    expect(bad.errors).toContain("(Line 12) Unknown keyword 'priorty'");
     expect(bad.errors.some((e) => e.includes("VRID '300' not valid - must be between 1 & 255"))).toBe(true);
-    expect(bad.errors).toContain('(VI_2) track script chk_none not found, ignoring...');
+    expect(bad.errors.some((e) => /^\(Line \d+\) \(VI_2\) track script chk_none not found, ignoring...$/.test(e))).toBe(true);
     const nopreempt = parseKeepalived(keepalivedConf('lb1', 1).replace('advert_int 1', 'advert_int 1\n    nopreempt'));
     expect(nopreempt.warnings).toEqual(['(VI_1) Warning - nopreempt will not work with initial state MASTER - clearing']);
     expect(nopreempt.instances[0].nopreempt).toBe(false);
@@ -53,7 +53,7 @@ describe('keepalived and HAProxy: their files read like the real tools', () => {
     const missing = checkReport(parseCfg(haproxyCfg(1).replace('default_backend be_booking', 'default_backend be_bookin')), 7);
     expect(missing.lines).toContain("[ALERT]    (7) : config : Proxy 'fe_booking': unable to find required default_backend: 'be_bookin'.");
     const orphan = parseCfg(haproxyCfg(1).replace('\tbalance roundrobin', '\tbalance roundrobin\n\thttp-check expect status 200'));
-    expect(orphan.warnings[0]).toContain("'http-check' rules ignored for proxy 'be_booking'");
+    expect(orphan.warnings[0]).toBe("config : backend 'be_booking' uses http-check rules without 'option httpchk', so the rules are ignored.");
     const cfg = parseCfg(haproxyCfg(3));
     expect(cfg.backends[0]).toMatchObject({ name: 'be_booking', balance: 'roundrobin', httpchk: { method: 'GET', uri: '/health' }, expect: { kind: 'status', value: '200' } });
     expect(cfg.backends[0].servers[1]).toMatchObject({ name: 'web2', addr: '198.51.100.22', port: 8080, check: true, inter: 2000, fall: 3, rise: 2 });

@@ -19,7 +19,7 @@ import { systemd } from './systemd';
 import {
   actualUsage, allMessages, conf, confPath, confText, createMailbox, dovecot, header, lookup, mailboxDir, mailboxes, matchUsers, messagesOf, parseMail, putFile, quotaRoot,
   readConf, recalc, reloadDovecot, removeMessage, running, sieveScripts, usage, users, confErrorText, USERS, VMAIL,
-  type MailUser, type Stored, type ConfNode,
+  type MailUser, type Stored, type ConfNode, type Mail,
 } from './dovecot';
 import { compile, execute, printResult } from './sieve';
 import { learn, readConfig, rspamd, rspamdRunning, scan, VERSION as RSPAMD_VERSION, type Scan } from './rspamd';
@@ -130,10 +130,12 @@ function dateSpec(text: string, now: number): number | null {
   if (/^\d{10}$/.test(text)) return Number(text) * 1000;
   return null;
 }
+// A size as Dovecot 2.4.1's str_parse_get_size reads it (src/lib/str-parse.c): digits, spaces,
+// then B, K, M, G or T, the last four optionally followed by i and B ("10k", "2 MiB").
 const sizeSpec = (text: string): number | null => {
-  const m = /^(\d+)([bkmgt]?)$/i.exec(text);
+  const m = /^(\d+) *(?:(b)|([kmgt])i?b?)?$/i.exec(text);
   if (!m) return null;
-  return Number(m[1]) * ({ '': 1, b: 1, k: 1024, m: 1024 ** 2, g: 1024 ** 3, t: 1024 ** 4 } as Record<string, number>)[m[2].toLowerCase()];
+  return Number(m[1]) * ({ k: 1024, m: 1024 ** 2, g: 1024 ** 3, t: 1024 ** 4 } as Record<string, number>)[(m[3] ?? '').toLowerCase()] || Number(m[1]);
 };
 
 function parseQuery(words: string[], now: number): { query: Query; mailbox: string[] } | { error: string } {
@@ -181,8 +183,11 @@ function parseQuery(words: string[], now: number): { query: Query; mailbox: stri
       };
     }
     if (k === 'larger' || k === 'smaller') {
-      const s = sizeSpec(arg() ?? '');
-      if (s === null) return { error: `Invalid search size parameter: ${words[i - 1] ?? ''}` };
+      const raw = arg();
+      if (raw === undefined) return { error: 'Missing argument' };
+      // mail-search-register-human.c (arg_new_human_size) passes on str_parse_get_size's error.
+      const s = sizeSpec(raw);
+      if (s === null) return { error: `Invalid size: ${raw}` };
       return (m) => (k === 'larger' ? m.size > s : m.size < s);
     }
     if (['from', 'to', 'cc', 'subject'].includes(k)) {
@@ -703,15 +708,26 @@ function filesUnder(game: Shell, paths: string[]): { path: string; error?: strin
   return out;
 }
 
-function symbolsText(s: Scan, what: string): string {
+/**
+ * rspamc's output for a scanned file (src/client/rspamc.cxx of rspamd 3.12.1: the time with
+ * fmt's "{:.3}", three significant digits; rspamc_metric_output, rspamc_symbol_output,
+ * rspamc_symbols_output). The server sends "urls" and "emails" (compact JSON: each URL's host
+ * once, the addresses of mailto links and bare addresses) only when the message has some
+ * (src/libserver/protocol.c), and "undef" for a message without a Message-ID (libmime/message.c).
+ */
+function symbolsText(s: Scan, what: string, m: Mail): string {
+  const hosts = [...new Set([...m.body.matchAll(/\bhttps?:\/\/([A-Za-z0-9.-]+)/g)].map((x) => x[1].toLowerCase()))];
+  const emails = [...new Set([...m.body.matchAll(/(?:mailto:)?\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g)].map((x) => x[1]))];
+  const json = (xs: string[]) => `[${xs.map((x) => JSON.stringify(x)).join(',')}]`;
   return [
-    `Results for file: ${what} (${(0.08 + (s.score % 1) / 10).toFixed(3)} seconds)`,
+    `Results for file: ${what} (${Number((0.08 + (s.score % 1) / 10).toPrecision(3))} seconds)`,
     '[Metric: default]',
     `Action: ${s.action}`,
     `Spam: ${s.isSpam ? 'true' : 'false'}`,
     `Score: ${s.score.toFixed(2)} / ${s.required.toFixed(2)}`,
     ...s.symbols.map((x) => `Symbol: ${x.name} (${x.score.toFixed(2)})${x.options?.length ? `[${x.options.join(', ')}]` : ''}`),
-    `Message-ID: ${s.msgid.replace(/^<|>$/g, '')}`,
+    `Message-ID: ${s.msgid.replace(/^<|>$/g, '') || 'undef'}`,
+    ...(hosts.length || emails.length ? [`Urls: ${json(hosts)}`, `Emails: ${json(emails)}`] : []),
   ].join('\n');
 }
 
@@ -778,7 +794,7 @@ function rspamc(c: Context): string {
       continue;
     }
     st.asked.symbols++;
-    out.push(symbolsText(scan(game, m, env), f.path));
+    out.push(symbolsText(scan(game, m, env), f.path, m));
   }
   return out.join('\n');
 }

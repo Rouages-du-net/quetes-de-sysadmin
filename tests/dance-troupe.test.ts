@@ -113,7 +113,7 @@ for (const language of LANGUAGES)
       const deploy = key('site-deploy');
       expect(all).toContain(`Secret key:          ${deploy.secret}`);
       all = run('sudo garage bucket allow --read --write www.kestrel.example --key site-deploy', `aws configure set aws_access_key_id ${deploy.id} --profile deploy`, `aws configure set aws_secret_access_key ${deploy.secret} --profile deploy`, '~/bin/deploy-site', 'aws --profile deploy s3 ls s3://members/');
-      expect(all).toContain(`New permissions for ${deploy.id} on www.kestrel.example: read true, write true, owner false.`);
+      expect(all).toMatch(new RegExp(`^RW +${deploy.id} +site-deploy$`, 'm'));
       expect(all).toContain('An error occurred (AccessDenied) when calling the ListObjectsV2 operation: Forbidden: Operation is not allowed for this key.');
       contains(all, 'sa propre clé');
       expect(finished()).toBe(false);
@@ -274,7 +274,7 @@ for (const language of LANGUAGES)
       all = run('sudo garage layout apply');
       expect(all).toContain('Please pass the new layout version number');
       all = run(`sudo garage layout remove ${NODE.porch.slice(0, 8)}`, 'sudo garage layout apply --version 4');
-      expect(all).toContain('Error: The number of nodes with positive capacity (2) is smaller than the replication factor (3).');
+      expect(all).toContain('Error: ApplyClusterLayout returned InternalError (500): Internal error: The number of nodes with positive capacity (2) is smaller than the replication factor (3).');
       all = run(`sudo garage layout assign -z studio -c 4T ${NODE.newPorch.slice(0, 8)}`, 'sudo garage layout apply --version 4');
       contains(all, 'dans la même zone');
       run(`sudo garage layout assign -z home ${NODE.newPorch.slice(0, 8)}`, 'sudo garage layout apply --version 5');

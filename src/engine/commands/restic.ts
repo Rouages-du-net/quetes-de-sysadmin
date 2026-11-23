@@ -183,11 +183,32 @@ const POLITIQUES: { option: string; name: string; bucket: (ms: number, i: number
   { option: '--keep-yearly', name: 'yearly', bucket: (ms) => date(ms).slice(0, 4) },
 ];
 
+/**
+ * --keep-within's duration as restic 0.18 parses it (internal/restic/duration.go, ParseDuration):
+ * numbers each followed by y, m, d or h, in any order (a unit given twice keeps the last), a
+ * minus sign allowed; the error is ParseDuration's.
+ */
+export function parseWithin(text: string): { y: number; m: number; d: number; h: number } | { error: string } {
+  const d = { y: 0, m: 0, d: 0, h: 0 };
+  let s = text.trim();
+  while (s) {
+    const n = /^(-?)(\d*)/.exec(s)!;
+    if (!n[2]) return { error: 'no number found' };
+    const num = Number(n[1] + n[2]);
+    s = s.slice(n[0].length);
+    if (!s) return { error: `no unit found after number ${num}` };
+    const unit = s[0] as 'y' | 'm' | 'd' | 'h';
+    if (!'ymdh'.includes(unit)) return { error: `invalid unit '${s[0]}' found after number ${num}` };
+    d[unit] = num;
+    s = s.slice(1);
+  }
+  return d;
+}
+
 /** --keep-within's duration (1y6m, 3m, 30d, 12h): years, months, days and hours; null if unreadable. */
 export function readWithin(text: string): { y: number; m: number; d: number; h: number } | null {
-  const m = /^(?:(\d+)y)?(?:(\d+)m)?(?:(\d+)d)?(?:(\d+)h)?$/.exec(text);
-  if (!m || !text) return null;
-  return { y: Number(m[1] ?? 0), m: Number(m[2] ?? 0), d: Number(m[3] ?? 0), h: Number(m[4] ?? 0) };
+  const r = parseWithin(text);
+  return 'error' in r || !text ? null : r;
 }
 
 /** The snapshots kept by a policy, with their reasons (like restic); `within`: --keep-within, from the latest snapshot. */
@@ -513,14 +534,22 @@ function launch(c: Context, action: string, args: string[]): string {
     for (const p of POLITIQUES) {
       const v = values(p.option)[0];
       if (v !== undefined) {
-        if (!/^\d+$/.test(v))
-          return game.error(`Fatal: invalid argument "${v}" for "${p.option}" flag: strconv.ParseInt: parsing "${v}": invalid syntax`);
-        policy[p.name] = Number(v);
+        // ForgetPolicyCount.Set (cmd_forget.go): a number or "unlimited"; pflag names the flag
+        // with its shorthand ("-l, --keep-last").
+        const flag = `-${'lHdwmy'['last hourly daily weekly monthly yearly'.split(' ').indexOf(p.name)]}, ${p.option}`;
+        if (v === 'unlimited') policy[p.name] = Number.MAX_SAFE_INTEGER;
+        else if (!/^[-+]?\d+$/.test(v)) return game.error(`invalid argument "${v}" for "${flag}" flag: strconv.ParseInt: parsing "${v}": invalid syntax`);
+        else if (Number(v) < 0) return game.error(`invalid argument "${v}" for "${flag}" flag: negative values not allowed, use 'unlimited' instead`);
+        else policy[p.name] = Number(v);
       }
     }
     const withinText = values('--keep-within')[0];
-    const within = withinText === undefined ? undefined : readWithin(withinText);
-    if (withinText !== undefined && !within) return game.error(`Fatal: invalid argument "${withinText}" for "--keep-within" flag: invalid duration "${withinText}"`);
+    const parsed = withinText === undefined ? undefined : parseWithin(withinText);
+    // pflag's message for a value Set refuses, printed by restic's main without "Fatal:"
+    // (cmd/restic/main.go); a negative duration is cmd_forget.go's Fatal.
+    if (parsed && 'error' in parsed) return game.error(`invalid argument "${withinText}" for "--keep-within" flag: ${parsed.error}`);
+    if (parsed && Object.values(parsed).some((v) => v < 0)) return game.error('Fatal: durations containing negative values are not allowed for --keep-within*');
+    const within = parsed && !('error' in parsed) && withinText ? parsed : withinText === undefined ? undefined : null;
     const ids = positional;
     const trial = options.has('--dry-run') || options.has('-n');
     let removed: Snapshot[];

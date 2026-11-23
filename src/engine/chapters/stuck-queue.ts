@@ -75,7 +75,7 @@ export const stuckQueue: Chapter = {
   events: [
     { id: 'queue', condition: (j) => seen(j, /printer office disabled since/) || seen(j, 'office is not ready'), message: (j) => j.t('stuck-queue-event-queue') },
     { id: 'error-log', condition: (j) => seen(j, 'Unable to connect to printer; will retry in 30 seconds'), message: (j) => j.t('stuck-queue-event-error-log') },
-    { id: 'jobs', condition: (j) => seen(j, /office-117 +sven +3650000000/) || seen(j, /117 +yearbook-2029-proofs\.pdf/), message: (j) => j.t('stuck-queue-event-jobs') },
+    { id: 'jobs', condition: (j) => seen(j, /office-117 +sven +3650000896/) || seen(j, /117 +yearbook-2029-proofs\.pdf/), message: (j) => j.t('stuck-queue-event-jobs') },
     { id: 'disk', condition: (j) => seen(j, /\/dev\/vda3 .* (8|9)\d% \/var/), message: (j) => j.t('stuck-queue-event-disk') },
     { id: 'cancel-all', condition: (j) => cups(j).jobs.some((x) => x.id !== YEARBOOK && x.id < 125 && x.state === 'canceled'), message: (j) => j.t('stuck-queue-event-cancel-all') },
     { id: 'hand-rm', condition: lost, message: (j) => j.t('stuck-queue-event-hand-rm') },

@@ -370,7 +370,12 @@ export interface WebAnswer {
   object?: S3Object;
 }
 
-const xmlError = (code: string, message: string, resource: string) => `<?xml version="1.0" encoding="UTF-8"?><Error><Code>${code}</Code><Message>${message}</Message><Resource>${resource}</Resource><Region>garage</Region></Error>`;
+// The web endpoint's own error page (src/web/web_server.rs, error_to_res, v2.1.0): an
+// unknown bucket or one without website access is Error::NotFound, a title and a heading
+// only; a missing object (without an error document) adds the S3 error's code and message.
+const HTML = 'text/html; charset=utf-8';
+const htmlError = (s3?: { code: string; message: string }) =>
+  `<title>404 Not Found</title>\n<h1>404 Not Found</h1>${s3 ? `\n<ul>\n<li>Code: ${s3.code}</li>\n<li>Message: ${s3.message}.</li>\n</ul>` : ''}`;
 
 /** What the web endpoint answers for this Host and path (anyone, without a key). */
 export function webGet(j: Game, host: string, path: string): WebAnswer {
@@ -380,7 +385,7 @@ export function webGet(j: Game, host: string, path: string): WebAnswer {
   const log = (status: number, object?: string) => g.log.push({ at: realNow(j), key: null, op: 'GetObject', bucket: name, object, status, via: 'web' });
   if (!b || !b.website) {
     log(404);
-    return { status: 404, type: 'application/xml', body: xmlError('NoSuchBucket', `Bucket not found: ${name}`, path) };
+    return { status: 404, type: HTML, body: htmlError() };
   }
   let key = decodeURIComponent(path.replace(/^\//, '').replace(/\?.*$/, ''));
   if (key === '' || key.endsWith('/')) key += b.website.index;
@@ -392,7 +397,7 @@ export function webGet(j: Game, host: string, path: string): WebAnswer {
   log(404, key);
   const e = b.website.error ? b.objects[b.website.error] : undefined;
   if (e) return { status: 404, type: e.type, body: e.content ?? '', object: e };
-  return { status: 404, type: 'application/xml', body: xmlError('NoSuchKey', 'Key not found', `/${key}`) };
+  return { status: 404, type: HTML, body: htmlError({ code: 'NoSuchKey', message: 'Key not found' }) };
 }
 
 // ——— Sizes, as Garage's CLI writes them ———

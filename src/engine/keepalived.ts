@@ -93,7 +93,10 @@ function words(line: string): string[] {
 /** keepalived.conf read like keepalived (its blocks, keywords and checks). */
 export function parseKeepalived(text: string, file = CONF_FILE): KaConf {
   const conf: KaConf = { scripts: {}, instances: [], scriptSecurity: false, scriptUser: null, routerId: null, errors: [], warnings: [] };
-  const err = (n: number, message: string) => conf.errors.push(`(${file}: Line ${n}) ${message}`);
+  // keepalived 2.3.3's report_config_error (lib/parser.c): "(Line N) …" while a single
+  // configuration file is read ("(FILE: Line N) …" only with several), no prefix afterwards.
+  void file;
+  const err = (n: number, message: string) => conf.errors.push(`(Line ${n}) ${message}`);
   // Each line as tokens, braces apart; stack of open blocks.
   const lines = text.split('\n').map((l) => words(l.replace(/([{}])/g, ' $1 ')));
   const stack: { kind: string; name?: string; line: number }[] = [];
@@ -106,8 +109,15 @@ export function parseKeepalived(text: string, file = CONF_FILE): KaConf {
       const word = w[i];
       if (word === '}') {
         const closed = stack.pop();
-        if (!closed) err(n, "Unexpected '}' - ignoring");
-        else if (closed.kind === 'vrrp_script') script = null;
+        if (!closed) err(n, "Extra '}' found");
+        else if (closed.kind === 'vrrp_script') {
+          // vrrp_parser.c, vrrp_script_end_handler.
+          if (script && !script.script) {
+            err(n, `No script set for vrrp_script ${script.name} - removing`);
+            delete conf.scripts[script.name];
+          }
+          script = null;
+        }
         else if (closed.kind === 'vrrp_instance') inst = null;
         i++;
         continue;
@@ -147,7 +157,7 @@ export function parseKeepalived(text: string, file = CONF_FILE): KaConf {
         if (word === 'script') script.script = values.join(' ');
         if (word === 'interval') script.interval = Number.isFinite(num) && num > 0 ? num : 1;
         if (word === 'weight') {
-          if (!Number.isInteger(num) || num < -253 || num > 253) err(n, `vrrp_script ${script.name} weight ${values[0] ?? ''} must be between [-253, 253]`);
+          if (!Number.isInteger(num) || num < -253 || num > 253) err(n, `vrrp_script ${script.name} weight ${values[0] ?? ''} must be in [-253, 253]`);
           else script.weight = num;
         }
         if (word === 'fall') script.fall = Number.isInteger(num) && num > 0 ? num : 1;
@@ -163,11 +173,11 @@ export function parseKeepalived(text: string, file = CONF_FILE): KaConf {
         }
         if (word === 'interface') inst.iface = values[0] ?? '';
         if (word === 'virtual_router_id') {
-          if (!Number.isInteger(num) || num < 1 || num > 255) err(n, `(${inst.name}) VRID '${values[0] ?? ''}' not valid - must be between 1 & 255`);
+          if (!Number.isInteger(num) || num < 1 || num > 255) err(n, `(${inst.name}): VRID '${values[0] ?? ''}' not valid - must be between 1 & 255`);
           else inst.vrid = num;
         }
         if (word === 'priority') {
-          if (!Number.isInteger(num) || num < 1 || num > 255) err(n, `(${inst.name}) Priority not valid! must be between 1 & 255`);
+          if (!Number.isInteger(num) || num < 1 || num > 255) err(n, `(${inst.name}) Priority not valid! must be between 1 & 255. Using default 100`);
           else inst.priority = num;
         }
         if (word === 'advert_int') inst.advertInt = Number.isFinite(num) && num > 0 ? num : 1;
@@ -179,30 +189,31 @@ export function parseKeepalived(text: string, file = CONF_FILE): KaConf {
         else if (word === 'auth_pass') inst.auth = { type: inst.auth?.type ?? 'PASS', pass: (values[0] ?? '').slice(0, 8) };
         else err(n, `Unknown keyword '${word}'`);
       } else if ((kind === 'virtual_ipaddress' || kind === 'virtual_ipaddress_excluded') && inst) {
-        if (!/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(word)) err(n, `(${inst.name}) Invalid address '${word}' - ignoring`);
+        if (!/^\d+\.\d+\.\d+\.\d+(\/\d+)?$/.test(word)) err(n, `VRRP parsed invalid IP ${word}. skipping IP...`);
         else if (kind === 'virtual_ipaddress') inst.vips.push(word.includes('/') ? word : `${word}/32`);
       } else if (kind === 'unicast_peer' && inst) {
-        if (!/^\d+\.\d+\.\d+\.\d+$/.test(word)) err(n, `(${inst.name}) Invalid unicast peer '${word}' - ignoring`);
+        if (!/^\d+\.\d+\.\d+\.\d+$/.test(word)) err(n, `Configuration error: VRRP instance[${inst.name}] malformed unicast peer address[${word}]. Skipping...`);
         else inst.unicastPeers.push(word);
       } else if (kind === 'track_script' && inst) {
+        // vrrp_track.c, alloc_track_script: the script must already be defined.
         const wi = values.indexOf('weight');
-        inst.track.push({ name: word, ...(wi >= 0 ? { weight: Number(values[wi + 1]) } : {}) });
+        if (!conf.scripts[word]) err(n, `(${inst.name}) track script ${word} not found, ignoring...`);
+        else inst.track.push({ name: word, ...(wi >= 0 ? { weight: Number(values[wi + 1]) } : {}) });
       } else if (opens) open('unknown');
       i = j;
     }
   }
-  if (stack.length) err(lines.length, `Missing '}' at end of configuration block '${stack.at(-1)!.kind}' (opened line ${stack.at(-1)!.line})`);
+  if (stack.length) conf.errors.push(`There are ${stack.length} missing '}'s or extra '{'s`);
+  // vrrp.c (chk_min_cfg, vrrp_complete_instance): after the file is read, without a line.
   for (const inst of conf.instances) {
-    if (!inst.vrid) conf.errors.push(`(${inst.name}): the virtual router id must be set`);
-    if (!inst.iface) conf.errors.push(`(${inst.name}) Unknown interface !`);
-    for (const t of inst.track) if (!conf.scripts[t.name]) conf.errors.push(`(${inst.name}) track script ${t.name} not found, ignoring...`);
+    if (!inst.vrid) conf.errors.push(`(${inst.name}) the virtual router id must be set`);
+    else if (!inst.iface) conf.errors.push(`(${inst.name}) Unknown interface!`);
     inst.track = inst.track.filter((t) => conf.scripts[t.name]);
     if (inst.nopreempt && inst.state === 'MASTER') {
       conf.warnings.push(`(${inst.name}) Warning - nopreempt will not work with initial state MASTER - clearing`);
       inst.nopreempt = false;
     }
   }
-  for (const s of Object.values(conf.scripts)) if (!s.script) conf.errors.push(`VRRP_Script(${s.name}) has no script - ignoring`);
   return conf;
 }
 

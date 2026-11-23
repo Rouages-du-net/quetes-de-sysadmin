@@ -234,14 +234,14 @@ export function parseCfg(text: string, file = CFG): HaproxyConf {
   }
   for (const f of c.frontends) {
     if (f.defaultBackend && !c.backends.some((b) => b.name === f.defaultBackend)) c.alerts.push(`Proxy '${f.name}': unable to find required default_backend: '${f.defaultBackend}'.`);
-    if (!f.binds.length && !c.backends.some((b) => b.name === f.name)) c.alerts.push(`Proxy '${f.name}': no bind line declared for proxy.`);
+    // src/cfgparse.c (check_config_validity) of HAProxy 3.0.11: a warning, not an error.
+    if (!f.binds.length && !c.backends.some((b) => b.name === f.name)) c.warnings.push(`config : ${c.backends.some((b) => b.name === f.name) ? 'listen' : 'frontend'} '${f.name}' has no 'bind' directive. Please declare it as a backend if this was intended.`);
   }
   for (const b of c.backends) {
     if (b.expect && !b.httpchk) {
       b.orphanCheck = true;
-      c.warnings.push(`config : 'http-check' rules ignored for proxy '${b.name}' as they require 'option httpchk' (or 'http-check send').`);
+      c.warnings.push(`config : backend '${b.name}' uses http-check rules without 'option httpchk', so the rules are ignored.`);
     }
-    if (b.httpchk && !b.servers.some((s) => s.check)) c.warnings.push(`config : 'option httpchk' ignored for proxy '${b.name}' as no server has the 'check' option.`);
   }
   return c;
 }
@@ -629,8 +629,11 @@ export function runtime(j: Game, line: string): string {
     const was = s.admin;
     s.admin = admin;
     s.lastChange = now;
-    if (admin === 'maint') haLog(j, `Server ${s.backend}/${s.name} is going DOWN for maintenance. ${counts(r, s.backend).filter((x) => usable(x) && !x.conf.backup).length} active and ${counts(r, s.backend).filter((x) => usable(x) && x.conf.backup).length} backup servers left. ${s.scur} sessions active, 0 requeued, 0 remaining in queue.`);
-    else if (admin === 'drain') haLog(j, `Server ${s.backend}/${s.name} enters drain state.`);
+    if (admin === 'maint') haLog(j, `${s.conf.backup ? 'Backup ' : ''}Server ${s.backend}/${s.name} is going DOWN for maintenance. ${counts(r, s.backend).filter((x) => usable(x) && !x.conf.backup).length} active and ${counts(r, s.backend).filter((x) => usable(x) && x.conf.backup).length} backup servers left. ${s.scur} sessions active, 0 requeued, 0 remaining in queue.`);
+    // src/server.c of HAProxy 3.0.11 (_srv_update_status_adm, srv_append_more): a drained server
+    // no longer counts among the active ones; the requeued sessions follow.
+    else if (admin === 'drain')
+      haLog(j, `${s.conf.backup ? 'Backup ' : ''}Server ${s.backend}/${s.name} enters drain state. ${counts(r, s.backend).filter((x) => usable(x) && !x.conf.backup).length} active and ${counts(r, s.backend).filter((x) => usable(x) && x.conf.backup).length} backup servers online. 0 sessions requeued, 0 total in queue.`);
     else {
       if (was === 'maint') {
         // Leaving maintenance: the checks start again, from a server considered UP.
@@ -638,7 +641,8 @@ export function runtime(j: Game, line: string): string {
         s.nextCheck = now;
         s.up = true;
       }
-      haLog(j, `Server ${s.backend}/${s.name} is ${s.up ? 'UP' : 'DOWN'} (leaving forced ${was === 'maint' ? 'maintenance' : 'drain'}).`);
+      if (was === 'maint') haLog(j, `${s.conf.backup ? 'Backup ' : ''}Server ${s.backend}/${s.name} is ${s.up ? 'UP' : 'DOWN'}/READY (leaving forced maintenance).`);
+      else haLog(j, `${s.conf.backup ? 'Backup ' : ''}Server ${s.backend}/${s.name} is ${s.up ? 'UP' : 'DOWN'} (leaving forced drain).`);
     }
   };
   if (cmd === 'show stat') return `${showStat(j)}\n`;

@@ -11,8 +11,10 @@
 // with -e or a script says the statement's line ("ERROR 1146 (42S02) at line
 // 1: …") and stops, unless -f. Without -e and without input, it opens its
 // interactive monitor (MariaDB [db]> ).
-// Differences: no ~/.my.cnf for the client, no pager, no history; the old
-// names (mysql, mysqldump…) work without the deprecation warning; a dump's
+// The old names (mysql, mysqldump…) print no deprecation warning, as on Debian:
+// upstream's mysys/my_init.c warns, Debian 13 disables it
+// (debian/patches/hide-mysql-command-deprecation-warnings.patch, 1:11.8.3-0+deb13u1).
+// Differences: no ~/.my.cnf for the client, no pager, no history; a dump's
 // consistency is decided from the server's state (see mariadb.ts), not
 // from the rows of a real moment.
 
@@ -115,8 +117,15 @@ interface Target {
   via: string;
 }
 
-/** The server a client reaches (socket, or TCP to a machine of the story), or the client's error. */
-function reach(game: Shell, host: string | undefined, port: string | undefined, protocol: string | undefined): Target | SqlError {
+/**
+ * The server a client reaches (socket, or TCP to a machine of the story), or the client's error.
+ * Connector/C 3.4 (libmariadb/ma_errmsg.c, plugins/pvio/pvio_socket.c at v3.4.5, the client
+ * of MariaDB 11.8.3): a failed TCP connect reports CR_CONNECTION_ERROR (2002) with
+ * CR_CONN_HOST_ERROR's text and the errno left by the non-blocking connect(), EINPROGRESS
+ * (115), whether the port was refused or the packets dropped; only a poll() that runs out of
+ * --connect-timeout sets ETIMEDOUT (110). An unknown name is getaddrinfo's EAI_NONAME (-2).
+ */
+function reach(game: Shell, host: string | undefined, port: string | undefined, protocol: string | undefined, connectTimeout?: string): Target | SqlError {
   const socket = (!host || host === 'localhost') && protocol?.toLowerCase() !== 'tcp';
   if (socket) {
     if (!hasMaria(game) || !maria(game).running) return { code: 2002, state: 'HY000', message: `Can't connect to local server through socket '${SOCKET}' (2)` };
@@ -129,7 +138,7 @@ function reach(game: Shell, host: string | undefined, port: string | undefined, 
   if (!hasMaria(server)) return { code: 2002, state: 'HY000', message: `Can't connect to server on '${name}' (115)` };
   const from = server === game ? (address === '127.0.0.1' ? '127.0.0.1' : address) : sourceFor(game, address);
   const r = reachable(server, from, address);
-  if (r !== 'ok' || (port && port !== maria(server).vars.port)) return { code: 2002, state: 'HY000', message: `Can't connect to server on '${name}' (${r === 'timeout' ? 110 : 115})` };
+  if (r !== 'ok' || (port && port !== maria(server).vars.port)) return { code: 2002, state: 'HY000', message: `Can't connect to server on '${name}' (${r === 'timeout' && Number(connectTimeout) > 0 ? 110 : 115})` };
   return { server, host: from, via: `${name} via TCP/IP` };
 }
 
@@ -138,7 +147,7 @@ const errorLine = (e: SqlError, line?: number) => `ERROR ${e.code} (${e.state})$
 
 /** Opens a session for a client program; the session, or an error already reported. */
 function open(game: Shell, o: Parsed, kind: Conn['kind'] = 'client', interactive = false, password?: string | null): Session | SqlError {
-  const t = reach(game, o.options.h, o.options.P, o.options.protocol);
+  const t = reach(game, o.options.h, o.options.P, o.options.protocol, o.options['connect-timeout']);
   if ('code' in t) return t;
   const user = o.options.u ?? game.who;
   const pw = password !== undefined ? password : (o.options.p ?? null);
@@ -591,7 +600,7 @@ function admin(game: Shell, program: string, args: string[]): string {
   if (o.unknown) return unknownOption(game, program, o.unknown);
   if (!o.positional.length) return game.error(game.t('mariadb-admin-usage', { program }), 1);
   const go = (password?: string | null): string => {
-    const t = reach(game, o.options.h, o.options.P, o.options.protocol);
+    const t = reach(game, o.options.h, o.options.P, o.options.protocol, o.options['connect-timeout']);
     const where = o.options.h ?? 'localhost';
     const down = (e: SqlError) => game.error(`${program}: connect to server at '${where}' failed\nerror: '${e.message}'${e.code === 2002 && where === 'localhost' ? `\nCheck that mariadbd is running and that the socket: '${SOCKET}' exists!` : ''}`, 1);
     if ('code' in t) return down(t);

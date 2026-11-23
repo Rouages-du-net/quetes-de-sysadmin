@@ -1,7 +1,7 @@
 // CUPS, the print server of a Debian machine (cups 2.4): the scheduler
 // cupsd and its state, kept in state.cups. What it models:
-// - /etc/cups/cupsd.conf, read when cupsd starts (and on SIGHUP, systemctl
-//   reload): LogLevel, MaxLogSize, PreserveJobHistory, PreserveJobFiles,
+// - /etc/cups/cupsd.conf, read when cupsd starts (systemctl reload is
+//   refused: the unit has no ExecReload=): LogLevel, MaxLogSize, PreserveJobHistory, PreserveJobFiles,
 //   ErrorPolicy, Listen and Port, Browsing, the <Location> blocks (Order,
 //   Allow, Deny) that decide who reaches a path, and <Policy default> with
 //   its <Limit> blocks (Require user @OWNER @SYSTEM) and JobPrivateValues;
@@ -835,6 +835,9 @@ export function attach(j: Game) {
   s.check = (g) => startErrors(g);
   s.load = (g) => startCupsd(g);
   s.stop = (g) => stopCupsd(g);
+  // Debian 13's cups.service (cups 2.4.10, scheduler/cups.service.in) has no ExecReload=:
+  // systemctl reload cups is refused; a restart rereads the files.
+  s.noReload = true;
 }
 
 // ——— cupsd.conf edited like cupsctl ———
