@@ -11,7 +11,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test:
+  # Two jobs side by side: the unit tests, and the build checked in
+  # Chromium. The deployment waits for both.
+  unit:
+    name: Unit tests (Vitest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -21,13 +24,48 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+  test:
+    name: Build, budget and Chromium checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - run: npm run build
-      - name: Check in Chromium (1000 and 375 px, CSP, embedding, PWA)
+      # Playwright's Chromium, kept between runs for the same Playwright version
+      # (its system libraries are installed on each run).
+      - name: Playwright's version
+        id: playwright
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: chromium
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
+      - if: steps.chromium.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.chromium.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+      # tests/browser.mjs and tests/a11y.mjs (npm run test:browser) side by
+      # side, each with its own browser: they mostly wait on pages, not on
+      # the processor. Each log is printed whole, then both must pass.
+      - name: Check in Chromium (1000 and 375 px, CSP, embedding, PWA, accessibility)
         run: |
-          npx playwright install --with-deps chromium
           npm run preview &
           for i in $(seq 30); do curl -fs -o /dev/null http://localhost:4340/ && break; sleep 1; done
-          npm run test:browser
+          node tests/browser.mjs > browser.log 2>&1 & browser=$!
+          node tests/a11y.mjs > a11y.log 2>&1 & a11y=$!
+          status=0
+          wait $browser || status=1
+          wait $a11y || status=1
+          echo "::group::tests/browser.mjs"; cat browser.log; echo "::endgroup::"
+          echo "::group::tests/a11y.mjs"; cat a11y.log; echo "::endgroup::"
+          tail -n 5 browser.log a11y.log
+          exit $status
       - uses: actions/upload-artifact@v4
         with:
           name: dist
@@ -35,7 +73,7 @@ jobs:
           include-hidden-files: true # .htaccess
 
   deploy:
-    needs: test
+    needs: [unit, test]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:

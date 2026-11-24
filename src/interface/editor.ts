@@ -4,6 +4,7 @@
 // keyboards without a Ctrl key (mobiles).
 
 import type { Translate } from '../texts';
+import { el } from './dom';
 
 export interface EditorOptions {
   t: Translate;
@@ -14,13 +15,6 @@ export interface EditorOptions {
   save: (text: string) => { message: string; written: boolean };
   /** The editor is closed. */
   close: () => void;
-}
-
-function el<K extends keyof HTMLElementTagNameMap>(name: K, attrs: Record<string, string> = {}, ...children: (Node | string)[]) {
-  const e = document.createElement(name);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  e.append(...children);
-  return e;
 }
 
 const shortcut = (key: string, label: string) =>

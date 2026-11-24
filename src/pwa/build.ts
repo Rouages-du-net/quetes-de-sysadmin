@@ -10,7 +10,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
-import { pageFirstVisit } from './first-load.mjs';
+import { closure, pageFirstVisit } from './first-load.mjs';
 
 // The languages of the site: each has its game page and its manifest.
 export const LANGUAGES = ['en', 'fr'] as const;
@@ -20,7 +20,9 @@ export const LANGUAGES = ['en', 'fr'] as const;
 // first visit (first-load.mjs: the game's scripts, its core texts, the
 // styles) with the font (only its WOFF2 version, which every browser with
 // service workers reads), the dialogs' texts (texts-*--dialog-*: small,
-// and a dialog must open offline) and the chapters' summaries
+// and a dialog must open offline), the rarely opened dialogs' own chunks
+// (*-dialog.*.js and their imports, see src/interface/lazy-dialog.ts: they
+// must open offline too) and the chapters' summaries
 // (texts-*--summaries: the menu fills them once the terminal is ready).
 // The stories and the manual's pages are not precached: the service worker keeps them when they are first loaded.
 export function precacheList(dist: string): string[] {
@@ -38,10 +40,13 @@ export function precacheList(dist: string): string[] {
           .map((name) => `${prefix}${name}`)
       : [];
   paths.push(...listed('icons', '/icons/', (name) => name.endsWith('.png')));
-  const firstVisit = new Set(
+  const kept = new Set(
     LANGUAGES.filter((lang) => existsSync(join(dist, lang, 'index.html'))).flatMap((lang) => pageFirstVisit(dist, lang, lang).map((f: string) => relative(join(dist, '_astro'), f))),
   );
-  paths.push(...listed('_astro', '/_astro/', (name) => name.endsWith('.woff2') || firstVisit.has(name) || /^texts-[\w-]+--(dialog-|summaries[.-])/.test(name)));
+  const astro = join(dist, '_astro');
+  const dialogs = existsSync(astro) ? readdirSync(astro).filter((name) => /^[\w-]+-dialog\.[\w-]+\.js$/.test(name)) : [];
+  for (const f of closure(dialogs.map((name) => join(astro, name)), dist)) kept.add(relative(astro, f));
+  paths.push(...listed('_astro', '/_astro/', (name) => name.endsWith('.woff2') || kept.has(name) || /^texts-[\w-]+--(dialog-|summaries[.-])/.test(name)));
   return paths;
 }
 
