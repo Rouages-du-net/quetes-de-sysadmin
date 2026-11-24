@@ -114,6 +114,8 @@ export const MACHINES: Machine[] = [
   machine('wings', '192.0.2.160', 'dance-troupe'),
   // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
   machine('meadow', '192.0.2.164', 'shelter'),
+  // The Zine Library: a volunteer zine library's Debian server (nginx, php-fpm and its AppArmor profile, a backup script to confine).
+  machine('stapler', '192.0.2.190', 'zine-library'),
 ];
 
 /**

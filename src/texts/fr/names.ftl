@@ -529,3 +529,7 @@ name-link_for_zuri-txt = lien_pour_zuri.txt
 name-message_from_teuila-txt = message_de_teuila.txt
 name-envelope-txt = enveloppe.txt
 name-review-md = retour.md
+## La Fanzinothèque
+name-message_from_nomvula-txt = message_de_nomvula.txt
+name-notes_from_bartek-txt = notes_de_bartek.txt
+name-message_from_hinewai-txt = message_de_hinewai.txt

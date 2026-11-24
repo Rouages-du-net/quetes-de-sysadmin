@@ -66,3 +66,4 @@ machine-wings = wings
 machine-meadow = meadow
 machine-paddock = paddock
 machine-haven = haven
+machine-stapler = stapler

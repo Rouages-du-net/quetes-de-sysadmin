@@ -687,6 +687,15 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **AppArmor** (Debian 13's mandatory access control): a web app's
+  data moved and refused by its profile, and a profile of one's own for a
+  script that runs as root. Done: story 51, "The Zine Library"
+  (`apparmor.ts`: profiles, the kernel's policy, attachment at exec, enforce
+  and complain, audit records in the kernel's log or audit.log;
+  `aa-status`, `apparmor_parser`, `aa-enforce`, `aa-complain`,
+  `aa-disable`, `aa-autodep`, `aa-logprof`, `aa-genprof` in the `apparmor`
+  family; two errors in the error explainer).
+
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within
   their RPO), a rebuild on a spare machine after a flood, the switch, the

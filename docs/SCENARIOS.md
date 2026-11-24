@@ -291,6 +291,8 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
+| AppArmor's model (`apparmor.ts`, The Zine Library) | AppArmor 4.1.0 as Debian 13 ships it: profiles of `/etc/apparmor.d` read like apparmor_parser (abi, includes with `if exists` and directories, variables from the tunables, `profile NAME ATTACHMENT flags=(…)`, file rules with `owner`, `deny`, `audit`, the modes r w a l k m and ix px ux cx, capability rules; other rules accepted), globbing (`*`, `**`, `?`, `{a,b}`, `[…]`), the policy in the kernel (load, replace, remove; a replaced profile reaches the processes it confines, a removed one leaves them unconfined, a profile attaches at exec), enforce and complain (deny rules hold, unlogged), the audit records `apparmor="DENIED"`/`"ALLOWED"`/`"STATUS"` in the kernel's log, or in `/var/log/audit/audit.log` (and the journal) once auditd runs; `disable/` links; the php-fpm profile of `apparmor-profiles` | the world's other profiles, abstractions and tunables are trimmed; hats and subprofiles are listed but not entered; a child executed `cx` stays under its parent; network, signal, unix, dbus, mount rules have no effect; no profile cache, no policy namespaces, no `kill`/`prompt` behaviour; only the accesses the story's programs make are checked; the parser's syntax errors are fewer and their wording approximated (missing comma, mode, top-level rule, missing include); a profile reloaded unchanged still writes a `profile_replace` record |
+| `aa-status`, `apparmor_parser`, `aa-enforce`, `aa-complain`, `aa-disable`, `aa-autodep`, `aa-logprof`, `aa-genprof` (`commands/apparmor.ts`, the `apparmor` family) | aa-status's layout and counts (binutils/aa_status.c), its exit code 4 and "You do not have enough privilege to read the profile set."; apparmor_parser's `-r`, `-a`, `-R`, `-Q`, `-N`, `-C`, `-v` ("Replacement succeeded for …"), "Unable to replace … Permission denied; attempted to load a profile while confined?", "Profile already exists", "Profile doesn't exist"; the tools' "Setting %s to complain mode.", "Disabling %s.", "Profile for %s not found, skipping", "Writing updated profile for %s.", the flags rewritten in the file and the profile reloaded; aa-autodep's profile (complain, base, a script's interpreter `ix` and the bash abstraction); aa-logprof's questions (Profile, Path, New Mode, Severity, the numbered options, Allow, Deny, Ignore, Glob, Glob with Extension, New, Owner, Abort, Finish; Inherit, Unconfined, Deny for an exec; the capability; "= Changed Local Profiles =", Save, View) | a question is answered with a letter and Enter; aa-logprof adds its rules before the profile's closing brace instead of rewriting the profile in order, proposes only the nameservice, bash and ssl_certs abstractions, and rates severity for a handful of paths; Child and Named exec modes are not offered; aa-genprof can't watch another window (its Scan reads what came after its mark); the Python tools' errors as root-less are simplified to "ERROR: [Errno 13] Permission denied: '…'"; no `--json` for aa-logprof, `aa-status --json` is minimal; the tools answer in English in every language |
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: its outputs and the admin API's errors ("Error: GetBucketInfo returned NoSuchBucket (404): …") as Garage 2.1.0's CLI prints them, status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
 | The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
@@ -4895,6 +4897,77 @@ memory), restores a snapshot beside and verifies it. Expected traps: the
 name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
+
+## Story 51: The Zine Library (two chapters)
+
+The Zine Library, a volunteer-run library of zines, keeps its catalogue
+(zinecat, a small PHP app under `php8.4-fpm`, behind nginx) and the scans of
+its zines on `stapler` (192.0.2.190), a Debian 13 server where AppArmor
+4.1.0-1 confines php-fpm with the `php-fpm` profile of `apparmor-profiles`
+(upstream's file, unchanged). Nomvula coordinates the volunteers, Bartek set
+up the server in 2031 (the site's rules in `/etc/apparmor.d/local/php-fpm`),
+Rahim moved the scans to the new disk, Hinewai wrote the nightly backup
+script. AppArmor from the sysadmin's side, defensive throughout: read the
+kernel's refusals, add a rule where it belongs, write a profile from what a
+program really does. Engine: `apparmor.ts` (profiles read like
+apparmor_parser, the kernel's policy, what each process is confined by, the
+decisions and their audit records), its commands in `commands/apparmor.ts`
+(the `apparmor` family, loaded with the story), two explanations in the error
+explainer. The story is built in `chapters/zine-library.ts`. It opens after
+"Shared Rights" (file permissions) and "The Proxy" (nginx), and extends the
+security and web paths. The debriefs contrast AppArmor's paths with SELinux's
+labels.
+
+### Chapter 1 — Denied (done)
+
+Friday 11 March 2033, 17:40, the night before the zine fair. At 15:12 Rahim
+moved the scans from `/var/www/zinecat/scans` to `/srv/scans` and changed
+`config.php`: the catalogue answers 500 and every upload fails, though
+`/srv/scans` belongs to www-data. Each command, a visitor looks at the
+catalogue and a volunteer uploads a scan.
+
+| Step | Command learnt |
+|---|---|
+| Who says no | `journalctl -k`, `dmesg`: `apparmor="DENIED" operation="open" profile="php-fpm" name="/srv/scans/"`, `operation="mknod"` |
+| The profile | `aa-status`, `/etc/apparmor.d/php-fpm` and its `include if exists <local/php-fpm>` |
+| The rule, in its place | `/srv/scans/ r,` and `/srv/scans/** rw,` in `local/php-fpm`, `apparmor_parser -r /etc/apparmor.d/php-fpm` (or `systemctl reload apparmor`) |
+
+Goal checked on the state: php-fpm's profile loaded in enforce mode and
+confining the workers, allowing the directory `config.php` names to be listed
+and written, not `/etc/shadow`; the vendor's file as shipped (flags aside);
+the scans' directory not writable by all; the last upload went through.
+Several solutions: the local file, a file of `/etc/apparmor.d/php-fpm.d`,
+`owner` rules, a glob `{,**}`; `apparmor_parser -r` or a reload of the
+service; even the scans moved back. Expected traps: `aa-disable` (and the
+workers left unconfined once it is enabled again, until php-fpm restarts),
+`aa-complain` left on, the vendor's profile edited, `chmod 777`, the local
+file edited but not reloaded, the local file given to the parser, a missing
+comma, read without write, `/** rw`.
+
+### Chapter 2 — A Profile of Our Own (done)
+
+Tuesday 22 March 2033, 19:10. Hinewai's `zine-backup` runs as root and tars
+what `/etc/zine-backup.conf` lists; in February `/etc` was added and
+`/etc/shadow` ended up on a shared USB key. Rahim installed auditd: the
+records go to `/var/log/audit/audit.log`.
+
+| Step | Command learnt |
+|---|---|
+| The script | `/usr/local/sbin/zine-backup`, `/etc/zine-backup.conf` |
+| A first profile | `aa-autodep` (complain mode, base, bash, `/usr/bin/dash ix`) |
+| Watching it | `sudo zine-backup` or `systemctl start zine-backup`, `apparmor="ALLOWED"` in audit.log |
+| The rules | `aa-logprof` (Inherit, Allow, Glob, the nameservice abstraction, `capability dac_read_search`), or a profile by hand |
+| Enforced | `aa-enforce`, a run again, `/etc/shadow` in SOURCES refused (`apparmor="DENIED"`) |
+
+Goal checked on the state: the profile attaching to the script loaded in
+enforce mode, in enforce mode in its file too, reaching nothing a backup
+never needs (`/etc/shadow`, root's and your SSH keys, `/etc/sudoers`, writing
+`/etc/passwd` or `/etc/cron.d`, tar unconfined), and the last run confined by
+it, successful, with the scans and the catalogue archived. Several solutions:
+aa-logprof's questions answered in many ways, aa-genprof's steps, a profile
+written by hand. Expected traps: enforcing before observing, the archive's
+dated name allowed as is, `/** rwix` (and its missing capability), tar as
+`ux`, complain mode left on, a profile that doesn't attach.
 
 ## Ideas for later
 

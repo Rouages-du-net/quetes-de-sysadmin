@@ -45,6 +45,8 @@ export const EXPLANATIONS = [
   's3-no-bucket',
   's3-credentials',
   'garage-layout',
+  'apparmor-root',
+  'apparmor-parser',
   'refused',
   'timed-out',
   'no-route',

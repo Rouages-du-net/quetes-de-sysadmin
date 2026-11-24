@@ -526,3 +526,7 @@ name-link_for_zuri-txt = link_for_zuri.txt
 name-message_from_teuila-txt = message_from_teuila.txt
 name-envelope-txt = envelope.txt
 name-review-md = review.md
+## The Zine Library
+name-message_from_nomvula-txt = message_from_nomvula.txt
+name-notes_from_bartek-txt = notes_from_bartek.txt
+name-message_from_hinewai-txt = message_from_hinewai.txt

@@ -5775,6 +5775,82 @@
      "events": 19
     }
    ]
+  },
+  {
+   "id": "zine-library",
+   "after": [
+    "shared-rights",
+    "proxy"
+   ],
+   "texts": [
+    "chapter-backup-profile.ftl",
+    "chapter-denied-upload.ftl",
+    "chapter-memory.ftl",
+    "hints-zine-library.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "denied-upload",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "diff",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "dmesg",
+      "ps",
+      "curl",
+      "chmod",
+      "aa-status",
+      "apparmor_parser",
+      "aa-enforce",
+      "aa-complain",
+      "aa-disable",
+      "exit"
+     ],
+     "events": 14
+    },
+    {
+     "id": "backup-profile",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "diff",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ps",
+      "tar",
+      "aa-status",
+      "apparmor_parser",
+      "aa-enforce",
+      "aa-complain",
+      "aa-disable",
+      "aa-autodep",
+      "aa-logprof",
+      "aa-genprof",
+      "exit"
+     ],
+     "events": 10
+    }
+   ]
   }
  ]
 }

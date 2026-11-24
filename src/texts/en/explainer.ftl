@@ -225,3 +225,13 @@ explainer-garage-layout = Garage didn't apply the layout change. A layout is cha
         Please pass the new layout version number
         Invalid new layout version
         is smaller than the replication factor
+
+explainer-apparmor-root = Reading or changing AppArmor's policy is root's business: the profiles loaded in the kernel, which processes they confine, loading or removing one. Run the command with sudo. (aa-status --enabled alone works without it.)
+    .match =
+        You do not have enough privilege to read the profile set
+        attempted to load a profile while confined
+        ERROR: [Errno 13] Permission denied:
+
+explainer-apparmor-parser = apparmor_parser couldn't read the profile, so it loaded nothing: the kernel keeps the version it had. The message names the file and the line ("in profile" gives the file the error is in, an included one perhaps); every rule ends with a comma, and a missing comma is reported on the next line. A file of local/ or abstractions/ is not a profile: load the profile that includes it. man apparmor.d gives the syntax; apparmor_parser -Q checks a file without loading it.
+    .match =
+        AppArmor parser error for
