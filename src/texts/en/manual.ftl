@@ -4908,6 +4908,38 @@ man-aws = the AWS command-line tool (version 2), used here with an S3-compatible
     .example-9 = where each setting comes from
     .example-10 = an object's size, ETag and date
     .example-11 = a lifecycle rule from a JSON file
+man-tofu = runs OpenTofu, infrastructure as code. The open-source fork of Terraform: the .tf files of the current directory describe objects (here DNS records, with the hashicorp/dns provider), and tofu makes the real ones match. init prepares a directory once: it installs the providers (here from a local mirror, see ~/.tofurc) and writes .terraform.lock.hcl (the versions chosen, to commit). fmt rewrites the files in the standard style (-check: only say which ones differ, exit code 3; -diff: show the changes). validate checks the configuration against the providers' schemas, without touching anything. plan reads the state, refreshes each object from the real world, and shows what it would do: + create, ~ update in place, - destroy, -/+ replace (an attribute marked "# forces replacement"), with the summary line "Plan: N to add, N to change, N to destroy."; changes made outside OpenTofu are shown first ("Objects have changed outside of OpenTofu"). apply does the same plan, asks "Enter a value:" (only yes approves; -auto-approve skips the question) and makes the changes. Variables are declared in variable blocks; their values come from their default, TF_VAR_NAME, terraform.tfvars, *.auto.tfvars, -var-file and -var, in that order. The state (terraform.tfstate, a JSON file with a serial; the previous one in terraform.tfstate.backup) is OpenTofu's memory of the objects it manages: never edit it by hand. Each operation locks it; a lock held by another process stops the command (Lock Info says who), and a local state's lock can't be forced. state list and state show NAME read it, state rm NAME forgets an object without destroying it, state mv renames it. import ADDRESS ID adopts an existing object into the state (its resource block must exist; for this provider the ID is the record's name with its final dot); an import block (to, id) does the same through plan and apply. output shows the outputs (-raw: one value as is). destroy destroys everything the state manages. -chdir=DIR runs in another directory.
+    .synopsis = tofu [-chdir=DIR] init | fmt | validate | plan | apply | destroy | import ADDRESS ID | state list|show|rm|mv | output [NAME] | show | force-unlock ID | version [OPTIONS]
+    .option-chdir = run in this directory instead of the current one (before the subcommand).
+    .option-auto-approve = (apply, destroy) don't ask for "yes" (for reviewed plans only).
+    .option-var = NAME=VALUE: a variable's value for this command only.
+    .option-var-file = a file of variable values, read after terraform.tfvars and *.auto.tfvars.
+    .option-lock = -lock=false: don't lock the state (dangerous when another run may write it).
+    .option-detailed-exitcode = (plan) exit code 0 if nothing to do, 2 if there are changes, 1 on error.
+    .option-refresh-only = (plan, apply) only record in the state what changed outside, change nothing real.
+    .option-destroy = (plan, apply) plan to destroy everything the state manages.
+    .option-out = (plan) save the plan in this file, for tofu apply FILE.
+    .option-check = (fmt) change nothing, list the files that aren't formatted (exit code 3).
+    .option-diff = (fmt) show the changes as a diff.
+    .option-recursive = (fmt) also the subdirectories.
+    .option-upgrade = (init) choose the newest versions the constraints allow, again.
+    .option-raw = (output) one value as is, without quotes (for scripts).
+    .option-json = (output) the outputs as JSON.
+    .option-no-color = no colours in the output.
+    .example-1 = prepare the directory: the providers and the lock file
+    .example-2 = rewrite the files in the standard style
+    .example-3 = which files fmt would change, and how
+    .example-4 = check the configuration without touching anything
+    .example-5 = what apply would do, compared with the real records
+    .example-6 = a variable's value for this command only
+    .example-7 = make the changes, after a yes
+    .example-8 = drift detection for a script: exit code 2 if something differs
+    .example-9 = record outside changes in the state, without changing anything
+    .example-10 = the objects the state manages
+    .example-11 = one object as the state knows it
+    .example-12 = adopt a record made by hand (its resource block must exist)
+    .example-13 = one output's value, for a script
+    .example-14 = run in another directory
 man-rclone = copies and synchronises files between a local file system and remotes (here an S3 store), defined in its configuration file (~/.config/rclone/rclone.conf, or --config FILE, or RCLONE_CONFIG): a [NAME] section with type = s3, provider, access_key_id, secret_access_key, region, endpoint. A remote path is NAME:BUCKET/PATH. ls lists the files with their size, lsl with their date, lsd the buckets or folders, cat prints files, size adds them up. copy SOURCE DEST copies what is new or changed (it deletes nothing); copyto copies one file to one name; sync SOURCE DEST makes DEST the same as SOURCE: it copies what changed AND deletes from DEST what SOURCE doesn't have; mind the direction. --backup-dir NAME:PATH (on the same remote, not inside DEST) keeps what sync or copy replaces or deletes, moved there instead; -n (--dry-run) says what it would do and does nothing. check SOURCE DEST compares both sides file by file (size and MD5) and counts the differences (exit code 1 if there are any). rclone logs to the error output ("ERROR :", "NOTICE:"); a failed operation is tried three times ("Attempt 1/3 failed"), and nothing is deleted after an error. config show prints the remotes, listremotes their names.
     .synopsis = rclone [--config FILE] [-n] [-v] ls|lsl|lsd|cat|size|copy|copyto|sync|check|config show|listremotes [SOURCE] [DEST]
     .option-n = dry run: say what would be copied and deleted, do nothing (--dry-run).

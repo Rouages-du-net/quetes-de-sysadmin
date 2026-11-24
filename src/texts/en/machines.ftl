@@ -66,3 +66,6 @@ machine-wings = wings
 machine-meadow = meadow
 machine-paddock = paddock
 machine-haven = haven
+
+## The Mapping Party
+machine-cairn = cairn

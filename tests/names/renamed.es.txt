@@ -1915,6 +1915,18 @@ switch-and-learn:haven
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
 
+first-plan
+  /home/you → /home/tu
+  /home/you/message_from_andile.txt → /home/tu/mensaje_de_andile.txt
+  /home/you/notes_from_yusra.txt → /home/tu/notas_de_yusra.txt
+  /home/you/.tofurc → /home/tu/.tofurc
+
+drift
+  /home/you → /home/tu
+  /home/you/message_from_andile.txt → /home/tu/mensaje_de_andile.txt
+  /home/you/message_from_femi.txt → /home/tu/mensaje_de_femi.txt
+  /home/you/.tofurc → /home/tu/.tofurc
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

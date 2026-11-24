@@ -96,3 +96,5 @@ story-dance-troupe = The Dance Troupe
     .summary = A community dance troupe keeps its website, its members' files and its films in a small self-hosted object store: a Garage cluster with an S3 API, on three machines in three places. Private documents published with the website, a nightly backup that has failed since a power cut, a big film to share for a week while a node lies dead: running object storage, from the sysadmin's side.
 story-shelter = The Shelter
     .summary = Two animal shelters keep their adoption site and its database on one server in an old barn's cellar, and a disaster recovery plan nobody has read since 2029. Make the plan true, then live through the night the river comes in: rebuild on a spare machine from the backups, switch the site over, write the review, and schedule the next drill.
+story-mapping-party = The Mapping Party
+    .summary = A volunteer collective that maps step-free routes keeps its DNS as code with OpenTofu. A new record written in a hurry, then an evening when someone fixed things by hand and left a run holding the lock: plan, apply, drift and import, from the sysadmin's side.

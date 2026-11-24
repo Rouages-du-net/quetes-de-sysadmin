@@ -4929,6 +4929,38 @@ man-aws = l'outil en ligne de commande d'AWS (version 2), utilisé ici avec un s
     .example-9 = d'où vient chaque réglage
     .example-10 = la taille, l'ETag et la date d'un objet
     .example-11 = une règle de cycle de vie depuis un fichier JSON
+man-tofu = lance OpenTofu, l'infrastructure en code. Le fork libre de Terraform : les fichiers .tf du répertoire courant décrivent des objets (ici des enregistrements DNS, avec le fournisseur hashicorp/dns), et tofu fait correspondre les vrais. init prépare un répertoire une fois : il installe les fournisseurs (ici depuis un miroir local, voir ~/.tofurc) et écrit .terraform.lock.hcl (les versions choisies, à committer). fmt réécrit les fichiers dans le style standard (-check : dire seulement lesquels diffèrent, code de sortie 3 ; -diff : montrer les changements). validate vérifie la configuration par rapport aux schémas des fournisseurs, sans rien toucher. plan lit l'état, relit chaque objet dans le monde réel, et montre ce qu'il ferait : + créer, ~ modifier sur place, - détruire, -/+ remplacer (un attribut marqué « # forces replacement »), avec la ligne de bilan « Plan: N to add, N to change, N to destroy. » ; les changements faits hors d'OpenTofu viennent d'abord (« Objects have changed outside of OpenTofu »). apply fait le même plan, demande « Enter a value: » (seul yes approuve ; -auto-approve saute la question) et fait les changements. Les variables sont déclarées dans des blocs variable ; leurs valeurs viennent de leur valeur par défaut, de TF_VAR_NOM, de terraform.tfvars, des *.auto.tfvars, de -var-file et de -var, dans cet ordre. L'état (terraform.tfstate, un fichier JSON avec un numéro de série ; le précédent dans terraform.tfstate.backup) est la mémoire d'OpenTofu des objets qu'il gère : ne le modifie jamais à la main. Chaque opération le verrouille ; un verrou tenu par un autre processus arrête la commande (Lock Info dit qui), et le verrou d'un état local ne se force pas. state list et state show NOM le lisent, state rm NOM oublie un objet sans le détruire, state mv le renomme. import ADRESSE ID adopte un objet existant dans l'état (son bloc resource doit exister ; pour ce fournisseur, l'ID est le nom de l'enregistrement avec son point final) ; un bloc import (to, id) fait de même en passant par plan et apply. output montre les sorties (-raw : une valeur telle quelle). destroy détruit tout ce que gère l'état. -chdir=RÉP travaille dans un autre répertoire.
+    .synopsis = tofu [-chdir=RÉP] init | fmt | validate | plan | apply | destroy | import ADRESSE ID | state list|show|rm|mv | output [NOM] | show | force-unlock ID | version [OPTIONS]
+    .option-chdir = travailler dans ce répertoire au lieu du répertoire courant (avant la sous-commande).
+    .option-auto-approve = (apply, destroy) ne pas demander « yes » (pour des plans déjà relus seulement).
+    .option-var = NOM=VALEUR : la valeur d'une variable pour cette commande seulement.
+    .option-var-file = un fichier de valeurs de variables, lu après terraform.tfvars et les *.auto.tfvars.
+    .option-lock = -lock=false : ne pas verrouiller l'état (dangereux si une autre exécution peut l'écrire).
+    .option-detailed-exitcode = (plan) code de sortie 0 s'il n'y a rien à faire, 2 s'il y a des changements, 1 en cas d'erreur.
+    .option-refresh-only = (plan, apply) seulement enregistrer dans l'état ce qui a changé dehors, ne rien changer de réel.
+    .option-destroy = (plan, apply) prévoir de détruire tout ce que gère l'état.
+    .option-out = (plan) enregistrer le plan dans ce fichier, pour tofu apply FICHIER.
+    .option-check = (fmt) ne rien changer, lister les fichiers mal formatés (code de sortie 3).
+    .option-diff = (fmt) montrer les changements sous forme de diff.
+    .option-recursive = (fmt) aussi les sous-répertoires.
+    .option-upgrade = (init) choisir à nouveau les versions les plus récentes que permettent les contraintes.
+    .option-raw = (output) une valeur telle quelle, sans guillemets (pour les scripts).
+    .option-json = (output) les sorties en JSON.
+    .option-no-color = pas de couleurs dans la sortie.
+    .example-1 = préparer le répertoire : les fournisseurs et le fichier de verrouillage
+    .example-2 = réécrire les fichiers dans le style standard
+    .example-3 = quels fichiers fmt changerait, et comment
+    .example-4 = vérifier la configuration sans rien toucher
+    .example-5 = ce que ferait apply, comparé aux vrais enregistrements
+    .example-6 = la valeur d'une variable pour cette commande seulement
+    .example-7 = faire les changements, après un yes
+    .example-8 = détecter la dérive dans un script : code de sortie 2 si quelque chose diffère
+    .example-9 = enregistrer dans l'état les changements faits dehors, sans rien changer
+    .example-10 = les objets que gère l'état
+    .example-11 = un objet tel que l'état le connaît
+    .example-12 = adopter un enregistrement fait à la main (son bloc resource doit exister)
+    .example-13 = la valeur d'une sortie, pour un script
+    .example-14 = travailler dans un autre répertoire
 man-rclone = copie et synchronise des fichiers entre un système de fichiers local et des « remotes » (ici un stockage S3), définis dans son fichier de configuration (~/.config/rclone/rclone.conf, ou --config FICHIER, ou RCLONE_CONFIG) : une section [NOM] avec type = s3, provider, access_key_id, secret_access_key, region, endpoint. Un chemin distant s'écrit NOM:BUCKET/CHEMIN. ls liste les fichiers avec leur taille, lsl avec leur date, lsd les buckets ou les dossiers, cat affiche des fichiers, size en fait le total. copy SOURCE DEST copie ce qui est nouveau ou modifié (il ne supprime rien) ; copyto copie un fichier vers un nom ; sync SOURCE DEST rend DEST identique à SOURCE : il copie ce qui a changé ET supprime de DEST ce que SOURCE n'a pas ; attention au sens. --backup-dir NOM:CHEMIN (sur le même remote, pas dans DEST) garde ce que sync ou copy remplace ou supprime, déplacé là au lieu d'être perdu ; -n (--dry-run) dit ce qu'il ferait et ne fait rien. check SOURCE DEST compare les deux côtés fichier par fichier (taille et MD5) et compte les différences (code de sortie 1 s'il y en a). rclone écrit son journal sur la sortie d'erreur (« ERROR : », « NOTICE: ») ; une opération ratée est retentée trois fois (« Attempt 1/3 failed »), et rien n'est supprimé après une erreur. config show affiche les remotes, listremotes leurs noms.
     .synopsis = rclone [--config FICHIER] [-n] [-v] ls|lsl|lsd|cat|size|copy|copyto|sync|check|config show|listremotes [SOURCE] [DEST]
     .option-n = essai à blanc : dire ce qui serait copié et supprimé, ne rien faire (--dry-run).

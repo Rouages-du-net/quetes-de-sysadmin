@@ -114,6 +114,8 @@ export const MACHINES: Machine[] = [
   machine('wings', '192.0.2.160', 'dance-troupe'),
   // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
   machine('meadow', '192.0.2.164', 'shelter'),
+  // The Mapping Party: a mapping collective's DNS server (BIND), its zone kept as code with OpenTofu.
+  machine('cairn', '192.0.2.176', 'mapping-party'),
 ];
 
 /**

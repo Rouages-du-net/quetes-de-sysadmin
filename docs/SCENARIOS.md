@@ -288,6 +288,7 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | rspamd (`rspamd.ts`, The Lifeboat) | rspamd 3.12 (Debian 13): UCL as rspamd reads it (`key = value;`, objects, named objects, lists, comments; `delimiter is missing`), `local.d/` merged over the defaults and `override.d/` over both, read at start and on reload (a wrong file stops a start, a reload keeps the old configuration); the actions and their thresholds (defaults reject 15, add header 6, greylist 4; `null` disables one); the greylist module (a first triplet deferred, its retry after five minutes passes); `multimap` rules of type from (SMTP sender by default, `extract_from` mime or both), rcpt, ip, header with `filter` email:domain/email:user, `score` or `action`; `settings` rules (from, from_mime, rcpt, ip; ANDed kinds; `apply { actions }`, `want_spam`); Bayes in Redis with `min_learns`, learned per message id, relearned in the other class; the milter's answers to Postfix (`5.7.1 Spam message rejected`, `4.7.1 Try again later`, `X-Spam: Yes`); `rspamd_task_write_log` lines in `/var/log/rspamd/rspamd.log` | the symbols come from a set of rules the game knows (reverse DNS, a blocklist, SPF, DKIM and DMARC from the story's network, HTML only, all-caps subject, tracking redirectors, image and short text, list headers), with rspamd 3.12.1's default weights (`conf/scores.d`, the rules' `score`, SUBJ_ALL_CAPS's and PHISHING's dynamic factors); the story's blocklist answers as `RBL_SPAMCOP`, a rule of its own (3.12's default RBLs have no SpamCop), and a tracking redirector raises R_SUSPICIOUS_URL, which rspamd keeps for obscured URLs; Bayes is a naive Bayes on the words of the subject and body (four letters or more, any alphabet), so it learns whatever language the mail is in: the story's mail is written in the player's language and its word lists keep spam and ham apart in each language; no fuzzy storage, neural networks, controller web interface or rspamc's JSON |
 | `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), laid out as `rspamc.cxx` prints it (`[Metric: default]`, Action, Spam, Score, symbols sorted with strcmp, `Message-ID` or `undef`, `Urls`/`Emails` when the message has some), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
+| OpenTofu (`hcl.ts`, `tofu.ts`, The Mapping Party) | OpenTofu v1.13.10's CLI as its sources write it: HCL bodies, blocks, templates and hclsyntax's syntax errors; `fmt` (indentation, aligned `=`, exit code 3 with `-check`, `-diff`); `init` from a filesystem mirror (`.terraform.lock.hcl` with an `h1:` hash, the "Incomplete lock file information" warning); `validate` against hashicorp/dns 3.6.2's schema (`dns_a_record_set`, `dns_aaaa_record_set`, `dns_cname_record`: required, optional, computed, ForceNew); variables from defaults, `TF_VAR_`, `terraform.tfvars`, `*.auto.tfvars`, `-var-file`, `-var`; plan and apply with refresh, drift, `+ ~ - -/+`, hidden unchanged attributes, `-detailed-exitcode`, `-refresh-only`, `-destroy`, import blocks; the local backend's state (JSON format 4, serial, lineage, `.backup`) and lock (Lock Info, force-unlock refused); `import`, `state list/show/rm/mv`, `output` (`-raw`, `-json`); the diagnostics' box at 78 columns | one provider, no modules, workspaces, `count`/`for_each`, data sources, functions, operators, conditionals or heredocs; remote backends and `-generate-config-out` absent; the TSIG key isn't checked; an unset variable is an error, as with `-input=false` (tofu never prompts for it); a saved plan (`-out`) is a marker, `tofu apply FILE` is not supported; named keeps dynamic updates in memory and a growing `.jnl`, never rewrites the zone file, and a restart doesn't replay the journal against a hand-edited file (BIND would refuse it as out of sync); only `-help` of a few subcommands is OpenTofu's own text |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
@@ -4895,6 +4896,75 @@ memory), restores a snapshot beside and verifies it. Expected traps: the
 name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
+
+## Story 48: The Mapping Party (two chapters)
+
+Wayfinders, a volunteer collective that maps the town's step-free routes
+(kerbs, steps, ramps) and holds a mapping party every month, keeps its zone
+`wayfinders.example` as code with OpenTofu (https://opentofu.org/, v1.13.10,
+the open-source fork of Terraform): the hashicorp/dns provider (v3.6.2)
+sends RFC 2136 updates signed with a TSIG key to named on `cairn` (`hito` in
+Spanish, 192.0.2.176, the story's machine), whose zone is dynamic
+(`update-policy`). The code is shared in `/srv/dns` (group dnsadmins), its
+state local (`terraform.tfstate`). Andile coordinates, Yusra wrote the
+configuration and left notes, Dilnoza runs the tile server and the status
+page, Femi is on call. Engine: `hcl.ts` and `tofu.ts` (the `iac` family,
+loaded with the story); four explanations in the error explainer (the state
+lock, init, a variable without a value, the schema). The story is built in
+`chapters/mapping-party.ts`. It opens after "Works for Me" (BIND) and "The
+Playbook" (Ansible, idempotence), and extends the deployment path.
+
+### Chapter 1 — The First Plan (done)
+
+Thursday 10 June 2032, 18:30. Saturday's mapping party needs
+`tiles.wayfinders.example` (192.0.2.180). Andile added the record to
+`records.tf` herself: misindented, with a typo (`adresses`) and a new
+variable without a value; the copy was never initialised on cairn.
+
+| Step | Command learnt |
+|---|---|
+| The directory | `tofu init` (the provider from the filesystem mirror of `~/.tofurc`, `.terraform.lock.hcl`) |
+| The layout | `tofu fmt` (`-check`, `-diff`) |
+| The typo | `tofu validate` (Missing required argument, Unsupported argument with "Did you mean") |
+| The value | `terraform.tfvars` (or `-var`, which only lasts a command) |
+| The plan | `tofu plan` (refresh, `+`, "Plan: 1 to add, 0 to change, 0 to destroy.") |
+| The change | `tofu apply`, "Enter a value:" `yes` |
+| Checked | `dig @127.0.0.1 tiles.wayfinders.example` (or `host`) |
+
+Goal checked on the state: named serves tiles with 192.0.2.180 and the state
+manages it; www and wiki unchanged; every `.tf` file formatted; the
+variable's value in a `.tfvars` file; a lookup of the name that got the
+address. Several solutions: validate or plan to find the typo, `-var` then
+the file, `-auto-approve`, dig or host. Expected traps: the zone file edited
+by hand (`rndc reload` refuses a dynamic zone), the value only on the
+command line, the state file deleted (its backup brings it back).
+
+### Chapter 2 — Drift (done)
+
+Friday 25 June, 9:10. The night before, the old web host (198.51.100.40)
+died; Femi moved www to 198.51.100.41 with nsupdate (TTL 60) and added
+`status` (198.51.100.42), after leaving a `tofu apply` waiting at its
+question: its lock still holds the state. The old host is gone for good.
+
+| Step | Command learnt |
+|---|---|
+| The lock | `tofu plan` (Error acquiring the state lock, Lock Info), `ps aux`, `sudo kill PID` |
+| The drift | `tofu plan` ("Objects have changed outside of OpenTofu", `-/+` and "# forces replacement") |
+| The decision | `records.tf` follows the real change (the address, the TTL either way) |
+| The adoption | a `resource` block, `tofu import ADDRESS status.wayfinders.example.` or an `import` block |
+| Nothing left | `tofu plan` ("No changes."), `-detailed-exitcode` |
+
+Goal checked on the state: no process holds the lock; for every resource of
+the configuration the code, the state and named agree, and the state holds
+nothing else; www on .41, status managed, tiles and wiki unchanged; the
+state file as tofu wrote it; a plan or apply that found nothing to do once
+all agree. Several solutions: TERM or INT (or KILL, its lock file left
+behind), TTL 60 or 300 (a replacement), `tofu import` or an import block.
+Expected traps: `tofu force-unlock` (a local state can't be unlocked by
+another process), `-lock=false`, applying the old code (the site back on
+the dead host), `terraform.tfstate` edited by hand, `tofu state rm` to make
+a difference go away, status created instead of imported (this provider
+lets it pass).
 
 ## Ideas for later
 

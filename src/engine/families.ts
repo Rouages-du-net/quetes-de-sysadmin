@@ -30,6 +30,7 @@ import type * as Directory from './families/directory';
 import type * as Docker from './families/docker';
 import type * as Forge from './families/forge';
 import type * as Ha from './families/ha';
+import type * as Iac from './families/iac';
 import type * as Ibmi from './families/ibmi';
 import type * as Inbound from './families/inbound';
 import type * as Jq from './families/jq';
@@ -61,6 +62,7 @@ export const FAMILIES = {
   docker: () => import('./families/docker'),
   forge: () => import('./families/forge'),
   ha: () => import('./families/ha'),
+  iac: () => import('./families/iac'),
   ibmi: () => import('./families/ibmi'),
   inbound: () => import('./families/inbound'),
   jq: () => import('./families/jq'),
@@ -93,6 +95,7 @@ interface Hooks {
   docker: typeof Docker.HOOKS;
   forge: typeof Forge.HOOKS;
   ha: typeof Ha.HOOKS;
+  iac: typeof Iac.HOOKS;
   ibmi: typeof Ibmi.HOOKS;
   inbound: typeof Inbound.HOOKS;
   jq: typeof Jq.HOOKS;

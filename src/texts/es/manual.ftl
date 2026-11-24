@@ -4890,6 +4890,38 @@ man-aws = la herramienta de línea de comandos de AWS (versión 2), usada aquí 
     .example-9 = de dónde viene cada ajuste
     .example-10 = el tamaño, el ETag y la fecha de un objeto
     .example-11 = una regla de ciclo de vida a partir de un archivo JSON
+man-tofu = ejecuta OpenTofu, la infraestructura como código. El fork libre de Terraform: los archivos .tf del directorio actual describen objetos (aquí registros DNS, con el proveedor hashicorp/dns), y tofu hace que los reales coincidan. init prepara un directorio una vez: instala los proveedores (aquí desde un espejo local, ver ~/.tofurc) y escribe .terraform.lock.hcl (las versiones elegidas, para hacer commit). fmt reescribe los archivos en el estilo estándar (-check: solo decir cuáles difieren, código de salida 3; -diff: mostrar los cambios). validate comprueba la configuración frente a los esquemas de los proveedores, sin tocar nada. plan lee el estado, vuelve a leer cada objeto del mundo real y muestra lo que haría: + crear, ~ modificar en el sitio, - destruir, -/+ sustituir (un atributo marcado «# forces replacement»), con la línea de resumen «Plan: N to add, N to change, N to destroy.»; los cambios hechos fuera de OpenTofu aparecen primero («Objects have changed outside of OpenTofu»). apply hace el mismo plan, pregunta «Enter a value:» (solo yes aprueba; -auto-approve se salta la pregunta) y hace los cambios. Las variables se declaran en bloques variable; sus valores vienen de su valor por defecto, de TF_VAR_NOMBRE, de terraform.tfvars, de los *.auto.tfvars, de -var-file y de -var, en ese orden. El estado (terraform.tfstate, un archivo JSON con un número de serie; el anterior en terraform.tfstate.backup) es la memoria de OpenTofu sobre los objetos que gestiona: no lo edites nunca a mano. Cada operación lo bloquea; un bloqueo que tiene otro proceso detiene el comando (Lock Info dice quién), y el bloqueo de un estado local no se puede forzar. state list y state show NOMBRE lo leen, state rm NOMBRE olvida un objeto sin destruirlo, state mv le cambia el nombre. import DIRECCIÓN ID adopta un objeto existente en el estado (su bloque resource tiene que existir; para este proveedor el ID es el nombre del registro con su punto final); un bloque import (to, id) hace lo mismo pasando por plan y apply. output muestra las salidas (-raw: un valor tal cual). destroy destruye todo lo que gestiona el estado. -chdir=DIR trabaja en otro directorio.
+    .synopsis = tofu [-chdir=DIR] init | fmt | validate | plan | apply | destroy | import DIRECCIÓN ID | state list|show|rm|mv | output [NOMBRE] | show | force-unlock ID | version [OPCIONES]
+    .option-chdir = trabajar en este directorio en lugar del actual (antes del subcomando).
+    .option-auto-approve = (apply, destroy) no pedir «yes» (solo para planes ya revisados).
+    .option-var = NOMBRE=VALOR: el valor de una variable solo para este comando.
+    .option-var-file = un archivo de valores de variables, leído después de terraform.tfvars y los *.auto.tfvars.
+    .option-lock = -lock=false: no bloquear el estado (peligroso si otra ejecución puede escribirlo).
+    .option-detailed-exitcode = (plan) código de salida 0 si no hay nada que hacer, 2 si hay cambios, 1 si hay un error.
+    .option-refresh-only = (plan, apply) solo registrar en el estado lo que ha cambiado fuera, sin cambiar nada real.
+    .option-destroy = (plan, apply) planear destruir todo lo que gestiona el estado.
+    .option-out = (plan) guardar el plan en este archivo, para tofu apply ARCHIVO.
+    .option-check = (fmt) no cambiar nada, listar los archivos sin formatear (código de salida 3).
+    .option-diff = (fmt) mostrar los cambios como un diff.
+    .option-recursive = (fmt) también los subdirectorios.
+    .option-upgrade = (init) volver a elegir las versiones más recientes que permiten las restricciones.
+    .option-raw = (output) un valor tal cual, sin comillas (para scripts).
+    .option-json = (output) las salidas en JSON.
+    .option-no-color = sin colores en la salida.
+    .example-1 = preparar el directorio: los proveedores y el archivo de bloqueo
+    .example-2 = reescribir los archivos en el estilo estándar
+    .example-3 = qué archivos cambiaría fmt, y cómo
+    .example-4 = comprobar la configuración sin tocar nada
+    .example-5 = lo que haría apply, comparado con los registros reales
+    .example-6 = el valor de una variable solo para este comando
+    .example-7 = hacer los cambios, tras un yes
+    .example-8 = detectar la deriva en un script: código de salida 2 si algo difiere
+    .example-9 = registrar en el estado los cambios hechos fuera, sin cambiar nada
+    .example-10 = los objetos que gestiona el estado
+    .example-11 = un objeto tal como lo conoce el estado
+    .example-12 = adoptar un registro hecho a mano (su bloque resource tiene que existir)
+    .example-13 = el valor de una salida, para un script
+    .example-14 = trabajar en otro directorio
 man-rclone = copia y sincroniza archivos entre un sistema de archivos local y remotos (aquí un almacén S3), definidos en su archivo de configuración (~/.config/rclone/rclone.conf, o --config ARCHIVO, o RCLONE_CONFIG): una sección [NOMBRE] con type = s3, provider, access_key_id, secret_access_key, region, endpoint. Una ruta remota es NOMBRE:BUCKET/RUTA. ls lista los archivos con su tamaño, lsl con su fecha, lsd los buckets o carpetas, cat imprime archivos, size los suma. copy ORIGEN DESTINO copia lo nuevo o cambiado (no borra nada); copyto copia un archivo a un nombre; sync ORIGEN DESTINO hace DESTINO igual a ORIGEN: copia lo que ha cambiado Y borra de DESTINO lo que ORIGEN no tiene; cuidado con el sentido. --backup-dir NOMBRE:RUTA (en el mismo remoto, no dentro de DESTINO) conserva lo que sync o copy sustituye o borra, movido allí en su lugar; -n (--dry-run) dice lo que haría y no hace nada. check ORIGEN DESTINO compara los dos lados archivo a archivo (tamaño y MD5) y cuenta las diferencias (código de salida 1 si hay alguna). rclone escribe su registro en la salida de error ("ERROR :", "NOTICE:"); una operación fallida se intenta tres veces ("Attempt 1/3 failed"), y no se borra nada tras un error. config show imprime los remotos, listremotes sus nombres.
     .synopsis = rclone [--config ARCHIVO] [-n] [-v] ls|lsl|lsd|cat|size|copy|copyto|sync|check|config show|listremotes [ORIGEN] [DESTINO]
     .option-n = ensayo: decir lo que se copiaría y borraría, sin hacer nada (--dry-run).

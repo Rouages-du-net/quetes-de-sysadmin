@@ -66,3 +66,6 @@ machine-wings = coulisses
 machine-meadow = prairie
 machine-paddock = enclos
 machine-haven = abri
+
+## The Mapping Party
+machine-cairn = cairn

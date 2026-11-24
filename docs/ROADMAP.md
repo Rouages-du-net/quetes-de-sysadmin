@@ -695,6 +695,14 @@ them safely.
   `postgresql` package, a story's own curl between its machines through
   `state.storyCurl`).
 
+- [x] **Infrastructure as code** (OpenTofu): a record added through the
+  code (init, fmt, validate, a variable, plan, apply), then the drift of an
+  incident: a forgotten run holding the state lock, a hand change the code
+  must follow, a record adopted with import. Done: story 48, "The Mapping
+  Party" (`hcl.ts`: HCL and `tofu fmt`; `tofu.ts`: the hashicorp/dns
+  provider on the game's BIND, the local state and its lock, plans and
+  drift, import; the `iac` family; four errors in the error explainer).
+
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a
   clock, a region and a key, a big file shared for a week while a node lay

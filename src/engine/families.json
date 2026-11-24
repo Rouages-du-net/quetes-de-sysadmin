@@ -2215,6 +2215,12 @@
    "ownOptions": true
   }
  ],
+ "tofu": [
+  "iac",
+  {
+   "ownOptions": true
+  }
+ ],
  "update-ca-certificates": [
   "tls",
   {
