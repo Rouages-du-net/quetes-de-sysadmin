@@ -14,6 +14,7 @@ import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { COMMANDS } from '../src/engine/commands';
 import { name, password } from '../src/engine/world';
+import { machineName } from '../src/engine/machines';
 
 const MDP = 'splash-2029';
 
@@ -314,7 +315,7 @@ for (const language of languagesFor('pool'))
       expect(flag('config-read')).toBe(true);
       contains(all, 'un mot de passe va dans un Secret');
       all = play(['cd manifests', 'git status', 'git log -p']);
-      expect(all).toContain(fr ? 'rien à valider' : 'nothing to commit, working tree clean');
+      expect(all).toContain(({ fr: 'rien à valider', es: 'nada para hacer commit' } as Record<string, string>)[language] ?? 'nothing to commit, working tree clean');
       expect(all).toContain(`+  database_password: ${OLD}`);
       expect(flag('history-seen')).toBe(true);
       all = play([`kubectl create secret generic booking-db -n swim --from-literal=password=${NEW}`, 'kubectl get secret booking-db -n swim -o yaml']);
@@ -420,7 +421,7 @@ for (const language of languagesFor('pool'))
       expect(flag('oom')).toBe(true);
       contains(all, 'tué par SIGKILL');
       all = play(['kubectl top node', 'kubectl rollout history deployment/booking -n swim']);
-      expect(all).toMatch(/lane|couloir/);
+      expect(all).toContain(machineName(t, 'lane'));
       expect(all).toMatch(/4 +2\.4\.0: results cache \(faster timetable\)/);
       expect(flag('history')).toBe(true);
       all = play(['kubectl rollout history deployment/booking -n swim --revision=3']);
