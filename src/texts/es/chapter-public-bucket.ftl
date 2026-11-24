@@ -22,7 +22,7 @@ public-bucket-message-esperanza =
     https://www.kestrel.example/members/medical-contacts-2032.csv se abre
     para cualquiera.
 
-    Nuestros archivos están en wings, donde estás ahora (sudo funciona con
+    Nuestros archivos están en bastidores, donde estás ahora (sudo funciona con
     tu contraseña), y en las otras dos máquinas de lo que Teodora llamaba
     «el clúster». Teodora lo montó todo antes de mudarse y dejó notas.
     Hiroshi, que hizo el sitio web, lo publica con un pequeño script.
@@ -34,10 +34,10 @@ public-bucket-message-esperanza =
     Esperanza
 
 public-bucket-notes-teodora =
-    Notas de Teodora (wings, 2029, con algunas actualizaciones desde entonces)
+    Notas de Teodora (bastidores, 2029, con algunas actualizaciones desde entonces)
 
     - Nuestros archivos están en Garage, un almacén de objetos con una API
-      S3, en tres nodos: wings (aquí, el estudio), vault (en el teatro del
+      S3, en tres nodos: bastidores (aquí, el estudio), vault (en el teatro del
       Old Mill, que tiene la fibra) y porch (en casa de Siosaia). Cada
       objeto se guarda en los tres. sudo garage status los muestra.
     - Garage guarda los objetos en buckets. sudo garage bucket list, sudo

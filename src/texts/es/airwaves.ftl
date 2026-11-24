@@ -1,5 +1,5 @@
 ### Lo que comparten los capítulos de «Las Ondas»: los archivos de la
-### autoridad de certificación de la federación en mast (las notas de Kwame,
+### autoridad de certificación de la federación en mastil (las notas de Kwame,
 ### la política) y las páginas de sus sitios. Los comandos, las opciones,
 ### las rutas y las salidas no se traducen.
 
@@ -33,7 +33,7 @@ airwaves-readme-ca-2 =
     firmada por la raíz: issuing/ (Airwaves Issuing CA 1). Funciona con
     openssl ca y su propio openssl.cnf (base de datos index.txt, serial,
     newcerts/). A partir de ahora firma los certificados de los servidores
-    y de los portátiles. La clave de la raíz sale de mast la semana que
+    y de los portátiles. La clave de la raíz sale de mastil la semana que
     viene.
 airwaves-readme-ca-3 =
     { airwaves-readme-ca-2 }

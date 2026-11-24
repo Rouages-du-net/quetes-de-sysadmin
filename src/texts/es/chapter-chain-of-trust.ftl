@@ -20,14 +20,14 @@ chain-of-trust-message-adaeze =
     archivo: archive.airwaves.internal funciona bien en Firefox en las
     emisoras.
 
-    Pero Mateo dice que su monitorización en mast está en rojo desde que
+    Pero Mateo dice que su monitorización en mastil está en rojo desde que
     la escribió (/usr/local/bin/check-sites, su registro en
     /var/log/check-sites.log), y el nuevo PC del estudio que instaló en
-    Riverside, booth, rechaza tanto el archivo como la intranet. Propuso
+    Riverside, cabina, rechaza tanto el archivo como la intranet. Propuso
     añadir -k «para que se ponga en verde»; le dije que primero te
     preguntaría.
 
-    Puedes llegar a booth desde mast: ssh booth (tu clave está en él).
+    Puedes llegar a cabina desde mastil: ssh cabina (tu clave está en él).
 
     Adaeze
 chain-of-trust-note-mateo =
@@ -54,20 +54,20 @@ chain-of-trust-event-insecure =
     -k (--insecure) en la monitorización la pondría en verde... y ciega:
     ya no notaría un certificado caducado, un nombre incorrecto ni un
     servidor que no es el nuestro. Una comprobación que no puede fallar no
-    comprueba nada. Mejor haz que mast confíe en nuestra raíz.
+    comprueba nada. Mejor haz que mastil confíe en nuestra raíz.
 chain-of-trust-event-pem-ignored =
     Hay un archivo .pem en /usr/local/share/ca-certificates, y
     update-ca-certificates lo ignora: solo toma los archivos que terminan
     en .crt (el contenido es el mismo PEM). Cámbiale el nombre.
 chain-of-trust-event-key-on-booth =
-    ¡Hay una clave privada de la autoridad en booth! Un cliente solo
+    ¡Hay una clave privada de la autoridad en cabina! Un cliente solo
     necesita el certificado, la parte pública: quien tenga la clave puede
     firmar certificados en los que confiarían todas las emisoras. Bórrala
-    de booth enseguida (en la vida real, una clave filtrada significa una
-    autoridad nueva: aquí, booth aún no está en la red, y Adaeze lo deja
+    de cabina enseguida (en la vida real, una clave filtrada significa una
+    autoridad nueva: aquí, cabina aún no está en la red, y Adaeze lo deja
     pasar por esta vez).
 chain-of-trust-event-mast-trusts =
-    mast confía ahora en Airwaves Root CA: está en /etc/ssl/certs y en el
+    mastil confía ahora en Airwaves Root CA: está en /etc/ssl/certs y en el
     paquete ca-certificates.crt que leen curl y openssl. Veamos qué dice
     ahora la monitorización.
 chain-of-trust-event-still-red =
@@ -93,17 +93,17 @@ chain-of-trust-event-chain =
     recuerda los intermedios que ya ha visto; curl y una máquina recién
     instalada no.
 chain-of-trust-event-booth =
-    booth confía ahora en la raíz de la federación (solo está su
+    cabina confía ahora en la raíz de la federación (solo está su
     certificado, no su clave).
 chain-of-trust-event-end =
-    Mateo: «Todo en verde, y booth reproduce las sintonías. He quitado -k
+    Mateo: «Todo en verde, y cabina reproduce las sintonías. He quitado -k
     de mis notas, prometido».
 
     ¡Bien hecho! Has terminado el capítulo «La cadena de confianza».
 
     QUÉ HA PASADO
     Dos problemas distintos daban el mismo mensaje, «unable to get local
-    issuer certificate». Primero, ni mast ni booth confiaban en la raíz de
+    issuer certificate». Primero, ni mastil ni cabina confiaban en la raíz de
     la federación: Debian confía en lo que update-ca-certificates pone en
     /etc/ssl/certs, a partir de la lista de Mozilla y de los archivos .crt
     de /usr/local/share/ca-certificates. Luego, el archivo enviaba su

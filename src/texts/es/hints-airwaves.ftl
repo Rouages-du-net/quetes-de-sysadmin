@@ -41,11 +41,11 @@ hint-chain-of-trust-chain =
     .lead = El servidor debe enviar su certificado seguido del intermedio (el certificado de la CA emisora), en un solo archivo para ssl_certificate.
     .solution = openssl s_client -connect archive.airwaves.internal:443 -showcerts </dev/null; sudo sh -c 'cat /etc/nginx/ssl/archive.crt /srv/ca/issuing/issuing.crt > /etc/nginx/ssl/archive-chain.crt', apunta ssl_certificate a él, sudo nginx -t, sudo systemctl reload nginx
 hint-chain-of-trust-booth =
-    .lead = booth también necesita el certificado de la raíz, instalado de la misma manera: cópialo allí por ssh (man scp).
-    .solution = scp /srv/ca/ca.crt booth:; ssh booth; sudo cp ca.crt /usr/local/share/ca-certificates/airwaves-root.crt; sudo update-ca-certificates
+    .lead = cabina también necesita el certificado de la raíz, instalado de la misma manera: cópialo allí por ssh (man scp).
+    .solution = scp /srv/ca/ca.crt cabina:; ssh cabina; sudo cp ca.crt /usr/local/share/ca-certificates/airwaves-root.crt; sudo update-ca-certificates
 hint-chain-of-trust-end =
-    .lead = Desde booth y desde mast, los dos sitios deben responder sin -k.
-    .solution = curl https://archive.airwaves.internal/ (en booth y en mast)
+    .lead = Desde cabina y desde mastil, los dos sitios deben responder sin -k.
+    .solution = curl https://archive.airwaves.internal/ (en cabina y en mastil)
 
 ## Capítulo 3 — El portátil robado
 

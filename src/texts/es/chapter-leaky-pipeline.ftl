@@ -24,8 +24,8 @@ leaky-pipeline-message-rosa =
     La CI es .forgejo/workflows/ci.yml en el repositorio (tu clon está en
     ~/lendshed). Las ejecuciones están en la API (man forgejo-api), y el
     registro de cada job es una simple página web. La documentación la
-    publica el job «deploy» como la cuenta deploy en anvil
-    (deploy@anvil.internal), con la clave guardada en el secreto
+    publica el job «deploy» como la cuenta deploy en yunque
+    (deploy@yunque.internal), con la clave guardada en el secreto
     DEPLOY_KEY de la forja.
 
     Tu token de API sigue en ~/.forgejo-token.

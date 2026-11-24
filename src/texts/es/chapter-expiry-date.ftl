@@ -20,7 +20,7 @@ expiry-date-message-adaeze =
     habla de una fecha caducada y de un nombre incorrecto para
     board.airwaves.internal.
 
-    Todo funciona en mast. Nuestros nombres terminan en airwaves.internal,
+    Todo funciona en mastil. Nuestros nombres terminan en airwaves.internal,
     así que Kwame creó nuestra propia autoridad de certificación hace dos
     años: está en /srv/ca, con sus notas (README.txt) y nuestra política
     (POLICY.txt).
@@ -56,7 +56,7 @@ expiry-date-event-readme =
     en /srv/ca: ¿quién puede leer la clave privada de la autoridad?
 expiry-date-event-key-open =
     La clave privada de la raíz está en rw-r--r--: cualquier cuenta de
-    mast puede leerla y, con ella, firmar un certificado para cualquier
+    mastil puede leerla y, con ella, firmar un certificado para cualquier
     nombre, en el que confiarían todas las emisoras. La clave de una CA
     solo la puede leer root (chmod 600), en una carpeta en la que nadie
     más puede entrar (chmod 700).

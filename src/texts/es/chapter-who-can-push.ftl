@@ -31,7 +31,7 @@ who-can-push-message-wanjiru =
     años de memoria de nuestro proyecto, y deben conservar su nombre.
 
     Tu cuenta de la forja se llama «tu», administradora, con la misma contraseña
-    que en anvil por ahora; tienes un token de API en ~/.forgejo-token. La
+    que en yunque por ahora; tienes un token de API en ~/.forgejo-token. La
     API responde en https://forge.lendshed.example/api/v1 (man
     forgejo-api). Tu clon del repositorio está en ~/lendshed.
 
