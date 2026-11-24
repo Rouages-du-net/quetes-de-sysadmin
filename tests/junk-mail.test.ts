@@ -6,7 +6,7 @@ import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { translator } from '../src/texts';
-import { inLanguage, languagesFor } from './names';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const BEFORE = [...new Set([...ERASER, ...prerequisites('junk-mail')])];
@@ -32,7 +32,8 @@ for (const language of languagesFor('junk-mail'))
         c.save(change(c.edition!.text));
         return c.quitEdition();
       };
-      play(['ssh garden', 'yes']);
+      // The machine's name, not the Eraser's place called garden (jardin in Spanish, where the machine is huerto).
+      play([machinesInLanguage(translator(language), 'ssh garden'), 'yes']);
       expect(c.remote?.shell.chapter.id).toBe(chapter);
       const box = () => c.remote!.shell.read(`/var/mail/${c.remote!.shell.player}`) ?? '';
       const read = (path: string) => c.remote!.shell.read(path) ?? '';

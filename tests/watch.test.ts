@@ -15,6 +15,9 @@ const MDP = 'sourdough-2028';
 for (const language of languagesFor('watch'))
   describe(`The Watch — ${language}`, () => {
     const fr = language === 'fr';
+    const es = language === 'es';
+    // A text in the game's language: English, French, Spanish.
+    const w = (en: string, french: string, spanish: string) => (fr ? french : es ? spanish : en);
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {
@@ -35,14 +38,14 @@ for (const language of languagesFor('watch'))
     };
 
     // ——— Chapter 1: "The bulletin" ———
-    const DOC_WATCH = () => `# ${fr ? 'Veille' : 'Watch'} — ${fr ? 'Le Fournil' : 'The Bakery'}
+    const DOC_WATCH = () => `# ${w('Watch', 'Veille', 'Vigilancia')} — ${w('The Bakery', 'Le Fournil', 'la Panadería')}
 
-## ${fr ? 'Concerne ce serveur' : 'Concerns this server'}
-${CVE.nginx.id} (nginx), ${CVE.rsync.id} (rsync), ${CVE.ssh.id} (openssh-server) — ${fr ? 'déjà protégé par la configuration' : 'already protected by the configuration'}.
+## ${w('Concerns this server', 'Concerne ce serveur', 'Afecta a este servidor')}
+${CVE.nginx.id} (nginx), ${CVE.rsync.id} (rsync), ${CVE.ssh.id} (openssh-server) — ${w('already protected by the configuration', 'déjà protégé par la configuration', 'ya protegido por la configuración')}.
 
-## ${fr ? 'Sans objet' : 'Not applicable'}
-${CVE.certbot.id} (python3-certbot-nginx) : ${fr ? "n'est pas installé sur ce serveur" : 'is not installed on this server'}.
-${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-delà de la version corrigée' : 'already fixed, the installed version is past the fixed version'}.`;
+## ${w('Not applicable', 'Sans objet', 'No aplicable')}
+${CVE.certbot.id} (python3-certbot-nginx) : ${w('is not installed on this server', "n'est pas installé sur ce serveur", 'no está instalado en este servidor')}.
+${CVE.curl.id} (curl) : ${w('already fixed, the installed version is past the fixed version', 'déjà corrigé, la version installée est au-delà de la version corrigée', 'ya corregido, la versión instalada es posterior a la versión corregida')}.`;
 
     it('chapter 1 — solution: sort the bulletin, the rest not applicable', () => {
       const { c, jouer: play, editer: edit } = part();
@@ -50,7 +53,7 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
       contains(all, 'BULLETIN DE SÉCURITÉ');
       all = play(['apt list --installed']);
       expect(all).not.toContain('certbot');
-      const review = edit('nano watch.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/g, 'x'));
+      const review = edit('nano watch.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*/g, 'x'));
       contains(review, 'Salomé relit ton tri');
       expect(c.finished).not.toContain('bulletin');
       edit('nano watch.md', DOC_WATCH);
@@ -59,10 +62,10 @@ ${CVE.curl.id} (curl) : ${fr ? 'déjà corrigé, la version installée est au-de
 
     it('chapter 1 — false leads: certbot or curl classed as "concerns us"', () => {
       const { c, editer: edit } = part();
-      const bad = () => `# ${fr ? 'Veille' : 'Watch'}
-## ${fr ? 'Concerne ce serveur' : 'Concerns this server'}
+      const bad = () => `# ${w('Watch', 'Veille', 'Vigilancia')}
+## ${w('Concerns this server', 'Concerne ce serveur', 'Afecta a este servidor')}
 ${CVE.nginx.id}, ${CVE.rsync.id}, ${CVE.ssh.id}, ${CVE.certbot.id}, ${CVE.curl.id}
-## ${fr ? 'Sans objet' : 'Not applicable'}
+## ${w('Not applicable', 'Sans objet', 'No aplicable')}
 ${fr ? 'nothing' : 'nothing'}`;
       edit('nano watch.md', bad);
       expect(c.finished).not.toContain('bulletin');
@@ -71,10 +74,10 @@ ${fr ? 'nothing' : 'nothing'}`;
     // ——— Chapter 2: "The priority" ———
     const DOC_PRIORITY = (inverse = false) => {
       const ids = inverse ? [CVE.rsync.id, CVE.nginx.id] : [CVE.nginx.id, CVE.rsync.id];
-      return `# ${fr ? 'Priorité' : 'Priority'}
-1. ${ids[0]} — ${fr ? 'joignable depuis internet (80, 443)' : 'reachable from the internet (80, 443)'}
-2. ${ids[1]} — ${fr ? "aucun port en écoute, c'est un outil local" : 'no port at all, a local tool'}
-${CVE.ssh.id} (openssh-server) : ${fr ? 'déjà protégé (KbdInteractiveAuthentication à no), rien à faire' : 'already protected (KbdInteractiveAuthentication set to no), nothing to do'}`;
+      return `# ${w('Priority', 'Priorité', 'Prioridad')}
+1. ${ids[0]} — ${w('reachable from the internet (80, 443)', 'joignable depuis internet (80, 443)', 'accesible desde internet (80, 443)')}
+2. ${ids[1]} — ${w('no port at all, a local tool', "aucun port en écoute, c'est un outil local", 'ningún puerto en escucha, es una herramienta local')}
+${CVE.ssh.id} (openssh-server) : ${w('already protected (KbdInteractiveAuthentication set to no), nothing to do', 'déjà protégé (KbdInteractiveAuthentication à no), rien à faire', 'ya protegido (KbdInteractiveAuthentication a no), nada que hacer')}`;
     };
 
     it('chapter 2 — solution: nginx before rsync, with the reason why', () => {
