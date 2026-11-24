@@ -8,12 +8,16 @@ every push to `main`, as for rouages.net.
 
 Workflow `.github/workflows/deploy.yml`:
 
-1. **test** (every PR and every push): `npm test` (quests replayed),
-   `npm run build`, then `npm run test:browser` in Chromium (1000 and
+1. **unit** and **test**, side by side (every PR and every push): `unit`
+   runs `npm test` (quests replayed); `test` runs `npm run build` (with the
+   first visit's budget), then the two scripts of `npm run test:browser`
+   at the same time, each with its own Chromium (kept in the Actions cache
+   for the Playwright version in use): `tests/browser.mjs` (1000 and
    375 px, no console error, with the CSP of `.htaccess`, the root's
    language choice, the 404 page, embedding in another page, the installable
-   game: manifests, service worker, offline play, the footer's button).
-2. **deploy** (`main` only): upload of `dist/` over FTPS, then a check of
+   game: manifests, service worker, offline play, the footer's button) and
+   `tests/a11y.mjs`.
+2. **deploy** (`main` only, once both have passed): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
    header of the embeddable file, the CSP, the service worker and the
