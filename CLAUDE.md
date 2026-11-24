@@ -940,7 +940,7 @@ presents them for people.
   namespace's ids through `state.idView` (read by `ls -l`); `usermod
   --add-subuids/--add-subgids`; `journalctl --user`, `--user-unit`
   (`Input.userUnit`). `chapters/walking-club.ts`: what the chapters of "The
-  Walking Club" share (`cairn`, the walking club's server: nginx in front of
+  Walking Club" share (`stile`, the walking club's server: nginx in front of
   Trailbook, the service account trailbook, the data's owner, Ayasha's
   session replayed in chapter 2; `walksCurl` through `state.storyCurl`;
   five seconds per command and the sysctl files reapplied at a reboot in

@@ -44,8 +44,8 @@ hint-logged-out-no-bus =
     .lead = systemctl --user finds the manager through $XDG_RUNTIME_DIR, which sudo doesn't set; or ask from root with -M.
     .solution = as trailbook: export XDG_RUNTIME_DIR=/run/user/$(id -u); systemctl --user daemon-reload; systemctl --user start trailbook
 hint-logged-out-unit-running =
-    .lead = Now the proof Ayasha asked for: reboot cairn, connect again, check the site.
-    .solution = sudo reboot; ssh cairn; curl -k https://walks.openpaths.example/
+    .lead = Now the proof Ayasha asked for: reboot stile, connect again, check the site.
+    .solution = sudo reboot; ssh stile; curl -k https://walks.openpaths.example/
 hint-logged-out-rebooted =
     .lead = What did trailbook's manager do at boot? Its journal, the account's linger, the unit's [Install] section.
     .solution = sudo journalctl -u user@997 -b; loginctl show-user trailbook -p Linger; sudo cat /var/lib/trailbook/.config/containers/systemd/trailbook.container

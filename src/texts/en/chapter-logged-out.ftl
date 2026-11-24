@@ -16,7 +16,7 @@ logged-out-message-ayasha =
     Hi!
 
     Thank you for Monday! Yesterday afternoon I wanted to try it myself. I
-    logged in as trailbook from my PC (ssh trailbook@cairn: my key is in its
+    logged in as trailbook from my PC (ssh trailbook@stile: my key is in its
     authorized_keys), removed your container and started mine, the same
     command, with the name trailbook. The site worked. I logged out at
     18:02, and at 18:02 the site went down: nginx has answered 502 ever
@@ -27,7 +27,7 @@ logged-out-message-ayasha =
       - Trailbook running with nobody logged in;
       - and coming back by itself after a reboot. The kernel update is
         waiting for one anyway (/var/run/reboot-required): please reboot
-        cairn once you're done, so that we know.
+        stile once you're done, so that we know.
 
     The Podman people seem to recommend something called Quadlet. I didn't
     get further than the name.
@@ -94,10 +94,10 @@ logged-out-event-not-wanted =
     file has no [Install] section with WantedBy=default.target.
 logged-out-event-unit-running =
     Trailbook runs as a service of trailbook's manager. Ayasha asked for the
-    proof: reboot cairn (the kernel is waiting for it), connect again and
+    proof: reboot stile (the kernel is waiting for it), connect again and
     check the site.
 logged-out-event-rebooted =
-    cairn rebooted, and the site doesn't answer. Look at what came back: does
+    stile rebooted, and the site doesn't answer. Look at what came back: does
     trailbook's manager run (systemctl status user@997), did it start the
     unit (journalctl -u user@997 -b), does the account linger, is the unit
     wanted by default.target?

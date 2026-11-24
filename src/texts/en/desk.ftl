@@ -97,4 +97,4 @@ machine-slipway-motd = The Lifeboat — slipway, Seaholme Lifeboat's mail server
 machine-belay-motd = The Climbing Wall — belay, the server of Overhang, the community climbing hall: bookings, memberships, the door's badges. It sits on a UPS in the office rack (Network UPS Tools: upsc, upsmon).
 machine-wings-motd = The Dance Troupe — wings, the Kestrel Dance Company's server and a node of its Garage cluster. sudo garage status before anything else; aws and rclone talk to s3.kestrel.example.
 machine-meadow-motd = The Shelter — meadow, Hillside Animal Shelters' small server at a hosting cooperative: the restic repository (/srv/restic), the disaster recovery plan (/srv/drp), and the zone's hidden primary DNS. paddock, the main server, is in Hillside's cellar.
-machine-cairn-motd = The Walking Club — cairn, the Open Paths walking club's server: Trailbook (walks and sign-ups) in a container behind nginx, https://walks.openpaths.example. Its account: trailbook.
+machine-stile-motd = The Walking Club — stile, the Open Paths walking club's server: Trailbook (walks and sign-ups) in a container behind nginx, https://walks.openpaths.example. Its account: trailbook.

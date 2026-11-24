@@ -691,7 +691,7 @@ them safely.
   Docker as root to Podman under its own account (subordinate ids, the
   namespace's mapping and the data's owner, unprivileged ports behind a
   reverse proxy), then kept running with nobody logged in (Quadlet, linger,
-  a reboot). Done: story 48, "The Walking Club" (`podman.ts`; `podman`,
+  a reboot). Done: story 50, "The Walking Club" (`podman.ts`; `podman`,
   `loginctl`, Quadlet's dry run and `systemctl --user` in the `podman`
   family; `usermod --add-subuids`; three errors in the error explainer).
 

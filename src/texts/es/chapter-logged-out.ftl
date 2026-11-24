@@ -17,7 +17,7 @@ logged-out-message-ayasha =
     ¡Hola!
 
     ¡Gracias por lo del lunes! Ayer por la tarde quise probar yo misma.
-    Entré como trailbook desde mi PC (ssh trailbook@hito: mi clave está en
+    Entré como trailbook desde mi PC (ssh trailbook@portillo: mi clave está en
     su authorized_keys), borré tu contenedor y arranqué el mío, el mismo
     comando, con el nombre trailbook. El sitio funcionaba. Cerré la sesión a
     las 18:02, y a las 18:02 el sitio se cayó: nginx responde 502 desde
@@ -29,7 +29,7 @@ logged-out-message-ayasha =
       - Trailbook funcionando sin nadie con la sesión abierta;
       - y que vuelva solo después de un reinicio. La actualización del
         núcleo espera uno de todas formas (/var/run/reboot-required):
-        reinicia hito cuando termines, para que lo sepamos seguro.
+        reinicia portillo cuando termines, para que lo sepamos seguro.
 
     La gente de Podman parece recomendar algo llamado Quadlet. No pasé del
     nombre.
@@ -101,10 +101,10 @@ logged-out-event-not-wanted =
     WantedBy=default.target.
 logged-out-event-unit-running =
     Trailbook funciona como un servicio del gestor de trailbook. Ayasha
-    pidió la prueba: reinicia hito (el núcleo lo espera), vuelve a
+    pidió la prueba: reinicia portillo (el núcleo lo espera), vuelve a
     conectarte y comprueba el sitio.
 logged-out-event-rebooted =
-    hito se ha reiniciado, y el sitio no responde. Mira lo que ha vuelto:
+    portillo se ha reiniciado, y el sitio no responde. Mira lo que ha vuelto:
     ¿funciona el gestor de trailbook (systemctl status user@997), arrancó la
     unidad (journalctl -u user@997 -b), persiste la cuenta, quiere
     default.target la unidad?

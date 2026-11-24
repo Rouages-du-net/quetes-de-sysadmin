@@ -23,7 +23,7 @@ no-root-needed-message-soo-ah =
     Bolat montó el sitio en 2031: Trailbook (la aplicación que lista
     nuestras salidas y recoge las inscripciones) funciona en un contenedor,
     detrás de nginx. La semana pasada, una amiga que se dedica a la
-    seguridad miró hito con nosotros. Su veredicto: el demonio Docker
+    seguridad miró portillo con nosotros. Su veredicto: el demonio Docker
     funciona como root, cualquiera del grupo docker es root en la máquina, y
     una aplicación con la que habla gente desconocida todo el día no
     debería tener nada que ver con root. «Ejecutadla sin root, bajo su
@@ -46,7 +46,7 @@ no-root-needed-message-soo-ah =
     Soo-ah
 
 no-root-needed-notes-bolat =
-    Notas de Bolat (hito, 2031)
+    Notas de Bolat (portillo, 2031)
 
     - Trailbook es una sola imagen:
       registry.example/openpaths/trailbook:2.3. Lo guarda todo en un único
@@ -145,7 +145,7 @@ no-root-needed-event-cant-write =
     man podman-run, o podman unshare chown.
 no-root-needed-event-world-writable =
     chmod 777 (u o+w) sobre los datos deja escribir al contenedor, pero
-    también a cada cuenta de hito y a cada otro contenedor: 1873
+    también a cada cuenta de portillo y a cada otro contenedor: 1873
     inscripciones, con nombres y teléfonos, abiertas a cualquiera que
     consiga un shell. Vuelve a poner los permisos (755 para la carpeta, 644
     para el archivo) y corrige mejor el propietario.

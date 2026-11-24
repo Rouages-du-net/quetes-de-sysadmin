@@ -66,4 +66,4 @@ machine-wings = coulisses
 machine-meadow = prairie
 machine-paddock = enclos
 machine-haven = abri
-machine-cairn = cairn
+machine-stile = echalier

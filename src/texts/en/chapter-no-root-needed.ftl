@@ -21,7 +21,7 @@ no-root-needed-message-soo-ah =
 
     Bolat set the site up in 2031: Trailbook (the app that lists our walks
     and takes the sign-ups) runs in a container, behind nginx. Last week a
-    friend who does security for a living looked at cairn with us. Her
+    friend who does security for a living looked at stile with us. Her
     verdict: the Docker daemon runs as root, anybody in the docker group is
     root on the machine, and an app that strangers talk to all day should
     have nothing to do with root. "Run it rootless, under its own account."
@@ -43,7 +43,7 @@ no-root-needed-message-soo-ah =
     Soo-ah
 
 no-root-needed-notes-bolat =
-    Notes from Bolat (cairn, 2031)
+    Notes from Bolat (stile, 2031)
 
     - Trailbook is a single image: registry.example/openpaths/trailbook:2.3.
       It keeps everything in one SQLite file, /data/trailbook.db, and listens
@@ -132,7 +132,7 @@ no-root-needed-event-cant-write =
     podman-run, or podman unshare chown.
 no-root-needed-event-world-writable =
     chmod 777 (or o+w) on the data lets the container write, and also every
-    account on cairn and every other container: 1873 sign-ups, with names
+    account on stile and every other container: 1873 sign-ups, with names
     and phone numbers, open to anybody who gets a shell. Put the rights back
     (755 for the folder, 644 for the file) and fix the owner instead.
 no-root-needed-event-empty =

@@ -4898,14 +4898,14 @@ name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
 
-## Story 48: The Walking Club (two chapters)
+## Story 50: The Walking Club (two chapters)
 
 Rootless containers with Podman, as Debian 13 ships it (podman
 5.4.2+ds1-2+b2, passt 0.0~git20250503.587980c, systemd 257). Open Paths
 (Sentiers ouverts, Senderos Abiertos), a volunteers' walking club, lists its
 walks and takes the sign-ups through Trailbook, a web app in an image
 (`registry.example/openpaths/trailbook:2.3`, its own USER uid 1000), behind
-nginx on `cairn` (192.0.2.176, `hito` in Spanish); the site is
+nginx on `stile` (192.0.2.184, `portillo` in Spanish); the site is
 `walks.openpaths.example`. Soo-ah chairs the club, Bolat ran the app with
 Docker as root in 2031, Ayasha created the service account `trailbook`
 (`useradd --system`: uid 997, no subordinate ids). Engine: `podman.ts` and

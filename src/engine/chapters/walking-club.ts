@@ -1,11 +1,11 @@
 // Story "The Walking Club": what its chapters share. Open Paths, a walking
 // club run by volunteers (Sentiers ouverts in French, Senderos Abiertos in
 // Spanish), publishes its walks and takes the sign-ups through Trailbook, a
-// small web app in a container image, behind nginx on cairn (hito in
+// small web app in a container image, behind nginx on stile (portillo in
 // Spanish), the club's Debian 13 server. Soo-ah chairs the club; Bolat, a
 // volunteer, ran Trailbook with Docker as root in 2031; Ayasha created the
 // service account trailbook and started moving it to rootless Podman.
-// Machines: cairn, 192.0.2.176 (RFC 5737); the site walks.openpaths.example
+// Machines: stile, 192.0.2.184 (RFC 5737); the site walks.openpaths.example
 // (RFC 6761), nginx on 80 and 443 proxying to 127.0.0.1:8080; Ayasha's PC on
 // the office network 198.51.100.0/24.
 // Chapter 1: Docker stopped, the app back under trailbook, rootless:
@@ -32,7 +32,7 @@ import { PAPPS, REGISTRY, freshMaps, hostPath, podman, settle, store, uidOf, typ
 export const HOME = '/home/you';
 export const PASSWORD = 'switchback-27';
 export type ChapterNo = 1 | 2;
-export const CAIRN = '192.0.2.176';
+export const STILE = '192.0.2.184';
 export const AYASHA_PC = '198.51.100.23';
 export const SITE = 'walks.openpaths.example';
 export const IMAGE = 'registry.example/openpaths/trailbook:2.3';
@@ -42,7 +42,7 @@ export const SERVICE_HOME = '/var/lib/trailbook';
 export const QUADLET_DIR = `${SERVICE_HOME}/.config/containers/systemd`;
 // The service account (useradd --system: below 1000, no subordinate ids).
 export const SERVICE_UID = 997;
-// The first free subordinate range on cairn (after you, bolat and ayasha).
+// The first free subordinate range on stile (after you, bolat and ayasha).
 export const FREE_RANGE = 296608;
 const DB_CONTENT = 'SQLite format 3 (Trailbook: 412 walks, 1873 sign-ups)';
 export const WALKS = 412;
@@ -139,7 +139,7 @@ export const siteUp = (game: Game) => {
 const CURL_VALUED = ['-H', '--header', '-o', '--output', '-w', '--write-out', '-X', '--request', '-A', '--user-agent', '-m', '--max-time', '--connect-timeout', '-u', '--user'];
 const STATUS: Record<number, string> = { 200: 'OK', 404: 'Not Found', 502: 'Bad Gateway' };
 
-/** curl on cairn towards the site, nginx or the app's port (null: curl's own way). */
+/** curl on stile towards the site, nginx or the app's port (null: curl's own way). */
 export function walksCurl(from: Shell, args: string[]): string | null {
   const positional: string[] = [];
   for (let i = 0; i < args.length; i++) {
@@ -149,7 +149,7 @@ export function walksCurl(from: Shell, args: string[]): string | null {
   const m = /^(?:(https?):\/\/)?([^/:]+)(?::(\d+))?(.*)$/.exec(positional[0] ?? '');
   if (!m) return null;
   const host = m[2].toLowerCase();
-  const local = ['localhost', '127.0.0.1', CAIRN, SITE, 'cairn', 'cairn.internal', machineName(from.t, 'cairn'), `${machineName(from.t, 'cairn')}.internal`].includes(host);
+  const local = ['localhost', '127.0.0.1', STILE, SITE, 'stile', 'stile.internal', machineName(from.t, 'stile'), `${machineName(from.t, 'stile')}.internal`].includes(host);
   if (!local) return null;
   const port = Number(m[3] ?? (m[1] === 'https' ? 443 : 80));
   const path = m[4] || '/';
@@ -240,7 +240,7 @@ const REGISTRIES = `# For more information on this configuration file, see conta
 export function walkState(t: Translate, n: ChapterNo) {
   const proc = (pid: number, user: string, command: string) => ({ pid, user, cpu: 0, mem: 0.4, command });
   return {
-    systemd: newSystemd(machineName(t, 'cairn'), BOOTED, NOW[n], {
+    systemd: newSystemd(machineName(t, 'stile'), BOOTED, NOW[n], {
       ssh: { description: 'OpenBSD Secure Shell server', active: true, executable: 'sshd', process: [proc(611, 'root', 'sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups')] },
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron', process: [proc(598, 'root', '/usr/sbin/cron -f')] },
       nginx: {
@@ -268,8 +268,8 @@ export function walkState(t: Translate, n: ChapterNo) {
 }
 
 export function walkWorld(t: Translate, n: ChapterNo, home: Record<string, Node>): Directory {
-  const host = machineName(t, 'cairn');
-  const key = generateKey('walking-cairn', `you@${host}`);
+  const host = machineName(t, 'stile');
+  const key = generateKey('walking-stile', `you@${host}`);
   const trailbookIds = n === 2 ? `\ntrailbook:${FREE_RANGE}:65536` : '';
   // Chapter 2: chapter 1 done (data chowned through :U to the container's user, 296608 + 999).
   const dataOwner: Rights = n === 1 ? { owner: 'you', group: 'you' } : { owner: String(FREE_RANGE + 999), group: String(FREE_RANGE + 999) };
@@ -277,7 +277,7 @@ export function walkWorld(t: Translate, n: ChapterNo, home: Record<string, Node>
     etc: dir({
       ...accountsFiles(),
       hostname: file(host),
-      hosts: file(`127.0.0.1\tlocalhost\n${CAIRN}\t${host}.internal ${host}\n\n::1\tlocalhost ip6-localhost ip6-loopback`),
+      hosts: file(`127.0.0.1\tlocalhost\n${STILE}\t${host}.internal ${host}\n\n::1\tlocalhost ip6-localhost ip6-loopback`),
       subuid: file(subIdsFile(t, trailbookIds)),
       subgid: file(subIdsFile(t, trailbookIds)),
       'sysctl.d': dir({}),

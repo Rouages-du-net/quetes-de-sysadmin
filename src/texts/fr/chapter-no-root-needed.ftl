@@ -23,7 +23,7 @@ no-root-needed-message-soo-ah =
     Bolat a installé le site en 2031 : Trailbook (l'application qui liste
     nos sorties et prend les inscriptions) tourne dans un conteneur, derrière
     nginx. La semaine dernière, une amie dont la sécurité est le métier a
-    regardé cairn avec nous. Son verdict : le démon Docker tourne en root,
+    regardé echalier avec nous. Son verdict : le démon Docker tourne en root,
     quiconque est dans le groupe docker est root sur la machine, et une
     application à laquelle des inconnu·es parlent toute la journée ne
     devrait avoir aucun rapport avec root. « Faites-la tourner sans root,
@@ -47,7 +47,7 @@ no-root-needed-message-soo-ah =
     Soo-ah
 
 no-root-needed-notes-bolat =
-    Notes de Bolat (cairn, 2031)
+    Notes de Bolat (echalier, 2031)
 
     - Trailbook, c'est une seule image :
       registry.example/openpaths/trailbook:2.3. Elle garde tout dans un seul
@@ -147,7 +147,7 @@ no-root-needed-event-cant-write =
     podman-run, ou podman unshare chown.
 no-root-needed-event-world-writable =
     chmod 777 (ou o+w) sur les données laisse écrire le conteneur, mais
-    aussi chaque compte de cairn et chaque autre conteneur : 1873
+    aussi chaque compte de echalier et chaque autre conteneur : 1873
     inscriptions, avec noms et numéros de téléphone, ouvertes à quiconque
     obtient un shell. Remets les droits (755 pour le dossier, 644 pour le
     fichier) et corrige plutôt le propriétaire.

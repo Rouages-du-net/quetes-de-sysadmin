@@ -17,7 +17,7 @@ logged-out-message-ayasha =
     Salut !
 
     Merci pour lundi ! Hier après-midi, j'ai voulu essayer moi-même. Je me
-    suis connectée en trailbook depuis mon PC (ssh trailbook@cairn : ma clé
+    suis connectée en trailbook depuis mon PC (ssh trailbook@echalier : ma clé
     est dans ses authorized_keys), j'ai supprimé ton conteneur et lancé le
     mien, la même commande, avec le nom trailbook. Le site marchait. Je me
     suis déconnectée à 18:02, et à 18:02 le site est tombé : nginx répond
@@ -29,7 +29,7 @@ logged-out-message-ayasha =
       - Trailbook en marche sans personne de connecté ;
       - et qui revient tout seul après un redémarrage. La mise à jour du
         noyau en attend un de toute façon (/var/run/reboot-required) :
-        redémarre cairn quand tu as fini, qu'on en ait le cœur net.
+        redémarre echalier quand tu as fini, qu'on en ait le cœur net.
 
     Les gens de Podman semblent recommander un truc appelé Quadlet. Je ne
     suis pas allée plus loin que le nom.
@@ -102,10 +102,10 @@ logged-out-event-not-wanted =
     WantedBy=default.target.
 logged-out-event-unit-running =
     Trailbook tourne comme un service du gestionnaire de trailbook. Ayasha a
-    demandé la preuve : redémarre cairn (le noyau l'attend), reconnecte-toi
+    demandé la preuve : redémarre echalier (le noyau l'attend), reconnecte-toi
     et vérifie le site.
 logged-out-event-rebooted =
-    cairn a redémarré, et le site ne répond pas. Regarde ce qui est revenu :
+    echalier a redémarré, et le site ne répond pas. Regarde ce qui est revenu :
     le gestionnaire de trailbook tourne-t-il (systemctl status user@997),
     a-t-il démarré l'unité (journalctl -u user@997 -b), le compte
     persiste-t-il, l'unité est-elle voulue par default.target ?

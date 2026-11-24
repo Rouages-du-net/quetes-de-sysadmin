@@ -115,7 +115,7 @@ export const MACHINES: Machine[] = [
   // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
   machine('meadow', '192.0.2.164', 'shelter'),
   // The Walking Club: a walking club's Debian server, its web app in a rootless Podman container behind nginx.
-  machine('cairn', '192.0.2.176', 'walking-club'),
+  machine('stile', '192.0.2.184', 'walking-club'),
 ];
 
 /**

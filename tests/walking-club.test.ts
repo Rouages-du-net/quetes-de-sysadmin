@@ -1,5 +1,5 @@
 // The Walking Club: rootless Podman. Each chapter is replayed to the end
-// from the workstation (ssh cairn), with other solutions and false leads, in
+// from the workstation (ssh stile), with other solutions and false leads, in
 // each language; the expected texts are checked in French. Also: the
 // engine (podman.ts: mappings, Quadlet's conversion, messages) and the
 // error explainer on Podman's errors.
@@ -98,7 +98,7 @@ for (const language of languagesFor('walking-club'))
         c.shell.saveEdition(text);
         return `${before}\n${c.shell.quitEdition() ?? ''}`;
       };
-      run('ssh cairn');
+      run('ssh stile');
       return { c, run, edit, finished: () => c.finished.includes(id) };
     }
 
@@ -219,7 +219,7 @@ for (const language of languagesFor('walking-club'))
       expect(all).toContain('ExecStart=/usr/bin/podman run --name systemd-%N');
       expect(all).toMatch(/997 trailbook yes\s+lingering/);
       contains(all, 'trailbook persiste');
-      contains(all, 'redémarre cairn');
+      contains(all, 'redémarre echalier');
       all = run('sudo -iu trailbook', 'export XDG_RUNTIME_DIR=/run/user/$(id -u)', 'systemctl --user status trailbook', 'systemctl --user enable trailbook', 'podman ps');
       expect(all).toContain('Loaded: loaded (/var/lib/trailbook/.config/containers/systemd/trailbook.container; generated)');
       expect(all).toContain('Active: active (running)');
@@ -230,7 +230,7 @@ for (const language of languagesFor('walking-club'))
       all = run('exit', 'sudo reboot');
       expect(finished()).toBe(true);
       contains(all, 'Tu as terminé Déconnexion.');
-      all = run('ssh cairn', 'curl -k https://walks.openpaths.example/', 'sudo journalctl -u user@997 -b');
+      all = run('ssh stile', 'curl -k https://walks.openpaths.example/', 'sudo journalctl -u user@997 -b');
       expect(all).toContain('1873');
       expect(all).toContain("Started trailbook.service - Trailbook, the club's walks.");
     });
@@ -243,7 +243,7 @@ for (const language of languagesFor('walking-club'))
       all = run('sudo loginctl enable-linger trailbook', 'sudo systemctl --user -M trailbook@ status walks', 'sudo -u trailbook podman ps');
       expect(all).toContain("● walks.service - Trailbook, the club's walks");
       expect(all).toMatch(/127\.0\.0\.1:8080->8080\/tcp\s+trailbook$/m);
-      run('sudo reboot', 'ssh cairn');
+      run('sudo reboot', 'ssh stile');
       expect(finished()).toBe(true);
     });
 
@@ -260,9 +260,9 @@ for (const language of languagesFor('walking-club'))
       run('exit');
       all = edit('sudo nano /etc/systemd/system/trailbook.service', `[Service]\nExecStart=/usr/bin/sudo -u trailbook /usr/bin/podman start -a trailbook\n\n[Install]\nWantedBy=multi-user.target\n`);
       contains(all, 'remet le lanceur root en place');
-      all = run('curl -k https://walks.openpaths.example/', 'sudo reboot', 'ssh cairn', 'curl -k https://walks.openpaths.example/');
+      all = run('curl -k https://walks.openpaths.example/', 'sudo reboot', 'ssh stile', 'curl -k https://walks.openpaths.example/');
       expect(all).toContain('502 Bad Gateway');
-      contains(all, 'cairn a redémarré, et le site ne répond pas');
+      contains(all, 'echalier a redémarré, et le site ne répond pas');
       expect(finished()).toBe(false);
     });
   });
