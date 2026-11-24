@@ -3,33 +3,41 @@
 // script (src/interface/classroom.ts) mounts it in #class. Nothing is sent:
 // the files are read in the teacher's browser.
 interface Props {
-  lang: 'fr' | 'en';
+  lang: 'fr' | 'en' | 'es';
 }
 const { lang } = Astro.props;
-const fr = lang === 'fr';
+const TEXTS = {
+  en: {
+    title: 'Class table',
+    intro:
+      'Students send you their progress file ("My progress", under the terminal, then "Download my save") or their short code. Drop the files here, or paste the codes: the table shows, for each student, the finished chapters, the rank, the achievements, the best exam time and the progress in each story.',
+    nothingSent:
+      'Nothing is sent: the files are read in this browser, and the table goes away when you close the page (download it as CSV, comma-separated as spreadsheets expect in English, or print it to keep it). It is not proof of work: a file can be edited, a code can be copied.',
+    noScript: 'The class table needs JavaScript.',
+  },
+  fr: {
+    title: 'Tableau de classe',
+    intro:
+      "Les élèves t'envoient le fichier de leur progression (« Ma progression », sous le terminal, puis « Télécharger ma backup ») ou leur code court. Glisse les fichiers ici, ou colle les codes : le tableau montre, pour chacun·e, les chapitres terminés, le grade, les succès, le meilleur temps en mode examen et l'avancée dans chaque histoire.",
+    nothingSent:
+      "Rien n'est envoyé : les fichiers sont lus dans ce navigateur, et le tableau disparaît quand tu fermes la page (télécharge-le en CSV, séparé par des points-virgules comme l'attendent les tableurs en français, ou imprime-le pour le garder). Ce n'est pas une preuve de travail : un fichier se modifie, un code se recopie.",
+    noScript: 'Le tableau de classe a besoin de JavaScript.',
+  },
+  es: {
+    title: 'Tabla de la clase',
+    intro:
+      'Tu alumnado te envía el archivo de su progreso («Mi progreso», debajo de la terminal, y luego «Descargar mi guardado») o su código corto. Suelta los archivos aquí o pega los códigos: la tabla muestra, para cada estudiante, los capítulos terminados, el rango, los logros, el mejor tiempo en modo examen y el avance en cada historia.',
+    nothingSent:
+      'No se envía nada: los archivos se leen en este navegador y la tabla desaparece cuando cierras la página (descárgala en CSV, separada por punto y coma como esperan las hojas de cálculo en español, o imprímela para conservarla). No es una prueba de trabajo: un archivo se puede modificar y un código se puede copiar.',
+    noScript: 'La tabla de la clase necesita JavaScript.',
+  },
+};
+const T = TEXTS[lang];
 ---
-<h1>{fr ? 'Tableau de classe' : 'Class table'}</h1>
-{fr ? (
-  <p class="intro no-print">
-    Les élèves t'envoient le fichier de leur progression (« Ma progression », sous le terminal,
-    puis « Télécharger ma backup ») ou leur code court. Glisse les fichiers ici, ou colle les
-    codes : le tableau montre, pour chacun·e, les chapitres terminés, le grade, les succès, le
-    meilleur temps en mode examen et l'avancée dans chaque histoire.
-  </p>
-) : (
-  <p class="intro no-print">
-    Students send you their progress file ("My progress", under the terminal, then "Download my
-    save") or their short code. Drop the files here, or paste the codes: the table shows, for each
-    student, the finished chapters, the rank, the achievements, the best exam time and the progress
-    in each story.
-  </p>
-)}
-<p class="intro muted no-print">
-  {fr
-    ? "Rien n'est envoyé : les fichiers sont lus dans ce navigateur, et le tableau disparaît quand tu fermes la page (télécharge-le en CSV, séparé par des points-virgules comme l'attendent les tableurs en français, ou imprime-le pour le garder). Ce n'est pas une preuve de travail : un fichier se modifie, un code se recopie."
-    : 'Nothing is sent: the files are read in this browser, and the table goes away when you close the page (download it as CSV, comma-separated as spreadsheets expect in English, or print it to keep it). It is not proof of work: a file can be edited, a code can be copied.'}
-</p>
-<noscript><p class="warning">{fr ? 'Le tableau de classe a besoin de JavaScript.' : 'The class table needs JavaScript.'}</p></noscript>
+<h1>{T.title}</h1>
+<p class="intro no-print">{T.intro}</p>
+<p class="intro muted no-print">{T.nothingSent}</p>
+<noscript><p class="warning">{T.noScript}</p></noscript>
 <div id="class" data-lang={lang}></div>
 <script>
   import { mountClass } from '../interface/classroom';

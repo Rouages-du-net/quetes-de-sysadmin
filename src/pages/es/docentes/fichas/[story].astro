@@ -1,0 +1,23 @@
+---
+// A story's printable sheet (src/components/StorySheet.astro), one page per story.
+import Base from '../../../../layouts/Base.astro';
+import { PAGES } from '../../../../site-languages';
+import StorySheet from '../../../../components/StorySheet.astro';
+import { STORIES } from '../../../../engine/chapters';
+import { loadAllTexts, translator } from '../../../../texts';
+
+export function getStaticPaths() {
+  return STORIES.map((h) => ({ params: { story: h.id } }));
+}
+const { story } = Astro.params;
+await loadAllTexts();
+const name = translator('es')(`story-${story}`);
+---
+<Base
+  title={`${name}: ficha para imprimir — Misiones de Sysadmin`}
+  lang="es"
+  description={`Una ficha para repartir sobre «${name}»: el objetivo de cada capítulo, los comandos y las páginas del manual, preguntas para comprobar lo aprendido y una versión para docentes.`}
+  alternates={PAGES.sheet(story!)}
+>
+  <StorySheet lang="es" story={story!} />
+</Base>

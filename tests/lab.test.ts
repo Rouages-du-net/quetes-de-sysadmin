@@ -10,8 +10,8 @@ import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { name } from '../src/engine/world';
 import { SERIES } from '../src/engine/chapters/lab';
 import { storageOf } from '../src/engine/storage';
@@ -19,7 +19,7 @@ import { storageOf } from '../src/engine/storage';
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 const MDP = 'film-2027';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('lab'))
   describe(`The Lab — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

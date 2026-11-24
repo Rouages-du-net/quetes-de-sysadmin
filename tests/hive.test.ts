@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { name, password } from '../src/engine/world';
+import { portSource } from '../src/engine/nftables';
 
 // L'Effaceur, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('hive')])];
@@ -27,7 +28,7 @@ iface eth1.30 inet static
     address 10.10.30.1/24
 `;
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('hive'))
   describe(`The Hive — ${language}`, () => {
     const fr = language === 'fr';
     // A line written with the reference names, in the game's language.
@@ -197,8 +198,8 @@ table ip nat {
         'journalctl -k',
       ]);
       expect(all).toContain('iifname "eth1.10" counter packets 3 bytes 180 accept');
-      // The source port follows the device's name, which is the language's (malik-pc, poste-malik).
-      expect(all).toContain(`dst=198.51.100.80 sport=${fr ? 51735 : 59041} dport=443 src=198.51.100.80 dst=192.0.2.21`);
+      // The source port follows the device's name, which is the language's (malik-pc, poste-malik, pc-malik).
+      expect(all).toContain(`dst=198.51.100.80 sport=${portSource(N('malik-pc'), 443)} dport=443 src=198.51.100.80 dst=192.0.2.21`);
       expect(all).toContain('forward drop: IN=eth1.20 OUT=eth1.10');
       expect(all).not.toContain('dst=203.0.113.50');
       contains(all, 'https://wiki.nftables.org/wiki-nftables/index.php/Performing_Network_Address_Translation_(NAT)');
@@ -206,7 +207,7 @@ table ip nat {
       // After a reboot, everything comes back on its own.
       all = play(['sudo reboot', 'ssh hive', 'sysctl net.ipv4.ip_forward', 'sudo conntrack -L -s 10.10.20.197']);
       expect(all).toContain('net.ipv4.ip_forward = 1');
-      expect(all).toContain(`dst=198.51.100.80 sport=${fr ? 47099 : 55828} dport=443 src=198.51.100.80 dst=192.0.2.21`);
+      expect(all).toContain(`dst=198.51.100.80 sport=${portSource(N('visitor-phone'), 443)} dport=443 src=198.51.100.80 dst=192.0.2.21`);
       expect(all).not.toContain('dport=445');
     });
 

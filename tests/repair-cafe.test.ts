@@ -6,15 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
-import { machinesInLanguage } from './names';
+import { machinesInLanguage, languagesFor } from './names';
 
 const LETTERS = STORIES.find((h) => h.id === 'letters')!.chapters.map((c) => c.id);
 const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters'), ...LETTERS.slice(0, LETTERS.indexOf('repair-cafe'))])];
 const REPAIR = '/etc/apache2/sites-available/repair.conf';
 const DIRECTORY = '    <Directory /var/www/repair>\n        AllowOverride All\n    </Directory>\n</VirtualHost>';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('letters'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {

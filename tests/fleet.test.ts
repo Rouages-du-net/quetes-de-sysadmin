@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
+import { translator } from '../src/texts';
 import { machineName } from '../src/engine/machines';
-import { inLanguage } from './names';
+import { inLanguage, languagesFor } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const BEFORE = [...new Set([...ERASER, ...prerequisites('fleet')])];
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('fleet'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

@@ -9,8 +9,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { SCHEMA_ERROR, chainOf, configFromXml, domainXml, libvirt, parseXml, qemuBytes, qemuSize, scaledKiB, usedShare } from '../src/engine/libvirt';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
@@ -55,7 +55,7 @@ describe('libvirt and QEMU: XML, sizes, units', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('health-centre'))
   describe(`The Health Centre — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

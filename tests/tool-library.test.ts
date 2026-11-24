@@ -9,8 +9,9 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { name } from '../src/engine/world';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { evaluate, forge } from '../src/engine/forge';
 import { readAllowedSigners, readSignature, sign } from '../src/engine/sshsig';
 import { generateKey } from '../src/engine/access';
@@ -47,13 +48,13 @@ describe('SSH signatures, allowed signers, expressions', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('tool-library'))
   describe(`The Tool Library — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
     const L = (line: string) => inLanguage(t, machinesInLanguage(t, line));
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
-    const me = fr ? 'vous' : 'you';
+    const me = name(t, 'you');
 
     function play(finished: string[]) {
       const c = new Console({ language, finished: [...STORIES[0].chapters.map((x) => x.id), ...prerequisites('tool-library'), ...finished] });

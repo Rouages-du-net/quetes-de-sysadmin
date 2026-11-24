@@ -1,11 +1,12 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { PAGES } from '../../site-languages';
 import { CATALOGUE as STORIES } from '../../engine/catalogue';
 ---
 <Base
   title="Sysadmin Quests"
   lang="en"
-  other={{ href: '/fr/', lang: 'fr', name: 'Français' }}
+  alternates={PAGES.home}
   description="Learn system administration, on Linux and Windows, by playing in your browser with real commands: moving around, searching, permissions, logs, networking, git, backups, PowerShell."
 >
   <h1>Sysadmin Quests</h1>

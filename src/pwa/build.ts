@@ -11,9 +11,15 @@ import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import { closure, pageFirstVisit } from './first-load.mjs';
+import INFO from '../texts/languages.json';
 
-// The languages of the site: each has its game page and its manifest.
-export const LANGUAGES = ['en', 'fr'] as const;
+// The languages of the site whose game an installed app keeps offline: the
+// complete ones (src/texts/languages.json). A draft's pages are built too,
+// but not precached: an installed game doesn't download a translation in
+// progress for everyone; the service worker keeps it once visited.
+export const LANGUAGES = Object.entries(INFO.languages)
+  .filter(([, l]) => l.status === 'complete')
+  .map(([code]) => code);
 
 // What an installed game needs to start offline, as URL paths: each
 // language's page and manifest, the icons, and the files of each page's

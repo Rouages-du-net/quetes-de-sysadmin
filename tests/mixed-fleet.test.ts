@@ -6,11 +6,13 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { tokenize, outDefault, literal, operate } from '../src/engine/powershell';
 import { CMDLETS } from '../src/engine/commands/powershell';
 import { COMMANDS } from '../src/engine/commands';
+import { name, password } from '../src/engine/world';
+import { machineName } from '../src/engine/machines';
 
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('mixed-fleet')])];
 
@@ -33,10 +35,14 @@ describe('PowerShell, the parts', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('mixed-fleet'))
   describe(`Next Door Windows — ${language}`, () => {
     const fr = language === 'fr';
-    const CABINET = fr ? 'armoire' : 'cabinet';
+    const t = translator(language);
+    const by = <T,>(values: { en: T; fr: T; es: T }) => values[language as 'en' | 'fr' | 'es'] ?? values.en;
+    const CABINET = machineName(t, 'cabinet');
+    const YOU = name(t, 'you');
+    const SUDO = password(t, 'drafting-2029');
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const first = (out: string) => out.split('\n')[0];
@@ -57,7 +63,7 @@ for (const language of LANGUAGES)
       expect(flag('bad-interpreter')).toBe(true);
       const run = play(['bash nightly-copy.sh']);
       expect(run).toContain("nightly-copy.sh: line 5: $'\\r': command not found");
-      expect(run).toContain(fr ? "nightly-copy.sh: line 6: cd : $'/srv/projects\\r' : aucun fichier ou dossier de ce nom" : "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory");
+      expect(run).toContain(by({ en: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory", fr: "nightly-copy.sh: line 6: cd : $'/srv/projects\\r' : aucun fichier ou dossier de ce nom", es: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No existe el fichero o el directorio" }));
       expect(first(play(['file nightly-copy.sh']))).toBe('nightly-copy.sh: Bourne-Again shell script, ASCII text executable, with CRLF line terminators');
       expect(play(['cat -A nightly-copy.sh'])).toContain('#!/bin/bash^M$');
       expect(flag('crlf')).toBe(true);
@@ -102,7 +108,7 @@ for (const language of LANGUAGES)
       expect(list).toContain('plans           Disk      Drawings and plans');
       expect(list).toContain('SMB1 disabled -- no workgroup available');
       expect(flag('listed')).toBe(true);
-      play(['sudo mount -t cifs //cabinet/plans /mnt/plans', fr ? 'calque-2029' : 'drafting-2029']);
+      play(['sudo mount -t cifs //cabinet/plans /mnt/plans', SUDO]);
       expect(flag('helper-missing')).toBe(true);
       play(['sudo apt install cifs-utils', 'Y']);
       // cifs-utils 7.0's mount.cifs.c: EHOSTDOWN is explained first, then the error and exit code 32.
@@ -140,7 +146,7 @@ for (const language of LANGUAGES)
 
     it('chapter 2 — false lead: the password on the command line', () => {
       const { play, flag } = part(['line-endings']);
-      play(['sudo apt install -y cifs-utils', fr ? 'calque-2029' : 'drafting-2029', 'sudo mount -t cifs //cabinet/plans /mnt/plans -o username=compass-svc,password=Ruler-2029-cab,uid=plotter']);
+      play(['sudo apt install -y cifs-utils', SUDO, 'sudo mount -t cifs //cabinet/plans /mnt/plans -o username=compass-svc,password=Ruler-2029-cab,uid=plotter']);
       expect(flag('password-visible')).toBe(true);
       expect(flag('writable')).toBe(true);
       expect(play(['mount'])).not.toContain('Ruler-2029-cab');
@@ -156,7 +162,7 @@ for (const language of LANGUAGES)
       expect(flag('outside')).toBe(true);
       const banner = play(['ssh cabinet', 'yes']);
       expect(banner).toContain('Windows PowerShell');
-      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${fr ? 'vous' : 'you'}>`);
+      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${YOU}>`);
       const grep = play(['grep zip']);
       expect(flag('powershell')).toBe(true);
       expect(grep).toContain("grep : The term 'grep' is not recognized as the name of a cmdlet, function, script file, or operable program.");
@@ -165,7 +171,7 @@ for (const language of LANGUAGES)
       expect(play(['ls -la'])).toContain("ls : A parameter cannot be found that matches parameter name 'la'.");
       expect(flag('parameter')).toBe(true);
       expect(play(['hostname'])).toBe(CABINET.toUpperCase());
-      expect(play(['whoami'])).toBe(`${CABINET}\\${fr ? 'vous' : 'you'}`);
+      expect(play(['whoami'])).toBe(`${CABINET}\\${YOU}`);
       expect(play(['Get-Service LanmanServer'])).toMatch(/Running +LanmanServer +Server/);
       const vol = play(['Get-Volume']);
       expect(vol).toMatch(/D +Data +NTFS +Fixed +Healthy +OK +11\.\d+ MB +500 GB/);
@@ -182,7 +188,7 @@ for (const language of LANGUAGES)
       expect(play(['Get-Help Get-Volume'])).toContain('Get-Volume [[-DriveLetter] <Char[]>]');
       expect(play(['cd D:\\shares', 'pwd'])).toContain('D:\\Shares');
       play(['exit']);
-      expect(c.shell.prompt()).toContain('compass'.replace('compass', fr ? 'compas' : 'compass'));
+      expect(c.shell.prompt()).toContain(machineName(t, 'compass'));
       play(["echo 'D: (Data) is full: D:\\Backup\\plans-full-2029-11-03.zip since 3 November' > cabinet-report.txt"]);
       expect(c.finished).toContain('full-volume');
       expect(play(['df -h /mnt/plans'])).not.toContain('100%');
@@ -190,7 +196,7 @@ for (const language of LANGUAGES)
 
     it('chapter 3 — false lead: deleting drawings from Linux', () => {
       const { c, play, flag } = part(['line-endings', 'smb-mount']);
-      play(['sudo rm /mnt/plans/exports/school-canteen-A1.pdf', fr ? 'calque-2029' : 'drafting-2029']);
+      play(['sudo rm /mnt/plans/exports/school-canteen-A1.pdf', SUDO]);
       expect(flag('deleted-drawings')).toBe(true);
       expect(play(['df -h /mnt/plans'])).toContain('100%');
       expect(c.finished).not.toContain('full-volume');

@@ -225,8 +225,10 @@ export function inColumns(names: string[], screenWidth: number): string {
   return names.join('\n');
 }
 
-// A yes to coreutils' questions: y, or the language's own (o for oui, like rpmatch in French).
-const yes = (game: Shell, answer: string) => /^y/i.test(answer.trim()) || (game.t.language === 'fr' && /^o/i.test(answer.trim()));
+// A yes to coreutils' questions: y, or the language's own, like rpmatch
+// (glibc's yesexpr: o for oui in French, s for si in Spanish).
+const YES: Record<string, RegExp> = { fr: /^o/i, es: /^s/i };
+const yes = (game: Shell, answer: string) => /^y/i.test(answer.trim()) || (YES[game.t.language]?.test(answer.trim()) ?? false);
 
 // One move or copy of mv and cp: returns an error, or what -v prints.
 type One = (game: Shell, source: string, dest: string, letters: Set<string>) => string | null;

@@ -31,9 +31,14 @@ agents, but its rules apply to everyone.
   issue first (the story, the commands it teaches, the traps), so we can
   agree on where it fits.
 - **Translate**: every text lives in `src/texts/<language>/*.ftl`
-  (Fluent format). Copy the `en/` directory and translate; see
-  [`docs/TRANSLATING.md`](docs/TRANSLATING.md) for names,
-  passwords and machine names, which are translated too.
+  (Fluent format). A new language starts as a **draft**
+  (`src/texts/languages.json`): it is translated file by file (the
+  manual, page by page), what is missing shows in English, and a story it
+  doesn't translate yet is played in English. One story is a good unit of
+  work: its `chapter-*.ftl` and `hints-*.ftl` files, and its own file if it
+  has one; `npm run coverage:texts` lists what is left. See
+  [`docs/TRANSLATING.md`](docs/TRANSLATING.md) for names, passwords and
+  machine names, which are translated too.
 
 ## Principles
 
@@ -233,9 +238,11 @@ Each chapter has at least:
 - a test of the **false leads**: each hint event is triggered, and the
   chapter isn't finished while the mistake remains.
 
-The tests replay every quest in every available language. The scenarios in
-the tests are written with the English names of places and files (the
-`inLanguage()` helper translates them), and texts are checked in French.
+The tests replay every quest in every complete language, and in each draft
+language the stories it translates (`languagesFor()` in `tests/names.ts`).
+The scenarios in the tests are written with the English names of places and
+files (the `inLanguage()` helper translates them), and texts are checked in
+French.
 
 ## A new simulated tool
 

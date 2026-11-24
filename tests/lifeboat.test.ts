@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { Shell } from '../src/engine/shell';
 import { explain } from '../src/engine/explainer';
 import { parseSize, readConf, quotaRoot, lookup, mailText } from '../src/engine/dovecot';
@@ -75,7 +75,7 @@ describe('The Lifeboat: the engine', () => {
   });
 
   it('scores the mail the same way in every language: each language learns its own words', () => {
-    const verdicts = (language: (typeof LANGUAGES)[number], trained: boolean) => {
+    const verdicts = (language: string, trained: boolean) => {
       const c = new Console({ language, finished: [...STORIES[0].chapters.map((x) => x.id), ...prerequisites('lifeboat'), 'mailbox-full'] });
       const t = translator(language);
       const run = (l: string) => {
@@ -99,12 +99,12 @@ describe('The Lifeboat: the engine', () => {
     for (const trained of [false, true]) {
       const en = verdicts('en', trained);
       expect(en).toEqual(trained ? ['add header', 'add header', 'add header', 'add header', 'no action', 'no action'] : ['greylist', 'add header', 'add header', 'add header', 'no action', 'no action']);
-      for (const language of LANGUAGES) expect(verdicts(language, trained), `${language}, trained: ${trained}`).toEqual(en);
+      for (const language of languagesFor('lifeboat')) expect(verdicts(language, trained), `${language}, trained: ${trained}`).toEqual(en);
     }
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('lifeboat'))
   describe(`The Lifeboat — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -341,7 +341,7 @@ for (const language of LANGUAGES)
   });
 
 describe('The Lifeboat: the error explainer', () => {
-  for (const language of LANGUAGES)
+  for (const language of languagesFor('lifeboat'))
     it(`${language}: reading the mail server explains nothing; its errors are explained`, () => {
       const sh = new Shell(chapter('sorting-office'), language);
       const t = translator(language);

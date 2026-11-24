@@ -56,3 +56,6 @@ export function freshCommands(stories: readonly StoryInfo[] = CATALOGUE): Map<st
     }
   return out;
 }
+
+/** The story a chapter belongs to (none for the workstation). */
+export const storyOfChapter = (id: string): string | undefined => CATALOGUE.find((s) => s.chapters.some((c) => c.id === id))?.id;

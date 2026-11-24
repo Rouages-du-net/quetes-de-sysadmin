@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 // The Eraser, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('coop')])];
 const MDP = 'radish-2027';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('coop'))
   describe(`The Co-op — ${language}`, () => {
     const fr = language === 'fr';
     // The player's account in the language (vous@poste, you@poste), like the names of places.

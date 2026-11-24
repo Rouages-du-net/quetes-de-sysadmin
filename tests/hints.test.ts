@@ -7,7 +7,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { STORIES } from '../src/engine/chapters';
 import { Shell } from '../src/engine/shell';
 import { hint } from '../src/engine/hints';
-import { LANGUAGES } from '../src/texts';
+import { LANGUAGES, storyTranslated } from '../src/texts';
 
 // A language's hint messages, with their attributes.
 const messages = (language: string) => {
@@ -26,7 +26,8 @@ const messages = (language: string) => {
 
 for (const h of STORIES)
   describe(`Hints: ${h.id}`, () => {
-    for (const language of LANGUAGES) {
+    // A draft language (languages.json) has the hints of the stories it translates.
+    for (const language of LANGUAGES.filter((l) => storyTranslated(l, h.id))) {
       const all = messages(language);
       it(`${language}: each chapter has hints, on its real steps, with clue and solution`, () => {
         for (const c of h.chapters) {
