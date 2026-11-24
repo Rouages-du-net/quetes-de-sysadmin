@@ -29,6 +29,7 @@ import { help, apropos, whatisLine, invalidOption, pageMan, shorten } from './co
 import { translator, typography, type Language, type Translate } from '../texts';
 import { hostInLanguage, machineName } from './machines';
 import { live } from './activity';
+import { storyOfChapter } from './catalogue';
 
 export { split, applyMode } from './tools';
 import { applyMode, appendOnly, braces, immutable, compareNames, content, glob, hasGlob, listRuns, split, splitList, takesTarget, modeWithMask, sizeFor, type ListItem, type Word } from './tools';
@@ -402,7 +403,8 @@ export class Shell implements Game {
     language?: Language,
     public host = 'sysadmin',
   ) {
-    this.t = translator(language);
+    // A draft language plays a story it doesn't translate yet with its English world (texts/index.ts).
+    this.t = translator(language, storyOfChapter(chapter.id));
     this.root = chapter.names ? translateNames(this.t, chapter.createWorld(this.t)) : chapter.createWorld(this.t);
     this.home = chapter.names ? path(this.t, chapter.home) : chapter.home;
     this.cwd = this.home;

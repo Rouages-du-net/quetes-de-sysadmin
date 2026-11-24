@@ -1,15 +1,17 @@
 // Each chapter is replayed to the end (expected solution), with false
 // leads along the way: the engine must refuse them without blocking the
-// game. Games are replayed in every available language; the expected
-// texts are checked in French (the reference language of these tests).
+// game. Games are replayed in every available language (a draft language,
+// src/texts/languages.json: in the stories it translates already); the
+// expected texts are checked in French (the reference language of these tests).
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it as vitestIt, type TestContext } from 'vitest';
+import { storyOfChapter } from '../src/engine/catalogue';
 import { machineName } from '../src/engine/machines';
 import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator, typography } from '../src/texts';
+import { LANGUAGES, storyTranslated, translator, typography } from '../src/texts';
 import { clean, name } from '../src/engine/world';
 import { inLanguage, machinesInLanguage } from './names';
 import { withoutColours } from '../src/engine/colours';
@@ -18,8 +20,25 @@ const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c
 // Every command a chapter lists, each once.
 const allCommands = () => [...new Set(STORIES.flatMap((h) => h.chapters.flatMap((c) => c.commands)))];
 
+// A chapter of a story the language doesn't translate yet (a draft): its test is skipped.
+class Untranslated extends Error {}
+
 for (const language of LANGUAGES)
   describe(`Language: ${language}`, () => {
+    const it = (title: string, options: { timeout?: number } | (() => void), body?: () => void) => {
+      const test = typeof options === 'function' ? options : body!;
+      return vitestIt(title, typeof options === 'function' ? {} : options, (context: TestContext) => {
+        try {
+          test();
+        } catch (e) {
+          if (e instanceof Untranslated) context.skip(e.message);
+          else throw e;
+        }
+      });
+    };
+    const translated = (id: string) => {
+      if (!storyTranslated(language, storyOfChapter(id) ?? '')) throw new Untranslated(`${language} doesn't translate ${storyOfChapter(id)} yet`);
+    };
     const reference = language === 'fr';
     // A line written with the French names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
@@ -31,6 +50,7 @@ for (const language of LANGUAGES)
     };
 
     function play(id: string, commands: string[]) {
+      translated(id);
       const s = new Shell(chapter(id), language);
       // In the reference language, the game is played with colours, as in the
       // interface: events must ignore them (see colours.ts).
@@ -852,6 +872,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution, tested from the workstation: ufw is not enough, port bound to 127.0.0.1, clean-up', () => {
+        translated('firewall-hole');
         const c = new Console({ language, finished: BEFORE });
         const playC = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
         expect(playC(['nc -zv workshop 5432'])).toContain(`Connection to ${machineName(c.t, 'workshop')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);

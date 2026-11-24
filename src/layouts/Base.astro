@@ -1,51 +1,92 @@
 ---
 // Shared layout of the site's pages. Page texts live in the pages
-// themselves: one page per language, English at /en/, French at /fr/;
-// / picks one from the browser's language (see public/.htaccess).
+// themselves: one page per language, English at /en/, French at /fr/,
+// Spanish at /es/; / picks one from the browser's language (see
+// public/.htaccess). The languages offered and the addresses of each page:
+// src/site-languages.ts (a draft language's pages carry a banner and stay
+// out of search engines).
 // The font of the headings and the terminal, served by the site (JetBrains Mono, OFL licence).
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
 import '../styles/site.css';
+import { isComplete, offered, type Alternates } from '../site-languages';
 
 interface Props {
   title: string;
   description: string;
   lang?: string;
-  // The same page in another language (link at the top of the page).
-  other?: { href: string; lang: string; name: string };
+  // The same page in each language (the header's links, hreflang): language → address.
+  alternates?: Alternates;
 }
-const { title, description, lang = 'en', other } = Astro.props;
-const en = lang !== 'fr';
-const home = en ? '/en/' : '/fr/';
+const { title, description, lang = 'en', alternates = {} } = Astro.props;
+const others = offered(lang, alternates);
+const draft = !isComplete(lang);
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const appName = en ? 'Sysadmin Quests' : 'Quêtes de Sysadmin';
-// The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
-// on a page without the game, or without JavaScript, the game's page opens it (#report).
-const report = en ? 'Report a problem or an idea' : 'Signaler un problème ou une idée';
-// The Atom feed of new stories in the page's language (src/feeds.ts): announced in <head>, linked in the footer.
-const feed = en
-  ? { href: '/en/feed.xml', title: 'Sysadmin Quests: new stories', label: 'Follow new stories (RSS/Atom)' }
-  : { href: '/fr/feed.xml', title: 'Quêtes de Sysadmin : nouvelles histoires', label: 'Suivre les nouvelles histoires (RSS/Atom)' };
-// The first link of every page, shown when it has the focus: past the header, to the content.
-const skip = en ? 'Skip to content' : 'Aller au contenu';
-// The footer's "Install the game" (src/pwa/install.ts): its messages.
-const install = en
-  ? {
+
+// The layout's own texts, in each language.
+const TEXTS = {
+  en: {
+    appName: 'Sysadmin Quests',
+    // The footer's "Report a problem or an idea": opens the game's dialog (src/pwa/feedback-link.ts);
+    // on a page without the game, or without JavaScript, the game's page opens it (#report).
+    report: 'Report a problem or an idea',
+    // The Atom feed of new stories in the page's language (src/feeds.ts): announced in <head>, linked in the footer.
+    feedTitle: 'Sysadmin Quests: new stories',
+    feedLabel: 'Follow new stories (RSS/Atom)',
+    // The first link of every page, shown when it has the focus: past the header, to the content.
+    skip: 'Skip to content',
+    languages: 'Other languages',
+    draft: '',
+    // The footer's "Install the game" (src/pwa/install.ts): its messages.
+    install: {
       label: 'Install the game',
       help: 'In Safari, tap the Share button, then "Add to Home Screen".',
       offline: 'Once installed, the game opens full screen and plays offline; your progress stays on this device.',
       installing: 'The game is being installed: it will appear with your apps.',
       installed: 'The game is installed.',
       dismissed: 'Installation cancelled. You can keep playing here.',
-    }
-  : {
+    },
+  },
+  fr: {
+    appName: 'Quêtes de Sysadmin',
+    report: 'Signaler un problème ou une idée',
+    feedTitle: 'Quêtes de Sysadmin : nouvelles histoires',
+    feedLabel: 'Suivre les nouvelles histoires (RSS/Atom)',
+    skip: 'Aller au contenu',
+    languages: 'Autres langues',
+    draft: '',
+    install: {
       label: 'Installer le jeu',
       help: "Dans Safari, touche le bouton Partager, puis « Sur l'écran d'accueil ».",
       offline: "Une fois installé, le jeu s'ouvre en plein écran et marche hors ligne ; ta progression reste sur cet appareil.",
       installing: "Le jeu s'installe : il apparaîtra parmi tes applications.",
       installed: 'Le jeu est installé.',
       dismissed: 'Installation annulée. Tu peux continuer à jouer ici.',
-    };
+    },
+  },
+  es: {
+    appName: 'Misiones de Sysadmin',
+    report: 'Informar de un problema o una idea',
+    feedTitle: 'Misiones de Sysadmin: historias nuevas',
+    feedLabel: 'Seguir las historias nuevas (RSS/Atom)',
+    skip: 'Ir al contenido',
+    languages: 'Otros idiomas',
+    // A draft's banner (src/texts/languages.json).
+    draft: 'Traducción en curso: algunas historias todavía están en inglés.',
+    install: {
+      label: 'Instalar el juego',
+      help: 'En Safari, toca el botón Compartir y luego «Añadir a la pantalla de inicio».',
+      offline: 'Una vez instalado, el juego se abre a pantalla completa y funciona sin conexión; tu progreso se queda en este dispositivo.',
+      installing: 'El juego se está instalando: aparecerá entre tus aplicaciones.',
+      installed: 'El juego está instalado.',
+      dismissed: 'Instalación cancelada. Puedes seguir jugando aquí.',
+    },
+  },
+};
+const T = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
+const home = `/${lang}/`;
+const feed = { href: `/${lang}/feed.xml`, title: T.feedTitle, label: T.feedLabel };
+const install = T.install;
 ---
 <!doctype html>
 <html lang={lang}>
@@ -54,6 +95,7 @@ const install = en
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  {draft && <meta name="robots" content="noindex" />}
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0e1319" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#eef2ee" media="(prefers-color-scheme: light)" />
@@ -62,16 +104,22 @@ const install = en
   <link rel="manifest" href={`${home}manifest.webmanifest`} />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="alternate" type="application/atom+xml" href={feed.href} title={feed.title} />
-  <meta name="apple-mobile-web-app-title" content={appName} />
-  {other && <link rel="alternate" hreflang={other.lang} href={new URL(other.href, Astro.site)} />}
-  {other && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
+  <meta name="apple-mobile-web-app-title" content={T.appName} />
+  {!draft && others.map((o) => <link rel="alternate" hreflang={o.lang} href={new URL(o.href, Astro.site)} />)}
+  {!draft && others.length > 0 && <link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />}
 </head>
 <body>
-  <a class="skip-link" href="#content">{skip}</a>
+  <a class="skip-link" href="#content">{T.skip}</a>
   <header>
-    <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{appName}<span class="cursor" aria-hidden="true"></span></a></p>
-    {other && <p class="language"><a href={other.href} hreflang={other.lang} lang={other.lang}>{other.name}</a></p>}
+    <p class="name"><a href={home}><span class="prompt" aria-hidden="true">~$ </span>{T.appName}<span class="cursor" aria-hidden="true"></span></a></p>
+    {others.length === 1 && <p class="language"><a href={others[0].href} hreflang={others[0].lang} lang={others[0].lang}>{others[0].name}</a></p>}
+    {others.length > 1 && (
+      <nav class="language" aria-label={T.languages}>
+        {others.map((o, i) => <>{i > 0 && ' · '}<a href={o.href} hreflang={o.lang} lang={o.lang}>{o.name}</a></>)}
+      </nav>
+    )}
   </header>
+  {draft && <p class="draft-banner" role="note">{T.draft}</p>}
   <main id="content" tabindex="-1">
     <slot />
   </main>
@@ -84,24 +132,9 @@ const install = en
       </details>
       <p class="install-status" role="status" tabindex="-1"></p>
     </div>
-    <p class="report"><a href={`${home}#report`} data-report>{report}</a></p>
+    <p class="report"><a href={`${home}#report`} data-report>{T.report}</a></p>
     <p class="feed"><a href={feed.href} type="application/atom+xml">{feed.label}</a></p>
-    {en ? (
-      <>
-        <p>
-          Inspired by <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html">Terminus</a>,
-          created at MIT by Shawn Conrad and Michele Pratusevich: the idea of learning commands by moving
-          from directory to directory comes from there; the places, puzzles and texts are our own. The
-          addresses and domain names used are reserved for examples (RFC 5737, RFC 6761).
-        </p>
-        <p>
-          Code under the <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
-          texts under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
-          <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Source code</a> ·
-          a project by <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. No trackers, no ads.
-        </p>
-      </>
-    ) : (
+    {lang === 'fr' ? (
     <>
     <p>
       Inspiré de <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html" hreflang="en">Terminus</a>,
@@ -117,6 +150,37 @@ const install = en
       un projet de <a href="https://rouages.net">Les rouages du net</a>. Sans pisteur ni publicité.
     </p>
     </>
+    ) : lang === 'es' ? (
+    <>
+    <p>
+      Inspirado en <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html" hreflang="en">Terminus</a>,
+      creado en el MIT por Shawn Conrad y Michele Pratusevich: de ahí viene la idea de aprender los
+      comandos moviéndose de carpeta en carpeta; los lugares, los enigmas y los textos son nuestros.
+      Los comandos responden a menudo en inglés, como en un sistema real; las direcciones y los nombres
+      de dominio que se usan están reservados para ejemplos (RFC 5737, RFC 6761).
+    </p>
+    <p>
+      Código bajo licencia <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
+      textos bajo <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es">CC BY-SA 4.0</a>.
+      <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Código fuente</a> ·
+      un proyecto de <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. Sin rastreadores ni publicidad.
+    </p>
+    </>
+    ) : (
+      <>
+        <p>
+          Inspired by <a href="https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html">Terminus</a>,
+          created at MIT by Shawn Conrad and Michele Pratusevich: the idea of learning commands by moving
+          from directory to directory comes from there; the places, puzzles and texts are our own. The
+          addresses and domain names used are reserved for examples (RFC 5737, RFC 6761).
+        </p>
+        <p>
+          Code under the <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
+          texts under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+          <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Source code</a> ·
+          a project by <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. No trackers, no ads.
+        </p>
+      </>
     )}
   </footer>
   <script>

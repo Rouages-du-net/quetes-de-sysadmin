@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PAGES } from '../../site-languages';
+import { CATALOGUE as STORIES } from '../../engine/catalogue';
+---
+<Base
+  title="Misiones de Sysadmin"
+  lang="es"
+  alternates={PAGES.home}
+  description="Aprende administración de sistemas, en Linux y en Windows, jugando en el navegador con comandos reales: moverse, buscar, los permisos, los registros, la red, git, las copias de seguridad, PowerShell."
+>
+  <h1>Misiones de Sysadmin</h1>
+  <p class="intro">
+    Aventuras en las que actúas con <strong>comandos reales</strong>: primero Linux, luego PowerShell en un Windows Server. Cada lugar es
+    una carpeta, cada objeto un archivo. {STORIES.length} historias independientes: empieza por El Borrador
+    si nunca has abierto una terminal.
+  </p>
+  <p class="intro">
+    ¿Te has atascado? Haz como los profesionales: <code>man comando</code> abre el manual,
+    <code>comando --help</code> da un resumen y <code>man -k palabra</code> busca el comando
+    que hace lo que quieres.
+  </p>
+  <noscript><p class="warning">Este juego necesita JavaScript para simular una terminal en tu navegador.</p></noscript>
+
+  <quetes-de-sysadmin lang="es" exam-control="page"></quetes-de-sysadmin>
+
+  <details class="faq">
+    <summary><h2 id="embed">Pon el juego en tu sitio web</h2></summary>
+    <p>El juego es software libre y cabe en cualquier página con dos líneas:</p>
+    <pre tabindex="0"><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
+<quetes-de-sysadmin lang="es"></quetes-de-sysadmin>`}</code></pre>
+    <p>Instrucciones completas (en inglés): <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/EMBEDDING.md" hreflang="en">docs/EMBEDDING.md</a>.</p>
+  </details>
+
+  <details class="faq">
+    <summary><h2 id="names">¿Por qué nombres que terminan en .internal y .example?</h2></summary>
+    <p>
+      Las máquinas del juego son ficticias, pero sus nombres siguen las reglas reales: <code>.internal</code>
+      está reservado para las redes privadas (ICANN, 2024), <code>.example</code> para los ejemplos
+      (<a href="https://www.rfc-editor.org/rfc/rfc6761" hreflang="en">RFC 6761</a>), y las direcciones 192.0.2.x, 198.51.100.x
+      y 203.0.113.x para la documentación (<a href="https://www.rfc-editor.org/rfc/rfc5737" hreflang="en">RFC 5737</a>). Un
+      nombre inventado podría pertenecer a alguien: lo que pruebas aquí nunca apunta a una máquina real.
+    </p>
+  </details>
+
+  <details class="faq">
+    <summary><h2 id="teach">Para docentes</h2></summary>
+    <p>Objetivo, requisitos previos, comandos nuevos y duración de cada capítulo: <a href="/es/docentes/">las fichas de las misiones</a>.</p>
+    <p>Para una prueba en clase: el juego no muestra pistas y cronometra cada capítulo; el mejor tiempo se queda en este navegador.</p>
+    <p class="exam-control"><label><input type="checkbox" id="exam-mode" /> Modo examen: sin pistas, con cronómetro (el capítulo actual vuelve a empezar)</label></p>
+  </details>
+</Base>
+
+<script>
+  import '../../element';
+  import { wireExam } from '../../exam-control';
+  wireExam();
+</script>

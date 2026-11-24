@@ -1,0 +1,1922 @@
+lighthouse
+  /Hut → /Cabana
+  /Hut/welcome.txt → /Cabana/bienvenida.txt
+  /Hut/message.txt → /Cabana/mensaje.txt
+  /Hut/Beach → /Cabana/Playa
+  /Hut/Beach/sign.txt → /Cabana/Playa/cartel.txt
+  /Hut/Beach/mender.txt → /Cabana/Playa/remendona.txt
+  /Hut/Beach/seashell → /Cabana/Playa/concha
+  /Hut/Hill → /Cabana/Colina
+  /Hut/Hill/wind.txt → /Cabana/Colina/viento.txt
+  /Hut/Hill/SignalSchool → /Cabana/Colina/EscuelaDeSenales
+  /Hut/Hill/SignalSchool/headteacher.txt → /Cabana/Colina/EscuelaDeSenales/directora.txt
+  /Hut/Hill/SignalSchool/PracticeRoom → /Cabana/Colina/EscuelaDeSenales/SalaDePracticas
+  /Hut/Hill/SignalSchool/PracticeRoom/exercise.txt → /Cabana/Colina/EscuelaDeSenales/SalaDePracticas/ejercicio.txt
+  /Hut/Hill/SignalSchool/PracticeRoom/crab → /Cabana/Colina/EscuelaDeSenales/SalaDePracticas/cangrejo
+  /Hut/Hill/SignalSchool/PracticeRoom/Bucket → /Cabana/Colina/EscuelaDeSenales/SalaDePracticas/Cubo
+  /Hut/Hill/SignalSchool/Lessons → /Cabana/Colina/EscuelaDeSenales/Lecciones
+  /Hut/Hill/SignalSchool/Lessons/lesson_1_manual.txt → /Cabana/Colina/EscuelaDeSenales/Lecciones/leccion_1_manual.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_2_paths.txt → /Cabana/Colina/EscuelaDeSenales/Lecciones/leccion_2_rutas.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_3_hidden.txt → /Cabana/Colina/EscuelaDeSenales/Lecciones/leccion_3_ocultos.txt
+  /Hut/Hill/SignalSchool/Lessons/.secret_note → /Cabana/Colina/EscuelaDeSenales/Lecciones/.nota_secreta
+  /Hut/Hill/SignalSchool/Lessons/lesson_4_rename.txt → /Cabana/Colina/EscuelaDeSenales/Lecciones/leccion_4_renombrar.txt
+  /Hut/Hill/SignalSchool/Library → /Cabana/Colina/EscuelaDeSenales/Biblioteca
+  /Hut/Hill/SignalSchool/Library/book_of_commands.txt → /Cabana/Colina/EscuelaDeSenales/Biblioteca/libro_de_comandos.txt
+  /Hut/Harbour → /Cabana/Puerto
+  /Hut/Harbour/captain.txt → /Cabana/Puerto/capitana.txt
+  /Hut/Harbour/Boathouse → /Cabana/Puerto/Cobertizo
+  /Hut/Harbour/Boathouse/inventory.txt → /Cabana/Puerto/Cobertizo/inventario.txt
+  /Hut/Harbour/Storeroom → /Cabana/Puerto/Almacen
+  /Hut/Harbour/Storeroom/label.txt → /Cabana/Puerto/Almacen/etiqueta.txt
+  /Hut/Harbour/Storeroom/.spare_bulb → /Cabana/Puerto/Almacen/.bombilla_de_repuesto
+  /Hut/Pier → /Cabana/Espigon
+  /Hut/Pier/net → /Cabana/Espigon/red
+  /Hut/Pier/clue.txt → /Cabana/Espigon/indicio.txt
+  /Hut/Pier/Lighthouse → /Cabana/Espigon/Faro
+  /Hut/Pier/Lighthouse/keeper.txt → /Cabana/Espigon/Faro/farera.txt
+  /Hut/Pier/Lighthouse/Stairs → /Cabana/Espigon/Faro/Escalera
+  /Hut/Pier/Lighthouse/Stairs/steps.txt → /Cabana/Espigon/Faro/Escalera/peldanos.txt
+  /Hut/Pier/Lighthouse/Stairs/Lantern → /Cabana/Espigon/Faro/Escalera/Linterna
+  /Hut/Pier/Lighthouse/Stairs/Lantern/lantern.txt → /Cabana/Espigon/Faro/Escalera/Linterna/linterna.txt
+
+village
+  /Quay → /Muelle
+  /Quay/crier.txt → /Muelle/pregonero.txt
+  /Quay/scroll_of_spells.txt → /Muelle/pergamino_de_hechizos.txt
+  /Quay/Market → /Muelle/Mercado
+  /Quay/Market/stallholder.txt → /Muelle/Mercado/tendera.txt
+  /Quay/Market/apple → /Muelle/Mercado/manzana
+  /Quay/Market/apple_2 → /Muelle/Mercado/manzana_2
+  /Quay/Market/cheese → /Muelle/Mercado/queso
+  /Quay/Bakery → /Muelle/Panaderia
+  /Quay/Bakery/baker.txt → /Muelle/Panaderia/panadero.txt
+  /Quay/Bakery/sourdough → /Muelle/Panaderia/masamadre
+  /Quay/Workshop → /Muelle/Taller
+  /Quay/Workshop/maker.txt → /Muelle/Taller/artesana.txt
+  /Quay/School → /Muelle/Escuela
+  /Quay/School/teacher.txt → /Muelle/Escuela/maestra.txt
+  /Quay/TownHall → /Muelle/Ayuntamiento
+  /Quay/TownHall/clerk.txt → /Muelle/Ayuntamiento/secretaria.txt
+  /Quay/TownHall/notice_dance.txt → /Muelle/Ayuntamiento/aviso_baile.txt
+  /Quay/TownHall/notice_cat.txt → /Muelle/Ayuntamiento/aviso_gato.txt
+  /Quay/TownHall/notice_sewers.txt → /Muelle/Ayuntamiento/aviso_alcantarillas.txt
+  /Quay/TownHall/notice_market.txt → /Muelle/Ayuntamiento/aviso_mercado.txt
+  /Quay/TownHall/notice_clock.txt → /Muelle/Ayuntamiento/aviso_reloj.txt
+  /Quay/TownHall/.doormat → /Muelle/Ayuntamiento/.felpudo
+  /Quay/TownHall/Archives → /Muelle/Ayuntamiento/Archivo
+  /Quay/TownHall/Archives/archivist.txt → /Muelle/Ayuntamiento/Archivo/archivera.txt
+  /Quay/TownHall/Archives/chronicle.txt → /Muelle/Ayuntamiento/Archivo/cronica.txt
+  /Quay/Alley → /Muelle/Callejon
+  /Quay/Alley/barricade → /Muelle/Callejon/barricada
+  /Quay/Alley/Yard → /Muelle/Callejon/Patio
+  /Quay/Alley/Yard/wall.txt → /Muelle/Callejon/Patio/muro.txt
+  /Quay/Alley/Yard/Sewer → /Muelle/Callejon/Patio/Alcantarilla
+  /Quay/Alley/Yard/Sewer/rats.txt → /Muelle/Callejon/Patio/Alcantarilla/ratas.txt
+  /Quay/Alley/Yard/Sewer/Tunnel → /Muelle/Callejon/Patio/Alcantarilla/Galeria
+  /Quay/Alley/Yard/Sewer/Tunnel/nour.txt → /Muelle/Callejon/Patio/Alcantarilla/Galeria/nour.txt
+
+root
+  /home/you → /home/tu
+  /home/you/arrival.txt → /home/tu/llegada.txt
+  /home/you/admin_manual.txt → /home/tu/manual_admin.txt
+  /home/you/journal.txt → /home/tu/diario.txt
+  /home/you/eraser.conf.fixed → /home/tu/borrador.conf.corregido
+  /home/you/memories → /home/tu/recuerdos
+  /home/you/memories/school → /home/tu/recuerdos/escuela
+  /home/you/memories/first_program → /home/tu/recuerdos/primer_programa
+  /home/you/memories/garden → /home/tu/recuerdos/jardin
+  /home/you/memories/song → /home/tu/recuerdos/cancion
+  /home/you/memories/journey → /home/tu/recuerdos/viaje
+  /home/you/memories/friend → /home/tu/recuerdos/amiga
+  /home/you/memories/library → /home/tu/recuerdos/biblioteca
+  /home/you/memories/first_server → /home/tu/recuerdos/primer_servidor
+  /home/nour/diary.txt → /home/nour/diario_intimo.txt
+  /etc/eraser.conf → /etc/borrador.conf
+  /var/log/eraser.log → /var/log/borrador.log
+  /root/notes.txt → /root/notas.txt
+
+backup
+  /home/you → /home/tu
+  /home/you/note_from_maelle.txt → /home/tu/nota_de_maelle.txt
+  /home/you/memories → /home/tu/recuerdos
+  /home/you/memories/first-letter.txt → /home/tu/recuerdos/primera-carta.txt
+  /home/you/memories/lighthouse.txt → /home/tu/recuerdos/faro.txt
+  /home/you/memories/village.txt → /home/tu/recuerdos/pueblo.txt
+  /home/you/memories/nour.txt → /home/tu/recuerdos/nour.txt
+  /home/you/memories/eraser.txt → /home/tu/recuerdos/borrador.txt
+  /mnt/backup → /mnt/copia
+
+first-day
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /home/you/notes_awa.txt → /home/tu/notes_awa.txt
+
+second-day
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /home/you/notes_awa.txt → /home/tu/notes_awa.txt
+  /srv/team → /srv/equipo
+
+reboot-night
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /home/you/notes_awa.txt → /home/tu/notes_awa.txt
+
+fire
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /mnt/backup → /mnt/copia
+  /mnt/backup/DRP.txt → /mnt/copia/PRD.txt
+  /mnt/backup/medialibrary-2026-10-21.tar.gz → /mnt/copia/medialibrary-2026-10-21.tar.gz
+  /mnt/backup/medialibrary-2026-10-22.tar.gz → /mnt/copia/medialibrary-2026-10-22.tar.gz
+  /mnt/backup/medialibrary-2026-10-23.tar.gz → /mnt/copia/medialibrary-2026-10-23.tar.gz
+
+certificate
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /home/you/message_from_lea.txt → /home/tu/mensaje_de_lea.txt
+
+lost-packet
+  /home/you → /home/tu
+  /home/you/note_from_kofi.txt → /home/tu/nota_de_kofi.txt
+  /home/you/notebook.txt → /home/tu/cuaderno.txt
+
+manuscript
+  /home/you → /home/tu
+  /home/you/message_from_ines.txt → /home/tu/mensaje_de_ines.txt
+  /home/you/novel → /home/tu/novela
+  /home/you/novel/.git → /home/tu/novela/.git
+  /home/you/novel/.git/HEAD → /home/tu/novela/.git/HEAD
+  /home/you/novel/novel.txt → /home/tu/novela/novela.txt
+  /home/you/poems → /home/tu/poemas
+  /home/you/poems/sea.txt → /home/tu/poemas/mar.txt
+  /home/you/poems/lighthouse.txt → /home/tu/poemas/faro.txt
+  /home/you/poems/zohra.txt → /home/tu/poemas/zohra.txt
+  /home/you/help_git.txt → /home/tu/ayuda_git.txt
+
+archives
+  /home/you → /home/tu
+  /home/you/letter_from_rosa.txt → /home/tu/carta_de_rosa.txt
+  /home/you/notes_rosa.txt → /home/tu/notes_rosa.txt
+  /home/you/collection → /home/tu/fondos
+  /home/you/collection/readme.txt → /home/tu/fondos/leeme.txt
+  /home/you/collection/manuscripts → /home/tu/fondos/manuscritos
+  /home/you/collection/manuscripts/marie_diary.txt → /home/tu/fondos/manuscritos/diario_de_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/tu/fondos/manuscritos/cartas_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/tu/fondos/manuscritos/recetas_del_barrio.txt
+  /home/you/collection/maps → /home/tu/fondos/mapas
+  /home/you/collection/maps/map_1890.png → /home/tu/fondos/mapas/plano_1890.png
+  /home/you/collection/maps/map_1954.png → /home/tu/fondos/mapas/plano_1954.png
+  /home/you/collection/maps/render.tmp → /home/tu/fondos/mapas/render.tmp
+  /home/you/collection/press → /home/tu/fondos/prensa
+  /home/you/collection/press/gazette_1936.pdf → /home/tu/fondos/prensa/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/tu/fondos/prensa/gazette_1968.pdf
+  /home/you/collection/press/export.tmp → /home/tu/fondos/prensa/export.tmp
+  /home/you/collection/recordings → /home/tu/fondos/grabaciones
+  /home/you/collection/recordings/market_songs.ogg → /home/tu/fondos/grabaciones/cantos_del_mercado.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/tu/fondos/grabaciones/entrevista_fatou.ogg
+  /home/you/collection/recordings/raw.tmp → /home/tu/fondos/grabaciones/bruto.tmp
+  /media/usb → /media/memoria
+
+versions
+  /home/you → /home/tu
+  /home/you/note_from_rosa.txt → /home/tu/nota_de_rosa.txt
+  /home/you/notes_restic.txt → /home/tu/notes_restic.txt
+  /home/you/.config → /home/tu/.config
+  /home/you/.config/restic → /home/tu/.config/restic
+  /home/you/.config/restic/password → /home/tu/.config/restic/contrasena
+  /home/you/collection → /home/tu/fondos
+  /home/you/collection/readme.txt → /home/tu/fondos/leeme.txt
+  /home/you/collection/manuscripts → /home/tu/fondos/manuscritos
+  /home/you/collection/manuscripts/marie_diary.txt → /home/tu/fondos/manuscritos/diario_de_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/tu/fondos/manuscritos/cartas_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/tu/fondos/manuscritos/recetas_del_barrio.txt
+  /home/you/collection/maps → /home/tu/fondos/mapas
+  /home/you/collection/maps/map_1890.png → /home/tu/fondos/mapas/plano_1890.png
+  /home/you/collection/maps/map_1954.png → /home/tu/fondos/mapas/plano_1954.png
+  /home/you/collection/press → /home/tu/fondos/prensa
+  /home/you/collection/press/gazette_1936.pdf → /home/tu/fondos/prensa/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/tu/fondos/prensa/gazette_1968.pdf
+  /home/you/collection/recordings → /home/tu/fondos/grabaciones
+  /home/you/collection/recordings/market_songs.ogg → /home/tu/fondos/grabaciones/cantos_del_mercado.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/tu/fondos/grabaciones/entrevista_fatou.ogg
+  /home/you/collection/scans → /home/tu/fondos/escaneos
+  /home/you/collection/scans/register_1.png → /home/tu/fondos/escaneos/registro_1.png
+  /home/you/collection/scans/register_2.png → /home/tu/fondos/escaneos/registro_2.png
+  /home/you/collection/scans/register_3.png → /home/tu/fondos/escaneos/registro_3.png
+  /mnt/townhall → /mnt/ayuntamiento
+  /mnt/townhall/restic-library → /mnt/ayuntamiento/restic-biblioteca
+
+shut-the-door
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+firewall
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+  /home/you/scan_yasmine.txt → /home/tu/scan_yasmine.txt
+
+sentinel
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+
+sharing
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+  /home/you/note_from_rania.txt → /home/tu/nota_de_rania.txt
+  /opt/agenda/README.txt → /opt/agenda/LEEME.txt
+
+works-for-me
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+  /home/you/help_dns.txt → /home/tu/ayuda_dns.txt
+
+concert
+  /home/you → /home/tu
+  /home/you/message_from_kofi.txt → /home/tu/mensaje_de_kofi.txt
+  /home/you/help_logs.txt → /home/tu/ayuda_registros.txt
+
+port
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+
+repeat-offenders
+  /home/you → /home/tu
+  /home/you/email_rania.txt → /home/tu/correo_rania.txt
+
+repair-cafe
+  /home/you → /home/tu
+  /home/you/email_kofi.txt → /home/tu/correo_kofi.txt
+  /home/you/note_from_rania.txt → /home/tu/nota_de_rania.txt
+
+update
+  /home/you → /home/tu
+  /home/you/message_from_yasmine.txt → /home/tu/mensaje_de_yasmine.txt
+  /home/you/notes_docker.txt → /home/tu/notes_docker.txt
+
+compose
+  /home/you → /home/tu
+  /home/you/message_from_yasmine.txt → /home/tu/mensaje_de_yasmine.txt
+  /home/you/help_compose.txt → /home/tu/ayuda_compose.txt
+
+firewall-hole
+  /home/you → /home/tu
+  /home/you/message_from_rania.txt → /home/tu/mensaje_de_rania.txt
+  /home/you/note_from_yasmine.txt → /home/tu/nota_de_yasmine.txt
+  /usr/base-system → /usr/sistema
+
+full-powers
+  /home/you → /home/tu
+  /home/you/message_from_yasmine.txt → /home/tu/mensaje_de_yasmine.txt
+  /home/you/note_from_rania.txt → /home/tu/nota_de_rania.txt
+  /srv/gallery → /srv/galeria
+  /srv/gallery/compose.yaml → /srv/galeria/compose.yaml
+  /srv/gallery/README.txt → /srv/galeria/LEEME.txt
+  /srv/gallery/photos → /srv/galeria/photos
+  /srv/gallery/photos/benchy-first-try.jpg → /srv/galeria/photos/benchy-primer-intento.jpg
+  /srv/gallery/photos/benchy-success.jpg → /srv/galeria/photos/benchy-logrado.jpg
+  /srv/gallery/photos/laser-cut-lamp.jpg → /srv/galeria/photos/lampara-corte-laser.jpg
+  /srv/gallery/photos/wooden-clock.jpg → /srv/galeria/photos/reloj-de-madera.jpg
+  /srv/gallery/photos/line-following-robot.jpg → /srv/galeria/photos/robot-sigue-lineas.jpg
+  /srv/gallery/photos/kids-soldering-workshop.jpg → /srv/galeria/photos/taller-soldadura-peques.jpg
+  /srv/gallery/photos/repaired-bike.jpg → /srv/galeria/photos/bici-reparada.jpg
+  /srv/gallery/photos/revived-toaster.jpg → /srv/galeria/photos/tostadora-resucitada.jpg
+  /srv/gallery/photos/led-sign.jpg → /srv/galeria/photos/letrero-led.jpg
+  /srv/gallery/photos/shared-toolbox.jpg → /srv/galeria/photos/caja-herramientas-compartida.jpg
+  /srv/gallery/photos/digital-embroidery.jpg → /srv/galeria/photos/bordadora-digital.jpg
+  /srv/gallery/photos/homemade-drone.jpg → /srv/galeria/photos/dron-casero.jpg
+  /srv/gallery/photos/custom-keyboard.jpg → /srv/galeria/photos/teclado-a-medida.jpg
+  /srv/gallery/photos/fablab-party.jpg → /srv/galeria/photos/fiesta-del-fablab.jpg
+
+bare-repo
+  /home/you → /home/tu
+  /home/you/message_from_samia.txt → /home/tu/mensaje_de_samia.txt
+  /home/you/note_from_theo.txt → /home/tu/nota_de_theo.txt
+  /home/you/gazette → /home/tu/gazette
+  /home/you/gazette/.git → /home/tu/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/tu/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/tu/gazette/index.html
+  /home/you/gazette/style.css → /home/tu/gazette/style.css
+  /home/you/gazette/agenda.html → /home/tu/gazette/agenda.html
+  /home/you/gazette/fiesta-vecinal.html → /home/tu/gazette/fiesta-vecinal.html
+
+rollback
+  /home/you → /home/tu
+  /home/you/message_from_samia.txt → /home/tu/mensaje_de_samia.txt
+  /home/you/gazette → /home/tu/gazette
+  /home/you/gazette/.git → /home/tu/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/tu/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/tu/gazette/index.html
+  /home/you/gazette/style.css → /home/tu/gazette/style.css
+  /home/you/gazette/agenda.html → /home/tu/gazette/agenda.html
+  /home/you/gazette/fiesta-vecinal.html → /home/tu/gazette/fiesta-vecinal.html
+  /home/you/gazette/tests.sh → /home/tu/gazette/tests.sh
+
+blue-green
+  /home/you → /home/tu
+  /home/you/message_from_samia.txt → /home/tu/mensaje_de_samia.txt
+
+canary
+  /home/you → /home/tu
+  /home/you/message_from_samia.txt → /home/tu/mensaje_de_samia.txt
+
+migration
+  /home/you → /home/tu
+  /home/you/message_from_samia.txt → /home/tu/mensaje_de_samia.txt
+  /home/you/note_from_theo.txt → /home/tu/nota_de_theo.txt
+
+ransom
+  /home/you → /home/tu
+  /home/you/message_from_berenice.txt → /home/tu/mensaje_de_berenice.txt
+  /home/frontdesk → /home/recepcion
+  /home/frontdesk/.cache → /home/recepcion/.cache
+  /home/frontdesk/.cache/.upd → /home/recepcion/.cache/.act
+  /home/frontdesk/.cache/.upd/system-update → /home/recepcion/.cache/.act/act-sistema
+  /srv/share → /srv/compartido
+  /srv/share/inventory.csv → /srv/compartido/inventario.csv
+  /srv/share/volunteer-rota.txt → /srv/compartido/turnos-voluntariado.txt
+  /srv/share/games-day-poster.txt → /srv/compartido/cartel-dia-del-juego.txt
+  /srv/share/rules → /srv/compartido/reglas
+  /srv/share/rules/goose-game.txt → /srv/compartido/reglas/juego-de-la-oca.txt
+  /srv/share/rules/ludo.txt → /srv/compartido/reglas/parchis.txt
+  /srv/share/rules/draughts.txt → /srv/compartido/reglas/damas.txt
+  /mnt/nas/share → /mnt/nas/compartido
+  /mnt/usb → /mnt/memoria
+
+snapshots
+  /home/you → /home/tu
+  /home/you/message_from_berenice.txt → /home/tu/mensaje_de_berenice.txt
+  /home/frontdesk → /home/recepcion
+  /srv/share → /srv/compartido
+  /srv/share/inventory.csv → /srv/compartido/inventario.csv
+  /srv/share/volunteer-rota.txt → /srv/compartido/turnos-voluntariado.txt
+  /srv/share/games-day-poster.txt → /srv/compartido/cartel-dia-del-juego.txt
+  /srv/share/rules → /srv/compartido/reglas
+  /srv/share/rules/goose-game.txt → /srv/compartido/reglas/juego-de-la-oca.txt
+  /srv/share/rules/ludo.txt → /srv/compartido/reglas/parchis.txt
+  /srv/share/rules/draughts.txt → /srv/compartido/reglas/damas.txt
+  /srv/share/rules/rules-scans.pdf → /srv/compartido/reglas/escaneos-reglas.pdf
+  /mnt/snapshots → /mnt/instantaneas
+  /mnt/usb → /mnt/memoria
+
+database
+  /home/you → /home/tu
+  /home/you/message_from_berenice.txt → /home/tu/mensaje_de_berenice.txt
+  /home/you/note_from_malo.txt → /home/tu/nota_de_malo.txt
+
+full-disk
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /srv/radio/shows → /srv/radio/programas
+  /srv/radio/shows/matinal-2027-08-14.ogg → /srv/radio/programas/matinal-2027-08-14.ogg
+
+memory
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /opt/podcast/convert.py → /opt/podcast/convertir.py
+
+inodes
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /srv/radio/shows → /srv/radio/programas
+  /srv/radio/shows/matinal-2027-08-27.ogg → /srv/radio/programas/matinal-2027-08-27.ogg
+  /srv/radio/shows/matinal-2027-08-28.ogg → /srv/radio/programas/matinal-2027-08-28.ogg
+  /srv/radio/shows/nocturno-2027-08-28.ogg → /srv/radio/programas/nocturno-2027-08-28.ogg
+  /srv/radio/stats/README.txt → /srv/radio/stats/LEEME.txt
+
+clock
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /home/you/mail_hosting.txt → /home/tu/correo_alojamiento.txt
+
+probe
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /srv/radio/shows → /srv/radio/programas
+  /srv/radio/shows/matinal-2027-09-06.ogg → /srv/radio/programas/matinal-2027-09-06.ogg
+  /srv/radio/shows/nocturno-2027-09-06.ogg → /srv/radio/programas/nocturno-2027-09-06.ogg
+  /srv/radio/podcasts/thumbnails → /srv/radio/podcasts/miniaturas
+  /srv/radio/podcasts/README.txt → /srv/radio/podcasts/LEEME.txt
+
+post-mortem
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /home/you/notes_theo.txt → /home/tu/notes_theo.txt
+  /home/you/postmortem.md → /home/tu/postmortem.md
+
+bottleneck
+  /home/you → /home/tu
+  /home/you/message_from_zoe.txt → /home/tu/mensaje_de_zoe.txt
+  /srv/radio/recordings → /srv/radio/grabaciones
+  /srv/radio/live → /srv/radio/directo
+
+keys
+  /home/you → /home/tu
+  /home/you/email_yasmine.txt → /home/tu/correo_yasmine.txt
+
+keys:wiki
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+
+keys:archives
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+
+jump
+  /home/you → /home/tu
+  /home/you/email_yasmine.txt → /home/tu/correo_yasmine.txt
+  /home/you/.ssh → /home/tu/.ssh
+
+jump:wiki
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/note_gaspard.txt → /home/tu/note_gaspard.txt
+  /srv/wiki/pages/home.md → /srv/wiki/pages/inicio.md
+
+jump:archives
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+
+tunnel
+  /home/you → /home/tu
+  /home/you/email_yasmine.txt → /home/tu/correo_yasmine.txt
+  /home/you/.ssh → /home/tu/.ssh
+
+tunnel:wiki
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/note_gaspard.txt → /home/tu/note_gaspard.txt
+
+tunnel:archives
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+
+transfers
+  /home/you → /home/tu
+  /home/you/email_yasmine.txt → /home/tu/correo_yasmine.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/config → /home/tu/.ssh/config
+  /home/you/.ssh/id_backup → /home/tu/.ssh/id_copia
+  /home/you/.ssh/id_backup.pub → /home/tu/.ssh/id_copia.pub
+  /srv/share → /srv/compartido
+  /srv/share/minutes → /srv/compartido/actas
+  /srv/share/minutes/agm-2026.txt → /srv/compartido/actas/asamblea-2026.txt
+  /srv/share/minutes/board-2027-09.txt → /srv/compartido/actas/junta-2027-09.txt
+  /srv/share/posters → /srv/compartido/carteles
+  /srv/share/posters/street-party.pdf → /srv/compartido/carteles/fiesta-vecinal.pdf
+  /srv/share/room-bookings.txt → /srv/compartido/reservas-salas.txt
+
+transfers:wiki
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /srv/wiki/exports/report-2027.pdf → /srv/wiki/exports/informe-2027.pdf
+
+transfers:archives
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/backups → /srv/copias
+  /srv/backups/share → /srv/copias/compartido
+  /srv/backups/share/minutes → /srv/copias/compartido/actas
+  /srv/backups/share/minutes/agm-2026.txt → /srv/copias/compartido/actas/asamblea-2026.txt
+
+web-host
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/email_yasmine.txt → /home/tu/correo_yasmine.txt
+  /home/you/email_hosting.txt → /home/tu/email_alojamiento.txt
+  /home/you/notes-gaspard.txt → /home/tu/notes-gaspard.txt
+
+web-host:wiki
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /srv/wiki/site/membership.html → /srv/wiki/site/socios.html
+
+departure
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /home/marc/bin/till-backup.sh → /home/marc/bin/copia-caja.sh
+  /home/marc/notes.txt → /home/marc/notas.txt
+  /srv/backups → /srv/copias
+  /srv/backups/2027-10-18 → /srv/copias/2027-10-18
+  /srv/backups/2027-10-18/home → /srv/copias/2027-10-18/home
+  /srv/backups/2027-10-18/home/marc → /srv/copias/2027-10-18/home/marc
+  /srv/backups/2027-10-18/home/marc/bin → /srv/copias/2027-10-18/home/marc/bin
+  /srv/backups/2027-10-18/home/marc/bin/till-backup.sh → /srv/copias/2027-10-18/home/marc/bin/copia-caja.sh
+
+shared-rights
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+  /srv/till/statements → /srv/till/extractos
+  /srv/till/statements/2027-10-17.txt → /srv/till/extractos/2027-10-17.txt
+  /srv/till/statements/2027-10-18.txt → /srv/till/extractos/2027-10-18.txt
+
+secret
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+
+proxy
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+
+updates
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+
+auto-updates
+  /home/you → /home/tu
+  /home/you/email_awa.txt → /home/tu/correo_awa.txt
+
+vlan
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+  /home/you/switch-plan.txt → /home/tu/plano-switch.txt
+
+dhcp
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+
+zones
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+  /home/you/notes-from-sacha.txt → /home/tu/notas-de-sacha.txt
+
+remote-work
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+  /home/you/malik-laptop.conf → /home/tu/malik-laptop.conf
+
+dmz
+  /home/you → /home/tu
+  /home/you/email_ines.txt → /home/tu/correo_ines.txt
+  /home/you/switch-plan.txt → /home/tu/plano-switch.txt
+
+annex
+  /home/you → /home/tu
+  /home/you/email_sami.txt → /home/tu/correo_sami.txt
+  /home/you/annex-wg0.conf → /home/tu/annex-wg0.conf
+  /home/you/malik-laptop.conf → /home/tu/malik-laptop.conf
+
+directory
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+  /home/you/ines-template.ldif → /home/tu/plantilla-ines.ldif
+  /home/you/malik-laptop.conf → /home/tu/malik-laptop.conf
+
+wifi
+  /home/you → /home/tu
+  /home/you/email_malik.txt → /home/tu/correo_malik.txt
+  /home/you/ap-offices.txt → /home/tu/punto-oficinas.txt
+  /home/you/malik-laptop.conf → /home/tu/malik-laptop.conf
+
+scope
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/engagement_letter.txt → /home/tu/carta_de_encargo.txt
+  /home/you/audit_notes.md → /home/tu/notas_auditoria.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+report
+  /home/you → /home/tu
+  /home/you/email_nadia.txt → /home/tu/correo_nadia.txt
+  /home/you/audit_report.txt → /home/tu/informe_auditoria.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/orders → /srv/pedidos
+  /srv/orders/.env → /srv/pedidos/.env
+  /srv/orders/app → /srv/pedidos/app
+  /srv/orders/app/server.js → /srv/pedidos/app/server.js
+
+exposure
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/audit_scan.txt → /home/tu/escaneo_auditoria.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+traces
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/orders → /srv/pedidos
+  /srv/orders/.env → /srv/pedidos/.env
+
+follow-up
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/closing_report.md → /home/tu/informe_cierre.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+tired-disk
+  /home/you → /home/tu
+  /home/you/message_from_odile.txt → /home/tu/mensaje_de_odile.txt
+  /home/you/host_procedure.txt → /home/tu/procedimiento_alojamiento.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-primavera
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-primavera/copias-papel.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/salida-puerto
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/salida-puerto/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concurso-noche
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concurso-noche/raw.tar
+  /var/mail/you → /var/mail/tu
+  /var/www/gallery → /var/www/galeria
+  /var/www/gallery/index.html → /var/www/galeria/index.html
+
+new-disk
+  /home/you → /home/tu
+  /home/you/message_from_odile.txt → /home/tu/mensaje_de_odile.txt
+  /home/you/host_procedure.txt → /home/tu/procedimiento_alojamiento.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-primavera
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-primavera/copias-papel.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/salida-puerto
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/salida-puerto/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concurso-noche
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concurso-noche/raw.tar
+  /var/www/gallery → /var/www/galeria
+  /var/www/gallery/index.html → /var/www/galeria/index.html
+
+more-room
+  /home/you → /home/tu
+  /home/you/message_from_odile.txt → /home/tu/mensaje_de_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-primavera
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-primavera/copias-papel.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/salida-puerto
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/salida-puerto/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concurso-noche
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concurso-noche/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archivo-otono
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archivo-otono/raw.tar
+  /var/www/gallery → /var/www/galeria
+  /var/www/gallery/index.html → /var/www/galeria/index.html
+
+stuck-boot
+  /home/you → /home/tu
+  /root/message_from_odile.txt → /root/mensaje_de_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/expo-primavera
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/expo-primavera/copias-papel.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/salida-puerto
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/salida-puerto/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/concurso-noche
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/concurso-noche/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/archivo-otono
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/archivo-otono/raw.tar
+  /var/www/gallery → /var/www/galeria
+  /var/www/gallery/index.html → /var/www/galeria/index.html
+
+bulletin
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/obrador
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/obrador
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/security_bulletin.txt → /home/tu/boletin_seguridad.txt
+  /home/you/watch.md → /home/tu/vigilancia.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /var/www/bakery → /var/www/obrador
+  /var/www/bakery/index.html → /var/www/obrador/index.html
+
+priority
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/obrador
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/obrador
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/priority.md → /home/tu/prioridad.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /var/www/bakery → /var/www/obrador
+  /var/www/bakery/index.html → /var/www/obrador/index.html
+
+fix
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/obrador
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/obrador
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /var/www/bakery → /var/www/obrador
+  /var/www/bakery/index.html → /var/www/obrador/index.html
+
+proof
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/obrador
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/obrador
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /var/www/bakery → /var/www/obrador
+  /var/www/bakery/index.html → /var/www/obrador/index.html
+
+routine
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/obrador
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/obrador
+  /home/you → /home/tu
+  /home/you/email_salome.txt → /home/tu/correo_salome.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /var/www/bakery → /var/www/obrador
+  /var/www/bakery/index.html → /var/www/obrador/index.html
+
+postman
+  /home/you → /home/tu
+  /home/you/email_nour.txt → /home/tu/correo_nour.txt
+
+signature
+  /home/you → /home/tu
+  /home/you/message_from_nour.txt → /home/tu/mensaje_de_nour.txt
+
+policy
+  /home/you → /home/tu
+  /home/you/email_nour.txt → /home/tu/correo_nour.txt
+  /home/you/newsmail_letter.txt → /home/tu/carta_newsmail.txt
+  /home/you/dmarc_reports → /home/tu/informes_dmarc
+  /home/you/dmarc_reports/mailbox.example-2027-05-16.xml → /home/tu/informes_dmarc/mailbox.example-2027-05-16.xml
+  /home/you/dmarc_reports/post.example-2027-05-16.xml → /home/tu/informes_dmarc/post.example-2027-05-16.xml
+
+inventory
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/ansible → /home/tu/ansible
+  /home/you/ansible/ansible.cfg → /home/tu/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/tu/ansible/inventory.ini
+  /home/you/email_theo.txt → /home/tu/correo_theo.txt
+
+playbook
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/tu/.ssh/known_hosts
+  /home/you/ansible → /home/tu/ansible
+  /home/you/ansible/ansible.cfg → /home/tu/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/tu/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/tu/ansible/site.yml
+  /home/you/message_from_theo.txt → /home/tu/mensaje_de_theo.txt
+
+rehearsal
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/tu/.ssh/known_hosts
+  /home/you/ansible → /home/tu/ansible
+  /home/you/ansible/ansible.cfg → /home/tu/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/tu/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/tu/ansible/site.yml
+  /home/you/ansible/ssh.yml → /home/tu/ansible/ssh.yml
+  /home/you/note_from_theo.txt → /home/tu/nota_de_theo.txt
+
+padlock
+  /home/you → /home/tu
+  /home/you/message_from_ines.txt → /home/tu/mensaje_de_ines.txt
+
+boot-order
+  /home/you → /home/tu
+  /home/you/message_from_ibrahim.txt → /home/tu/mensaje_de_ibrahim.txt
+
+restart-loop
+  /home/you → /home/tu
+  /home/you/message_from_ibrahim.txt → /home/tu/mensaje_de_ibrahim.txt
+
+slow-boot
+  /home/you → /home/tu
+  /home/you/message_from_ibrahim.txt → /home/tu/mensaje_de_ibrahim.txt
+
+late-disk
+  /home/you → /home/tu
+  /home/you/message_from_ibrahim.txt → /home/tu/mensaje_de_ibrahim.txt
+
+heavy-load
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+
+quota
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+  /home/you/mail_from_the_host.txt → /home/tu/correo_del_alojamiento.txt
+
+too-many-files
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+
+stuck-process
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+
+too-many-clients
+  /home/you → /home/tu
+  /home/you/message_from_camille.txt → /home/tu/mensaje_de_camille.txt
+
+slow-query
+  /home/you → /home/tu
+  /home/you/message_from_camille.txt → /home/tu/mensaje_de_camille.txt
+
+read-only
+  /home/you → /home/tu
+  /home/you/message_from_camille.txt → /home/tu/mensaje_de_camille.txt
+
+failover
+  /home/you → /home/tu
+  /home/you/message_from_camille.txt → /home/tu/mensaje_de_camille.txt
+
+central-logs
+  /home/you → /home/tu
+  /home/you/message_from_lou.txt → /home/tu/mensaje_de_lou.txt
+
+journal-full
+  /home/you → /home/tu
+  /home/you/message_from_lou.txt → /home/tu/mensaje_de_lou.txt
+
+ssh-alerts
+  /home/you → /home/tu
+  /home/you/message_from_lou.txt → /home/tu/mensaje_de_lou.txt
+
+nfs-export
+  /srv/photos/README.txt → /srv/photos/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_margot.txt → /home/tu/mensaje_de_margot.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+nfs-export:darkroom
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/escaneos
+  /home/sam/scans/roll-04.tif → /home/sam/escaneos/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/escaneos/roll-05.tif
+
+nfs-owners
+  /srv/photos/README.txt → /srv/photos/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_margot.txt → /home/tu/mensaje_de_margot.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+nfs-owners:darkroom
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/escaneos
+  /home/sam/scans/roll-04.tif → /home/sam/escaneos/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/escaneos/roll-05.tif
+
+samba-share
+  /srv/photos/README.txt → /srv/photos/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_margot.txt → /home/tu/mensaje_de_margot.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+samba-share:darkroom
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/sam/scans → /home/sam/escaneos
+  /home/sam/scans/roll-04.tif → /home/sam/escaneos/roll-04.tif
+  /home/sam/scans/roll-05.tif → /home/sam/escaneos/roll-05.tif
+
+alarm
+  /home/you → /home/tu
+  /home/you/email_nadia.txt → /home/tu/correo_nadia.txt
+  /home/you/incident.md → /home/tu/incident.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+containment
+  /home/you → /home/tu
+  /home/you/email_nadia.txt → /home/tu/correo_nadia.txt
+  /home/you/incident.md → /home/tu/incident.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+eradication
+  /home/you → /home/tu
+  /home/you/email_selma.txt → /home/tu/correo_selma.txt
+  /home/you/incident.md → /home/tu/incident.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+hardening
+  /home/you → /home/tu
+  /home/you/email_nadia.txt → /home/tu/correo_nadia.txt
+  /home/you/incident.md → /home/tu/incident.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+portable-script
+  /home/you → /home/tu
+  /home/you/message_from_yanis.txt → /home/tu/mensaje_de_yanis.txt
+  /home/you/nightly-backup.sh → /home/tu/nightly-backup.sh
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+rc-services
+  /home/you → /home/tu
+  /home/you/message_from_romy.txt → /home/tu/mensaje_de_romy.txt
+  /home/you/lucien-notes.txt → /home/tu/notas-de-lucien.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+last-rule
+  /home/you → /home/tu
+  /home/you/message_from_romy.txt → /home/tu/mensaje_de_romy.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+read-first
+  /export/home/you → /export/home/tu
+  /export/home/you/email_inaya.txt → /export/home/tu/correo_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/tu/notas-de-odette.txt
+  /export/home/you/migration.md → /export/home/tu/migration.md
+  /export/home/you/.ssh → /export/home/tu/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/tu/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/tu/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/tu/.ssh/id_ed25519.pub
+  /export/backup → /export/copia
+  /export/backup/pgdata-weekly.tar → /export/copia/pgdata-weekly.tar
+
+read-first:greenhouse
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+byte-order
+  /export/home/you → /export/home/tu
+  /export/home/you/email_inaya.txt → /export/home/tu/correo_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/tu/notas-de-odette.txt
+  /export/home/you/migration.md → /export/home/tu/migration.md
+  /export/home/you/.ssh → /export/home/tu/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/tu/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/tu/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/tu/.ssh/id_ed25519.pub
+  /export/backup → /export/copia
+  /export/backup/pgdata-weekly.tar → /export/copia/pgdata-weekly.tar
+
+byte-order:greenhouse
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+switch-over
+  /export/home/you → /export/home/tu
+  /export/home/you/email_inaya.txt → /export/home/tu/correo_inaya.txt
+  /export/home/you/migration.md → /export/home/tu/migration.md
+  /export/home/you/.ssh → /export/home/tu/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/tu/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/tu/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/tu/.ssh/id_ed25519.pub
+  /export/backup → /export/copia
+  /export/backup/pgdata-weekly.tar → /export/copia/pgdata-weekly.tar
+
+switch-over:greenhouse
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+copybook
+  /home/you → /home/tu
+  /home/you/email_ayesha.txt → /home/tu/correo_ayesha.txt
+  /home/you/check.txt → /home/tu/comprobacion.txt
+
+return-code
+  /home/you → /home/tu
+  /home/you/email_ayesha.txt → /home/tu/correo_ayesha.txt
+
+late-file
+  /home/you → /home/tu
+  /home/you/email_ayesha.txt → /home/tu/correo_ayesha.txt
+
+inquiry
+  /home/you → /home/tu
+  /home/you/email_kwame.txt → /home/tu/correo_kwame.txt
+  /home/you/notes-margit.txt → /home/tu/notas-de-margit.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+inquiry:sieve
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+spooled
+  /home/you → /home/tu
+  /home/you/email_kwame.txt → /home/tu/correo_kwame.txt
+  /home/you/notes-margit.txt → /home/tu/notas-de-margit.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+spooled:sieve
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+save-file
+  /home/you → /home/tu
+  /home/you/email_kwame.txt → /home/tu/correo_kwame.txt
+  /home/you/notes-margit.txt → /home/tu/notas-de-margit.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+save-file:sieve
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+line-endings
+  /home/you → /home/tu
+  /home/you/email_ifeoma.txt → /home/tu/correo_ifeoma.txt
+  /home/you/ops → /home/tu/ops
+  /home/you/ops/.git → /home/tu/ops/.git
+  /home/you/ops/.git/HEAD → /home/tu/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/tu/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/tu/ops/nightly-copy.sh
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notas.txt
+
+smb-mount
+  /home/you → /home/tu
+  /home/you/email_ifeoma.txt → /home/tu/correo_ifeoma.txt
+  /home/you/notes-priya.txt → /home/tu/notas-de-priya.txt
+  /home/you/ops → /home/tu/ops
+  /home/you/ops/.git → /home/tu/ops/.git
+  /home/you/ops/.git/HEAD → /home/tu/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/tu/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/tu/ops/nightly-copy.sh
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notas.txt
+
+smb-mount:cabinet
+  /C/Users/you → /C/Users/tu
+  /C/Users/you/Desktop → /C/Users/tu/Desktop
+  /C/Users/you/Documents → /C/Users/tu/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/tu/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/leeme.txt
+
+full-volume
+  /home/you → /home/tu
+  /home/you/email_ifeoma.txt → /home/tu/correo_ifeoma.txt
+  /home/you/cabinet-report.txt → /home/tu/informe-armario.txt
+  /home/you/ops → /home/tu/ops
+  /home/you/ops/.git → /home/tu/ops/.git
+  /home/you/ops/.git/HEAD → /home/tu/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/tu/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/tu/ops/nightly-copy.sh
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notas.txt
+
+full-volume:cabinet
+  /C/Users/you → /C/Users/tu
+  /C/Users/you/Desktop → /C/Users/tu/Desktop
+  /C/Users/you/Documents → /C/Users/tu/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/tu/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/leeme.txt
+
+two-locks
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/email_samir.txt → /C/Users/tu/correo_samir.txt
+
+service-logon
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/vault-svc_agenda.txt → /C/Users/tu/Documents/caja-fuerte-svc_agenda.txt
+  /C/Users/tu/email_mariam.txt → /C/Users/tu/correo_mariam.txt
+
+log-flood
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/email_beatriz.txt → /C/Users/tu/correo_beatriz.txt
+
+silent-backup
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/vault-svc_backup.txt → /C/Users/tu/Documents/caja-fuerte-svc_backup.txt
+  /C/Users/tu/email_mariam.txt → /C/Users/tu/correo_mariam.txt
+
+comings-and-goings
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
+  /C/Users/tu/Documents/hr-0112-arrival.txt → /C/Users/tu/Documents/rrhh-0112-llegada.txt
+  /C/Users/tu/Documents/hr-0113-departure.txt → /C/Users/tu/Documents/rrhh-0113-salida.txt
+  /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
+
+stale-password
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
+  /C/Users/tu/Documents/vault-svc_scans.txt → /C/Users/tu/Documents/caja-fuerte-svc_scans.txt
+  /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
+
+stale-password:stacks
+  /D/Shares/Archives → /D/Shares/Archivo
+  /D/Shares/Archives/Incoming → /D/Shares/Archivo/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archivo/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archivo/finding-aid-mills.docx
+
+unapplied-policy
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
+  /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
+
+unapplied-policy:stacks
+  /D/Shares/Archives → /D/Shares/Archivo
+  /D/Shares/Archives/Incoming → /D/Shares/Archivo/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archivo/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archivo/finding-aid-mills.docx
+
+dormant-accounts
+  /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
+  /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
+  /C/Users/tu/Documents/city-it-audit.txt → /C/Users/tu/Documents/auditoria-informatica-ciudad.txt
+  /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
+
+dormant-accounts:stacks
+  /D/Shares/Archives → /D/Shares/Archivo
+  /D/Shares/Archives/Incoming → /D/Shares/Archivo/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archivo/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archivo/finding-aid-mills.docx
+
+lost-disk
+  /home/you → /home/tu
+  /home/you/message_from_fatou.txt → /home/tu/mensaje_de_fatou.txt
+  /home/you/note_from_mei.txt → /home/tu/nota_de_mei.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+spare-key
+  /home/you → /home/tu
+  /home/you/message_from_fatou.txt → /home/tu/mensaje_de_fatou.txt
+  /home/you/note_from_mei.txt → /home/tu/nota_de_mei.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+restore-drill
+  /home/you → /home/tu
+  /home/you/message_from_fatou.txt → /home/tu/mensaje_de_fatou.txt
+  /home/you/drill.txt → /home/tu/simulacro.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+restore-drill:spare
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+new-card
+  /home/you → /home/tu
+  /home/you/message_from_amaru.txt → /home/tu/mensaje_de_amaru.txt
+  /home/you/email_from_rangi.txt → /home/tu/correo_de_rangi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+new-card:lookout
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+other-door
+  /home/you → /home/tu
+  /home/you/message_from_amaru.txt → /home/tu/mensaje_de_amaru.txt
+  /home/you/scan_report.txt → /home/tu/informe_de_escaneo.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+other-door:lookout
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+both-ways
+  /home/you → /home/tu
+  /home/you/message_from_amaru.txt → /home/tu/mensaje_de_amaru.txt
+  /home/you/note_from_lucia.txt → /home/tu/nota_de_lucia.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+both-ways:lookout
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+blind-spot
+  /home/you → /home/tu
+  /home/you/message_from_ngozi.txt → /home/tu/mensaje_de_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/tu/nota_de_tomas.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+blind-spot:saddle
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+blind-spot:hub
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+threshold
+  /home/you → /home/tu
+  /home/you/message_from_ngozi.txt → /home/tu/mensaje_de_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/tu/nota_de_tomas.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+threshold:saddle
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/rental/RELEASE-NOTES.txt → /srv/rental/NOTAS-DE-VERSION.txt
+
+threshold:hub
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+quiet-hours
+  /home/you → /home/tu
+  /home/you/message_from_ngozi.txt → /home/tu/mensaje_de_ngozi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+quiet-hours:saddle
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+quiet-hours:hub
+  /home/you → /home/tu
+  /home/you/README.txt → /home/tu/LEEME.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wont-start
+  /home/you → /home/tu
+  /home/you/message_from_folake.txt → /home/tu/mensaje_de_folake.txt
+  /home/you/note_from_rui.txt → /home/tu/nota_de_rui.txt
+  /home/you/manifests → /home/tu/manifests
+  /home/you/manifests/namespace.yaml → /home/tu/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/tu/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/tu/manifests/booking.yaml
+  /home/you/.kube → /home/tu/.kube
+  /home/you/.kube/config → /home/tu/.kube/config
+
+front-desk
+  /home/you → /home/tu
+  /home/you/message_from_folake.txt → /home/tu/mensaje_de_folake.txt
+  /home/you/note_from_kemal.txt → /home/tu/nota_de_kemal.txt
+  /home/you/manifests → /home/tu/manifests
+  /home/you/manifests/namespace.yaml → /home/tu/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/tu/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/tu/manifests/booking.yaml
+  /home/you/manifests/service.yaml → /home/tu/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/tu/manifests/ingress.yaml
+  /home/you/.kube → /home/tu/.kube
+  /home/you/.kube/config → /home/tu/.kube/config
+
+locker-room
+  /home/you → /home/tu
+  /home/you/message_from_folake.txt → /home/tu/mensaje_de_folake.txt
+  /home/you/note_from_kemal.txt → /home/tu/nota_de_kemal.txt
+  /home/you/new_db_password.txt → /home/tu/nueva_clave_bd.txt
+  /home/you/manifests → /home/tu/manifests
+  /home/you/manifests/.git → /home/tu/manifests/.git
+  /home/you/manifests/.git/HEAD → /home/tu/manifests/.git/HEAD
+  /home/you/manifests/.git/config → /home/tu/manifests/.git/config
+  /home/you/manifests/namespace.yaml → /home/tu/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/tu/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/tu/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/tu/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/tu/manifests/booking.yaml
+  /home/you/.kube → /home/tu/.kube
+  /home/you/.kube/config → /home/tu/.kube/config
+
+deep-end
+  /home/you → /home/tu
+  /home/you/message_from_folake.txt → /home/tu/mensaje_de_folake.txt
+  /home/you/note_from_rui.txt → /home/tu/nota_de_rui.txt
+  /home/you/manifests → /home/tu/manifests
+  /home/you/manifests/namespace.yaml → /home/tu/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/tu/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/tu/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/tu/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/tu/manifests/booking.yaml
+  /home/you/.kube → /home/tu/.kube
+  /home/you/.kube/config → /home/tu/.kube/config
+
+stuck-queue
+  /home/you → /home/tu
+  /home/you/message_from_ines.txt → /home/tu/mensaje_de_ines.txt
+  /home/you/note_from_joe.txt → /home/tu/nota_de_joe.txt
+
+new-printer
+  /home/you → /home/tu
+  /home/you/message_from_ines.txt → /home/tu/mensaje_de_ines.txt
+  /home/you/delivery_note.txt → /home/tu/albaran.txt
+
+paper-trail
+  /home/you → /home/tu
+  /home/you/message_from_ines.txt → /home/tu/mensaje_de_ines.txt
+  /home/you/dpo_request.txt → /home/tu/solicitud_dpd.txt
+
+expiry-date
+  /srv/ca/README.txt → /srv/ca/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_adaeze.txt → /home/tu/mensaje_de_adaeze.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+chain-of-trust
+  /srv/ca/README.txt → /srv/ca/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_adaeze.txt → /home/tu/mensaje_de_adaeze.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+chain-of-trust:booth
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/you/note_from_mateo.txt → /home/tu/nota_de_mateo.txt
+
+stolen-laptop
+  /srv/ca/README.txt → /srv/ca/LEEME.txt
+  /home/you → /home/tu
+  /home/you/message_from_adaeze.txt → /home/tu/mensaje_de_adaeze.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+who-can-push
+  /home/you → /home/tu
+  /home/you/message_from_wanjiru.txt → /home/tu/mensaje_de_wanjiru.txt
+  /home/you/note_from_tomasz.txt → /home/tu/nota_de_tomasz.txt
+  /home/you/.forgejo-token → /home/tu/.forgejo-token
+  /home/you/.gitconfig → /home/tu/.gitconfig
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/tu/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/tu/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/tu/lendshed
+  /home/you/lendshed/README.md → /home/tu/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/tu/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/tu/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/tu/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/tu/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/tu/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/tu/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/tu/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/tu/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/tu/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/tu/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/tu/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/tu/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/tu/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/tu/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/tu/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/tu/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/tu/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/tu/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/tu/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/tu/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/tu/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/tu/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/tu/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/tu/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/tu/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/tu/lendshed/.git/config
+
+leaky-pipeline
+  /home/you → /home/tu
+  /home/you/message_from_rosa.txt → /home/tu/mensaje_de_rosa.txt
+  /home/you/.forgejo-token → /home/tu/.forgejo-token
+  /home/you/.gitconfig → /home/tu/.gitconfig
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/tu/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/tu/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/tu/lendshed
+  /home/you/lendshed/README.md → /home/tu/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/tu/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/tu/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/tu/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/tu/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/tu/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/tu/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/tu/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/tu/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/tu/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/tu/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/tu/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/tu/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/tu/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/tu/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/tu/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/tu/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/tu/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/tu/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/tu/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/tu/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/tu/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/tu/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/tu/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/tu/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/tu/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/tu/lendshed/.git/config
+
+signed-release
+  /home/you → /home/tu
+  /home/you/message_from_aroha.txt → /home/tu/mensaje_de_aroha.txt
+  /home/you/note_from_wanjiru.txt → /home/tu/nota_de_wanjiru.txt
+  /home/you/.forgejo-token → /home/tu/.forgejo-token
+  /home/you/.gitconfig → /home/tu/.gitconfig
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/tu/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/tu/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/tu/lendshed
+  /home/you/lendshed/README.md → /home/tu/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/tu/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/tu/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/tu/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/tu/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/tu/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/tu/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/tu/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/tu/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/tu/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/tu/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/tu/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/tu/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/tu/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/tu/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/tu/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/tu/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/tu/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/tu/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/tu/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/tu/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/tu/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/tu/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/tu/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/tu/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/tu/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/tu/lendshed/.git/config
+
+cold-start
+  /home/you → /home/tu
+  /home/you/message_from_grace.txt → /home/tu/mensaje_de_grace.txt
+  /home/you/note_from_ilse.txt → /home/tu/nota_de_ilse.txt
+  /home/you/message_from_priya.txt → /home/tu/mensaje_de_priya.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.config → /home/tu/.config
+  /home/you/.config/libvirt → /home/tu/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/tu/.config/libvirt/libvirt.conf
+
+cold-start:ledger
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LEEME.txt
+
+cold-start:agenda
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+cold-start:records
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-side
+  /home/you → /home/tu
+  /home/you/message_from_grace.txt → /home/tu/mensaje_de_grace.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.config → /home/tu/.config
+  /home/you/.config/libvirt → /home/tu/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/tu/.config/libvirt/libvirt.conf
+
+wrong-side:ledger
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LEEME.txt
+
+wrong-side:agenda
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-side:records
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-side:portal
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-side:agenda-training
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-side:reception
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /home/you/note_from_hamid.txt → /home/tu/nota_de_hamid.txt
+
+tight-fit
+  /home/you → /home/tu
+  /home/you/message_from_grace.txt → /home/tu/mensaje_de_grace.txt
+  /home/you/note_from_joon.txt → /home/tu/nota_de_joon.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.config → /home/tu/.config
+  /home/you/.config/libvirt → /home/tu/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/tu/.config/libvirt/libvirt.conf
+
+tight-fit:ledger
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LEEME.txt
+
+tight-fit:agenda
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+tight-fit:records
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+tight-fit:portal
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+tight-fit:agenda-training
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+no-failover
+  /home/you → /home/tu
+  /home/you/message_from_zainab.txt → /home/tu/mensaje_de_zainab.txt
+  /home/you/note_from_bastien.txt → /home/tu/nota_de_bastien.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+no-failover:lb2
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+no-failover:web1
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+no-failover:web2
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+no-failover:web3
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+sick-server
+  /home/you → /home/tu
+  /home/you/message_from_zainab.txt → /home/tu/mensaje_de_zainab.txt
+  /home/you/message_from_teodor.txt → /home/tu/mensaje_de_teodor.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+sick-server:lb2
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+sick-server:web1
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+sick-server:web2
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+sick-server:web3
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+split-brain
+  /home/you → /home/tu
+  /home/you/message_from_kirsi.txt → /home/tu/mensaje_de_kirsi.txt
+  /home/you/message_from_zainab.txt → /home/tu/mensaje_de_zainab.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+split-brain:lb2
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+split-brain:web1
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+split-brain:web2
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+split-brain:web3
+  /srv/booking/README.txt → /srv/booking/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+kept-forever
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+  /home/you/note_from_ruben.txt → /home/tu/nota_de_ruben.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+access-request
+  /home/you → /home/tu
+  /home/you/message_from_amara.txt → /home/tu/mensaje_de_amara.txt
+  /home/you/request_from_priya.txt → /home/tu/solicitud_de_priya.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+forget-me
+  /home/you → /home/tu
+  /home/you/message_from_kenji.txt → /home/tu/mensaje_de_kenji.txt
+  /home/you/message_from_tomas.txt → /home/tu/mensaje_de_tomas.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+sleeping-connections
+  /home/you → /home/tu
+  /home/you/message_from_halima.txt → /home/tu/mensaje_de_halima.txt
+  /home/you/note_from_lwazi.txt → /home/tu/nota_de_lwazi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+least-privilege
+  /home/you → /home/tu
+  /home/you/message_from_halima.txt → /home/tu/mensaje_de_halima.txt
+  /home/you/scan_from_selin.txt → /home/tu/escaneo_de_selin.txt
+  /home/you/note_from_lwazi.txt → /home/tu/nota_de_lwazi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+least-privilege:barrow
+  /srv/plotline/README.txt → /srv/plotline/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+broken-replica
+  /home/you → /home/tu
+  /home/you/message_from_moana.txt → /home/tu/mensaje_de_moana.txt
+  /home/you/note_from_lwazi.txt → /home/tu/nota_de_lwazi.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+broken-replica:rake
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+mailbox-full
+  /home/you → /home/tu
+  /home/you/message_from_marisol.txt → /home/tu/mensaje_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/tu/nota_de_yerlan.txt
+
+spam-tide
+  /home/you → /home/tu
+  /home/you/message_from_leilani.txt → /home/tu/mensaje_de_leilani.txt
+  /home/you/note_from_yerlan.txt → /home/tu/nota_de_yerlan.txt
+
+sorting-office
+  /home/you → /home/tu
+  /home/you/message_from_marisol.txt → /home/tu/mensaje_de_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/tu/nota_de_yerlan.txt
+  /home/you/sample-booking.eml → /home/tu/ejemplo-reserva.eml
+  /home/you/sample-list.eml → /home/tu/ejemplo-lista.eml
+
+last-cut
+  /home/you → /home/tu
+  /home/you/message_from_nkechi.txt → /home/tu/mensaje_de_nkechi.txt
+  /home/you/notes_from_haruto.txt → /home/tu/notas_de_haruto.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+down-in-order
+  /home/you → /home/tu
+  /home/you/message_from_akosua.txt → /home/tu/mensaje_de_akosua.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+down-in-order:harness
+  /srv/archive/README.txt → /srv/archive/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+old-battery
+  /home/you → /home/tu
+  /home/you/message_from_thandiwe.txt → /home/tu/mensaje_de_thandiwe.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+old-battery:harness
+  /srv/archive/README.txt → /srv/archive/LEEME.txt
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+public-bucket
+  /home/you → /home/tu
+  /home/you/message_from_esperanza.txt → /home/tu/mensaje_de_esperanza.txt
+  /home/you/notes_from_teodora.txt → /home/tu/notas_de_teodora.txt
+  /home/you/.aws → /home/tu/.aws
+  /home/you/.aws/credentials → /home/tu/.aws/credentials
+  /home/you/.aws/config → /home/tu/.aws/config
+  /home/you/bin → /home/tu/bin
+  /home/you/bin/deploy-site → /home/tu/bin/deploy-site
+  /home/you/site → /home/tu/site
+  /home/you/site/index.html → /home/tu/site/index.html
+  /home/you/site/agenda.html → /home/tu/site/agenda.html
+  /home/you/site/classes.html → /home/tu/site/classes.html
+  /home/you/site/404.html → /home/tu/site/404.html
+  /home/you/site/css → /home/tu/site/css
+  /home/you/site/css/style.css → /home/tu/site/css/style.css
+  /home/you/site/images → /home/tu/site/images
+  /home/you/site/images/gala-2031.jpg → /home/tu/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/tu/site/images/studio.jpg
+
+offsite-copy
+  /home/you → /home/tu
+  /home/you/message_from_linh.txt → /home/tu/mensaje_de_linh.txt
+  /home/you/message_from_anahera.txt → /home/tu/mensaje_de_anahera.txt
+  /home/you/notes_from_teodora.txt → /home/tu/notas_de_teodora.txt
+  /home/you/.aws → /home/tu/.aws
+  /home/you/.aws/credentials → /home/tu/.aws/credentials
+  /home/you/.aws/config → /home/tu/.aws/config
+  /home/you/bin → /home/tu/bin
+  /home/you/bin/deploy-site → /home/tu/bin/deploy-site
+  /home/you/site → /home/tu/site
+  /home/you/site/index.html → /home/tu/site/index.html
+  /home/you/site/agenda.html → /home/tu/site/agenda.html
+  /home/you/site/classes.html → /home/tu/site/classes.html
+  /home/you/site/404.html → /home/tu/site/404.html
+  /home/you/site/css → /home/tu/site/css
+  /home/you/site/css/style.css → /home/tu/site/css/style.css
+  /home/you/site/images → /home/tu/site/images
+  /home/you/site/images/gala-2031.jpg → /home/tu/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/tu/site/images/studio.jpg
+
+big-file
+  /home/you → /home/tu
+  /home/you/message_from_farrukh.txt → /home/tu/mensaje_de_farrukh.txt
+  /home/you/message_from_siosaia.txt → /home/tu/mensaje_de_siosaia.txt
+  /home/you/notes_from_teodora.txt → /home/tu/notas_de_teodora.txt
+  /home/you/.aws → /home/tu/.aws
+  /home/you/.aws/credentials → /home/tu/.aws/credentials
+  /home/you/.aws/config → /home/tu/.aws/config
+  /home/you/bin → /home/tu/bin
+  /home/you/bin/deploy-site → /home/tu/bin/deploy-site
+  /home/you/site → /home/tu/site
+  /home/you/site/index.html → /home/tu/site/index.html
+  /home/you/site/agenda.html → /home/tu/site/agenda.html
+  /home/you/site/classes.html → /home/tu/site/classes.html
+  /home/you/site/404.html → /home/tu/site/404.html
+  /home/you/site/css → /home/tu/site/css
+  /home/you/site/css/style.css → /home/tu/site/css/style.css
+  /home/you/site/images → /home/tu/site/images
+  /home/you/site/images/gala-2031.jpg → /home/tu/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/tu/site/images/studio.jpg
+
+what-we-have
+  /home/you → /home/tu
+  /home/you/message_from_teuila.txt → /home/tu/mensaje_de_teuila.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+what-we-have:paddock
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+rebuild
+  /home/you → /home/tu
+  /home/you/message_from_teuila.txt → /home/tu/mensaje_de_teuila.txt
+  /home/you/envelope.txt → /home/tu/sobre.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+rebuild:haven
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+switch-and-learn
+  /home/you → /home/tu
+  /home/you/message_from_teuila.txt → /home/tu/mensaje_de_teuila.txt
+  /home/you/review.md → /home/tu/revision.md
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+switch-and-learn:haven
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+desk
+  /home/you → /home/tu
+  /home/you/welcome.txt → /home/tu/bienvenida.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/config → /home/tu/.ssh/config

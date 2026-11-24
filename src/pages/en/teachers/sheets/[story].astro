@@ -1,6 +1,7 @@
 ---
 // A story's printable sheet (src/components/StorySheet.astro), one page per story.
 import Base from '../../../../layouts/Base.astro';
+import { PAGES } from '../../../../site-languages';
 import StorySheet from '../../../../components/StorySheet.astro';
 import { STORIES } from '../../../../engine/chapters';
 import { loadAllTexts, translator } from '../../../../texts';
@@ -16,7 +17,7 @@ const name = translator('en')(`story-${story}`);
   title={`${name}: printable sheet — Sysadmin Quests`}
   lang="en"
   description={`A handout for "${name}": each chapter's goal, the commands and manual pages, questions to check what was learnt, and a teacher's version.`}
-  other={{ href: `/fr/enseignants/fiches/${story}/`, lang: 'fr', name: 'Français' }}
+  alternates={PAGES.sheet(story!)}
 >
   <StorySheet lang="en" story={story!} />
 </Base>

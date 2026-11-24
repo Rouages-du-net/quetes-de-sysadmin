@@ -18,7 +18,9 @@
 //                            src/interface/lazy-dialog.ts)
 //
 // `virtual:qds-texts` lists the languages and, for each group, a loader
-// (a dynamic import: Vite makes each group its own chunk, with a hashed name).
+// (a dynamic import: Vite makes each group its own chunk, with a hashed name),
+// and for each draft language (languages.json) the stories it already
+// translates (`TRANSLATED`: the others are played with the English world).
 // Used by astro.config.mjs, vite.integration.config.ts and vitest.config.ts.
 
 import { readFileSync, readdirSync } from 'node:fs';
@@ -53,6 +55,33 @@ export function entries(source) {
   }
   return out.map((e) => ({ id: e.id, text: e.lines.join('\n').replace(/\n+$/, '') }));
 }
+
+// Each language's name and status (complete or draft), and the stories' own
+// core files that their name doesn't give (see storyFiles).
+const LANGUAGE_INFO = join(TEXTS, 'languages.json');
+export const languageInfo = () => JSON.parse(readFileSync(LANGUAGE_INFO, 'utf8'));
+
+/**
+ * A story's text files, in English: its chapters' and hints' files
+ * (catalogue.json), and its own core file when it has one (`<story>.ftl`, or
+ * those languages.json's storyFiles names).
+ */
+export function storyFiles(story, english = readdirSync(join(TEXTS, 'en'))) {
+  const own = languageInfo().storyFiles[story.id] ?? [`${story.id}.ftl`];
+  return [...story.texts, ...own.filter((f) => english.includes(f))];
+}
+
+/** The stories a language translates: those whose every file it has. */
+export function translatedStories(language) {
+  const english = readdirSync(join(TEXTS, 'en'));
+  const present = readdirSync(join(TEXTS, language));
+  return JSON.parse(readFileSync(CATALOGUE, 'utf8'))
+    .stories.filter((s) => storyFiles(s, english).every((f) => present.includes(f)))
+    .map((s) => s.id);
+}
+
+/** The draft languages (languages.json: a status other than complete). */
+export const draftLanguages = () => languages().filter((l) => languageInfo().languages[l]?.status !== 'complete');
 
 const languages = () => readdirSync(TEXTS, { withFileTypes: true }).filter((d) => d.isDirectory() && readdirSync(join(TEXTS, d.name)).some((f) => f.endsWith('.ftl'))).map((d) => d.name).sort();
 // Read in every language at once: a save made in another language (machine
@@ -121,11 +150,13 @@ export function qdsTexts() {
       if (!id.startsWith('\0')) return;
       const name = id.slice(1);
       this.addWatchFile(CATALOGUE);
+      this.addWatchFile(LANGUAGE_INFO);
       if (name === INDEX) {
         const loaders = languages().flatMap((l) =>
           Object.keys(groups(l)).map((g) => `  ${JSON.stringify(`${l}/${g}`)}: () => import(${JSON.stringify(`${PREFIX}${l}--${g}`)}).then((m) => m.default),`),
         );
-        return `export const LANGUAGES = ${JSON.stringify(languages())};\nexport const GROUPS = {\n${loaders.join('\n')}\n};\n`;
+        const translated = Object.fromEntries(draftLanguages().map((l) => [l, translatedStories(l)]));
+        return `export const LANGUAGES = ${JSON.stringify(languages())};\nexport const TRANSLATED = ${JSON.stringify(translated)};\nexport const GROUPS = {\n${loaders.join('\n')}\n};\n`;
       }
       if (name.startsWith(PREFIX)) {
         const [language, group] = name.slice(PREFIX.length).split('--');

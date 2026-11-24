@@ -3,7 +3,7 @@
 // (RFC 6761). The SSH keys and fingerprints are fake but have the shape of
 // real ones (ed25519), and never change: the game stays deterministic.
 
-import type { Translate } from '../texts';
+import { storyTranslated, type Translate } from '../texts';
 
 export interface Machine {
   // The machine's identifier (in French); the name you type depends on the language (machineName).
@@ -116,8 +116,16 @@ export const MACHINES: Machine[] = [
   machine('meadow', '192.0.2.164', 'shelter'),
 ];
 
-/** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */
-export const machineName = (t: Translate, id: string) => (t.exists(`machine-${id}`) ? t(`machine-${id}`) : id);
+/**
+ * A machine's name in the language (machines.ftl: royaume → kingdom); a
+ * machine without a translation keeps its own, and so does the machine of a
+ * story a draft language doesn't translate yet (its texts, in English, name it so).
+ */
+export const machineName = (t: Translate, id: string) => {
+  const story = MACHINES.find((m) => m.name === id)?.story;
+  if (story && !storyTranslated(t.language, story)) return id;
+  return t.exists(`machine-${id}`) ? t(`machine-${id}`) : id;
+};
 /** Its full name (royaume.internal → kingdom.internal). */
 export const machineDomain = (t: Translate, m: Machine) => `${machineName(t, m.name)}.internal`;
 

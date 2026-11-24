@@ -1,0 +1,11 @@
+{
+  "languages": {
+    "en": { "name": "English", "status": "complete" },
+    "fr": { "name": "Français", "status": "complete" },
+    "es": { "name": "Español", "status": "draft" }
+  },
+  "storyFiles": {
+    "junk-mail": ["gardens.ftl"],
+    "on-call": ["on-call-radio.ftl"]
+  }
+}
