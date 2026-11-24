@@ -67,5 +67,9 @@ machine-meadow = pradera
 machine-paddock = cercado
 machine-haven = refugio
 
+## The Language Café
+machine-kettle = tetera
+machine-noticeboard = pizarra
+
 ## The Mapping Party
 machine-cairn = hito

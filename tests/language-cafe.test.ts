@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { parseRich, richText } from '../src/engine/firewalld';
 import { machineName } from '../src/engine/machines';
 
@@ -25,7 +25,7 @@ describe('The Language Café: the engine', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('language-cafe'))
   describe(`The Language Café — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

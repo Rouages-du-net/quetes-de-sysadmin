@@ -1917,8 +1917,8 @@ switch-and-learn:haven
 
 new-neighbour
   /home/you → /home/tu
-  /home/you/message_from_dilnoza.txt → /home/tu/message_from_dilnoza.txt
-  /home/you/notes_from_seun.txt → /home/tu/notes_from_seun.txt
+  /home/you/message_from_dilnoza.txt → /home/tu/mensaje_de_dilnoza.txt
+  /home/you/notes_from_seun.txt → /home/tu/notas_de_seun.txt
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
   /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
@@ -1930,8 +1930,8 @@ new-neighbour:noticeboard
 
 wrong-label
   /home/you → /home/tu
-  /home/you/message_from_thuy.txt → /home/tu/message_from_thuy.txt
-  /home/you/message_from_itzel.txt → /home/tu/message_from_itzel.txt
+  /home/you/message_from_thuy.txt → /home/tu/mensaje_de_thuy.txt
+  /home/you/message_from_itzel.txt → /home/tu/mensaje_de_itzel.txt
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
   /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
@@ -1943,8 +1943,8 @@ wrong-label:noticeboard
 
 port-and-boolean
   /home/you → /home/tu
-  /home/you/message_from_dilnoza.txt → /home/tu/message_from_dilnoza.txt
-  /home/you/notes_from_tenzin.txt → /home/tu/notes_from_tenzin.txt
+  /home/you/message_from_dilnoza.txt → /home/tu/mensaje_de_dilnoza.txt
+  /home/you/notes_from_tenzin.txt → /home/tu/notas_de_tenzin.txt
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
   /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub

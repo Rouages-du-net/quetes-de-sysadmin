@@ -125,6 +125,16 @@ explainer-s3-credentials = La herramienta de línea de comandos de AWS no ha enc
 
 explainer-garage-layout = Garage no ha aplicado el cambio de layout. Un layout se cambia en dos pasos: los cambios se preparan (garage layout assign, remove) y luego se aplican con garage layout apply --version N, siendo N la versión siguiente que muestra garage layout show, para que nadie aplique un layout que no ha leído. Un layout también debe conservar al menos tantos nodos con capacidad como el factor de replicación.
 
+explainer-firewalld-auth = firewall-cmd puede leer la configuración de firewalld con cualquier cuenta, pero cambiarla necesita root: por ssh, ningún agente polkit puede pedir una contraseña. Ejecuta el comando con sudo.
+
+explainer-firewalld-not-running = El demonio firewalld no está en marcha, así que firewall-cmd no tiene con quién hablar (y nada filtra). systemctl status firewalld dice por qué; systemctl enable --now firewalld lo arranca y lo mantiene al arrancar la máquina.
+
+explainer-dnf-root = Instalar o quitar paquetes cambia el sistema: dnf necesita root. Vuelve a ejecutarlo con sudo (search, info y list funcionan sin él).
+
+explainer-httpd-bind = httpd no ha podido abrir un socket. Con (98) Address already in use, otro programa escucha en ese puerto (ss -tlnp). Con (13) Permission denied y nada más ahí, en un sistema con SELinux, httpd_t solo puede escuchar en los puertos de tipo http_port_t: busca un AVC (ausearch -m avc), y dale ese tipo al puerto con semanage port -a -t http_port_t -p tcp PUERTO. Mientras falle un socket, httpd no arranca en absoluto.
+
+explainer-selinux-denied = «Permission denied» aunque los permisos Unix lo permiten: en un sistema con SELinux, el núcleo puede rechazar lo que la etiqueta del archivo no permite al dominio del programa. Compara las etiquetas (ls -Z, ps -Z), lee las denegaciones (sudo ausearch -m avc -ts recent | audit2why), y corrige la etiqueta en la política (semanage fcontext, y luego restorecon) en lugar de apagar SELinux.
+
 explainer-tofu-lock = OpenTofu no ha podido bloquear el estado: otra ejecución tiene el bloqueo, y OpenTofu no espera a nadie. Lock Info dice quién lo tomó, para qué operación y cuándo. Con un estado local (terraform.tfstate), el bloqueo pertenece a ese proceso: mira si sigue en marcha (ps), y déjalo terminar o detenlo; tofu force-unlock solo sirve para estados remotos, y -lock=false arriesga que dos ejecuciones escriban el estado a la vez.
 
 explainer-tofu-init = Este directorio de trabajo no está inicializado, o ya no corresponde a su configuración: el proveedor que necesita no está instalado ni registrado en .terraform.lock.hcl. tofu init instala los proveedores y escribe el archivo de bloqueo; tras cambiar una restricción de versión, tofu init -upgrade.
