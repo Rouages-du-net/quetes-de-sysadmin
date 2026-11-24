@@ -178,7 +178,7 @@ Each language is **complete** or a **draft**, in `src/texts/languages.json`.
 |---|---|---|
 | `en` | English | reference, default and fallback language; complete (texts, manual, tool messages as with `LANG=C`, names of the Eraser's and the workstation's places and objects, documents and data on the other stories' servers, `you` and `eraser` accounts) |
 | `fr` | French | complete; the project's original language: translation of the English names of places, machines, accounts and passwords |
-| `es` | Spanish | draft: the interface, the dialogs, the shell's and the commands' messages (from the Spanish catalogues of the [Translation Project](https://translationproject.org/team/es.html) and of git: `ls: no se puede acceder a…`, `No existe el fichero o el directorio`), the names of places, objects, machines and passwords, the workstation, The Eraser, the stories' titles and summaries, part of the manual. `npm run coverage:texts -- es` says what is left |
+| `es` | Spanish | draft: the interface, the dialogs, the shell's and the commands' messages (from the Spanish catalogues of the [Translation Project](https://translationproject.org/team/es.html) and of git: `ls: no se puede acceder a…`, `No existe el fichero o el directorio`), the names of places, objects, machines and passwords, the workstation, The Eraser, the stories' titles and summaries, the whole manual (every page; command names, options, paths and quoted tool messages stay as the tools write them). `npm run coverage:texts -- es` says what is left |
 
 Spanish is neutral international Spanish, usable in Spain and in Latin
 America, with the informal "tú", like the French "tu"; inclusive where it is
