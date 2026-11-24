@@ -60,14 +60,16 @@ describe('Text files', () => {
             ),
           );
         const english = attributes(REFERENCE_LANGUAGE);
-        const partial = [...attributes(language)].flatMap(([id, attrs]) => {
+        // Parsed once: the manual is one large file.
+        const translated = attributes(language);
+        const partial = [...translated].flatMap(([id, attrs]) => {
           const lacking = (english.get(id) ?? []).filter((a) => !attrs.includes(a));
           const extra = attrs.filter((a) => !(english.get(id) ?? []).includes(a) && !/^command-\d+$/.test(a));
           return lacking.length || extra.length ? [`${id}: ${[...lacking.map((a) => `-${a}`), ...extra.map((a) => `+${a}`)].join(' ')}`] : [];
         });
         expect(partial).toEqual([]);
         const pages = [...english.keys()].filter((id) => id.startsWith('man-'));
-        console.info(`${language}: ${pages.filter((id) => attributes(language).has(id)).length}/${pages.length} manual pages translated`);
+        console.info(`${language}: ${pages.filter((id) => translated.has(id)).length}/${pages.length} manual pages translated`);
       });
 
       it.runIf(isComplete(language))('a complete language has every file', () => {
