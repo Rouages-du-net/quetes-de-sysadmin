@@ -193,9 +193,10 @@ Chaque chapitre a au moins :
 - un test des **fausses pistes** : chaque événement d'indice est déclenché,
   et le chapitre n'est pas fini tant que l'erreur reste.
 
-Les tests rejouent chaque quête dans chaque langue disponible ; les
-scénarios des tests sont écrits avec les noms anglais (`inLanguage()` les
-traduit), et les textes vérifiés en français.
+Les tests rejouent chaque quête dans chaque langue complète, et, dans chaque
+langue en cours, les histoires qu'elle traduit déjà (`languagesFor()` dans
+`tests/names.ts`) ; les scénarios des tests sont écrits avec les noms
+anglais (`inLanguage()` les traduit), et les textes vérifiés en français.
 
 ### La difficulté
 
@@ -239,6 +240,16 @@ Pour un changement visible, jouer le chapitre dans Chromium à 375 et 1000 px
 de large : pas d'erreur console, pas de défilement horizontal.
 
 ## Les langues
+
+- **Traduire** : chaque texte est dans `src/texts/<langue>/*.ftl` (format
+  Fluent). Une nouvelle langue commence **en cours** (`src/texts/languages.json`) :
+  elle se traduit fichier par fichier (le manuel, page par page), ce qui
+  manque s'affiche en anglais, et une histoire pas encore traduite se joue
+  en anglais. Une histoire est une bonne unité de travail : ses fichiers
+  `chapter-*.ftl` et `hints-*.ftl`, et son fichier propre si elle en a un ;
+  `npm run coverage:texts` liste ce qui reste. Voir
+  [`docs/TRANSLATING.md`](docs/TRANSLATING.md) (en anglais) pour les noms,
+  les mots de passe et les noms de machines, traduits eux aussi.
 
 - **L'anglais d'abord.** C'est la langue de référence des textes du jeu :
   chaque texte s'écrit d'abord en anglais (`src/texts/en/`), puis se

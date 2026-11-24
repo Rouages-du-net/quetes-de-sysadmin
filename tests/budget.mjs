@@ -20,8 +20,8 @@ import { embedFirstVisit, pageFirstVisit } from '../src/pwa/first-load.mjs';
 // and English's core for another language left the first visit); raise it
 // on purpose, not by habit.
 // Spanish, a draft (src/texts/languages.json), fetches English's core with
-// its own: the same 15 % over what it weighed when it was added.
-const BUDGET = { '/en/': 536_000, '/fr/': 541_000, '/es/': 600_000, embed: 568_000 };
+// its own: 15 % over what it weighed when it was added (514 KiB).
+const BUDGET = { '/en/': 536_000, '/fr/': 541_000, '/es/': 605_000, embed: 568_000 };
 
 const report = process.argv.includes('--report');
 const dist = report ? process.argv[process.argv.indexOf('--report') + 1] : 'dist';

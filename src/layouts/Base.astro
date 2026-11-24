@@ -119,8 +119,8 @@ const install = T.install;
       </nav>
     )}
   </header>
-  {draft && <p class="draft-banner" role="note">{T.draft}</p>}
   <main id="content" tabindex="-1">
+    {draft && <p class="draft-banner" role="note">{T.draft}</p>}
     <slot />
   </main>
   <footer>

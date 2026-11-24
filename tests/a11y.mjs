@@ -119,6 +119,15 @@ for (const scheme of process.env.A11Y_SKIP_AXE ? [] : ['dark', 'light'])
     await audit(page, `${tag} printable story sheet (fr)`);
     await page.go('/en/');
     await audit(page, `${tag} home en (menu)`);
+    // Spanish, a draft: its banner, its pages (src/site-languages.ts).
+    await page.go('/es/');
+    await audit(page, `${tag} home es (draft banner, menu)`);
+    await page.go('/es/docentes/');
+    await audit(page, `${tag} teachers' sheets (es)`);
+    await page.go('/es/docentes/clase/');
+    await audit(page, `${tag} class table (es)`);
+    await page.go('/es/docentes/fichas/eraser/');
+    await audit(page, `${tag} printable story sheet (es)`);
     await page.go('/fr/');
     await audit(page, `${tag} home fr (menu)`);
     const g = game(page);
