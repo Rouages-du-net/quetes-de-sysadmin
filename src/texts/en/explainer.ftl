@@ -266,3 +266,17 @@ explainer-tofu-argument = The configuration doesn't match the provider's schema:
         Missing required argument
         Unsupported block type
         Invalid resource type
+explainer-podman-subids = Rootless Podman builds a user namespace for the account: inside, 0 is the account itself and 1, 2, 3… are its subordinate ids, read from /etc/subuid and /etc/subgid (ACCOUNT:FIRST:COUNT). An account without a range gets a namespace of one id, and no image whose files belong to other ids can be unpacked in it. Look at both files (man subuid); usermod --add-subuids and --add-subgids add a range. Podman keeps the account's namespace: after changing the files, podman system migrate rebuilds it.
+    .match =
+        cannot find UID/GID for user
+        potentially insufficient UIDs or GIDs
+
+explainer-privileged-port = A program that isn't root can't listen on a port below net.ipv4.ip_unprivileged_port_start (1024 by default): with rootless Podman, the program that publishes the port (pasta, or rootlessport) runs as your account. Publish a port from 1024 up and leave 80 and 443 to a reverse proxy (nginx, Caddy) that forwards to it. Lowering the sysctl opens these ports to every account's programs, not just yours.
+    .match =
+        (Permission denied) for option '-t
+        cannot expose privileged port
+
+explainer-user-bus = systemctl --user (and journalctl --user) talk to your account's own service manager through its bus, which they find with $XDG_RUNTIME_DIR (/run/user/UID). A login sets it (pam_systemd); sudo, su and cron don't. The manager must also be running: it starts with the account's first session, or at boot if the account lingers (loginctl enable-linger). From root, systemctl --user -M ACCOUNT@ reaches another account's manager.
+    .match =
+        XDG_RUNTIME_DIR not defined
+        Failed to connect to user scope bus

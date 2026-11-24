@@ -301,6 +301,8 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | firewalld (`firewalld.ts`, `firewall-cmd`) | firewalld 2.4.3: runtime and permanent configurations, `--reload` and `--runtime-to-permanent`, zones and their sources, services, ports and rich rules (source address, service or port, accept/reject/drop) as `Rich_Rule` writes them back; `--list-all`'s layout, "success", "Warning: ALREADY_ENABLED", `INVALID_SERVICE`/`INVALID_PORT`/`INVALID_RULE`, "Authorization failed." without root, "FirewallD is not running" | IPv4 TCP only; a subset of the services (`--get-services`); no policies, ipsets, ICMP, masquerade, forwarding, direct rules or `firewall-offline-cmd`; a rejected connection fails at once |
 | `dnf`, `rpm` (`rpm.ts`, `commands/rhel-packages.ts`) | DNF 4.20 (Rocky and RHEL 10's dnf, not dnf5): install (the transaction table, "Is this ok [y/N]:", `-y`), remove, search (its sections), info, list, provides (also in /usr/bin and /usr/sbin), repolist, history, makecache; "No match for argument", "Unable to find a match", the superuser error; rpm `-q`, `-qa`, `-qi`, `-ql`, `-qc`, `-qf`, `-V`; Rocky 10.3's packages and versions | a few dozen packages; no download, GPG prompt or scriptlet output; dependencies listed by hand; `rpm -i`/`-e` refused (use dnf); `dnf upgrade` has nothing to do |
 | httpd on Rocky (`httpd-rhel.ts`, The Language Café) | httpd 2.4.63 as Rocky packages it: `httpd.conf` and `conf.d/*.conf` (Listen, DocumentRoot, `<Directory>` with Require, `<VirtualHost>`, ServerName/ServerAlias, ProxyPass), welcome.conf's test page for a refused "/", AH00072/AH00015 at start, AH00132, AH00035, AH01630, AH00957/AH00959/AH01114 in error_log, the access log, "Server configured, listening on" in the journal | other known directives are accepted and ignored (unknown ones: AH00526); no `httpd -t` or `apachectl`; a failed proxy worker is not put in error state for 60 s; no TLS |
+| Rootless Podman (`podman.ts`, The Walking Club) | Podman 5.4.2 as Debian 13 ships it: each account's own images and containers; the user namespace from `/etc/subuid`/`/etc/subgid` (the account as 0, its ranges from 1), built at the account's first command and kept until `podman system migrate` or a reboot; without ranges the "cannot find UID/GID … no subuid ranges found" error and the single mapping warning, then the layer's "potentially insufficient UIDs or GIDs" error; `--userns=keep-id[:uid=,gid=]`; `:U` chowning from inside the namespace (refused on files it doesn't map), `:Z` accepted and doing nothing (no SELinux); ports published by pasta (refused below `net.ipv4.ip_unprivileged_port_start`, or taken) or rootlessport (`--network slirp4netns`); the user session warnings when the account's manager doesn't run; a container started from a session lives in the account's manager and dies with it; the app's process under its host uid in `ps` and pasta's sockets in `ss` | one registry declared by the story; the pause process is the namespace itself; no pods, networks, volumes' commands or healthchecks; `podman run` without `-d` returns like `-d`; `exec` knows `id`, `whoami`, `ls`, `cat`, `touch`; `podman info` shows part of its fields; container ids derived, not random |
+| Quadlet, `systemctl --user`, `loginctl` (`podman.ts`, `commands/podman.ts`, the `podman` family) | `.container` files read from `~/.config/containers/systemd` and `/etc/containers/systemd/users[/UID]`, converted like Podman 5.4.2's Quadlet (the `[X-Container]` group, `--replace --rm --cgroups=split --sdnotify=conmon -d`, `systemd-%N`, "unsupported key", "no Image or Rootfs key specified"), at `daemon-reload` and when the manager starts; `user@UID.service` started by `loginctl enable-linger` and at boot when `/var/lib/systemd/linger/ACCOUNT` exists, stopped by `disable-linger`; `systemctl --user` found through `$XDG_RUNTIME_DIR` or `-M ACCOUNT@` (systemd 257's bus errors), `enable` on a generated unit refused; `journalctl --user`, `--user-unit` | the manager's units are only Quadlet's (no hand-written user units, no timers); `loginctl` has `enable-linger`, `disable-linger`, `show-user`, `list-users`, `list-sessions`; only the player's ssh session exists; the generator's errors go to the system journal under `user@UID.service` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -5058,6 +5060,75 @@ another process), `-lock=false`, applying the old code (the site back on
 the dead host), `terraform.tfstate` edited by hand, `tofu state rm` to make
 a difference go away, status created instead of imported (this provider
 lets it pass).
+## Story 50: The Walking Club (two chapters)
+
+Rootless containers with Podman, as Debian 13 ships it (podman
+5.4.2+ds1-2+b2, passt 0.0~git20250503.587980c, systemd 257). Open Paths
+(Sentiers ouverts, Senderos Abiertos), a volunteers' walking club, lists its
+walks and takes the sign-ups through Trailbook, a web app in an image
+(`registry.example/openpaths/trailbook:2.3`, its own USER uid 1000), behind
+nginx on `stile` (192.0.2.184, `portillo` in Spanish); the site is
+`walks.openpaths.example`. Soo-ah chairs the club, Bolat ran the app with
+Docker as root in 2031, Ayasha created the service account `trailbook`
+(`useradd --system`: uid 997, no subordinate ids). Engine: `podman.ts` and
+the `podman` family (`podman`, `loginctl`, `/usr/libexec/podman/quadlet`,
+`systemctl --user` through a hook of the core's systemctl). Built in
+`chapters/walking-club.ts`; it opens after "Full Powers" (Docker's uid
+shared with the host) and "Boot Order", and extends the deployment path.
+Sources: https://docs.podman.io/en/v5.4.2/ (podman-run, podman-unshare,
+podman-system-migrate, podman-systemd.unit), the rootless tutorial, Podman
+v5.4.2's sources, subuid(5), loginctl(1), systemctl(1).
+
+### Chapter 1 — No Root Needed (done)
+
+Monday 12 April 2033, 9:20. Docker is stopped; the data in
+`/srv/trailbook/data` belongs to uid 1000 (you: Docker's container uid was
+the host's).
+
+| Step | Command learnt |
+|---|---|
+| As the service | `sudo -iu trailbook` (or `sudo -u trailbook podman …`) |
+| Subordinate ids | `cat /etc/subuid /etc/subgid`, `usermod --add-subuids/--add-subgids FIRST-LAST`, `podman system migrate` |
+| The image | `podman pull`, `podman images` |
+| The port | `podman run -p 127.0.0.1:8080:8080` behind nginx, not 80 (pasta's "Permission denied") |
+| The data's owner | `podman unshare cat /proc/self/uid_map`, `podman unshare ls -ln`, `sudo chown`, `-v …:/data:U`, `--userns=keep-id`, `podman unshare chown` |
+| The check | `podman top trailbook user huser`, `curl -k https://walks.openpaths.example/` |
+
+Goal checked on the state: trailbook has its own ranges (65536, no overlap)
+in both files; one of trailbook's rootless containers runs the image with
+`/srv/trailbook/data` at `/data` and opened the club's database; the site
+answers through nginx; no rootful container runs; the data isn't
+world-writable; `net.ipv4.ip_unprivileged_port_start` is 1024 or more, now
+and at boot. Several solutions: `:U`, `--userns=keep-id`, `podman unshare
+chown -R 1000:1000`, the ranges with usermod or nano. Expected traps: `sudo
+podman` (rootful), `chmod 777`, the sysctl lowered to 0, a range copied from
+another account, a named volume (an empty database), `:U` on files the
+namespace doesn't map.
+
+### Chapter 2 — Logged Out (done)
+
+Wednesday 14 April, 9:05. Ayasha started the container over ssh as
+trailbook; at 18:02 she logged out and logind stopped `user@997.service`
+with it.
+
+| Step | Command learnt |
+|---|---|
+| What happened | `journalctl --since … --until …`, `podman ps -a` (Exited (143)) |
+| Quadlet | `~/.config/containers/systemd/trailbook.container` (`[Container]`, `[Install] WantedBy=default.target`), `/usr/libexec/podman/quadlet -dryrun -user` |
+| Linger | `loginctl enable-linger trailbook`, `loginctl list-users`, `show-user -p Linger` |
+| The user manager | `export XDG_RUNTIME_DIR=/run/user/$(id -u)` or `systemctl --user -M trailbook@`, `daemon-reload`, `start`, `status`, `cat` |
+| The proof | `sudo reboot`, `journalctl -u user@997 -b`, curl |
+
+Goal checked on the state: trailbook lingers; a unit generated from a
+`.container` file is wanted by default.target, was started by the manager
+at this boot (after a reboot) and runs the container serving the club's
+data; the site answers; no rootful container and no active system unit
+running podman. Several solutions: the user's own shell with
+`XDG_RUNTIME_DIR`, or `-M trailbook@ --user` from root; the file written
+before or after linger; any unit or container name. Expected traps: `nohup
+podman run`, a system unit calling `sudo -u trailbook podman`, `podman
+generate systemd` (deprecated), `systemctl --user enable` on a generated
+unit, a Quadlet key that doesn't exist, a reboot before linger.
 
 ## Ideas for later
 

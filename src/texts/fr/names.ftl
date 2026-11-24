@@ -538,3 +538,7 @@ name-review-md = retour.md
 name-message_from_andile-txt = message_d_andile.txt
 name-notes_from_yusra-txt = notes_de_yusra.txt
 name-message_from_femi-txt = message_de_femi.txt
+## Le Club de marche
+name-message_from_soo-ah-txt = message_de_soo-ah.txt
+name-notes_from_bolat-txt = notes_de_bolat.txt
+name-message_from_ayasha-txt = message_d_ayasha.txt

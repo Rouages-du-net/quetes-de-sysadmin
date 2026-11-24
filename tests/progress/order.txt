@@ -175,3 +175,5 @@ wrong-label
 port-and-boolean
 first-plan
 drift
+no-root-needed
+logged-out

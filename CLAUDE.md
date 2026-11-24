@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`), OpenTofu (`iac`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -962,6 +962,29 @@ presents them for people.
   Femi's evening and his `tofu apply` holding the lock in chapter 2,
   `state.onKill` releasing it); `first-plan.ts`, `drift.ts` (`converged`:
   code, state and named agree). Tests: `tests/mapping-party.test.ts`.
+- `src/engine/podman.ts`: rootless Podman 5.4.2 (`state.podman`: each
+  account's images and containers, the user namespace from `/etc/subuid`
+  and `/etc/subgid` (`freshMaps`, `keepIdMaps`, `toHost`, `toNs`, built at
+  the account's first command, `podman system migrate`), the image's layers
+  that a single mapping can't hold, `:U` from inside the namespace, pasta's
+  and rootlessport's ports (`net.ipv4.ip_unprivileged_port_start`), the
+  user session warnings; each account's manager `user@UID.service`
+  (`managerService`, linger from `/var/lib/systemd/linger`), Quadlet's
+  `.container` files converted at `daemon-reload` and when the manager
+  starts (`convert`, `generate`), `settle()` after each command (a reboot,
+  a manager that starts or stops); `REGISTRY` and `PAPPS`, the images and
+  apps a story declares); `podman`, `loginctl`, Quadlet's dry run and
+  `systemctl --user` (a hook of the core's systemctl) in
+  `commands/podman.ts` (the `podman` family); `podman unshare` shows the
+  namespace's ids through `state.idView` (read by `ls -l`); `usermod
+  --add-subuids/--add-subgids`; `journalctl --user`, `--user-unit`
+  (`Input.userUnit`). `chapters/walking-club.ts`: what the chapters of "The
+  Walking Club" share (`stile`, the walking club's server: nginx in front of
+  Trailbook, the service account trailbook, the data's owner, Ayasha's
+  session replayed in chapter 2; `walksCurl` through `state.storyCurl`;
+  five seconds per command and the sysctl files reapplied at a reboot in
+  `passTime`); `no-root-needed.ts`, `logged-out.ts`. Tests:
+  `tests/walking-club.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

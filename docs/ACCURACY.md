@@ -91,6 +91,35 @@ Sources: `pigeonhole/src/lib-sieve/{sieve-lexer,sieve-validator,sieve-ast}.c`,
 | Lexer: unexpected character | corrected: a control character shown as `0x..` (`_char_sanitize`) |
 | `doveadm search … larger X` with a bad size | corrected: "Invalid size: X" (str_parse_get_size); sizes like `10k`, `2 MiB` accepted |
 
+## Podman 5.4.2, passt and systemd 257 (The Walking Club)
+
+Sources: Podman's sources at [v5.4.2](https://github.com/containers/podman/tree/v5.4.2)
+(Debian 13: podman 5.4.2+ds1-2+b2): `pkg/rootless/rootless_linux.go`,
+`vendor/github.com/containers/storage/pkg/idtools/idtools.go`,
+`vendor/github.com/containers/common/pkg/config/config.go`,
+`vendor/github.com/containers/common/libnetwork/pasta/pasta_linux.go`,
+`vendor/github.com/rootless-containers/rootlesskit/v2/pkg/port/builtin/parent/parent.go`,
+`vendor/github.com/containers/common/pkg/chown/chown_unix.go`,
+`vendor/github.com/containers/storage/containers.go`, `libpod/container_internal.go`,
+`vendor/github.com/containers/image/v5/{copy,storage}`, `cmd/quadlet/main.go`,
+`pkg/systemd/quadlet/quadlet.go`, `cmd/podman/generate/systemd.go`,
+`cmd/podman/system/unshare.go`; passt's `conf.c` and `log.h` at
+2025_05_03.587980c (Debian 13: 0.0~git20250503.587980c-2+deb13u1); systemd's
+`src/shared/bus-util.c` (`bus_log_connect_error`) and `src/shared/install.c` at v257.
+
+| Item | Result |
+| --- | --- |
+| "cannot find UID/GID for user X: no subuid ranges found for user \"X\" in /etc/subuid - check rootless mode in man pages." (ERRO), "Using rootless single mapping into the namespace. This might break some images. Check /etc/subuid and /etc/subgid for adding sub*ids if not using a network user" (WARN) | confirmed |
+| "potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/gshadow): Check /etc/subuid and /etc/subgid if configured locally and run \"podman system migrate\": lchown …: invalid argument", wrapped by "writing blob: adding layer with blob …: processing tar file(…): exit status 1" | confirmed (the blob's trusted identity printed as `"sha256:…"/""/"sha256:…"`) |
+| The four user session warnings ("The cgroupv2 manager is set to systemd but there is no systemd user session available" … "Falling back to --cgroup-manager=cgroupfs") | confirmed |
+| Rootless ports: Podman 5 uses pasta by default (`default_rootless_network_cmd`), "pasta failed with exit code 1:" followed by passt's "Failed to bind port 80 (Permission denied) for option '-t 80-80:8080-8080'" | confirmed; rootlesskit's "cannot expose privileged port 80, you can add 'net.ipv4.ip_unprivileged_port_start=80' to /etc/sysctl.conf (currently 1024), or choose a larger port number (>= 1024)" kept for `--network slirp4netns` (prefixed "rootlessport ") |
+| `:U`: "failed to chown recursively host path: lchown …: operation not permitted" | confirmed (the message); EPERM on files the namespace doesn't map is the kernel's |
+| "creating container storage: the container name \"X\" is already in use by ID. You have to remove that container to be able to reuse that name: that name is already in use", "cannot remove container ID as it is running - running or paused containers cannot be removed without force: container state improper", "please use unshare with rootless", generate systemd's DEPRECATED text, "short-name \"X\" did not resolve to an alias and no unqualified-search registries are defined in …" | confirmed |
+| Quadlet: "converting \"X.container\": unsupported key 'K' in group 'Container' in PATH", "no Image or Rootfs key specified", the generated unit's lines (`--replace --rm --cgroups=split --sdnotify=conmon -d`, `systemd-%N`, `Type=notify`, `KillMode=mixed`, `[X-Container]`), dry run's `---NAME.service---` | confirmed; the order of the generated file's groups is approximated |
+| systemctl --user: "Failed to connect to user scope bus via local transport: $DBUS_SESSION_BUS_ADDRESS and $XDG_RUNTIME_DIR not defined (consider using --machine=<user>@.host --user to connect to bus of other user)" | confirmed; "Failed to enable unit: Unit … is transient or generated" (`src/shared/install.c`, `install_changes_dump`: no final period) |
+| `podman ps`/`images` layout (tabwriter 12, 2, 2; COMMAND cut at 17 characters; HumanDuration; HumanSizeWithPrecision 3) | confirmed |
+| `loginctl list-users` columns (UID USER LINGER STATE), "Could not enable linger: Access denied", "Failed to get user: User ID N is not logged in or lingering" | approximated (systemd 257's tables and logind's errors, not checked line by line) |
+
 ## NUT 2.8.1 (The Climbing Wall)
 
 Sources: `clients/{upsmon,upsmon.h,upsclient,upssched,upsc,upscmd,upsrw}.c`,

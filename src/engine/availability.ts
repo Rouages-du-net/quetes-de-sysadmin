@@ -91,6 +91,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['rspamc', 'rspamadm'], ['rspamd'], ['/etc/rspamd']],
   [['upsc', 'upscmd', 'upsrw', 'upsmon', 'upsd', 'upsdrvctl', 'upssched'], ['nut'], ['/etc/nut']],
   [['ipmitool'], ['power'], []],
+  [['podman', 'quadlet'], ['podman'], ['/etc/containers']],
   [['garage'], ['garage'], ['/etc/garage.toml']],
   [['tofu'], ['tofu'], ['/usr/bin/tofu']],
   [['aws', 'rclone'], ['garage'], []],

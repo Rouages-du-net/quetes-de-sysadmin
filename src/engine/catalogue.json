@@ -5964,6 +5964,89 @@
      "events": 12
     }
    ]
+  },
+  {
+   "id": "walking-club",
+   "after": [
+    "full-powers",
+    "boot-order"
+   ],
+   "texts": [
+    "chapter-logged-out.ftl",
+    "chapter-no-root-needed.ftl",
+    "hints-walking-club.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "no-root-needed",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "nano",
+      "sudo",
+      "id",
+      "getent",
+      "ps",
+      "ss",
+      "curl",
+      "systemctl",
+      "journalctl",
+      "sysctl",
+      "usermod",
+      "chown",
+      "chmod",
+      "podman",
+      "exit"
+     ],
+     "events": 14
+    },
+    {
+     "id": "logged-out",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "nano",
+      "sudo",
+      "id",
+      "getent",
+      "ps",
+      "ss",
+      "curl",
+      "systemctl",
+      "journalctl",
+      "sysctl",
+      "usermod",
+      "chown",
+      "chmod",
+      "podman",
+      "exit",
+      "loginctl",
+      "quadlet",
+      "mkdir",
+      "export",
+      "env",
+      "nohup",
+      "reboot"
+     ],
+     "events": 13
+    }
+   ]
   }
  ]
 }

@@ -1764,6 +1764,13 @@
    "ownOptions": true
   }
  ],
+ "loginctl": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
  "lp": [
   "cups",
   {
@@ -1998,6 +2005,19 @@
    "ownOptions": true
   }
  ],
+ "podman": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "podman-systemd.unit": [
+  "podman",
+  {
+   "section": 5
+  }
+ ],
  "postconf": [
   "postfix",
   {
@@ -2101,6 +2121,14 @@
   "libvirt",
   {
    "ownOptions": true
+  }
+ ],
+ "quadlet": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true,
+   "directory": "/usr/libexec/podman"
   }
  ],
  "radtest": [
@@ -2275,6 +2303,12 @@
   {
    "section": 1,
    "ownOptions": true
+  }
+ ],
+ "subuid": [
+  "podman",
+  {
+   "section": 5
   }
  ],
  "system": [

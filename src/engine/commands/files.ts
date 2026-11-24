@@ -81,8 +81,11 @@ function longRow(game: Shell, name: string, n: Node, human: boolean, numeric = f
   // Through a Windows share (cifs): the mount's owner, group and modes.
   const share = cifsShown(game, n);
   const remote = shownOwner(game, n) ?? share;
-  const ownerName = remote?.owner ?? n.owner ?? game.player;
-  const groupName = remote?.group ?? n.group ?? ownerName;
+  let ownerName = remote?.owner ?? n.owner ?? game.player;
+  let groupName = remote?.group ?? n.group ?? ownerName;
+  // Inside a user namespace (podman unshare, see podman.ts): the ids as the namespace maps them.
+  const view = game.state.idView as { owner: (o: string) => string; group: (g: string) => string } | undefined;
+  if (view) [ownerName, groupName] = [view.owner(ownerName), view.group(groupName)];
   const owner = numeric ? String(game.accounts.users[ownerName]?.uid ?? ownerName) : ownerName;
   const group = numeric ? String(game.accounts.groups[groupName]?.gid ?? groupName) : groupName;
   const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);

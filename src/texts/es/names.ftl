@@ -535,3 +535,7 @@ name-review-md = revision.md
 name-message_from_andile-txt = mensaje_de_andile.txt
 name-notes_from_yusra-txt = notas_de_yusra.txt
 name-message_from_femi-txt = mensaje_de_femi.txt
+## El Club de Senderismo
+name-message_from_soo-ah-txt = mensaje_de_soo-ah.txt
+name-notes_from_bolat-txt = notas_de_bolat.txt
+name-message_from_ayasha-txt = mensaje_de_ayasha.txt

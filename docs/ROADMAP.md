@@ -695,6 +695,13 @@ them safely.
   (`rhel.ts`, `selinux.ts`, `firewalld.ts`, `rpm.ts`, `httpd-rhel.ts`;
   the `rhel` family). Later: updates (`dnf updateinfo`, `--security`,
   `dnf history undo`, `dnf needs-restarting -r`).
+- [x] **Rootless containers** (Podman 5.4, Debian 13): an app moved from
+  Docker as root to Podman under its own account (subordinate ids, the
+  namespace's mapping and the data's owner, unprivileged ports behind a
+  reverse proxy), then kept running with nobody logged in (Quadlet, linger,
+  a reboot). Done: story 50, "The Walking Club" (`podman.ts`; `podman`,
+  `loginctl`, Quadlet's dry run and `systemctl --user` in the `podman`
+  family; `usermod --add-subuids`; three errors in the error explainer).
 
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within

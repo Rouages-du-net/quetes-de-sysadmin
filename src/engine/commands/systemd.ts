@@ -5,6 +5,7 @@
 import type { Shell } from '../shell';
 import { stop, dateComplete, start, duration, writeLog, logLine, reload, restart, systemd, type Systemd } from '../systemd';
 import type { Command } from './index';
+import { family } from '../families';
 import { colourise, sgr } from '../colours';
 import { readSize } from '../memory';
 import { readNice, readQuota } from '../cpu';
@@ -595,6 +596,8 @@ export const SYSTEMD: Record<string, Command> = {
       const paint: Paint = colourise(c, 'auto') ? sgr : raw;
       const sd = systemd(game);
       if (!sd) return game.error('System has not been booted with systemd as init system (PID 1). Can\'t operate.');
+      // --user, -M USER@: a user's service manager, on a machine with rootless Podman (podman.ts).
+      if (game.state.podman && args.some((a) => a === '--user' || /^(-M|--machine)(=|$)/.test(a) || /^-M./.test(a))) return family('podman').userSystemctl(c);
       const now = args.includes('--now');
       const unknown = args.find((a) => /^-[^-]/.test(a) && a !== '-t');
       if (unknown) return game.error(`systemctl: invalid option -- '${unknown[1]}'`);
@@ -832,6 +835,9 @@ export const SYSTEMD: Record<string, Command> = {
       let grep: RegExp | null = null;
       let lowest = 0;
       let listBoots = false;
+      // --user (-u then names a unit of the user's manager), --user-unit=UNIT.
+      let userScope = false;
+      let userUnit: string | null = null;
       const readPriority = (v: string) => ({ emerg: 0, alert: 1, crit: 2, err: 3, warning: 4, notice: 5, info: 6, debug: 7 } as Record<string, number>)[v] ?? (/^[0-7]$/.test(v) ? Number(v) : null);
       const setPriority = (v: string): boolean => {
         const [a, b] = v.split('..');
@@ -847,6 +853,8 @@ export const SYSTEMD: Record<string, Command> = {
         const a = args[i];
         if (a.startsWith('--')) {
           if (a.startsWith('--unit=')) unit = a.slice(7);
+          else if (a === '--user') userScope = true;
+          else if (/^--user-unit(=|$)/.test(a)) userUnit = a.includes('=') ? a.slice(12) : (args[++i] ?? '');
           else if (a === '--follow') follow = true;
           else if (a === '--no-pager' || a === '--pager-end' || a === '--no-hostname' || a === '--quiet') continue;
           else if (a === '--reverse') reverse = true;
@@ -920,8 +928,11 @@ export const SYSTEMD: Record<string, Command> = {
         if (!boots.includes(boot)) return game.error(`Data from the specified boot (${bootOffset > 0 ? `+${bootOffset}` : bootOffset}) is not available: No such boot ID in journal`);
         onlyBoot = true;
       }
+      if (userScope && unit !== null) [userUnit, unit] = [unit, null];
+      // A user's own messages (--user, --user-unit): readable by that user.
+      const mine = (userScope || userUnit !== null) && game.who !== 'root';
       // Reading the whole journal: root, or the adm and systemd-journal groups.
-      const allowed = game.who === 'root' || game.groupsFor(game.who).some((g) => g === 'adm' || g === 'systemd-journal');
+      const allowed = mine || game.who === 'root' || game.groupsFor(game.who).some((g) => g === 'adm' || g === 'systemd-journal');
       if (!allowed)
         return [
           'Hint: You are currently not seeing messages from other users and the system.',
@@ -930,10 +941,14 @@ export const SYSTEMD: Record<string, Command> = {
           '-- No entries --',
         ].join('\n');
       const u = unit && (unit.endsWith('.service') ? unit : `${unit}.service`);
+      const uu = userUnit && (userUnit.includes('.') ? userUnit : `${userUnit}.service`);
       // Dates are read in the machine's time (the one the journal displays).
       const shows = (e: { time: number }) => e.time + (sd.difference ?? 0);
       const kept = (e: (typeof sd.log)[number]) =>
         (!u || e.unit === u) &&
+        (!uu || e.userUnit === uu) &&
+        (!userScope || !!e.userUnit) &&
+        (!mine || e.user === game.who) &&
         (!onlyKernel || e.ident === 'kernel') &&
         e.priority <= priority &&
         e.priority >= lowest &&

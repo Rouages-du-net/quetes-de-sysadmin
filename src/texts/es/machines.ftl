@@ -73,3 +73,4 @@ machine-noticeboard = pizarra
 
 ## The Mapping Party
 machine-cairn = hito
+machine-stile = portillo

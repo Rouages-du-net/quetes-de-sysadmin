@@ -2142,23 +2142,40 @@ export class Shell implements Game {
       else if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
-        // sudo -E keeps the environment (the user may: ALL implies SETENV).
-        if (args[0] === '-E' || args[0] === '--preserve-env') {
-          keepEnv = true;
-          args = args.slice(1);
+        // sudo's options, in any order: -E keeps the environment (the user may: ALL
+        // implies SETENV), -u ACCOUNT, -i or -s (a shell), grouped too (-iu ACCOUNT).
+        let shellFlag: string | null = null;
+        let unknownAccount = false;
+        const account = (name: string) => {
+          as = name;
+          if (!this.accounts.users[as] && as !== 'root') unknownAccount = true;
+        };
+        for (;;) {
+          const a = args[0] ?? '';
+          if (a === '-E' || a === '--preserve-env') {
+            keepEnv = true;
+            args = args.slice(1);
+          } else if (a === '-u' || a === '--user') {
+            account(args[1] ?? '');
+            args = args.slice(2);
+          } else if (a.startsWith('--user=')) {
+            account(a.slice(7));
+            args = args.slice(1);
+          } else if (/^-[is]u$/.test(a)) {
+            shellFlag = `-${a[1]}`;
+            account(args[1] ?? '');
+            args = args.slice(2);
+          } else if (!shellFlag && ['-i', '--login', '-s', '--shell'].includes(a)) {
+            shellFlag = a;
+            args = args.slice(1);
+          } else break;
         }
-        if (args[0] === '-u') {
-          as = args[1] ?? '';
-          args = args.slice(2);
-          if (!this.accounts.users[as] && as !== 'root') {
-            this.error(this.t('sudo-account-unknown', { account: as }));
-            input = '';
-            return;
-          }
+        if (unknownAccount) {
+          this.error(this.t('sudo-account-unknown', { account: as }));
+          input = '';
+          return;
         }
         // sudo -i, sudo -s (or sudo bash): a shell as root (or -u's account); with a command, the command alone.
-        const shellFlag = ['-i', '--login', '-s', '--shell'].includes(args[0] ?? '') ? args[0] : null;
-        if (shellFlag) args = args.slice(1);
         if ((shellFlag && !args.length) || (args.length === 1 && args[0] === 'bash' && segments.length === 1)) {
           const login = shellFlag === '-i' || shellFlag === '--login';
           const shellPath = this.accounts.users[as]?.shell ?? '/bin/bash';

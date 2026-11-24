@@ -26,6 +26,7 @@ import {
   dockerSize,
   findContainer,
   imageUser,
+  duration,
   type Container,
   type DockerState,
   type Mount,
@@ -37,23 +38,7 @@ import type { Command } from './index';
 
 const SOCKET = 'permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock';
 
-/** A duration like Docker's units.HumanDuration: "3 days", "About an hour". */
-export function duration(ms: number): string {
-  const s = Math.round(ms / 1000);
-  const m = Math.round(s / 60);
-  const h = Math.round(m / 60);
-  if (s < 1) return 'Less than a second';
-  if (s === 1) return '1 second';
-  if (s < 60) return `${s} seconds`;
-  if (m === 1) return 'About a minute';
-  if (m < 60) return `${m} minutes`;
-  if (h === 1) return 'About an hour';
-  if (h < 48) return `${h} hours`;
-  if (h < 24 * 7 * 2) return `${Math.floor(h / 24)} days`;
-  if (h < 24 * 30 * 2) return `${Math.floor(h / 24 / 7)} weeks`;
-  if (h < 24 * 365 * 2) return `${Math.floor(h / 24 / 30)} months`;
-  return `${Math.floor(h / 24 / 365)} years`;
-}
+export { duration };
 
 const A_NAMES = ['brave', 'calm', 'eager', 'gentle', 'happy', 'jolly', 'keen', 'lucid', 'nifty', 'quirky'];
 const B_NAMES = ['hopper', 'lovelace', 'noether', 'curie', 'turing', 'hamilton', 'germain', 'meitner', 'franklin', 'johnson'];
