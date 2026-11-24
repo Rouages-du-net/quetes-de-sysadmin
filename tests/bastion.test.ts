@@ -182,7 +182,7 @@ deploy, password, from ${ATTACKER}, 13/04 02:40`;
       play(FIREWALL.filter((l) => !l.includes(' lo ')));
       expect(flag('no-loopback')).toBe(true);
       const all = play(['sudo iptables-save > /etc/iptables/rules.v4']);
-      expect(all).toMatch(/Permission denied|Permission non accordée/);
+      expect(all).toMatch(/Permission denied|Permission non accordée|Permiso denegado/);
       expect(c.finished).not.toContain('hardening');
     });
   });
