@@ -946,7 +946,7 @@ for (const language of LANGUAGES)
           .join('\n');
         expect(end).toContain('uid=1001 gid=1001 groups=1001');
         expect(end).toMatch(/^yasmine\s+\d+.*node server\.js$/m);
-        expect(end).toContain('14 photos');
+        expect(end).toContain(translator(language)('full-powers-gallery-welcome', { count: 14 }));
         contains(end, 'Tu as terminé le chapitre 4 de La Fabrique');
         expect(s.finished).toBe(true);
       });
