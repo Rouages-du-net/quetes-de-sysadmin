@@ -66,3 +66,4 @@ machine-wings = bastidores
 machine-meadow = pradera
 machine-paddock = cercado
 machine-haven = refugio
+machine-cairn = hito

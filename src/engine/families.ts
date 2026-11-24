@@ -40,6 +40,7 @@ import type * as Luks from './families/luks';
 import type * as Mariadb from './families/mariadb';
 import type * as Nut from './families/nut';
 import type * as Objects from './families/objects';
+import type * as Podman from './families/podman';
 import type * as Postfix from './families/postfix';
 import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
@@ -71,6 +72,7 @@ export const FAMILIES = {
   mariadb: () => import('./families/mariadb'),
   nut: () => import('./families/nut'),
   objects: () => import('./families/objects'),
+  podman: () => import('./families/podman'),
   postfix: () => import('./families/postfix'),
   postgres: () => import('./families/postgres'),
   prometheus: () => import('./families/prometheus'),
@@ -103,6 +105,7 @@ interface Hooks {
   mariadb: typeof Mariadb.HOOKS;
   nut: typeof Nut.HOOKS;
   objects: typeof Objects.HOOKS;
+  podman: typeof Podman.HOOKS;
   postfix: typeof Postfix.HOOKS;
   postgres: typeof Postgres.HOOKS;
   prometheus: typeof Prometheus.HOOKS;

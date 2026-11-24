@@ -526,3 +526,7 @@ name-link_for_zuri-txt = link_for_zuri.txt
 name-message_from_teuila-txt = message_from_teuila.txt
 name-envelope-txt = envelope.txt
 name-review-md = review.md
+## The Walking Club
+name-message_from_soo-ah-txt = message_from_soo-ah.txt
+name-notes_from_bolat-txt = notes_from_bolat.txt
+name-message_from_ayasha-txt = message_from_ayasha.txt

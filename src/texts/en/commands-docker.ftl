@@ -10,3 +10,4 @@ docker-volume-usage = (Here: docker volume ls, create, inspect, rm; see man dock
 compose-usage =
     Usage:  docker compose [OPTIONS] COMMAND
     (Here: up [-d], down [-v], ps, logs, config, restart, stop, start, exec, pull; see man docker-compose)
+podman-unshare-shell = podman unshare without a command opens a shell in the account's namespace: the game doesn't simulate that shell. Give it a command (podman unshare ls -ln FOLDER, podman unshare cat /proc/self/uid_map).

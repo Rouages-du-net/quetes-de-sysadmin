@@ -95,6 +95,9 @@ export interface Input {
   message: string;
   // 3 = error, 4 = warning, 6 = info (syslog).
   priority: number;
+  // A message from a user manager's unit (user@UID.service): the unit and its account (journalctl --user-unit).
+  userUnit?: string;
+  user?: string;
 }
 
 export interface Systemd {

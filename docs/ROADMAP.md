@@ -687,6 +687,14 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **Rootless containers** (Podman 5.4, Debian 13): an app moved from
+  Docker as root to Podman under its own account (subordinate ids, the
+  namespace's mapping and the data's owner, unprivileged ports behind a
+  reverse proxy), then kept running with nobody logged in (Quadlet, linger,
+  a reboot). Done: story 48, "The Walking Club" (`podman.ts`; `podman`,
+  `loginctl`, Quadlet's dry run and `systemctl --user` in the `podman`
+  family; `usermod --add-subuids`; three errors in the error explainer).
+
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within
   their RPO), a rebuild on a spare machine after a flood, the switch, the

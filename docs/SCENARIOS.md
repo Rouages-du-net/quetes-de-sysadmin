@@ -294,6 +294,8 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: its outputs and the admin API's errors ("Error: GetBucketInfo returned NoSuchBucket (404): …") as Garage 2.1.0's CLI prints them, status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
 | The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
+| Rootless Podman (`podman.ts`, The Walking Club) | Podman 5.4.2 as Debian 13 ships it: each account's own images and containers; the user namespace from `/etc/subuid`/`/etc/subgid` (the account as 0, its ranges from 1), built at the account's first command and kept until `podman system migrate` or a reboot; without ranges the "cannot find UID/GID … no subuid ranges found" error and the single mapping warning, then the layer's "potentially insufficient UIDs or GIDs" error; `--userns=keep-id[:uid=,gid=]`; `:U` chowning from inside the namespace (refused on files it doesn't map), `:Z` accepted and doing nothing (no SELinux); ports published by pasta (refused below `net.ipv4.ip_unprivileged_port_start`, or taken) or rootlessport (`--network slirp4netns`); the user session warnings when the account's manager doesn't run; a container started from a session lives in the account's manager and dies with it; the app's process under its host uid in `ps` and pasta's sockets in `ss` | one registry declared by the story; the pause process is the namespace itself; no pods, networks, volumes' commands or healthchecks; `podman run` without `-d` returns like `-d`; `exec` knows `id`, `whoami`, `ls`, `cat`, `touch`; `podman info` shows part of its fields; container ids derived, not random |
+| Quadlet, `systemctl --user`, `loginctl` (`podman.ts`, `commands/podman.ts`, the `podman` family) | `.container` files read from `~/.config/containers/systemd` and `/etc/containers/systemd/users[/UID]`, converted like Podman 5.4.2's Quadlet (the `[X-Container]` group, `--replace --rm --cgroups=split --sdnotify=conmon -d`, `systemd-%N`, "unsupported key", "no Image or Rootfs key specified"), at `daemon-reload` and when the manager starts; `user@UID.service` started by `loginctl enable-linger` and at boot when `/var/lib/systemd/linger/ACCOUNT` exists, stopped by `disable-linger`; `systemctl --user` found through `$XDG_RUNTIME_DIR` or `-M ACCOUNT@` (systemd 257's bus errors), `enable` on a generated unit refused; `journalctl --user`, `--user-unit` | the manager's units are only Quadlet's (no hand-written user units, no timers); `loginctl` has `enable-linger`, `disable-linger`, `show-user`, `list-users`, `list-sessions`; only the player's ssh session exists; the generator's errors go to the system journal under `user@UID.service` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4895,6 +4897,76 @@ memory), restores a snapshot beside and verifies it. Expected traps: the
 name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
+
+## Story 48: The Walking Club (two chapters)
+
+Rootless containers with Podman, as Debian 13 ships it (podman
+5.4.2+ds1-2+b2, passt 0.0~git20250503.587980c, systemd 257). Open Paths
+(Sentiers ouverts, Senderos Abiertos), a volunteers' walking club, lists its
+walks and takes the sign-ups through Trailbook, a web app in an image
+(`registry.example/openpaths/trailbook:2.3`, its own USER uid 1000), behind
+nginx on `cairn` (192.0.2.176, `hito` in Spanish); the site is
+`walks.openpaths.example`. Soo-ah chairs the club, Bolat ran the app with
+Docker as root in 2031, Ayasha created the service account `trailbook`
+(`useradd --system`: uid 997, no subordinate ids). Engine: `podman.ts` and
+the `podman` family (`podman`, `loginctl`, `/usr/libexec/podman/quadlet`,
+`systemctl --user` through a hook of the core's systemctl). Built in
+`chapters/walking-club.ts`; it opens after "Full Powers" (Docker's uid
+shared with the host) and "Boot Order", and extends the deployment path.
+Sources: https://docs.podman.io/en/v5.4.2/ (podman-run, podman-unshare,
+podman-system-migrate, podman-systemd.unit), the rootless tutorial, Podman
+v5.4.2's sources, subuid(5), loginctl(1), systemctl(1).
+
+### Chapter 1 — No Root Needed (done)
+
+Monday 12 April 2033, 9:20. Docker is stopped; the data in
+`/srv/trailbook/data` belongs to uid 1000 (you: Docker's container uid was
+the host's).
+
+| Step | Command learnt |
+|---|---|
+| As the service | `sudo -iu trailbook` (or `sudo -u trailbook podman …`) |
+| Subordinate ids | `cat /etc/subuid /etc/subgid`, `usermod --add-subuids/--add-subgids FIRST-LAST`, `podman system migrate` |
+| The image | `podman pull`, `podman images` |
+| The port | `podman run -p 127.0.0.1:8080:8080` behind nginx, not 80 (pasta's "Permission denied") |
+| The data's owner | `podman unshare cat /proc/self/uid_map`, `podman unshare ls -ln`, `sudo chown`, `-v …:/data:U`, `--userns=keep-id`, `podman unshare chown` |
+| The check | `podman top trailbook user huser`, `curl -k https://walks.openpaths.example/` |
+
+Goal checked on the state: trailbook has its own ranges (65536, no overlap)
+in both files; one of trailbook's rootless containers runs the image with
+`/srv/trailbook/data` at `/data` and opened the club's database; the site
+answers through nginx; no rootful container runs; the data isn't
+world-writable; `net.ipv4.ip_unprivileged_port_start` is 1024 or more, now
+and at boot. Several solutions: `:U`, `--userns=keep-id`, `podman unshare
+chown -R 1000:1000`, the ranges with usermod or nano. Expected traps: `sudo
+podman` (rootful), `chmod 777`, the sysctl lowered to 0, a range copied from
+another account, a named volume (an empty database), `:U` on files the
+namespace doesn't map.
+
+### Chapter 2 — Logged Out (done)
+
+Wednesday 14 April, 9:05. Ayasha started the container over ssh as
+trailbook; at 18:02 she logged out and logind stopped `user@997.service`
+with it.
+
+| Step | Command learnt |
+|---|---|
+| What happened | `journalctl --since … --until …`, `podman ps -a` (Exited (143)) |
+| Quadlet | `~/.config/containers/systemd/trailbook.container` (`[Container]`, `[Install] WantedBy=default.target`), `/usr/libexec/podman/quadlet -dryrun -user` |
+| Linger | `loginctl enable-linger trailbook`, `loginctl list-users`, `show-user -p Linger` |
+| The user manager | `export XDG_RUNTIME_DIR=/run/user/$(id -u)` or `systemctl --user -M trailbook@`, `daemon-reload`, `start`, `status`, `cat` |
+| The proof | `sudo reboot`, `journalctl -u user@997 -b`, curl |
+
+Goal checked on the state: trailbook lingers; a unit generated from a
+`.container` file is wanted by default.target, was started by the manager
+at this boot (after a reboot) and runs the container serving the club's
+data; the site answers; no rootful container and no active system unit
+running podman. Several solutions: the user's own shell with
+`XDG_RUNTIME_DIR`, or `-M trailbook@ --user` from root; the file written
+before or after linger; any unit or container name. Expected traps: `nohup
+podman run`, a system unit calling `sudo -u trailbook podman`, `podman
+generate systemd` (deprecated), `systemctl --user enable` on a generated
+unit, a Quadlet key that doesn't exist, a reboot before linger.
 
 ## Ideas for later
 

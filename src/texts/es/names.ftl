@@ -526,3 +526,7 @@ name-link_for_zuri-txt = enlace_para_zuri.txt
 name-message_from_teuila-txt = mensaje_de_teuila.txt
 name-envelope-txt = sobre.txt
 name-review-md = revision.md
+## El Club de Senderismo
+name-message_from_soo-ah-txt = mensaje_de_soo-ah.txt
+name-notes_from_bolat-txt = notas_de_bolat.txt
+name-message_from_ayasha-txt = mensaje_de_ayasha.txt

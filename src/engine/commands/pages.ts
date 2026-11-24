@@ -275,7 +275,7 @@ export const PAGES: Record<string, Page> = {
   uniq: { long: { count: 'c', repeated: 'd', unique: 'u', 'ignore-case': 'i' }, options: ['c', 'd', 'u', 'i', 'f', 's'], values: ['f', 's'] },
   ufw: { section: 8 },
   wc: { long: { lines: 'l', words: 'w', bytes: 'c' }, options: ['l', 'w', 'c'] },
-  usermod: { long: { append: 'a', groups: 'G', lock: 'L', unlock: 'U', expiredate: 'e', shell: 's', uid: 'u' }, section: 8, options: ['a', 'G', 'L', 'U', 'e', 's', 'u'] },
+  usermod: { long: { append: 'a', groups: 'G', lock: 'L', unlock: 'U', expiredate: 'e', shell: 's', uid: 'u', 'add-subuids': 'v', 'add-subgids': 'w', 'del-subuids': 'V', 'del-subgids': 'W' }, section: 8, options: ['a', 'G', 'L', 'U', 'e', 's', 'u', 'v', 'w', 'V', 'W'] },
   userdel: { long: { remove: 'r', force: 'f' }, section: 8, options: ['r', 'f'] },
   history: { options: ['c'] },
   umask: { options: ['S'] },

@@ -102,3 +102,5 @@ password-spring-gala-58 = gala-primavera-58
 ## El Refugio
 password-kibble-2031 = pienso-2031
 password-lantern-thistle-otter-64 = farol-cardo-nutria-64
+## El Club de Senderismo
+password-switchback-27 = zigzag-27

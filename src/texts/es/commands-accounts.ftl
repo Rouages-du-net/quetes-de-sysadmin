@@ -36,6 +36,9 @@ usermod-date-invalid = usermod: fecha «{ $date }» incorrecta
 usermod-uid-invalid = usermod: identificador de usuario «{ $uid }» incorrecto
 usermod-uid-exists = usermod: el UID «{ $uid }» ya existe
 usermod-used = usermod: el usuario { $user } está actualmente en uso por el proceso { $pid }
+# { $range }: what was given to -v/-w (FIRST-LAST)
+usermod-subuid-invalid = usermod: rango de UID subordinados «{ $range }» incorrecto
+usermod-subgid-invalid = usermod: rango de GID subordinados «{ $range }» incorrecto
 
 ## userdel, gpasswd, chage (shadow-utils)
 

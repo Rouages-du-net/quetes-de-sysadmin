@@ -569,10 +569,14 @@ export const ACCOUNTS: Record<string, Command> = {
       let expires: string | null = null;
       let shell: string | null = null;
       let uid: string | null = null;
+      // -v/-w add a range of subordinate uids/gids (FIRST-LAST), -V/-W remove one (/etc/subuid, /etc/subgid).
+      const subIds: { file: 'subuid' | 'subgid'; add: boolean; range: string }[] = [];
       const rest: string[] = [];
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
-        if (/^-[a-zA-Z]+$/.test(a)) {
+        const sub = { '-v': ['subuid', true], '-w': ['subgid', true], '-V': ['subuid', false], '-W': ['subgid', false] }[a] as ['subuid' | 'subgid', boolean] | undefined;
+        if (sub) subIds.push({ file: sub[0], add: sub[1], range: args[++i] ?? '' });
+        else if (/^-[a-zA-Z]+$/.test(a)) {
           if (a.includes('a')) addition = true;
           // -L locks the password (a "!" in front of its hash in /etc/shadow), -U unlocks it.
           if (a.includes('L')) lock = true;
@@ -586,7 +590,7 @@ export const ACCOUNTS: Record<string, Command> = {
         } else rest.push(a);
       }
       const name = rest[0];
-      if (!name || (listing === null && lock === null && expires === null && shell === null && uid === null))
+      if (!name || (listing === null && lock === null && expires === null && shell === null && uid === null && !subIds.length))
         return game.error(game.t(addition && listing === null ? 'usermod-a-without-G' : 'usermod-usage'));
       if (addition && listing === null) return game.error(game.t('usermod-a-without-G'));
       if (game.who !== 'root') return game.error(game.t('usermod-permission'));
@@ -620,6 +624,17 @@ export const ACCOUNTS: Record<string, Command> = {
       if (expires !== null) {
         if (date) u.expires = date;
         else delete u.expires;
+      }
+      for (const { file, add, range } of subIds) {
+        // shadow's getrange(): FIRST-LAST, LAST >= FIRST (usermod.c, prepend_range).
+        const m = /^(\d+)-(\d+)$/.exec(range);
+        if (!m || Number(m[2]) < Number(m[1])) return game.error(game.t(file === 'subuid' ? 'usermod-subuid-invalid' : 'usermod-subgid-invalid', { range }), 2);
+        const [first, last] = [Number(m[1]), Number(m[2])];
+        const lines = (game.read(`/etc/${file}`) ?? '').split('\n').filter(Boolean);
+        const kept = add ? [...lines, `${name}:${first}:${last - first + 1}`] : lines.filter((l) => l !== `${name}:${first}:${last - first + 1}`);
+        const node = game.find(`/etc/${file}`);
+        if (node?.type === 'file') node.content = kept.join('\n');
+        else game.place('usermod', `/etc/${file}`, { type: 'file', content: kept.join('\n'), lines: true, owner: 'root', group: 'root' });
       }
       if (shell !== null) u.shell = shell;
       if (uid !== null) u.uid = Number(uid);

@@ -1915,6 +1915,23 @@ switch-and-learn:haven
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
 
+no-root-needed
+  /home/you → /home/tu
+  /home/you/message_from_soo-ah.txt → /home/tu/mensaje_de_soo-ah.txt
+  /home/you/notes_from_bolat.txt → /home/tu/notas_de_bolat.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LEEME.txt
+
+logged-out
+  /home/you → /home/tu
+  /home/you/message_from_ayasha.txt → /home/tu/mensaje_de_ayasha.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LEEME.txt
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

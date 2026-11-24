@@ -1888,6 +1888,23 @@ switch-and-learn:haven
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+no-root-needed
+  /home/you → /home/vous
+  /home/you/message_from_soo-ah.txt → /home/vous/message_de_soo-ah.txt
+  /home/you/notes_from_bolat.txt → /home/vous/notes_de_bolat.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LISEZMOI.txt
+
+logged-out
+  /home/you → /home/vous
+  /home/you/message_from_ayasha.txt → /home/vous/message_d_ayasha.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LISEZMOI.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt
