@@ -1298,12 +1298,12 @@ for (const language of LANGUAGES)
           MDP,
         ]);
         expect(all).toMatch(/^6$/m);
-        const quiet = reference ? '--silencieux' : '--quiet';
+        const quiet = translator(language)('ransom-option-quiet');
         // procps cuts a user name longer than 8 characters: frontde+.
         expect(all).toMatch(new RegExp(`^${(L('frontdesk').length > 8 ? `${L('frontdesk').slice(0, 7)}\\+` : L('frontdesk'))} +3141  97\\.3   1\\.4 ${L('/home/frontdesk/.cache/.upd/system-update')} ${quiet}$`, 'm'));
         expect(all).toContain(`${L('*/10 * * * * /home/frontdesk/.cache/.upd/system-update')} ${quiet}`);
         expect(all).toContain(`Accepted password for ${L('frontdesk')} from 203.0.113.66`);
-        expect(all).toContain(reference ? 'SAUVEGARDE' : 'BACKUP');
+        expect(all).toContain(translator(language)('ransom-usb-label'));
         if (reference) expect(all).toContain('touch: /mnt/cle/testfile: Système de fichiers accessible en lecture seulement');
         expect(all).toContain('Summary: Restored 6 files/dirs');
         contains(all, 'On ne paie pas');
@@ -1421,7 +1421,7 @@ for (const language of LANGUAGES)
           `${PG} pg_restore -d gamelib_test ${DUMP}`,
         ]);
         expect(all).toContain(L('FATAL:  role "you" does not exist'));
-        expect(all).toContain(reference ? ' public | prets   | table | ludo' : ' public | loans      | table | gamelib');
+        expect(all).toMatch(new RegExp(` public \\| ${L('loans')} +\\| table \\| ${L('gamelib')}`));
         contains(all, 'sudo -u postgres (man sudo)');
         contains(all, 'la sauvegarde se restaure');
         // The next command: the incident.
