@@ -4897,7 +4897,7 @@ name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
 
-## Story 48: The Mapping Party (two chapters)
+## Story 49: The Mapping Party (two chapters)
 
 Wayfinders, a volunteer collective that maps the town's step-free routes
 (kerbs, steps, ramps) and holds a mapping party every month, keeps its zone
@@ -4907,7 +4907,7 @@ sends RFC 2136 updates signed with a TSIG key to named on `cairn` (`hito` in
 Spanish, 192.0.2.176, the story's machine), whose zone is dynamic
 (`update-policy`). The code is shared in `/srv/dns` (group dnsadmins), its
 state local (`terraform.tfstate`). Andile coordinates, Yusra wrote the
-configuration and left notes, Dilnoza runs the tile server and the status
+configuration and left notes, Malalai runs the tile server and the status
 page, Femi is on call. Engine: `hcl.ts` and `tofu.ts` (the `iac` family,
 loaded with the story); four explanations in the error explainer (the state
 lock, init, a variable without a value, the schema). The story is built in

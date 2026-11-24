@@ -16,7 +16,7 @@ first-plan-message-andile =
 
     Samedi, c'est notre cartopartie au centre social : quarante personnes
     qui parcourent la vieille ville avec leur téléphone et notent chaque
-    bordure, chaque marche, chaque rampe. Dilnoza a monté un serveur de
+    bordure, chaque marche, chaque rampe. Malalai a monté un serveur de
     tuiles pour la carte de la soirée, en 192.0.2.180, et les téléphones ont
     besoin d'un nom pour lui : tiles.wayfinders.example.
 
@@ -112,7 +112,7 @@ first-plan-event-checked =
     dig a interrogé named directement : tiles.wayfinders.example répond
     192.0.2.180. Le code, l'état d'OpenTofu et le serveur sont d'accord.
 first-plan-event-end =
-    Andile : « Dilnoza voit les tuiles sur son téléphone. Samedi est sauvé ! »
+    Andile : « Malalai voit les tuiles sur son téléphone. Samedi est sauvé ! »
 
     Bravo ! Tu as terminé Le Premier Plan.
 

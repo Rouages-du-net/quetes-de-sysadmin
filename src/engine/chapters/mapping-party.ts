@@ -7,7 +7,7 @@
 // configuration in /srv/dns (the hashicorp/dns provider, dynamic updates
 // signed with the TSIG key tofu-key), shared by the volunteers of the
 // dnsadmins group, its state in /srv/dns/terraform.tfstate. Andile
-// coordinates the collective, Dilnoza runs the tile server, Femi is on
+// coordinates the collective, Malalai runs the tile server, Femi is on
 // call.
 // Chapter 1: a record for the mapping party's tile server, added by Andile
 // with a typo and without its value: init, fmt, validate, a variable in
@@ -128,7 +128,7 @@ variable "tsig_secret" {
 }
 
 variable "tiles_address" {
-  description = "${n === 1 ? "The address of Dilnoza's tile server (she will tell us)." : "The address of Dilnoza's tile server."}"
+  description = "${n === 1 ? "The address of Malalai's tile server (she will tell us)." : "The address of Malalai's tile server."}"
   type        = string
 }
 `;
@@ -149,7 +149,7 @@ resource "dns_cname_record" "wiki" {
 
 // Chapter 1: Andile's block, a typo and no formatting.
 const TILES_ANDILE = `
-# Added by Andile for the mapping party: Dilnoza's tile server.
+# Added by Andile for the mapping party: Malalai's tile server.
 resource "dns_a_record_set" "tiles" {
 zone = var.zone
     name = "tiles"
@@ -158,7 +158,7 @@ zone = var.zone
 }
 `;
 const TILES_DONE = `
-# Dilnoza's tile server (the mapping parties).
+# Malalai's tile server (the mapping parties).
 resource "dns_a_record_set" "tiles" {
   zone      = var.zone
   name      = "tiles"

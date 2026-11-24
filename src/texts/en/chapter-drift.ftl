@@ -24,7 +24,7 @@ drift-message-andile =
     start for me: something about a lock.
 
     Can you put things back in order? The site must keep working. Femi also
-    added a record for Dilnoza's status page: keep it, but under OpenTofu
+    added a record for Malalai's status page: keep it, but under OpenTofu
     like the others. His note is in your home.
 
     Andile
@@ -35,7 +35,7 @@ drift-message-femi =
 
     Sorry, a hurried note before I sleep.
 
-    21:30: the site no longer answered, its host was dead. Dilnoza started
+    21:30: the site no longer answered, its host was dead. Malalai started
     the spare machine (198.51.100.41) and copied the site onto it.
 
     21:41: I started tofu apply in /srv/dns to change the address, but the
@@ -46,7 +46,7 @@ drift-message-femi =
       update add www.wayfinders.example 60 A 198.51.100.41
     (TTL 60, so that we could switch back fast.)
 
-    21:51: Dilnoza's status page is up on 198.51.100.42, so I added
+    21:51: Malalai's status page is up on 198.51.100.42, so I added
     status.wayfinders.example the same way, TTL 300.
 
     I didn't touch the code. My laptop's battery died before I could close

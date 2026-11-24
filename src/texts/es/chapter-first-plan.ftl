@@ -17,7 +17,7 @@ first-plan-message-andile =
 
     El sábado es nuestro mapatón en el centro cívico: cuarenta personas
     recorriendo el casco antiguo con el móvil, anotando cada bordillo,
-    escalón y rampa. Dilnoza ha montado un servidor de teselas para el mapa
+    escalón y rampa. Malalai ha montado un servidor de teselas para el mapa
     de la tarde, en 192.0.2.180, y los móviles necesitan un nombre para él:
     tiles.wayfinders.example.
 
@@ -110,7 +110,7 @@ first-plan-event-checked =
     responde 192.0.2.180. El código, el estado de OpenTofu y el servidor
     están de acuerdo.
 first-plan-event-end =
-    Andile: «Dilnoza ve las teselas en su móvil. ¡El sábado está salvado!»
+    Andile: «Malalai ve las teselas en su móvil. ¡El sábado está salvado!»
 
     ¡Bien hecho! Has terminado el capítulo «El primer plan».
 

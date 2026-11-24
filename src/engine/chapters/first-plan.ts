@@ -1,5 +1,5 @@
 // Story "The Mapping Party", chapter "The First Plan": Saturday's mapping
-// party needs tiles.wayfinders.example for Dilnoza's tile server. Andile
+// party needs tiles.wayfinders.example for Malalai's tile server. Andile
 // added the record to /srv/dns/records.tf, by hand, the night before: a
 // misindented block, a typo (adresses) and a variable without a value. The
 // configuration was never initialised on cairn (no lock file, no provider).

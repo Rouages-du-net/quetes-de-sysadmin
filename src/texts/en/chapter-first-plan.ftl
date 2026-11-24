@@ -16,7 +16,7 @@ first-plan-message-andile =
 
     Saturday is our mapping party at the community centre: forty people
     walking the old town with phones, noting every kerb, step and ramp.
-    Dilnoza has set up a tile server for the evening's map, at 192.0.2.180,
+    Malalai has set up a tile server for the evening's map, at 192.0.2.180,
     and the phones need a name for it: tiles.wayfinders.example.
 
     Yusra taught me that we never touch the zone by hand: the records live
@@ -101,7 +101,7 @@ first-plan-event-checked =
     dig asked named directly: tiles.wayfinders.example answers 192.0.2.180.
     The code, OpenTofu's state and the server agree.
 first-plan-event-end =
-    Andile: "Dilnoza sees the tiles on her phone. Saturday is saved!"
+    Andile: "Malalai sees the tiles on her phone. Saturday is saved!"
 
     Well done! You finished The First Plan.
 

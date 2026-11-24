@@ -25,7 +25,7 @@ drift-message-andile =
     même pas chez moi : une histoire de verrou.
 
     Tu peux remettre de l'ordre ? Le site doit continuer à marcher. Femi a
-    aussi ajouté un enregistrement pour la page d'état de Dilnoza : garde-le,
+    aussi ajouté un enregistrement pour la page d'état de Malalai : garde-le,
     mais sous OpenTofu comme les autres. Sa note est dans ton dossier.
 
     Andile
@@ -36,7 +36,7 @@ drift-message-femi =
 
     Désolé, une note pressée avant d'aller dormir.
 
-    21 h 30 : le site ne répondait plus, son hébergeur était mort. Dilnoza a
+    21 h 30 : le site ne répondait plus, son hébergeur était mort. Malalai a
     démarré la machine de secours (198.51.100.41) et y a copié le site.
 
     21 h 41 : j'ai lancé tofu apply dans /srv/dns pour changer l'adresse,
@@ -47,7 +47,7 @@ drift-message-femi =
       update add www.wayfinders.example 60 A 198.51.100.41
     (TTL 60, pour pouvoir revenir en arrière vite.)
 
-    21 h 51 : la page d'état de Dilnoza tourne sur 198.51.100.42, alors j'ai
+    21 h 51 : la page d'état de Malalai tourne sur 198.51.100.42, alors j'ai
     ajouté status.wayfinders.example de la même façon, TTL 300.
 
     Je n'ai pas touché au code. La batterie de mon portable a lâché avant

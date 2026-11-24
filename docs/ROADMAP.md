@@ -698,7 +698,7 @@ them safely.
 - [x] **Infrastructure as code** (OpenTofu): a record added through the
   code (init, fmt, validate, a variable, plan, apply), then the drift of an
   incident: a forgotten run holding the state lock, a hand change the code
-  must follow, a record adopted with import. Done: story 48, "The Mapping
+  must follow, a record adopted with import. Done: story 49, "The Mapping
   Party" (`hcl.ts`: HCL and `tofu fmt`; `tofu.ts`: the hashicorp/dns
   provider on the game's BIND, the local state and its lock, plans and
   drift, import; the `iac` family; four errors in the error explainer).

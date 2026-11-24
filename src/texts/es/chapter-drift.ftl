@@ -25,7 +25,7 @@ drift-message-andile =
     siquiera arranca: algo de un bloqueo.
 
     ¿Puedes poner orden? El sitio tiene que seguir funcionando. Femi también
-    añadió un registro para la página de estado de Dilnoza: consérvalo, pero
+    añadió un registro para la página de estado de Malalai: consérvalo, pero
     bajo OpenTofu como los demás. Su nota está en tu carpeta.
 
     Andile
@@ -36,7 +36,7 @@ drift-message-femi =
 
     Perdón, una nota con prisas antes de dormir.
 
-    21:30: el sitio ya no respondía, su alojamiento estaba muerto. Dilnoza
+    21:30: el sitio ya no respondía, su alojamiento estaba muerto. Malalai
     arrancó la máquina de reserva (198.51.100.41) y copió el sitio en ella.
 
     21:41: lancé tofu apply en /srv/dns para cambiar la dirección, pero el
@@ -47,7 +47,7 @@ drift-message-femi =
       update add www.wayfinders.example 60 A 198.51.100.41
     (TTL 60, para poder volver atrás rápido.)
 
-    21:51: la página de estado de Dilnoza funciona en 198.51.100.42, así que
+    21:51: la página de estado de Malalai funciona en 198.51.100.42, así que
     añadí status.wayfinders.example de la misma manera, TTL 300.
 
     No toqué el código. La batería del portátil se murió antes de que
