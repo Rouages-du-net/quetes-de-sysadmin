@@ -147,7 +147,7 @@ traces-event-end =
       esa noche («El informe»). Cámbialo en los dos lados (la base de datos Y
       el archivo), reinicia la aplicación, comprueba que aguanta. Una
       contraseña escrita en «psql -c "ALTER ROLE ... PASSWORD '...'"» se queda
-      en el historial del shell: el metacomando \password de psql lo evita
+      en el historial de la shell: el metacomando \password de psql lo evita
       (la pide sin mostrarla).
     - Avisa a quien deba saberlo: a la aseguradora y, si había datos
       personales en juego, a la autoridad de protección de datos de tu país,

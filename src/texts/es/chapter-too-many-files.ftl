@@ -3,7 +3,7 @@
 ### las rutas y las salidas de las herramientas no se traducen.
 
 chapter-too-many-files = Demasiados archivos abiertos
-    .summary = La nueva página de archivo de la galería responde 500: «EMFILE: too many open files». El ulimit del shell dice 1024, limits.conf no dice nada, y la galería es un servicio. Darle el límite que necesita, para siempre.
+    .summary = La nueva página de archivo de la galería responde 500: «EMFILE: too many open files». El ulimit de la shell dice 1024, limits.conf no dice nada, y la galería es un servicio. Darle el límite que necesita, para siempre.
 
 ## Archivos
 
@@ -52,7 +52,7 @@ too-many-files-event-limits =
     ¿Quién le dio 1024 a la galería? Es un servicio: systemd, que la
     arranca.
 too-many-files-event-ulimit-shell =
-    ulimit cambia los límites de TU shell, y de lo que lances desde él. La
+    ulimit cambia los límites de TU shell, y de lo que lances desde ella. La
     galería la arrancó systemd: los límites de tu shell no la alcanzan.
 too-many-files-event-limits-conf =
     /etc/security/limits.conf lo lee pam_limits cuando se abre una sesión
@@ -91,7 +91,7 @@ too-many-files-event-end =
     - systemd fija los límites de un servicio cuando lo arranca:
       LimitNOFILE= en la unidad (por defecto 1024:524288).
     - Una sesión de inicio los recibe de pam_limits (limits.conf), y ulimit
-      cambia los del shell: ninguno de los dos alcanza a un servicio.
+      cambia los de la shell: ninguno de los dos alcanza a un servicio.
     - prlimit cambia los límites de un proceso en marcha, hasta que se
       reinicia.
 

@@ -56,7 +56,7 @@ alarm-event-process =
     Un «kworkerd» se lleva casi dos procesadores enteros, como deploy, y se
     ejecuta desde /tmp/.cache. Su nombre imita un hilo del núcleo, pero uno
     de verdad aparece entre corchetes ([kworker/0:1]), pertenece a root, y
-    no tiene ninguna ruta en disco. Y su padre, un shell que ejecuta
+    no tiene ninguna ruta en disco. Y su padre, una shell que ejecuta
     /tmp/.cache/.w, no es nada que la aplicación deba lanzar.
 # { $pool }: the pool's address
 alarm-event-connection =

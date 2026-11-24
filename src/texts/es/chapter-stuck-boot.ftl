@@ -95,7 +95,7 @@ stuck-boot-event-end =
       x-systemd.device-timeout=10s para no esperar 90 segundos.
     - Tras cada cambio: findmnt --verify, mount -a, y luego systemctl
       daemon-reload, antes de reiniciar.
-    - El modo de emergencia no es una avería: un shell de root, el journal
+    - El modo de emergencia no es una avería: una shell de root, el journal
       (journalctl -xb), y lo necesario para reparar. Consigue el acceso a la
       consola del proveedor antes de necesitarlo.
     - Lleva un registro de lo que añades al servidor, y por qué.
