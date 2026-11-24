@@ -22,7 +22,7 @@ expiry-date-message-adaeze =
 
     Todo funciona en mastil. Nuestros nombres terminan en airwaves.internal,
     así que Kwame creó nuestra propia autoridad de certificación hace dos
-    años: está en /srv/ca, con sus notas (README.txt) y nuestra política
+    años: está en /srv/ca, con sus notas (LEEME.txt) y nuestra política
     (POLICY.txt).
 
     ¿Puedes renovar el certificado de la intranet, bien hecho esta vez?

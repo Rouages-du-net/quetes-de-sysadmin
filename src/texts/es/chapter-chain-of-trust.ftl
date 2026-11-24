@@ -16,7 +16,7 @@ chain-of-trust-message-adaeze =
     Dos semanas de paz, y ahora esto.
 
     Kwame pasó la semana pasada para montar lo que llama una «CA emisora»
-    (mira /srv/ca/README.txt), y firmó con ella el certificado del nuevo
+    (mira /srv/ca/LEEME.txt), y firmó con ella el certificado del nuevo
     archivo: archive.airwaves.internal funciona bien en Firefox en las
     emisoras.
 

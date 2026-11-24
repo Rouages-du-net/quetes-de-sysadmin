@@ -21,7 +21,7 @@ stolen-laptop-message-adaeze =
     contribuciones, https://contrib.airwaves.internal/. El portal solo deja
     entrar los portátiles de los reporteros: cada uno tiene un certificado
     de cliente de nuestra CA emisora (las notas de Kwame están en
-    /srv/ca/README.txt). Amina y Ravi tienen que seguir trabajando: Amina
+    /srv/ca/LEEME.txt). Amina y Ravi tienen que seguir trabajando: Amina
     envía esta mañana las entrevistas del festival.
 
     Lindiwe tendrá un portátil nuevo la semana que viene; mientras tanto,
