@@ -122,6 +122,8 @@ export const MACHINES: Machine[] = [
   machine('stile', '192.0.2.184', 'walking-club'),
   // The Zine Library: a volunteer zine library's Debian server (nginx, php-fpm and its AppArmor profile, a backup script to confine).
   machine('stapler', '192.0.2.190', 'zine-library'),
+  // The Tenants' Union: a tenants' union's server (Repairline, its repairs app, and PostgreSQL), its secrets kept with sops and age in git.
+  machine('latch', '192.0.2.196', 'tenants-union'),
 ];
 
 /**

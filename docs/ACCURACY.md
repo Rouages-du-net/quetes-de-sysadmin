@@ -269,6 +269,39 @@ https://wiki.debian.org/AppArmor/HowToUse.
 | The php-fpm profile (its rules, `include if exists <php-fpm.d>`, `include if exists <local/php-fpm>`); aa-genprof's two choices and its Finish to enforce mode (aa-genprof(8)) | confirmed |
 | apparmor_parser's syntax errors ("syntax error, unexpected TOK_CLOSE, expecting TOK_END_OF_RULE", "unexpected TOK_MODE, expecting TOK_OPEN", "Could not open '…'"), "Invalid mode, 'x' must be preceded by exec qualifier…", "Conflict 'a' and 'w' perms are mutually exclusive."; the kernel's record fields (`class="file"`, `capability=2  capname="dac_read_search"`); aa-logprof's header labels and the Save menu's words; severities | from memory of real outputs, not checked against the 4.1 sources |
 
+## SOPS v3.10.2 and age v1.2.1 (The Tenants' Union)
+
+Sources: SOPS's `usererrors.go`, `sops.go` (`Tree.Encrypt`, `Tree.Decrypt`,
+`shouldBeEncrypted`, `decryptKey`), `aes/cipher.go`, `age/keysource.go`,
+`stores/{flatten.go,stores.go,dotenv/store.go}`, `config/config.go`,
+`cmd/sops/{main.go,encrypt.go,decrypt.go,edit.go,rotate.go}`,
+`cmd/sops/common/common.go`, `cmd/sops/codes/codes.go`,
+`cmd/sops/subcommand/updatekeys/updatekeys.go`, `version/version.go` at
+v3.10.2 (the module from proxy.golang.org, github.com/getsops/sops/v3);
+age's `cmd/age-keygen/keygen.go`, `x25519.go`, `parse.go`, `age.go`,
+`internal/bech32/bech32.go` at v1.2.1 (filippo.io/age; Debian 13 ships
+1.2.1-1, sources.debian.org). Git's ignored-file message from Git 2.47's
+`advice.c` hint as Git ≥ 2.46 prints it (`git config set`).
+
+| Item | Result |
+| --- | --- |
+| "Failed to get the data key required to decrypt the SOPS file.", "Group 0: FAILED", each key's "FAILED" with `- |` and `|` lines wrapped at 60, the trailer wrapped at 75 | confirmed (`usererrors.go`); the blank line between two keys keeps the two-space prefix, as `prefixer` writes it |
+| "failed to create reader for decrypting sops data key with age: no identity matched any of the recipients", "failed to load age identities: failed to open file: open …: no such file or directory", "failed to open SOPS_AGE_KEY_FILE file: …" | confirmed (`age/keysource.go`, `age.go`) |
+| "MAC mismatch. File has …, computed …", "Error decrypting tree: Error walking tree: Could not decrypt value: …", "Input string … does not match sops' data format", "Could not decrypt with AES_GCM: cipher: message authentication failed" | confirmed (`common.go`, `sops.go`, `aes/cipher.go`; Go's `crypto/cipher` message) |
+| "config file not found, or has no creation rules, and no keys provided through command line options" and its ": error loading config: no matching creation rules found" | confirmed (`main.go`, `config.go`) |
+| "File already encrypted"'s user message wrapped at 75, exit code 203 | confirmed (`encrypt.go`, `codes.go`) |
+| updatekeys: "Syncing keys for file", "already up to date", "The following changes will be made to the file's groups:", "Group 1", `+++`, `---`, "Is this okay? (y/n):", "synced with new keys", "left unchanged", the same data key | confirmed (`updatekeys.go`, `common.go` PrettyPrintDiffs) |
+| rotate: a new data key, `--add-age` to the first group, `--rm-age` from every group | confirmed (`rotate.go`) |
+| edit: SOPS_EDITOR, EDITOR, then vim, nano, vi; "File has not changed, exiting." (200); the example file of a new dotenv file | confirmed (`edit.go`, `stores.go` ExampleFlatTree) |
+| The dotenv store: `#` comments, `KEY=value`, `\n` escapes, the `sops_` prefix, keys sorted, `__map_`/`__list_` flattening, "invalid dotenv input line" | confirmed (`dotenv/store.go`, `flatten.go`) |
+| A plain dotenv file given to `-d`: Go's time parsing error on an empty `sops_lastmodified` | confirmed by reading `ToInternal` (`time.Parse(time.RFC3339, "")`); not run |
+| Exit codes 2, 3, 4, 8, 25, 51, 91, 92, 100, 128, 200, 201, 203 | confirmed (`codes.go`) |
+| age-keygen: usage text, "Public key: …" on stderr when the output isn't a terminal, the world-readable warning, "failed to open output file …: file exists", the report line, "too many arguments", `-y`'s "no identities found in the input" | confirmed (`keygen.go`) |
+| Bech32 errors ("invalid checksum", "invalid character data part", "separator '1' at invalid position") and "malformed recipient …" | confirmed (`internal/bech32`, `x25519.go`) |
+| `sops --version` without network: the "[warning] failed to retrieve latest version from upstream" line and the note on `--check-for-updates` | wording confirmed (`version.go`); the Go network error inside is an approximation |
+| urfave/cli's "Incorrect Usage. flag provided but not defined: -x" | from urfave/cli v1's behaviour as remembered; not re-read here |
+| `sops --help` | abridged from `main.go`'s `UsageText` and flags (kept in the table of differences) |
+
 ## Not checked against sources
 
 These stay in the table of differences as they were: the IBM i messages

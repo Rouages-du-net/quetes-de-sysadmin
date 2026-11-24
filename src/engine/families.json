@@ -1372,6 +1372,12 @@
    "section": 8
   }
  ],
+ "age-keygen": [
+  "secrets",
+  {
+   "ownOptions": true
+  }
+ ],
  "amtool": [
   "prometheus",
   {
@@ -2364,6 +2370,12 @@
   "ha",
   {
    "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "sops": [
+  "secrets",
+  {
    "ownOptions": true
   }
  ],

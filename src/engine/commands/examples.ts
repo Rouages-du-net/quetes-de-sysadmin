@@ -304,6 +304,28 @@ export const EXAMPLES: Record<string, Extra> = {
     ],
     see: ['rclone', 'garage', 'curl'],
   },
+  sops: {
+    examples: [
+      'sops --encrypt --in-place .env',
+      'sops --encrypt --age age1… .env > .env.enc',
+      'sops --decrypt .env',
+      'sops --decrypt --extract \'["DB_PASSWORD"]\' .env',
+      'sops edit .env',
+      'sops set .env \'["DB_PASSWORD"]\' \'"a-new-password"\'',
+      'sops updatekeys .env',
+      'sops updatekeys -y .env mail.env',
+      'sops rotate --in-place .env',
+      'sops rotate -i --rm-age age1… .env',
+      'SOPS_AGE_KEY_FILE=/etc/app/age.key sops -d .env',
+      'sops filestatus .env',
+    ],
+    see: ['age-keygen', 'git', 'gitignore'],
+  },
+  gitignore: { examples: ["echo '.env.local' >> .gitignore", 'git rm --cached .env', 'git status'], see: ['git', 'sops'] },
+  'age-keygen': {
+    examples: ['age-keygen', 'age-keygen -o ~/.config/sops/age/keys.txt', 'age-keygen -y ~/.config/sops/age/keys.txt'],
+    see: ['sops'],
+  },
   tofu: {
     examples: [
       'tofu init',

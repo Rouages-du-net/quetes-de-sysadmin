@@ -1998,6 +1998,20 @@ backup-profile
   /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
   /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
 
+out-of-the-open
+  /home/you → /home/tu
+  /home/you/message_from_taslima.txt → /home/tu/mensaje_de_taslima.txt
+
+keys-change-hands
+  /home/you → /home/tu
+  /home/you/message_from_taslima.txt → /home/tu/mensaje_de_taslima.txt
+  /home/you/message_from_ikenna.txt → /home/tu/mensaje_de_ikenna.txt
+  /home/you/message_from_makoa.txt → /home/tu/mensaje_de_makoa.txt
+  /home/you/.config → /home/tu/.config
+  /home/you/.config/sops → /home/tu/.config/sops
+  /home/you/.config/sops/age → /home/tu/.config/sops/age
+  /home/you/.config/sops/age/keys.txt → /home/tu/.config/sops/age/keys.txt
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

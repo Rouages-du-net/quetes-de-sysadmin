@@ -48,6 +48,7 @@ import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
 import type * as Rhel from './families/rhel';
 import type * as Rsnapshot from './families/rsnapshot';
+import type * as Secrets from './families/secrets';
 import type * as Samba from './families/samba';
 import type * as Security from './families/security';
 import type * as Storage from './families/storage';
@@ -83,6 +84,7 @@ export const FAMILIES = {
   prometheus: () => import('./families/prometheus'),
   rhel: () => import('./families/rhel'),
   rsnapshot: () => import('./families/rsnapshot'),
+  secrets: () => import('./families/secrets'),
   samba: () => import('./families/samba'),
   security: () => import('./families/security'),
   storage: () => import('./families/storage'),
@@ -119,6 +121,7 @@ interface Hooks {
   prometheus: typeof Prometheus.HOOKS;
   rhel: typeof Rhel.HOOKS;
   rsnapshot: typeof Rsnapshot.HOOKS;
+  secrets: typeof Secrets.HOOKS;
   samba: typeof Samba.HOOKS;
   security: typeof Security.HOOKS;
   storage: typeof Storage.HOOKS;

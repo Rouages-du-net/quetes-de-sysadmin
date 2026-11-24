@@ -6123,6 +6123,87 @@
      "events": 10
     }
    ]
+  },
+  {
+   "id": "tenants-union",
+   "after": [
+    "traces",
+    "bare-repo"
+   ],
+   "texts": [
+    "chapter-keys-change-hands.ftl",
+    "chapter-out-of-the-open.ftl",
+    "hints-tenants-union.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "out-of-the-open",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "mkdir",
+      "chmod",
+      "cp",
+      "mv",
+      "rm",
+      "echo",
+      "export",
+      "install",
+      "sh",
+      "sudo",
+      "git",
+      "sops",
+      "age-keygen",
+      "psql",
+      "systemctl",
+      "journalctl",
+      "base64",
+      "exit"
+     ],
+     "events": 19
+    },
+    {
+     "id": "keys-change-hands",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "mkdir",
+      "chmod",
+      "cp",
+      "mv",
+      "rm",
+      "echo",
+      "export",
+      "install",
+      "sh",
+      "sudo",
+      "git",
+      "sops",
+      "age-keygen",
+      "psql",
+      "systemctl",
+      "journalctl",
+      "exit"
+     ],
+     "events": 14
+    }
+   ]
   }
  ]
 }

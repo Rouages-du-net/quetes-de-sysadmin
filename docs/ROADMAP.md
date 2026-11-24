@@ -727,6 +727,15 @@ them safely.
   provider on the game's BIND, the local state and its lock, plans and
   drift, import; the `iac` family; four errors in the error explainer).
 
+- [x] **Secrets in git** (SOPS and age): a `.env` committed in clear and
+  leaked, encrypted with a creation rule, its password rotated and
+  decrypted at deploy time; then a volunteer's key added, a leaver's
+  removed, the data key and the secret rotated. Done: story 52, "The
+  Tenants' Union" (`sops.ts`: age keys in Bech32, the dotenv store, the
+  ENC[…] values, the MAC, `.sops.yaml`; `sops` and `age-keygen` in the
+  `secrets` family; `.gitignore` in git; four errors in the error
+  explainer).
+
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a
   clock, a region and a key, a big file shared for a week while a node lay

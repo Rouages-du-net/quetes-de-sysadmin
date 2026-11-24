@@ -289,6 +289,8 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), laid out as `rspamc.cxx` prints it (`[Metric: default]`, Action, Spam, Score, symbols sorted with strcmp, `Message-ID` or `undef`, `Urls`/`Emails` when the message has some), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
 | OpenTofu (`hcl.ts`, `tofu.ts`, The Mapping Party) | OpenTofu v1.13.10's CLI as its sources write it: HCL bodies, blocks, templates and hclsyntax's syntax errors; `fmt` (indentation, aligned `=`, exit code 3 with `-check`, `-diff`); `init` from a filesystem mirror (`.terraform.lock.hcl` with an `h1:` hash, the "Incomplete lock file information" warning); `validate` against hashicorp/dns 3.6.2's schema (`dns_a_record_set`, `dns_aaaa_record_set`, `dns_cname_record`: required, optional, computed, ForceNew); variables from defaults, `TF_VAR_`, `terraform.tfvars`, `*.auto.tfvars`, `-var-file`, `-var`; plan and apply with refresh, drift, `+ ~ - -/+`, hidden unchanged attributes, `-detailed-exitcode`, `-refresh-only`, `-destroy`, import blocks; the local backend's state (JSON format 4, serial, lineage, `.backup`) and lock (Lock Info, force-unlock refused); `import`, `state list/show/rm/mv`, `output` (`-raw`, `-json`); the diagnostics' box at 78 columns | one provider, no modules, workspaces, `count`/`for_each`, data sources, functions, operators, conditionals or heredocs; remote backends and `-generate-config-out` absent; the TSIG key isn't checked; an unset variable is an error, as with `-input=false` (tofu never prompts for it); a saved plan (`-out`) is a marker, `tofu apply FILE` is not supported; named keeps dynamic updates in memory and a growing `.jnl`, never rewrites the zone file, and a restart doesn't replay the journal against a hand-edited file (BIND would refuse it as out of sync); only `-help` of a few subcommands is OpenTofu's own text |
+| SOPS and age (`sops.ts`, `commands/secrets.ts`, The Tenants' Union) | SOPS 3.10.2 (the upstream .deb; SOPS isn't in Debian's archive) and age 1.2.1 (Debian 13): age's X25519 keys written as real Bech32 with its checksum (`AGE-SECRET-KEY-1…`, `age1…`, "malformed recipient … invalid checksum"), the identity file age-keygen writes (`# created:`, `# public key:`), `-o` that never overwrites (`O_EXCL`, mode 0600, "failed to open output file"), `-y`, the public key and the world-readable warning on stderr; SOPS's dotenv store (comments kept and encrypted as `type:comment`, the metadata as sorted `sops_…` lines flattened like `stores/flatten.go`, `\n` escaped), the `ENC[AES256_GCM,data:…,iv:…,tag:…,type:str]` format with a 32-byte IV, a 16-byte tag and the key's path as additional data, the MAC over all values encrypted with the last modification date, `_unencrypted` by default, `encrypted_regex`/`unencrypted_regex`/suffixes; `.sops.yaml` found from the current directory upwards, `path_regex` relative to its directory, `age` as a comma-separated (or folded) string or `key_groups`; the identities from `SOPS_AGE_KEY`, `SOPS_AGE_KEY_FILE` and `$XDG_CONFIG_HOME` or `~/.config/sops/age/keys.txt` (root's own under sudo); `-e`, `-d`, `-r`, `-i`, `--output`, `--extract`, `--age`, `--add-age`, `--rm-age`, `--ignore-mac`, `encrypt`, `decrypt`, `edit` (SOPS_EDITOR, EDITOR, then vim, nano, vi; "File has not changed, exiting."), `rotate` (a new data key), `updatekeys` (the diff, "Is this okay? (y/n):", Go's log lines, the same data key), `set`, `filestatus`; the messages and exit codes of `usererrors.go` (the no-key report, wrapped like `go-wordwrap`), `aes/cipher.go`, `common.go` and `codes.go` (128, 51, 25, 100, 200, 203); the binary store for other extensions | the cryptography is a deterministic stand-in: SHA-256 keystreams and tags instead of AES-GCM, a hashed wrapping of the data key instead of X25519 and ChaCha20-Poly1305 (the armored age file has the real header's shape, not its cryptography), two SHA-256 instead of SHA-512 for the MAC, and the public key derived from the secret by a hash: nothing outside the game could decrypt these files, nor the game decrypt real ones; only the dotenv and binary stores (no YAML, JSON or INI); no PGP, KMS or Vault keys, no Shamir threshold, no `exec-env`, `exec-file`, `publish`, `keyservice` or `groups`; an editor that leaves invalid syntax ends the edit instead of reopening it; `sops --help` is abridged; `--version` always reports that the version check failed (no network) |
+| `.gitignore` (`ignoredBy` in `commands/git.ts`) | gitignore(5)'s patterns in a repository that tracks subdirectories: comments, `!`, a trailing `/` for directories, anchoring by a `/`, `*`, `?`, `[]`, `**`; an ignored file left out of `git status` and `git add .`, a tracked file staying tracked, `git add` of an ignored file refused with Git 2.47's message unless `-f` | only the root's `.gitignore` (no nested ones, no `.git/info/exclude`, no `core.excludesFile`); no `git check-ignore` |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
@@ -5201,6 +5203,84 @@ aa-logprof's questions answered in many ways, aa-genprof's steps, a profile
 written by hand. Expected traps: enforcing before observing, the archive's
 dated name allowed as is, `/** rwix` (and its missing capability), tar as
 `ux`, complain mode left on, a profile that doesn't attach.
+
+## Story 52: The Tenants' Union (two chapters)
+
+The Larkspur Tenants' Union (the same name in every language) helps the
+tenants of an estate get repairs done: Repairline, its small Flask app,
+takes their requests and the union chases the landlord. It runs on `latch`
+(`loquet` in French, `pestillo` in Spanish, 192.0.2.196, the story's
+machine): the code in `/srv/repairline` (a git working copy of the group
+union, pushed to `/srv/git/repairline.git`), its settings deployed by
+`deploy.sh` to `/etc/repairline/env` (the service's `EnvironmentFile=`),
+PostgreSQL's role `repairline`. Its secrets are kept in git with SOPS
+(https://getsops.io/, 3.10.2) and age (https://age-encryption.org/, 1.2.1):
+the server has its own age key in `/etc/repairline/age.key`. Taslima is the
+union's secretary, Makoa the volunteer who wrote most of the code, Ikenna
+the new volunteer. Engine: `sops.ts` and `commands/secrets.ts` (the
+`secrets` family, loaded with the story, with the `postgres` family);
+`.gitignore` in `commands/git.ts`; four explanations in the error explainer
+(no key for the data key, the MAC, no creation rule, an existing key file).
+The story is built in `chapters/tenants-union.ts`. It opens after "The
+Traces" (a leaked database password changed on both sides) and "The Bare
+Repository" (git, push), and extends the security and deployment paths.
+
+### Chapter 1 — Out of the Open (done)
+
+Tuesday 8 March 2033, 19:05. Repairline's `.env` holds the database
+password, committed in clear by Makoa in January; Makoa then mirrored the
+repository on a public forge for three days. Taslima wants the `.env`
+encrypted for the server and for you, and a rule for the next secrets file.
+
+| Step | Command learnt |
+|---|---|
+| The leak | `git log -p` (the password in the history, in every clone) |
+| A key of your own | `mkdir -p ~/.config/sops/age`, `age-keygen -o ~/.config/sops/age/keys.txt`, `age-keygen -y` |
+| The rule | `.sops.yaml`: `creation_rules`, `path_regex`, `age` (the server's key from the README, yours) |
+| Encryption | `sops --encrypt --in-place .env` |
+| The rotation | `sudo -u postgres psql -c "ALTER ROLE repairline PASSWORD '…'"`, `sops set` or `sops edit` |
+| The deploy | `deploy.sh`: `SOPS_AGE_KEY_FILE=/etc/repairline/age.key`, `sops --decrypt` |
+| Shared | `git commit`, `git push` |
+
+Goal checked on the state: the app runs with a new password (at least 12
+characters), read from `/etc/repairline/env`, which only root can read;
+HEAD's `.env` is a SOPS file for the server's key and yours that decrypts
+to that password; `.sops.yaml`'s rule covers `.env` and `mail.env`;
+`deploy.sh` decrypts; origin has the same; no commit holds the new password
+in clear. Several solutions: `sops set` or `sops edit`, the password changed
+before or after encrypting, `> file` or `--output`, `age` as a string or a
+key group, one commit or several. Expected traps: base64 ("encryption"
+anyone reverses), `.env` in `.gitignore` (a tracked file stays tracked, the
+history keeps it; `git add` then refuses the file), a file encrypted for
+Makoa only (the deploy copies the ciphertext, the app fails to start),
+encrypted for the server but not for you, `sudo` without
+`SOPS_AGE_KEY_FILE` (root has no key), the new password committed in
+clear, the encrypted file committed with the old password.
+
+### Chapter 2 — Keys Change Hands (done)
+
+Tuesday 26 April. `.env` and `mail.env` are encrypted for the server, for
+you and for Makoa. Makoa leaves the tech team; Ikenna joins it and sent his
+public key (and offers to take your `keys.txt` instead).
+
+| Step | Command learnt |
+|---|---|
+| The rule | `.sops.yaml`: Ikenna in, Makoa out |
+| The files | `sops updatekeys .env` ("Is this okay? (y/n):"), `-y` |
+| The data key | `sops rotate --in-place` (or `--add-age`/`--rm-age`) |
+| The secret | `ALTER ROLE`, `sops edit .env` or `sops set` |
+| Deploy, share | `sudo ./deploy.sh`, `git commit`, `git push` |
+
+Goal checked on the state: the rule and both files are for the server, you
+and Ikenna, not Makoa (Ikenna's key opens them); both data keys differ
+from the ones Makoa could open; a new database password, in `.env`,
+deployed and used by the app; HEAD and origin agree; your private key is
+nowhere but your `keys.txt`, readable by you only. Several solutions:
+updatekeys then rotate, or rotate with `--add-age`/`--rm-age` and the rule
+edited; `sops edit` or `sops set`. Expected traps: your `keys.txt` copied
+for Ikenna (or made readable), an `ENC[…]` value edited by hand (its tag,
+or a missing line's MAC), updatekeys without rotate (the same data key), the
+rule committed without updating the files.
 
 ## Ideas for later
 

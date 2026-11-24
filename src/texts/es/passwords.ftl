@@ -105,3 +105,4 @@ password-lantern-thistle-otter-64 = farol-cardo-nutria-64
 password-step-free-32 = sin-escalon-32
 ## El Club de Senderismo
 password-switchback-27 = zigzag-27
+password-mind-the-damp-24 = ojo-con-la-humedad-24

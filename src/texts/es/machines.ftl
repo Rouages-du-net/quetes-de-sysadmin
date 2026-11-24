@@ -75,3 +75,6 @@ machine-noticeboard = pizarra
 machine-cairn = hito
 machine-stile = portillo
 machine-stapler = grapadora
+
+## The Tenants' Union
+machine-latch = pestillo

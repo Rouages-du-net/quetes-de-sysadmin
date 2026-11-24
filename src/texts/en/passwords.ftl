@@ -105,3 +105,4 @@ password-lantern-thistle-otter-64 = lantern-thistle-otter-64
 password-step-free-32 = step-free-32
 ## The Walking Club
 password-switchback-27 = switchback-27
+password-mind-the-damp-24 = mind-the-damp-24

@@ -73,3 +73,6 @@ machine-noticeboard = noticeboard
 machine-cairn = cairn
 machine-stile = stile
 machine-stapler = stapler
+
+## The Tenants' Union
+machine-latch = latch

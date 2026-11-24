@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`), AppArmor (`apparmor`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`), AppArmor (`apparmor`), SOPS and age (`secrets`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -1003,6 +1003,26 @@ presents them for people.
   the backup script `runBackup`, confined as the kernel would, its runs in
   `story.runs`, `tooWide`); `denied-upload.ts`, `backup-profile.ts`. Tests:
   `tests/zine-library.test.ts`.
+- `src/engine/sops.ts`: SOPS 3.10.2 and age 1.2.1, simulated (age keys in
+  real Bech32 derived from a seed, `ageKey`, `parseRecipient`,
+  `parseIdentities`; the data key wrapped in an armored age file,
+  `wrapKey`/`unwrapKey`; `ENC[AES256_GCM,…]` values with their tag and the
+  key's path, `encryptValue`/`decryptValue`; the MAC; the dotenv store and
+  its `sops_` metadata, `encryptFile`/`decryptFile`, the no-key report
+  `noKeyError`; `.sops.yaml`'s creation rules, `readSopsConfig`,
+  `findConfig`, `ruleFor`; `state.sops.seq` makes every key and data key
+  new, deterministically); `sops` (encrypt, decrypt, edit through nano,
+  rotate, updatekeys and its question, set, filestatus; the identities from
+  `SOPS_AGE_KEY`, `SOPS_AGE_KEY_FILE`, `~/.config/sops/age/keys.txt`) and
+  `age-keygen` in `commands/secrets.ts`, the `secrets` family; `.gitignore`
+  (`ignoredBy`, a repository with `deep`) and the `gitignore(5)` page in
+  `commands/git.ts`. `chapters/tenants-union.ts`: what the chapters of "The
+  Tenants' Union" share (`latch`, the Larkspur Tenants' Union's server:
+  `/srv/repairline` and its history, origin, the server's age key, the
+  repairline service reading `/etc/repairline/env` at start, PostgreSQL's
+  role; the keys of the server, Makoa, Ikenna and yours; chapter 2's
+  encrypted files with fixed data keys, `state.startKeys`); `out-of-the-open.ts`,
+  `keys-change-hands.ts`. Tests: `tests/tenants-union.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

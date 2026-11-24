@@ -73,3 +73,6 @@ machine-noticeboard = panneau
 machine-cairn = cairn
 machine-stile = echalier
 machine-stapler = agrafeuse
+
+## The Tenants' Union
+machine-latch = loquet

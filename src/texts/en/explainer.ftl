@@ -289,3 +289,21 @@ explainer-apparmor-root = Reading or changing AppArmor's policy is root's busine
 explainer-apparmor-parser = apparmor_parser couldn't read the profile, so it loaded nothing: the kernel keeps the version it had. The message names the file and the line ("in profile" gives the file the error is in, an included one perhaps); every rule ends with a comma, and a missing comma is reported on the next line. A file of local/ or abstractions/ is not a profile: load the profile that includes it. man apparmor.d gives the syntax; apparmor_parser -Q checks a file without loading it.
     .match =
         AppArmor parser error for
+
+explainer-sops-no-key = sops couldn't decrypt the file's data key: none of the age identities it found matches the file's recipients (listed under Group 0), or it found none at all. It reads SOPS_AGE_KEY, SOPS_AGE_KEY_FILE and ~/.config/sops/age/keys.txt of the account running it (root's own under sudo). Either the file wasn't encrypted for your key, or sops isn't looking where your key is: sops can only decrypt for a recipient chosen when encrypting (.sops.yaml, --age, updatekeys).
+    .match =
+        Failed to get the data key required to decrypt the SOPS file
+
+explainer-sops-mac = The file was changed outside sops: the MAC, computed over all the values when sops last wrote the file, no longer matches them (or a value's own tag fails). An ENC[…] value edited by hand, a line removed or a clear value changed is enough. Take the file back from git, and change values with sops edit or sops set; --ignore-mac only helps to recover a damaged file.
+    .match =
+        MAC mismatch
+        does not match sops' data format
+        Could not decrypt with AES_GCM
+
+explainer-sops-no-rule = sops doesn't know who to encrypt this new file for: no --age on the command line, no .sops.yaml in the current directory or above it, or no creation rule whose path_regex matches the file (the path relative to .sops.yaml's directory). Run sops from the repository, and check the rule's regular expression.
+    .match =
+        config file not found, or has no creation rules, and no keys provided through command line options
+
+explainer-age-keygen-exists = age-keygen never overwrites a file: losing a secret key would make everything encrypted for it unreadable. Use the key that is already there (age-keygen -y FILE prints its public key), or choose another file name on purpose. It also fails when the file's directory doesn't exist yet (mkdir -p).
+    .match =
+        failed to open output file

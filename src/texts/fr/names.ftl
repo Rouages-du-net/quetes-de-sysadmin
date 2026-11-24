@@ -546,3 +546,7 @@ name-message_from_ayasha-txt = message_d_ayasha.txt
 name-message_from_nomvula-txt = message_de_nomvula.txt
 name-notes_from_bartek-txt = notes_de_bartek.txt
 name-message_from_hinewai-txt = message_de_hinewai.txt
+## The Tenants' Union
+name-message_from_taslima-txt = message_de_taslima.txt
+name-message_from_ikenna-txt = message_d_ikenna.txt
+name-message_from_makoa-txt = message_de_makoa.txt
