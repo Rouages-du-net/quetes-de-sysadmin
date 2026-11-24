@@ -44,6 +44,8 @@ for (const language of LANGUAGES)
     const L = (line: string) => inLanguage(translator(language), line);
     // A single name of the world, in the game's language (convert → convertir in French).
     const N = (word: string) => name(translator(language), word);
+    // The Kiosk's footer in the game's language ("Kiosque 1.5.0" in French).
+    const kioskFooter = (version: string) => /<footer>(.*)<\/footer>/.exec(translator(language)('kiosk-welcome', { version }))![1];
     // An expected text, checked only in the reference language.
     const contains = (all: string, text: string) => {
       if (reference) expect(all).toContain(text);
@@ -1007,7 +1009,10 @@ for (const language of LANGUAGES)
         edit(s, '/srv/git/gazette.git/hooks/post-receive', () => HOOK);
         s.execute('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.execute('cd ~/gazette');
-        edit(s, 'index.html', (t) => t.replaceAll('Gazzette', 'Gazette'));
+        // The title's typo, as each language writes it (Gazzette → Gazette in English).
+        const titles = translator(language);
+        const rightTitle = /<h1>(.*)<\/h1>/.exec(titles('bare-repo-site-index-theo'))![1];
+        edit(s, 'index.html', (t) => t.replaceAll(titles('bare-repo-title-mistake'), rightTitle));
         if (reference) expect(s.execute('git commit -am "Title: Gazette, no typo"')).toContain('2 insertions(+), 2 suppressions(-)');
         s.execute('git remote add prod /srv/git/gazette.git');
         const push = s.execute('git push prod main') ?? '';
@@ -1149,7 +1154,7 @@ for (const language of LANGUAGES)
         const end = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.execute(l)).join('\n');
         expect(end).toContain('test is successful');
         contains(end, 'Tu as terminé le chapitre 3 de La Gazette');
-        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.5.0`);
+        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(kioskFooter('1.5.0'));
         expect(s.finished).toBe(true);
       });
 
@@ -1209,7 +1214,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
         site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
         contains(reload(s), 'Tu as terminé le chapitre 4 de La Gazette');
-        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.6.1`);
+        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(kioskFooter('1.6.1'));
         expect(s.finished).toBe(true);
       });
 
