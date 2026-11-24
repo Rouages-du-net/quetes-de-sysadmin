@@ -107,7 +107,7 @@ for (const language of languagesFor('dance-troupe'))
       contains(all, 'Les documents des membres ne sont plus');
       all = run(`curl -i ${DOC}`);
       expect(all).toMatch(/^HTTP\/2 404$/m);
-      expect(all).toContain(fr ? "Cette page n'existe pas" : "This page doesn't exist");
+      expect(all).toContain(/<h1>(.*?)<\/h1>/.exec(t('troupe-site-404'))![1]);
       contains(all, 'répond maintenant 404');
       all = run('sudo garage key create site-deploy');
       const deploy = key('site-deploy');
