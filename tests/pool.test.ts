@@ -7,8 +7,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { age, decode, readManifests, tabwrite, templateHash, toYaml, quantity, validate, normalise, newK8s, bootstrap, plan, carryOut, tick, list, podStatusText, type K8s } from '../src/engine/k8s';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
@@ -91,7 +91,7 @@ describe('k8s: manifests and printers', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('pool'))
   describe(`The Pool — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

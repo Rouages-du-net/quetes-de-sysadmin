@@ -10,8 +10,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { machineName } from '../src/engine/machines';
 import { format6, parse6, eui64, linkLocalFor, slaacFor, inPrefix6, normalise6 } from '../src/engine/ipv6';
 import { runNft, traverse, type Package } from '../src/engine/nftables';
@@ -82,7 +82,7 @@ describe('ufw and IPv6', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('ferry'))
   describe(`The Ferry — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

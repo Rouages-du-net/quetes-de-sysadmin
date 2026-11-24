@@ -221,17 +221,17 @@ export class Console {
     // The banner gives the running kernel (the session's, if it has one).
     const kernel = (old?.state.kernel as { active: string } | undefined)?.active ?? '6.12.0-quetes';
     // Its welcome message, in its story's words (a draft language's untranslated story: in English).
-    const motd = translator(this.t.language, machine.story)(`machine-${machine.name}-motd`);
+    const motd = () => translator(this.t.language, machine.story)(`machine-${machine.name}-motd`);
     const banner =
       machine.os === 'freebsd'
-        ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', motd]
+        ? ['FreeBSD 14.2-RELEASE (GENERIC) releng/14.2-n269506-c8918d6c7412', '', 'Welcome to FreeBSD!', '', motd()]
         : machine.os === 'ibmi'
-        ? [motd]
+        ? [motd()]
         : machine.os === 'windows'
         ? []
         : machine.os === 'solaris'
-        ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', motd]
-        : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, motd];
+        ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', motd()]
+        : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, motd()];
     // A session created from afar (a port tested with nc): the first real
     // connection opens the chapter, with its welcome text.
     // A Windows Server: the session lands in its DefaultShell (cmd or PowerShell), which prints its own banner.

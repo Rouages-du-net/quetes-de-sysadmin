@@ -94,7 +94,12 @@ const networkFirst = (request, url) =>
       caches.match(request, { ...MATCH, ignoreSearch: true }).then((hit) => {
         if (hit) return hit;
         if (request.mode !== 'navigate') return Response.error();
-        return caches.match(url.pathname.startsWith('/fr/') ? '/fr/' : '/en/', MATCH).then((home) => home || Response.error());
+        // The game's page in the page's language (/fr/, /es/…) if it was kept, otherwise in English.
+        const home = /^\/[a-z]{2}(?:-[A-Za-z]+)?\//.exec(url.pathname)?.[0] ?? '/en/';
+        return caches
+          .match(home, MATCH)
+          .then((page) => page || caches.match('/en/', MATCH))
+          .then((page) => page || Response.error());
       }),
     );
 

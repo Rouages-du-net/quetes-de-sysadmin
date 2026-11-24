@@ -9,8 +9,7 @@ import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { instants } from '../src/engine/activity';
-import { LANGUAGES } from '../src/texts';
-import { machinesInLanguage } from './names';
+import { machinesInLanguage, languagesFor } from './names';
 
 const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters'), 'shut-the-door', 'firewall'])];
 const ROBOT = '198.51.100.23';
@@ -23,7 +22,7 @@ describe('instants', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('letters'))
   describe(`The sentinel live — ${language}`, () => {
     const part = () => {
       const c = new Console({ language, finished: BEFORE });
@@ -87,7 +86,7 @@ for (const language of LANGUAGES)
     });
   });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('datacenter'))
   describe(`First day live — ${language}`, () => {
     const eraser = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
     it('tail -f: the bot gets 503s while the service is saturated, 403s once blocked', () => {

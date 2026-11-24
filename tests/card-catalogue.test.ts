@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
+import { languagesFor } from './names';
 import type { Shell } from '../src/engine/shell';
 import { domainOf, findIdentity, lockedOut } from '../src/engine/windows-ad';
 import { windows } from '../src/engine/windows';
@@ -24,7 +24,7 @@ const LEAVERS = 'OU=Leavers,DC=lending,DC=internal';
 const KOFI = `New-ADUser -Name 'Kofi Mensah' -GivenName Kofi -Surname Mensah -SamAccountName kmensah -Path '${RIVERSIDE}' -Department Children -Title 'Youth Librarian' -Manager iduarte`;
 const PASSWORD = "(ConvertTo-SecureString 'Bookmark-2030-Monday' -AsPlainText -Force)";
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('card-catalogue'))
   describe(`The Card Catalogue — ${language}`, () => {
     const fr = language === 'fr';
     const REGISTER = fr ? 'registre' : 'register';

@@ -10,8 +10,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { addExtension, parseSubj, readConf, readIndex, verify, writeIndex, type Extensions } from '../src/engine/pki';
 import { ARCHIVE_CERT, INTRANET_NEW, INTRANET_OLD, ISSUING, LAPTOPS, ROOT, ROOT_CRL, booth } from '../src/engine/chapters/airwaves';
 
@@ -105,7 +105,7 @@ describe('PKI: names, extensions, the database, chain building', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('airwaves'))
   describe(`The Airwaves — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

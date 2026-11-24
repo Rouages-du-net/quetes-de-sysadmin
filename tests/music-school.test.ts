@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
+import { languagesFor } from './names';
 import type { Shell } from '../src/engine/shell';
 import { windows } from '../src/engine/windows';
 import { shareAccess } from '../src/engine/windows-acl';
@@ -19,7 +19,7 @@ import { findTask } from '../src/engine/windows-tasks';
 
 const BEFORE = [...prerequisites('music-school')];
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('music-school'))
   describe(`The Music School — ${language}`, () => {
     const fr = language === 'fr';
     const STAVE = fr ? 'portee' : 'stave';

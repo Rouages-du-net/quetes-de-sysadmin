@@ -9,8 +9,8 @@ import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { analyzeDuration, readSeconds } from '../src/engine/units';
 import { systemd } from '../src/engine/systemd';
 
@@ -30,7 +30,7 @@ describe('Units and boot timing', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('canteen'))
   describe(`The Canteen — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), machinesInLanguage(translator(language), line));

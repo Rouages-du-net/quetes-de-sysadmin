@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, languagesFor } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const BEFORE = [...new Set([...ERASER, ...prerequisites('junk-mail')])];
 const ZONE = '/etc/bind/zones/db.gardens.example';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('junk-mail'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

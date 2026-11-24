@@ -9,8 +9,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { evaluate, forge } from '../src/engine/forge';
 import { readAllowedSigners, readSignature, sign } from '../src/engine/sshsig';
 import { generateKey } from '../src/engine/access';
@@ -47,7 +47,7 @@ describe('SSH signatures, allowed signers, expressions', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('tool-library'))
   describe(`The Tool Library — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

@@ -8,8 +8,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { effective, lookup, readExports, reload } from '../src/engine/nfs';
 import { allowed, modeFor, readConfig } from '../src/engine/samba';
 
@@ -53,7 +53,7 @@ describe('NFS exports and Samba shares', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('photo-club'))
   describe(`The Photo Club — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

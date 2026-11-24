@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('night-batch')])];
 const MDP = 'ledger-2029';
@@ -19,7 +19,7 @@ rm /srv/drop/contrib.ebc.done
 /opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat
 /opt/batch/bin/contrib /srv/batch/in/contrib.dat /srv/batch/out/contrib.rpt`;
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('night-batch'))
   describe(`The Night Batch — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

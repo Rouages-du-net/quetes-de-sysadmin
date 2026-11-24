@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { Shell } from '../src/engine/shell';
 import { explain } from '../src/engine/explainer';
 import { maria, hostMatches, nativeHash, sortedAccounts, newServer, socketAuth, passwordAuth, fileValue, startErrors } from '../src/engine/mariadb';
@@ -63,7 +63,7 @@ describe('The Allotments: the engine', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('allotments'))
   describe(`The Allotments — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -356,7 +356,7 @@ describe('The Allotments: the error explainer', () => {
     return run;
   }
 
-  for (const language of LANGUAGES)
+  for (const language of languagesFor('allotments'))
     it(`${language}: reading the server explains nothing; MariaDB's errors are explained`, () => {
       const run = session(language);
       for (const line of ['mariadb -e "SHOW PROCESSLIST"', 'cat /etc/mysql/mariadb.conf.d/50-server.cnf', 'mariadb-admin status', 'journalctl -u mariadb'])

@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { parseCl, bind, isError } from '../src/engine/cl';
 import { CL } from '../src/engine/commands/ibmi';
 import { COMMANDS } from '../src/engine/commands';
@@ -38,7 +38,7 @@ describe('CL, the command analyser', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('order-book'))
   describe(`The Order Book — ${language}`, () => {
     const fr = language === 'fr';
     const PASSWORD = fr ? 'meule-2029' : 'millstone-2029';

@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { name, password } from '../src/engine/world';
 
 // L'Effaceur, then the chapters to finish to receive the story's key.
@@ -27,7 +27,7 @@ iface eth1.30 inet static
     address 10.10.30.1/24
 `;
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('hive'))
   describe(`The Hive — ${language}`, () => {
     const fr = language === 'fr';
     // A line written with the reference names, in the game's language.

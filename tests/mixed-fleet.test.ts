@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { tokenize, outDefault, literal, operate } from '../src/engine/powershell';
 import { CMDLETS } from '../src/engine/commands/powershell';
 import { COMMANDS } from '../src/engine/commands';
@@ -33,7 +33,7 @@ describe('PowerShell, the parts', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('mixed-fleet'))
   describe(`Next Door Windows — ${language}`, () => {
     const fr = language === 'fr';
     const CABINET = fr ? 'armoire' : 'cabinet';

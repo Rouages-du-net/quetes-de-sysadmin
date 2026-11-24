@@ -5,14 +5,14 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { YESTERDAY } from '../src/engine/chapters/film-club';
 
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('other-unix')])];
 const MDP = 'film-reel-2029';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('other-unix'))
   describe(`The Other Unix — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

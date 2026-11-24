@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { machinesInLanguage, languagesFor } from './names';
 import { name } from '../src/engine/world';
 import { explain } from '../src/engine/explainer';
 import { parseCapacity, presign, readPresigned, scope, type Garage } from '../src/engine/garage';
@@ -49,7 +49,7 @@ describe('The Dance Troupe: the engine', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('dance-troupe'))
   describe(`The Dance Troupe — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

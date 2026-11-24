@@ -6,15 +6,15 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
+import { translator } from '../src/texts';
 import { password } from '../src/engine/world';
-import { inLanguage, machinesInLanguage } from './names';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 // The Eraser, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('audit')])];
 const MDP = 'flour-2028';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('audit'))
   describe(`The Audit — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), line);

@@ -42,8 +42,32 @@ describe('Text files', () => {
           const reference = new Set(keysOf(REFERENCE_LANGUAGE, f));
           const translated = new Set(keysOf(language, f));
           expect([...translated].filter((id) => !reference.has(id)), `${language}/${f}: unknown in ${REFERENCE_LANGUAGE}`).toEqual([]);
-          expect([...reference].filter((id) => !translated.has(id)), `${language}/${f}: missing`).toEqual([]);
+          // A draft's manual goes page by page (see below); every other file is whole.
+          const wanted = !isComplete(language) && f === 'manual.ftl' ? [...reference].filter((id) => !id.startsWith('man-')) : [...reference];
+          expect(wanted.filter((id) => !translated.has(id)), `${language}/${f}: missing`).toEqual([]);
         }
+      });
+
+      // The manual is one big file: a draft translates it page by page. A page
+      // (man-<command>) is whole: its summary and every attribute English's has
+      // (a language may add its own .command-N); the manual's own messages
+      // (headers, option errors) are all there. A missing page shows in English.
+      it.runIf(!isComplete(language) && files(language).includes('manual.ftl'))('a draft manual: whole pages', () => {
+        const attributes = (l: string) =>
+          new Map(
+            parse(readFileSync(join(TEXTS, l, 'manual.ftl'), 'utf8'), {}).body.flatMap((e) =>
+              e instanceof Message ? [[e.id.name, e.attributes.map((a) => a.id.name)] as const] : [],
+            ),
+          );
+        const english = attributes(REFERENCE_LANGUAGE);
+        const partial = [...attributes(language)].flatMap(([id, attrs]) => {
+          const lacking = (english.get(id) ?? []).filter((a) => !attrs.includes(a));
+          const extra = attrs.filter((a) => !(english.get(id) ?? []).includes(a) && !/^command-\d+$/.test(a));
+          return lacking.length || extra.length ? [`${id}: ${[...lacking.map((a) => `-${a}`), ...extra.map((a) => `+${a}`)].join(' ')}`] : [];
+        });
+        expect(partial).toEqual([]);
+        const pages = [...english.keys()].filter((id) => id.startsWith('man-'));
+        console.info(`${language}: ${pages.filter((id) => attributes(language).has(id)).length}/${pages.length} manual pages translated`);
       });
 
       it.runIf(isComplete(language))('a complete language has every file', () => {

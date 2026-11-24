@@ -6,9 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
 import { formatValue, readCaddyfile } from '../src/engine/caddy';
-import { inLanguage, machinesInLanguage } from './names';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const BEFORE = [...new Set([...ERASER, ...prerequisites('patch')])];
@@ -34,7 +33,7 @@ describe('The Caddyfile', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('patch'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {

@@ -8,8 +8,8 @@ import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { readDuration, setting, server } from '../src/engine/pg-server';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
@@ -42,7 +42,7 @@ describe('The PostgreSQL server model', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('theatre'))
   describe(`The Theatre — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), machinesInLanguage(translator(language), line));

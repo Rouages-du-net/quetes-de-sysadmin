@@ -26,11 +26,18 @@ const languages = Object.keys(info.languages).filter((l) => l !== 'en' && (!want
 for (const language of languages) {
   const present = files(language);
   const done = english.filter((f) => present.includes(f));
-  const texts = done.reduce((n, f) => n + size('en', f), 0);
+  const texts = done.reduce((n, f) => n + Math.min(size('en', f), size(language, f)), 0);
   const stories = translatedStories(language);
   const { name, status } = info.languages[language];
   console.log(`${language} (${name}), ${status}: ${done.length}/${english.length} files, ${texts}/${total} texts (${Math.floor((100 * texts) / total)} %), ${stories.length}/${catalogue.stories.length} stories`);
   if (status === 'complete') continue;
+  // A draft's manual goes page by page (tests/texts.test.ts): the pages still in English.
+  const pages = (l) => readFileSync(join(TEXTS, l, 'manual.ftl'), 'utf8').match(/^man-[\w.-]+(?= =)/gm) ?? [];
+  if (present.includes('manual.ftl')) {
+    const translated = new Set(pages(language));
+    const left = pages('en').filter((p) => !translated.has(p));
+    console.log(`  manual: ${translated.size}/${translated.size + left.length} pages; still in English: ${left.map((p) => p.slice(4)).join(' ')}`);
+  }
   const claimed = new Set(catalogue.stories.flatMap((s) => storyFiles(s, english)));
   const core = english.filter((f) => !claimed.has(f) && !present.includes(f));
   if (core.length) console.log(`  core files still in English: ${core.join(', ')}`);
