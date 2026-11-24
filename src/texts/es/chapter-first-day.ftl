@@ -114,7 +114,7 @@ first-day-event-account =
 # { $requests }: número de peticiones del robot
 first-day-event-robot =
     { $robot }: { $requests } peticiones en pocos minutos, todas a
-    /catalogue/search. Eso no es una persona: es un robot que rastrea
+    /catalogue/busqueda. Eso no es una persona: es un robot que rastrea
     el catálogo, y el servicio «catalogue» ya no da abasto.
 
     Mira lo que pasa en la máquina:  ps aux
