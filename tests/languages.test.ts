@@ -10,7 +10,7 @@ import { PAGES, offered, SITE_LANGUAGES } from '../src/site-languages';
 import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
-import { machineName } from '../src/engine/machines';
+import { MACHINES, machineName } from '../src/engine/machines';
 import { name, password } from '../src/engine/world';
 import { config } from '../src/engine/workstation';
 import INFO from '../src/texts/languages.json';
@@ -50,6 +50,10 @@ for (const language of drafts)
   describe(`A draft: ${language}`, () => {
     const t = translator(language);
     const untranslated = STORIES.find((h) => !storyTranslated(language, h.id) && h.chapters[0].names)!;
+    // The machine of a story the draft doesn't translate yet, whose name the language does translate.
+    const untranslatedMachine = MACHINES.find(
+      (m) => m.story && !storyTranslated(language, m.story) && t.exists(`machine-${m.name}`) && t(`machine-${m.name}`) !== m.name,
+    )!.name;
 
     it('a translated story has its world in the language', () => {
       expect(storyTranslated(language, 'eraser')).toBe(true);
@@ -65,7 +69,7 @@ for (const language of drafts)
       expect(name(s.t, 'message.txt')).toBe('message.txt');
       expect(password(s.t, 'flour-2028')).toBe('flour-2028');
       // The machine keeps its English name, on the workstation too.
-      expect(machineName(t, 'library')).toBe('library');
+      expect(machineName(t, untranslatedMachine)).toBe(untranslatedMachine);
       // The player's account is the language's everywhere: the workstation's ssh config logs in with it.
       expect(name(s.t, 'you')).toBe(name(t, 'you'));
       expect(s.execute('cat nothing-here')).toBe(t('error-missing', { command: 'cat', target: 'nothing-here' }));
@@ -75,6 +79,6 @@ for (const language of drafts)
       const c = new Console({ language });
       const ssh = config(c.t);
       expect(ssh).toContain(`Host ${machineName(t, 'kingdom')}\n`);
-      expect(ssh).toContain('Host library\n');
+      expect(ssh).toContain(`Host ${untranslatedMachine}\n`);
     });
   });

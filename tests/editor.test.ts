@@ -19,7 +19,7 @@ for (const language of languagesFor('datacenter'))
     it('new file: open, write, quit, reread', () => {
       const c = new Console({ language });
       c.execute('nano notes.txt');
-      expect(c.edition?.path).toBe(L('/home/you/notes.txt'));
+      expect(c.edition?.path).toBe(`${L('/home/you')}/notes.txt`);
       if (fr) expect(c.edition?.message).toBe('[ Nouveau fichier ]');
       const { message, written } = c.save('ligne 1\nligne 2\n');
       expect(written).toBe(true);
