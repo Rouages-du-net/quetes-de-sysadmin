@@ -23,11 +23,12 @@ export const PATH: Path[] = [
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
       'expiry-date', 'chain-of-trust', 'stolen-laptop', 'who-can-push', 'leaky-pipeline', 'signed-release',
       'kept-forever', 'access-request', 'forget-me', 'least-privilege', 'public-bucket',
+      'new-neighbour', 'wrong-label', 'port-and-boolean',
     ],
   },
   {
     id: 'web',
-    chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock', 'expiry-date', 'chain-of-trust', 'mailbox-full', 'spam-tide', 'sorting-office'],
+    chapters: ['first-day', 'reboot-night', 'fire', 'certificate', 'sharing', 'concert', 'proxy', 'repair-cafe', 'postman', 'signature', 'policy', 'padlock', 'expiry-date', 'chain-of-trust', 'mailbox-full', 'spam-tide', 'sorting-office', 'new-neighbour', 'wrong-label', 'port-and-boolean'],
   },
   { id: 'network', chapters: ['lost-packet', 'works-for-me', 'jump', 'tunnel', 'vlan', 'dhcp', 'zones', 'remote-work', 'dmz', 'annex', 'new-card', 'other-door', 'both-ways', 'new-printer', 'wrong-side', 'split-brain'] },
   { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me', 'broken-replica', 'offsite-copy', 'big-file', 'what-we-have', 'rebuild', 'switch-and-learn'] },

@@ -225,3 +225,24 @@ explainer-garage-layout = Garage didn't apply the layout change. A layout is cha
         Please pass the new layout version number
         Invalid new layout version
         is smaller than the replication factor
+
+explainer-firewalld-auth = firewall-cmd may read firewalld's configuration as any user, but changing it needs root: over ssh no polkit agent can ask for a password. Run the command with sudo.
+    .match =
+        Authorization failed.
+
+explainer-firewalld-not-running = The firewalld daemon is not running, so firewall-cmd has nobody to talk to (and nothing filters). systemctl status firewalld says why; systemctl enable --now firewalld starts it and keeps it at boot.
+    .match =
+        FirewallD is not running
+
+explainer-dnf-root = Installing or removing packages changes the system: dnf needs root. Run it again with sudo (searching, info and list work without).
+    .match =
+        This command has to be run with superuser privileges
+
+explainer-httpd-bind = httpd could not open a socket. With (98) Address already in use, another program listens on that port (ss -tlnp). With (13) Permission denied and nothing else there, on a system with SELinux, httpd_t may only bind the ports typed http_port_t: look for an AVC (ausearch -m avc), and give the port that type with semanage port -a -t http_port_t -p tcp PORT. While one socket fails, httpd doesn't start at all.
+    .match =
+        make_sock: could not bind to address
+
+explainer-selinux-denied = "Permission denied" although the Unix rights allow it: on a system with SELinux, the kernel may refuse what the file's label doesn't allow to the program's domain. Compare the labels (ls -Z, ps -Z), read the denials (sudo ausearch -m avc -ts recent | audit2why), and fix the label in the policy (semanage fcontext, then restorecon) rather than switching SELinux off.
+    .match =
+        file permissions deny server access
+        because search permissions are missing on a component of the path

@@ -914,6 +914,28 @@ presents them for people.
   undone). restic's `sftp:` repositories (`sftpStore`) and `snapshots`'
   filters in `commands/restic.ts`; the `postgresql` package in
   `commands/apt.ts`. Tests: `tests/shelter.test.ts`.
+- `src/engine/rhel.ts`: a Red Hat family machine (`state.os = 'rhel'`,
+  Rocky Linux 10): Debian's own tools "command not found" (`DEBIAN_ONLY`,
+  the `rhel` platform of `availability.ts`), Fedora's prompt, SELinux
+  contexts on files (`Rights.context`, `labelNew` in `Shell.place`: mv
+  keeps a label, cp takes its place's) for `ls -Z`, `ps -Z`, `id`; the
+  `rhel` family (`families/rhel.ts`): SELinux in `src/engine/selinux.ts`
+  (`state.selinux`: mode, booleans and saved values, local file contexts
+  and equivalences, port types, modules, the audit log; `defaultType`,
+  `httpdAllows`, `check` writes AVCs, `boot` with `/.autorelabel` through
+  `state.onBoot` of `systemd.ts`'s restart), firewalld in
+  `src/engine/firewalld.ts` (runtime and permanent zones, rich rules,
+  `verdict`), packages in `src/engine/rpm.ts` (Rocky 10.3's,
+  `installFiles`), httpd in `src/engine/httpd-rhel.ts` (conf.d, vhosts,
+  ProxyPass, `serve`); `dnf`, `rpm`, `firewall-cmd` in
+  `commands/rhel-packages.ts`, SELinux's commands in `commands/selinux.ts`.
+  `chapters/language-cafe.ts`: what the chapters of "The Language Café"
+  share (`kettle`, the café's Rocky server, `kettleState`/`kettleWorld`/
+  `initialiseKettle`; `noticeboard`, the café's screen, an internal host;
+  `storyCurl`, `reach` through firewalld and httpd without trace; the
+  noticeboard's request every five minutes in `passTime`; `rebootKettle`);
+  `new-neighbour.ts`, `wrong-label.ts`, `port-and-boolean.ts`. Tests:
+  `tests/language-cafe.test.ts`.
 - `src/interface/`: the interface (`game.ts`, function `mount()`, the
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in

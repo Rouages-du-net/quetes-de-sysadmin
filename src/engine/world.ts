@@ -79,7 +79,9 @@ export interface CryptoBlob {
 // group, the others). By default: "you", the group named after the
 // owner, rw-r--r-- (file), rwxr-xr-x (place).
 // `attributes`: ext4's attributes set by chattr (i: immutable, a: append only).
-export type Rights = { owner?: string; group?: string; mode?: string; acl?: NtfsAcl; attributes?: string };
+// `context`: its SELinux label (the security.selinux attribute) on a machine
+// with SELinux (rhel.ts): user:role:type:level.
+export type Rights = { owner?: string; group?: string; mode?: string; acl?: NtfsAcl; attributes?: string; context?: string };
 // A Windows machine's NTFS security descriptor (see windows-acl.ts): the
 // owner and the explicit entries; the inherited ones come from the parents.
 export interface NtfsAce {

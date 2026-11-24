@@ -227,6 +227,9 @@ export class Console {
         ? [this.t(`machine-${machine.name}-motd`)]
         : machine.os === 'windows'
         ? []
+        : machine.os === 'rhel'
+        ? // Rocky Linux shows no kernel line at login: sshd's "Last login", then /etc/motd (empty by default) and its motd.d.
+          [this.t(`machine-${machine.name}-motd`)]
         : machine.os === 'solaris'
         ? ['Oracle Corporation      SunOS 5.10      Generic Patch   January 2005', this.t(`machine-${machine.name}-motd`)]
         : [`Linux ${machineName(this.t, machine.name)} ${kernel} #1 SMP x86_64 GNU/Linux`, this.t(`machine-${machine.name}-motd`)];

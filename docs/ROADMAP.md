@@ -687,6 +687,15 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **A Red Hat family machine** (Rocky Linux 10): the other family's
+  tools for a Debian sysadmin (dnf, rpm, firewalld's two configurations),
+  then SELinux (labels kept by mv, semanage fcontext and restorecon, a port
+  type, a boolean with -P, audit2why's suggestions and audit2allow's
+  modules as false leads). Done: story 48, "The Language Café"
+  (`rhel.ts`, `selinux.ts`, `firewalld.ts`, `rpm.ts`, `httpd-rhel.ts`;
+  the `rhel` family). Later: updates (`dnf updateinfo`, `--security`,
+  `dnf history undo`, `dnf needs-restarting -r`).
+
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within
   their RPO), a rebuild on a spare machine after a flood, the switch, the

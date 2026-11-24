@@ -1311,6 +1311,25 @@
    "ownOptions": true
   }
  ],
+ "audit2allow": [
+  "rhel",
+  {
+   "ownOptions": true
+  }
+ ],
+ "audit2why": [
+  "rhel",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ausearch": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "aws": [
   "objects",
   {
@@ -1326,6 +1345,12 @@
  ],
  "cancel": [
   "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "chcon": [
+  "rhel",
   {
    "ownOptions": true
   }
@@ -1404,6 +1429,13 @@
    "ownOptions": true
   }
  ],
+ "dnf": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "doveadm": [
   "inbound",
   {
@@ -1424,6 +1456,12 @@
  ],
  "driverless": [
   "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "firewall-cmd": [
+  "rhel",
   {
    "ownOptions": true
   }
@@ -1457,6 +1495,20 @@
   "objects",
   {
    "ownOptions": true
+  }
+ ],
+ "getenforce": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "getsebool": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
   }
  ],
  "gpresult": [
@@ -1767,6 +1819,20 @@
    "ownOptions": true
   }
  ],
+ "restorecon": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "rpm": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "rspamadm": [
   "inbound",
   {
@@ -1791,6 +1857,41 @@
   {
    "winexe": true,
    "ownOptions": true
+  }
+ ],
+ "semanage": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "semodule": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "sestatus": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "setenforce": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "setsebool": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
   }
  ],
  "sieve-test": [

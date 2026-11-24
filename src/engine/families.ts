@@ -36,6 +36,7 @@ import type * as Mariadb from './families/mariadb';
 import type * as Nut from './families/nut';
 import type * as Objects from './families/objects';
 import type * as Prometheus from './families/prometheus';
+import type * as Rhel from './families/rhel';
 import type * as Windows from './families/windows';
 import entries from './families.json';
 
@@ -55,6 +56,7 @@ export const FAMILIES = {
   nut: () => import('./families/nut'),
   objects: () => import('./families/objects'),
   prometheus: () => import('./families/prometheus'),
+  rhel: () => import('./families/rhel'),
   windows: () => import('./families/windows'),
 };
 export type Family = keyof typeof FAMILIES;
@@ -75,6 +77,7 @@ interface Hooks {
   nut: typeof Nut.HOOKS;
   objects: typeof Objects.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
+  rhel: typeof Rhel.HOOKS;
   windows: typeof Windows.HOOKS;
 }
 

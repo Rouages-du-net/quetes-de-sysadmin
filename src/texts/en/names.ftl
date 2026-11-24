@@ -512,6 +512,11 @@ name-sample-list-eml = sample-list.eml
 ## The Climbing Wall
 name-message_from_nkechi-txt = message_from_nkechi.txt
 name-notes_from_haruto-txt = notes_from_haruto.txt
+name-message_from_dilnoza-txt = message_from_dilnoza.txt
+name-notes_from_seun-txt = notes_from_seun.txt
+name-message_from_thuy-txt = message_from_thuy.txt
+name-message_from_itzel-txt = message_from_itzel.txt
+name-notes_from_tenzin-txt = notes_from_tenzin.txt
 name-message_from_akosua-txt = message_from_akosua.txt
 name-message_from_thandiwe-txt = message_from_thandiwe.txt
 ## The Dance Troupe

@@ -9,6 +9,7 @@
 // group to a group they are a member of; usermod -G replaces the
 // supplementary groups, usermod -aG adds to them.
 
+import { isRhel, LOGIN_CONTEXT } from '../rhel';
 import { squashed } from '../nfs';
 import type { Node } from '../world';
 import type { Shell } from '../shell';
@@ -500,6 +501,12 @@ export const ACCOUNTS: Record<string, Command> = {
       const u = game.accounts.users[name];
       if (!u) return game.error(game.t('id-missing', { user: name }));
       const gid = (g: string) => game.accounts.groups[g]?.gid;
+      // -Z: the process's SELinux context (only on a kernel with SELinux, rhel.ts).
+      if (letters.has('Z')) {
+        if (!isRhel(game)) return game.error('id: --context (-Z) works only on an SELinux-enabled kernel');
+        if (rest.length) return game.error("id: cannot print security context when user specified");
+        return LOGIN_CONTEXT;
+      }
       const only = ['u', 'g', 'G'].filter((l) => letters.has(l));
       if (only.length > 1) return game.error('id: cannot print "only" of more than one choice');
       if (!only.length && letters.has('n')) return game.error('id: cannot print only names or real IDs in default format');
@@ -507,11 +514,13 @@ export const ACCOUNTS: Record<string, Command> = {
       if (only[0] === 'u') return names ? name : String(u.uid);
       if (only[0] === 'g') return names ? u.group : String(gid(u.group) ?? u.group);
       if (only[0] === 'G') return game.groupsFor(name).map((g) => (names ? g : String(gid(g) ?? g))).join(' ');
-      return game.t('id-line', {
+      const line = game.t('id-line', {
         uid: withNumber(name, u.uid),
         gid: withNumber(u.group, gid(u.group)),
         groups: game.groupsFor(name).map((g) => withNumber(g, gid(g))).join(','),
       });
+      // With SELinux, id of the current process adds its context (coreutils' id.c).
+      return isRhel(game) && !rest.length ? `${line} context=${LOGIN_CONTEXT}` : line;
     },
   },
 

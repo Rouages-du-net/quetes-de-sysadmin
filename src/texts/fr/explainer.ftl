@@ -128,3 +128,13 @@ explainer-s3-no-bucket = Aucun bucket ne porte ce nom sur ce stockage. Vérifie 
 explainer-s3-credentials = L'outil AWS n'a trouvé aucune clé pour signer. Il cherche sur la ligne de commande (--profile), dans l'environnement (AWS_ACCESS_KEY_ID et AWS_SECRET_ACCESS_KEY, AWS_PROFILE), puis dans ~/.aws/credentials et ~/.aws/config, dans le dossier personnel de l'utilisateur qui le lance : sous sudo, c'est celui de root, pas le tien. aws configure list montre ce qu'il a trouvé, et où.
 
 explainer-garage-layout = Garage n'a pas appliqué le changement d'agencement. Un agencement se change en deux temps : les changements sont préparés (garage layout assign, remove), puis appliqués par garage layout apply --version N, N étant la version suivante qu'affiche garage layout show, pour que personne n'applique un agencement qu'il n'a pas lu. Un agencement doit aussi garder au moins autant de nœuds avec une capacité que le facteur de réplication.
+
+explainer-firewalld-auth = firewall-cmd peut lire la configuration de firewalld sous n'importe quel compte, mais la changer demande root : par ssh, aucun agent polkit ne peut demander de mot de passe. Relance la commande avec sudo.
+
+explainer-firewalld-not-running = Le démon firewalld ne tourne pas : firewall-cmd n'a personne à qui parler (et rien ne filtre). systemctl status firewalld dit pourquoi ; systemctl enable --now firewalld le démarre et le garde au démarrage.
+
+explainer-dnf-root = Installer ou supprimer des paquets change le système : dnf demande root. Relance-le avec sudo (chercher, info et list marchent sans).
+
+explainer-httpd-bind = httpd n'a pas pu ouvrir une socket. Avec (98) Address already in use, un autre programme écoute sur ce port (ss -tlnp). Avec (13) Permission denied et rien d'autre là, sur un système avec SELinux, httpd_t ne peut écouter que sur les ports typés http_port_t : cherche un AVC (ausearch -m avc), et donne ce type au port avec semanage port -a -t http_port_t -p tcp PORT. Tant qu'une socket échoue, httpd ne démarre pas du tout.
+
+explainer-selinux-denied = « Permission denied » alors que les droits Unix le permettent : sur un système avec SELinux, le noyau peut refuser ce que l'étiquette du fichier n'autorise pas au domaine du programme. Compare les étiquettes (ls -Z, ps -Z), lis les refus (sudo ausearch -m avc -ts recent | audit2why), et corrige l'étiquette dans la politique (semanage fcontext, puis restorecon) plutôt que d'éteindre SELinux.
