@@ -21,7 +21,7 @@ https://sysadmin.rouages.net and embeddable in other sites (see
 - `commands/manual.ts` and `commands/pages.ts`: the manual (`man`,
   `--help`, `man -k`).
 
-The interface is in `src/interface/` (`game.ts`, `styles.css`), the
+The interface is in `src/interface/` (`game.ts` and its parts, `styles.css`), the
 `<quetes-de-sysadmin>` element in `src/element.ts`. All texts (stories,
 messages, manual, interface) are in `src/texts/<language>/*.ftl`, English
 first (see `docs/TRANSLATING.md`). Games are replayed by

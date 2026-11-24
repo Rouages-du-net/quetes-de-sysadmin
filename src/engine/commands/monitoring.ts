@@ -16,7 +16,7 @@ import { appRequest } from '../nginx';
 import { systemd } from '../systemd';
 import { timeOfDay, machineTime } from '../time';
 import type { Command } from './index';
-import { submit } from '../mail';
+import { family } from '../families';
 
 export const PLUGINS = '/usr/lib/nagios/plugins';
 const CODES = ['OK', 'WARNING', 'CRITICAL', 'UNKNOWN'];
@@ -242,7 +242,7 @@ export const SUPERVISION: Record<string, Command> = {
       }
       // A machine with Postfix (mail.ts): the message goes through the queue, to the machine or outside.
       if (game.state.mail) {
-        submit(game, game.who, addresses, subject, body, game.accounts.users[game.who]?.uid ?? 1000);
+        family('postfix').submit(game, game.who, addresses, subject, body, game.accounts.users[game.who]?.uid ?? 1000);
         return '';
       }
       send(game, addresses, subject, body);

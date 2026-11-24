@@ -9,7 +9,8 @@
 // language, and every language's shared texts. Not counted: what loads once
 // the terminal is ready or later (src/texts/index.ts, src/interface/game.ts):
 // English's core for another language (the fallback), the chapters'
-// summaries, the manual's pages, the stories and the engine families they
+// summaries, the manual's pages, the rarely opened dialogs (*-dialog.*.js,
+// src/interface/lazy-dialog.ts), the stories and the engine families they
 // bring (src/engine/families.ts).
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -32,12 +33,17 @@ export function closure(start, dist) {
   return [...seen];
 }
 
+// The game's chunk: game.<hash>.js (Astro) or game-<hash>.js (the embeddable
+// file, Rollup's 8-character hash); not a story's chunk whose name starts
+// with "game-" (game-library.<hash>.js, game-library-<hash>.js).
+const GAME = /^game(\.[\w-]+|-[\w-]{8})\.js$/;
+
 /** The chunks the element fetches at once, in a directory of chunks. */
 export function elementChunks(dir, language) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => /^game[.-]/.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
+    .filter((f) => GAME.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
     .sort()
     .map((f) => join(dir, f));
 }

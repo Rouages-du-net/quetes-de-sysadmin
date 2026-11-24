@@ -24,7 +24,6 @@ import { systemd, toUtc } from '../systemd';
 import { addressFor, interfaceFor, reach, lan } from '../lan';
 import { pingTunnel } from './wireguard';
 import { curl6, ping6, speaks6 } from './ipv6';
-import { pkiCurl, pkiNet } from './openssl';
 import { family } from '../families';
 
 // What curl adds when certificate verification fails (curl 8).
@@ -334,7 +333,7 @@ function curlTo({ args, game, input }: { args: string[]; game: Shell; last: bool
       // A story with load balancers and a virtual address (keepalived, HAProxy): who holds it answers.
       if (game.principal.state.haHttp) return family('ha').haCurl(game, args);
       // A story with an internal PKI: its services, its trust store (openssl.ts).
-      if (pkiNet(game)) return pkiCurl(game, args);
+      if (game.principal.state.pkiNet) return family('tls').pkiCurl(game, args);
       // A machine with a forge (Forgejo): its API and web routes (forge.ts).
       if (game.state.forge) return family('forge').forgeCurl(game, args, input);
       // A machine of a story with a Garage cluster: its S3 API, presigned URLs and web endpoint (garage.ts).

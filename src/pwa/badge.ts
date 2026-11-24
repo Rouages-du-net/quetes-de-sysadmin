@@ -1,7 +1,7 @@
 // The installed game's icon badge (App Badging API): the number of stories
 // released since the last visit, plus one while the incident of the day is
 // not solved. The game says what deserves it (a `qds-badge` event, see
-// badgeUpdate in src/interface/game.ts); only the site's own pages show it,
+// badgeUpdate in src/interface/whats-new.ts); only the site's own pages show it,
 // and only when the game runs installed (display-mode: standalone): never
 // in a browser tab, never in a page that embeds the game. The badge shows
 // once the app is in the background, and goes when the player comes back:

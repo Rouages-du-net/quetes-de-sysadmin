@@ -27,7 +27,7 @@ import type { Game } from './shell';
 import { wildcard } from './tools';
 import { summerTime, systemd, toUtc } from './systemd';
 import { read as readCertificate, readAll, subject } from './tls';
-import { readCrls, readKey, verify, VERIFY_ERRORS } from './pki';
+import { family } from './families';
 
 export const VERSION = '1.26.3';
 export const CONF = '/etc/nginx/nginx.conf';
@@ -313,7 +313,7 @@ function loadCertificate(game: Game, children: Directive[], http: Directive[], s
   // An internal PKI's certificate (pki.ts): the key must be its own.
   const c = readCertificate(content);
   if (c?.key) {
-    const k = readKey(keyText);
+    const k = family('tls').readKey(keyText);
     if (!k)
       failure(`cannot load certificate key "${key!.args[0]}": PEM_read_bio_PrivateKey() failed (SSL: error:1E08010C:DECODER routines::unsupported:No supported data to decode.)`, key!.file, key!.line);
     if (k!.id !== c.key.id)
@@ -696,6 +696,7 @@ function clientVerdict(game: Game, server: Server, client: Client): { page: stri
   const chain = readAll(client.certificate ?? null);
   if (!chain.length) return server.verifyClient === 'on' ? { page: 'No required SSL certificate was sent', log: 'client sent no required SSL certificate' } : null;
   if (server.verifyClient === 'optional_no_ca') return null;
+  const { verify, readCrls, VERIFY_ERRORS } = family('tls');
   const r = verify(chain[0], {
     now: toUtc(systemd(game)?.clock ?? 0),
     trusted: readAll(server.clientCas ?? null),

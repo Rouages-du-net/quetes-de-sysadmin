@@ -152,7 +152,10 @@ not in the first visit (`src/engine/families.ts`, see `docs/DEPLOYMENT.md`,
    `Hooks` (`families.ts`).
 2. The story's module imports it: `import '../families/<family>';`
    (`tests/families.test.ts` checks that every story whose chapters list the
-   family's commands does).
+   family's commands does). A story whose world runs them by itself (a
+   cron job, a unit) without its chapters listing them, or whose machine a
+   core command asks of the family (lsblk on described disks), imports it
+   too and says so in `RUN_BY_THE_WORLD` there.
 3. The core (the shell, the other commands) never imports the family's
    modules: where it must call into the tool, it goes through a hook,
    `family('<family>').myFunction(…)` (throws `NeedsLoading`: the line runs

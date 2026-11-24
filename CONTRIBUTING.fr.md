@@ -117,7 +117,11 @@ restent où ils sont ; ensuite :
    `HOOKS` dans `Hooks` (`families.ts`).
 2. Le module de l'histoire l'importe : `import '../families/<famille>';`
    (`tests/families.test.ts` vérifie que chaque histoire dont les chapitres
-   listent les commandes de la famille le fait).
+   listent les commandes de la famille le fait). Une histoire dont le monde
+   les lance de lui-même (une tâche cron, une unité) sans que ses chapitres
+   les listent, ou dont une commande du cœur demande la famille sur sa
+   machine (lsblk sur des disques décrits), l'importe aussi et le dit dans
+   `RUN_BY_THE_WORLD` de ce test.
 3. Le cœur (le shell, les autres commandes) n'importe jamais les modules de
    la famille : là où il doit appeler l'outil, il passe par un crochet,
    `family('<famille>').maFonction(…)` (lève `NeedsLoading` : la ligne

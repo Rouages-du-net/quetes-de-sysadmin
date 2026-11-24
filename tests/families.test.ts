@@ -62,11 +62,15 @@ describe('The engine families', () => {
   });
 
   it('load with the stories that use their commands (each story module imports them)', () => {
+    // The families a story needs while its chapters don't list their
+    // commands: what its world runs by itself (a cron job's pg_dump), what a
+    // core command asks of its machine (lsblk on described disks).
+    const RUN_BY_THE_WORLD: Record<string, Family[]> = { pantry: ['postgres', 'storage'] };
     for (const s of STORIES) {
       const code = readFileSync(`src/engine/stories/${s.id}.ts`, 'utf8');
       const imported = [...code.matchAll(/^import '\.\.\/families\/([\w-]+)';/gm)].map((m) => m[1]).sort();
       const listed = s.chapters.flatMap((c) => [...c.commands, ...Object.values(c.hosts ?? {}).flatMap((h) => h.commands ?? [])]);
-      const needed = [...new Set(listed.filter((n) => Object.hasOwn(FAMILY_COMMANDS, n)).map((n) => FAMILY_COMMANDS[n][0]))].sort();
+      const needed = [...new Set([...listed.filter((n) => Object.hasOwn(FAMILY_COMMANDS, n)).map((n) => FAMILY_COMMANDS[n][0]), ...(RUN_BY_THE_WORLD[s.id] ?? [])])].sort();
       expect(imported, s.id).toEqual(needed);
     }
   });

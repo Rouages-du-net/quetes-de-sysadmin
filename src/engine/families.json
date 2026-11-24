@@ -1281,6 +1281,48 @@
    "ownOptions": true
   }
  ],
+ "a2disconf": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "a2dismod": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "a2dissite": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "a2enconf": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "a2enmod": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "a2ensite": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
  "amtool": [
   "prometheus",
   {
@@ -1311,6 +1353,20 @@
    "ownOptions": true
   }
  ],
+ "apache2ctl": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "apachectl": [
+  "apache",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
  "aws": [
   "objects",
   {
@@ -1326,6 +1382,12 @@
  ],
  "cancel": [
   "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "certbot": [
+  "tls",
   {
    "ownOptions": true
   }
@@ -1348,6 +1410,39 @@
   {
    "winexe": true,
    "ownOptions": true
+  }
+ ],
+ "createdb": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
+ "cryptdisks_start": [
+  "luks",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cryptdisks_stop": [
+  "luks",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "cryptsetup": [
+  "luks",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "crypttab": [
+  "luks",
+  {
+   "section": 5
   }
  ],
  "cupsaccept": [
@@ -1404,6 +1499,18 @@
    "ownOptions": true
   }
  ],
+ "docker": [
+  "docker",
+  {
+   "ownOptions": true
+  }
+ ],
+ "docker-compose": [
+  "docker",
+  {
+   "ownOptions": true
+  }
+ ],
  "doveadm": [
   "inbound",
   {
@@ -1424,6 +1531,12 @@
  ],
  "driverless": [
   "cups",
+  {
+   "ownOptions": true
+  }
+ ],
+ "dropdb": [
+  "postgres",
   {
    "ownOptions": true
   }
@@ -1459,6 +1572,12 @@
    "ownOptions": true
   }
  ],
+ "gpg": [
+  "security",
+  {
+   "ownOptions": true
+  }
+ ],
  "gpresult": [
   "windows",
   {
@@ -1476,6 +1595,13 @@
  "growpart": [
   "libvirt",
   {
+   "ownOptions": true
+  }
+ ],
+ "grub-install": [
+  "storage",
+  {
+   "section": 8,
    "ownOptions": true
   }
  ],
@@ -1502,6 +1628,12 @@
  ],
  "ipmitool": [
   "nut",
+  {
+   "ownOptions": true
+  }
+ ],
+ "jq": [
+  "jq",
   {
    "ownOptions": true
   }
@@ -1574,6 +1706,12 @@
    "section": 5
   }
  ],
+ "lftp": [
+  "lftp",
+  {
+   "ownOptions": true
+  }
+ ],
  "lp": [
   "cups",
   {
@@ -1624,6 +1762,34 @@
    "ownOptions": true
   }
  ],
+ "lvextend": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "lvs": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "lynis": [
+  "security",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "mailq": [
+  "postfix",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
  "mariadb": [
   "mariadb",
   {
@@ -1651,6 +1817,13 @@
  "mariadb-secure-installation": [
   "mariadb",
   {
+   "ownOptions": true
+  }
+ ],
+ "mdadm": [
+  "storage",
+  {
+   "section": 8,
    "ownOptions": true
   }
  ],
@@ -1692,16 +1865,112 @@
    "ownOptions": true
   }
  ],
+ "nmap": [
+  "security",
+  {
+   "ownOptions": true
+  }
+ ],
  "nut.conf": [
   "nut",
   {
    "section": 5
   }
  ],
+ "opendkim-genkey": [
+  "postfix",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "opendkim-testkey": [
+  "postfix",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "openssl": [
+  "tls",
+  {
+   "ownOptions": true
+  }
+ ],
+ "pdbedit": [
+  "samba",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "pg_ctl": [
+  "postgres",
+  {
+   "ownOptions": true,
+   "directory": "/usr/lib/postgresql/16/bin"
+  }
+ ],
+ "pg_ctlcluster": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
+ "pg_dump": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
+ "pg_isready": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
+ "pg_lsclusters": [
+  "postgres",
+  {}
+ ],
+ "pg_restore": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
  "pidof": [
   "ha",
   {
    "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "postconf": [
+  "postfix",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "postfix": [
+  "postfix",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "postqueue": [
+  "postfix",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "postsuper": [
+  "postfix",
+  {
+   "section": 1,
    "ownOptions": true
   }
  ],
@@ -1742,6 +2011,40 @@
    "ownOptions": true
   }
  ],
+ "psql": [
+  "postgres",
+  {
+   "ownOptions": true
+  }
+ ],
+ "pvcreate": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "pvmove": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "pvremove": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "pvs": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
  "qemu-img": [
   "libvirt",
   {
@@ -1764,6 +2067,20 @@
   "windows",
   {
    "winexe": true,
+   "ownOptions": true
+  }
+ ],
+ "resize2fs": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "rsnapshot": [
+  "rsnapshot",
+  {
+   "section": 1,
    "ownOptions": true
   }
  ],
@@ -1793,6 +2110,13 @@
    "ownOptions": true
   }
  ],
+ "sfdisk": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
  "sieve-test": [
   "inbound",
   {
@@ -1814,6 +2138,32 @@
  ],
  "slappasswd": [
   "directory",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "smartctl": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "smb.conf": [
+  "samba",
+  {
+   "section": 5
+  }
+ ],
+ "smbclient": [
+  "samba",
+  {
+   "ownOptions": true
+  }
+ ],
+ "smbpasswd": [
+  "samba",
   {
    "section": 8,
    "ownOptions": true
@@ -1853,9 +2203,29 @@
    "ownOptions": true
   }
  ],
+ "testparm": [
+  "samba",
+  {
+   "ownOptions": true
+  }
+ ],
  "tn5250": [
   "ibmi",
   {
+   "ownOptions": true
+  }
+ ],
+ "update-ca-certificates": [
+  "tls",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "update-initramfs": [
+  "storage",
+  {
+   "section": 8,
    "ownOptions": true
   }
  ],
@@ -1933,6 +2303,27 @@
   "nut",
   {
    "section": 5
+  }
+ ],
+ "vgextend": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "vgreduce": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
+  }
+ ],
+ "vgs": [
+  "storage",
+  {
+   "section": 8,
+   "ownOptions": true
   }
  ],
  "virsh": [

@@ -16,10 +16,7 @@ import { TMUX } from './tmux';
 import { LAN } from './lan';
 import { NFTABLES } from './nftables';
 import { WIREGUARD } from './wireguard';
-import { NMAP } from './nmap';
-import { LYNIS } from './lynis';
 import { SFTP } from './sftp';
-import { LFTP } from './lftp';
 import { SYSTEMD } from './systemd';
 import { EDITOR } from './editor';
 import { SSHD } from './sshd';
@@ -30,29 +27,21 @@ import { BACKUP } from './backup';
 import { APT } from './apt';
 import { IOSTAT } from './iostat';
 import { UNATTENDED } from './unattended';
-import { CERTBOT } from './certbot';
 import { RESTIC } from './restic';
 import { BIND } from './bind';
 import { AWK } from './awk';
-import { DOCKER } from './docker';
 import { NC } from './nc';
 import { DIFF } from './diff';
 import { SCRIPTS } from './scripts';
 import { BUILTINS } from './builtins';
 import { EVERYDAY } from './everyday';
 import { DISKS } from './disks';
-import { RSNAPSHOT } from './rsnapshot';
-import { POSTGRES } from './postgres';
 import { LOGS } from './logs';
 import { MEMORY } from './memory';
 import { CPU } from './cpu';
 import { LIMITS } from './limits';
-import { PG_CLUSTER } from './pg-cluster';
 import { SYSLOG } from './syslog';
 import { NFS } from './nfs';
-import { SAMBA } from './samba';
-import { OPENSSL } from './openssl';
-import { GPG } from './gpg';
 import { IPTABLES } from './iptables';
 import { SED } from './sed';
 import { ICONV } from './iconv';
@@ -61,17 +50,11 @@ import { FREEBSD } from './freebsd';
 import { TIME } from './time';
 import { SUPERVISION } from './monitoring';
 import { TRANSFERS } from './transfers';
-import { STOCKAGE } from './storage';
-import { LVM } from './lvm';
 import { FSTAB } from './fstab';
-import { APACHE } from './apache';
-import { MAIL } from './mail';
 import { BYTES } from './bytes';
 import { LINE_ENDINGS } from './line-endings';
-import { CRYPTSETUP } from './cryptsetup';
 import { CHECKSUMS } from './checksums';
 import { ENVIRONMENT } from './environment';
-import { JQ } from './jq';
 import { SHELL_CONTROL } from './shell-control';
 import { SCRIPT_BUILTINS } from './shell-builtins';
 import { HOSTNAMECTL } from './hostnamectl';
@@ -139,10 +122,7 @@ function build(): Record<string, Command> {
     ...LAN,
     ...NFTABLES,
     ...WIREGUARD,
-    ...NMAP,
-    ...LYNIS,
     ...SFTP,
-    ...LFTP,
     ...SYSTEMD,
     ...EDITOR,
     ...SSHD,
@@ -153,11 +133,9 @@ function build(): Record<string, Command> {
     ...APT,
     ...IOSTAT,
     ...UNATTENDED,
-    ...CERTBOT,
     ...RESTIC,
     ...BIND,
     ...AWK,
-    ...DOCKER,
     ...NC,
     ...DIFF,
     ...SCRIPTS,
@@ -167,22 +145,14 @@ function build(): Record<string, Command> {
     ...HOSTNAMECTL,
     ...EVERYDAY,
     ...DISKS,
-    ...STOCKAGE,
-    ...LVM,
     ...FSTAB,
-    ...RSNAPSHOT,
-    ...POSTGRES,
     ...LOGS,
     ...MEMORY,
     ...CPU,
     ...LIMITS,
-    ...PG_CLUSTER,
     ...SYSLOG,
     ...NFS,
-    ...SAMBA,
-    ...OPENSSL,
-  ...GPG,
-  ...IPTABLES,
+    ...IPTABLES,
     ...SED,
     ...ICONV,
     ...SOLARIS,
@@ -190,14 +160,10 @@ function build(): Record<string, Command> {
     ...TIME,
     ...SUPERVISION,
     ...TRANSFERS,
-    ...APACHE,
-    ...MAIL,
     ...BYTES,
     ...LINE_ENDINGS,
-    ...CRYPTSETUP,
     ...CHECKSUMS,
     ...ENVIRONMENT,
-    ...JQ,
     ...COMPRESS,
     ...SMALL_TOOLS,
     ...NET_CLIENTS,

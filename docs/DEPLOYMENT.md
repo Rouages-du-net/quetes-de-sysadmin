@@ -8,12 +8,16 @@ every push to `main`, as for rouages.net.
 
 Workflow `.github/workflows/deploy.yml`:
 
-1. **test** (every PR and every push): `npm test` (quests replayed),
-   `npm run build`, then `npm run test:browser` in Chromium (1000 and
+1. **unit** and **test**, side by side (every PR and every push): `unit`
+   runs `npm test` (quests replayed); `test` runs `npm run build` (with the
+   first visit's budget), then the two scripts of `npm run test:browser`
+   at the same time, each with its own Chromium (kept in the Actions cache
+   for the Playwright version in use): `tests/browser.mjs` (1000 and
    375 px, no console error, with the CSP of `.htaccess`, the root's
    language choice, the 404 page, embedding in another page, the installable
-   game: manifests, service worker, offline play, the footer's button).
-2. **deploy** (`main` only): upload of `dist/` over FTPS, then a check of
+   game: manifests, service worker, offline play, the footer's button) and
+   `tests/a11y.mjs`.
+2. **deploy** (`main` only, once both have passed): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
    header of the embeddable file, the CSP, the service worker and the
@@ -92,7 +96,8 @@ log says which check fails.
   precache, the game's shell: each language's page and manifest, the
   icons, the WOFF2 fonts and the files of each page's first visit
   (`src/pwa/first-load.mjs`, the list the budget weighs), the dialogs'
-  texts (`texts-*--dialog-*`, a few KB, so that a dialog opens offline) and
+  texts (`texts-*--dialog-*`, a few KB, so that a dialog opens offline), the
+  rarely opened dialogs' own chunks (`*-dialog.*.js`, for the same reason) and
   the chapters' summaries (`texts-*--summaries`); about 50 files, 2.1 MB,
   0.8 MB compressed; and a **version**: a hash of these files. The
   cache is called `qds-<version>`; a new build gives a new `sw.js`, which
@@ -119,10 +124,13 @@ log says which check fails.
   - the **engine families** (`src/engine/families.ts`): the tools of a few
     stories (Windows' shells and cmdlets, k8s, libvirt, CUPS, Prometheus,
     keepalived/HAProxy, Forgejo, IBM i, COBOL, Ansible, Caddy, LDAP/RADIUS,
-    MariaDB), modules of `families/` that load with the stories whose
+    MariaDB, Dovecot/rspamd, NUT, Garage, openssl and certbot, Docker,
+    Apache, Postfix, PostgreSQL, nmap/Lynis/gpg, Samba, the disks' tools
+    (smartctl, mdadm, LVM), cryptsetup, lftp, rsnapshot, jq), modules of `families/` that load with the stories whose
     module imports them; the table of commands keeps their entries
     (`families.json`) and loads a family before a line that runs one of its
-    commands (`needs()` in `game.ts`, `NeedsLoading` otherwise). A story's
+    commands (`needs()` in `src/interface/run-line.ts`, `NeedsLoading`
+    otherwise). A story's
     own tool goes in a family (`CONTRIBUTING.md`, "A story's own commands");
   - the manual's examples and SEE ALSO (`commands/examples.ts`), with the
     manual's pages;
@@ -131,7 +139,11 @@ log says which check fails.
     texts (the fallback): the interface fetches them, the manual and its
     examples once the terminal is ready (`idle()` at the end of `mount()`);
     the menu fills its summaries then, the mission dialog and the notebook
-    wait for them.
+    wait for them;
+  - the dialogs a player rarely opens ("Where do I start?", "Report a
+    problem or an idea", the daily reminder, a chapter's summary): each is a
+    chunk of its own, `*-dialog.*.js` (`src/interface/lazy-dialog.ts`),
+    fetched with its texts when it first opens, and precached.
 
   A story's chapters (`src/engine/stories/<id>.ts`, with the code only they
   use), each engine family, each group of texts (`texts-<language>--core`,
@@ -148,8 +160,10 @@ log says which check fails.
   mobile profile (150 ms, 1.6 Mbit/s, CPU 4x; gzip as Apache sends it), the
   terminal of `/en/` answered after 12.3 s with the single file, 5.7 s
   split, 4.0 s once the families and the texts above left the first visit
-  (`/fr/`: 6.2 s, then 4.0 s); the first visit went from 892 to 549 KiB
-  gzip on `/en/`, 999 to 553 on `/fr/`, 960 to 588 for the embeddable
-  file.
+  (`/fr/`: 6.2 s, then 4.0 s), 3.5 s once openssl, Docker, Apache,
+  Postfix, PostgreSQL, Samba, the disks' and the auditor's tools became
+  families too (`/fr/` and the embeddable file: 3.5 s); the first visit
+  went from 892 to 549, then 455 KiB gzip on `/en/`, 999 to 553, then 459
+  on `/fr/`, 960 to 588, then 482 for the embeddable file.
 - **Rolling back**: revert the faulty commit (`git revert`) and push to
   `main`; the workflow uploads the previous version again.

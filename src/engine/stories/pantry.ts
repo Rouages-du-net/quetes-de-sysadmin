@@ -1,6 +1,11 @@
 // The chapters of the story "pantry", in order: the module the game loads
 // when the story is opened (see story-registry.ts). Its place among the
 // stories, and what it opens after, are in chapters/index.ts.
+// Its engine families load with it (see families.ts); postgres for the
+// nightly pg_dump its cron runs, storage for lsblk on its described disks.
+import '../families/luks';
+import '../families/postgres';
+import '../families/storage';
 import type { Chapter } from '../world';
 import { lostDisk } from '../chapters/lost-disk';
 import { spareKey } from '../chapters/spare-key';
