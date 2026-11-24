@@ -531,3 +531,7 @@ name-link_for_zuri-txt = link_for_zuri.txt
 name-message_from_teuila-txt = message_from_teuila.txt
 name-envelope-txt = envelope.txt
 name-review-md = review.md
+## The Mapping Party
+name-message_from_andile-txt = message_from_andile.txt
+name-notes_from_yusra-txt = notes_from_yusra.txt
+name-message_from_femi-txt = message_from_femi.txt

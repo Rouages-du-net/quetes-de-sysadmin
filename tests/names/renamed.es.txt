@@ -1915,6 +1915,57 @@ switch-and-learn:haven
   /home/you/.ssh → /home/tu/.ssh
   /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
 
+new-neighbour
+  /home/you → /home/tu
+  /home/you/message_from_dilnoza.txt → /home/tu/message_from_dilnoza.txt
+  /home/you/notes_from_seun.txt → /home/tu/notes_from_seun.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+new-neighbour:noticeboard
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+wrong-label
+  /home/you → /home/tu
+  /home/you/message_from_thuy.txt → /home/tu/message_from_thuy.txt
+  /home/you/message_from_itzel.txt → /home/tu/message_from_itzel.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+wrong-label:noticeboard
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+port-and-boolean
+  /home/you → /home/tu
+  /home/you/message_from_dilnoza.txt → /home/tu/message_from_dilnoza.txt
+  /home/you/notes_from_tenzin.txt → /home/tu/notes_from_tenzin.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+port-and-boolean:noticeboard
+  /home/you → /home/tu
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/authorized_keys → /home/tu/.ssh/authorized_keys
+
+first-plan
+  /home/you → /home/tu
+  /home/you/message_from_andile.txt → /home/tu/mensaje_de_andile.txt
+  /home/you/notes_from_yusra.txt → /home/tu/notas_de_yusra.txt
+  /home/you/.tofurc → /home/tu/.tofurc
+
+drift
+  /home/you → /home/tu
+  /home/you/message_from_andile.txt → /home/tu/mensaje_de_andile.txt
+  /home/you/message_from_femi.txt → /home/tu/mensaje_de_femi.txt
+  /home/you/.tofurc → /home/tu/.tofurc
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

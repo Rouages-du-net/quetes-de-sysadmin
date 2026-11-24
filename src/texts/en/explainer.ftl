@@ -246,3 +246,23 @@ explainer-selinux-denied = "Permission denied" although the Unix rights allow it
     .match =
         file permissions deny server access
         because search permissions are missing on a component of the path
+explainer-tofu-lock = OpenTofu couldn't lock the state: another run holds the lock, and OpenTofu waits for nobody. Lock Info says who took it, for which operation and when. With a local state (terraform.tfstate), the lock belongs to that process: check whether it still runs (ps), and let it finish or stop it; tofu force-unlock only helps with remote states, and -lock=false risks two runs writing the state at once.
+    .match =
+        Error acquiring the state lock
+
+explainer-tofu-init = This working directory isn't initialised, or no longer matches its configuration: the provider it needs isn't installed or recorded in .terraform.lock.hcl. tofu init installs the providers and writes the lock file; after a change of version constraint, tofu init -upgrade.
+    .match =
+        Inconsistent dependency lock file
+        Missing required provider
+        Required plugins are not installed
+
+explainer-tofu-variable = A variable is declared (a variable block) but nothing gives it a value: no default, no .tfvars file, no -var. A value given with -var only lasts for that command; terraform.tfvars and *.auto.tfvars files are read every time, and TF_VAR_name variables of the environment too.
+    .match =
+        No value for required variable
+
+explainer-tofu-argument = The configuration doesn't match the provider's schema: an argument it doesn't know (often a typo, OpenTofu then suggests the right name), a required one missing, or a block in the wrong place. The message gives the file and the line; tofu validate checks everything without touching anything, and the provider's documentation lists each resource's arguments.
+    .match =
+        Unsupported argument
+        Missing required argument
+        Unsupported block type
+        Invalid resource type

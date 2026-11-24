@@ -116,6 +116,8 @@ export const MACHINES: Machine[] = [
   machine('meadow', '192.0.2.164', 'shelter'),
   // The Language Café: a nonprofit's Rocky Linux 10 server (httpd, firewalld, SELinux); noticeboard, the café's screen, is an internal host.
   { ...machine('kettle', '192.0.2.170', 'language-cafe'), os: 'rhel' },
+  // The Mapping Party: a mapping collective's DNS server (BIND), its zone kept as code with OpenTofu.
+  machine('cairn', '192.0.2.176', 'mapping-party'),
 ];
 
 /**

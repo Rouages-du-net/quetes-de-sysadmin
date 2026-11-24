@@ -102,3 +102,4 @@ password-spring-gala-58 = spring-gala-58
 ## The Shelter
 password-kibble-2031 = kibble-2031
 password-lantern-thistle-otter-64 = lantern-thistle-otter-64
+password-step-free-32 = step-free-32

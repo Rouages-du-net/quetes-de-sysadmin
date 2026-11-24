@@ -4,7 +4,7 @@
 // behaviour (The Lost Packet, network.ts).
 
 import type { Shell } from '../shell';
-import { dns, query, readZone, reloadZones, serverFor, declaredZones, type Rr } from '../dns';
+import { dns, dynamicZone, query, readZone, reloadZones, serverFor, declaredZones, type Rr } from '../dns';
 import { summerTime, systemd, toUtc } from '../systemd';
 import type { Command } from './index';
 import { hostWithoutDns } from './net-clients';
@@ -187,6 +187,7 @@ export const BIND: Record<string, Command> = {
       if (zone) {
         if (!declaredZones(game)[zone.replace(/\.$/, '').toLowerCase()])
           return game.error(`rndc: 'reload' failed: not found\nno matching zone '${zone}' in any view`);
+        if (dynamicZone(game, zone)) return game.error("rndc: 'reload' failed: dynamic zone");
         const { errors, changed } = reloadZones(game, zone);
         if (errors.length) return game.error("rndc: 'reload' failed: failure");
         return changed.length ? 'zone reload queued' : 'zone reload up-to-date';

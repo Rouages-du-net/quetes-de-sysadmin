@@ -147,3 +147,6 @@ export const DIFF: Record<string, Command> = {
     },
   },
 };
+
+/** A unified diff between two texts with labels and no dates (diff -u --label A --label B), for tools that show their own changes (tofu fmt -diff). */
+export const labelledDiff = (a: string, b: string, aLabel: string, bLabel: string) => unified(edit(lines(a), lines(b)), aLabel, bLabel, '').replace(/\t$/gm, '');

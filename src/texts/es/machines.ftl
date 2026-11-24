@@ -66,3 +66,6 @@ machine-wings = bastidores
 machine-meadow = pradera
 machine-paddock = cercado
 machine-haven = refugio
+
+## The Mapping Party
+machine-cairn = hito

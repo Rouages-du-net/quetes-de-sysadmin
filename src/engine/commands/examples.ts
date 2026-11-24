@@ -287,6 +287,25 @@ export const EXAMPLES: Record<string, Extra> = {
     ],
     see: ['rclone', 'garage', 'curl'],
   },
+  tofu: {
+    examples: [
+      'tofu init',
+      'tofu fmt',
+      'tofu fmt -check -diff',
+      'tofu validate',
+      'tofu plan',
+      'tofu plan -var tiles_address=192.0.2.180',
+      'tofu apply',
+      'tofu plan -detailed-exitcode',
+      'tofu apply -refresh-only',
+      'tofu state list',
+      'tofu state show dns_a_record_set.www',
+      'tofu import dns_a_record_set.status status.wayfinders.example.',
+      'tofu output -raw nameserver',
+      'tofu -chdir=/srv/dns plan',
+    ],
+    see: ['dig', 'rndc', 'git'],
+  },
   rclone: {
     examples: [
       'rclone listremotes',

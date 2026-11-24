@@ -1927,6 +1927,18 @@ port-and-boolean:noticeboard
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+first-plan
+  /home/you → /home/vous
+  /home/you/message_from_andile.txt → /home/vous/message_d_andile.txt
+  /home/you/notes_from_yusra.txt → /home/vous/notes_de_yusra.txt
+  /home/you/.tofurc → /home/vous/.tofurc
+
+drift
+  /home/you → /home/vous
+  /home/you/message_from_andile.txt → /home/vous/message_d_andile.txt
+  /home/you/message_from_femi.txt → /home/vous/message_de_femi.txt
+  /home/you/.tofurc → /home/vous/.tofurc
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

@@ -191,6 +191,36 @@ adding cockpit to public); dnf 4.20.0-28 (`dnf/cli/{cli,output,main}.py`,
 | dnf: "Last metadata expiration check: … ago on …", "Is this ok [y/N]: ", "No match for argument", "Error: Unable to find a match", the superuser error, search's sections, history's columns | confirmed; the transaction table's column widths and the download lines are approximated |
 | httpd: AH00072 (13)/(98), "no listening sockets available, shutting down", AH00015, AH00132, AH00035, AH00957, AH00959, AH01114, AH01630 | confirmed; "Server configured, listening on: port 80" and the "SELinux policy enabled" notice come from Red Hat's patches (as seen on RHEL; the patches were not read) |
 | The AVC record's layout (`avc:  denied  { read } for  pid=… comm=… name=… scontext=… tcontext=… tclass=… permissive=0`), and ausearch printing an event's records PROCTITLE first | unverifiable here (the kernel's and auparse's output order were not read): kept as commonly printed |
+## OpenTofu v1.13.10 and hashicorp/dns v3.6.2 (The Mapping Party)
+
+Sources: OpenTofu's `internal/command/views/{init,apply,operation,import,state,output,unlock,hook_ui,validate}.go`,
+`internal/command/jsonformat/{plan.go,computed/renderers/{block,set,util}.go,differ/set.go}`,
+`internal/command/format/{diagnostic,trivia}.go`, `internal/command/clistate/state.go`,
+`internal/backend/local/{backend_apply,backend_local}.go`, `internal/states/statemgr/{filesystem,locker}.go`,
+`internal/tofu/{evaluate,node_resource_validate,node_resource_import,context}.go`,
+`internal/backend/unparsed_value.go`, `internal/plans/plan.go`, `internal/terminal/stream.go` at
+[tag v1.13.10](https://github.com/opentofu/opentofu/tree/v1.13.10); HCL's
+`hclsyntax/{parser,structure}.go` ([main](https://github.com/hashicorp/hcl));
+the provider's `internal/provider/{provider,resource_dns_a_record_set,resource_dns_cname_record,validators}.go`
+and `docs/` at [v3.6.2](https://github.com/hashicorp/terraform-provider-dns).
+
+| Item | Result |
+| --- | --- |
+| Diagnostics: `╷ │ ╵`, "Error: " then the summary, "on FILE line N, in BLOCK:", the snippet `%4d: `, the detail wrapped at 75 columns | confirmed (`format.DiagnosticFromJSON`, 78 columns when not a terminal) |
+| "Missing required argument" before "Unsupported argument", the former on the block's `{` line; "Did you mean" | confirmed (hclsyntax `Body.Content`: `PartialContent` first, `MissingItemRange` = the body's start) |
+| "No value for required variable", before validation | confirmed (`backend/unparsed_value.go`, `localRunDirect`); the snippet without context is an assumption (hcled's context for a declaration range) |
+| "Inconsistent dependency lock file", "Missing required provider" | confirmed (`backend_local.go`, `context.go`) |
+| init's lines, the lock file's message, "(unauthenticated)" for a mirror, the incomplete lock file warning | confirmed (`views/init.go`, `init.go`); its position among the lines approximated |
+| Plan rendering: symbols, "will be created", "must be replaced", "# forces replacement", "has changed", "(N unchanged attributes hidden)", the set's elements (removed then added), the rule of 77 "─", "Note: You didn't use the -out option" | confirmed (`jsonformat`); the "-> (known after apply)" of an id in a replacement from memory of real plans |
+| "Plan: N to add, N to change, N to destroy." and the import form | confirmed |
+| The approval question, "Enter a value: ", "Apply cancelled." | confirmed (`backend_apply.go`, `ui_input.go`, `operation.go`) |
+| Hook lines: "Refreshing state... [id=…]", "Creating...", "Creation complete after 0s [id=…]", "Destruction complete", "Importing from ID", "Import prepared!" | confirmed (`hook_ui.go`); the duration is always 0s |
+| "Error acquiring the state lock", "resource temporarily unavailable", Lock Info's layout | confirmed (`clistate/state.go`, `statemgr/locker.go`); the error text is Linux's EAGAIN from flock |
+| force-unlock on a local state: "State locked by another local process" / "Local state cannot be unlocked by another process." | confirmed (`unlock.go`, `views/unlock.go`) |
+| state rm/mv messages, "No instance found for the given address", "No state file was found", output's warnings | confirmed (`views/state.go`, `views/output.go`) |
+| The provider: import IDs are FQDNs with the final dot ("Not a fully-qualified DNS name"), zone/name/ttl ForceNew, addresses updated by set difference, TTL default 3600 | confirmed (`provider.go`, `resource_dns_a_record_set.go`, the CNAME resource's plan modifiers) |
+| named's update log ("signer … approved", "updating zone '…/IN': deleting rrset at", "adding an RR at"), `rndc: 'reload' failed: dynamic zone` | from BIND 9.20's `update.c` and `rndc` as remembered; not re-read here |
+| `tofu -help`'s command list | confirmed (`cmd/tofu/help.go`, each command's `Synopsis()`), reduced to the commands the game has |
 
 ## Not checked against sources
 

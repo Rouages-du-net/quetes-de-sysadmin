@@ -125,6 +125,8 @@ export const CODE_ORDER = [
   'new-neighbour',
   'wrong-label',
   'port-and-boolean',
+  'first-plan',
+  'drift',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.
