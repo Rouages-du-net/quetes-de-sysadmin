@@ -22,59 +22,95 @@
 import { NeedsLoading } from './loading';
 import type { Command } from './commands/index';
 import type * as Ansible from './families/ansible';
+import type * as Apache from './families/apache';
 import type * as Caddy from './families/caddy';
 import type * as Cobol from './families/cobol';
 import type * as Cups from './families/cups';
 import type * as Directory from './families/directory';
+import type * as Docker from './families/docker';
 import type * as Forge from './families/forge';
 import type * as Ha from './families/ha';
 import type * as Ibmi from './families/ibmi';
 import type * as Inbound from './families/inbound';
+import type * as Jq from './families/jq';
 import type * as K8s from './families/k8s';
+import type * as Lftp from './families/lftp';
 import type * as Libvirt from './families/libvirt';
+import type * as Luks from './families/luks';
 import type * as Mariadb from './families/mariadb';
 import type * as Nut from './families/nut';
 import type * as Objects from './families/objects';
+import type * as Postfix from './families/postfix';
+import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
+import type * as Rsnapshot from './families/rsnapshot';
+import type * as Samba from './families/samba';
+import type * as Security from './families/security';
+import type * as Storage from './families/storage';
+import type * as Tls from './families/tls';
 import type * as Windows from './families/windows';
 import entries from './families.json';
 
 export const FAMILIES = {
   ansible: () => import('./families/ansible'),
+  apache: () => import('./families/apache'),
   caddy: () => import('./families/caddy'),
   cobol: () => import('./families/cobol'),
   cups: () => import('./families/cups'),
   directory: () => import('./families/directory'),
+  docker: () => import('./families/docker'),
   forge: () => import('./families/forge'),
   ha: () => import('./families/ha'),
   ibmi: () => import('./families/ibmi'),
   inbound: () => import('./families/inbound'),
+  jq: () => import('./families/jq'),
   k8s: () => import('./families/k8s'),
+  lftp: () => import('./families/lftp'),
   libvirt: () => import('./families/libvirt'),
+  luks: () => import('./families/luks'),
   mariadb: () => import('./families/mariadb'),
   nut: () => import('./families/nut'),
   objects: () => import('./families/objects'),
+  postfix: () => import('./families/postfix'),
+  postgres: () => import('./families/postgres'),
   prometheus: () => import('./families/prometheus'),
+  rsnapshot: () => import('./families/rsnapshot'),
+  samba: () => import('./families/samba'),
+  security: () => import('./families/security'),
+  storage: () => import('./families/storage'),
+  tls: () => import('./families/tls'),
   windows: () => import('./families/windows'),
 };
 export type Family = keyof typeof FAMILIES;
 
 interface Hooks {
   ansible: typeof Ansible.HOOKS;
+  apache: typeof Apache.HOOKS;
   caddy: typeof Caddy.HOOKS;
   cobol: typeof Cobol.HOOKS;
   cups: typeof Cups.HOOKS;
   directory: typeof Directory.HOOKS;
+  docker: typeof Docker.HOOKS;
   forge: typeof Forge.HOOKS;
   ha: typeof Ha.HOOKS;
   ibmi: typeof Ibmi.HOOKS;
   inbound: typeof Inbound.HOOKS;
+  jq: typeof Jq.HOOKS;
   k8s: typeof K8s.HOOKS;
+  lftp: typeof Lftp.HOOKS;
   libvirt: typeof Libvirt.HOOKS;
+  luks: typeof Luks.HOOKS;
   mariadb: typeof Mariadb.HOOKS;
   nut: typeof Nut.HOOKS;
   objects: typeof Objects.HOOKS;
+  postfix: typeof Postfix.HOOKS;
+  postgres: typeof Postgres.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
+  rsnapshot: typeof Rsnapshot.HOOKS;
+  samba: typeof Samba.HOOKS;
+  security: typeof Security.HOOKS;
+  storage: typeof Storage.HOOKS;
+  tls: typeof Tls.HOOKS;
   windows: typeof Windows.HOOKS;
 }
 

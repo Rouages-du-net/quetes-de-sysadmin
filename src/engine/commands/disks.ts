@@ -18,7 +18,7 @@ import type { Shell } from '../shell';
 import type { Command } from './index';
 import { storageOf } from '../storage';
 import { readFstab, systemFor } from '../fstab';
-import { lsblkStockage } from './storage';
+import { family } from '../families';
 import { mountLine, mountNfs, unmountNfs, type NfsMount } from '../nfs';
 import { brancher, deviceFor, devices, mountAll, mounts, DMESG, type Mount } from '../devices';
 import { cifsLine, mountCifs, unmountCifs, type CifsMount } from '../cifs';
@@ -45,7 +45,7 @@ function lsblkSize(bytes: number): string {
 function lsblk(game: Shell, args: string[]): string {
   // A machine with described disks (storage.ts): disks, partitions, RAID, chosen columns.
   const st = storageOf(game);
-  if (st) return lsblkStockage(game, st, args);
+  if (st) return family('storage').lsblk(game, st, args);
   const complete = args.includes('-f') || args.includes('--fs');
   // The machine's disk (vda) and its mounted partitions, then the devices.
   type Line = {

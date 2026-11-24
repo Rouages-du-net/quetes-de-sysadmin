@@ -14,10 +14,12 @@ import { gzipSync, brotliCompressSync } from 'node:zlib';
 import { embedFirstVisit, pageFirstVisit } from '../src/pwa/first-load.mjs';
 
 // Gzip bytes (what mod_deflate sends), about 15 % over the size measured
-// when the budget was set (549, 553 and 588 KiB, once the engine's families,
-// the manual's examples, the chapters' summaries and English's core for
-// another language left the first visit); raise it on purpose, not by habit.
-const BUDGET = { '/en/': 646_000, '/fr/': 652_000, embed: 692_000 };
+// when the budget was set (455, 459 and 482 KiB, once the engine's families,
+// openssl, docker, Apache, Postfix, PostgreSQL, Samba, the disks' tools and
+// the auditor's among them, the manual's examples, the chapters' summaries
+// and English's core for another language left the first visit); raise it
+// on purpose, not by habit.
+const BUDGET = { '/en/': 536_000, '/fr/': 541_000, embed: 568_000 };
 
 const report = process.argv.includes('--report');
 const dist = report ? process.argv[process.argv.indexOf('--report') + 1] : 'dist';

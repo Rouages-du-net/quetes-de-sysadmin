@@ -37,7 +37,8 @@ export function elementChunks(dir, language) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => /^game[.-]/.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
+    // The game's chunk (game.HASH.js, game-HASH.js), not the story game-library's.
+    .filter((f) => (/^game[.-]/.test(f) && !/^game-library[.-]/.test(f)) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
     .sort()
     .map((f) => join(dir, f));
 }

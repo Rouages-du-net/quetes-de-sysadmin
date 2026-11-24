@@ -124,7 +124,10 @@ function put(game: Shell, path: string, tree: Directory) {
 
 export const PACKAGES: Record<string, Package> = {
   'nginx-common': {
-    version: `${VERSION}-3`,
+    // Read when asked: nginx.ts and this module import each other (through the table of commands).
+    get version() {
+      return `${VERSION}-3`;
+    },
     architecture: 'all',
     download: 113,
     installed: 486,
@@ -163,7 +166,9 @@ export const PACKAGES: Record<string, Package> = {
     },
   },
   nginx: {
-    version: `${VERSION}-3`,
+    get version() {
+      return `${VERSION}-3`;
+    },
     architecture: 'amd64',
     download: 527,
     installed: 1210,

@@ -119,7 +119,9 @@ log says which check fails.
   - the **engine families** (`src/engine/families.ts`): the tools of a few
     stories (Windows' shells and cmdlets, k8s, libvirt, CUPS, Prometheus,
     keepalived/HAProxy, Forgejo, IBM i, COBOL, Ansible, Caddy, LDAP/RADIUS,
-    MariaDB), modules of `families/` that load with the stories whose
+    MariaDB, Dovecot/rspamd, NUT, Garage, openssl and certbot, Docker,
+    Apache, Postfix, PostgreSQL, nmap/Lynis/gpg, Samba, the disks' tools
+    (smartctl, mdadm, LVM), cryptsetup, lftp, rsnapshot, jq), modules of `families/` that load with the stories whose
     module imports them; the table of commands keeps their entries
     (`families.json`) and loads a family before a line that runs one of its
     commands (`needs()` in `game.ts`, `NeedsLoading` otherwise). A story's
@@ -148,8 +150,10 @@ log says which check fails.
   mobile profile (150 ms, 1.6 Mbit/s, CPU 4x; gzip as Apache sends it), the
   terminal of `/en/` answered after 12.3 s with the single file, 5.7 s
   split, 4.0 s once the families and the texts above left the first visit
-  (`/fr/`: 6.2 s, then 4.0 s); the first visit went from 892 to 549 KiB
-  gzip on `/en/`, 999 to 553 on `/fr/`, 960 to 588 for the embeddable
-  file.
+  (`/fr/`: 6.2 s, then 4.0 s), 3.5 s once openssl, Docker, Apache,
+  Postfix, PostgreSQL, Samba, the disks' and the auditor's tools became
+  families too (`/fr/` and the embeddable file: 3.5 s); the first visit
+  went from 892 to 549, then 455 KiB gzip on `/en/`, 999 to 553, then 459
+  on `/fr/`, 960 to 588, then 482 for the embeddable file.
 - **Rolling back**: revert the faulty commit (`git revert`) and push to
   `main`; the workflow uploads the previous version again.
