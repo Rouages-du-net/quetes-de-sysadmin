@@ -12,7 +12,7 @@ import { inLanguage, machinesInLanguage, languagesFor } from './names';
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters')])];
 const CONFIG = '/etc/ssh/sshd_config';
 
-for (const language of languagesFor('bastion'))
+for (const language of languagesFor('letters'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     // The player's account in the language (vous@poste, you@poste), like the places' names.
@@ -93,7 +93,7 @@ for (const language of languagesFor('bastion'))
   });
 
 // The Neighbourhood Letters, "The firewall": ufw.
-for (const language of languagesFor('bastion'))
+for (const language of languagesFor('letters'))
   describe(`The firewall — ${language}`, () => {
     const fr = language === 'fr';
     // The player's account in the language (vous@poste, you@poste), like the places' names.
@@ -150,7 +150,7 @@ for (const language of languagesFor('bastion'))
   });
 
 // The Neighbourhood Letters, "The sentinel": fail2ban.
-for (const language of languagesFor('bastion'))
+for (const language of languagesFor('letters'))
   describe(`The sentinel — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
@@ -224,7 +224,7 @@ for (const language of languagesFor('bastion'))
 // The Neighbourhood Letters, "The port": moving SSH to 2222 without locking yourself out.
 const LETTERS = ['shut-the-door', 'firewall', 'sentinel', 'sharing', 'works-for-me', 'concert'];
 
-for (const language of languagesFor('bastion'))
+for (const language of languagesFor('letters'))
   describe(`The port — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
@@ -309,7 +309,7 @@ for (const language of languagesFor('bastion'))
   });
 
 // The Neighbourhood Letters, "Repeat offenders": the recidive and nginx-limit-req jails.
-for (const language of languagesFor('bastion'))
+for (const language of languagesFor('letters'))
   describe(`Repeat offenders — ${language}`, () => {
     const fr = language === 'fr';
     const part = () => {
