@@ -1939,6 +1939,20 @@ drift
   /home/you/message_from_femi.txt → /home/vous/message_de_femi.txt
   /home/you/.tofurc → /home/vous/.tofurc
 
+out-of-the-open
+  /home/you → /home/vous
+  /home/you/message_from_taslima.txt → /home/vous/message_de_taslima.txt
+
+keys-change-hands
+  /home/you → /home/vous
+  /home/you/message_from_taslima.txt → /home/vous/message_de_taslima.txt
+  /home/you/message_from_ikenna.txt → /home/vous/message_d_ikenna.txt
+  /home/you/message_from_makoa.txt → /home/vous/message_de_makoa.txt
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/sops → /home/vous/.config/sops
+  /home/you/.config/sops/age → /home/vous/.config/sops/age
+  /home/you/.config/sops/age/keys.txt → /home/vous/.config/sops/age/keys.txt
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

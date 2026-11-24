@@ -71,3 +71,6 @@ machine-noticeboard = noticeboard
 
 ## The Mapping Party
 machine-cairn = cairn
+
+## The Tenants' Union
+machine-latch = latch

@@ -23,7 +23,7 @@ export const PATH: Path[] = [
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
       'expiry-date', 'chain-of-trust', 'stolen-laptop', 'who-can-push', 'leaky-pipeline', 'signed-release',
       'kept-forever', 'access-request', 'forget-me', 'least-privilege', 'public-bucket',
-      'new-neighbour', 'wrong-label', 'port-and-boolean',
+      'new-neighbour', 'wrong-label', 'port-and-boolean', 'out-of-the-open', 'keys-change-hands',
     ],
   },
   {
@@ -34,7 +34,7 @@ export const PATH: Path[] = [
   { id: 'backups', chapters: ['backup', 'archives', 'versions', 'ransom', 'snapshots', 'database', 'transfers', 'web-host', 'silent-backup', 'lost-disk', 'spare-key', 'restore-drill', 'forget-me', 'broken-replica', 'offsite-copy', 'big-file', 'what-we-have', 'rebuild', 'switch-and-learn'] },
   {
     id: 'deployment',
-    chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal', 'wont-start', 'front-desk', 'locker-room', 'deep-end', 'who-can-push', 'leaky-pipeline', 'signed-release', 'first-plan', 'drift'],
+    chapters: ['manuscript', 'update', 'compose', 'firewall-hole', 'full-powers', 'bare-repo', 'rollback', 'blue-green', 'canary', 'migration', 'inventory', 'playbook', 'rehearsal', 'wont-start', 'front-desk', 'locker-room', 'deep-end', 'who-can-push', 'leaky-pipeline', 'signed-release', 'first-plan', 'drift', 'out-of-the-open', 'keys-change-hands'],
   },
   { id: 'production', chapters: ['portable-script', 'rc-services', 'last-rule', 'read-first', 'byte-order', 'switch-over', 'copybook', 'return-code', 'late-file', 'inquiry', 'spooled', 'save-file', 'line-endings', 'service-logon', 'log-flood', 'reboot-night', 'full-disk', 'memory', 'inodes', 'clock', 'probe', 'post-mortem', 'bottleneck', 'tired-disk', 'new-disk', 'more-room', 'stuck-boot', 'boot-order', 'restart-loop', 'slow-boot', 'late-disk', 'heavy-load', 'quota', 'too-many-files', 'stuck-process', 'too-many-clients', 'slow-query', 'read-only', 'failover', 'central-logs', 'journal-full', 'ssh-alerts', 'blind-spot', 'threshold', 'quiet-hours', 'stuck-queue', 'paper-trail', 'cold-start', 'wrong-side', 'tight-fit', 'no-failover', 'sick-server', 'split-brain', 'sleeping-connections', 'broken-replica', 'mailbox-full', 'last-cut', 'down-in-order', 'old-battery', 'what-we-have', 'rebuild', 'switch-and-learn'] },
   { id: 'identities', chapters: ['second-day', 'departure', 'shared-rights', 'keys', 'directory', 'wifi', 'nfs-export', 'nfs-owners', 'samba-share', 'smb-mount', 'full-volume', 'two-locks', 'service-logon', 'comings-and-goings', 'stale-password', 'unapplied-policy', 'dormant-accounts'] },

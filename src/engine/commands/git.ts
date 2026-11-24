@@ -337,15 +337,19 @@ const wildcardGit = (pattern: string) => new RegExp(`^${pattern.replace(/^\//, '
 // The working copy's files (directly in the repository's folder), as git
 // reads them (after the text attribute's normalisation); .gitattributes is
 // the only hidden file tracked.
-function travail(game: Shell, path: string, deep = !!game.state.git?.[path]?.deep): Record<string, string> {
+function travail(game: Shell, path: string, deep = !!game.state.git?.[path]?.deep, withIgnored = false): Record<string, string> {
   const place = game.find(path) as Directory;
   if (deep) {
     const out: Record<string, string> = {};
+    // .gitignore at the root: an untracked file it matches is left out (a tracked one stays tracked).
+    const ignored = withIgnored ? () => false : ignoredBy(game.read(`${path}/.gitignore`));
+    const tracked = game.state.git?.[path]?.index ?? {};
     const walk = (dir: Directory, prefix: string) => {
       for (const [name, n] of Object.entries(dir.children).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
         if (name === '.git' && !prefix) continue;
         if (n.type === 'directory') walk(n, `${prefix}${name}/`);
         else if (n.type === 'file') {
+          if (ignored(`${prefix}${name}`) && !(`${prefix}${name}` in tracked)) continue;
           const text = content(n, game);
           out[`${prefix}${name}`] = textAttribute(game, path, `${prefix}${name}`) ? text.replace(/\r\n/g, '\n') : text;
         }
@@ -365,6 +369,45 @@ function travail(game: Shell, path: string, deep = !!game.state.git?.[path]?.dee
 }
 
 const headRef = (d: Repo) => d.commits.at(-1) ?? null;
+
+/**
+ * The patterns of a .gitignore (gitignore(5), a subset: blank lines and #
+ * comments skipped, ! negation, a trailing / for directories, a leading or
+ * inner / anchors the pattern to the root, * ? and [] within a name, **).
+ * Returns whether a path (from the root) is ignored: the last matching
+ * pattern decides, and a file under an ignored directory is ignored.
+ */
+export function ignoredBy(text: string | null): (rel: string) => boolean {
+  const patterns = (text ?? '')
+    .split('\n')
+    .map((l) => l.replace(/\s+$/, ''))
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => {
+      const negate = l.startsWith('!');
+      let p = negate ? l.slice(1) : l;
+      const dirOnly = p.endsWith('/');
+      if (dirOnly) p = p.slice(0, -1);
+      const anchored = p.includes('/');
+      p = p.replace(/^\//, '');
+      const body = p
+        .split('**')
+        .map((part) => part.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]'))
+        .join('.*');
+      return { negate, dirOnly, re: new RegExp(anchored ? `^${body}$` : `(^|/)${body}$`) };
+    });
+  if (!patterns.length) return () => false;
+  return (rel) => {
+    const parts = rel.split('/');
+    let verdict = false;
+    for (let k = 1; k <= parts.length; k++) {
+      const sub = parts.slice(0, k).join('/');
+      const isDir = k < parts.length;
+      for (const p of patterns) if ((!p.dirOnly || isDir) && p.re.test(sub)) verdict = !p.negate;
+      if (verdict && isDir) return true;
+    }
+    return verdict;
+  };
+}
 
 // The sample hooks git init puts in hooks/ (as .sample).
 const EXAMPLES_CROCHETS = [
@@ -595,7 +638,15 @@ const UNDER: Record<string, (game: Shell, args: string[]) => string> = {
         warnings.push(`warning: in the working copy of '${name}', CRLF will be replaced by LF the next time Git touches it`);
       if (name in w) here.repo.index[name] = w[name];
       else if (name in here.repo.index) delete here.repo.index[name];
-      else return game.error(game.t('git-path-unknown', { file: name }));
+      else if (here.repo.deep && game.find(`${here.path}/${name}`)?.type === 'file') {
+        // Ignored by .gitignore: git refuses it, unless -f.
+        if (args.includes('-f') || args.includes('--force')) here.repo.index[name] = travail(game, here.path, true, true)[name];
+        else if (!all)
+          return game.error(
+            `The following paths are ignored by one of your .gitignore files:\n${name}\nhint: Use -f if you really want to add them.\nhint: Disable this message with "git config set advice.addIgnoredFile false"`,
+            1,
+          );
+      } else return game.error(game.t('git-path-unknown', { file: name }));
     }
     return warnings.join('\n');
   },
@@ -1385,4 +1436,6 @@ export const GIT: Record<string, Command> = {
       }
     },
   },
+  // Manual page only (git's ignore file, see ignoredBy).
+  gitignore: { section: 5, launch: () => '' },
 };

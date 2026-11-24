@@ -535,3 +535,7 @@ name-review-md = revision.md
 name-message_from_andile-txt = mensaje_de_andile.txt
 name-notes_from_yusra-txt = notas_de_yusra.txt
 name-message_from_femi-txt = mensaje_de_femi.txt
+## The Tenants' Union
+name-message_from_taslima-txt = mensaje_de_taslima.txt
+name-message_from_ikenna-txt = mensaje_de_ikenna.txt
+name-message_from_makoa-txt = mensaje_de_makoa.txt

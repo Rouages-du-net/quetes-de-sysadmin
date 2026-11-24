@@ -100,3 +100,5 @@ story-language-cafe = The Language Café
     .summary = A nonprofit's conversation tables for newcomers keep their site, the week's tables and a volunteers' sign-up app on a small server the last volunteer installed with Rocky Linux: not Debian. Find the other family's tools (dnf, firewalld and its two configurations), then meet SELinux: a site moved with mv that httpd may not read, a port it may not bind, an app it may not reach. Fix the labels, the port and the boolean, never by turning SELinux off.
 story-mapping-party = The Mapping Party
     .summary = A volunteer collective that maps step-free routes keeps its DNS as code with OpenTofu. A new record written in a hurry, then an evening when someone fixed things by hand and left a run holding the lock: plan, apply, drift and import, from the sysadmin's side.
+story-tenants-union = The Tenants' Union
+    .summary = A tenants' union's repair app keeps its database password in git, in clear, and the repository was public for three days. Encrypt the secrets with sops and age so that they can stay in git, decrypt them at deploy time, rotate what leaked; then welcome a volunteer and see one off, keys and all.
