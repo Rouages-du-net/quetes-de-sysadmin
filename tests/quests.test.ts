@@ -1878,6 +1878,34 @@ for (const language of LANGUAGES)
         '- Restart the relay after every change.',
       ].join('\n');
 
+      // The same post-mortem, written in Spanish.
+      const POSTMORTEM_ES = [
+        '# Post-mortem: corte del directo, noche del 11 al 12 de septiembre de 2027',
+        '',
+        '## Resumen',
+        'El directo se cortó el domingo por la noche, y luego Théo lo volvió a arrancar.',
+        '',
+        '## Cronología',
+        '- 02:13: la actualización automática reinicia el repetidor, que no vuelve.',
+        '- 02:15: primera alerta de la sonda.',
+        '- 02:41: Théo se conecta.',
+        '- 02:58: el repetidor vuelve.',
+        '',
+        '## Impacto',
+        '45 minutos de silencio en el directo.',
+        '',
+        '## Causas',
+        'unattended-upgrades (needrestart) reinició el repetidor; una opción desconocida (bitrate_max) esperaba en stream.conf desde el 20 de agosto.',
+        '',
+        '## Lo que funcionó bien',
+        'La sonda avisó en 2 minutos.',
+        '',
+        '## Acciones',
+        '- Comprobar la configuración antes de cada reinicio (ExecStartPre=).',
+        '- Reiniciar el repetidor después de cada cambio.',
+      ].join('\n');
+      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES };
+
       it('solution: the night’s logs, then the complete post-mortem', () => {
         const { s, tout: all } = play('post-mortem', [
           'cat notes_theo.txt',
@@ -1896,7 +1924,7 @@ for (const language of LANGUAGES)
         expect(all).toContain(' systemctl restart radio-stream.service');
         contains(all, 'trois semaines');
         s.execute('nano postmortem.md');
-        s.saveEdition(reference ? POSTMORTEM : POSTMORTEM_IN);
+        s.saveEdition(written[language] ?? POSTMORTEM_IN);
         contains(s.quitEdition(), 'Tu as terminé L');
         expect(s.finished).toBe(true);
       });
