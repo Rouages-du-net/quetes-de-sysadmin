@@ -2,6 +2,7 @@
 // permissions, archives, disk space.
 
 import { isBsd } from '../freebsd';
+import { contextOf, isRhel } from '../rhel';
 import { shownOwner } from '../nfs';
 import { cifsShown, cifsUsage } from '../cifs';
 import type { File, Node, Rights } from '../world';
@@ -65,6 +66,7 @@ const blocksOf = (game: Shell, n: Node) => (n.type === 'directory' ? 4 : n.link 
 
 // A row of "ls -l": rights, links, owner, group, size, date, name.
 interface LongRow {
+  context?: string;
   mode: string;
   links: string;
   owner: string;
@@ -90,17 +92,20 @@ function longRow(game: Shell, name: string, n: Node, human: boolean, numeric = f
   const date = lsDate(game, n.type === 'file' ? n.mtime : undefined);
   // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
   if (n.type === 'file' && n.link !== undefined)
-    return { mode: 'lrwxrwxrwx', links: '1', owner, group, size: String(n.link.length), date, name: `${paint(name, n)}${mark ? '@' : ''} -> ${n.link}` };
+    return { mode: `lrwxrwxrwx${isRhel(game) ? '.' : ''}`, links: '1', owner, group, size: String(n.link.length), date, name: `${paint(name, n)}${mark ? '@' : ''} -> ${n.link}`, context: contextOf(game, n) };
   // The / added to places stays (like ls -F): colour is never the only sign.
   const suffix = n.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(n) : '';
-  return { mode: `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)}`, links: String(links), owner, group, size, date, name: `${paint(name, n)}${suffix}` };
+  // With SELinux (rhel.ts), GNU ls marks a file that has a security context with a dot after its mode.
+  const dot = isRhel(game) ? '.' : '';
+  return { mode: `${n.type === 'directory' ? 'd' : '-'}${share?.mode ?? modeFor(n)}${dot}`, links: String(links), owner, group, size, date, name: `${paint(name, n)}${suffix}`, context: contextOf(game, n) };
 }
 
 /** The rows of ls -l, aligned like GNU ls: each column as wide as its widest value. */
-function longLines(rows: LongRow[]): string[] {
-  const w = (k: keyof LongRow) => Math.max(...rows.map((r) => r[k].length));
-  const [links, owner, group, size] = [w('links'), w('owner'), w('group'), w('size')];
-  return rows.map((r) => `${r.mode} ${r.links.padStart(links)} ${r.owner.padEnd(owner)} ${r.group.padEnd(group)} ${r.size.padStart(size)} ${r.date} ${r.name}`);
+function longLines(rows: LongRow[], withContext = false): string[] {
+  const w = (k: keyof LongRow) => Math.max(...rows.map((r) => (r[k] ?? '').length));
+  const [links, owner, group, size, context] = [w('links'), w('owner'), w('group'), w('size'), w('context')];
+  // -Z: the SELinux context after the group (GNU ls -lZ).
+  return rows.map((r) => `${r.mode} ${r.links.padStart(links)} ${r.owner.padEnd(owner)} ${r.group.padEnd(group)} ${withContext ? `${(r.context ?? '?').padEnd(context)} ` : ''}${r.size.padStart(size)} ${r.date} ${r.name}`);
 }
 
 // Source → (destination place, final name), like mv and cp on Linux:
@@ -112,14 +117,22 @@ function destination(game: Shell, source: string, dest: string): string {
 }
 
 // A copy: yours (or, keeping the owner, the original's), with a new date unless `dates`.
-const copy = (n: Node, owner: string, keepOwner = false, dates = true): Node => {
+// A copy is a new file: it takes the SELinux context of the place it lands in (rhel.ts), unless cp -a keeps it (`context`).
+const copy = (n: Node, owner: string, keepOwner = false, dates = true, context = false): Node => {
   const who = keepOwner ? { owner: n.owner, group: n.group } : { owner, group: undefined };
   if (n.type === 'file') {
     const c: File = { ...n, ...who, read: undefined, isProtected: undefined };
     if (!dates) delete c.mtime;
+    if (!context) delete c.context;
     return c;
   }
-  return { type: 'directory', ...who, mode: n.mode, children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner, keepOwner, dates)])) };
+  return {
+    type: 'directory',
+    ...who,
+    mode: n.mode,
+    ...(context && n.context ? { context: n.context } : {}),
+    children: Object.fromEntries(Object.entries(n.children).map(([k, e]) => [k, copy(e, owner, keepOwner, dates, context)])),
+  };
 };
 
 // The order of ls's entries (GNU ls): by name, or -S by size (largest
@@ -160,8 +173,11 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting, one
   // -F: each name followed by its kind (/, @, *).
   const mark = letters.has('F');
   const row = (name: string, e: Node) => longRow(game, name, e, letters.has('h'), letters.has('n'), paint, mark);
+  // -Z: each name with its SELinux context (before it, or after the group with -l).
+  const Z = letters.has('Z');
+  const ctx = (e: Node, text: string) => (Z && !long ? `${contextOf(game, e)} ${text}` : text);
   // -d: the place itself, not its contents.
-  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLines([row(target, n)])[0] : paint(target, n) + (mark ? classify(n) : ''));
+  if (n.type === 'file' || letters.has('d')) return ino(n, long ? longLines([row(target, n)], Z)[0] : ctx(n, paint(target, n) + (mark ? classify(n) : '')));
   if (!game.can(n, 'r')) return game.error(game.t('ls-open-permission', { target: target }));
   // -a: every name, . and .. included; -A: every name but . and ..
   let inputs: [string, Node][] = Object.entries(n.children).filter(([name]) => letters.has('a') || letters.has('A') || !name.startsWith('.'));
@@ -171,11 +187,12 @@ function list({ args, game, last }: Context, paint: Paint = withoutPainting, one
     // First the blocks the entries take (KiB, like GNU ls), then one line each.
     const blocks = inputs.reduce((t, [, e]) => t + blocksOf(game, e), 0);
     const total = `total ${letters.has('h') ? readable(blocks * 1024, game.t.language) : blocks}`;
-    const lines = longLines(inputs.map(([name, e]) => row(name, e)));
+    const lines = longLines(inputs.map(([name, e]) => row(name, e)), Z);
     return [total, ...inputs.map(([, e], k) => ino(e, lines[k]))].join('\n');
   }
   // The / added to places stays outside the colour (like ls -F): colour is never the only sign.
   const shows = (name: string, e: Node) => paint(name, e) + (e.type === 'directory' && name !== '.' && name !== '..' ? '/' : mark ? classify(e) : '');
+  if (Z) return inputs.map(([name, e]) => ino(e, ctx(e, last ? shows(name, e) : paint(name, e)))).join('\n');
   if (letters.has('i')) return inputs.map(([name, e]) => ino(e, last ? shows(name, e) : paint(name, e))).join(last && !one ? '    ' : '\n');
   // Like the real ls: in columns on screen, one name per line in a
   // pipe or a file (and without the / added to places), or with -1.
@@ -301,7 +318,8 @@ const copyOne: One = (game, source, dest, letters) => {
   if (!game.traverses(source) || !game.can(n, 'r')) return game.error(game.t('cp-read-permission', { target: source })) || null;
   // -p (and -a): the date stays, and root keeps the owner; otherwise the copy is new, and yours.
   const keep = letters.has('p');
-  const error = game.place('cp', target, copy(n, game.who, keep && game.who === 'root', keep));
+  // -a (--preserve=all) also keeps the SELinux context; -p doesn't.
+  const error = game.place('cp', target, copy(n, game.who, keep && game.who === 'root', keep, letters.has('a')));
   if (error) return game.error(error) || null;
   return letters.has('v') ? `'${source}' -> '${shownDestination(game, source, dest)}'` : null;
 };

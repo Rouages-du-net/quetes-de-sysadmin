@@ -1367,6 +1367,25 @@
    "ownOptions": true
   }
  ],
+ "audit2allow": [
+  "rhel",
+  {
+   "ownOptions": true
+  }
+ ],
+ "audit2why": [
+  "rhel",
+  {
+   "ownOptions": true
+  }
+ ],
+ "ausearch": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "aws": [
   "objects",
   {
@@ -1388,6 +1407,12 @@
  ],
  "certbot": [
   "tls",
+  {
+   "ownOptions": true
+  }
+ ],
+ "chcon": [
+  "rhel",
   {
    "ownOptions": true
   }
@@ -1499,6 +1524,13 @@
    "ownOptions": true
   }
  ],
+ "dnf": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "docker": [
   "docker",
   {
@@ -1541,6 +1573,12 @@
    "ownOptions": true
   }
  ],
+ "firewall-cmd": [
+  "rhel",
+  {
+   "ownOptions": true
+  }
+ ],
  "forgejo": [
   "forge",
   {
@@ -1570,6 +1608,20 @@
   "objects",
   {
    "ownOptions": true
+  }
+ ],
+ "getenforce": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "getsebool": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
   }
  ],
  "gpg": [
@@ -2077,6 +2129,20 @@
    "ownOptions": true
   }
  ],
+ "restorecon": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "rpm": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "rsnapshot": [
   "rsnapshot",
   {
@@ -2108,6 +2174,41 @@
   {
    "winexe": true,
    "ownOptions": true
+  }
+ ],
+ "semanage": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "semodule": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "sestatus": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "setenforce": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "setsebool": [
+  "rhel",
+  {
+   "ownOptions": true,
+   "section": 8
   }
  ],
  "sfdisk": [

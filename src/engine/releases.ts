@@ -55,6 +55,7 @@ export const RELEASES: Readonly<Record<string, string>> = {
   'climbing-wall': '2026-11-22',
   'dance-troupe': '2026-11-22',
   shelter: '2026-11-23',
+  'language-cafe': '2026-11-24',
 };
 
 /** The stories, newest first (the same day: the later in the game's order first). */

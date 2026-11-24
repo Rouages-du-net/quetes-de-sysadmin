@@ -43,6 +43,7 @@ import type * as Objects from './families/objects';
 import type * as Postfix from './families/postfix';
 import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
+import type * as Rhel from './families/rhel';
 import type * as Rsnapshot from './families/rsnapshot';
 import type * as Samba from './families/samba';
 import type * as Security from './families/security';
@@ -74,6 +75,7 @@ export const FAMILIES = {
   postfix: () => import('./families/postfix'),
   postgres: () => import('./families/postgres'),
   prometheus: () => import('./families/prometheus'),
+  rhel: () => import('./families/rhel'),
   rsnapshot: () => import('./families/rsnapshot'),
   samba: () => import('./families/samba'),
   security: () => import('./families/security'),
@@ -106,6 +108,7 @@ interface Hooks {
   postfix: typeof Postfix.HOOKS;
   postgres: typeof Postgres.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
+  rhel: typeof Rhel.HOOKS;
   rsnapshot: typeof Rsnapshot.HOOKS;
   samba: typeof Samba.HOOKS;
   security: typeof Security.HOOKS;

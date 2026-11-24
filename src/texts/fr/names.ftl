@@ -515,6 +515,11 @@ name-sample-list-eml = exemple-liste.eml
 ## Le Mur d'escalade
 name-message_from_nkechi-txt = message_de_nkechi.txt
 name-notes_from_haruto-txt = notes_de_haruto.txt
+name-message_from_dilnoza-txt = message_de_dilnoza.txt
+name-notes_from_seun-txt = notes_de_seun.txt
+name-message_from_thuy-txt = message_de_thuy.txt
+name-message_from_itzel-txt = message_d_itzel.txt
+name-notes_from_tenzin-txt = notes_de_tenzin.txt
 name-message_from_akosua-txt = message_de_akosua.txt
 name-message_from_thandiwe-txt = message_de_thandiwe.txt
 ## La Troupe de danse

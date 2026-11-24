@@ -5,6 +5,7 @@
 //   state.onKill(game, process), state.onSystemctl(game, action, name):
 //   the story's own reactions, which return an optional message.
 
+import { isRhel, LOGIN_CONTEXT, SERVICE_CONTEXT } from '../rhel';
 import { isBsd } from '../freebsd';
 import { jobFor, signalJob } from '../jobs';
 import { bsdPs } from './bsd-tools';
@@ -30,6 +31,8 @@ export interface Process {
   nofile?: import('../limits').Limit;
   // Signals it ignores or handles itself (a shell script's trap): TERM, HUP…
   ignores?: string[];
+  // Its SELinux context (ps -Z) on a machine with SELinux (rhel.ts).
+  label?: string;
 }
 
 // The columns of ps -o (procps-ng's names; %cpu and pcpu are the same column).
@@ -112,6 +115,10 @@ export const SYSTEM: Record<string, Command> = {
       // FreeBSD's ps: BSD's options and formats (see bsd-tools.ts).
       if (isBsd(game)) return bsdPs(game, args);
       const original = args;
+      // Z (ps -eZ, ps auxZ): a LABEL column first, each process's SELinux context ("-" without SELinux).
+      const Z = args.some((a) => /^-?[a-zA-Z]*Z[a-zA-Z]*$/.test(a) && !a.startsWith('--'));
+      if (Z) args = args.map((a) => (/^-?[a-zA-Z]*Z[a-zA-Z]*$/.test(a) && !a.startsWith('--') ? a.replace('Z', '') : a)).filter((a) => a !== '-' && a !== '');
+      const label = (p: Process) => (isRhel(game) ? (p.label ?? (p.command.startsWith('[') ? 'system_u:system_r:kernel_t:s0' : p.user === game.player ? LOGIN_CONTEXT : SERVICE_CONTEXT)) : '-');
       // -o FORMAT (and -eo FORMAT): the columns chosen; --sort=[-]KEY.
       const io = args.findIndex((a) => /^-\w*o$/.test(a) || a === '--format');
       const format = io >= 0 ? (args[io + 1] ?? '') : args.find((a) => a.startsWith('--format='))?.slice(9) ?? null;
@@ -157,14 +164,19 @@ export const SYSTEM: Record<string, Command> = {
         ].join('\n');
       }
       // -f (ps -ef): the full format, with the parent (PPID).
+      const withLabels = (header: string, rows: Process[], format: (p: Process) => string) => {
+        if (!Z) return [header, ...rows.map(format)].join('\n');
+        const width = Math.max(5, ...rows.map((p) => label(p).length));
+        return [`${'LABEL'.padEnd(width)} ${header}`, ...rows.map((p) => `${label(p).padEnd(width)} ${format(p)}`)].join('\n');
+      };
       if (args.some((a) => /^-\w*f/.test(a))) {
         const fLine = (p: Process) =>
           `${psUser(p.user).padEnd(8)} ${String(p.pid).padStart(7)} ${String(p.ppid ?? (p.pid === 1 ? 0 : 1)).padStart(7)}  0 04:00 ?        00:00:00 ${p.command}`;
-        return ['UID          PID    PPID  C STIME TTY          TIME CMD', ...listing.map(fLine)].join('\n');
+        return withLabels('UID          PID    PPID  C STIME TTY          TIME CMD', listing, fLine);
       }
       const line = (p: Process) =>
         `${psUser(p.user).padEnd(10)} ${String(p.pid).padStart(6)} ${p.cpu.toFixed(1).padStart(5)} ${p.mem.toFixed(1).padStart(5)} ${p.command}`;
-      return ['USER          PID  %CPU  %MEM COMMAND', ...listing.map(line)].join('\n');
+      return withLabels('USER          PID  %CPU  %MEM COMMAND', listing, line);
     },
   },
 

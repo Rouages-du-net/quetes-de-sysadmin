@@ -16,6 +16,7 @@ import { isBsd, LINUX_ONLY } from './freebsd';
 import { BSD_CHECKS } from './commands/bsd-tools';
 import { SOLARIS_CHECKS, XPG4_CHECKS, OTHER_BINS } from './commands/solaris-tools';
 import { isSolaris, NOT_ON_SOLARIS } from './solaris';
+import { DEBIAN_ONLY, isRhel, labelNew } from './rhel';
 import { isIbmi, NOT_ON_IBMI } from './ibmi';
 import { access as nfsAccess, ownForServer } from './nfs';
 import { cifsAccess, cifsUsage } from './cifs';
@@ -734,6 +735,12 @@ export class Shell implements Game {
       }
       ownForServer(this, parent, n);
     }
+    // SELinux (rhel.ts): a new node takes its place's label, a moved one keeps its own.
+    if (isRhel(this)) {
+      // Written over an existing file (cp onto it), the file keeps its inode, and its label.
+      if (cmd !== 'mv' && old && !n.context && old.context) n.context = old.context;
+      labelNew(parent, n);
+    }
     parent.children[name] = n;
     return null;
   }
@@ -826,6 +833,8 @@ export class Shell implements Game {
     // root (sudo -i, or a chapter's rescue console) has its own prompt, with #, like bash.
     const root = this.who === 'root';
     const user = this.shells.length ? this.shellUser : root ? 'root' : this.player;
+    // Fedora's and Red Hat's /etc/bashrc: PS1='[\u@\h \W]\$ ' (the directory's last name).
+    if (isRhel(this)) return `${this.tmux ? `[${this.tmux}] ` : ''}[${user}@${this.hostName} ${here === '/' || here === '~' ? here : here.split('/').at(-1)}]${root ? '#' : '$'}`;
     return `${this.tmux ? `[${this.tmux}] ` : ''}${user}@${this.hostName}:${here}${root ? '#' : '$'}`;
   }
 
@@ -2336,6 +2345,11 @@ export class Shell implements Game {
     if (isBsd(this) && (LINUX_ONLY.includes(cmd) || (cmd === 'bash' && !this.exists('/usr/local/bin/bash')))) {
       this.status = 127;
       return this.error(`${cmd}: not found`);
+    }
+    // Rocky Linux (rhel.ts): Debian's own tools aren't there.
+    if (isRhel(this) && DEBIAN_ONLY.includes(cmd)) {
+      this.status = 127;
+      return this.error(`-bash: ${cmd}: command not found`);
     }
     // Solaris 10: neither Linux's tools nor FreeBSD's.
     if (isSolaris(this) && NOT_ON_SOLARIS.includes(cmd) && !otherBin) {

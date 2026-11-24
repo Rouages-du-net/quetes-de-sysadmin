@@ -17,7 +17,7 @@ export interface Machine {
   withoutKey?: boolean;
   // Another system than Debian (see freebsd.ts): its login banner. A Windows
   // Server (windows.ts) shows no banner: its OpenSSH lands in cmd or PowerShell.
-  os?: 'freebsd' | 'solaris' | 'ibmi' | 'windows';
+  os?: 'freebsd' | 'solaris' | 'ibmi' | 'windows' | 'rhel';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
@@ -114,6 +114,8 @@ export const MACHINES: Machine[] = [
   machine('wings', '192.0.2.160', 'dance-troupe'),
   // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
   machine('meadow', '192.0.2.164', 'shelter'),
+  // The Language Café: a nonprofit's Rocky Linux 10 server (httpd, firewalld, SELinux); noticeboard, the café's screen, is an internal host.
+  { ...machine('kettle', '192.0.2.170', 'language-cafe'), os: 'rhel' },
 ];
 
 /**

@@ -294,6 +294,12 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: its outputs and the admin API's errors ("Error: GetBucketInfo returned NoSuchBucket (404): …") as Garage 2.1.0's CLI prints them, status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
 | The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
+| Rocky Linux (`rhel.ts`, The Language Café) | `state.os = 'rhel'`: Debian's own tools (apt, dpkg, ufw, a2ensite, apache2ctl, update-rc.d, unattended-upgrade, lsb_release, ifup) answer `-bash: X: command not found`; Fedora's prompt `[you@kettle ~]$`; `ls -l` marks every file with a `.` after its mode; `ls -Z`, `ps -Z` (a LABEL column) and `id`'s `context=`; a new file takes its place's label (a home's: user_home_t, /tmp's: user_tmp_t), `mv` keeps it, `cp` doesn't (`cp -a` does) | `ps -Z` keeps the game's `aux` columns; no motd.d, no cockpit banner, no "Last login" line; `/var/log/messages` and `/var/log/secure` are written once, not by rsyslog as the story goes |
+| SELinux (`selinux.ts`, The Language Café) | the targeted policy of selinux-policy 42.1.27 as far as httpd goes: file contexts, equivalences and specificity (local rules win), port types, httpd_t's read/search/name_bind/name_connect and the booleans that widen them (`httpd_can_network_connect`, `httpd_can_network_relay`, `httpd_graceful_shutdown`, `httpd_read_user_content`, `httpd_enable_homedirs`, `nis_enabled`), enforcing/permissive and `/etc/selinux/config` at boot, `/.autorelabel`, AVC/SYSCALL/PROCTITLE records | a subset of the policy's file contexts, port types, booleans and modules; only httpd is confined; levels are always `s0`; a policy package written by `audit2allow -M` is not a real `.pp` (the game keeps its rules) |
+| `getenforce`, `setenforce`, `sestatus`, `getsebool`, `setsebool`, `chcon`, `restorecon`, `semanage`, `semodule`, `ausearch`, `audit2why`, `audit2allow` (`commands/selinux.ts`, the `rhel` family) | their messages and formats at policycoreutils/libselinux 3.11 and audit 4.2.1: `semanage fcontext`, `port`, `boolean` with `-a`/`-d`/`-m`/`-l`/`-C`/`-e`, "already defined, modifying instead", `ValueError: Type … is invalid…`; restorecon's "Relabeled … from … to …" (`-n`: "Would relabel"), the type only unless `-F`; audit2why's boolean and TE explanations; audit2allow's rules and its IMPORTANT banner; ausearch's `----`/`time->` groups, `-ts recent/today/boot/HH:MM`, `<no matches>`; `semanage`, `audit2why`, `audit2allow` only once policycoreutils-python-utils is installed | `ausearch -i` prints the raw records; `semodule -l` lists a few dozen modules; `semanage` has no `login`, `user`, `module`, `node`, `interface`, `permissive` objects; booleans' descriptions are sepolicy's fallback ("Allow httpd to can network connect"), as without policy.xml |
+| firewalld (`firewalld.ts`, `firewall-cmd`) | firewalld 2.4.3: runtime and permanent configurations, `--reload` and `--runtime-to-permanent`, zones and their sources, services, ports and rich rules (source address, service or port, accept/reject/drop) as `Rich_Rule` writes them back; `--list-all`'s layout, "success", "Warning: ALREADY_ENABLED", `INVALID_SERVICE`/`INVALID_PORT`/`INVALID_RULE`, "Authorization failed." without root, "FirewallD is not running" | IPv4 TCP only; a subset of the services (`--get-services`); no policies, ipsets, ICMP, masquerade, forwarding, direct rules or `firewall-offline-cmd`; a rejected connection fails at once |
+| `dnf`, `rpm` (`rpm.ts`, `commands/rhel-packages.ts`) | DNF 4.20 (Rocky and RHEL 10's dnf, not dnf5): install (the transaction table, "Is this ok [y/N]:", `-y`), remove, search (its sections), info, list, provides (also in /usr/bin and /usr/sbin), repolist, history, makecache; "No match for argument", "Unable to find a match", the superuser error; rpm `-q`, `-qa`, `-qi`, `-ql`, `-qc`, `-qf`, `-V`; Rocky 10.3's packages and versions | a few dozen packages; no download, GPG prompt or scriptlet output; dependencies listed by hand; `rpm -i`/`-e` refused (use dnf); `dnf upgrade` has nothing to do |
+| httpd on Rocky (`httpd-rhel.ts`, The Language Café) | httpd 2.4.63 as Rocky packages it: `httpd.conf` and `conf.d/*.conf` (Listen, DocumentRoot, `<Directory>` with Require, `<VirtualHost>`, ServerName/ServerAlias, ProxyPass), welcome.conf's test page for a refused "/", AH00072/AH00015 at start, AH00132, AH00035, AH01630, AH00957/AH00959/AH01114 in error_log, the access log, "Server configured, listening on" in the journal | other known directives are accepted and ignored (unknown ones: AH00526); no `httpd -t` or `apachectl`; a failed proxy worker is not put in error state for 60 s; no TLS |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4895,6 +4901,94 @@ memory), restores a snapshot beside and verifies it. Expected traps: the
 name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
+
+## Story 48: The Language Café (three chapters)
+
+Common Tongue (Langue Commune in French), a nonprofit running free
+conversation tables for newcomers and their neighbours, keeps its site, the
+week's tables and a volunteers' sign-up app on `kettle` (192.0.2.170), a
+small server Seun installed with Rocky Linux 10.3 before leaving for three
+months: a Red Hat family machine (`state.os = 'rhel'`, `rhel.ts`), not a
+Debian. `noticeboard` (198.51.100.20, an internal host on the café's
+network 198.51.100.0/24) is the screen by the door that loads the site
+every five minutes. Dilnoza coordinates the café, Itzel makes the site,
+Tenzin wrote the sign-up app, Thuy hosts the Vietnamese table and minds the
+screen, Kaveh helps from the association next door. Versions as Rocky 10.3
+ships them (dl.rockylinux.org/pub/rocky/10/): DNF 4.20 (not dnf5),
+firewalld 2.4.3, selinux-policy 42.1.27, policycoreutils 3.11, audit
+4.2.1, httpd 2.4.63. Engine: `selinux.ts`, `firewalld.ts`, `rpm.ts`,
+`httpd-rhel.ts`, their commands in `commands/selinux.ts` and
+`commands/rhel-packages.ts` (the `rhel` family, loaded with the story),
+five explanations in the error explainer. The story is built in
+`chapters/language-cafe.ts`; curl between the machines through
+`state.storyCurl`. It opens after "The firewall" (ufw) and "The proxy"
+(nginx in front of an app), and extends the security and web paths.
+
+### Chapter 1 — New Neighbour (done)
+
+Monday 7 December 2026, 18:30. A Debian sysadmin meets a Rocky machine.
+
+| Step | Command learnt |
+|---|---|
+| Which system | `cat /etc/os-release`, `apt` → command not found |
+| The web server | `dnf search httpd`, `sudo dnf install httpd`, `rpm -q httpd` |
+| Running and at boot | `sudo systemctl enable --now httpd`, `curl -I localhost` (Rocky's test page, 403) |
+| The firewall | `ssh noticeboard` then `curl`; `firewall-cmd --list-all`, `--add-service=http --add-service=https`, with and without `--permanent`, `--reload` |
+
+Goal checked on the state: httpd installed, running and enabled; firewalld
+running and enabled; 80 and 443 allowed at runtime and permanently;
+SELinux enforcing (now and in its configuration); the noticeboard gets an
+answer from httpd now and with the permanent configuration. Several
+solutions: services or ports, both commands or permanent then `--reload`
+or runtime then `--runtime-to-permanent`. Expected traps: apt, a runtime
+rule lost at a reload, a permanent rule not active, httpd started but not
+enabled, firewalld stopped, `setenforce 0`.
+
+### Chapter 2 — Permission Denied, But… (done)
+
+Saturday 12 December, 10:15. Itzel moved the site from her home to
+`/srv/site` with `mv`; the screen shows the test page (httpd's 403).
+
+| Step | Command learnt |
+|---|---|
+| The refusal | `curl`, `/var/log/httpd/error_log` (AH00132) |
+| The labels | `ls -lZ /srv/site` (user_home_t), `ls -Zd /var/www/html`, `ps -eZ` |
+| Who refused | `sudo ausearch -m avc -ts recent`; `audit2why` not found: `dnf provides semanage`, `dnf install policycoreutils-python-utils`; `audit2why` |
+| The policy | `semanage fcontext -l` (/srv/.* is var_t), `semanage fcontext -a -t httpd_sys_content_t "/srv/site(/.*)?"`, `restorecon -Rv /srv/site` |
+
+Goal checked on the state: enforcing now and at boot; httpd up and
+enabled; the home page and the stylesheet served to the noticeboard; every
+file of the served root readable by httpd now and as the policy labels it;
+no world-writable file; `httpd_read_user_content` off; no custom module.
+Several solutions: a type rule, an equivalence (`-e /var/www`), the site
+moved under `/var/www` or `/srv/www` and relabelled. Expected traps:
+`setenforce 0` or SELINUX=permissive, `chmod 777`, `restorecon` before the
+rule (var_t), `httpd_read_user_content`, an audit2allow module, `chcon`
+alone: Kaveh's reboot for the kernel update runs Seun's `/.autorelabel` and
+puts var_t back.
+
+### Chapter 3 — A Port and a Boolean (done)
+
+Monday 14 December, 18:40. Tenzin added a rota on port 8010 and a sign-up
+app behind httpd (ProxyPass to 127.0.0.1:8086); httpd hasn't started since
+Friday.
+
+| Step | Command learnt |
+|---|---|
+| Why httpd is down | `systemctl status httpd`, `journalctl -u httpd` (AH00072, (13)) |
+| The port | `ausearch -m avc -c httpd` (name_bind), `semanage port -l`, `semanage port -a -t http_port_t -p tcp 8010`, a restart |
+| The backend | 503, AH01114; `ausearch … \| audit2why` (httpd_can_network_connect or nis_enabled), `setsebool -P httpd_can_network_connect on` |
+| The rota | a rich rule: `rule family="ipv4" source address="198.51.100.0/24" port port="8010" protocol="tcp" accept`, runtime and permanent |
+
+Goal checked on the state: httpd up and enabled; site and sign-up page 200
+for anyone, the rota for the café's network only, at runtime and with the
+permanent firewall; the saved booleans and port types let httpd bind 8010
+and reach 8086 after a reboot; enforcing; nis_enabled off; no custom
+module. Several solutions: `setsebool -P` or `semanage boolean -m --on`,
+8086 typed http_port_t with `httpd_can_network_relay`, the rule added in
+either configuration first. Expected traps: `nis_enabled` (audit2why's other
+suggestion), Tenzin's audit2allow module, 8086 typed http_port_t alone, the
+boolean without `-P`, `--add-port=8010/tcp` (the rota on the internet).
 
 ## Ideas for later
 
