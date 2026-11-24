@@ -1,11 +1,22 @@
 ---
+// The site's one error page (public/.htaccess: ErrorDocument 404), with a
+// line in each language the site offers (src/site-languages.ts).
 import Base from '../layouts/Base.astro';
+import { COMPLETE_LANGUAGES, PAGES } from '../site-languages';
+
+// "This page does not exist (or no longer does)", and the link back, in each language.
+const LINES: Record<string, [string, string]> = {
+  en: ['This page does not exist (or no longer does).', 'Back to the game'],
+  fr: ["Cette page n'existe pas (ou plus).", 'Retour au jeu'],
+  es: ['Esta página no existe (o ya no existe).', 'Volver al juego'],
+};
+const offered = COMPLETE_LANGUAGES.filter((l) => LINES[l]);
 ---
 <Base title="Page not found — Sysadmin Quests" description="This page does not exist.">
   <h1>404: page not found</h1>
   <pre tabindex="0"><code>$ cat this-page
 cat: this-page: No such file or directory</code></pre>
-  <p>This page does not exist (or no longer does). <a href="/en/">Back to the game</a>.</p>
-  <p lang="fr">Cette page n'existe pas (ou plus). <a href="/fr/">Retour au jeu</a>.</p>
+  {offered.map((l) => (
+    <p lang={l === 'en' ? undefined : l}>{LINES[l][0]} <a href={PAGES.home[l as keyof typeof PAGES.home]}>{LINES[l][1]}</a>.</p>
+  ))}
 </Base>
-'

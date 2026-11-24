@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { where, values } from '../src/engine/sql-where';
 import { timeSpan } from '../src/engine/journal-files';
 import { readWithin } from '../src/engine/commands/restic';
@@ -77,7 +77,7 @@ describe('The Choir: the engine pieces it extended', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('choir'))
   describe(`The Choir — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -330,7 +330,7 @@ describe('The Choir: the error explainer', () => {
     return run;
   }
 
-  for (const language of LANGUAGES)
+  for (const language of languagesFor('choir'))
     it(`${language}: reading logs, the policy and the database explains nothing; real errors are explained`, () => {
       const run = session('kept-forever', language);
       for (const line of ['cat /srv/choir/docs/retention-policy.txt', 'tail /var/log/nginx/access.log', 'zcat /var/log/nginx/access.log.2.gz', 'cat /var/log/nginx/error.log', 'cat /etc/logrotate.d/nginx', 'logrotate -d /etc/logrotate.d/nginx', 'nginx -t', 'journalctl --disk-usage'])

@@ -6,7 +6,10 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
+import { languagesFor } from './names';
+import { translator } from '../src/texts';
+import { name } from '../src/engine/world';
+import { machineName } from '../src/engine/machines';
 import type { Shell } from '../src/engine/shell';
 import { windows } from '../src/engine/windows';
 import { shareAccess } from '../src/engine/windows-acl';
@@ -19,12 +22,14 @@ import { findTask } from '../src/engine/windows-tasks';
 
 const BEFORE = [...prerequisites('music-school')];
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('music-school'))
   describe(`The Music School — ${language}`, () => {
     const fr = language === 'fr';
-    const STAVE = fr ? 'portee' : 'stave';
+    const t = translator(language);
+    const STAVE = machineName(t, 'stave');
     const COMPUTER = STAVE.toUpperCase();
-    const ME = fr ? 'vous' : 'you';
+    const ME = name(t, 'you');
+    const N = (file: string) => name(t, file);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {
       const c = new Console({ language, finished: [...BEFORE, ...finished] });
@@ -46,7 +51,7 @@ for (const language of LANGUAGES)
       expect(c.shell.prompt()).toBe(`${ME}@${COMPUTER} C:\\Users\\${ME}>`);
       expect(play(['Get-SmbShare'])).toContain("'Get-SmbShare' is not recognized as an internal or external command");
       expect(flag('cmd')).toBe(true);
-      expect(play([fr ? 'type Documents\\passation.txt' : 'type Documents\\handover.txt'])).toContain('New-SmbShare');
+      expect(play([`type Documents\\${N('handover.txt')}`])).toContain('New-SmbShare');
       play(['powershell']);
       expect(c.shell.prompt()).toBe(`PS C:\\Users\\${ME}>`);
       expect(flag('powershell')).toBe(true);
@@ -134,7 +139,7 @@ for (const language of LANGUAGES)
       expect(flag('account')).toBe(true);
       expect(play(['Get-LocalUser svc_agenda | Select-Object Name, PasswordLastSet'])).toContain('12/7/2029 4:42:00 PM');
       expect(flag('rotated')).toBe(true);
-      const vault = play([fr ? 'Get-Content Documents\\coffre-svc_agenda.txt' : 'Get-Content Documents\\vault-svc_agenda.txt']);
+      const vault = play([`Get-Content Documents\\${N('vault-svc_agenda.txt')}`]);
       expect(vault).toContain(NEW_PASSWORD);
       expect(play([`sc config Agenda obj= .\\svc_agenda password= ${NEW_PASSWORD}`])).toContain("A positional parameter cannot be found that accepts argument 'obj='.");
       expect(flag('sc-alias')).toBe(true);
@@ -145,7 +150,7 @@ for (const language of LANGUAGES)
       contains(end, 'Bravo');
       expect(c.finished).toContain('service-logon');
       expect(findService(server(), 'Agenda')?.status).toBe('Running');
-      play([fr ? 'Remove-Item Documents\\coffre-svc_agenda.txt' : 'Remove-Item Documents\\vault-svc_agenda.txt']);
+      play([`Remove-Item Documents\\${N('vault-svc_agenda.txt')}`]);
       expect(flag('vault-deleted')).toBe(true);
     });
 
@@ -194,7 +199,7 @@ for (const language of LANGUAGES)
       const { c, play, flag, banner, server } = part(['two-locks', 'service-logon']);
       contains(banner, 'La crue des journaux');
       play(['powershell']);
-      contains(play([fr ? 'Get-Content courriel_beatriz.txt' : 'Get-Content email_beatriz.txt']), '30 derniers jours');
+      contains(play([`Get-Content ${N('email_beatriz.txt')}`]), '30 derniers jours');
       expect(play(['Get-Volume'])).toMatch(/D +Data +NTFS +Fixed +Healthy +OK +180 MB +500 GB/);
       expect(flag('full')).toBe(true);
       expect(play(['Get-ChildItem D:\\ -Recurse -File | Sort-Object Length -Descending | Select-Object -First 10 FullName, Length'])).toMatch(/D:\\Logs\\Agenda\\agenda-2029-\d\d-\d\d\.log +\d{10}/);
@@ -274,7 +279,7 @@ for (const language of LANGUAGES)
       play(['wevtutil sl Microsoft-Windows-TaskScheduler/Operational /e:true']);
       expect(play(['Get-LocalUser svc_backup | Select-Object Name, PasswordLastSet, PasswordExpires'])).toContain('12/20/2029 3:00:00 PM');
       expect(flag('expired')).toBe(true);
-      expect(play([fr ? 'Get-Content Documents\\coffre-svc_backup.txt' : 'Get-Content Documents\\vault-svc_backup.txt'])).toContain('Coda-5ty-Hn42');
+      expect(play([`Get-Content Documents\\${N('vault-svc_backup.txt')}`])).toContain('Coda-5ty-Hn42');
       play(['Set-LocalUser svc_backup -PasswordNeverExpires $true']);
       expect(flag('logon-fixed')).toBe(true);
       play(['Start-ScheduledTask "Nightly Backup"']);

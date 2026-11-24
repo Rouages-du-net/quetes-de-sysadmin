@@ -173,6 +173,29 @@ export function declaredZones(game: Game): Record<string, string> {
 }
 
 /**
+ * A zone that takes dynamic updates (update-policy, or allow-update other
+ * than none): named keeps its changes in a journal, and refuses to reload it
+ * from its file (rndc freeze first, then thaw).
+ */
+export function dynamicZone(game: Game, zone: string): boolean {
+  const d = dns(game);
+  const text = d ? (game.read(d.conf) ?? '') : '';
+  const at = text.search(new RegExp(`zone\\s+"${zone.replace(/\.$/, '').replace(/\./g, '\\.')}"\\s*\\{`, 'i'));
+  if (at < 0) return false;
+  let depth = 0;
+  let end = at;
+  for (let i = text.indexOf('{', at); i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    if (text[i] === '}' && --depth === 0) {
+      end = i;
+      break;
+    }
+  }
+  const block = text.slice(at, end);
+  return /update-policy\s*\{/.test(block) || (/allow-update\s*\{/.test(block) && !/allow-update\s*\{\s*none\s*;\s*\}/.test(block));
+}
+
+/**
  * rndc reload: named rereads the zone files. A broken zone keeps its
  * old version. If the serial increases, the secondary is notified (NOTIFY)
  * and copies the zone; otherwise, it keeps the old one. Returns the zones in error.
@@ -185,6 +208,8 @@ export function reloadZones(game: Game, only?: string): { errors: string[]; chan
   const changed: string[] = [];
   for (const [zone, file] of Object.entries(declaredZones(game))) {
     if (only && zone !== only.replace(/\.$/, '').toLowerCase()) continue;
+    // A dynamic zone already loaded: its journal holds the truth, the file isn't read again.
+    if (d.charges[zone] !== undefined && dynamicZone(game, zone)) continue;
     const text = game.read(file);
     if (text === null) {
       log(`zone ${zone}/IN: loading from master file ${file} failed: file not found`, 3);

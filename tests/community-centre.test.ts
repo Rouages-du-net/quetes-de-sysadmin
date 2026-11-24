@@ -4,13 +4,13 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 const ERASER = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
 const CONFIG = '/etc/ssh/sshd_config';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('community-centre'))
   describe(`The Community Centre — ${language}`, () => {
     const fr = language === 'fr';
     // A line written with the English names, in the game's language.

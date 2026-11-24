@@ -9,8 +9,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { appendLog, cups, locationFor, matches, parseConf, reaches, sizeValue, timeValue, verdict } from '../src/engine/cups';
 import { cupsdConf } from '../src/engine/chapters/staff-room';
 
@@ -69,7 +69,7 @@ describe('CUPS: cupsd.conf, access, policy', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('staff-room'))
   describe(`The Staff Room — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

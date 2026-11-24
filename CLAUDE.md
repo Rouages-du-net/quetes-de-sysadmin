@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -923,6 +923,45 @@ presents them for people.
   undone). restic's `sftp:` repositories (`sftpStore`) and `snapshots`'
   filters in `commands/restic.ts`; the `postgresql` package in
   `commands/apt.ts`. Tests: `tests/shelter.test.ts`.
+- `src/engine/rhel.ts`: a Red Hat family machine (`state.os = 'rhel'`,
+  Rocky Linux 10): Debian's own tools "command not found" (`DEBIAN_ONLY`,
+  the `rhel` platform of `availability.ts`), Fedora's prompt, SELinux
+  contexts on files (`Rights.context`, `labelNew` in `Shell.place`: mv
+  keeps a label, cp takes its place's) for `ls -Z`, `ps -Z`, `id`; the
+  `rhel` family (`families/rhel.ts`): SELinux in `src/engine/selinux.ts`
+  (`state.selinux`: mode, booleans and saved values, local file contexts
+  and equivalences, port types, modules, the audit log; `defaultType`,
+  `httpdAllows`, `check` writes AVCs, `boot` with `/.autorelabel` through
+  `state.onBoot` of `systemd.ts`'s restart), firewalld in
+  `src/engine/firewalld.ts` (runtime and permanent zones, rich rules,
+  `verdict`), packages in `src/engine/rpm.ts` (Rocky 10.3's,
+  `installFiles`), httpd in `src/engine/httpd-rhel.ts` (conf.d, vhosts,
+  ProxyPass, `serve`); `dnf`, `rpm`, `firewall-cmd` in
+  `commands/rhel-packages.ts`, SELinux's commands in `commands/selinux.ts`.
+  `chapters/language-cafe.ts`: what the chapters of "The Language Café"
+  share (`kettle`, the café's Rocky server, `kettleState`/`kettleWorld`/
+  `initialiseKettle`; `noticeboard`, the café's screen, an internal host;
+  `storyCurl`, `reach` through firewalld and httpd without trace; the
+  noticeboard's request every five minutes in `passTime`; `rebootKettle`);
+  `new-neighbour.ts`, `wrong-label.ts`, `port-and-boolean.ts`. Tests:
+  `tests/language-cafe.test.ts`.
+- `src/engine/hcl.ts`: HCL, the OpenTofu language's syntax (a subset:
+  bodies, blocks, templates, tuples, objects, references; hclsyntax's
+  errors) and `format()` for `tofu fmt`; `src/engine/tofu.ts`: OpenTofu
+  1.13 (`tofu`: init from a filesystem mirror and `.terraform.lock.hcl`,
+  fmt, validate against the hashicorp/dns provider's schema, variables,
+  plan with refresh and drift, apply and its "yes", import and import
+  blocks, state list/show/rm/mv, output, the local state
+  `terraform.tfstate` and its lock held by a process, `state.tofu` on the
+  principal: locks, runs; the diagnostics' box `renderDiagnostic`); the
+  provider's records are the game's BIND zones (`dynamicUpdate`, `readRecord`;
+  `dynamicZone` in `dns.ts`: `rndc reload` refuses a zone with
+  `update-policy`), the `iac` family. `chapters/mapping-party.ts`: what the
+  chapters of "The Mapping Party" share (`cairn`, the Wayfinders
+  collective's DNS server: `/srv/dns` and its state, the dynamic zone,
+  Femi's evening and his `tofu apply` holding the lock in chapter 2,
+  `state.onKill` releasing it); `first-plan.ts`, `drift.ts` (`converged`:
+  code, state and named agree). Tests: `tests/mapping-party.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

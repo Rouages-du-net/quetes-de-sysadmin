@@ -225,3 +225,44 @@ explainer-garage-layout = Garage didn't apply the layout change. A layout is cha
         Please pass the new layout version number
         Invalid new layout version
         is smaller than the replication factor
+
+explainer-firewalld-auth = firewall-cmd may read firewalld's configuration as any user, but changing it needs root: over ssh no polkit agent can ask for a password. Run the command with sudo.
+    .match =
+        Authorization failed.
+
+explainer-firewalld-not-running = The firewalld daemon is not running, so firewall-cmd has nobody to talk to (and nothing filters). systemctl status firewalld says why; systemctl enable --now firewalld starts it and keeps it at boot.
+    .match =
+        FirewallD is not running
+
+explainer-dnf-root = Installing or removing packages changes the system: dnf needs root. Run it again with sudo (searching, info and list work without).
+    .match =
+        This command has to be run with superuser privileges
+
+explainer-httpd-bind = httpd could not open a socket. With (98) Address already in use, another program listens on that port (ss -tlnp). With (13) Permission denied and nothing else there, on a system with SELinux, httpd_t may only bind the ports typed http_port_t: look for an AVC (ausearch -m avc), and give the port that type with semanage port -a -t http_port_t -p tcp PORT. While one socket fails, httpd doesn't start at all.
+    .match =
+        make_sock: could not bind to address
+
+explainer-selinux-denied = "Permission denied" although the Unix rights allow it: on a system with SELinux, the kernel may refuse what the file's label doesn't allow to the program's domain. Compare the labels (ls -Z, ps -Z), read the denials (sudo ausearch -m avc -ts recent | audit2why), and fix the label in the policy (semanage fcontext, then restorecon) rather than switching SELinux off.
+    .match =
+        file permissions deny server access
+        because search permissions are missing on a component of the path
+explainer-tofu-lock = OpenTofu couldn't lock the state: another run holds the lock, and OpenTofu waits for nobody. Lock Info says who took it, for which operation and when. With a local state (terraform.tfstate), the lock belongs to that process: check whether it still runs (ps), and let it finish or stop it; tofu force-unlock only helps with remote states, and -lock=false risks two runs writing the state at once.
+    .match =
+        Error acquiring the state lock
+
+explainer-tofu-init = This working directory isn't initialised, or no longer matches its configuration: the provider it needs isn't installed or recorded in .terraform.lock.hcl. tofu init installs the providers and writes the lock file; after a change of version constraint, tofu init -upgrade.
+    .match =
+        Inconsistent dependency lock file
+        Missing required provider
+        Required plugins are not installed
+
+explainer-tofu-variable = A variable is declared (a variable block) but nothing gives it a value: no default, no .tfvars file, no -var. A value given with -var only lasts for that command; terraform.tfvars and *.auto.tfvars files are read every time, and TF_VAR_name variables of the environment too.
+    .match =
+        No value for required variable
+
+explainer-tofu-argument = The configuration doesn't match the provider's schema: an argument it doesn't know (often a typo, OpenTofu then suggests the right name), a required one missing, or a block in the wrong place. The message gives the file and the line; tofu validate checks everything without touching anything, and the provider's documentation lists each resource's arguments.
+    .match =
+        Unsupported argument
+        Missing required argument
+        Unsupported block type
+        Invalid resource type

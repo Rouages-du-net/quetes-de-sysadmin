@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { parseKeepalived } from '../src/engine/keepalived';
 import { checkReport, parseCfg } from '../src/engine/haproxy';
 import { haproxyCfg, keepalivedConf } from '../src/engine/chapters/blood-drive';
@@ -68,7 +68,7 @@ describe('keepalived and HAProxy: their files read like the real tools', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('blood-drive'))
   describe(`The Blood Drive — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

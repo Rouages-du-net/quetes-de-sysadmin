@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c.id === id)!;
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('datacenter'))
   describe(`Language: ${language}`, () => {
     const fr = language === 'fr';
     // The player's account in the language (vous@poste, you@desk), like the place names.
@@ -19,7 +19,7 @@ for (const language of LANGUAGES)
     it('new file: open, write, quit, reread', () => {
       const c = new Console({ language });
       c.execute('nano notes.txt');
-      expect(c.edition?.path).toBe(L('/home/you/notes.txt'));
+      expect(c.edition?.path).toBe(`${L('/home/you')}/notes.txt`);
       if (fr) expect(c.edition?.message).toBe('[ Nouveau fichier ]');
       const { message, written } = c.save('ligne 1\nligne 2\n');
       expect(written).toBe(true);

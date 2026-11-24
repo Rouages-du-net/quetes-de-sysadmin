@@ -8,8 +8,8 @@ import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { readConfig, route } from '../src/engine/rsyslog';
 import { human, systemMaxUse } from '../src/engine/journal-files';
 
@@ -79,7 +79,7 @@ describe('rsyslog and the journal', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('huts'))
   describe(`The Huts — ${language}`, () => {
     const fr = language === 'fr';
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);

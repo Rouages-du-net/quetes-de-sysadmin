@@ -22,12 +22,28 @@
 // everything (loadAllTexts(), tests/setup.ts).
 
 import { FluentBundle, FluentResource, type FluentVariable } from '@fluent/bundle';
-import { GROUPS, LANGUAGES as KNOWN } from 'virtual:qds-texts';
+import { GROUPS, LANGUAGES as KNOWN, TRANSLATED } from 'virtual:qds-texts';
 import { NeedsLoading } from '../engine/loading';
+import INFO from './languages.json';
 
 export const REFERENCE_LANGUAGE = 'en';
 export const LANGUAGE_BY_DEFAULT = 'en';
 export const LANGUAGES: string[] = [...KNOWN];
+
+// A language is complete (every file, every story) or a draft (languages.json):
+// a translation in progress, file by file. A draft's missing text shows in
+// English; a story it doesn't translate yet is played with the English world
+// (see translator()). The site builds a draft's pages but neither indexes nor
+// offers them (src/site-languages.ts).
+const LANGUAGE_INFO: Record<string, { name: string; status: 'complete' | 'draft' }> = INFO.languages as never;
+/** Is this language complete? (A language languages.json doesn't list is a draft.) */
+export const isComplete = (language: Language) => LANGUAGE_INFO[language]?.status === 'complete';
+/** The complete languages: those the site offers, those every quest is replayed in. */
+export const COMPLETE_LANGUAGES: string[] = LANGUAGES.filter(isComplete);
+/** A language's own name (Español). */
+export const languageName = (language: Language) => LANGUAGE_INFO[language]?.name ?? language;
+/** Does this language translate this story (a complete one: all of them; a draft: those whose every file it has)? */
+export const storyTranslated = (language: Language, story: string) => isComplete(language) || (TRANSLATED[language] ?? []).includes(story);
 export type Language = string;
 export type Variables = Record<string, FluentVariable>;
 export type Translate = ((id: string, variables?: Variables) => string) & {
@@ -99,13 +115,17 @@ export function loadTexts(language: Language | undefined, group: string): Promis
       : group === 'fallbacks'
         ? fallbacks(chosen).map((l) => `${l}/core`)
         : [`${chosen}/${group}`];
-  return Promise.all(keys.map(loadGroup)).then(() => undefined);
+  return Promise.all(withEnglish(chosen, keys).map(loadGroup)).then(() => undefined);
 }
+
+// A draft lacks texts English has: each of its groups comes with English's.
+const withEnglish = (language: Language, keys: string[]) =>
+  isComplete(language) ? keys : [...new Set([...keys, ...keys.map((k) => `${REFERENCE_LANGUAGE}/${k.split('/')[1]}`)])];
 
 /** Is this group loaded in this language? */
 export const textsLoaded = (language: Language | undefined, group: string) => {
   const chosen = gameLanguage(language);
-  const keys = group === 'fallbacks' ? fallbacks(chosen).map((l) => `${l}/core`) : [`${chosen}/${group}`];
+  const keys = withEnglish(chosen, group === 'fallbacks' ? fallbacks(chosen).map((l) => `${l}/core`) : [`${chosen}/${group}`]);
   return keys.every((key) => loaded.has(key) || !GROUPS[key]);
 };
 
@@ -128,12 +148,24 @@ export function gameLanguage(language?: string | null): Language {
   return (l && (known(l) ?? known(l.split('-')[0]))) || LANGUAGE_BY_DEFAULT;
 }
 
-export function translator(language?: Language): Translate {
+// The texts that make a story's world: the names of its places and objects,
+// its machines and its passwords (not the player's account, which the
+// workstation shares with every story).
+const WORLD = /^(name|machine|password)-/;
+
+/**
+ * The texts of a language. With a story (a machine's chapter, see Shell): in
+ * a draft language that doesn't translate that story yet, its world keeps its
+ * English names (the story's texts, in English, name them so), while the
+ * commands answer in the language.
+ */
+export function translator(language?: Language, story?: string): Translate {
   const chosen = gameLanguage(language);
   const order = fallbacks(chosen).map(pkg);
+  const english = story && !storyTranslated(chosen, story) ? [pkg(REFERENCE_LANGUAGE)] : null;
   const find = (id: string) => {
     const [name, attribute] = id.split('.');
-    for (const b of order) {
+    for (const b of english && WORLD.test(name) && name !== 'name-you' ? english : order) {
       const m = b.getMessage(name);
       const pattern = attribute ? m?.attributes[attribute] : m?.value;
       if (pattern) return { b, pattern };

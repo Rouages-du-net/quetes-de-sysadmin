@@ -9,8 +9,8 @@ import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { readNice, readQuota, shares, weight } from '../src/engine/cpu';
 import { systemd } from '../src/engine/systemd';
 import { GALLERY, WORKERS, galleryTime } from '../src/engine/chapters/observatory';
@@ -50,7 +50,7 @@ describe('The processor model', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('observatory'))
   describe(`The Observatory — ${language}`, () => {
     const fr = language === 'fr';
     const L = (line: string) => inLanguage(translator(language), machinesInLanguage(translator(language), line));

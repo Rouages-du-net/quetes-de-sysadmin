@@ -687,6 +687,15 @@ them safely.
   nginx's `map` and `log_format`, journald's `MaxRetentionSec=`, psql's
   WHERE with dates, `INSERT`, `--csv`, restic's `--keep-within`).
 
+- [x] **A Red Hat family machine** (Rocky Linux 10): the other family's
+  tools for a Debian sysadmin (dnf, rpm, firewalld's two configurations),
+  then SELinux (labels kept by mv, semanage fcontext and restorecon, a port
+  type, a boolean with -P, audit2why's suggestions and audit2allow's
+  modules as false leads). Done: story 48, "The Language Café"
+  (`rhel.ts`, `selinux.ts`, `firewalld.ts`, `rpm.ts`, `httpd-rhel.ts`;
+  the `rhel` family). Later: updates (`dnf updateinfo`, `--security`,
+  `dnf history undo`, `dnf needs-restarting -r`).
+
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within
   their RPO), a rebuild on a spare machine after a flood, the switch, the
@@ -694,6 +703,14 @@ them safely.
   `sftp:` repositories and `snapshots --path/--host/--latest/--json`, the
   `postgresql` package, a story's own curl between its machines through
   `state.storyCurl`).
+
+- [x] **Infrastructure as code** (OpenTofu): a record added through the
+  code (init, fmt, validate, a variable, plan, apply), then the drift of an
+  incident: a forgotten run holding the state lock, a hand change the code
+  must follow, a record adopted with import. Done: story 49, "The Mapping
+  Party" (`hcl.ts`: HCL and `tofu fmt`; `tofu.ts`: the hashicorp/dns
+  provider on the game's BIND, the local state and its lock, plans and
+  drift, import; the `iac` family; four errors in the error explainer).
 
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a

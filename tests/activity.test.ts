@@ -9,8 +9,8 @@ import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { instants } from '../src/engine/activity';
-import { LANGUAGES } from '../src/texts';
-import { machinesInLanguage } from './names';
+import { machinesInLanguage, languagesFor } from './names';
+import { name, password } from '../src/engine/world';
 
 const BEFORE = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('letters'), 'shut-the-door', 'firewall'])];
 const ROBOT = '198.51.100.23';
@@ -23,7 +23,7 @@ describe('instants', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('letters'))
   describe(`The sentinel live — ${language}`, () => {
     const part = () => {
       const c = new Console({ language, finished: BEFORE });
@@ -87,7 +87,7 @@ for (const language of LANGUAGES)
     });
   });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('datacenter'))
   describe(`First day live — ${language}`, () => {
     const eraser = STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id);
     it('tail -f: the bot gets 503s while the service is saturated, 403s once blocked', () => {
@@ -95,10 +95,10 @@ for (const language of LANGUAGES)
       const play = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
       play(['ssh datacenter', 'yes', 'tail -f /var/log/nginx/access.log']);
       expect(c.follows).toBe(true);
-      const search = language === 'fr' ? 'recherche' : 'search';
+      const search = name(c.t, 'search');
       expect(c.follow(6)).toMatch(new RegExp(`^198\\.51\\.100\\.77 .*"GET /catalogue/${search}\\?q=\\w+ HTTP/1\\.1" 503 197$`, 'm'));
       c.interrupt();
-      play(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', 'welcome-2026', 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
+      play(['echo "deny 198.51.100.77;" | sudo tee -a /etc/nginx/blocked.conf', password(c.t, 'welcome-2026'), 'sudo systemctl reload nginx', 'tail -f /var/log/nginx/access.log']);
       const after = c.follow(10);
       expect(after).toMatch(/^198\.51\.100\.77 .* 403 153$/m);
       expect(after).not.toMatch(/^198\.51\.100\.77 .* 503 /m);

@@ -30,6 +30,7 @@ import type * as Directory from './families/directory';
 import type * as Docker from './families/docker';
 import type * as Forge from './families/forge';
 import type * as Ha from './families/ha';
+import type * as Iac from './families/iac';
 import type * as Ibmi from './families/ibmi';
 import type * as Inbound from './families/inbound';
 import type * as Jq from './families/jq';
@@ -43,6 +44,7 @@ import type * as Objects from './families/objects';
 import type * as Postfix from './families/postfix';
 import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
+import type * as Rhel from './families/rhel';
 import type * as Rsnapshot from './families/rsnapshot';
 import type * as Samba from './families/samba';
 import type * as Security from './families/security';
@@ -61,6 +63,7 @@ export const FAMILIES = {
   docker: () => import('./families/docker'),
   forge: () => import('./families/forge'),
   ha: () => import('./families/ha'),
+  iac: () => import('./families/iac'),
   ibmi: () => import('./families/ibmi'),
   inbound: () => import('./families/inbound'),
   jq: () => import('./families/jq'),
@@ -74,6 +77,7 @@ export const FAMILIES = {
   postfix: () => import('./families/postfix'),
   postgres: () => import('./families/postgres'),
   prometheus: () => import('./families/prometheus'),
+  rhel: () => import('./families/rhel'),
   rsnapshot: () => import('./families/rsnapshot'),
   samba: () => import('./families/samba'),
   security: () => import('./families/security'),
@@ -93,6 +97,7 @@ interface Hooks {
   docker: typeof Docker.HOOKS;
   forge: typeof Forge.HOOKS;
   ha: typeof Ha.HOOKS;
+  iac: typeof Iac.HOOKS;
   ibmi: typeof Ibmi.HOOKS;
   inbound: typeof Inbound.HOOKS;
   jq: typeof Jq.HOOKS;
@@ -106,6 +111,7 @@ interface Hooks {
   postfix: typeof Postfix.HOOKS;
   postgres: typeof Postgres.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
+  rhel: typeof Rhel.HOOKS;
   rsnapshot: typeof Rsnapshot.HOOKS;
   samba: typeof Samba.HOOKS;
   security: typeof Security.HOOKS;

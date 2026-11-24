@@ -11,7 +11,8 @@
 // English's core for another language (the fallback), the chapters'
 // summaries, the manual's pages, the rarely opened dialogs (*-dialog.*.js,
 // src/interface/lazy-dialog.ts), the stories and the engine families they
-// bring (src/engine/families.ts).
+// bring (src/engine/families.ts). A draft language (src/texts/languages.json)
+// fetches English's core at once too, for the texts it lacks.
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -38,21 +39,22 @@ export function closure(start, dist) {
 // with "game-" (game-library.<hash>.js, game-library-<hash>.js).
 const GAME = /^game(\.[\w-]+|-[\w-]{8})\.js$/;
 
-/** The chunks the element fetches at once, in a directory of chunks. */
-export function elementChunks(dir, language) {
+/** The chunks the element fetches at once, in a directory of chunks (with English's core for a draft language). */
+export function elementChunks(dir, language, draft = false) {
   if (!existsSync(dir)) return [];
+  const cores = draft ? [language, 'en'] : [language];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => GAME.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
+    .filter((f) => GAME.test(f) || cores.some((l) => new RegExp(`^texts-${l}--core[.-]`).test(f)) || /^texts-.+--shared[.-]/.test(f))
     .sort()
     .map((f) => join(dir, f));
 }
 
 /** A site page's first visit (path like "en"), its files on disk. */
-export function pageFirstVisit(dist, path, language) {
+export function pageFirstVisit(dist, path, language, draft = false) {
   const html = readFileSync(join(dist, path, 'index.html'), 'utf8');
   const refs = [...html.matchAll(/<(?:script[^>]*src|link[^>]*rel="stylesheet"[^>]*href)="([^"]+)"/g)].map((m) => join(dist, m[1]));
-  return closure([...refs, ...elementChunks(join(dist, '_astro'), language)], dist);
+  return closure([...refs, ...elementChunks(join(dist, '_astro'), language, draft)], dist);
 }
 
 /** The embeddable file's first visit (in English, the language without a page to say otherwise). */

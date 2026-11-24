@@ -5,11 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { parseCl, bind, isError } from '../src/engine/cl';
 import { CL } from '../src/engine/commands/ibmi';
 import { COMMANDS } from '../src/engine/commands';
+import { name, password } from '../src/engine/world';
+import { machineName } from '../src/engine/machines';
 
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('order-book')])];
 
@@ -38,12 +40,13 @@ describe('CL, the command analyser', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('order-book'))
   describe(`The Order Book — ${language}`, () => {
     const fr = language === 'fr';
-    const PASSWORD = fr ? 'meule-2029' : 'millstone-2029';
-    const PROFILE = fr ? 'vous' : 'you';
-    const SIEVE = fr ? 'tamis' : 'sieve';
+    const t = translator(language);
+    const PASSWORD = password(t, 'millstone-2029');
+    const PROFILE = name(t, 'you');
+    const SIEVE = machineName(t, 'sieve');
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {

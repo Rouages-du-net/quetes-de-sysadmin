@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { explain } from '../src/engine/explainer';
 import { readMonConf, readSched, readUpsConf, readUsers, readUpsdConf, shutdownKind, splitName, words } from '../src/engine/nut';
 
@@ -47,7 +47,7 @@ describe('The Climbing Wall: the engine', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('climbing-wall'))
   describe(`The Climbing Wall — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

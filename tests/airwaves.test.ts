@@ -10,8 +10,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { addExtension, parseSubj, readConf, readIndex, verify, writeIndex, type Extensions } from '../src/engine/pki';
 import { ARCHIVE_CERT, INTRANET_NEW, INTRANET_OLD, ISSUING, LAPTOPS, ROOT, ROOT_CRL, booth } from '../src/engine/chapters/airwaves';
 
@@ -105,7 +105,7 @@ describe('PKI: names, extensions, the database, chain building', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('airwaves'))
   describe(`The Airwaves — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -148,9 +148,9 @@ for (const language of LANGUAGES)
       expect(all).toMatch(/-rw-r--r-- 1 root root +\d+ .* ca\.key/);
       contains(all, 'chmod 600');
       all = run('sudo chmod 600 /srv/ca/private/ca.key', 'sudo chmod 700 /srv/ca/private', 'cat /srv/ca/private/ca.key');
-      expect(all).toMatch(/Permission (denied|non accordée)/);
+      expect(all).toMatch(/(Permission (denied|non accordée)|Permiso denegado)/);
       run('openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out intranet.key');
-      expect(run('ls -l intranet.key')).toMatch(/^-rw------- 1 (you|vous) (you|vous)/);
+      expect(run('ls -l intranet.key')).toMatch(/^-rw------- 1 (you|vous|tu) (you|vous|tu)/);
       run('openssl req -new -key intranet.key -subj /CN=intranet.airwaves.internal -addext "subjectAltName=DNS:intranet.airwaves.internal,DNS:board.airwaves.internal" -out intranet.csr');
       expect(run('openssl req -in intranet.csr -noout -text')).toContain('Requested Extensions:\n                    X509v3 Subject Alternative Name: \n                        DNS:intranet.airwaves.internal, DNS:board.airwaves.internal');
       all = run('sudo openssl x509 -req -in intranet.csr -CA /srv/ca/ca.crt -CAkey /srv/ca/private/ca.key -days 365 -copy_extensions copy -out intranet.crt');

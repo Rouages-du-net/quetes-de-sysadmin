@@ -9,9 +9,10 @@ identifier exists in English. It is also the default and fallback language:
 without a requested language (no `lang` attribute on the element or the
 page), or in a language the game doesn't know, the game speaks English; a
 text missing from a translation shows in English (`LANGUAGE_BY_DEFAULT` and
-`gameLanguage()` in `src/texts/index.ts`). The `help` command works in every
+`gameLanguage()` in `src/texts/index.ts`); see "Complete and draft languages"
+below. The `help` command works in every
 language, like bash's builtin; each language adds its own name for it
-(`command-help`: `aide` in French).
+(`command-help`: `aide` in French, `ayuda` in Spanish).
 
 ## The files
 
@@ -171,21 +172,107 @@ write in their language: read the comment above the message.
 
 ## Available languages
 
+Each language is **complete** or a **draft**, in `src/texts/languages.json`.
+
 | Code | Language | Status |
 |---|---|---|
 | `en` | English | reference, default and fallback language; complete (texts, manual, tool messages as with `LANG=C`, names of the Eraser's and the workstation's places and objects, documents and data on the other stories' servers, `you` and `eraser` accounts) |
 | `fr` | French | complete; the project's original language: translation of the English names of places, machines, accounts and passwords |
+| `es` | Spanish | draft: the interface, the dialogs, the shell's and the commands' messages (from the Spanish catalogues of the [Translation Project](https://translationproject.org/team/es.html) and of git: `ls: no se puede acceder a…`, `No existe el fichero o el directorio`), the names of places, objects, machines and passwords, the workstation, The Eraser, the stories' titles and summaries, the whole manual (every page; command names, options, paths and quoted tool messages stay as the tools write them). `npm run coverage:texts -- es` says what is left |
+
+Spanish is neutral international Spanish, usable in Spain and in Latin
+America, with the informal "tú", like the French "tu"; inclusive where it is
+natural, through neutral phrasing ("el alumnado", "quien juega") rather than
+heavy forms. In prose, a file is an *archivo* and a directory a *carpeta*
+(*directorio* in the manual); the tools' own messages keep their official
+translation (*fichero*). Names you type have no accent and no ñ
+(`EscuelaDeSenales`, `contrasena`).
+
+## Complete and draft languages
+
+A **complete** language has every file of `src/texts/en/`, each with exactly
+the same texts. It is offered: the root sends browsers to it
+(`public/.htaccess`), the other pages link to it, every quest is replayed in
+it.
+
+A **draft** is a translation in progress, file by file:
+
+- each file it has holds exactly the texts of its English counterpart
+  (`tests/texts.test.ts`); a missing file shows in English (the draft loads
+  English's group with each of its own, `withEnglish` in
+  `src/texts/index.ts`);
+- the manual (`manual.ftl`, one file of more than 600 pages) goes page by
+  page: a page is whole (its summary and every attribute of English's) or
+  absent, and the manual's own messages (headers, option errors) are all
+  there;
+- a story is translated once every one of its files is: its
+  `chapter-*.ftl` and `hints-*.ftl` (listed in `src/engine/catalogue.json`)
+  and its own file when it has one (`<story>.ftl`, or the ones `storyFiles`
+  of `languages.json` names). A story the draft doesn't translate yet is
+  played with its **English world**: its places, files, machine and
+  passwords keep their English names, as its English texts quote them,
+  while the interface and the commands' messages are in the language (the
+  story's translator, `translator(language, story)`; `machineName()` for its
+  machine on the workstation). The player's account stays the language's
+  everywhere;
+- the tests replay, in a draft, the stories it translates
+  (`languagesFor()` in `tests/names.ts`), and check that it translates The
+  Eraser and the core files first;
+- the site builds its pages (`/es/`, `/es/docentes/`…, see
+  `src/site-languages.ts`) with a banner ("translation in progress"),
+  `noindex`, and no link from the other languages nor redirection from the
+  root: nobody lands there by chance on a game half in English. The
+  installed app doesn't precache it.
+
+`npm run coverage:texts` lists, for each draft, the files and the manual's
+pages still in English, story by story.
 
 ## Adding a language
 
-1. Copy `src/texts/en/` to `src/texts/<code>/` (a BCP 47 code: `de`,
-   `es`, `zh-Hans`, `ko`…) and translate. A missing text shows in English:
-   you can go file by file.
-2. `npm test`: checks that the files are valid, with no duplicate
-   identifier, none unknown in English, none missing, and replays every quest
-   in every language.
-3. If the language needs them, add its typographic rules in `typography()`
-   (`src/texts/index.ts`): French non-breaking spaces are an example.
+1. Add it to `src/texts/languages.json` as a `draft`, and create
+   `src/texts/<code>/` (a BCP 47 code: `de`, `zh-Hans`, `ko`…).
+2. Translate the core first, in this order: `interface.ftl`, the
+   `dialog-*.ftl`, `start-here.ftl`, `feedback.ftl`, `shell.ftl` and the
+   `commands-*.ftl` (the tools' messages, from their official translation),
+   `explainer.ftl` (its `.match` lists the messages as your language prints
+   them), `machines.ftl`, `names.ftl` and `passwords.ftl` (all of them: a
+   name applies to every story), `desk.ftl`, `stories.ftl`, the manual's own
+   messages and its everyday pages, then The Eraser.
+3. Add the site's pages: `src/pages/<code>/` mirroring `src/pages/en/`, the
+   addresses in `PAGES` of `src/site-languages.ts`, the layout's texts in
+   `src/layouts/Base.astro` and the components (`Sheets.astro`,
+   `StorySheet.astro`, `Classroom.astro`), the teachers' page in
+   `TEACHERS_PAGE` of `src/engine/start-here.ts`, and the first visit's
+   budget in `tests/budget.mjs`.
+4. If the language needs them, add its typographic rules in `typography()`
+   (`src/texts/index.ts`), its "yes" in the tools' questions (`YES` in
+   `src/engine/commands/files.ts`, ufw's in `commands/ufw.ts`).
+5. `npm test`, then `npm run coverage:texts`.
+
+When every file and every page is translated, switch the language to
+`complete` in `languages.json`: the tests then require every file, the site
+offers it, and the root's redirection in `public/.htaccess` must name it
+(`tests/languages.test.ts` checks it).
+
+## Translating one story
+
+A story is a unit of work that several translators can share, each one a
+story:
+
+1. `npm run coverage:texts -- es` lists the story's files still in English.
+2. Translate each of them whole: the chapters (`chapter-<id>.ftl`), the
+   hints (`hints-<story>.ftl`) and the story's own file if it has one. Use
+   the names, machines and passwords already in `names.ftl`,
+   `machines.ftl` and `passwords.ftl`: they are shared by every story (if a
+   name must change, change it there, and update
+   `tests/names/renamed.<language>.txt`). The files the texts describe
+   (configurations, logs, sudoers) are written with the language's names
+   and accounts.
+3. Once its last file is there, the story is played in the language: its
+   tests run in it (`npx vitest run tests/<story>.test.ts`), and the game
+   switches its world to the language's names.
+4. The manual's pages of the commands the story introduces are welcome
+   too (`man-<command>` in `manual.ftl`, whole pages).
 
 The Fluent format is supported by free translation platforms
 ([Weblate](https://weblate.org), [Pontoon](https://pontoon.mozilla.org)),

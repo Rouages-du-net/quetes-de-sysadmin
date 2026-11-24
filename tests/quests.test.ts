@@ -1,15 +1,17 @@
 // Each chapter is replayed to the end (expected solution), with false
 // leads along the way: the engine must refuse them without blocking the
-// game. Games are replayed in every available language; the expected
-// texts are checked in French (the reference language of these tests).
+// game. Games are replayed in every available language (a draft language,
+// src/texts/languages.json: in the stories it translates already); the
+// expected texts are checked in French (the reference language of these tests).
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it as vitestIt, type TestContext } from 'vitest';
+import { storyOfChapter } from '../src/engine/catalogue';
 import { machineName } from '../src/engine/machines';
 import { Shell } from '../src/engine/shell';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator, typography } from '../src/texts';
+import { LANGUAGES, storyTranslated, translator, typography } from '../src/texts';
 import { clean, name } from '../src/engine/world';
 import { inLanguage, machinesInLanguage } from './names';
 import { withoutColours } from '../src/engine/colours';
@@ -18,19 +20,39 @@ const chapter = (id: string) => STORIES.flatMap((h) => h.chapters).find((c) => c
 // Every command a chapter lists, each once.
 const allCommands = () => [...new Set(STORIES.flatMap((h) => h.chapters.flatMap((c) => c.commands)))];
 
+// A chapter of a story the language doesn't translate yet (a draft): its test is skipped.
+class Untranslated extends Error {}
+
 for (const language of LANGUAGES)
   describe(`Language: ${language}`, () => {
+    const it = (title: string, options: { timeout?: number } | (() => void), body?: () => void) => {
+      const test = typeof options === 'function' ? options : body!;
+      return vitestIt(title, typeof options === 'function' ? {} : options, (context: TestContext) => {
+        try {
+          test();
+        } catch (e) {
+          if (e instanceof Untranslated) context.skip(e.message);
+          else throw e;
+        }
+      });
+    };
+    const translated = (id: string) => {
+      if (!storyTranslated(language, storyOfChapter(id) ?? '')) throw new Untranslated(`${language} doesn't translate ${storyOfChapter(id)} yet`);
+    };
     const reference = language === 'fr';
     // A line written with the French names, in the game's language.
     const L = (line: string) => inLanguage(translator(language), line);
     // A single name of the world, in the game's language (convert → convertir in French).
     const N = (word: string) => name(translator(language), word);
+    // The Kiosk's footer in the game's language ("Kiosque 1.5.0" in French).
+    const kioskFooter = (version: string) => /<footer>(.*)<\/footer>/.exec(translator(language)('kiosk-welcome', { version }))![1];
     // An expected text, checked only in the reference language.
     const contains = (all: string, text: string) => {
       if (reference) expect(all).toContain(text);
     };
 
     function play(id: string, commands: string[]) {
+      translated(id);
       const s = new Shell(chapter(id), language);
       // In the reference language, the game is played with colours, as in the
       // interface: events must ignore them (see colours.ts).
@@ -852,6 +874,7 @@ for (const language of LANGUAGES)
       };
 
       it('solution, tested from the workstation: ufw is not enough, port bound to 127.0.0.1, clean-up', () => {
+        translated('firewall-hole');
         const c = new Console({ language, finished: BEFORE });
         const playC = (lines: string[]) => lines.map((l) => c.execute(machinesInLanguage(c.t, l)) ?? '').join('\n');
         expect(playC(['nc -zv workshop 5432'])).toContain(`Connection to ${machineName(c.t, 'workshop')} (192.0.2.15) 5432 port [tcp/postgresql] succeeded!`);
@@ -925,7 +948,7 @@ for (const language of LANGUAGES)
           .join('\n');
         expect(end).toContain('uid=1001 gid=1001 groups=1001');
         expect(end).toMatch(/^yasmine\s+\d+.*node server\.js$/m);
-        expect(end).toContain('14 photos');
+        expect(end).toContain(translator(language)('full-powers-gallery-welcome', { count: 14 }));
         contains(end, 'Tu as terminé le chapitre 4 de La Fabrique');
         expect(s.finished).toBe(true);
       });
@@ -986,7 +1009,10 @@ for (const language of LANGUAGES)
         edit(s, '/srv/git/gazette.git/hooks/post-receive', () => HOOK);
         s.execute('chmod +x /srv/git/gazette.git/hooks/post-receive');
         s.execute('cd ~/gazette');
-        edit(s, 'index.html', (t) => t.replaceAll('Gazzette', 'Gazette'));
+        // The title's typo, as each language writes it (Gazzette → Gazette in English).
+        const titles = translator(language);
+        const rightTitle = /<h1>(.*)<\/h1>/.exec(titles('bare-repo-site-index-theo'))![1];
+        edit(s, 'index.html', (t) => t.replaceAll(titles('bare-repo-title-mistake'), rightTitle));
         if (reference) expect(s.execute('git commit -am "Title: Gazette, no typo"')).toContain('2 insertions(+), 2 suppressions(-)');
         s.execute('git remote add prod /srv/git/gazette.git');
         const push = s.execute('git push prod main') ?? '';
@@ -1128,7 +1154,7 @@ for (const language of LANGUAGES)
         const end = ['sudo nginx -t', 'sudo systemctl reload nginx'].map((l) => s.execute(l)).join('\n');
         expect(end).toContain('test is successful');
         contains(end, 'Tu as terminé le chapitre 3 de La Gazette');
-        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.5.0`);
+        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(kioskFooter('1.5.0'));
         expect(s.finished).toBe(true);
       });
 
@@ -1188,7 +1214,7 @@ for (const language of LANGUAGES)
         expect(s.finished).toBe(false);
         site(s, (t) => t.replace('3002 weight=9;', '3002 weight=9 down;'));
         contains(reload(s), 'Tu as terminé le chapitre 4 de La Gazette');
-        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(`${reference ? 'Kiosque' : 'Kiosk'} 1.6.1`);
+        expect(s.execute('curl -s http://gazette.example/kiosk/')).toContain(kioskFooter('1.6.1'));
         expect(s.finished).toBe(true);
       });
 
@@ -1272,12 +1298,12 @@ for (const language of LANGUAGES)
           MDP,
         ]);
         expect(all).toMatch(/^6$/m);
-        const quiet = reference ? '--silencieux' : '--quiet';
+        const quiet = translator(language)('ransom-option-quiet');
         // procps cuts a user name longer than 8 characters: frontde+.
         expect(all).toMatch(new RegExp(`^${(L('frontdesk').length > 8 ? `${L('frontdesk').slice(0, 7)}\\+` : L('frontdesk'))} +3141  97\\.3   1\\.4 ${L('/home/frontdesk/.cache/.upd/system-update')} ${quiet}$`, 'm'));
         expect(all).toContain(`${L('*/10 * * * * /home/frontdesk/.cache/.upd/system-update')} ${quiet}`);
         expect(all).toContain(`Accepted password for ${L('frontdesk')} from 203.0.113.66`);
-        expect(all).toContain(reference ? 'SAUVEGARDE' : 'BACKUP');
+        expect(all).toContain(translator(language)('ransom-usb-label'));
         if (reference) expect(all).toContain('touch: /mnt/cle/testfile: Système de fichiers accessible en lecture seulement');
         expect(all).toContain('Summary: Restored 6 files/dirs');
         contains(all, 'On ne paie pas');
@@ -1395,7 +1421,7 @@ for (const language of LANGUAGES)
           `${PG} pg_restore -d gamelib_test ${DUMP}`,
         ]);
         expect(all).toContain(L('FATAL:  role "you" does not exist'));
-        expect(all).toContain(reference ? ' public | prets   | table | ludo' : ' public | loans      | table | gamelib');
+        expect(all).toMatch(new RegExp(` public \\| ${L('loans')} +\\| table \\| ${L('gamelib')}`));
         contains(all, 'sudo -u postgres (man sudo)');
         contains(all, 'la sauvegarde se restaure');
         // The next command: the incident.
@@ -1852,6 +1878,34 @@ for (const language of LANGUAGES)
         '- Restart the relay after every change.',
       ].join('\n');
 
+      // The same post-mortem, written in Spanish.
+      const POSTMORTEM_ES = [
+        '# Post-mortem: corte del directo, noche del 11 al 12 de septiembre de 2027',
+        '',
+        '## Resumen',
+        'El directo se cortó el domingo por la noche, y luego Théo lo volvió a arrancar.',
+        '',
+        '## Cronología',
+        '- 02:13: la actualización automática reinicia el repetidor, que no vuelve.',
+        '- 02:15: primera alerta de la sonda.',
+        '- 02:41: Théo se conecta.',
+        '- 02:58: el repetidor vuelve.',
+        '',
+        '## Impacto',
+        '45 minutos de silencio en el directo.',
+        '',
+        '## Causas',
+        'unattended-upgrades (needrestart) reinició el repetidor; una opción desconocida (bitrate_max) esperaba en stream.conf desde el 20 de agosto.',
+        '',
+        '## Lo que funcionó bien',
+        'La sonda avisó en 2 minutos.',
+        '',
+        '## Acciones',
+        '- Comprobar la configuración antes de cada reinicio (ExecStartPre=).',
+        '- Reiniciar el repetidor después de cada cambio.',
+      ].join('\n');
+      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES };
+
       it('solution: the night’s logs, then the complete post-mortem', () => {
         const { s, tout: all } = play('post-mortem', [
           'cat notes_theo.txt',
@@ -1870,7 +1924,7 @@ for (const language of LANGUAGES)
         expect(all).toContain(' systemctl restart radio-stream.service');
         contains(all, 'trois semaines');
         s.execute('nano postmortem.md');
-        s.saveEdition(reference ? POSTMORTEM : POSTMORTEM_IN);
+        s.saveEdition(written[language] ?? POSTMORTEM_IN);
         contains(s.quitEdition(), 'Tu as terminé L');
         expect(s.finished).toBe(true);
       });

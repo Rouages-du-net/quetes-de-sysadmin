@@ -3,7 +3,7 @@
 // (RFC 6761). The SSH keys and fingerprints are fake but have the shape of
 // real ones (ed25519), and never change: the game stays deterministic.
 
-import type { Translate } from '../texts';
+import { storyTranslated, type Translate } from '../texts';
 
 export interface Machine {
   // The machine's identifier (in French); the name you type depends on the language (machineName).
@@ -17,7 +17,7 @@ export interface Machine {
   withoutKey?: boolean;
   // Another system than Debian (see freebsd.ts): its login banner. A Windows
   // Server (windows.ts) shows no banner: its OpenSSH lands in cmd or PowerShell.
-  os?: 'freebsd' | 'solaris' | 'ibmi' | 'windows';
+  os?: 'freebsd' | 'solaris' | 'ibmi' | 'windows' | 'rhel';
 }
 
 const machine = (name: string, address: string, story?: string, withoutKey = false): Machine => ({
@@ -114,10 +114,22 @@ export const MACHINES: Machine[] = [
   machine('wings', '192.0.2.160', 'dance-troupe'),
   // The Shelter: the animal shelters' offsite server (restic repository, the written plan, hidden primary DNS); paddock and haven are internal hosts.
   machine('meadow', '192.0.2.164', 'shelter'),
+  // The Language Café: a nonprofit's Rocky Linux 10 server (httpd, firewalld, SELinux); noticeboard, the café's screen, is an internal host.
+  { ...machine('kettle', '192.0.2.170', 'language-cafe'), os: 'rhel' },
+  // The Mapping Party: a mapping collective's DNS server (BIND), its zone kept as code with OpenTofu.
+  machine('cairn', '192.0.2.176', 'mapping-party'),
 ];
 
-/** A machine's name in the language (machines.ftl: royaume → kingdom); a machine without a translation keeps its own. */
-export const machineName = (t: Translate, id: string) => (t.exists(`machine-${id}`) ? t(`machine-${id}`) : id);
+/**
+ * A machine's name in the language (machines.ftl: royaume → kingdom); a
+ * machine without a translation keeps its own, and so does the machine of a
+ * story a draft language doesn't translate yet (its texts, in English, name it so).
+ */
+export const machineName = (t: Translate, id: string) => {
+  const story = MACHINES.find((m) => m.name === id)?.story;
+  if (story && !storyTranslated(t.language, story)) return id;
+  return t.exists(`machine-${id}`) ? t(`machine-${id}`) : id;
+};
 /** Its full name (royaume.internal → kingdom.internal). */
 export const machineDomain = (t: Translate, m: Machine) => `${machineName(t, m.name)}.internal`;
 

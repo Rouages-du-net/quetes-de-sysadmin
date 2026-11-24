@@ -19,7 +19,9 @@ import { embedFirstVisit, pageFirstVisit } from '../src/pwa/first-load.mjs';
 // the auditor's among them, the manual's examples, the chapters' summaries
 // and English's core for another language left the first visit); raise it
 // on purpose, not by habit.
-const BUDGET = { '/en/': 536_000, '/fr/': 541_000, embed: 568_000 };
+// Spanish, a draft (src/texts/languages.json), fetches English's core with
+// its own: 15 % over what it weighed when it was added (514 KiB).
+const BUDGET = { '/en/': 536_000, '/fr/': 541_000, '/es/': 605_000, embed: 568_000 };
 
 const report = process.argv.includes('--report');
 const dist = report ? process.argv[process.argv.indexOf('--report') + 1] : 'dist';
@@ -30,6 +32,7 @@ let failed = false;
 for (const [name, files] of [
   ['/en/', pageFirstVisit(dist, 'en', 'en')],
   ['/fr/', pageFirstVisit(dist, 'fr', 'fr')],
+  ['/es/', pageFirstVisit(dist, 'es', 'es', true)],
   ['embed', embedFirstVisit(dist)],
 ]) {
   const content = files.map((f) => readFileSync(f));

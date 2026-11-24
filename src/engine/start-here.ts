@@ -51,7 +51,7 @@ export interface Recommendation {
 }
 
 // The teachers' page of each language of the site (English otherwise).
-export const TEACHERS_PAGE: Record<string, string> = { en: '/en/teachers/', fr: '/fr/enseignants/' };
+export const TEACHERS_PAGE: Record<string, string> = { en: '/en/teachers/', fr: '/fr/enseignants/', es: '/es/docentes/' };
 
 // The path of each system of interest. Linux alone depends on the goal: the
 // web for curiosity, backups for studies (the basics every exam asks for),

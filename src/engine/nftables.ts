@@ -820,7 +820,7 @@ export const readSysctl = (j: Game, key: string) => j.read(`/proc/sys/${key.repl
 export const routing = (j: Game) => readSysctl(j, 'net.ipv4.ip_forward') === '1' || readSysctl(j, 'net.ipv4.conf.all.forwarding') === '1';
 
 // A source port derived from the device's name (always the same).
-const portSource = (name: string, port: number) => {
+export const portSource = (name: string, port: number) => {
   let h = port;
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return 40000 + (h % 20000);

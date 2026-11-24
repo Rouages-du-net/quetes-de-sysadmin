@@ -5775,6 +5775,195 @@
      "events": 19
     }
    ]
+  },
+  {
+   "id": "language-cafe",
+   "after": [
+    "firewall",
+    "proxy"
+   ],
+   "texts": [
+    "chapter-new-neighbour.ftl",
+    "chapter-port-and-boolean.ftl",
+    "chapter-wrong-label.ftl",
+    "hints-language-cafe.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "new-neighbour",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "curl",
+      "ssh",
+      "exit",
+      "hostnamectl",
+      "uname",
+      "dnf",
+      "rpm",
+      "firewall-cmd",
+      "getenforce",
+      "setenforce",
+      "sestatus"
+     ],
+     "events": 13
+    },
+    {
+     "id": "wrong-label",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "ssh",
+      "exit",
+      "ps",
+      "id",
+      "mv",
+      "cp",
+      "chmod",
+      "find",
+      "dnf",
+      "rpm",
+      "getenforce",
+      "setenforce",
+      "sestatus",
+      "getsebool",
+      "setsebool",
+      "chcon",
+      "restorecon",
+      "semanage",
+      "ausearch",
+      "audit2why",
+      "audit2allow",
+      "semodule"
+     ],
+     "events": 15
+    },
+    {
+     "id": "port-and-boolean",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ss",
+      "curl",
+      "ssh",
+      "exit",
+      "dnf",
+      "rpm",
+      "firewall-cmd",
+      "getenforce",
+      "setenforce",
+      "getsebool",
+      "setsebool",
+      "semanage",
+      "ausearch",
+      "audit2why",
+      "audit2allow",
+      "semodule",
+      "restorecon",
+      "chcon"
+     ],
+     "events": 14
+    }
+   ]
+  },
+  {
+   "id": "mapping-party",
+   "after": [
+    "works-for-me",
+    "playbook"
+   ],
+   "texts": [
+    "chapter-drift.ftl",
+    "chapter-first-plan.ftl",
+    "hints-mapping-party.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "first-plan",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "dig",
+      "host",
+      "rndc",
+      "named-checkzone",
+      "tofu",
+      "exit"
+     ],
+     "events": 13
+    },
+    {
+     "id": "drift",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "dig",
+      "host",
+      "ps",
+      "kill",
+      "tofu",
+      "exit"
+     ],
+     "events": 12
+    }
+   ]
   }
  ]
 }

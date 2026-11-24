@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { password, name, systemDirectory } from '../src/engine/world';
 import { MACHINES, machineName, WORKSTATION } from '../src/engine/machines';
-import type { Translate } from '../src/texts';
+import { LANGUAGES, storyTranslated, type Translate } from '../src/texts';
 
 const IDS = [WORKSTATION, ...MACHINES].map((m) => m.name).join('|');
 const HOST = new RegExp(`(?<=@|\\bid_|^Linux |^\\s*(?:Host|HostName|ProxyJump)\\s+|-J )(${IDS})(?![\\w-])|(?<![\\w./-])(${IDS})(?=\\.internal\\b|:[~/\\w])`, 'gim');
@@ -47,3 +47,10 @@ export const inLanguage = (t: Translate, line: string) =>
       return copyOf && name(t, copyOf[1]) !== copyOf[1] ? name(t, copyOf[1]) + copyOf[2] : name(t, m);
     }),
   );
+
+/**
+ * The languages a story's tests play it in: every complete language, and the
+ * drafts (src/texts/languages.json) that translate it already; a draft plays
+ * the others with their English world, which these tests' names don't follow.
+ */
+export const languagesFor = (story: string) => LANGUAGES.filter((l) => storyTranslated(l, story));

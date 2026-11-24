@@ -8,7 +8,10 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES } from '../src/texts';
+import { languagesFor } from './names';
+import { translator } from '../src/texts';
+import { name } from '../src/engine/world';
+import { machineName } from '../src/engine/machines';
 import type { Shell } from '../src/engine/shell';
 import { domainOf, findIdentity, lockedOut } from '../src/engine/windows-ad';
 import { windows } from '../src/engine/windows';
@@ -24,11 +27,12 @@ const LEAVERS = 'OU=Leavers,DC=lending,DC=internal';
 const KOFI = `New-ADUser -Name 'Kofi Mensah' -GivenName Kofi -Surname Mensah -SamAccountName kmensah -Path '${RIVERSIDE}' -Department Children -Title 'Youth Librarian' -Manager iduarte`;
 const PASSWORD = "(ConvertTo-SecureString 'Bookmark-2030-Monday' -AsPlainText -Force)";
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('card-catalogue'))
   describe(`The Card Catalogue — ${language}`, () => {
     const fr = language === 'fr';
-    const REGISTER = fr ? 'registre' : 'register';
-    const STACKS = fr ? 'rayons' : 'stacks';
+    const t = translator(language);
+    const REGISTER = machineName(t, 'register');
+    const STACKS = machineName(t, 'stacks');
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {
       const c = new Console({ language, finished: [...BEFORE, ...finished] });
@@ -49,8 +53,8 @@ for (const language of LANGUAGES)
       const { c, play, flag, banner, user, groups } = part();
       expect(banner).toContain('Windows PowerShell');
       contains(banner, 'Arrivées et départs');
-      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${fr ? 'vous' : 'you'}>`);
-      expect(play(['Get-Content Documents\\conventions.txt'])).toContain('AGDLP');
+      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${name(t, 'you')}>`);
+      expect(play([`Get-Content Documents\\${name(t, 'conventions.txt')}`])).toContain('AGDLP');
       expect(play(['Get-ADOrganizationalUnit -Filter * | Select-Object -ExpandProperty DistinguishedName'])).toContain(RIVERSIDE);
       expect(flag('ous')).toBe(true);
       const amara = play(['Get-ADPrincipalGroupMembership aokoye | Select-Object -ExpandProperty name']);
@@ -185,7 +189,7 @@ for (const language of LANGUAGES)
       expect(play(["Get-ADUser -LDAPFilter '(lockoutTime>=1)' | Select-Object -ExpandProperty SamAccountName"])).toBe('rsilva');
       const there = play(['ssh stacks', 'yes']);
       expect(there).toContain('Windows PowerShell');
-      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${fr ? 'vous' : 'you'}>`);
+      expect(c.shell.prompt()).toBe(`PS C:\\Users\\${name(t, 'you')}>`);
       expect(play(['hostname'])).toContain(STACKS.toUpperCase());
       expect(flag('on-stacks')).toBe(true);
       expect(play(["Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625} -MaxEvents 1 | Format-List Message"])).toMatch(/Logon Type:\t+4/);
@@ -346,7 +350,7 @@ for (const language of LANGUAGES)
       const { c, play, flag, banner, dc, user, groups } = part(AFTER_3);
       contains(banner, 'Portes et comptes dormants');
       expect(rdp(dc(), '198.51.100.77')).toBe(true);
-      expect(play([`Get-Content Documents\\${fr ? 'audit-informatique-ville.txt' : 'city-it-audit.txt'}`])).toContain('TCP 3389');
+      expect(play([`Get-Content Documents\\${name(t, 'city-it-audit.txt')}`])).toContain('TCP 3389');
       play(['ssh stacks', 'yes']);
       const rule = play(['Get-NetFirewallPortFilter | Where-Object LocalPort -eq 3389 | Get-NetFirewallRule | Where-Object Enabled -eq True | Select-Object DisplayName, Profile']);
       expect(rule).toMatch(/Remote Desktop - Any +Any/);

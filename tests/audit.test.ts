@@ -6,17 +6,20 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
+import { translator } from '../src/texts';
 import { password } from '../src/engine/world';
-import { inLanguage, machinesInLanguage } from './names';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 // The Eraser, then the chapters to finish to receive the story's key.
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('audit')])];
 const MDP = 'flour-2028';
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('audit'))
   describe(`The Audit — ${language}`, () => {
     const fr = language === 'fr';
+    const es = language === 'es';
+    // A section title of a template, in the game's language.
+    const section = (key: string) => translator(language)(key);
     const L = (line: string) => inLanguage(translator(language), line);
     const contains = (all: string, text: string) => fr && expect(all).toContain(text);
     const part = (finished: string[] = []) => {
@@ -220,13 +223,13 @@ for (const language of LANGUAGES)
 
     // ——— Chapter 1, "The Scope" ———
     const NOTES = (outside: string) => `# ${fr ? 'Notes' : 'Notes'}
-## ${fr ? 'Périmètre' : 'Scope'}
+## ${section('scope-section-scope')}
 ${fr ? 'Seulement le serveur fournil (192.0.2.22), comme la lettre de mission.' : 'Only the bakery server (192.0.2.22), as in the letter of engagement.'}
-## ${fr ? "Ce que j'ai trouvé" : 'What I found'}
+## ${section('scope-section-found')}
 ${fr ? 'Vus d’internet : SSH (22), le site (80, 443), mais aussi PostgreSQL (5432) et Redis (6379).' : 'Seen from the internet: SSH (22), the website (80, 443), but also PostgreSQL (5432) and Redis (6379).'}
-## ${fr ? 'Hors périmètre' : 'Out of scope'}
+## ${section('scope-section-outside')}
 ${outside}`;
-    const OUTSIDE = fr ? 'Le serveur du voisin (192.0.2.24) : hors périmètre, je ne l’ai pas sondé.' : 'The neighbour’s server (192.0.2.24): out of scope, I did not probe it.';
+    const OUTSIDE = fr ? 'Le serveur du voisin (192.0.2.24) : hors périmètre, je ne l’ai pas sondé.' : es ? 'El servidor del vecino (192.0.2.24): fuera del perímetro, no lo he sondeado.' : 'The neighbour’s server (192.0.2.24): out of scope, I did not probe it.';
 
     it('chapter 1 — solution: the letter, nmap -sV -oN, honest notes', () => {
       const { c, jouer: play, editer: edit } = part();
@@ -243,7 +246,7 @@ ${outside}`;
       expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'bakery.internal')}`, 'm'));
       expect(all).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
       expect(c.finished).not.toContain('scope');
-      const review = edit('nano audit_notes.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*/, 'x'));
+      const review = edit('nano audit_notes.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*/, 'x'));
       contains(review, 'Salomé relit tes notes');
       edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       expect(c.finished).toContain('scope');
@@ -293,13 +296,13 @@ ${outside}`;
     // ——— Chapter 5, "The Follow-up Visit" ———
     const ALL = ['scope', 'report', 'exposure', 'traces'];
     const REPORT = (hint: string) => `# ${fr ? 'Rapport de clôture' : 'Closing report'}
-## ${fr ? 'Résumé' : 'Summary'}
+## ${section('follow-up-section-summary')}
 ${fr ? 'Les quatre parties du rapport sont corrigées et vérifiées : le serveur est nettement mieux protégé.' : 'The four parts of the report are fixed and verified: the server is much better protected.'}
-## ${fr ? 'Constats corrigés' : 'Findings fixed'}
+## ${section('follow-up-section-findings')}
 ${fr ? '- SSH : root ne peut plus entrer.\n- Le compte de Lucas est supprimé.\n- sudo demande un mot de passe.\n- Le fichier .env est fermé (secret).\n- ufw est actif et Redis écoute en local.\n- La clé de l’intrus et sa tâche cron sont retirées.' : '- SSH: root can no longer log in.\n- Lucas’s account is deleted.\n- sudo asks for a password.\n- The .env file is closed (secret).\n- ufw is active and Redis listens locally.\n- The intruder’s key and cron job are removed.'}
-## ${fr ? 'Preuves' : 'Evidence'}
+## ${section('follow-up-section-evidence')}
 nmap -sV : ${fr ? 'seuls 22, 80 et 443 répondent.' : 'only 22, 80 and 443 answer.'} Lynis : ${fr ? 'indice de durcissement' : 'hardening index'} ${hint}.
-## ${fr ? 'Reste à faire' : 'Still to do'}
+## ${section('follow-up-section-remaining')}
 ${fr ? 'FINT-4350 : choisir et installer un outil d’intégrité des fichiers.' : 'FINT-4350: choose and install a file integrity tool.'}`;
     const harden = (edit: (c: string, f: (t: string) => string) => string) => {
       edit('sudo nano /etc/ssh/sshd_config', (t) => t.replace('X11Forwarding yes', 'X11Forwarding no') + '\nMaxAuthTries 3\nAllowTcpForwarding no\nAllowAgentForwarding no\n');

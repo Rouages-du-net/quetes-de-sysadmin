@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { storageOf } from '../src/engine/storage';
 import { machineName } from '../src/engine/machines';
 import { sha256 } from '../src/engine/commands/checksums';
@@ -26,7 +26,7 @@ describe('sha256', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('pantry'))
   describe(`The Pantry — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

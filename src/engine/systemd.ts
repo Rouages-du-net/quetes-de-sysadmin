@@ -281,6 +281,8 @@ export function restart(game: Game, sd: Systemd) {
     game.state.wg = {};
   }
   writeLog(sd, '', 'kernel', 0, `Linux version ${kernel?.active ?? '6.12.0-quetes'} (${sd.host})`);
+  // What the machine's own early boot does before the services (SELinux's mode and relabel on a Rocky machine, rhel.ts).
+  (game.state.onBoot as ((j: Game) => void) | undefined)?.(game);
   // A machine that mounts its disks according to /etc/fstab (see fstab.ts): if that is
   // not possible, it stops in emergency mode, without starting its services.
   const mounts = game.state.startMounts as ((j: Game) => boolean) | undefined;

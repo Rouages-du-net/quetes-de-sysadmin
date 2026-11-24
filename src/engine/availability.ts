@@ -30,8 +30,9 @@ import { COMMANDS } from './commands';
 import type { Chapter } from './world';
 import type { StoryInfo as Story } from './catalogue';
 import type { Game } from './shell';
+import { DEBIAN_ONLY } from './rhel';
 
-export type Platform = 'linux' | 'freebsd' | 'solaris' | 'ibmi' | 'windows';
+export type Platform = 'linux' | 'freebsd' | 'solaris' | 'ibmi' | 'windows' | 'rhel';
 
 /** The system of a story's machine (Debian unless machines.ts says otherwise). */
 export const storyPlatform = (story: string): Platform => MACHINES.find((m) => m.story === story)?.os ?? 'linux';
@@ -52,7 +53,7 @@ const POSIX = [
   'sleep', 'sort', 'tail', 'tee', 'test', 'touch', 'tr', 'true', 'type', 'ulimit', 'umask', 'unalias', 'uname', 'uniq', 'wc', 'who',
   'xargs',
 ];
-const UNIX_LIKE: Platform[] = ['linux', 'freebsd', 'solaris', 'ibmi'];
+const UNIX_LIKE: Platform[] = ['linux', 'freebsd', 'solaris', 'ibmi', 'rhel'];
 
 // The systems on which each command exists in the game (computed once).
 let platforms: Map<string, Set<Platform>> | null = null;
@@ -64,6 +65,8 @@ function commandPlatforms(command: string): Set<Platform> {
         for (const name of c.commands) {
           const set = platforms.get(name) ?? new Set<Platform>();
           set.add(storyPlatform(s.id));
+          // A Red Hat machine (rhel.ts) has Debian's GNU tools, not its own (apt, ufw…).
+          if (set.has('linux') && !DEBIAN_ONLY.includes(name)) set.add('rhel');
           platforms.set(name, set);
         }
   }
@@ -89,6 +92,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['upsc', 'upscmd', 'upsrw', 'upsmon', 'upsd', 'upsdrvctl', 'upssched'], ['nut'], ['/etc/nut']],
   [['ipmitool'], ['power'], []],
   [['garage'], ['garage'], ['/etc/garage.toml']],
+  [['tofu'], ['tofu'], ['/usr/bin/tofu']],
   [['aws', 'rclone'], ['garage'], []],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],

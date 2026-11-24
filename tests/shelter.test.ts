@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { machineName } from '../src/engine/machines';
 import { duration, interval, planRows, serviceOf } from '../src/engine/chapters/shelter';
 
@@ -27,18 +27,22 @@ describe('The Shelter: the engine', () => {
     expect(duration('2d')).toBe(172_800_000);
     expect(duration('1 w')).toBe(604_800_000);
     expect(duration('soon')).toBeNull();
+    expect(duration('2 días')).toBe(172_800_000);
+    expect(duration('1sem')).toBe(604_800_000);
     const rows = planRows(t, '| Owner | Service | RTO | RPO | Backup |\n|---|---|---|---|---|\n| Mirela | Vet records (vetlink) | 2d | 24h | restic |\n| you | Adoption app and database | 4h | 24h | pg_dump |');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ owner: 'Mirela', rpo: '24h', rto: '2d', backup: 'restic' });
     expect(rows.map(serviceOf)).toEqual(['vetlink', 'adoptions']);
     expect(serviceOf({ service: 'Newsletter (phpList)', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('newsletter');
+    expect(serviceOf({ service: 'Boletín', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('newsletter');
+    expect(serviceOf({ service: 'Aplicación de adopciones', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('adoptions');
     expect(serviceOf({ service: 'Website (nginx)', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('website');
     expect(interval('*-*-* 02:00:00', Date.UTC(2031, 10, 3, 9, 30))).toBe(86_400_000);
     expect(interval('hourly', Date.UTC(2031, 10, 3, 9, 30))).toBe(3_600_000);
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('shelter'))
   describe(`The Shelter — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -89,7 +93,7 @@ for (const language of LANGUAGES)
       expect(all).toContain('restic backup /etc /var/www /srv/adopt /var/backups');
       expect(flag('script')).toBe(true);
       all = play([`sudo restic -r ${REPO} -p /root/.restic-pass snapshots --latest 1`]);
-      expect(all).toMatch(/2031-11-03 02:0\d:\d\d +paddock|2031-11-03 02:0\d:\d\d +enclos/);
+      expect(all).toMatch(new RegExp(`2031-11-03 02:0\\d:\\d\\d +${paddock}`));
       expect(flag('snapshots')).toBe(true);
       all = edit('sudo nano /usr/local/sbin/shelter-backup', (x) => x.replace('/srv/adopt /var/backups', '/srv/adopt /srv/vetlink /var/backups'));
       expect(flag('fixed')).toBe(true);
@@ -118,7 +122,7 @@ for (const language of LANGUAGES)
 
     it('chapter 1 — false leads: an RPO the night can\'t keep, Dariusz, phpList kept, vetlink without a backup', () => {
       const { play, edit, flag, done } = part();
-      let all = edit('nano /srv/drp/plan.md', (x) => x.replace('| Newsletter (phpList) |', '| Vet records (vetlink) | 24h | 2d | restic | Mirela |\n| Newsletter (phpList) |').replace(/\| Lettre d'information \(phpList\) \|/, "| Fiches (vetlink) | 24h | 2j | restic | Mirela |\n| Lettre d'information (phpList) |"));
+      let all = edit('nano /srv/drp/plan.md', (x) => x.replace(/^(\| [^|]*\(phpList\) \|)/m, '| Vet records (vetlink) | 24h | 2d | restic | Mirela |\n$1'));
       expect(flag('rpo-unmet')).toBe(true);
       expect(flag('old-owner')).toBe(true);
       expect(flag('stale-row')).toBe(true);
@@ -302,7 +306,7 @@ for (const language of LANGUAGES)
       // Mirela's draft scheduled as it is: it only lists the snapshots.
       edit('sudo crontab -e', (x) => `${x}\n30 3 1 * * /usr/local/sbin/restore-drill\n`);
       expect(flag('drill-list-only')).toBe(true);
-      all = edit(`nano ${t('name-review-md')}`, () => review(['- Never again', '- Buy a pump'], ['- 02:50 down', '- 13:30 back', fr ? 'C\'était la faute de Dariusz.' : 'It was Dariusz\'s fault: careless.']));
+      all = edit(`nano ${t('name-review-md')}`, () => review(['- Never again', '- Buy a pump'], ['- 02:50 down', '- 13:30 back', fr ? 'C\'était la faute de Dariusz.' : language === 'es' ? 'Fue culpa de Dariusz: un descuido.' : 'It was Dariusz\'s fault: careless.']));
       expect(flag('blame')).toBe(true);
       expect(flag('no-owners')).toBe(true);
       edit(`nano ${t('name-review-md')}`, () => review(ACTIONS));

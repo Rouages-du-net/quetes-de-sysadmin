@@ -1,8 +1,13 @@
 ---
 // The site's root. On the real server, Apache sends visitors straight to
 // /en/ or /fr/ according to their browser's language (public/.htaccess);
-// this page is what any other server shows: a choice of language.
+// this page is what any other server shows: a choice among the languages the
+// site offers (the complete ones, src/site-languages.ts).
 import Base from '../layouts/Base.astro';
+import { COMPLETE_LANGUAGES, PAGES } from '../site-languages';
+
+const PLAY: Record<string, string> = { en: 'Play in English', fr: 'Jouer en français', es: 'Jugar en español' };
+const offered = COMPLETE_LANGUAGES.filter((l) => PLAY[l]);
 ---
 <Base
   title="Sysadmin Quests — Quêtes de Sysadmin"
@@ -11,7 +16,6 @@ import Base from '../layouts/Base.astro';
   <h1>Sysadmin Quests</h1>
   <p class="intro">Learn system administration, on Linux and Windows, by playing in your browser with real commands.</p>
   <ul class="languages">
-    <li><a href="/en/" hreflang="en" lang="en">Play in English</a></li>
-    <li><a href="/fr/" hreflang="fr" lang="fr">Jouer en français</a></li>
+    {offered.map((l) => <li><a href={PAGES.home[l as keyof typeof PAGES.home]} hreflang={l} lang={l}>{PLAY[l]}</a></li>)}
   </ul>
 </Base>

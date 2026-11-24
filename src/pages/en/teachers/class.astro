@@ -1,12 +1,13 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import { PAGES } from '../../../site-languages';
 import Classroom from '../../../components/Classroom.astro';
 ---
 <Base
   title="Class table — Sysadmin Quests"
   lang="en"
   description="Your students' progress in a table, from their save files or their codes, without sending anything."
-  other={{ href: '/fr/enseignants/classe/', lang: 'fr', name: 'Français' }}
+  alternates={PAGES.classTable}
 >
   <Classroom lang="en" />
 </Base>

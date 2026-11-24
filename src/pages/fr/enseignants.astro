@@ -1,12 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
+import { PAGES } from '../../site-languages';
 import Sheets from '../../components/Sheets.astro';
 ---
 <Base
   lang="fr"
   title="Pour les enseignant·es — Quêtes de Sysadmin"
   description="Les fiches des quêtes : objectifs, prérequis, commandes découvertes et durée indicative de chaque chapitre, pour préparer un cours ou un TP."
-  other={{ href: '/en/teachers/', lang: 'en', name: 'English' }}
+  alternates={PAGES.teachers}
 >
   <Sheets lang="fr" />
 </Base>

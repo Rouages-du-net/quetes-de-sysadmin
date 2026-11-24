@@ -288,12 +288,19 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | rspamd (`rspamd.ts`, The Lifeboat) | rspamd 3.12 (Debian 13): UCL as rspamd reads it (`key = value;`, objects, named objects, lists, comments; `delimiter is missing`), `local.d/` merged over the defaults and `override.d/` over both, read at start and on reload (a wrong file stops a start, a reload keeps the old configuration); the actions and their thresholds (defaults reject 15, add header 6, greylist 4; `null` disables one); the greylist module (a first triplet deferred, its retry after five minutes passes); `multimap` rules of type from (SMTP sender by default, `extract_from` mime or both), rcpt, ip, header with `filter` email:domain/email:user, `score` or `action`; `settings` rules (from, from_mime, rcpt, ip; ANDed kinds; `apply { actions }`, `want_spam`); Bayes in Redis with `min_learns`, learned per message id, relearned in the other class; the milter's answers to Postfix (`5.7.1 Spam message rejected`, `4.7.1 Try again later`, `X-Spam: Yes`); `rspamd_task_write_log` lines in `/var/log/rspamd/rspamd.log` | the symbols come from a set of rules the game knows (reverse DNS, a blocklist, SPF, DKIM and DMARC from the story's network, HTML only, all-caps subject, tracking redirectors, image and short text, list headers), with rspamd 3.12.1's default weights (`conf/scores.d`, the rules' `score`, SUBJ_ALL_CAPS's and PHISHING's dynamic factors); the story's blocklist answers as `RBL_SPAMCOP`, a rule of its own (3.12's default RBLs have no SpamCop), and a tracking redirector raises R_SUSPICIOUS_URL, which rspamd keeps for obscured URLs; Bayes is a naive Bayes on the words of the subject and body (four letters or more, any alphabet), so it learns whatever language the mail is in: the story's mail is written in the player's language and its word lists keep spam and ham apart in each language; no fuzzy storage, neural networks, controller web interface or rspamc's JSON |
 | `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), laid out as `rspamc.cxx` prints it (`[Metric: default]`, Action, Spam, Score, symbols sorted with strcmp, `Message-ID` or `undef`, `Urls`/`Emails` when the message has some), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
+| OpenTofu (`hcl.ts`, `tofu.ts`, The Mapping Party) | OpenTofu v1.13.10's CLI as its sources write it: HCL bodies, blocks, templates and hclsyntax's syntax errors; `fmt` (indentation, aligned `=`, exit code 3 with `-check`, `-diff`); `init` from a filesystem mirror (`.terraform.lock.hcl` with an `h1:` hash, the "Incomplete lock file information" warning); `validate` against hashicorp/dns 3.6.2's schema (`dns_a_record_set`, `dns_aaaa_record_set`, `dns_cname_record`: required, optional, computed, ForceNew); variables from defaults, `TF_VAR_`, `terraform.tfvars`, `*.auto.tfvars`, `-var-file`, `-var`; plan and apply with refresh, drift, `+ ~ - -/+`, hidden unchanged attributes, `-detailed-exitcode`, `-refresh-only`, `-destroy`, import blocks; the local backend's state (JSON format 4, serial, lineage, `.backup`) and lock (Lock Info, force-unlock refused); `import`, `state list/show/rm/mv`, `output` (`-raw`, `-json`); the diagnostics' box at 78 columns | one provider, no modules, workspaces, `count`/`for_each`, data sources, functions, operators, conditionals or heredocs; remote backends and `-generate-config-out` absent; the TSIG key isn't checked; an unset variable is an error, as with `-input=false` (tofu never prompts for it); a saved plan (`-out`) is a marker, `tofu apply FILE` is not supported; named keeps dynamic updates in memory and a growing `.jnl`, never rewrites the zone file, and a restart doesn't replay the journal against a hand-edited file (BIND would refuse it as out of sync); only `-help` of a few subcommands is OpenTofu's own text |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: its outputs and the admin API's errors ("Error: GetBucketInfo returned NoSuchBucket (404): …") as Garage 2.1.0's CLI prints them, status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
 | The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
+| Rocky Linux (`rhel.ts`, The Language Café) | `state.os = 'rhel'`: Debian's own tools (apt, dpkg, ufw, a2ensite, apache2ctl, update-rc.d, unattended-upgrade, lsb_release, ifup) answer `-bash: X: command not found`; Fedora's prompt `[you@kettle ~]$`; `ls -l` marks every file with a `.` after its mode; `ls -Z`, `ps -Z` (a LABEL column) and `id`'s `context=`; a new file takes its place's label (a home's: user_home_t, /tmp's: user_tmp_t), `mv` keeps it, `cp` doesn't (`cp -a` does) | `ps -Z` keeps the game's `aux` columns; no motd.d, no cockpit banner, no "Last login" line; `/var/log/messages` and `/var/log/secure` are written once, not by rsyslog as the story goes |
+| SELinux (`selinux.ts`, The Language Café) | the targeted policy of selinux-policy 42.1.27 as far as httpd goes: file contexts, equivalences and specificity (local rules win), port types, httpd_t's read/search/name_bind/name_connect and the booleans that widen them (`httpd_can_network_connect`, `httpd_can_network_relay`, `httpd_graceful_shutdown`, `httpd_read_user_content`, `httpd_enable_homedirs`, `nis_enabled`), enforcing/permissive and `/etc/selinux/config` at boot, `/.autorelabel`, AVC/SYSCALL/PROCTITLE records | a subset of the policy's file contexts, port types, booleans and modules; only httpd is confined; levels are always `s0`; a policy package written by `audit2allow -M` is not a real `.pp` (the game keeps its rules) |
+| `getenforce`, `setenforce`, `sestatus`, `getsebool`, `setsebool`, `chcon`, `restorecon`, `semanage`, `semodule`, `ausearch`, `audit2why`, `audit2allow` (`commands/selinux.ts`, the `rhel` family) | their messages and formats at policycoreutils/libselinux 3.11 and audit 4.2.1: `semanage fcontext`, `port`, `boolean` with `-a`/`-d`/`-m`/`-l`/`-C`/`-e`, "already defined, modifying instead", `ValueError: Type … is invalid…`; restorecon's "Relabeled … from … to …" (`-n`: "Would relabel"), the type only unless `-F`; audit2why's boolean and TE explanations; audit2allow's rules and its IMPORTANT banner; ausearch's `----`/`time->` groups, `-ts recent/today/boot/HH:MM`, `<no matches>`; `semanage`, `audit2why`, `audit2allow` only once policycoreutils-python-utils is installed | `ausearch -i` prints the raw records; `semodule -l` lists a few dozen modules; `semanage` has no `login`, `user`, `module`, `node`, `interface`, `permissive` objects; booleans' descriptions are sepolicy's fallback ("Allow httpd to can network connect"), as without policy.xml |
+| firewalld (`firewalld.ts`, `firewall-cmd`) | firewalld 2.4.3: runtime and permanent configurations, `--reload` and `--runtime-to-permanent`, zones and their sources, services, ports and rich rules (source address, service or port, accept/reject/drop) as `Rich_Rule` writes them back; `--list-all`'s layout, "success", "Warning: ALREADY_ENABLED", `INVALID_SERVICE`/`INVALID_PORT`/`INVALID_RULE`, "Authorization failed." without root, "FirewallD is not running" | IPv4 TCP only; a subset of the services (`--get-services`); no policies, ipsets, ICMP, masquerade, forwarding, direct rules or `firewall-offline-cmd`; a rejected connection fails at once |
+| `dnf`, `rpm` (`rpm.ts`, `commands/rhel-packages.ts`) | DNF 4.20 (Rocky and RHEL 10's dnf, not dnf5): install (the transaction table, "Is this ok [y/N]:", `-y`), remove, search (its sections), info, list, provides (also in /usr/bin and /usr/sbin), repolist, history, makecache; "No match for argument", "Unable to find a match", the superuser error; rpm `-q`, `-qa`, `-qi`, `-ql`, `-qc`, `-qf`, `-V`; Rocky 10.3's packages and versions | a few dozen packages; no download, GPG prompt or scriptlet output; dependencies listed by hand; `rpm -i`/`-e` refused (use dnf); `dnf upgrade` has nothing to do |
+| httpd on Rocky (`httpd-rhel.ts`, The Language Café) | httpd 2.4.63 as Rocky packages it: `httpd.conf` and `conf.d/*.conf` (Listen, DocumentRoot, `<Directory>` with Require, `<VirtualHost>`, ServerName/ServerAlias, ProxyPass), welcome.conf's test page for a refused "/", AH00072/AH00015 at start, AH00132, AH00035, AH01630, AH00957/AH00959/AH01114 in error_log, the access log, "Server configured, listening on" in the journal | other known directives are accepted and ignored (unknown ones: AH00526); no `httpd -t` or `apachectl`; a failed proxy worker is not put in error state for 60 s; no TLS |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -4895,6 +4902,162 @@ memory), restores a snapshot beside and verifies it. Expected traps: the
 name switched while haven's port is closed, an unchanged serial (the
 secondary keeps the old zone), Mirela's draft that only lists snapshots, a
 drill that restores over /, a review that blames.
+
+## Story 48: The Language Café (three chapters)
+
+Common Tongue (Langue Commune in French), a nonprofit running free
+conversation tables for newcomers and their neighbours, keeps its site, the
+week's tables and a volunteers' sign-up app on `kettle` (192.0.2.170), a
+small server Seun installed with Rocky Linux 10.3 before leaving for three
+months: a Red Hat family machine (`state.os = 'rhel'`, `rhel.ts`), not a
+Debian. `noticeboard` (198.51.100.20, an internal host on the café's
+network 198.51.100.0/24) is the screen by the door that loads the site
+every five minutes. Dilnoza coordinates the café, Itzel makes the site,
+Tenzin wrote the sign-up app, Thuy hosts the Vietnamese table and minds the
+screen, Kaveh helps from the association next door. Versions as Rocky 10.3
+ships them (dl.rockylinux.org/pub/rocky/10/): DNF 4.20 (not dnf5),
+firewalld 2.4.3, selinux-policy 42.1.27, policycoreutils 3.11, audit
+4.2.1, httpd 2.4.63. Engine: `selinux.ts`, `firewalld.ts`, `rpm.ts`,
+`httpd-rhel.ts`, their commands in `commands/selinux.ts` and
+`commands/rhel-packages.ts` (the `rhel` family, loaded with the story),
+five explanations in the error explainer. The story is built in
+`chapters/language-cafe.ts`; curl between the machines through
+`state.storyCurl`. It opens after "The firewall" (ufw) and "The proxy"
+(nginx in front of an app), and extends the security and web paths.
+
+### Chapter 1 — New Neighbour (done)
+
+Monday 7 December 2026, 18:30. A Debian sysadmin meets a Rocky machine.
+
+| Step | Command learnt |
+|---|---|
+| Which system | `cat /etc/os-release`, `apt` → command not found |
+| The web server | `dnf search httpd`, `sudo dnf install httpd`, `rpm -q httpd` |
+| Running and at boot | `sudo systemctl enable --now httpd`, `curl -I localhost` (Rocky's test page, 403) |
+| The firewall | `ssh noticeboard` then `curl`; `firewall-cmd --list-all`, `--add-service=http --add-service=https`, with and without `--permanent`, `--reload` |
+
+Goal checked on the state: httpd installed, running and enabled; firewalld
+running and enabled; 80 and 443 allowed at runtime and permanently;
+SELinux enforcing (now and in its configuration); the noticeboard gets an
+answer from httpd now and with the permanent configuration. Several
+solutions: services or ports, both commands or permanent then `--reload`
+or runtime then `--runtime-to-permanent`. Expected traps: apt, a runtime
+rule lost at a reload, a permanent rule not active, httpd started but not
+enabled, firewalld stopped, `setenforce 0`.
+
+### Chapter 2 — Permission Denied, But… (done)
+
+Saturday 12 December, 10:15. Itzel moved the site from her home to
+`/srv/site` with `mv`; the screen shows the test page (httpd's 403).
+
+| Step | Command learnt |
+|---|---|
+| The refusal | `curl`, `/var/log/httpd/error_log` (AH00132) |
+| The labels | `ls -lZ /srv/site` (user_home_t), `ls -Zd /var/www/html`, `ps -eZ` |
+| Who refused | `sudo ausearch -m avc -ts recent`; `audit2why` not found: `dnf provides semanage`, `dnf install policycoreutils-python-utils`; `audit2why` |
+| The policy | `semanage fcontext -l` (/srv/.* is var_t), `semanage fcontext -a -t httpd_sys_content_t "/srv/site(/.*)?"`, `restorecon -Rv /srv/site` |
+
+Goal checked on the state: enforcing now and at boot; httpd up and
+enabled; the home page and the stylesheet served to the noticeboard; every
+file of the served root readable by httpd now and as the policy labels it;
+no world-writable file; `httpd_read_user_content` off; no custom module.
+Several solutions: a type rule, an equivalence (`-e /var/www`), the site
+moved under `/var/www` or `/srv/www` and relabelled. Expected traps:
+`setenforce 0` or SELINUX=permissive, `chmod 777`, `restorecon` before the
+rule (var_t), `httpd_read_user_content`, an audit2allow module, `chcon`
+alone: Kaveh's reboot for the kernel update runs Seun's `/.autorelabel` and
+puts var_t back.
+
+### Chapter 3 — A Port and a Boolean (done)
+
+Monday 14 December, 18:40. Tenzin added a rota on port 8010 and a sign-up
+app behind httpd (ProxyPass to 127.0.0.1:8086); httpd hasn't started since
+Friday.
+
+| Step | Command learnt |
+|---|---|
+| Why httpd is down | `systemctl status httpd`, `journalctl -u httpd` (AH00072, (13)) |
+| The port | `ausearch -m avc -c httpd` (name_bind), `semanage port -l`, `semanage port -a -t http_port_t -p tcp 8010`, a restart |
+| The backend | 503, AH01114; `ausearch … \| audit2why` (httpd_can_network_connect or nis_enabled), `setsebool -P httpd_can_network_connect on` |
+| The rota | a rich rule: `rule family="ipv4" source address="198.51.100.0/24" port port="8010" protocol="tcp" accept`, runtime and permanent |
+
+Goal checked on the state: httpd up and enabled; site and sign-up page 200
+for anyone, the rota for the café's network only, at runtime and with the
+permanent firewall; the saved booleans and port types let httpd bind 8010
+and reach 8086 after a reboot; enforcing; nis_enabled off; no custom
+module. Several solutions: `setsebool -P` or `semanage boolean -m --on`,
+8086 typed http_port_t with `httpd_can_network_relay`, the rule added in
+either configuration first. Expected traps: `nis_enabled` (audit2why's other
+suggestion), Tenzin's audit2allow module, 8086 typed http_port_t alone, the
+boolean without `-P`, `--add-port=8010/tcp` (the rota on the internet).
+## Story 49: The Mapping Party (two chapters)
+
+Wayfinders, a volunteer collective that maps the town's step-free routes
+(kerbs, steps, ramps) and holds a mapping party every month, keeps its zone
+`wayfinders.example` as code with OpenTofu (https://opentofu.org/, v1.13.10,
+the open-source fork of Terraform): the hashicorp/dns provider (v3.6.2)
+sends RFC 2136 updates signed with a TSIG key to named on `cairn` (`hito` in
+Spanish, 192.0.2.176, the story's machine), whose zone is dynamic
+(`update-policy`). The code is shared in `/srv/dns` (group dnsadmins), its
+state local (`terraform.tfstate`). Andile coordinates, Yusra wrote the
+configuration and left notes, Malalai runs the tile server and the status
+page, Femi is on call. Engine: `hcl.ts` and `tofu.ts` (the `iac` family,
+loaded with the story); four explanations in the error explainer (the state
+lock, init, a variable without a value, the schema). The story is built in
+`chapters/mapping-party.ts`. It opens after "Works for Me" (BIND) and "The
+Playbook" (Ansible, idempotence), and extends the deployment path.
+
+### Chapter 1 — The First Plan (done)
+
+Thursday 10 June 2032, 18:30. Saturday's mapping party needs
+`tiles.wayfinders.example` (192.0.2.180). Andile added the record to
+`records.tf` herself: misindented, with a typo (`adresses`) and a new
+variable without a value; the copy was never initialised on cairn.
+
+| Step | Command learnt |
+|---|---|
+| The directory | `tofu init` (the provider from the filesystem mirror of `~/.tofurc`, `.terraform.lock.hcl`) |
+| The layout | `tofu fmt` (`-check`, `-diff`) |
+| The typo | `tofu validate` (Missing required argument, Unsupported argument with "Did you mean") |
+| The value | `terraform.tfvars` (or `-var`, which only lasts a command) |
+| The plan | `tofu plan` (refresh, `+`, "Plan: 1 to add, 0 to change, 0 to destroy.") |
+| The change | `tofu apply`, "Enter a value:" `yes` |
+| Checked | `dig @127.0.0.1 tiles.wayfinders.example` (or `host`) |
+
+Goal checked on the state: named serves tiles with 192.0.2.180 and the state
+manages it; www and wiki unchanged; every `.tf` file formatted; the
+variable's value in a `.tfvars` file; a lookup of the name that got the
+address. Several solutions: validate or plan to find the typo, `-var` then
+the file, `-auto-approve`, dig or host. Expected traps: the zone file edited
+by hand (`rndc reload` refuses a dynamic zone), the value only on the
+command line, the state file deleted (its backup brings it back).
+
+### Chapter 2 — Drift (done)
+
+Friday 25 June, 9:10. The night before, the old web host (198.51.100.40)
+died; Femi moved www to 198.51.100.41 with nsupdate (TTL 60) and added
+`status` (198.51.100.42), after leaving a `tofu apply` waiting at its
+question: its lock still holds the state. The old host is gone for good.
+
+| Step | Command learnt |
+|---|---|
+| The lock | `tofu plan` (Error acquiring the state lock, Lock Info), `ps aux`, `sudo kill PID` |
+| The drift | `tofu plan` ("Objects have changed outside of OpenTofu", `-/+` and "# forces replacement") |
+| The decision | `records.tf` follows the real change (the address, the TTL either way) |
+| The adoption | a `resource` block, `tofu import ADDRESS status.wayfinders.example.` or an `import` block |
+| Nothing left | `tofu plan` ("No changes."), `-detailed-exitcode` |
+
+Goal checked on the state: no process holds the lock; for every resource of
+the configuration the code, the state and named agree, and the state holds
+nothing else; www on .41, status managed, tiles and wiki unchanged; the
+state file as tofu wrote it; a plan or apply that found nothing to do once
+all agree. Several solutions: TERM or INT (or KILL, its lock file left
+behind), TTL 60 or 300 (a replacement), `tofu import` or an import block.
+Expected traps: `tofu force-unlock` (a local state can't be unlocked by
+another process), `-lock=false`, applying the old code (the site back on
+the dead host), `terraform.tfstate` edited by hand, `tofu state rm` to make
+a difference go away, status created instead of imported (this provider
+lets it pass).
 
 ## Ideas for later
 

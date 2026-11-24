@@ -12,70 +12,154 @@ import { STORIES } from '../engine/chapters';
 import { storySheets, manualPages, documentation, solutionRoute, hours } from '../engine/sheets';
 import { difficulty, stars } from '../engine/difficulty';
 import { loadAllTexts, translator, typography } from '../texts';
+import { PAGES } from '../site-languages';
 
 interface Props {
-  lang: 'fr' | 'en';
+  lang: 'fr' | 'en' | 'es';
   story: string;
 }
 const { lang, story } = Astro.props;
 await loadAllTexts();
-const t = translator(lang);
+// The story's own texts (the hints of the solution route) name its world as the game does.
+const t = translator(lang, story);
 const typo = (text: string) => typography(text, lang);
-const fr = lang === 'fr';
 const h = STORIES.find((x) => x.id === story)!;
 const sheets = storySheets(story);
 const total = hours(sheets.reduce((s, f) => s + f.duration, 0), lang);
 const storyOf = (c: string) => STORIES.find((x) => x.chapters.some((y) => y.id === c))!;
-const quoted = (c: string) => (fr ? `« ${t(`chapter-${c}`)} »` : `"${t(`chapter-${c}`)}"`);
+const QUOTES = { en: ['"', '"'], fr: ['« ', ' »'], es: ['«', '»'] }[lang];
+const quoted = (c: string) => `${QUOTES[0]}${t(`chapter-${c}`)}${QUOTES[1]}`;
 const after = (ids: string[]) =>
   new Intl.ListFormat(lang, { type: 'conjunction' }).format(ids.map((c) => `${quoted(c)} (${t(`story-${storyOf(c).id}`)})`));
-const title = (n: number, id: string) => `${t('chapter-number', { number: n })}${fr ? ' : ' : ': '}${t(`chapter-${id}`)}`;
-const teachers = fr ? '/fr/enseignants/' : '/en/teachers/';
+const plural = (n: number, one: string, other: string) => (n > 1 ? other : one);
 // Questions to check what was learnt: open questions, the same for every
 // chapter, then one per command it introduces (three at most). They ask
 // the student to explain; the answers are the student's own.
 const QUESTIONS = 3;
+
+// The page's own texts, in each language.
+const TEXTS = {
+  en: {
+    teachers: 'For teachers',
+    sheet: 'Printable sheet',
+    help: 'A handout: each chapter\'s goal, without the solutions, the commands and manual pages to read, and questions to check what was learnt. It prints on A4 or Letter, in black and white, with the links written out. The teacher\'s version, at the bottom of the page, prints only if you open it.',
+    print: 'Print the sheet',
+    name: 'Name: ______________________   Class: __________   Date: __________',
+    chapters: (n: number, time: string) => `${n} ${plural(n, 'chapter', 'chapters')}, about ${time}.`,
+    opensAfter: (list: string) => ` Opens in the game after ${list}.`,
+    first: ' The first story: you start from scratch.',
+    game: 'The game: ',
+    appName: 'Sysadmin Quests',
+    colon: ': ',
+    theChapters: 'The chapters',
+    goal: 'Goal',
+    before: 'Before',
+    orDirect: ' (or a direct opening).',
+    scratch: 'Nothing: you start from scratch.',
+    difficulty: 'Difficulty',
+    outOf: (n: number) => `${n} out of 5`,
+    time: 'Approximate time',
+    fresh: 'New commands',
+    none: 'None: you reuse what you know.',
+    manual: 'Read in the manual',
+    further: 'Further reading',
+    check: 'Check what you learnt',
+    checkHelp: 'After each chapter, without the game in front of you. The manual (man) is allowed: that is the right habit.',
+    wrong: 'What was wrong at the start of the chapter, and how did you check that it was fixed?',
+    command: ['What did you use ', ' for? Name one of its options and what it does ('],
+    practice: 'Which good practice from the debrief would you apply on a real server, and why?',
+    route: "Teacher's version: the solution route (not for students)",
+    routeHelp: 'The steps the game checks, in order, with the lead then the solution: the same hints the game itself gives a player who asks for three. The game checks the result, not the command: other solutions pass. Once open, this part prints too, on a new page.',
+    noHints: 'No hints for this chapter: the debrief tells the solution.',
+  },
+  fr: {
+    teachers: 'Pour les enseignant·es',
+    sheet: 'Fiche à imprimer',
+    help: "Une fiche à distribuer : les objectifs de chaque chapitre, sans les solutions, les commandes et les pages du manuel à lire, et des questions pour vérifier ce qu'on a appris. Elle s'imprime sur A4 comme sur Letter, en noir et blanc, les liens écrits en entier. La version enseignant·e, en bas de page, ne s'imprime que si tu l'ouvres.",
+    print: 'Imprimer la fiche',
+    name: 'Nom : ______________________   Classe : __________   Date : __________',
+    chapters: (n: number, time: string) => `${n} ${plural(n, 'chapitre', 'chapitres')}, environ ${time}.`,
+    opensAfter: (list: string) => ` S'ouvre dans le jeu après ${list}.`,
+    first: ' La première histoire : on part de zéro.',
+    game: 'Le jeu : ',
+    appName: 'Quêtes de Sysadmin',
+    colon: ' : ',
+    theChapters: 'Les chapitres',
+    goal: 'Objectif',
+    before: 'Avant',
+    orDirect: ' (ou une ouverture directe).',
+    scratch: 'Rien : on part de zéro.',
+    difficulty: 'Difficulté',
+    outOf: (n: number) => `${n} sur 5`,
+    time: 'Durée indicative',
+    fresh: 'Commandes découvertes',
+    none: "Aucune nouvelle : on réutilise ce qu'on connaît.",
+    manual: 'À lire dans le manuel',
+    further: 'Pour aller plus loin',
+    check: 'Vérifier ce que tu as appris',
+    checkHelp: "À faire après chaque chapitre, sans le jeu sous les yeux. Le manuel (man) est permis : c'est le bon réflexe.",
+    wrong: "Qu'est-ce qui n'allait pas au début du chapitre, et comment as-tu vérifié que c'était réparé ?",
+    command: ["À quoi t'a servi ", " ? Cite une de ses options et ce qu'elle fait ("],
+    practice: 'Quelle bonne pratique du débrief appliquerais-tu sur un vrai serveur, et pourquoi ?',
+    route: 'Version enseignant·e : le chemin de solution (pas pour les élèves)',
+    routeHelp: "Les étapes que le jeu vérifie, dans l'ordre, avec la piste puis la solution : ce sont les indices que le jeu donne lui-même à qui en demande trois. Le jeu vérifie le résultat, pas la commande : d'autres solutions passent. Ouverte, cette partie s'imprime aussi, sur une nouvelle page.",
+    noHints: "Pas d'indice pour ce chapitre : le débrief raconte la solution.",
+  },
+  es: {
+    teachers: 'Para docentes',
+    sheet: 'Ficha para imprimir',
+    help: 'Una ficha para repartir: el objetivo de cada capítulo, sin las soluciones, los comandos y las páginas del manual que leer, y preguntas para comprobar lo aprendido. Se imprime en A4 o en Carta, en blanco y negro, con los enlaces escritos completos. La versión para docentes, al final de la página, solo se imprime si la abres.',
+    print: 'Imprimir la ficha',
+    name: 'Nombre: ______________________   Grupo: __________   Fecha: __________',
+    chapters: (n: number, time: string) => `${n} ${plural(n, 'capítulo', 'capítulos')}, unos ${time}.`,
+    opensAfter: (list: string) => ` Se abre en el juego después de ${list}.`,
+    first: ' La primera historia: se empieza desde cero.',
+    game: 'El juego: ',
+    appName: 'Misiones de Sysadmin',
+    colon: ': ',
+    theChapters: 'Los capítulos',
+    goal: 'Objetivo',
+    before: 'Antes',
+    orDirect: ' (o una apertura directa).',
+    scratch: 'Nada: se empieza desde cero.',
+    difficulty: 'Dificultad',
+    outOf: (n: number) => `${n} de 5`,
+    time: 'Duración aproximada',
+    fresh: 'Comandos nuevos',
+    none: 'Ninguno nuevo: se reutiliza lo que ya se conoce.',
+    manual: 'Para leer en el manual',
+    further: 'Para saber más',
+    check: 'Comprueba lo que has aprendido',
+    checkHelp: 'Después de cada capítulo, sin el juego delante. El manual (man) está permitido: es el buen hábito.',
+    wrong: '¿Qué fallaba al principio del capítulo y cómo comprobaste que estaba arreglado?',
+    command: ['¿Para qué te sirvió ', '? Cita una de sus opciones y lo que hace ('],
+    practice: '¿Qué buena práctica del repaso aplicarías en un servidor real, y por qué?',
+    route: 'Versión para docentes: el camino de la solución (no para el alumnado)',
+    routeHelp: 'Los pasos que el juego comprueba, en orden, con la pista y luego la solución: son las mismas pistas que el propio juego da a quien pide tres. El juego comprueba el resultado, no el comando: pasan otras soluciones. Una vez abierta, esta parte también se imprime, en una página nueva.',
+    noHints: 'No hay pistas para este capítulo: el repaso cuenta la solución.',
+  },
+};
+const T = TEXTS[lang];
+const title = (n: number, id: string) => `${t('chapter-number', { number: n })}${T.colon}${t(`chapter-${id}`)}`;
 ---
-<p class="crumbs no-print"><a href={teachers}>{fr ? 'Pour les enseignant·es' : 'For teachers'}</a> › {fr ? 'Fiche à imprimer' : 'Printable sheet'}</p>
+<p class="crumbs no-print"><a href={PAGES.teachers[lang]}>{T.teachers}</a> › {T.sheet}</p>
 <h1>{t(`story-${h.id}`)}</h1>
 <div class="no-print sheet-help">
-  {fr ? (
-    <p class="intro">
-      Une fiche à distribuer : les objectifs de chaque chapitre, sans les solutions, les commandes et
-      les pages du manuel à lire, et des questions pour vérifier ce qu'on a appris. Elle s'imprime sur
-      A4 comme sur Letter, en noir et blanc, les liens écrits en entier. La version enseignant·e, en
-      bas de page, ne s'imprime que si tu l'ouvres.
-    </p>
-  ) : (
-    <p class="intro">
-      A handout: each chapter's goal, without the solutions, the commands and manual pages to read,
-      and questions to check what was learnt. It prints on A4 or Letter, in black and white, with
-      the links written out. The teacher's version, at the bottom of the page, prints only if you
-      open it.
-    </p>
-  )}
-  <p class="print-actions" hidden><button type="button" class="print-button" data-print>{fr ? 'Imprimer la fiche' : 'Print the sheet'}</button></p>
+  <p class="intro">{T.help}</p>
+  <p class="print-actions" hidden><button type="button" class="print-button" data-print>{T.print}</button></p>
 </div>
 
-<p class="print-only handout-name">{fr ? 'Nom : ______________________   Classe : __________   Date : __________' : 'Name: ______________________   Class: __________   Date: __________'}</p>
+<p class="print-only handout-name">{T.name}</p>
 <p class="intro">{typo(t(`story-${h.id}.summary`))}</p>
 <p class="muted">
-  {fr
-    ? `${sheets.length} ${sheets.length > 1 ? 'chapitres' : 'chapitre'}, environ ${total}.`
-    : `${sheets.length} ${sheets.length > 1 ? 'chapters' : 'chapter'}, about ${total}.`}
-  {h.after
-    ? fr
-      ? ` S'ouvre dans le jeu après ${after(h.after)}.`
-      : ` Opens in the game after ${after(h.after)}.`
-    : fr
-      ? " La première histoire : on part de zéro."
-      : ' The first story: you start from scratch.'}
+  {T.chapters(sheets.length, total)}
+  {h.after ? T.opensAfter(after(h.after)) : T.first}
   {' '}
-  {fr ? 'Le jeu : ' : 'The game: '}<a href={fr ? '/fr/' : '/en/'}>{fr ? 'Quêtes de Sysadmin' : 'Sysadmin Quests'}</a>.
+  {T.game}<a href={PAGES.home[lang]}>{T.appName}</a>.
 </p>
 
 <section aria-labelledby="chapters">
-  <h2 id="chapters">{fr ? 'Les chapitres' : 'The chapters'}</h2>
+  <h2 id="chapters">{T.theChapters}</h2>
   <ol class="sheets">
     {sheets.map((f) => {
       const pages = manualPages(f, t);
@@ -84,39 +168,39 @@ const QUESTIONS = 3;
         <li class="sheet" id={`c-${f.chapter.id}`}>
           <h3>{title(f.chapter.number, f.chapter.id)}</h3>
           <dl>
-            <dt>{fr ? 'Objectif' : 'Goal'}</dt>
+            <dt>{T.goal}</dt>
             <dd>{typo(t(`chapter-${f.chapter.id}.summary`))}</dd>
-            <dt>{fr ? 'Avant' : 'Before'}</dt>
+            <dt>{T.before}</dt>
             <dd>
               {f.before
                 ? quoted(f.before.id)
                 : h.after
-                  ? `${after(h.after)}${fr ? ' (ou une ouverture directe).' : ' (or a direct opening).'}`
-                  : fr ? 'Rien : on part de zéro.' : 'Nothing: you start from scratch.'}
+                  ? `${after(h.after)}${T.orDirect}`
+                  : T.scratch}
             </dd>
-            <dt>{fr ? 'Difficulté' : 'Difficulty'}</dt>
-            <dd><span aria-hidden="true">{stars(difficulty(f.chapter.id))}</span> {fr ? `${difficulty(f.chapter.id)} sur 5` : `${difficulty(f.chapter.id)} out of 5`}</dd>
-            <dt>{fr ? 'Durée indicative' : 'Approximate time'}</dt>
+            <dt>{T.difficulty}</dt>
+            <dd><span aria-hidden="true">{stars(difficulty(f.chapter.id))}</span> {T.outOf(difficulty(f.chapter.id))}</dd>
+            <dt>{T.time}</dt>
             <dd>{hours(f.duration, lang)}</dd>
-            <dt>{fr ? 'Commandes découvertes' : 'New commands'}</dt>
+            <dt>{T.fresh}</dt>
             <dd>
               {f.fresh.length
                 ? f.fresh.map((c, i) => <>{i > 0 && ', '}<code>{c}</code></>)
-                : fr ? "Aucune nouvelle : on réutilise ce qu'on connaît." : 'None: you reuse what you know.'}
+                : T.none}
             </dd>
             {pages.length > 0 && (
               <>
-                <dt>{fr ? 'À lire dans le manuel' : 'Read in the manual'}</dt>
+                <dt>{T.manual}</dt>
                 <dd>
                   <ul class="manual-pages">
-                    {pages.map((p) => <li><code>man {p.name}</code>{fr ? ' : ' : ': '}{p.whatis}</li>)}
+                    {pages.map((p) => <li><code>man {p.name}</code>{T.colon}{p.whatis}</li>)}
                   </ul>
                 </dd>
               </>
             )}
             {docs.length > 0 && (
               <>
-                <dt>{fr ? 'Pour aller plus loin' : 'Further reading'}</dt>
+                <dt>{T.further}</dt>
                 <dd>
                   <ul class="documentation">
                     {docs.map((d) => <li><a href={d.url}>{d.label}</a></li>)}
@@ -132,33 +216,25 @@ const QUESTIONS = 3;
 </section>
 
 <section aria-labelledby="questions" class="questions">
-  <h2 id="questions">{fr ? 'Vérifier ce que tu as appris' : 'Check what you learnt'}</h2>
-  <p class="intro muted">
-    {fr
-      ? "À faire après chaque chapitre, sans le jeu sous les yeux. Le manuel (man) est permis : c'est le bon réflexe."
-      : 'After each chapter, without the game in front of you. The manual (man) is allowed: that is the right habit.'}
-  </p>
+  <h2 id="questions">{T.check}</h2>
+  <p class="intro muted">{T.checkHelp}</p>
   {sheets.map((f) => (
     <div class="question-block">
       <h3>{title(f.chapter.number, f.chapter.id)}</h3>
       <ol>
-        <li>{fr ? "Qu'est-ce qui n'allait pas au début du chapitre, et comment as-tu vérifié que c'était réparé ?" : 'What was wrong at the start of the chapter, and how did you check that it was fixed?'}</li>
+        <li>{T.wrong}</li>
         {f.fresh.slice(0, QUESTIONS).map((c) => (
-          <li>{fr ? <>À quoi t'a servi <code>{c}</code> ? Cite une de ses options et ce qu'elle fait (<code>man {c}</code>).</> : <>What did you use <code>{c}</code> for? Name one of its options and what it does (<code>man {c}</code>).</>}</li>
+          <li>{T.command[0]}<code>{c}</code>{T.command[1]}<code>man {c}</code>).</li>
         ))}
-        <li>{fr ? 'Quelle bonne pratique du débrief appliquerais-tu sur un vrai serveur, et pourquoi ?' : 'Which good practice from the debrief would you apply on a real server, and why?'}</li>
+        <li>{T.practice}</li>
       </ol>
     </div>
   ))}
 </section>
 
 <details class="teacher-route">
-  <summary>{fr ? 'Version enseignant·e : le chemin de solution (pas pour les élèves)' : "Teacher's version: the solution route (not for students)"}</summary>
-  <p class="intro">
-    {fr
-      ? "Les étapes que le jeu vérifie, dans l'ordre, avec la piste puis la solution : ce sont les indices que le jeu donne lui-même à qui en demande trois. Le jeu vérifie le résultat, pas la commande : d'autres solutions passent. Ouverte, cette partie s'imprime aussi, sur une nouvelle page."
-      : 'The steps the game checks, in order, with the lead then the solution: the same hints the game itself gives a player who asks for three. The game checks the result, not the command: other solutions pass. Once open, this part prints too, on a new page.'}
-  </p>
+  <summary>{T.route}</summary>
+  <p class="intro">{T.routeHelp}</p>
   {sheets.map((f) => {
     const route = solutionRoute(f.chapter, t);
     return (
@@ -174,7 +250,7 @@ const QUESTIONS = 3;
             ))}
           </ol>
         ) : (
-          <p class="muted">{fr ? "Pas d'indice pour ce chapitre : le débrief raconte la solution." : 'No hints for this chapter: the debrief tells the solution.'}</p>
+          <p class="muted">{T.noHints}</p>
         )}
       </section>
     );

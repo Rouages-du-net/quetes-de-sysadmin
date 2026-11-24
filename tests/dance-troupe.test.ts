@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { machinesInLanguage, languagesFor } from './names';
 import { name } from '../src/engine/world';
 import { explain } from '../src/engine/explainer';
 import { parseCapacity, presign, readPresigned, scope, type Garage } from '../src/engine/garage';
@@ -49,7 +49,7 @@ describe('The Dance Troupe: the engine', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('dance-troupe'))
   describe(`The Dance Troupe — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -107,7 +107,7 @@ for (const language of LANGUAGES)
       contains(all, 'Les documents des membres ne sont plus');
       all = run(`curl -i ${DOC}`);
       expect(all).toMatch(/^HTTP\/2 404$/m);
-      expect(all).toContain(fr ? "Cette page n'existe pas" : "This page doesn't exist");
+      expect(all).toContain(/<h1>(.*?)<\/h1>/.exec(t('troupe-site-404'))![1]);
       contains(all, 'répond maintenant 404');
       all = run('sudo garage key create site-deploy');
       const deploy = key('site-deploy');

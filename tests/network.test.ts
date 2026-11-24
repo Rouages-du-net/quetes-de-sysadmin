@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { STORIES } from '../src/engine/chapters';
 import { hostKey, fingerprint, storyMachine } from '../src/engine/machines';
-import { LANGUAGES, translator } from '../src/texts';
+import { LANGUAGES, storyTranslated, translator } from '../src/texts';
 import { inLanguage } from './names';
 
 // The three chapters that give the keys (the fourth, added later, doesn't count).
@@ -105,7 +105,8 @@ for (const language of LANGUAGES)
       expect(play(c, ['ls Hill/SignalSchool/PracticeRoom/Bucket'])).toBe(L('crab'));
     });
 
-    it('reboot cuts the ssh session; the machine has restarted when you come back', () => {
+    // Another story's machine: in a draft language, only once that story is translated (names.ts: languagesFor).
+    it.runIf(storyTranslated(language, 'datacenter'))('reboot cuts the ssh session; the machine has restarted when you come back', () => {
       const finished = STORIES.find((h) => h.id === 'datacenter')!
         .chapters.slice(0, 2)
         .map((c) => c.id);
@@ -151,7 +152,7 @@ for (const language of LANGUAGES)
       );
     });
 
-    it('Tab completes the machines of ~/.ssh/config', () => {
+    it.runIf(storyTranslated(language, 'archives'))('Tab completes the machines of ~/.ssh/config', () => {
       const c = new Console({ language });
       // The first three letters of the name in the language (roy, kin): Tab completes the rest.
       const start = (id: string) => L(`ssh ${id}`).slice(0, 7);

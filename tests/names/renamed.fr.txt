@@ -1888,6 +1888,57 @@ switch-and-learn:haven
   /home/you/.ssh → /home/vous/.ssh
   /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
 
+new-neighbour
+  /home/you → /home/vous
+  /home/you/message_from_dilnoza.txt → /home/vous/message_de_dilnoza.txt
+  /home/you/notes_from_seun.txt → /home/vous/notes_de_seun.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+new-neighbour:noticeboard
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+wrong-label
+  /home/you → /home/vous
+  /home/you/message_from_thuy.txt → /home/vous/message_de_thuy.txt
+  /home/you/message_from_itzel.txt → /home/vous/message_d_itzel.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+wrong-label:noticeboard
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+port-and-boolean
+  /home/you → /home/vous
+  /home/you/message_from_dilnoza.txt → /home/vous/message_de_dilnoza.txt
+  /home/you/notes_from_tenzin.txt → /home/vous/notes_de_tenzin.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+port-and-boolean:noticeboard
+  /home/you → /home/vous
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/authorized_keys → /home/vous/.ssh/authorized_keys
+
+first-plan
+  /home/you → /home/vous
+  /home/you/message_from_andile.txt → /home/vous/message_d_andile.txt
+  /home/you/notes_from_yusra.txt → /home/vous/notes_de_yusra.txt
+  /home/you/.tofurc → /home/vous/.tofurc
+
+drift
+  /home/you → /home/vous
+  /home/you/message_from_andile.txt → /home/vous/message_d_andile.txt
+  /home/you/message_from_femi.txt → /home/vous/message_de_femi.txt
+  /home/you/.tofurc → /home/vous/.tofurc
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

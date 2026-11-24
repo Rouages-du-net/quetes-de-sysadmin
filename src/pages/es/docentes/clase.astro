@@ -1,0 +1,13 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { PAGES } from '../../../site-languages';
+import Classroom from '../../../components/Classroom.astro';
+---
+<Base
+  lang="es"
+  title="Tabla de la clase — Misiones de Sysadmin"
+  description="El progreso de tu alumnado en una tabla, a partir de sus archivos de guardado o de sus códigos, sin enviar nada."
+  alternates={PAGES.classTable}
+>
+  <Classroom lang="es" />
+</Base>

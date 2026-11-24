@@ -7,8 +7,8 @@
 import { describe, expect, it } from 'vitest';
 import { Console } from '../src/engine/console';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { machineName } from '../src/engine/machines';
 import { evaluate, formatExp, formatValue, parse, PromQLError, type Labels, type Storage, type StoredSeries } from '../src/engine/promql';
 import { readPromConfig, readRules, ConfigError, expandTemplate } from '../src/engine/prometheus';
@@ -135,7 +135,7 @@ describe('jq', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('bike-share'))
   describe(`The Bike Share — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);

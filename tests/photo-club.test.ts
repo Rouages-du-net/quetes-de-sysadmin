@@ -8,8 +8,8 @@ import { Console } from '../src/engine/console';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
-import { LANGUAGES, translator } from '../src/texts';
-import { inLanguage, machinesInLanguage } from './names';
+import { translator } from '../src/texts';
+import { inLanguage, machinesInLanguage, languagesFor } from './names';
 import { effective, lookup, readExports, reload } from '../src/engine/nfs';
 import { allowed, modeFor, readConfig } from '../src/engine/samba';
 
@@ -53,7 +53,7 @@ describe('NFS exports and Samba shares', () => {
   });
 });
 
-for (const language of LANGUAGES)
+for (const language of languagesFor('photo-club'))
   describe(`The Photo Club — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
@@ -153,7 +153,8 @@ for (const language of LANGUAGES)
       all = run('ssh darkroom', 'yes', 'id sam', 'ls -n /mnt/photos/2028-outings', 'sudo cp /home/sam/scans/roll-04.tif /mnt/photos/2028-film-scans/');
       expect(all).toContain('uid=1001(sam)');
       expect(all).toMatch(/-rw-r--r-- \d+ 1002 +1500 +3570000 .* heron\.jpg/);
-      if (!fr) expect(all).toMatch(/cp: cannot create .*roll-04\.tif.*Permission denied/);
+      if (language === 'en') expect(all).toMatch(/cp: cannot create .*roll-04\.tif.*Permission denied/);
+      if (language === 'es') expect(all).toMatch(/cp: no se puede crear .*roll-04\.tif.*Permiso denegado/);
       contains(all, 'devient nobody');
       all = run('sudo chown sam /mnt/photos/2028-outings/heron.jpg', 'sudo usermod -u 1002 sam');
       expect(all).toContain(t('chown-not-allowed', { target: '/mnt/photos/2028-outings/heron.jpg' }));

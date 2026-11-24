@@ -153,6 +153,75 @@ Sources: `scheduler/{ipp.c,cups.service.in}`, `systemv/{lpadmin,lpstat}.c`,
 | `lpadmin -m` with an unknown model | corrected: "lpadmin: cups-driverd failed to get PPD file - see error_log for details." and "copy_model: empty PPD file" in error_log |
 | An unreachable printer's message | unverifiable without a live network trace (kept in the table) |
 
+## Rocky Linux 10.3: SELinux, firewalld, DNF, httpd (The Language Café)
+
+Sources: Rocky Linux 10.3's source RPMs (dl.rockylinux.org/pub/rocky/10/):
+selinux-policy 42.1.27-2.el10_3.2 (`policy/modules/contrib/apache.{te,fc}`,
+`kernel/corenetwork.te.in`, `kernel/files.fc`, `system/authlogin.te`,
+`contrib/nis.if`, `dist/targeted/booleans.conf`,
+`config/file_contexts.subs_dist`); policycoreutils, libselinux and
+libsemanage 3.11 (`python/semanage/seobject.py`,
+`python/audit2allow/audit2allow`, sepolgen's `policygen.py`,
+`python/sepolicy/sepolicy/__init__.py`,
+`libselinux/utils/{setenforce,getsebool}.c`,
+`libselinux/src/selinux_restorecon.c`, `policycoreutils/{setsebool,sestatus}`,
+`libsemanage/src/direct_api.c`); audit 4.2.1 (`src/ausearch*.c`,
+`auparse/auditd-config.c`); firewalld 2.4.3-4.el10_2 (`src/firewall-cmd.in`,
+`src/firewall/{command,errors}.py`, `core/{rich,fw_policy}.py`,
+`core/io/policy.py`, `server/config_zone.py`, `config/`, Red Hat's patch
+adding cockpit to public); dnf 4.20.0-28 (`dnf/cli/{cli,output,main}.py`,
+`dnf/base.py`, `dnf/cli/commands/{search,install}.py`); httpd
+2.4.63-13.el10_2.8 (`server/{listen,main,core,request}.c`,
+`modules/proxy/{proxy_util,mod_proxy_http}.c`, the package's `httpd.conf`,
+`welcome.conf`, `httpd.service`).
+
+| Item | Result |
+| --- | --- |
+| Rocky 10 ships DNF 4 (4.20.0), not dnf5; firewalld 2.4.3; selinux-policy 42.1.27 | confirmed (the 10.3 repositories) |
+| `httpd_can_network_connect`, `httpd_graceful_shutdown`, `httpd_can_network_relay`, `httpd_read_user_content`, `nis_enabled` default off; graceful_shutdown and relay are what let httpd_t connect to http_port_t, so typing 8086 http_port_t alone doesn't let it connect | confirmed (`apache.te`, targeted `booleans.conf`) |
+| `nis_enabled` lets nsswitch domains (httpd included) bind and connect to unreserved ports: audit2why offers it next to httpd_can_network_connect | confirmed (`nis.if`, `authlogin.te`) |
+| http_port_t: tcp 80, 81, 443, 488, 8008, 8009, 8443, 9000; 8010 and 8086 are unreserved_port_t; httpd_t binds http_port_t and http_cache_port_t | confirmed (`corenetwork.te.in`, `apache.te`) |
+| `/srv/([^/]*/)?www(/.*)?` is httpd_sys_content_t, `/srv/.*` var_t | confirmed (`apache.fc`, `files.fc`): the story uses `/srv/site`, not `/srv/www` |
+| semanage's listings ("%-50s %-18s %s", "%-30s %-8s %s", the boolean table), "Port tcp/N already defined, modifying instead", "Type %s is invalid, must be a port type" / "a file or device type", "File context for %s already defined, modifying instead", "SELinux policy is not managed or store cannot be accessed." | confirmed |
+| restorecon's "Relabeled %s from %s to %s", "Would relabel", "lstat(%s) failed", the type only without -F | confirmed |
+| setenforce's usage and "security_setenforce() failed", setsebool's "Could not change active booleans. Please try as root", "Cannot set persistent booleans, please try as root.", "Boolean %s is not defined", getsebool's "%s --> %s" | confirmed |
+| sestatus's 32-column layout; ausearch's "----", "time->", "<no matches>", the non-root "Error opening config file (Permission denied)" | confirmed |
+| audit2why's texts ("Was caused by:", "The boolean %s was set incorrectly. ", "One of the following booleans was set incorrectly.", "Missing type enforcement (TE) allow rule."), audit2allow's IMPORTANT banner and "#!!!! This avc can be allowed using the boolean" | confirmed; the booleans' descriptions are sepolicy's fallback (policy.xml is in selinux-policy-devel) |
+| firewall-cmd: "success", "Warning: ALREADY_ENABLED: 'http' already in 'public'" (runtime) / ": http" (permanent), "Error: INVALID_SERVICE…", "Authorization failed." and its polkit line (253), "FirewallD is not running" (252), `--list-all`'s lines | confirmed |
+| dnf: "Last metadata expiration check: … ago on …", "Is this ok [y/N]: ", "No match for argument", "Error: Unable to find a match", the superuser error, search's sections, history's columns | confirmed; the transaction table's column widths and the download lines are approximated |
+| httpd: AH00072 (13)/(98), "no listening sockets available, shutting down", AH00015, AH00132, AH00035, AH00957, AH00959, AH01114, AH01630 | confirmed; "Server configured, listening on: port 80" and the "SELinux policy enabled" notice come from Red Hat's patches (as seen on RHEL; the patches were not read) |
+| The AVC record's layout (`avc:  denied  { read } for  pid=… comm=… name=… scontext=… tcontext=… tclass=… permissive=0`), and ausearch printing an event's records PROCTITLE first | unverifiable here (the kernel's and auparse's output order were not read): kept as commonly printed |
+## OpenTofu v1.13.10 and hashicorp/dns v3.6.2 (The Mapping Party)
+
+Sources: OpenTofu's `internal/command/views/{init,apply,operation,import,state,output,unlock,hook_ui,validate}.go`,
+`internal/command/jsonformat/{plan.go,computed/renderers/{block,set,util}.go,differ/set.go}`,
+`internal/command/format/{diagnostic,trivia}.go`, `internal/command/clistate/state.go`,
+`internal/backend/local/{backend_apply,backend_local}.go`, `internal/states/statemgr/{filesystem,locker}.go`,
+`internal/tofu/{evaluate,node_resource_validate,node_resource_import,context}.go`,
+`internal/backend/unparsed_value.go`, `internal/plans/plan.go`, `internal/terminal/stream.go` at
+[tag v1.13.10](https://github.com/opentofu/opentofu/tree/v1.13.10); HCL's
+`hclsyntax/{parser,structure}.go` ([main](https://github.com/hashicorp/hcl));
+the provider's `internal/provider/{provider,resource_dns_a_record_set,resource_dns_cname_record,validators}.go`
+and `docs/` at [v3.6.2](https://github.com/hashicorp/terraform-provider-dns).
+
+| Item | Result |
+| --- | --- |
+| Diagnostics: `╷ │ ╵`, "Error: " then the summary, "on FILE line N, in BLOCK:", the snippet `%4d: `, the detail wrapped at 75 columns | confirmed (`format.DiagnosticFromJSON`, 78 columns when not a terminal) |
+| "Missing required argument" before "Unsupported argument", the former on the block's `{` line; "Did you mean" | confirmed (hclsyntax `Body.Content`: `PartialContent` first, `MissingItemRange` = the body's start) |
+| "No value for required variable", before validation | confirmed (`backend/unparsed_value.go`, `localRunDirect`); the snippet without context is an assumption (hcled's context for a declaration range) |
+| "Inconsistent dependency lock file", "Missing required provider" | confirmed (`backend_local.go`, `context.go`) |
+| init's lines, the lock file's message, "(unauthenticated)" for a mirror, the incomplete lock file warning | confirmed (`views/init.go`, `init.go`); its position among the lines approximated |
+| Plan rendering: symbols, "will be created", "must be replaced", "# forces replacement", "has changed", "(N unchanged attributes hidden)", the set's elements (removed then added), the rule of 77 "─", "Note: You didn't use the -out option" | confirmed (`jsonformat`); the "-> (known after apply)" of an id in a replacement from memory of real plans |
+| "Plan: N to add, N to change, N to destroy." and the import form | confirmed |
+| The approval question, "Enter a value: ", "Apply cancelled." | confirmed (`backend_apply.go`, `ui_input.go`, `operation.go`) |
+| Hook lines: "Refreshing state... [id=…]", "Creating...", "Creation complete after 0s [id=…]", "Destruction complete", "Importing from ID", "Import prepared!" | confirmed (`hook_ui.go`); the duration is always 0s |
+| "Error acquiring the state lock", "resource temporarily unavailable", Lock Info's layout | confirmed (`clistate/state.go`, `statemgr/locker.go`); the error text is Linux's EAGAIN from flock |
+| force-unlock on a local state: "State locked by another local process" / "Local state cannot be unlocked by another process." | confirmed (`unlock.go`, `views/unlock.go`) |
+| state rm/mv messages, "No instance found for the given address", "No state file was found", output's warnings | confirmed (`views/state.go`, `views/output.go`) |
+| The provider: import IDs are FQDNs with the final dot ("Not a fully-qualified DNS name"), zone/name/ttl ForceNew, addresses updated by set difference, TTL default 3600 | confirmed (`provider.go`, `resource_dns_a_record_set.go`, the CNAME resource's plan modifiers) |
+| named's update log ("signer … approved", "updating zone '…/IN': deleting rrset at", "adding an RR at"), `rndc: 'reload' failed: dynamic zone` | from BIND 9.20's `update.c` and `rndc` as remembered; not re-read here |
+| `tofu -help`'s command list | confirmed (`cmd/tofu/help.go`, each command's `Synopsis()`), reduced to the commands the game has |
+
 ## Not checked against sources
 
 These stay in the table of differences as they were: the IBM i messages
