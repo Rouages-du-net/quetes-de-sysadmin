@@ -49,11 +49,12 @@ describe('Languages', () => {
 for (const language of drafts)
   describe(`A draft: ${language}`, () => {
     const t = translator(language);
-    const untranslated = STORIES.find((h) => !storyTranslated(language, h.id) && h.chapters[0].names)!;
+    // A story the draft doesn't translate yet (none once every story is in the language).
+    const untranslated = STORIES.find((h) => !storyTranslated(language, h.id) && h.chapters[0].names);
     // The machine of a story the draft doesn't translate yet, whose name the language does translate.
     const untranslatedMachine = MACHINES.find(
       (m) => m.story && !storyTranslated(language, m.story) && t.exists(`machine-${m.name}`) && t(`machine-${m.name}`) !== m.name,
-    )!.name;
+    )?.name;
 
     it('a translated story has its world in the language', () => {
       expect(storyTranslated(language, 'eraser')).toBe(true);
@@ -63,13 +64,13 @@ for (const language of drafts)
       expect(machineName(t, 'kingdom')).not.toBe('kingdom');
     });
 
-    it("a story it doesn't translate yet keeps its English world, and the commands answer in the language", () => {
-      const s = new Shell(untranslated.chapters[0], language);
+    it.skipIf(!untranslated || !untranslatedMachine)("a story it doesn't translate yet keeps its English world, and the commands answer in the language", () => {
+      const s = new Shell(untranslated!.chapters[0], language);
       expect(s.t.language).toBe(language);
       expect(name(s.t, 'message.txt')).toBe('message.txt');
       expect(password(s.t, 'flour-2028')).toBe('flour-2028');
       // The machine keeps its English name, on the workstation too.
-      expect(machineName(t, untranslatedMachine)).toBe(untranslatedMachine);
+      expect(machineName(t, untranslatedMachine!)).toBe(untranslatedMachine);
       // The player's account is the language's everywhere: the workstation's ssh config logs in with it.
       expect(name(s.t, 'you')).toBe(name(t, 'you'));
       expect(s.execute('cat nothing-here')).toBe(t('error-missing', { command: 'cat', target: 'nothing-here' }));
@@ -79,6 +80,6 @@ for (const language of drafts)
       const c = new Console({ language });
       const ssh = config(c.t);
       expect(ssh).toContain(`Host ${machineName(t, 'kingdom')}\n`);
-      expect(ssh).toContain(`Host ${untranslatedMachine}\n`);
+      if (untranslatedMachine) expect(ssh).toContain(`Host ${untranslatedMachine}\n`);
     });
   });
