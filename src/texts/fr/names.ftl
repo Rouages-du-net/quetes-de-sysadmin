@@ -542,3 +542,7 @@ name-message_from_femi-txt = message_de_femi.txt
 name-message_from_soo-ah-txt = message_de_soo-ah.txt
 name-notes_from_bolat-txt = notes_de_bolat.txt
 name-message_from_ayasha-txt = message_d_ayasha.txt
+## La Fanzinothèque
+name-message_from_nomvula-txt = message_de_nomvula.txt
+name-notes_from_bartek-txt = notes_de_bartek.txt
+name-message_from_hinewai-txt = message_de_hinewai.txt

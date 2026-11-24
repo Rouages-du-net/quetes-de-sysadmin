@@ -120,6 +120,8 @@ export const MACHINES: Machine[] = [
   machine('cairn', '192.0.2.176', 'mapping-party'),
   // The Walking Club: a walking club's Debian server, its web app in a rootless Podman container behind nginx.
   machine('stile', '192.0.2.184', 'walking-club'),
+  // The Zine Library: a volunteer zine library's Debian server (nginx, php-fpm and its AppArmor profile, a backup script to confine).
+  machine('stapler', '192.0.2.190', 'zine-library'),
 ];
 
 /**

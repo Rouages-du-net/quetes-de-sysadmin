@@ -2403,10 +2403,20 @@ export class Shell implements Game {
       try {
         // A compiled program (cobc): it runs, it doesn't go through sh.
         if (n.type === 'file' && n.program) return family('cobol').runProgram(this, n.program, rest);
+        // A program the story runs itself (state.programs: its path → what it does), not through sh.
+        const own = (this.state.programs as Record<string, (game: Shell, args: string[]) => string> | undefined)?.[this.realPath(cmd)];
+        if (own) return own(this, rest);
         return launchScript(this, cmd, rest);
       } finally {
         this.who = before;
       }
+    }
+    // A story's own program found in the PATH (root's has /usr/local/sbin): run like its path.
+    const programs = this.state.programs as Record<string, unknown> | undefined;
+    if (programs && !COMMANDS[cmd]) {
+      const dirs = (root ? this.as : this.who) === 'root' ? ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin'] : ['/usr/local/bin', '/usr/bin'];
+      const found = dirs.map((d) => `${d}/${cmd}`).find((p) => programs[p] && this.find(p)?.type === 'file');
+      if (found) return this.launch([found, ...rest], input, root, last);
     }
     // A man page for a file (section 5, e.g. sshd_config) is not a command.
     const command: Command | undefined = COMMANDS[cmd]?.section === 5 ? undefined : COMMANDS[cmd];

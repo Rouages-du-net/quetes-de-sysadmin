@@ -250,6 +250,24 @@ and `docs/` at [v3.6.2](https://github.com/hashicorp/terraform-provider-dns).
 | The provider: import IDs are FQDNs with the final dot ("Not a fully-qualified DNS name"), zone/name/ttl ForceNew, addresses updated by set difference, TTL default 3600 | confirmed (`provider.go`, `resource_dns_a_record_set.go`, the CNAME resource's plan modifiers) |
 | named's update log ("signer … approved", "updating zone '…/IN': deleting rrset at", "adding an RR at"), `rndc: 'reload' failed: dynamic zone` | from BIND 9.20's `update.c` and `rndc` as remembered; not re-read here |
 | `tofu -help`'s command list | confirmed (`cmd/tofu/help.go`, each command's `Synopsis()`), reduced to the commands the game has |
+## AppArmor 4.1.0 (The Zine Library)
+
+Sources: `binutils/aa_status.c`, `parser/parser_main.c`,
+`utils/apparmor/{tools,aa,ui}.py`, `utils/aa-logprof`, `utils/logprof.conf`
+and `profiles/apparmor.d/php-fpm` at
+[apparmor-4.1](https://gitlab.com/apparmor/apparmor/-/tree/apparmor-4.1)
+(Debian 13: apparmor 4.1.0-1, https://packages.debian.org/trixie/apparmor);
+the man pages of https://manpages.debian.org/trixie/apparmor/ and
+https://manpages.debian.org/trixie/apparmor-utils/; the file list of
+apparmor-profiles 4.1.0-1 (https://packages.debian.org/trixie/all/apparmor-profiles/filelist);
+https://wiki.debian.org/AppArmor/HowToUse.
+
+| Item | Result |
+| --- | --- |
+| aa-status: "apparmor module is loaded.", "%zd profiles are loaded.", "%zd profiles are in %s mode." for enforce, complain, prompt, kill, unconfined, "%zd processes have profiles defined.", "%zd processes are unconfined but have a profile defined.", the process line "   %s (%s) %s" (the profile left out when it is the program's path), "You do not have enough privilege to read the profile set." and exit code 4 | confirmed |
+| The tools: "Setting %s to complain mode.", "Setting %s to enforce mode.", "Disabling %s.", "Profile for %s not found, skipping", "%s does not exist, please double-check the path.", "Can't find %s in the system path list…", "Profile for %s already exists - skipping.", "Writing updated profile for %s.", "Reading log entries from %s.", "Updating AppArmor profiles in %s.", "Complain-mode changes:", "Enforce-mode changes:", "Can't find system log … Please check permissions.", "The logfile %s does not exist. Please check the path."; the disable/ link; apparmor_parser -r after a mode change; aa-autodep's complain flag, interpreter `ix` and bash abstraction; the menu's button order | confirmed |
+| The php-fpm profile (its rules, `include if exists <php-fpm.d>`, `include if exists <local/php-fpm>`); aa-genprof's two choices and its Finish to enforce mode (aa-genprof(8)) | confirmed |
+| apparmor_parser's syntax errors ("syntax error, unexpected TOK_CLOSE, expecting TOK_END_OF_RULE", "unexpected TOK_MODE, expecting TOK_OPEN", "Could not open '…'"), "Invalid mode, 'x' must be preceded by exec qualifier…", "Conflict 'a' and 'w' perms are mutually exclusive."; the kernel's record fields (`class="file"`, `capability=2  capname="dac_read_search"`); aa-logprof's header labels and the Save menu's words; severities | from memory of real outputs, not checked against the 4.1 sources |
 
 ## Not checked against sources
 

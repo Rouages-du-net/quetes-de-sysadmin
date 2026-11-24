@@ -539,3 +539,7 @@ name-message_from_femi-txt = mensaje_de_femi.txt
 name-message_from_soo-ah-txt = mensaje_de_soo-ah.txt
 name-notes_from_bolat-txt = notas_de_bolat.txt
 name-message_from_ayasha-txt = mensaje_de_ayasha.txt
+## The Zine Library
+name-message_from_nomvula-txt = mensaje_de_nomvula.txt
+name-notes_from_bartek-txt = notas_de_bartek.txt
+name-message_from_hinewai-txt = mensaje_de_hinewai.txt

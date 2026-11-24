@@ -1983,6 +1983,21 @@ logged-out
   /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
   /srv/trailbook/README.txt → /srv/trailbook/LEEME.txt
 
+denied-upload
+  /home/you → /home/tu
+  /home/you/message_from_nomvula.txt → /home/tu/mensaje_de_nomvula.txt
+  /home/you/notes_from_bartek.txt → /home/tu/notas_de_bartek.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
+backup-profile
+  /home/you → /home/tu
+  /home/you/message_from_hinewai.txt → /home/tu/mensaje_de_hinewai.txt
+  /home/you/.ssh → /home/tu/.ssh
+  /home/you/.ssh/id_ed25519 → /home/tu/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/tu/.ssh/id_ed25519.pub
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

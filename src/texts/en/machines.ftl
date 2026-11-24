@@ -72,3 +72,4 @@ machine-noticeboard = noticeboard
 ## The Mapping Party
 machine-cairn = cairn
 machine-stile = stile
+machine-stapler = stapler

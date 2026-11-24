@@ -129,6 +129,8 @@ export const CODE_ORDER = [
   'drift',
   'no-root-needed',
   'logged-out',
+  'denied-upload',
+  'backup-profile',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

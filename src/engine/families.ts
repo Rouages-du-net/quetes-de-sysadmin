@@ -22,6 +22,7 @@
 import { NeedsLoading } from './loading';
 import type { Command } from './commands/index';
 import type * as Ansible from './families/ansible';
+import type * as Apparmor from './families/apparmor';
 import type * as Apache from './families/apache';
 import type * as Caddy from './families/caddy';
 import type * as Cobol from './families/cobol';
@@ -56,6 +57,7 @@ import entries from './families.json';
 
 export const FAMILIES = {
   ansible: () => import('./families/ansible'),
+  apparmor: () => import('./families/apparmor'),
   apache: () => import('./families/apache'),
   caddy: () => import('./families/caddy'),
   cobol: () => import('./families/cobol'),
@@ -91,6 +93,7 @@ export type Family = keyof typeof FAMILIES;
 
 interface Hooks {
   ansible: typeof Ansible.HOOKS;
+  apparmor: typeof Apparmor.HOOKS;
   apache: typeof Apache.HOOKS;
   caddy: typeof Caddy.HOOKS;
   cobol: typeof Cobol.HOOKS;

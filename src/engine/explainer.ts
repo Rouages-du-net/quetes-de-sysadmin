@@ -52,6 +52,8 @@ export const EXPLANATIONS = [
   'podman-subids',
   'privileged-port',
   'user-bus',
+  'apparmor-root',
+  'apparmor-parser',
   'refused',
   'timed-out',
   'no-route',

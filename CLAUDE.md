@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`), AppArmor (`apparmor`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -985,6 +985,24 @@ presents them for people.
   five seconds per command and the sysctl files reapplied at a reboot in
   `passTime`); `no-root-needed.ts`, `logged-out.ts`. Tests:
   `tests/walking-club.test.ts`.
+- `src/engine/apparmor.ts`: AppArmor 4.1 on a Debian machine
+  (`state.apparmor`: the profiles loaded in the kernel and their mode, each
+  process's confinement `tasks`, attached at exec by `execTask`; profiles of
+  `/etc/apparmor.d` read like apparmor_parser, `parseFile`, `globToRegex`,
+  `expandBraces`; `check` decides an access and writes its audit record
+  to the kernel's log, or to `/var/log/audit/audit.log` with auditd;
+  `loadAll` for apparmor.service; `withFlags` for the mode in a file); the
+  `apparmor` family: `aa-status`, `apparmor_parser`, `aa-enforce`,
+  `aa-complain`, `aa-disable`, `aa-autodep`, `aa-logprof` and `aa-genprof`
+  (their questions) and the `apparmor.d(5)` page in `commands/apparmor.ts`.
+  A story's own program run by its path or name (`state.programs` in
+  `shell.ts`). `chapters/zine-library.ts`: what the chapters of "The Zine
+  Library" share (`stapler`, the library's server: nginx, the zinecat app
+  under php-fpm and its profile, the scans, `request` for each visit and
+  upload, `storyCurl`, a visit and an upload per command in `passTime`;
+  the backup script `runBackup`, confined as the kernel would, its runs in
+  `story.runs`, `tooWide`); `denied-upload.ts`, `backup-profile.ts`. Tests:
+  `tests/zine-library.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

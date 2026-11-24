@@ -102,3 +102,5 @@ story-mapping-party = The Mapping Party
     .summary = A volunteer collective that maps step-free routes keeps its DNS as code with OpenTofu. A new record written in a hurry, then an evening when someone fixed things by hand and left a run holding the lock: plan, apply, drift and import, from the sysadmin's side.
 story-walking-club = The Walking Club
     .summary = A walking club publishes its walks and takes the sign-ups through a small app in a container, run as root since a volunteer set it up. Move it to rootless Podman under its own account, then keep it running when nobody is logged in: user namespaces and subordinate ids, unprivileged ports, systemd user services with Quadlet.
+story-zine-library = The Zine Library
+    .summary = A volunteer-run library of zines keeps its catalogue and the scans of its zines on a small Debian server, where AppArmor confines the PHP app. Scans moved to a new disk and refused by the app's profile the night before the fair; a backup script running as root that once saved the passwords file. Read the kernel's refusals, add the right rule in the right place, and write a profile of your own.

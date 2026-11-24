@@ -1323,6 +1323,55 @@
    "ownOptions": true
   }
  ],
+ "aa-autodep": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-complain": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-disable": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-enforce": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-genprof": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-logprof": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-status": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "amtool": [
   "prometheus",
   {
@@ -1365,6 +1414,19 @@
   {
    "section": 8,
    "ownOptions": true
+  }
+ ],
+ "apparmor.d": [
+  "apparmor",
+  {
+   "section": 5
+  }
+ ],
+ "apparmor_parser": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
   }
  ],
  "audit2allow": [
