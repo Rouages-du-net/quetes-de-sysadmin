@@ -33,12 +33,17 @@ export function closure(start, dist) {
   return [...seen];
 }
 
+// The game's chunk: game.<hash>.js (Astro) or game-<hash>.js (the embeddable
+// file, Rollup's 8-character hash); not a story's chunk whose name starts
+// with "game-" (game-library.<hash>.js, game-library-<hash>.js).
+const GAME = /^game(\.[\w-]+|-[\w-]{8})\.js$/;
+
 /** The chunks the element fetches at once, in a directory of chunks. */
 export function elementChunks(dir, language) {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => /^game[.-]/.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
+    .filter((f) => GAME.test(f) || new RegExp(`^texts-${language}--core[.-]`).test(f) || /^texts-.+--shared[.-]/.test(f))
     .sort()
     .map((f) => join(dir, f));
 }

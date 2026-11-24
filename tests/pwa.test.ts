@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { installOffer, isIos } from '../src/pwa/install';
 import { manifest } from '../src/pwa/manifest';
 import { assetList, buildId, precacheList, serviceWorker } from '../src/pwa/build';
+import { embedFirstVisit } from '../src/pwa/first-load.mjs';
 
 describe('Install the game (footer)', () => {
   it('offers the button only when the browser can install, the help on iOS, nothing once installed', () => {
@@ -69,6 +70,17 @@ describe('The service worker', () => {
       '/_astro/texts-fr--core.jkl.js',
       '/_astro/texts-fr--summaries.stu.js',
     ]);
+  });
+
+  it('counts the game\'s chunk in the first visit, not a story whose name starts with "game-"', () => {
+    const dist = fakeDist();
+    writeFileSync(join(dist, '_astro/game-library.Ab3-_x9Z.js'), 'a story');
+    expect(precacheList(dist)).not.toContain('/_astro/game-library.Ab3-_x9Z.js');
+    const chunks = join(dist, 'integration/chunks');
+    mkdirSync(chunks, { recursive: true });
+    for (const f of ['game-Ab3-_x9Z.js', 'game-library-Cd4-_y8W.js']) writeFileSync(join(chunks, f), '');
+    writeFileSync(join(dist, 'integration/quetes-de-sysadmin.js'), '');
+    expect(embedFirstVisit(dist).map((f) => f.slice(dist.length)).sort()).toEqual(['/integration/chunks/game-Ab3-_x9Z.js', '/integration/quetes-de-sysadmin.js']);
   });
 
   it('precaches the rarely opened dialogs\' own chunks and what they import, so they open offline (src/interface/lazy-dialog.ts)', () => {
