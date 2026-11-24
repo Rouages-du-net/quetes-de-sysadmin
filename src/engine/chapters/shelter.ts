@@ -398,9 +398,9 @@ export interface PlanRow {
 
 export type ServiceId = 'website' | 'adoptions' | 'vetlink' | 'newsletter';
 
-/** A duration as the plan writes it (4h, 30 min, 1 day, 24 h, 2d, 1 w…), in milliseconds; null if unreadable. */
+/** A duration as the plan writes it (4h, 30 min, 1 day, 24 h, 2d, 1 w, 2 días…), in milliseconds; null if unreadable. */
 export function duration(text: string): number | null {
-  const m = /^\s*(\d+(?:[.,]\d+)?)\s*(min|mins|minutes?|m|h|hrs?|hours?|heures?|d|days?|j|jours?|w|weeks?|sem|semaines?)\s*$/i.exec(text);
+  const m = /^\s*(\d+(?:[.,]\d+)?)\s*(min|mins|minutes?|minutos?|m|h|hrs?|hours?|heures?|horas?|d|days?|d\u00edas?|dias?|j|jours?|w|weeks?|sem|semaines?|semanas?)\s*$/i.exec(text);
   if (!m) return null;
   const n = Number(m[1].replace(',', '.'));
   const u = m[2].toLowerCase();
@@ -430,9 +430,9 @@ export function planRows(t: Translate, text: string): PlanRow[] {
 /** Which of paddock's services a row is about (vetlink, then the app and its database, then the site). */
 export function serviceOf(row: PlanRow): ServiceId | null {
   const s = row.service.toLowerCase();
-  if (/phplist|newsletter|lettre|infolettre/.test(s)) return 'newsletter';
+  if (/phplist|newsletter|lettre|infolettre|bolet(i|\u00ed)n/.test(s)) return 'newsletter';
   if (/vetlink|\bv(e|\u00e9)t/.test(s)) return 'vetlink';
-  if (/adopt|postgres|database|\bbase\b|\bdb\b|\bapp/.test(s)) return 'adoptions';
+  if (/adop|postgres|database|\bbase\b|\bdb\b|\bapp/.test(s)) return 'adoptions';
   if (/nginx|web|site/.test(s)) return 'website';
   return null;
 }
