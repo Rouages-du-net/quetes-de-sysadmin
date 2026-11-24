@@ -14,7 +14,8 @@
 //   <language>/story-<id>    a story's files (chapter-*.ftl, hints-*.ftl), listed
 //                            in src/engine/catalogue.json (npm run catalogue)
 //   <language>/dialog-<name> a dialog's texts (dialog-<name>.ftl), loaded when it
-//                            first opens (game.ts: lazyText, openWithTexts)
+//                            first opens (game.ts: lazy, withTexts;
+//                            src/interface/lazy-dialog.ts)
 //
 // `virtual:qds-texts` lists the languages and, for each group, a loader
 // (a dynamic import: Vite makes each group its own chunk, with a hashed name).

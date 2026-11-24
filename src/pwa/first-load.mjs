@@ -9,7 +9,8 @@
 // language, and every language's shared texts. Not counted: what loads once
 // the terminal is ready or later (src/texts/index.ts, src/interface/game.ts):
 // English's core for another language (the fallback), the chapters'
-// summaries, the manual's pages, the stories and the engine families they
+// summaries, the manual's pages, the rarely opened dialogs (*-dialog.*.js,
+// src/interface/lazy-dialog.ts), the stories and the engine families they
 // bring (src/engine/families.ts).
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';

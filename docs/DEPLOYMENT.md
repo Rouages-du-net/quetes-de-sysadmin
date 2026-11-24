@@ -92,7 +92,8 @@ log says which check fails.
   precache, the game's shell: each language's page and manifest, the
   icons, the WOFF2 fonts and the files of each page's first visit
   (`src/pwa/first-load.mjs`, the list the budget weighs), the dialogs'
-  texts (`texts-*--dialog-*`, a few KB, so that a dialog opens offline) and
+  texts (`texts-*--dialog-*`, a few KB, so that a dialog opens offline), the
+  rarely opened dialogs' own chunks (`*-dialog.*.js`, for the same reason) and
   the chapters' summaries (`texts-*--summaries`); about 50 files, 2.1 MB,
   0.8 MB compressed; and a **version**: a hash of these files. The
   cache is called `qds-<version>`; a new build gives a new `sw.js`, which
@@ -122,7 +123,8 @@ log says which check fails.
     MariaDB), modules of `families/` that load with the stories whose
     module imports them; the table of commands keeps their entries
     (`families.json`) and loads a family before a line that runs one of its
-    commands (`needs()` in `game.ts`, `NeedsLoading` otherwise). A story's
+    commands (`needs()` in `src/interface/run-line.ts`, `NeedsLoading`
+    otherwise). A story's
     own tool goes in a family (`CONTRIBUTING.md`, "A story's own commands");
   - the manual's examples and SEE ALSO (`commands/examples.ts`), with the
     manual's pages;
@@ -131,7 +133,11 @@ log says which check fails.
     texts (the fallback): the interface fetches them, the manual and its
     examples once the terminal is ready (`idle()` at the end of `mount()`);
     the menu fills its summaries then, the mission dialog and the notebook
-    wait for them.
+    wait for them;
+  - the dialogs a player rarely opens ("Where do I start?", "Report a
+    problem or an idea", the daily reminder, a chapter's summary): each is a
+    chunk of its own, `*-dialog.*.js` (`src/interface/lazy-dialog.ts`),
+    fetched with its texts when it first opens, and precached.
 
   A story's chapters (`src/engine/stories/<id>.ts`, with the code only they
   use), each engine family, each group of texts (`texts-<language>--core`,

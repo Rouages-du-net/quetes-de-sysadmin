@@ -414,8 +414,9 @@ for (const width of [1000, 375]) {
   }
   // From here on, nothing may go out: the dialog only builds a text.
   const requests = [];
-  // The dialog's own texts load from the site when it first opens (dialog-*.ftl): nothing else.
-  page.on('request', (r) => !(r.method() === 'GET' && r.url().startsWith(`${BASE}/_astro/texts-fr--dialog-feedback.`)) && requests.push(r.url()));
+  // The dialog's own code and texts load from the site when it first opens
+  // (src/interface/lazy-dialog.ts, dialog-*.ftl): nothing else.
+  page.on('request', (r) => !(r.method() === 'GET' && /^\/_astro\/(feedback-dialog|texts-fr--dialog-feedback)\./.test(r.url().slice(BASE.length))) && requests.push(r.url()));
   const opener = game.locator('.chapter-actions .pill').last();
   await opener.focus();
   await page.keyboard.press('Enter');

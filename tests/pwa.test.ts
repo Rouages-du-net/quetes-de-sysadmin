@@ -71,6 +71,15 @@ describe('The service worker', () => {
     ]);
   });
 
+  it('precaches the rarely opened dialogs\' own chunks and what they import, so they open offline (src/interface/lazy-dialog.ts)', () => {
+    const dist = fakeDist();
+    writeFileSync(join(dist, '_astro/feedback-dialog.vwx.js'), 'import"./report.yz1.js";');
+    writeFileSync(join(dist, '_astro/report.yz1.js'), 'the report');
+    const list = precacheList(dist);
+    expect(list).toEqual(expect.arrayContaining(['/_astro/feedback-dialog.vwx.js', '/_astro/report.yz1.js']));
+    expect(list).not.toContain('/_astro/eraser.mno.js');
+  });
+
   it('knows every hashed file of the build, to keep the stories it cached at runtime', () => {
     expect(assetList(fakeDist())).toContain('/_astro/eraser.mno.js');
     expect(assetList(fakeDist())).not.toContain('/_astro/font.def.woff');

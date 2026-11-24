@@ -278,7 +278,8 @@ presents them for people.
   summaries (the menu's `lazy()` nodes, the mission waits with
   `withTexts`), English's core, the manual's pages and their examples (the
   notebook shows a command's sentence once they are there). The interface
-  loads what a line needs before running it (`needs()` in `game.ts`);
+  loads what a line needs before running it (`needs()` in
+  `interface/run-line.ts`);
   otherwise the engine throws `NeedsLoading` (`src/engine/loading.ts`) and
   the line runs again. The engine's families (`src/engine/families.ts`):
   the tools only some stories use (Windows' shells and cmdlets, k8s,
@@ -322,8 +323,9 @@ presents them for people.
   The autosave inside a chapter in `src/engine/autosave.ts` (the inputs,
   `Console.journal`, kept in `localStorage` under `KEY-autosave-LANGUAGE`,
   replayed by `Console.replay`; the opening's hash and a `fingerprint` of
-  the machine detect a chapter changed since; the banner and the setting in
-  `game.ts`; tests `tests/autosave.test.ts`).
+  the machine detect a chapter changed since; the banner in
+  `interface/autosave-banner.ts`, the setting in `interface/settings.ts`;
+  tests `tests/autosave.test.ts`).
 - `src/engine/access.ts`: the "real" ssh (machines with `state.realSsh` and
   a story's internal machines, `Chapter.hosts`): `~/.ssh/config`,
   `ProxyJump`, `known_hosts`, `authorized_keys`, passphrase, password;
@@ -914,7 +916,22 @@ presents them for people.
   undone). restic's `sftp:` repositories (`sftpStore`) and `snapshots`'
   filters in `commands/restic.ts`; the `postgresql` package in
   `commands/apt.ts`. Tests: `tests/shelter.test.ts`.
-- `src/interface/`: the interface (`game.ts`, function `mount()`, the
+- `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
+  each part with a shared context (`context.ts`: the options, texts,
+  console, progress, display settings, and what one part asks of another;
+  no part imports another's state) and lays them out; `dom.ts`: `el`,
+  `quiet`, `icon`, `uid`, `downloadFile`. The parts: `output.ts` (the log,
+  `announce()`, Alt+R), `terminal.ts` (the command line, history, Ctrl-R,
+  Tab, the key bar, copy and paste, a follow, nano), `run-line.ts` (a line
+  run: `needs()`, `waitFor()`), `notes.ts` (tips, the error explainer),
+  `menu.ts` (stories, chapters, paths), `whats-new.ts` (the "New" badges,
+  the `qds-badge` event), `settings.ts`, `exam.ts`, `on-call-duty.ts`,
+  `autosave-banner.ts`, `tour.ts`, `summary.ts`, and the dialogs:
+  `*-window.ts` built with the game (mission with hints and rescue, map,
+  notebook, progress, achievements), `*-dialog.ts` the rarely opened ones,
+  each a chunk of its own loaded when it first opens (`lazy-dialog.ts`:
+  start here, feedback, reminder, a chapter's summary; precached by
+  `src/pwa/build.ts`). The
   `nano` editor in `editor.ts`, the sysadmin's notebook whose logic is in
   `src/engine/notebook.ts`, the links to rouages.net after a chapter in
   `src/engine/rouages.ts`, the map of known places whose logic is in
@@ -961,7 +978,7 @@ presents them for people.
   summary in `src/engine/summary.ts` (`Shell.passed`, `typedCommands`),
   replay and compare in `src/engine/runs.ts` (`makeRun`, `addRun`,
   `compare`, `diffLines`; the runs in `KEY-runs`, the lines typed kept by
-  `game.ts`; the dialog's texts in `dialog-compare.ftl`;
+  `run-line.ts`; the dialog's texts in `dialog-compare.ftl`;
   `tests/runs.test.ts`),
   the error explainer in `src/engine/explainer.ts` (a failed command's
   common error recognised from the messages listed in `explainer.ftl`'s
@@ -972,8 +989,8 @@ presents them for people.
   `tests/hints.test.ts` checks it), one-time tips earned by what the
   player types (silence means success, `cd ../..`, `cd -`, `cd ~`, Tab) in
   `src/engine/tips.ts` (texts `tip-*`, shown ones saved with the progress,
-  a "Tips" setting), the intro tour of a first visit and the notebook's
-  window (with its shortcuts) in `game.ts`; and styles (`styles.css`, everything
+  a "Tips" setting), the intro tour of a first visit (`tour.ts`) and the
+  notebook's window (with its shortcuts, `notebook-window.ts`); and styles (`styles.css`, everything
   under `.qds`, colours in `--qds-*` variables).
 - `src/pwa/`: the installable game (Progressive Web App), on the site's
   pages only, never in the embeddable element: the manifests (`manifest.ts`,
@@ -1019,7 +1036,8 @@ presents them for people.
   stories, machines, places, accounts, passwords); French is a translation.
   `dialog-<name>.ftl`: a dialog's texts, their own group loaded when the
   dialog first opens (`src/texts/plugin.mjs`; in `game.ts`, `lazy()` text
-  nodes filled by `withTexts()`), precached for offline play
+  nodes filled by `withTexts()`, with the dialog's own chunk for a
+  `*-dialog.ts`), precached for offline play
   (`src/pwa/build.ts`); its buttons stay in the core texts.
 - `tests/quests.test.ts`: each chapter replayed; `tests/browser.mjs`:
   Chromium, 1000 and 375 px, the CSP of `.htaccess` applied, the root's
@@ -1126,7 +1144,7 @@ The game will be translated into more languages. All code must allow it:
   page, dialog or state goes in its axe list). On the command line Tab
   completes, Shift+Tab and Escape then Tab leave it, Alt+R reads the last
   output again; what is said besides the log (the follow's digest, a
-  chapter's end) goes through `announce()` in `game.ts`, its logic in
+  chapter's end) goes through `announce()` (`interface/output.ts`), its logic in
   `src/engine/announce.ts`. A follow keeps the log quiet. Monospace text
   has no ligatures; a block that scrolls takes a tab stop; forced colours
   and reduced motion are handled at the end of `styles.css`; the terminal
