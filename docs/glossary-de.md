@@ -199,3 +199,22 @@ The Community Centre, The Co-op.
 - the radio → **Radio Viertel** (unit descriptions keep their English words, like French); the media library → **Mediathek im Viertel**; the newspaper's site → **Die Stadtteilzeitung** (typo „Stadtteilzeitunng“)
 - identifiers kept in English as Spanish does: the Kiosk's migration `rename_subscribers_mail_to_email` and its columns `subscribers.mail`
 - typed words of these stories (not in names.ftl): the till's `ZAHLUNG_SCHLUESSEL`, `anmelden`, `zahlung`, `schluessel_widerrufen`; the wiki admin's `/admin/freigeben/`, `/admin/ablehnen/`; the game library's columns `id,name,exemplare`, `id,karte,viertel`, `id,spiel_id,mitglied_id,ausgeliehen_am,zurueck_am`; the ransomware's option `--leise`, the USB label `SICHERUNG`; the post-mortem's alert subject `Radio-Alarm`; Lina's host `werkstatt`
+## Stories group 5
+
+The Climbing Wall, The Dance Troupe, The Shelter, The Language Café, The
+Mapping Party, The Walking Club, The Zine Library, The Tenants' Union, The
+Hostel (with The Firewall and On Call's Memory, which their catalogue lists).
+
+- drill (power, restore) → **Übung**; power cut → **Stromausfall**; flicker → **Flackern**; outage that lasts → **anhaltender Ausfall**
+- UPS primary / secondary → kept as NUT's **primary** / **secondary**; power restore policy → **Power-Restore-Policy**; battery quick test / deep test → **Schnelltest** / **Tiefentest**; waiver → **Haftungsverzicht**
+- bucket, website access, presigned URL → **Bucket**, **Website-Zugriff**, **vorsignierte URL**; node, zone, layout → **Knoten**, **Zone**, **Layout**; key (access key) → **Schlüssel**; dry run → **Probelauf**
+- disaster recovery plan → **Notfallwiederherstellungsplan**; owner (of a service) → **verantwortliche Person**, column **Verantwortlich**; restore beside → **daneben wiederherstellen**; post-incident review → **Nachbetrachtung** (blameless: **ohne Schuldzuweisung**); timeline / actions → **Zeitleiste** / **Maßnahmen**
+- the plan's durations: German units are read by the engine (`24h`, `2 Tage`, `1 Woche`, `4 Std`, `30 Minuten`)
+- runtime / permanent configuration (firewalld) → **Laufzeitkonfiguration** / **permanente Konfiguration**; rich rule → **Rich Rule**; label, relabel → **Label**, **Relabel** / **neu kennzeichnen**; boolean → **Boolean**
+- state, drift, lock (OpenTofu) → **State**, **Drift**, **Sperre**; record set → **Record Set**; mirror → **Mirror**
+- subordinate ids → **untergeordnete IDs**; user namespace → **User-Namespace**; to linger → **lingern** (Linger); service manager → **Dienstmanager**
+- confined / unconfined → **eingeschränkt** / **uneingeschränkt**; complain / enforce mode → **Complain-Modus** / **Enforce-Modus**
+- recipient (sops) → **Empfänger**; data key → **Datenschlüssel**; creation rule → **Creation Rule**; to rotate → **rotieren**; leaked → **durchgesickert**
+- sealed / unseal → **versiegelt** / **entsiegeln**; key share → **Schlüsselteil**, **Teil**; threshold → **Schwelle**; root token → **Root-Token**; policy → **Policy** (plural Policys); orphan token → **Orphan-Token**
+- story titles: „Die Kletterhalle“, „Die Tanzgruppe“, „Das Tierheim“, „Das Sprachcafé“, „Die Mapping-Party“, „Der Wanderverein“, „Die Zine-Bibliothek“, „Die Mieterinitiative“, „Die Herberge“; chapters to check: „Der letzte Ausfall“, „Der Reihe nach“, „Die Kopie außer Haus“, „Keine Berechtigung, aber…“, „Ganz ohne root“, „Raus aus dem Offenen“, „Nur was nötig ist“
+- proper names kept: Overhang (the hall), Kestrel Dance Company, Old Mill, Common Tongue, Hillside, Riverbend, Open Paths; the shelter's animals are given German names (Keks, Pfeffer…)
