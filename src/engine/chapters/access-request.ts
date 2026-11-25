@@ -84,7 +84,8 @@ const missing = (j: Game, a: Answer) => {
   const names = PARTS.filter((x) => !a.has.has(x)).map((x) => j.t(`access-request-part-${x}`));
   return new Intl.ListFormat(j.t('choir-list-locale'), { type: 'conjunction' }).format(names);
 };
-const looking = (j: Game) => /\b(ls|find|cat|less|tree|du|grep|head)\b.*(gdpr-requests|demandes-rgpd)/.test(typed(j)) || /\b(ls|find|du)\b/.test(typed(j)) && /priya-raman/.test(typed(j));
+// The requests' folder in the player's language (path() gives its name).
+const looking = (j: Game) => /\b(ls|find|cat|less|tree|du|grep|head)\b/.test(typed(j)) && typed(j).includes(path(j.t, REQUESTS).split('/').pop()!) || /\b(ls|find|du)\b/.test(typed(j)) && /priya-raman/.test(typed(j));
 
 export const accessRequest: Chapter = {
   id: 'access-request',
