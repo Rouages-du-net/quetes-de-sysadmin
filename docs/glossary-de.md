@@ -74,3 +74,22 @@ adduser, git's commit summary „1 file changed“). Main forms:
 - Story titles: „Der Radierer“, „Der Äther“ (The Airwaves), „Der Zettelkatalog“, „Der Nachtlauf“ (The Night Batch), „Die alte Sonne“, „Die Mieterinitiative“ (The Tenants' Union), „Die Werkzeugbibliothek“ (The Tool Library), „Spam“ (Junk Mail).
 - The Eraser's world: `Huette`, `Huegel`, `SignalSchule`, `Uebungsraum`, `Muelleimer` (the Bin), `ziel = /Koenigreich/Muelleimer`, `flickerin.txt` (mender), `.ersatzbirne`.
 - Passwords: `sonnenblume`, `butter-brezel-91` (butter-brioche), `expressschlinge-42` (quickdraw), `vorsicht-feuchtigkeit-24` (mind-the-damp).
+
+## Stories group 4
+
+The Pool, The Staff Room, The Airwaves, The Tool Library, The Health
+Centre, The Blood Drive, The Choir, The Allotments, The Lifeboat (and the
+shared chapters The Public Bucket, The Firewall).
+
+- Kubernetes words stay English: **Pod**, **Deployment**, **ReplicaSet**, **Service**, **Ingress**, **Secret**, **ConfigMap**, **Namespace**, **Node**, **Rolling Update**, **Rollout**; readiness probe → **Readiness-Probe**; requests and limits → **Requests**, **Limits**; manifest → **Manifest**
+- print queue → **Warteschlange**; print job → **Auftrag**; driverless → **treiberlos**; MFP → **Multifunktionsgerät**; staff room → **Lehrerzimmer**; the staff → **das Kollegium**
+- certificate authority → **Zertifizierungsstelle**; intermediate CA → **Zwischenzertifizierungsstelle**, its certificate **Zwischenzertifikat**; issuing CA → **ausstellende CA**; root → **Root**; revocation list → **Sperrliste** (CRL); to revoke → **sperren**; trust store → **Speicher** (of trusted authorities); leaf → **Blatt**
+- forge → **Forge**; maintainer → **Maintainer** (plural Maintainer); collaborator → **Collaborator**; force-push → **Force-Push**; personal access token → **persönliches Zugriffstoken**; branch protection → **Schutzregel**; status check → **Status-Check**; supply chain → **Lieferkette**; typosquatting → **Typosquatting**; checksum → **Prüfsumme**; signed release → **signiertes Release**
+- hypervisor → **Hypervisor**; guest → **Gast**; domain → **Domain**; disk image → **Image**; backing chain → **Backing-Kette**; overlay → **Overlay**; to merge (blockcommit) → **zusammenführen**; bridge → **Bridge**
+- failover → **Umschaltung**; load balancer → **Load Balancer**; advertisement (VRRP) → **Advertisement**; to preempt → **präemptieren**; health check → **Health-Check**; to drain → **drainen**; split brain → **Split Brain**
+- retention policy → **Aufbewahrungsrichtlinie**; GDPR → **DSGVO** (Artikel 5 Absatz 1 Buchstabe e); right of access → **Auskunftsrecht** (request: **Auskunftsersuchen**); right to erasure → **Recht auf Löschung**; data breach → **Datenpanne**; purge → **Bereinigung**; phone tree → **Telefonkette**; DPO → **Datenschutzbeauftragte**
+- replica → **Replica**; primary → **Primary**; slow query log → **Slow Query Log**; least privilege → **geringste Rechte**; scratch database → **Schmierdatenbank**
+- mailbox → **Postfach**; Trash → **Papierkorb**; bounce → **Rückläufer**, **abweisen**; out-of-office reply → **Abwesenheitsnotiz**; spam score → **Punktzahl**; threshold → **Schwelle**
+- Places: Riverside Pool → **Uferbad**; Millbrook Health Centre → **Gesundheitszentrum Mühlbach**; Lindenvale Blood Service → **Blutspendedienst Lindental**; Riverside Community Choir → **Chor am Fluss** (addresses „…, Am Fluss“); Greenholme Allotments Association → **Kleingartenverein Grünholm**; Seaholme Lifeboat → **Rettungsstation Seaholme**; the Airwaves Federation → **Äther-Verbund**; Kestrel Dance Company → **Tanzkompanie Kestrel**, the Old Mill → **Alte Mühle**
+- The Choir's members (`choir-members`): the people the plot names keep their names (Amara Okafor, Kenji Watanabe, Priya Raman id 27, Tomas Novak id 41), some others are German (Gesine Hartmann, Jonas Brandt, Clara Vogel, Bernd Kühn, Lukas Schäfer, Hannah Weiß, Ulrike Möller); phones stay in Ofcom's drama range (07700 900xxx), mail at mail.example, voices Alt, Bass, Sopran, Tenor
+- The forge account `you` is **du** in German (`du@lendshed.example`)
