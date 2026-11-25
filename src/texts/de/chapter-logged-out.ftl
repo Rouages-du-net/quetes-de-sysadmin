@@ -67,7 +67,7 @@ logged-out-event-generate =
     podman generate systemd funktioniert noch, ist aber veraltet (es sagt
     es): Es schreibt eine Unit für einen Container, der schon existieren
     muss. Podman 5 empfiehlt Quadlet: Du beschreibst den Container in einer
-    .container-Datei, und der Generator von systemd schreibt die Unit bei
+    {"."}container-Datei, und der Generator von systemd schreibt die Unit bei
     jedem daemon-reload.
 logged-out-event-quadlet-error =
     Quadlet hat die Datei abgelehnt: Seine Meldung nennt den Schlüssel und
@@ -79,7 +79,7 @@ logged-out-event-quadlet =
     erzeugt (systemctl --user cat zeigt ihn: podman run mit --replace, --rm
     und --sdnotify=conmon, unter dem Namen der Unit). Ist er gestartet? Und
     wird er beim Booten mit dem Manager starten? Dafür ist ein
-    [Install]-Abschnitt mit WantedBy=default.target in der .container-Datei
+    {"["}Install]-Abschnitt mit WantedBy=default.target in der .container-Datei
     da.
 logged-out-event-no-bus =
     systemctl --user spricht mit dem Manager des Kontos über seinen Bus,
@@ -100,7 +100,7 @@ logged-out-event-linger =
     muss der Container eine seiner Units werden.
 logged-out-event-not-wanted =
     Die Unit läuft, aber nichts wird sie beim nächsten Booten starten: Ihre
-    .container-Datei hat keinen [Install]-Abschnitt mit
+    {"."}container-Datei hat keinen [Install]-Abschnitt mit
     WantedBy=default.target.
 logged-out-event-unit-running =
     Trailbook läuft als Dienst des Managers von trailbook. Ayasha hat um den
@@ -127,14 +127,14 @@ logged-out-event-end =
     ~/.config/containers/systemd/trailbook.container; bei daemon-reload, und
     wann immer der Manager startet, macht der Generator von Podman daraus
     trailbook.service. Mit WantedBy=default.target in seinem
-    [Install]-Abschnitt startet der Manager ihn von selbst. loginctl
+    {"["}Install]-Abschnitt startet der Manager ihn von selbst. loginctl
     enable-linger trailbook lässt logind den Manager beim Booten starten und
     ihn ohne jede Sitzung behalten. Der Neustart hat die ganze Kette
     bewiesen.
 
     GUTE PRAXIS
     - Ein rootless Dienst ist eine Benutzer-Unit seines Kontos: Quadlet, ein
-      [Install]-Abschnitt, und das Konto lingert.
+      {"["}Install]-Abschnitt, und das Konto lingert.
     - Sprich mit dem Manager eines Benutzers über eine echte Sitzung, mit
       gesetztem $XDG_RUNTIME_DIR, oder von root aus mit systemctl --user -M
       KONTO@.

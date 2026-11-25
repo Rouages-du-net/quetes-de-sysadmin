@@ -81,7 +81,7 @@ out-of-the-open-event-base64 =
     Secret im Klartext, das einen Befehl mehr zum Lesen braucht.
 out-of-the-open-event-gitignore =
     Eine .gitignore-Datei hält nur nicht verfolgte Dateien aus git heraus:
-    .env wird schon verfolgt, also bleibt es verfolgt, und git rm --cached
+    {"."}env wird schon verfolgt, also bleibt es verfolgt, und git rm --cached
     würde es nur aus den nächsten Commits entfernen. Das Passwort bleibt so
     oder so in der History, und das Deployment, das .env aus dem Repository
     liest, würde seine Einstellungen verlieren. Behalte .env in git, aber
@@ -119,7 +119,7 @@ out-of-the-open-event-rotated =
     in die deployten Einstellungen.
 out-of-the-open-event-ciphertext-deployed =
     /etc/repairline/env enthält die verschlüsselten Werte: deploy.sh hat
-    .env so kopiert, wie es ist, ENC[…] inbegriffen, und die App würde das
+    {"."}env so kopiert, wie es ist, ENC[…] inbegriffen, und die App würde das
     als ihr Passwort lesen. Das Deployment muss die Datei entschlüsseln,
     mit einem Schlüssel, den der Server hat.
 out-of-the-open-event-root-without-key =

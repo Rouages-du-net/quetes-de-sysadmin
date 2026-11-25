@@ -48,8 +48,8 @@ first-plan-notes-yusra =
       bearbeiten, nicht löschen.
     - Eine frische Kopie des Codes muss einmal initialisiert werden (tofu
       init): Es installiert den Provider aus dem lokalen Mirror (kein
-      Internet auf steinmann, siehe ~/.tofurc) und schreibt
-      .terraform.lock.hcl, die gewählten Versionen.
+      Internet auf steinmann, siehe ~/.tofurc) und schreibt die
+      gewählten Versionen in .terraform.lock.hcl.
     - Dann jedes Mal: tofu fmt, tofu validate, tofu plan, den Plan lesen,
       tofu apply. Und mit dig prüfen.
     - man tofu.

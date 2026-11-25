@@ -53,7 +53,7 @@ keys-change-hands-message-makoa =
     Montag, 25. April, 22:30
 
     Es war mir eine Freude, mit euch allen. Mein Schlüssel steht noch in
-    .sops.yaml und in den Dateien: Nimm ihn natürlich heraus. Und sei beim
+    {"."}sops.yaml und in den Dateien: Nimm ihn natürlich heraus. Und sei beim
     Rest nicht zimperlich: Ich habe das Datenbankpasswort bei jedem
     Deployment gelesen, also ändere es auch. Ich verfolge die Initiative
     weiter aus der Ferne.
@@ -84,7 +84,7 @@ keys-change-hands-event-config-updated =
 keys-change-hands-event-config-only =
     Die Regel hat sich geändert, aber .env oder mail.env sind noch für Makoa
     verschlüsselt: sops schreibt vorhandene Dateien nicht neu, wenn sich
-    .sops.yaml ändert. sops updatekeys tut es, Datei für Datei.
+    {"."}sops.yaml ändert. sops updatekeys tut es, Datei für Datei.
 keys-change-hands-event-keys-updated =
     Beide Dateien sind jetzt für den Server, für dich und für Ikenna
     verschlüsselt, nicht für Makoa. Aber updatekeys verschlüsselt nur
