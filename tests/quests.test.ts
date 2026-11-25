@@ -1905,7 +1905,33 @@ for (const language of LANGUAGES)
         '- Comprobar la configuración antes de cada reinicio (ExecStartPre=).',
         '- Reiniciar el repetidor después de cada cambio.',
       ].join('\n');
-      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES };
+      // The same post-mortem, written in German.
+      const POSTMORTEM_DE = [
+        '# Post-Mortem: Ausfall der Livesendung, Nacht vom 11. auf den 12. September 2027',
+        '',
+        '## Zusammenfassung',
+        'Die Livesendung ist Sonntagnacht ausgefallen, dann hat Théo sie neu gestartet.',
+        '',
+        '## Zeitverlauf',
+        '- 02:13: Das automatische Update startet das Relay neu, das nicht zurückkommt.',
+        '- 02:15: erster Alarm der Sonde.',
+        '- 02:41: Théo meldet sich an.',
+        '- 02:58: Das Relay läuft wieder.',
+        '',
+        '## Auswirkung',
+        '45 Minuten Stille in der Livesendung.',
+        '',
+        '## Ursachen',
+        'unattended-upgrades (needrestart) hat das Relay neu gestartet; eine unbekannte Option (bitrate_max) wartete seit dem 20. August in stream.conf.',
+        '',
+        '## Was gut lief',
+        'Die Sonde hat innerhalb von 2 Minuten gewarnt.',
+        '',
+        '## Maßnahmen',
+        '- Die Konfiguration vor jedem Neustart prüfen (ExecStartPre=).',
+        '- Das Relay nach jeder Änderung neu starten.',
+      ].join('\n');
+      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES, de: POSTMORTEM_DE };
 
       it('solution: the night’s logs, then the complete post-mortem', () => {
         const { s, tout: all } = play('post-mortem', [
