@@ -74,3 +74,27 @@ adduser, git's commit summary „1 file changed“). Main forms:
 - Story titles: „Der Radierer“, „Der Äther“ (The Airwaves), „Der Zettelkatalog“, „Der Nachtlauf“ (The Night Batch), „Die alte Sonne“, „Die Mieterinitiative“ (The Tenants' Union), „Die Werkzeugbibliothek“ (The Tool Library), „Spam“ (Junk Mail).
 - The Eraser's world: `Huette`, `Huegel`, `SignalSchule`, `Uebungsraum`, `Muelleimer` (the Bin), `ziel = /Koenigreich/Muelleimer`, `flickerin.txt` (mender), `.ersatzbirne`.
 - Passwords: `sonnenblume`, `butter-brezel-91` (butter-brioche), `expressschlinge-42` (quickdraw), `vorsicht-feuchtigkeit-24` (mind-the-damp).
+
+## Manual wave 1 (a2dismod to journalctl)
+
+- synopses: lowercase German placeholders as in the first pages (datei, ort, konto, gerät, muster); uppercase ones stay uppercase (DATEI, MUSTER, GERÄT, GRÖSSE, ZEICHENKETTE, JJJJ-MM-TT)
+- Reserved for root / Root only → **Nur für root.**
+- reload → **neu laden**; restart → **neu starten**; reboot → **Neustart**; boot → **Booten** (noun **Bootvorgang** where it is counted)
+- package → **Paket**; update → **Aktualisierung**; upgrade → **Upgrade**; candidate → **Kandidat**; dependency → **Abhängigkeit**
+- site (web) → **Site**; virtual host → **virtueller Host**; snippet (Apache conf) → **Konfigurationsschnipsel**; request → **Anfrage**; header → **Header** (HTTP), **Kopf der Antwort** for -I
+- mail queue → **Warteschlange**; sender, recipient → **Absender**, **Empfänger**
+- key pair → **Schlüsselpaar**; private / public key → **privater / öffentlicher Schlüssel**; passphrase → **Passphrase**; keyring → **Schlüsselbund**; fingerprint → **Fingerabdruck**
+- certificate signing request → **Zertifikatsanforderung (CSR)**; issuer → **Aussteller**; holder (subject) → **Inhaber**; intermediate certificate → **Zwischenzertifikat**; revocation list → **Sperrliste (CRL)**; to revoke → **widerrufen**
+- RAID array → **Verbund**; member → **Mitglied**; degraded → „degraded“; rebuild → **Wiederaufbau**
+- physical volume, volume group, logical volume → **physisches Volume**, **Volume-Gruppe**, **logisches Volume**; extent → **Extent**
+- file system → **Dateisystem**; device → **Gerät**; label → **Bezeichnung**; to unmount → **aushängen**; emergency mode → **Notfallmodus**
+- unit file → **Unit-Datei**; override (drop-in) → **Override** (das); timer → **Timer**; start limit → **Startgrenze**; control groups → **Control Groups**
+- link (network) → **Link**; interface → **Schnittstelle**; bring up / down → **hochbringen / herunternehmen**; gateway → **Gateway**; neighbour discovery → **Nachbarerkennung**; link-local → **Link-Local-Adresse**
+- chain, table, policy (firewall) → **Kette**, **Tabelle**, **Richtlinie**; connection tracking → **Verbindungsverfolgung**; exchange (conntrack) → **Austausch**
+- snapshot (restic, rsnapshot) → **Snapshot**; deduplication → **Deduplizierung**; dress rehearsal → **Generalprobe**
+- replica → **Replikat**; primary → **Primärserver**; binary log → **Binärlog**; statement (SQL) → **Anweisung**; query → **Abfrage**; row → **Zeile**
+- LDAP directory → **Verzeichnis** (LDAP-Verzeichnis); entry → **Eintrag**; access point → **Zugangspunkt**; shared secret → **gemeinsames Geheimnis**
+- signal → **Signal**; parent process → **Elternprozess**; zombie → **Zombie**; load average → **Durchschnittslast**; snapshot (top) → **Momentaufnahme**
+- supplementary groups → **zusätzliche Gruppen**; subordinate uids → **untergeordnete uids**; to lock / unlock (a password) → **sperren / entsperren**; to expire (an account) → **ablaufen lassen**
+- here-document → **Here-Document**; subshell → **Subshell**; parameter expansion → **Parametererweiterung**; escape sequence → **Escape-Sequenz**
+- monitoring plugin → **Überwachungs-Plugin**
