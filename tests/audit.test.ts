@@ -18,6 +18,7 @@ for (const language of languagesFor('audit'))
   describe(`The Audit — ${language}`, () => {
     const fr = language === 'fr';
     const es = language === 'es';
+    const de = language === 'de';
     // A section title of a template, in the game's language.
     const section = (key: string) => translator(language)(key);
     const L = (line: string) => inLanguage(translator(language), line);
@@ -229,7 +230,7 @@ ${fr ? 'Seulement le serveur fournil (192.0.2.22), comme la lettre de mission.' 
 ${fr ? 'Vus d’internet : SSH (22), le site (80, 443), mais aussi PostgreSQL (5432) et Redis (6379).' : 'Seen from the internet: SSH (22), the website (80, 443), but also PostgreSQL (5432) and Redis (6379).'}
 ## ${section('scope-section-outside')}
 ${outside}`;
-    const OUTSIDE = fr ? 'Le serveur du voisin (192.0.2.24) : hors périmètre, je ne l’ai pas sondé.' : es ? 'El servidor del vecino (192.0.2.24): fuera del perímetro, no lo he sondeado.' : 'The neighbour’s server (192.0.2.24): out of scope, I did not probe it.';
+    const OUTSIDE = fr ? 'Le serveur du voisin (192.0.2.24) : hors périmètre, je ne l’ai pas sondé.' : es ? 'El servidor del vecino (192.0.2.24): fuera del perímetro, no lo he sondeado.' : de ? 'Der Server des Nachbarn (192.0.2.24): außerhalb des Rahmens, ich habe ihn nicht geprüft.' : 'The neighbour’s server (192.0.2.24): out of scope, I did not probe it.';
 
     it('chapter 1 — solution: the letter, nmap -sV -oN, honest notes', () => {
       const { c, jouer: play, editer: edit } = part();
@@ -246,7 +247,7 @@ ${outside}`;
       expect(all).toMatch(new RegExp(`^# Nmap 7\\.95 scan initiated .* as: nmap -sV -oN \\S+ ${machinesInLanguage(translator(language), 'bakery.internal')}`, 'm'));
       expect(all).toMatch(/# Nmap done at .* -- 1 IP address \(1 host up\) scanned in/);
       expect(c.finished).not.toContain('scope');
-      const review = edit('nano audit_notes.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*/, 'x'));
+      const review = edit('nano audit_notes.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*|\(zu vervollständigen[^\n]*/, 'x'));
       contains(review, 'Salomé relit tes notes');
       edit('nano audit_notes.md', () => NOTES(OUTSIDE));
       expect(c.finished).toContain('scope');
