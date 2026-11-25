@@ -98,3 +98,21 @@ adduser, git's commit summary „1 file changed“). Main forms:
 - supplementary groups → **zusätzliche Gruppen**; subordinate uids → **untergeordnete uids**; to lock / unlock (a password) → **sperren / entsperren**; to expire (an account) → **ablaufen lassen**
 - here-document → **Here-Document**; subshell → **Subshell**; parameter expansion → **Parametererweiterung**; escape sequence → **Escape-Sequenz**
 - monitoring plugin → **Überwachungs-Plugin**
+## Manual wave 2
+
+The manual pages from `reboot` to `New-GPO` (network and firewall, logs,
+NFS and Samba, FreeBSD, Solaris, IBM i, bytes and character sets, Windows
+and PowerShell, Active Directory). Placeholders in synopses are translated
+when they are words (`datei`, `ADRESSE`, `KONTO`), kept when technical
+(`PID`, `GLOB`, `<String[]>`); option and parameter names never.
+
+- load average → **mittlere Last**; nice value → **nice-Wert**; soft/hard limit → **weiche/harte Grenze**
+- jail (fail2ban) → **Jail**; ban → **Sperre**, **sperren**; letter of engagement → **Auftragsschreiben**; hardening index → **Härtungsindex**
+- facility / severity (syslog) → **Facility** / **Schweregrad**; drop-in → **Drop-in**
+- share (SMB, NFS) → **Freigabe**; export (NFS) → **Export**; to share → **freigeben**
+- record (data) → **Datensatz**; packed decimal → **gepackte Zahl**; character set → **Zeichensatz**; encoding → **Codierung**
+- IBM i (as in IBM's German CL documentation): job queue → **Jobwarteschlange**; message queue → **Nachrichtenwarteschlange**; output queue → **Ausgabewarteschlange**; spooled file → **Spooldatei**; data area → **Datenbereich**; save file → **Sicherungsdatei**; library → **Bibliothek**; member → **Teildatei**; history log → **Protokoll** (QHST); inquiry message → **Anfragenachricht**; save while active → **Sichern im aktiven Zustand**; operator → **Bediener**
+- Windows, as Microsoft's German documentation says it: folder → **Ordner** (on Windows pages only); drive → **Laufwerk**; event log → **Ereignisprotokoll**; display name → **Anzeigename**; logon account → **Anmeldekonto**; Task Scheduler → **Aufgabenplanung**; scheduled task → **geplante Aufgabe**; registry key → **Registrierungsschlüssel** (the registry itself: **Registry**); security descriptor → **Sicherheitsbeschreibung**; provider → **Anbieter**; wildcard → **Platzhalter**; cmdlets „ruft … ab“ (Get-), „legt … an“ (New-)
+- Active Directory: domain controller → **Domänencontroller**; forest → **Gesamtstruktur**; organizational unit → **Organisationseinheit** (OU); domain local group → **lokale Domänengruppe**; Recycle Bin → **Papierkorb**; resultant set of policy → **Richtlinienergebnissatz**; Group Policy object → **Gruppenrichtlinienobjekt** (GPO); lockout → **Sperre**
+- The player's Windows profile `C:\Users\you` → `C:\Users\du`; the machine `cabinet` in commands and account names → `schrank`, `SCHRANK\alice`
+- Kept in English, as the tools print them: messages and states of Windows, PowerShell, SMF, IBM i and OpenSSH quoted in the pages („Access is denied“, „completed normally“, „The property already exists.“)
