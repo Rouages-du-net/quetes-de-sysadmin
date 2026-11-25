@@ -45,20 +45,24 @@ const classify = (n: Node) =>
   n.type === 'directory' ? '/' : n.link !== undefined ? '@' : /x/.test(modeFor(n)) ? '*' : '';
 
 // The date of ls -l (GNU coreutils): "Nov 20 14:54" within six months
-// (and not in the future), "Nov 20  2025" otherwise; in French, "20 nov.  14:54".
+// (and not in the future), "Nov 20  2025" otherwise; in French, "20 nov.  14:54";
+// in German, "20. Nov 14:54" (coreutils' de.po: "%e. %b %H:%M", glibc's
+// de_DE abbreviated months, not Intl's "Sept." or "März").
 const SIX_MONTHS = 15_778_476_000;
+const GERMAN_MONTHS = ['Jan', 'Feb', 'M\u00e4r', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
 export function lsDate(game: Shell, mtime: number | undefined): string {
   const now = nowOf(game);
   const ms = mtime ?? now;
   const d = new Date(ms);
   const language = game.t.language;
-  const months = Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(language, { month: 'short', timeZone: 'UTC' }).format(Date.UTC(2027, m, 15)));
+  const months =
+    language === 'de' ? GERMAN_MONTHS : Array.from({ length: 12 }, (_, m) => new Intl.DateTimeFormat(language, { month: 'short', timeZone: 'UTC' }).format(Date.UTC(2027, m, 15)));
   const width = Math.max(...months.map((m) => m.length));
   const month = months[d.getUTCMonth()].padEnd(width);
   const recent = ms <= now && now - ms < SIX_MONTHS;
   const end = recent ? `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}` : ` ${d.getUTCFullYear()}`;
   const day = String(d.getUTCDate()).padStart(2);
-  return language === 'en' ? `${month} ${day} ${end}` : `${day} ${month} ${end}`;
+  return language === 'en' ? `${month} ${day} ${end}` : language === 'de' ? `${day}. ${month} ${end}` : `${day} ${month} ${end}`;
 }
 
 // The blocks a node takes on disk (KiB), for ls's "total" and du.
@@ -246,8 +250,8 @@ export function inColumns(names: string[], screenWidth: number): string {
 }
 
 // A yes to coreutils' questions: y, or the language's own, like rpmatch
-// (glibc's yesexpr: o for oui in French, s for si in Spanish).
-const YES: Record<string, RegExp> = { fr: /^o/i, es: /^s/i };
+// (glibc's yesexpr: o for oui in French, s for si in Spanish, j for ja in German).
+const YES: Record<string, RegExp> = { fr: /^o/i, es: /^s/i, de: /^j/i };
 const yes = (game: Shell, answer: string) => /^y/i.test(answer.trim()) || (YES[game.t.language]?.test(answer.trim()) ?? false);
 
 // One move or copy of mv and cp: returns an error, or what -v prints.

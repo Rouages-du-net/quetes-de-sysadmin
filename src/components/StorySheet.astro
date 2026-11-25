@@ -15,7 +15,7 @@ import { loadAllTexts, translator, typography } from '../texts';
 import { PAGES } from '../site-languages';
 
 interface Props {
-  lang: 'fr' | 'en' | 'es';
+  lang: 'fr' | 'en' | 'es' | 'de';
   story: string;
 }
 const { lang, story } = Astro.props;
@@ -27,7 +27,7 @@ const h = STORIES.find((x) => x.id === story)!;
 const sheets = storySheets(story);
 const total = hours(sheets.reduce((s, f) => s + f.duration, 0), lang);
 const storyOf = (c: string) => STORIES.find((x) => x.chapters.some((y) => y.id === c))!;
-const QUOTES = { en: ['"', '"'], fr: ['« ', ' »'], es: ['«', '»'] }[lang];
+const QUOTES = { en: ['"', '"'], fr: ['« ', ' »'], es: ['«', '»'], de: ['„', '“'] }[lang];
 const quoted = (c: string) => `${QUOTES[0]}${t(`chapter-${c}`)}${QUOTES[1]}`;
 const after = (ids: string[]) =>
   new Intl.ListFormat(lang, { type: 'conjunction' }).format(ids.map((c) => `${quoted(c)} (${t(`story-${storyOf(c).id}`)})`));
@@ -137,6 +137,39 @@ const TEXTS = {
     route: 'Versión para docentes: el camino de la solución (no para el alumnado)',
     routeHelp: 'Los pasos que el juego comprueba, en orden, con la pista y luego la solución: son las mismas pistas que el propio juego da a quien pide tres. El juego comprueba el resultado, no el comando: pasan otras soluciones. Una vez abierta, esta parte también se imprime, en una página nueva.',
     noHints: 'No hay pistas para este capítulo: el repaso cuenta la solución.',
+  },
+  de: {
+    teachers: 'Für Lehrkräfte',
+    sheet: 'Arbeitsblatt zum Ausdrucken',
+    help: 'Ein Blatt zum Austeilen: das Ziel jedes Kapitels, ohne die Lösungen, die Befehle und die zu lesenden Handbuchseiten sowie Fragen zur Lernkontrolle. Es lässt sich auf A4 oder Letter drucken, in Schwarz-Weiß, mit ausgeschriebenen Links. Die Fassung für Lehrkräfte unten auf der Seite wird nur gedruckt, wenn du sie öffnest.',
+    print: 'Das Blatt drucken',
+    name: 'Name: ______________________   Klasse: __________   Datum: __________',
+    chapters: (n: number, time: string) => `${n} ${plural(n, 'Kapitel', 'Kapitel')}, etwa ${time}.`,
+    opensAfter: (list: string) => ` Öffnet sich im Spiel nach ${list}.`,
+    first: ' Die erste Geschichte: Man fängt bei null an.',
+    game: 'Das Spiel: ',
+    appName: 'Sysadmin-Quests',
+    colon: ': ',
+    theChapters: 'Die Kapitel',
+    goal: 'Ziel',
+    before: 'Vorher',
+    orDirect: ' (oder direktes Öffnen).',
+    scratch: 'Nichts: Man fängt bei null an.',
+    difficulty: 'Schwierigkeit',
+    outOf: (n: number) => `${n} von 5`,
+    time: 'Ungefähre Dauer',
+    fresh: 'Neue Befehle',
+    none: 'Keine neuen: Man nutzt, was man schon kennt.',
+    manual: 'Im Handbuch lesen',
+    further: 'Zum Weiterlesen',
+    check: 'Prüfe, was du gelernt hast',
+    checkHelp: 'Nach jedem Kapitel, ohne das Spiel vor Augen. Das Handbuch (man) ist erlaubt: Das ist die richtige Gewohnheit.',
+    wrong: 'Was stimmte am Anfang des Kapitels nicht, und wie hast du geprüft, dass es behoben war?',
+    command: ['Wofür hast du ', ' benutzt? Nenne eine seiner Optionen und was sie bewirkt ('],
+    practice: 'Welche gute Praxis aus der Nachbesprechung würdest du auf einem echten Server anwenden, und warum?',
+    route: 'Fassung für Lehrkräfte: der Lösungsweg (nicht für Lernende)',
+    routeHelp: 'Die Schritte, die das Spiel prüft, der Reihe nach, mit dem Hinweis und dann der Lösung: dieselben Hinweise, die das Spiel selbst gibt, wenn jemand drei davon anfordert. Das Spiel prüft das Ergebnis, nicht den Befehl: Andere Lösungen werden ebenfalls akzeptiert. Geöffnet wird dieser Teil mitgedruckt, auf einer neuen Seite.',
+    noHints: 'Keine Hinweise für dieses Kapitel: Die Nachbesprechung erzählt die Lösung.',
   },
 };
 const T = TEXTS[lang];

@@ -6,7 +6,7 @@
 import Base from '../layouts/Base.astro';
 import { COMPLETE_LANGUAGES, PAGES } from '../site-languages';
 
-const PLAY: Record<string, string> = { en: 'Play in English', fr: 'Jouer en français', es: 'Jugar en español' };
+const PLAY: Record<string, string> = { en: 'Play in English', fr: 'Jouer en français', es: 'Jugar en español', de: 'Auf Deutsch spielen' };
 const offered = COMPLETE_LANGUAGES.filter((l) => PLAY[l]);
 ---
 <Base

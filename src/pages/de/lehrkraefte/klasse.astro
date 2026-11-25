@@ -1,0 +1,13 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { PAGES } from '../../../site-languages';
+import Classroom from '../../../components/Classroom.astro';
+---
+<Base
+  lang="de"
+  title="Klassenübersicht — Sysadmin-Quests"
+  description="Der Fortschritt deiner Klasse in einer Tabelle, aus ihren Spielständen oder Codes gelesen, ohne dass etwas gesendet wird."
+  alternates={PAGES.classTable}
+>
+  <Classroom lang="de" />
+</Base>

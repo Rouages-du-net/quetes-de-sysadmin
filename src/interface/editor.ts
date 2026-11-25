@@ -39,7 +39,7 @@ export function editor(o: EditorOptions): HTMLElement {
   const write = shortcut('^O', t('nano-write'));
   const quit = shortcut('^X', t('nano-quit'));
   const help = el('div', { class: 'nano-help', id: `${id}-help` }, write, quit);
-  // nano's own letter for yes: Y in English, O (oui) in French; both work.
+  // nano's own letter for yes: Y in English, O (oui) in French, J (ja) in German; Y and the language's work.
   const yes = shortcut(t('nano-yes-key'), t('nano-yes'));
   const not = shortcut('N', t('nano-not'));
   const cancel = shortcut('^C', t('nano-cancel'));
@@ -95,7 +95,7 @@ export function editor(o: EditorOptions): HTMLElement {
   root.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (!question.hidden) {
-      if (key === 'o' || key === 'y') yes.click();
+      if (key === 'o' || key === 'y' || key === t('nano-yes-key').toLowerCase()) yes.click();
       else if (key === 'n') not.click();
       else if ((e.ctrlKey && key === 'c') || e.key === 'Escape') cancel.click();
       else return;

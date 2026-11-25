@@ -89,7 +89,7 @@ export const UFW: Record<string, Command> = {
       if (action === 'enable') {
         if (pf.enabled) return game.t('ufw-already-active');
         game.ask(game.t('ufw-question'), (r) => {
-          if (!/^(y|yes|o|oui|s|si|s\u00ed)$/iu.test(r)) return game.t('ufw-abandon');
+          if (!/^(y|yes|o|oui|s|si|s\u00ed|j|ja)$/iu.test(r)) return game.t('ufw-abandon');
           pf.enabled = true;
           pf.ipv6 = ipv6Setting(game);
           pf.activationAlConnections = game.state.connections ?? 1;
@@ -121,7 +121,7 @@ export const UFW: Record<string, Command> = {
           const r = lines[Number(rest[0]) - 1];
           if (!r) return game.error(game.t('ufw-number', { number: rest[0] }));
           game.ask(game.t('ufw-question-deletion', { rule: ruleText(r) }), (rep) => {
-            if (!/^(y|yes|o|oui|s|si|s\u00ed)$/iu.test(rep)) return game.t('ufw-abandon');
+            if (!/^(y|yes|o|oui|s|si|s\u00ed|j|ja)$/iu.test(rep)) return game.t('ufw-abandon');
             pf.rules = pf.rules.filter((q) => q !== r);
             return twin(pf, r) ? v6('ufw-rule-deleted') : game.t('ufw-rule-deleted');
           });

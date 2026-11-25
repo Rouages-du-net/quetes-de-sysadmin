@@ -1,5 +1,5 @@
 // The site's languages: every language of the game has its pages (/en/,
-// /fr/, /es/…), each page's address in each language, and what the site
+// /fr/, /es/, /de/…), each page's address in each language, and what the site
 // offers. A complete language (src/texts/languages.json) is offered: the
 // root sends browsers to it (public/.htaccess), the other pages link to it
 // (the header's language links, hreflang). A draft is built and reachable at
@@ -17,15 +17,16 @@ export const SITE_LANGUAGES: Language[] = [...COMPLETE_LANGUAGES, ...LANGUAGES.f
 export type Alternates = Record<Language, string>;
 
 // The address of each page, by language: English first, the others with
-// their own words (enseignants, docentes), the stories' identifiers as they are.
+// their own words (enseignants, docentes, lehrkraefte), the stories' identifiers as they are.
 export const PAGES = {
-  home: { en: '/en/', fr: '/fr/', es: '/es/' },
-  teachers: { en: '/en/teachers/', fr: '/fr/enseignants/', es: '/es/docentes/' },
-  classTable: { en: '/en/teachers/class/', fr: '/fr/enseignants/classe/', es: '/es/docentes/clase/' },
+  home: { en: '/en/', fr: '/fr/', es: '/es/', de: '/de/' },
+  teachers: { en: '/en/teachers/', fr: '/fr/enseignants/', es: '/es/docentes/', de: '/de/lehrkraefte/' },
+  classTable: { en: '/en/teachers/class/', fr: '/fr/enseignants/classe/', es: '/es/docentes/clase/', de: '/de/lehrkraefte/klasse/' },
   sheet: (story: string): Alternates => ({
     en: `/en/teachers/sheets/${story}/`,
     fr: `/fr/enseignants/fiches/${story}/`,
     es: `/es/docentes/fichas/${story}/`,
+    de: `/de/lehrkraefte/boegen/${story}/`,
   }),
 } satisfies Record<string, Alternates | ((story: string) => Alternates)>;
 

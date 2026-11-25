@@ -1,0 +1,58 @@
+---
+import Base from '../../layouts/Base.astro';
+import { PAGES } from '../../site-languages';
+import { CATALOGUE as STORIES } from '../../engine/catalogue';
+---
+<Base
+  title="Sysadmin-Quests"
+  lang="de"
+  alternates={PAGES.home}
+  description="Lerne Systemadministration unter Linux und Windows, indem du im Browser mit echten Befehlen spielst: sich bewegen, suchen, Rechte, Logs, Netzwerk, git, Backups, PowerShell."
+>
+  <h1>Sysadmin-Quests</h1>
+  <p class="intro">
+    Abenteuer, in denen du mit <strong>echten Befehlen</strong> handelst: zuerst Linux, dann PowerShell auf einem Windows Server. Jeder Ort ist
+    ein Verzeichnis, jedes Objekt eine Datei. {STORIES.length} unabhängige Geschichten: Fang mit dem Radierer an,
+    wenn du noch nie ein Terminal geöffnet hast.
+  </p>
+  <p class="intro">
+    Du kommst nicht weiter? Mach es wie die Profis: <code>man befehl</code> öffnet das Handbuch,
+    <code>befehl --help</code> gibt eine Kurzübersicht und <code>man -k wort</code> sucht den Befehl,
+    der tut, was du willst.
+  </p>
+  <noscript><p class="warning">Dieses Spiel braucht JavaScript, um in deinem Browser ein Terminal zu simulieren.</p></noscript>
+
+  <quetes-de-sysadmin lang="de" exam-control="page"></quetes-de-sysadmin>
+
+  <details class="faq">
+    <summary><h2 id="embed">Bau das Spiel in deine Website ein</h2></summary>
+    <p>Das Spiel ist freie Software und passt mit zwei Zeilen in jede Seite:</p>
+    <pre tabindex="0"><code>{`<script type="module" src="https://sysadmin.rouages.net/integration/quetes-de-sysadmin.js"></script>
+<quetes-de-sysadmin lang="de"></quetes-de-sysadmin>`}</code></pre>
+    <p>Vollständige Anleitung (auf Englisch): <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/EMBEDDING.md" hreflang="en">docs/EMBEDDING.md</a>.</p>
+  </details>
+
+  <details class="faq">
+    <summary><h2 id="names">Warum Namen, die auf .internal und .example enden?</h2></summary>
+    <p>
+      Die Maschinen des Spiels sind erfunden, aber ihre Namen folgen den echten Regeln: <code>.internal</code>
+      ist für private Netze reserviert (ICANN, 2024), <code>.example</code> für Beispiele
+      (<a href="https://www.rfc-editor.org/rfc/rfc6761" hreflang="en">RFC 6761</a>), und die Adressen 192.0.2.x, 198.51.100.x
+      und 203.0.113.x für die Dokumentation (<a href="https://www.rfc-editor.org/rfc/rfc5737" hreflang="en">RFC 5737</a>). Ein
+      erfundener Name könnte jemandem gehören: Was du hier ausprobierst, zeigt nie auf eine echte Maschine.
+    </p>
+  </details>
+
+  <details class="faq">
+    <summary><h2 id="teach">Für Lehrkräfte</h2></summary>
+    <p>Ziel, Voraussetzungen, neue Befehle und Dauer jedes Kapitels: <a href="/de/lehrkraefte/">die Steckbriefe der Quests</a>.</p>
+    <p>Für eine Prüfung im Unterricht: Das Spiel zeigt keine Hinweise und stoppt die Zeit jedes Kapitels; die beste Zeit bleibt in diesem Browser.</p>
+    <p class="exam-control"><label><input type="checkbox" id="exam-mode" /> Prüfungsmodus: keine Hinweise, mit Stoppuhr (das aktuelle Kapitel beginnt von vorn)</label></p>
+  </details>
+</Base>
+
+<script>
+  import '../../element';
+  import { wireExam } from '../../exam-control';
+  wireExam();
+</script>

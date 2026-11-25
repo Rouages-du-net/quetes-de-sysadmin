@@ -133,8 +133,10 @@ this independent project.
   contrast, reduced motion, forced colours, mobile; see
   [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **No trackers**, no ads, no third-party resources.
-- **English first**, French too; more languages will come (German, Spanish,
-  Mandarin, Korean…): texts are kept apart from the code.
+- **English first**, French too; Spanish (`/es/`) and German (`/de/`) are
+  translations in progress, and more languages will come (Mandarin,
+  Korean…): texts are kept apart from the code (see
+  [docs/TRANSLATING.md](docs/TRANSLATING.md)).
 
 ## Licences
 

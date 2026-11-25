@@ -11,7 +11,7 @@ import { loadAllTexts, translator, typography } from '../texts';
 import { PAGES } from '../site-languages';
 
 interface Props {
-  lang: 'fr' | 'en' | 'es';
+  lang: 'fr' | 'en' | 'es' | 'de';
 }
 const { lang } = Astro.props;
 await loadAllTexts();
@@ -22,7 +22,7 @@ const total = sheets.reduce((s, f) => s + f.duration, 0);
 const hours = (minutes: number) => duration(minutes, lang);
 // The chapters to finish before a story opens, with the title of their story.
 const storyOf = (c: string) => STORIES.find((h) => h.chapters.some((x) => x.id === c))!;
-const QUOTES = { en: ['"', '"'], fr: ['« ', ' »'], es: ['«', '»'] }[lang];
+const QUOTES = { en: ['"', '"'], fr: ['« ', ' »'], es: ['«', '»'], de: ['„', '“'] }[lang];
 const quoted = (text: string) => `${QUOTES[0]}${text}${QUOTES[1]}`;
 const after = (ids: string[]) =>
   new Intl.ListFormat(lang, { type: 'conjunction' }).format(ids.map((c) => `${quoted(t(`chapter-${c}`))} (${t(`story-${storyOf(c).id}`)})`));
@@ -122,6 +122,37 @@ const TEXTS = {
     difficulty: 'Dificultad',
     outOf: (n: number) => `${n} de 5`,
     time: 'Duración aproximada',
+  },
+  de: {
+    title: 'Für Lehrkräfte',
+    intro: 'Jedes Kapitel ist eine kleine Mission auf einem simulierten Server, mit echten Befehlen. Das Spiel prüft das <strong>Ergebnis</strong> am Zustand des Systems, nicht den genauen Befehl: Mehrere richtige Lösungen werden akzeptiert, und jedes Kapitel endet mit einer Nachbesprechung (was passiert ist, die gute Praxis, die offizielle Dokumentation).',
+    total: (stories: number, chapters: number, time: string) =>
+      `${stories} Geschichten, ${chapters} Kapitel, insgesamt etwa ${time}. Die Zeiten sind Richtwerte (etwa zehn Minuten zum Einfinden, dann einige Minuten pro geprüftem Schritt): Eine Gruppe von Anfänger·innen braucht länger. Die Schwierigkeit von 1 bis 5 sagt vor allem, wie viel vom Spiel das Kapitel voraussetzt, und ein wenig, wie umfangreich es ist.`,
+    organise: 'Eine Unterrichtsstunde gestalten',
+    tips: [
+      '<strong>Ohne Konto, ohne Installation</strong>: Der Fortschritt bleibt im Browser jeder Person. Nichts wird irgendwohin gesendet.',
+      '<strong>Zuerst der Radierer</strong>: Er bringt bei, sich zu bewegen, und gibt die SSH-Schlüssel für die anderen Geschichten. Um eine andere Geschichte direkt zu öffnen (eine gezielte Übung), bette das Spiel mit seinem Attribut <code>story</code> (siehe jede Geschichte unten) und <code>lang="de"</code> ein. Die deutsche Übersetzung ist in Arbeit: Noch nicht übersetzte Geschichten werden auf Englisch gespielt.',
+      '<strong>Die Arbeit abgeben</strong>: Unter dem Terminal lässt sich das „Sysadmin-Notizbuch“ als Markdown herunterladen. Es enthält den Fortschritt (abgeschlossene Kapitel) und die verwendeten Befehle, mit der ersten getippten Zeile.',
+      '<strong>Den Rechner wechseln</strong>: „Mein Fortschritt“ unter dem Terminal gibt einen kurzen Code zum Abschreiben (die abgeschlossenen Kapitel) oder eine Datei, die alles mitnimmt (samt Notizbuch), und einen optionalen Namen, der oben im Notizbuch steht. Beides ist kein Beweis: Ein Code lässt sich abschreiben, eine Datei bearbeiten.',
+      `<strong>Die Klasse begleiten</strong>: Die <a href="${PAGES.classTable.de}">Klassenübersicht</a> liest die Dateien oder Codes deiner Schüler·innen in deinem Browser, exportiert sie als CSV (für eine Tabellenkalkulation) oder druckt sie.`,
+      '<strong>Drucken</strong>: Jede Geschichte hat ihr <strong>Arbeitsblatt zum Austeilen</strong> (Link unter ihrem Titel): Ziele, Befehle, die zu lesenden Handbuchseiten, Fragen zur Lernkontrolle und, eingeklappt, eine Fassung für Lehrkräfte mit dem Lösungsweg. Die Schaltfläche „Drucken“ unten druckt alle Blätter dieser Seite, eine Geschichte pro Seite.',
+      '<strong>Zur Bewertung</strong>: Der Prüfungsmodus beginnt ein Kapitel ohne jeden Hinweis neu, mit Stoppuhr.',
+      '<strong>Festgefahren?</strong> Das Spiel verweist auf <code>man</code>, <code>--help</code> und <code>man -k</code>, statt die Antwort zu geben: Genau diese Gewohnheit soll entstehen.',
+    ],
+    print: 'Die Blätter drucken',
+    handout: (story: string) => `Arbeitsblatt zum Ausdrucken: ${story}`,
+    chapters: (n: number, time: string) => `${n} ${plural(n, 'Kapitel', 'Kapitel')}, etwa ${time}.`,
+    opensAfter: (list: string) => ` Öffnet sich im Spiel nach ${list}, außer bei direktem Öffnen:`,
+    colon: ': ',
+    goal: 'Ziel',
+    before: 'Vorher',
+    scratch: 'Nichts: Man fängt bei null an.',
+    orLive: (list: string) => `${list} (oder direktes Öffnen).`,
+    fresh: 'Neue Befehle',
+    none: 'Keine neuen: Man nutzt, was man schon kennt.',
+    difficulty: 'Schwierigkeit',
+    outOf: (n: number) => `${n} von 5`,
+    time: 'Ungefähre Dauer',
   },
 };
 const T = TEXTS[lang];

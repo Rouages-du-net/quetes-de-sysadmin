@@ -3,7 +3,7 @@
 // script (src/interface/classroom.ts) mounts it in #class. Nothing is sent:
 // the files are read in the teacher's browser.
 interface Props {
-  lang: 'fr' | 'en' | 'es';
+  lang: 'fr' | 'en' | 'es' | 'de';
 }
 const { lang } = Astro.props;
 const TEXTS = {
@@ -30,6 +30,14 @@ const TEXTS = {
     nothingSent:
       'No se envía nada: los archivos se leen en este navegador y la tabla desaparece cuando cierras la página (descárgala en CSV, separada por punto y coma como esperan las hojas de cálculo en español, o imprímela para conservarla). No es una prueba de trabajo: un archivo se puede modificar y un código se puede copiar.',
     noScript: 'La tabla de la clase necesita JavaScript.',
+  },
+  de: {
+    title: 'Klassenübersicht',
+    intro:
+      'Die Lernenden schicken dir die Datei ihres Fortschritts („Mein Fortschritt“ unter dem Terminal, dann „Meinen Spielstand herunterladen“) oder ihren kurzen Code. Zieh die Dateien hierher oder füge die Codes ein: Die Tabelle zeigt für jede Person die abgeschlossenen Kapitel, den Rang, die Erfolge, die beste Zeit im Prüfungsmodus und den Stand in jeder Geschichte.',
+    nothingSent:
+      'Nichts wird gesendet: Die Dateien werden in diesem Browser gelesen, und die Tabelle verschwindet, wenn du die Seite schließt (lade sie als CSV herunter, mit Semikolons getrennt, wie es Tabellenkalkulationen auf Deutsch erwarten, oder drucke sie, um sie aufzubewahren). Sie ist kein Arbeitsnachweis: Eine Datei lässt sich bearbeiten, ein Code abschreiben.',
+    noScript: 'Die Klassenübersicht braucht JavaScript.',
   },
 };
 const T = TEXTS[lang];

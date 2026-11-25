@@ -22,9 +22,9 @@ function header(game: Shell): string {
   const sd = systemd(game);
   const date = new Date(sd?.clock ?? 0);
   const day =
-    // Day first in French and Spanish (the locale's %x).
-    ['fr', 'es'].includes(game.t.language)
-      ? date.toISOString().slice(0, 10).split('-').reverse().join('/')
+    // Day first in French, Spanish and German (the locale's %x: 25/11/2026, 25.11.2026).
+    ['fr', 'es', 'de'].includes(game.t.language)
+      ? date.toISOString().slice(0, 10).split('-').reverse().join(game.t.language === 'de' ? '.' : '/')
       : `${date.toISOString().slice(5, 7)}/${date.toISOString().slice(8, 10)}/${date.getUTCFullYear()}`;
   return `Linux 6.12.0-quetes (${sd?.host ?? game.hostName}) \t${day} \t_x86_64_\t(${io(game)?.cpus ?? cpu(game)?.cores ?? 2} CPU)`;
 }

@@ -204,9 +204,10 @@ for (const language of LANGUAGES)
         const s = new Shell(chapter('backup'), language);
         const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         contains(nothing, 'aucune tâche de ta crontab ne tombait cette nuit');
-        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/s\/$/, '/')));
-        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').replace(/s$/, '')}" failed: No such file or directory (2)`));
-        crontab(s, (t) => t.replace(L('~/memories/').replace(/s\/$/, '/'), L('~/memories/')));
+        // A typo: the directory's last letter left out.
+        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/.\/$/, '/')));
+        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').slice(0, -1)}" failed: No such file or directory (2)`));
+        crontab(s, (t) => t.replace(L('~/memories/').replace(/.\/$/, '/'), L('~/memories/')));
         expect(s.flags.has('night-ok')).toBe(true);
         const perdu = s.execute(L('rsync -a --delete ~/memories/ /mnt/backup/memories/'))!;
         contains(perdu, 'de la sauvegarde aussi');
