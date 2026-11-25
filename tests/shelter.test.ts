@@ -29,6 +29,9 @@ describe('The Shelter: the engine', () => {
     expect(duration('soon')).toBeNull();
     expect(duration('2 días')).toBe(172_800_000);
     expect(duration('1sem')).toBe(604_800_000);
+    expect(duration('2 Tage')).toBe(172_800_000);
+    expect(duration('1 Woche')).toBe(604_800_000);
+    expect(duration('4 Std')).toBe(14_400_000);
     const rows = planRows(t, '| Owner | Service | RTO | RPO | Backup |\n|---|---|---|---|---|\n| Mirela | Vet records (vetlink) | 2d | 24h | restic |\n| you | Adoption app and database | 4h | 24h | pg_dump |');
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ owner: 'Mirela', rpo: '24h', rto: '2d', backup: 'restic' });
@@ -36,6 +39,7 @@ describe('The Shelter: the engine', () => {
     expect(serviceOf({ service: 'Newsletter (phpList)', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('newsletter');
     expect(serviceOf({ service: 'Boletín', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('newsletter');
     expect(serviceOf({ service: 'Aplicación de adopciones', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('adoptions');
+    expect(serviceOf({ service: 'Adoptions-App und ihre Datenbank', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('adoptions');
     expect(serviceOf({ service: 'Website (nginx)', rpo: '', rto: '', backup: '', owner: '', line: '' })).toBe('website');
     expect(interval('*-*-* 02:00:00', Date.UTC(2031, 10, 3, 9, 30))).toBe(86_400_000);
     expect(interval('hourly', Date.UTC(2031, 10, 3, 9, 30))).toBe(3_600_000);
@@ -306,7 +310,7 @@ for (const language of languagesFor('shelter'))
       // Mirela's draft scheduled as it is: it only lists the snapshots.
       edit('sudo crontab -e', (x) => `${x}\n30 3 1 * * /usr/local/sbin/restore-drill\n`);
       expect(flag('drill-list-only')).toBe(true);
-      all = edit(`nano ${t('name-review-md')}`, () => review(['- Never again', '- Buy a pump'], ['- 02:50 down', '- 13:30 back', fr ? 'C\'était la faute de Dariusz.' : language === 'es' ? 'Fue culpa de Dariusz: un descuido.' : 'It was Dariusz\'s fault: careless.']));
+      all = edit(`nano ${t('name-review-md')}`, () => review(['- Never again', '- Buy a pump'], ['- 02:50 down', '- 13:30 back', fr ? 'C\'était la faute de Dariusz.' : language === 'es' ? 'Fue culpa de Dariusz: un descuido.' : language === 'de' ? 'Es war die Schuld von Dariusz: fahrlässig.' : 'It was Dariusz\'s fault: careless.']));
       expect(flag('blame')).toBe(true);
       expect(flag('no-owners')).toBe(true);
       edit(`nano ${t('name-review-md')}`, () => review(ACTIONS));
