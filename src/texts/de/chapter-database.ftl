@@ -58,7 +58,7 @@ database-event-test-succeeded =
     mit dropdb löschen.)
 database-incident =
     14:05 Uhr. Bérénice, in Panik: „Eine ehrenamtliche Person hat auf der
-    Admin-Seite auf „Verlauf leeren“ geklickt… Die Liste der Ausleihen ist
+    Admin-Seite auf ‚Verlauf leeren‘ geklickt… Die Liste der Ausleihen ist
     leer! Die Spiele und die Mitglieder sind noch da. Kannst du die
     Ausleihen zurückholen, OHNE den Rest anzufassen?“
     (Prüfe mit psql: Wie viele Zeilen sind in ausleihen noch übrig? Dein

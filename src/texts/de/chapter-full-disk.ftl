@@ -12,8 +12,8 @@ full-disk-message-zoe =
     (2:40 Uhr):
 
     „Entschuldige, dass ich dich in deiner ersten Bereitschaft wecke… Die
-    automatische Aufnahme des Nachtprogramms ist gerade gescheitert: „No
-    space left on device“. Der Server sagt, seine Platte sei voll, aber ich
+    automatische Aufnahme des Nachtprogramms ist gerade gescheitert: ‚No
+    space left on device‘. Der Server sagt, seine Platte sei voll, aber ich
     sehe nicht, was sie gefüllt haben könnte, wir haben in letzter Zeit
     nichts hinzugefügt.
 

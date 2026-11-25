@@ -13,7 +13,7 @@ bottleneck-message-zoe =
     „Es geht schon wieder los! Jeden Tag gegen 16 Uhr hat der Livestream
     Lücken: halbsekündige Stille, mehrmals pro Minute. Die Hörerschaft
     schreibt uns. Das Relay (radio-stream) läuft, sein Journal erwähnt
-    „read stall“.
+    ‚read stall‘.
 
     Ich habe in top geschaut: Die Maschine wirkt überlastet, aber der
     Prozessor tut fast nichts. Ich verstehe es überhaupt nicht.

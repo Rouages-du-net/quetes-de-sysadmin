@@ -22,8 +22,8 @@ snapshots-message-berenice =
       - 7 tägliche Snapshots und 4 wöchentliche behalten;
       - dass es von selbst läuft, jede Nacht und jede Woche.
 
-    Malo hat einen Tipp dagelassen: „rsnapshot configtest vor allem
-    anderen, und Vorsicht bei den Tabulatoren“. Für sudo: wuerfel-2027.“
+    Malo hat einen Tipp dagelassen: ‚rsnapshot configtest vor allem
+    anderen, und Vorsicht bei den Tabulatoren‘. Für sudo: wuerfel-2027.“
 # { $number }: die Nummer des hinzugefügten Spiels
 snapshots-line-inventory = gespendetes Spiel Nr. { $number };1;neu
 snapshots-inventory-old =

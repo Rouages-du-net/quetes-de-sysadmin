@@ -15,9 +15,9 @@ full-powers-message-yasmine =
     docker compose gestartet, in /srv/galerie.
 
     Zwei Probleme. Erstens: Ich kann in /srv/galerie/photos keine Fotos
-    mehr ohne sudo hinzufügen oder entfernen, „Permission denied“. Dabei
-    ist es unser Verzeichnis! Zweitens: Rania sagt, die Galerie „läuft als
-    root“, und das sei gefährlich (ihre Notiz liegt neben dieser Nachricht).
+    mehr ohne sudo hinzufügen oder entfernen, ‚Permission denied‘. Dabei
+    ist es unser Verzeichnis! Zweitens: Rania sagt, die Galerie ‚läuft als
+    root‘, und das sei gefährlich (ihre Notiz liegt neben dieser Nachricht).
 
     Was ich mir wünsche:
       - dass die Galerie nicht mehr als root läuft;

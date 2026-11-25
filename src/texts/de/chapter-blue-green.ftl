@@ -14,7 +14,7 @@ blue-green-message-samia =
     abonnieren (curl http://gazette.example/kiosk/). Es ist ein
     Node.js-Programm, hinter nginx.
 
-    Er kann als zwei Kopien laufen, „blau“ (blue) und „grün“ (green):
+    Er kann als zwei Kopien laufen, ‚blau‘ (blue) und ‚grün‘ (green):
       - blau: der Dienst kiosk-blue, Port 3001, der Code in
         /srv/kiosk/blue (ein Link auf eine Version in /srv/kiosk/versions/);
       - grün: der Dienst kiosk-green, Port 3002, /srv/kiosk/green (gestoppt).

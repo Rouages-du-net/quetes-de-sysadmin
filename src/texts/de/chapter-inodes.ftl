@@ -12,7 +12,7 @@ inodes-message-zoe =
     Eine Nachricht von Zoé (3:05 Uhr):
 
     „Ich verstehe gar nichts mehr. Die Aufnahme des Nachtprogramms ist
-    wieder gescheitert: „No space left on device“, genau wie letzte Woche!
+    wieder gescheitert: ‚No space left on device‘, genau wie letzte Woche!
     Nur sagt df -h diesmal, dass das Datenvolume (/srv/radio) fast leer
     ist. Und das Relay kann die Hörvorgänge nicht mehr protokollieren
     (journalctl -u radio-stream).

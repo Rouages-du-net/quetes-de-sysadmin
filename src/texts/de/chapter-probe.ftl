@@ -13,7 +13,7 @@ probe-message-zoe =
 
     „Vier Nächte, vier Störungen, und jedes Mal haben wir es zu spät
     gemerkt. Ich habe eine Sonde angefangen: /usr/local/bin/probe. Sie
-    führt Prüfungen aus (die „Plugins“ des Monitorings, die von Nagios
+    führt Prüfungen aus (die ‚Plugins‘ des Monitorings, die von Nagios
     oder Icinga) und schickt mir per Mail alles, was nicht OK ist. Die
     Post von root kommt bei mir an (/etc/aliases), und von dort auf mein
     Handy.

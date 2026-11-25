@@ -71,7 +71,7 @@ manuscript-message-ines =
     schlimmer: Ich habe gleich danach einen Commit gemacht!
 
     Zum Glück wird mein Verzeichnis roman von git verfolgt, einer
-    Zeitmaschine für Dateien: Jeder „Commit“ ist ein Schnappschuss aller
+    Zeitmaschine für Dateien: Jeder ‚Commit‘ ist ein Schnappschuss aller
     Dateien, mit einer Nachricht und einem Datum. Kannst du mir helfen,
     mein Kapitel zurückzubekommen? Schau dich erst einmal um:
 

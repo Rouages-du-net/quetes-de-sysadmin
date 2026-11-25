@@ -11,14 +11,14 @@ chapter-clock = Die Uhr
 clock-message-zoe =
     Eine Nachricht von Zoé (Montag, 9:05 Uhr):
 
-    „Das Morgenmagazin („morgenmagazin“, 6 bis 9 Uhr) wurde erst ab 8:09
+    „Das Morgenmagazin (‚morgenmagazin‘, 6 bis 9 Uhr) wurde erst ab 8:09
     aufgenommen: Wir haben zwei Stunden Sendung verloren! Es ist der
     cron-Auftrag des Kontos radio, der die Aufnahme startet (sudo crontab
     -u radio -l), und der hat sich nicht geändert.
 
     Was sich geändert hat: Der Hoster hat den Server an diesem Wochenende
     auf eine neue Maschine umgezogen (seine E-Mail liegt in
-    mail_hoster.txt). Und dabei sagt das Aufnahme-Log doch „06:00“…“
+    mail_hoster.txt). Und dabei sagt das Aufnahme-Log doch ‚06:00‘…“
 clock-mail-host =
     Von: support@hosting.example
     Betreff: Umzug Ihres Radioservers abgeschlossen

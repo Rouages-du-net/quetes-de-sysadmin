@@ -20,7 +20,7 @@ bare-repo-message-samia =
     Die Website wird schon von git verfolgt, in ~/gazette. Ab jetzt
     veröffentlichen wir nur noch über git:
       - ein Repository auf dem Server: /srv/git/gazette.git (ein
-        „Bare“-Repository);
+        ‚Bare‘-Repository);
       - sobald Commits hineingeschoben werden (git push), aktualisiert
         sich die Website von selbst.
 

@@ -18,7 +18,7 @@ versions-word-rosa =
 
     Katastrophe: Heute Morgen ist die Abschrift von Maries Tagebuch voller
     absurder Fehler. Der Praktikant hat vor ein paar Nächten ein Skript zur
-    „automatischen Korrektur“ laufen lassen. Und das Backup jeder Nacht hat
+    ‚automatischen Korrektur‘ laufen lassen. Und das Backup jeder Nacht hat
     die beschädigte Version treu gesichert…
 
     Zwei weitere Sorgen: Das Rathaus sagt, unsere Platte sei fast voll

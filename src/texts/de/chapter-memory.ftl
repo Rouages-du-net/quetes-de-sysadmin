@@ -17,7 +17,7 @@ memory-message-zoe =
     habe nichts angefasst, versprochen.
 
     Noch etwas, vielleicht ohne Zusammenhang: In ps gibt es Prozesse mit
-    <defunct>, „Zombies“ laut einem Forum. Ich habe kill -9 auf sie
+    <defunct>, ‚Zombies‘ laut einem Forum. Ich habe kill -9 auf sie
     versucht: Sie sind immer noch da.“
 memory-server-js =
     // Radio Viertel: die automatische Nacht-Playlist.

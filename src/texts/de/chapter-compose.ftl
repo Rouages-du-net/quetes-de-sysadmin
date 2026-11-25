@@ -12,7 +12,7 @@ compose-message-yasmine =
 
     „Wir möchten, dass die Leute die Maschinen des FabLabs (den
     Laserschneider, die 3D-Drucker) online buchen können. Ich habe eine
-    App gefunden, „reservations“, die eine PostgreSQL-Datenbank braucht.
+    App gefunden, ‚reservations‘, die eine PostgreSQL-Datenbank braucht.
     Ein Tutorial lieferte eine fertige Datei compose.yaml: Ich habe sie
     nach /srv/reservations/ kopiert.
 
