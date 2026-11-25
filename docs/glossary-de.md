@@ -144,3 +144,33 @@ lowercase (datei, befehl, ziel).
 - runtime / permanent (firewalld) → **Laufzeitkonfiguration** / **permanente Konfiguration**; rich rule → **Rich Rule**
 - denial (SELinux) → **Verstoß**; relabel → **Relabeling**, **neu labeln**; boolean → **Boolean**; policy (SELinux, AppArmor) → **Richtlinie**
 - profile (AppArmor) → **Profil**; confined/unconfined → **eingeschränkt/uneingeschränkt**; enforce/complain mode → **Modus enforce/complain** (kept); attachment → **Anhang (Attachment)**
+## Stories group 2
+
+The Hive, The Audit, The Lab, The Watch, Junk Mail, The Fleet, The Patch,
+The Canteen, The Observatory, The Theatre, The Huts, The Photo Club.
+
+- e-mail headers: From / To / Subject → **Von: / An: / Betreff:**; the player as recipient → **dich**
+- the end of a debrief: „Gut gemacht! Du hast das Kapitel „…“ abgeschlossen.“; sections **WAS PASSIERT IST, GUTE PRAXIS, EIN ANDERER WEG, DOKUMENTATION**
+- finding (audit) → **Befund**; scope → **Rahmen** („außerhalb des Rahmens“); letter of engagement → **Auftragsschreiben**; auditor → **Auditorin** (Salomé), **Auditor·innen** in general
+- follow-up visit → **Nachprüfung**; closing report → **Abschlussbericht**; hardening (index) → **Härtung**, **Härtungsindex**; evidence → **Beweise**
+- exposure → **Exposition**; to probe (nmap) → **prüfen**; persistence (intrusion) → **Persistenz**; beacon → **Funkfeuer**; intruder → **Eindringling**
+- security watch → **Sicherheitsbeobachtung**, **Beobachtung** (file `beobachtung.md`); bulletin → **Bulletin**; fix (a CVE) → **Korrektur**, **beheben**; score (CVSS) → **Wert**; not applicable → **Nicht zutreffend**
+- template placeholder „(to complete…“ → **„(zu vervollständigen…“** (the reviews look for it)
+- array (RAID) → **Array**; rebuild → **Neuaufbau**; serial number → **Seriennummer**; emergency mode → **Notfallmodus**; logical volume → **logisches Volume**; extent → **Extent**
+- boot → **Bootvorgang**, **booten**; reboot → **Neustart**; drop-in → **Drop-in**; target (systemd) → **Target**; start limit → **Startlimit**
+- load average → **Durchschnittslast**; nice value → **nice-Wert**; quota (CPUQuota) → **Kontingent**; soft / hard limit → **weiches / hartes Limit**; worker → **Worker**; stacking (astrophotography) → **Stacking**
+- signal (TERM, KILL) → **Signal**; to catch → **abfangen**; stale PID file → **verwaiste PID-Datei**
+- ticket office → **Ticketkasse**; seat map → **Saalplan**; opening night → **Premiere**; standby / primary (PostgreSQL) → **Standby / Primärserver**; to promote → **befördern**; failover → **Umschaltung**; default privileges → **Standardrechte**
+- share (Samba) → **Freigabe**; export (NFS) → **Export**; mount (noun) → **Einhängen**; squashed (root_squash) → **gestutzt**
+- rule order (rsyslog) → **der Reihe nach**; template (rsyslog) → **Vorlage**; journal limit → **Limit**
+- trunk / tagged / native VLAN → **Trunk / getaggt / natives VLAN**; lease (DHCP) → **Lease**; range → **Bereich**; reservation → **Reservierung**; zone → **Zone**; chain (nft) → **Kette**; destination translation → **Zieladressübersetzung**; connection tracking → **Verbindungsverfolgung**; access point → **Zugangspunkt**; shared secret → **gemeinsames Geheimnis**; directory (LDAP) → **Verzeichnis**, **Verzeichnisdienst**; peer → **Peer**; site → **Standort**
+- playbook, task, handler, inventory → **Playbook, Task, Handler, Inventar**; rehearsal (--check) → **Generalprobe**; idempotence → **Idempotenz**
+- SPF / DKIM / DMARC: policy → **Richtlinie**; alignment → **Ausrichtung**; aggregate report → **Sammelbericht**; selector → **Selektor**; checker (mail) → **Prüfdienst**; junk folder → **Spam-Ordner**; serial (DNS zone) → **Seriennummer**
+
+Names chosen in these stories (check with a native reviewer):
+
+- Story chapters: „Der Rahmen“, „Der Bericht“, „Die Exposition“, „Die Spuren“, „Die Nachprüfung“ (The Audit); „Die müde Platte“, „Die neue Platte“, „Der Platz wird knapp“, „Der hängende Neustart“ (The Lab); „Das Bulletin“, „Die Priorität“, „Die Korrektur“, „Ohne Beweis keine Gewissheit“, „Eine Routine einrichten“ (The Watch); „Der Briefträger“, „Die Signatur“, „Die Richtlinie“ (Junk Mail); „Das Inventar“, „Das Playbook“, „Die Generalprobe“ (The Fleet); „Das Schloss“ (The Patch); „Die Startreihenfolge“, „Die Neustart-Schleife“, „Der langsame Start“, „Die verspätete Platte“ (The Canteen); „Hohe Last“, „Das Kontingent“, „Zu viele offene Dateien“, „Der hängende Prozess“ (The Observatory); „Premiere“, „Die langsame Abfrage“, „Nur lesen“, „Die Umschaltung“ (The Theatre); „Die Logs sammeln“, „Das volle Journal“, „Fehlgeschlagene Anmeldungen“ (The Huts); „Das geteilte Verzeichnis“, „Wem gehören die Dateien?“, „Die Laptops“ (The Photo Club); „VLANs“, „DHCP“, „Die Zonen“, „Homeoffice“, „Die DMZ“, „Die Nebenstelle“, „Der Verzeichnisdienst“, „Das WLAN der Büros“ (The Hive); shared chapters „Die Firewall“, „Der Abschied“ (The Co-op).
+- Chapters of other stories quoted before their translation (to align when they are translated): „Die Sonde“ (The Probe), „Der Wächter“ (The Sentinel), „Automatische Updates“ (Automatic Updates).
+- Plays of The Theatre: „Die Schneekönigin“, „Der Leuchtturmwärter“, „Die zwölf Geschworenen“.
+- Ansible handler of The Fleet: `Neuladen ssh` / `neuladen ssh` (one word before „ssh“, as the test expects).
+- Host name in The Co-op's keys: `lina@werkstatt`; the canteen's bookings header `uhrzeit;name;personen`.
