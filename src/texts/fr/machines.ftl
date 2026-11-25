@@ -76,3 +76,6 @@ machine-stapler = agrafeuse
 
 ## The Tenants' Union
 machine-latch = loquet
+
+## The Hostel
+machine-padlock = cadenas

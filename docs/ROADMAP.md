@@ -735,6 +735,14 @@ them safely.
   ENC[…] values, the MAC, `.sops.yaml`; `sops` and `age-keygen` in the
   `secrets` family; `.gitignore` in git; four errors in the error
   explainer).
+- [x] **A secrets manager** (OpenBao, the open-source fork of HashiCorp
+  Vault): a server sealed after a power cut and unsealed with three key
+  shares, an app moved from the root token to a narrow policy and a token
+  with a TTL, a leaked token traced in the audit log, revoked, and the
+  secret it read rotated. Done: story 53, "The Hostel" (`openbao.ts`: the
+  Shamir seal, tokens and their tree, ACL policies in HCL, KV version 2,
+  the file audit device and its HMACs; `commands/bao.ts`; the `openbao`
+  family; three errors in the error explainer).
 
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a

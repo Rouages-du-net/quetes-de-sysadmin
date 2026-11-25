@@ -102,3 +102,4 @@ machine-cairn-motd = La Cartopartie — cairn, le serveur DNS du collectif Wayfi
 machine-stile-motd = Le Club de marche — echalier, le serveur du club de randonnée Sentiers ouverts : Trailbook (sorties et inscriptions) dans un conteneur derrière nginx, https://walks.openpaths.example. Son compte : trailbook.
 machine-stapler-motd = La Fanzinothèque — agrafeuse, le serveur Debian de la fanzinothèque : nginx, l'appli du catalogue sous php-fpm (confinée par AppArmor), les scans des fanzines dans /srv/scans. sudo aa-status montre ce que confine AppArmor.
 machine-latch-motd = Le Syndicat des locataires — loquet, le serveur du syndicat des locataires de Larkspur (Repairline, son appli de réparations, et PostgreSQL). Le code est dans /srv/repairline, ses secrets gardés avec sops et age.
+machine-padlock-motd = L'Auberge — cadenas, le serveur de l'auberge coopérative : OpenBao, le coffre-fort des secrets de Bunks, son site de réservation. bao status avant toute chose.

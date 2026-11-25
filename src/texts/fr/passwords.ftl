@@ -106,3 +106,5 @@ password-step-free-32 = sans-marche-32
 ## Le Club de marche
 password-switchback-27 = lacet-27
 password-mind-the-damp-24 = gare-a-l-humidite-24
+## The Hostel
+password-bunk-bed-42 = lits-superposes-42

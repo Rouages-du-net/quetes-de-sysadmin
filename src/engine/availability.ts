@@ -95,6 +95,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['garage'], ['garage'], ['/etc/garage.toml']],
   [['tofu'], ['tofu'], ['/usr/bin/tofu']],
   [['sops', 'age-keygen'], [], ['/usr/bin/sops', '/usr/bin/age-keygen']],
+  [['bao'], ['bao'], ['/etc/openbao']],
   [['aws', 'rclone'], ['garage'], []],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],

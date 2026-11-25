@@ -307,3 +307,16 @@ explainer-sops-no-rule = sops doesn't know who to encrypt this new file for: no 
 explainer-age-keygen-exists = age-keygen never overwrites a file: losing a secret key would make everything encrypted for it unreadable. Use the key that is already there (age-keygen -y FILE prints its public key), or choose another file name on purpose. It also fails when the file's directory doesn't exist yet (mkdir -p).
     .match =
         failed to open output file
+
+explainer-bao-sealed = OpenBao is sealed: it holds its data encrypted and cannot read it until it rebuilds its root key from enough key shares. bao status shows the threshold and the progress; each share holder gives theirs with bao operator unseal. A server always starts sealed, after a reboot or a restart (unless auto-unseal is set up).
+    .match =
+        Vault is sealed
+
+explainer-bao-preflight = The bao kv commands first ask which KV engine is mounted at that path, and that request needs a token whose policies grant something under the mount. Check which token is used (bao token lookup, BAO_TOKEN, ~/.vault-token) and its policies.
+    .match =
+        preflight capability check returned 403
+
+explainer-bao-denied = OpenBao refused the request: the token used has no policy granting this capability on this path, or the token itself is invalid (revoked, expired). bao token lookup shows the token and its policies; bao token capabilities PATH shows what it may do there. With a KV version 2 engine, policies must name the API path (secret/data/..., secret/metadata/...), not the one bao kv takes.
+    .match =
+        1 error occurred:
+        bad token$

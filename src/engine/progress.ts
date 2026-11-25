@@ -133,6 +133,9 @@ export const CODE_ORDER = [
   'backup-profile',
   'out-of-the-open',
   'keys-change-hands',
+  'sealed',
+  'need-to-know',
+  'leaked-token',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

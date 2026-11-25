@@ -26,6 +26,7 @@ export const PATH: Path[] = [
       'new-neighbour', 'wrong-label', 'port-and-boolean',
       'denied-upload', 'backup-profile',
       'out-of-the-open', 'keys-change-hands',
+      'sealed', 'need-to-know', 'leaked-token',
     ],
   },
   {

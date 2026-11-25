@@ -124,6 +124,8 @@ export const MACHINES: Machine[] = [
   machine('stapler', '192.0.2.190', 'zine-library'),
   // The Tenants' Union: a tenants' union's server (Repairline, its repairs app, and PostgreSQL), its secrets kept with sops and age in git.
   machine('latch', '192.0.2.196', 'tenants-union'),
+  // The Hostel: a cooperative hostel's secrets server (OpenBao), behind its booking site Bunks.
+  machine('padlock', '192.0.2.226', 'hostel'),
 ];
 
 /**

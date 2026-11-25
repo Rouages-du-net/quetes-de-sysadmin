@@ -345,6 +345,28 @@ export const EXAMPLES: Record<string, Extra> = {
     ],
     see: ['dig', 'rndc', 'git'],
   },
+  bao: {
+    examples: [
+      'bao status',
+      'bao operator unseal',
+      'bao login',
+      'bao token lookup',
+      'bao kv list secret/',
+      'bao kv get secret/bunks/db',
+      'bao kv get -field=password secret/bunks/db',
+      'bao kv patch secret/bunks/payments api_key=NEW_KEY',
+      'bao kv metadata get secret/bunks/payments',
+      'bao kv rollback -version=1 secret/bunks/db',
+      'bao policy write bunks bunks.hcl',
+      'bao policy read admin',
+      'bao token create -policy=bunks -ttl=768h',
+      'bao token capabilities TOKEN secret/data/bunks/db',
+      'bao token revoke TOKEN',
+      'bao audit list',
+      'bao write sys/audit-hash/file input=TOKEN',
+    ],
+    see: ['systemctl', 'journalctl', 'jq'],
+  },
   rclone: {
     examples: [
       'rclone listremotes',

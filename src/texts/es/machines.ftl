@@ -78,3 +78,6 @@ machine-stapler = grapadora
 
 ## The Tenants' Union
 machine-latch = pestillo
+
+## The Hostel
+machine-padlock = candado

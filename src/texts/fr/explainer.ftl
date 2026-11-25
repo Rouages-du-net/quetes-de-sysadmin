@@ -161,3 +161,9 @@ explainer-sops-mac = Le fichier a été modifié en dehors de sops : le MAC, cal
 explainer-sops-no-rule = sops ne sait pas pour qui chiffrer ce nouveau fichier : pas de --age sur la ligne de commande, pas de .sops.yaml dans le répertoire courant ni au-dessus, ou aucune règle de création dont le path_regex correspond au fichier (le chemin relatif au répertoire de .sops.yaml). Lance sops depuis le dépôt, et vérifie l'expression rationnelle de la règle.
 
 explainer-age-keygen-exists = age-keygen n'écrase jamais un fichier : perdre une clé secrète rendrait illisible tout ce qui a été chiffré pour elle. Utilise la clé déjà là (age-keygen -y FICHIER affiche sa clé publique), ou choisis exprès un autre nom de fichier. Il échoue aussi quand le répertoire du fichier n'existe pas encore (mkdir -p).
+
+explainer-bao-sealed = OpenBao est scellé : il garde ses données chiffrées et ne peut pas les lire tant qu'il n'a pas reconstitué sa clé racine avec assez de parts de clé. bao status montre le seuil et la progression ; chaque détenteur·rice de part donne la sienne avec bao operator unseal. Un serveur démarre toujours scellé, après un redémarrage de la machine ou du service (sauf descellement automatique).
+
+explainer-bao-preflight = Les commandes bao kv demandent d'abord quel moteur KV est monté sur ce chemin, et cette requête exige un jeton dont les politiques accordent quelque chose sous ce point de montage. Vérifie quel jeton est utilisé (bao token lookup, BAO_TOKEN, ~/.vault-token) et ses politiques.
+
+explainer-bao-denied = OpenBao a refusé la requête : le jeton utilisé n'a aucune politique qui accorde cette capacité sur ce chemin, ou le jeton lui-même n'est plus valide (révoqué, expiré). bao token lookup montre le jeton et ses politiques ; bao token capabilities CHEMIN montre ce qu'il peut y faire. Avec un moteur KV version 2, les politiques doivent nommer le chemin de l'API (secret/data/..., secret/metadata/...), pas celui que prend bao kv.

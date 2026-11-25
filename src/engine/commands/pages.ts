@@ -186,6 +186,7 @@ export const PAGES: Record<string, Page> = {
   sops: { options: ['e', 'd', 'r', 'i', '-output', 'a', '-add-age', '-rm-age', '-extract', '-config', '-encrypted-regex', '-unencrypted-suffix', '-input-type', '-ignore-mac', 'y', 'v'] },
   'age-keygen': { options: ['o', 'y', '-version'] },
   tofu: { options: ['chdir', 'auto-approve', 'var', 'var-file', 'lock', 'detailed-exitcode', 'refresh-only', 'destroy', 'out', 'check', 'diff', 'recursive', 'upgrade', 'raw', 'json', 'no-color'] },
+  bao: { options: ['address', 'format', 'field', 'mount', 'version', 'policy', 'ttl', 'period', 'orphan', 'display-name', 'no-default-policy', 'accessor', 'self', 'reset', 'detailed', 'non-interactive', 'no-store', 'remove-data'] },
   rclone: { options: ['n', 'v', 'P', '-config', '-backup-dir', '-suffix', '-no-check-certificate'] },
   upscmd: { section: 8, options: ['l', 'u', 'p', 'w', 't', 'V', 'h'] },
   upsrw: { section: 8, options: ['s', 'l', 'u', 'p', 'w', 't', 'V', 'h'] },

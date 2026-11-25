@@ -291,6 +291,7 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | OpenTofu (`hcl.ts`, `tofu.ts`, The Mapping Party) | OpenTofu v1.13.10's CLI as its sources write it: HCL bodies, blocks, templates and hclsyntax's syntax errors; `fmt` (indentation, aligned `=`, exit code 3 with `-check`, `-diff`); `init` from a filesystem mirror (`.terraform.lock.hcl` with an `h1:` hash, the "Incomplete lock file information" warning); `validate` against hashicorp/dns 3.6.2's schema (`dns_a_record_set`, `dns_aaaa_record_set`, `dns_cname_record`: required, optional, computed, ForceNew); variables from defaults, `TF_VAR_`, `terraform.tfvars`, `*.auto.tfvars`, `-var-file`, `-var`; plan and apply with refresh, drift, `+ ~ - -/+`, hidden unchanged attributes, `-detailed-exitcode`, `-refresh-only`, `-destroy`, import blocks; the local backend's state (JSON format 4, serial, lineage, `.backup`) and lock (Lock Info, force-unlock refused); `import`, `state list/show/rm/mv`, `output` (`-raw`, `-json`); the diagnostics' box at 78 columns | one provider, no modules, workspaces, `count`/`for_each`, data sources, functions, operators, conditionals or heredocs; remote backends and `-generate-config-out` absent; the TSIG key isn't checked; an unset variable is an error, as with `-input=false` (tofu never prompts for it); a saved plan (`-out`) is a marker, `tofu apply FILE` is not supported; named keeps dynamic updates in memory and a growing `.jnl`, never rewrites the zone file, and a restart doesn't replay the journal against a hand-edited file (BIND would refuse it as out of sync); only `-help` of a few subcommands is OpenTofu's own text |
 | SOPS and age (`sops.ts`, `commands/secrets.ts`, The Tenants' Union) | SOPS 3.10.2 (the upstream .deb; SOPS isn't in Debian's archive) and age 1.2.1 (Debian 13): age's X25519 keys written as real Bech32 with its checksum (`AGE-SECRET-KEY-1…`, `age1…`, "malformed recipient … invalid checksum"), the identity file age-keygen writes (`# created:`, `# public key:`), `-o` that never overwrites (`O_EXCL`, mode 0600, "failed to open output file"), `-y`, the public key and the world-readable warning on stderr; SOPS's dotenv store (comments kept and encrypted as `type:comment`, the metadata as sorted `sops_…` lines flattened like `stores/flatten.go`, `\n` escaped), the `ENC[AES256_GCM,data:…,iv:…,tag:…,type:str]` format with a 32-byte IV, a 16-byte tag and the key's path as additional data, the MAC over all values encrypted with the last modification date, `_unencrypted` by default, `encrypted_regex`/`unencrypted_regex`/suffixes; `.sops.yaml` found from the current directory upwards, `path_regex` relative to its directory, `age` as a comma-separated (or folded) string or `key_groups`; the identities from `SOPS_AGE_KEY`, `SOPS_AGE_KEY_FILE` and `$XDG_CONFIG_HOME` or `~/.config/sops/age/keys.txt` (root's own under sudo); `-e`, `-d`, `-r`, `-i`, `--output`, `--extract`, `--age`, `--add-age`, `--rm-age`, `--ignore-mac`, `encrypt`, `decrypt`, `edit` (SOPS_EDITOR, EDITOR, then vim, nano, vi; "File has not changed, exiting."), `rotate` (a new data key), `updatekeys` (the diff, "Is this okay? (y/n):", Go's log lines, the same data key), `set`, `filestatus`; the messages and exit codes of `usererrors.go` (the no-key report, wrapped like `go-wordwrap`), `aes/cipher.go`, `common.go` and `codes.go` (128, 51, 25, 100, 200, 203); the binary store for other extensions | the cryptography is a deterministic stand-in: SHA-256 keystreams and tags instead of AES-GCM, a hashed wrapping of the data key instead of X25519 and ChaCha20-Poly1305 (the armored age file has the real header's shape, not its cryptography), two SHA-256 instead of SHA-512 for the MAC, and the public key derived from the secret by a hash: nothing outside the game could decrypt these files, nor the game decrypt real ones; only the dotenv and binary stores (no YAML, JSON or INI); no PGP, KMS or Vault keys, no Shamir threshold, no `exec-env`, `exec-file`, `publish`, `keyservice` or `groups`; an editor that leaves invalid syntax ends the edit instead of reopening it; `sops --help` is abridged; `--version` always reports that the version check failed (no network) |
 | `.gitignore` (`ignoredBy` in `commands/git.ts`) | gitignore(5)'s patterns in a repository that tracks subdirectories: comments, `!`, a trailing `/` for directories, anchoring by a `/`, `*`, `?`, `[]`, `**`; an ignored file left out of `git status` and `git add .`, a tracked file staying tracked, `git add` of an ignored file refused with Git 2.47's message unless `-f` | only the root's `.gitignore` (no nested ones, no `.git/info/exclude`, no `core.excludesFile`); no `git check-ignore` |
+| OpenBao (`openbao.ts`, `commands/bao.ts`, The Hostel) | OpenBao v2.7.3's CLI and API as its sources write them: `bao status` (the seal status table, exit code 2 while sealed), `operator unseal` (hidden prompt, hex or base64 shares, a share counted once, a wrong share failing the attempt at the threshold and resetting it, "invalid key: failed to decrypt keys from storage: cipher: message authentication failed"), `operator init` (already initialized), `operator seal` (sudo); tokens `s.` + 24 base62 characters (OpenBao disables server-side consistent tokens by default), accessors, policies, parents and orphans revoked with their tree, TTLs up to 768h, `token create/lookup/revoke/capabilities/renew`, `login` and `~/.vault-token`; ACL policies in HCL (`path`, `capabilities`, `*` and `+`, the priority rules, deny, sudo on root-protected paths, "invalid capability", unclosed blocks, invalid keys); KV version 2 at `secret/` (the preflight on `sys/internal/ui/mounts/`, `data/` and `metadata/` paths, versions, `kv get/put/patch/list/rollback/metadata get`, `-field`, `-version`, `-mount`); `read`, `write`, `list` on API paths; the file audit device (one JSON object per request and response, strings HMAC'd with the device's salt, `sys/audit-hash`); the API's error layout ("Error making API request.", URL, "Code: N. Errors:", the multierror "1 error occurred" of an ACL denial); flags after arguments ignored with OpenBao's warning; `BAO_ADDR`/`VAULT_ADDR`, `BAO_TOKEN`/`VAULT_TOKEN`, plain HTTP to the TLS listener refused | one KV mount and the token auth method only: no AppRole, userpass, namespaces, leases, identity, response wrapping, transit, PKI or database engines; no rekey, generate-root, raft or auto-unseal; TLS isn't checked (the CLI reaches https://127.0.0.1:8200 without a CA; curl to port 8200 says self-signed without `-k`); `-format=json` prints a reduced response; audit entries keep the main fields (time, type, auth, request with path, remote_address, response data), the request ids and ports are made up; the unseal nonce and ids are derived, not random UUIDs; the subcommands not modelled are absent from the help; colours are not used |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
@@ -5310,3 +5311,106 @@ The format of a quest (files, events, debrief, tests) is described in
 4. Check it can be finished: a test that replays it in every language (the
    solution, another one, the false leads), then in Chromium at 1000 and
    375 px. Give it its section in this document.
+## Story 53: The Hostel (three chapters)
+
+A cooperative youth hostel keeps the secrets of its booking site, Bunks (the
+database password, the payment provider's API key), in OpenBao
+(https://openbao.org/, v2.7.3) on `padlock` (`cadenas` in French, `candado`
+in Spanish, 192.0.2.226), a Debian 13 server: a KV version 2 engine at
+`secret/`, the token auth method, a file audit device declared in
+`openbao.hcl`, the Shamir seal (five shares, threshold three). Bunks reads its
+two secrets once, when it starts, with the token of `/etc/bunks/bunks.env`.
+Desta coordinates the hostel; Ruslan, the volunteer who installed padlock, is
+away; Hiroko keeps the accounts; Nnamdi looks after the website. Engine:
+`openbao.ts` and `commands/bao.ts` (the `openbao` family, loaded with the
+story, and the `jq` family for the audit log); three explanations in the
+error explainer (sealed, the KV preflight, a 403). The story is built in
+`chapters/hostel.ts`. It opens after "The Spare Key" (keys kept apart) and
+"The First Plan" (HCL), and extends the security path.
+
+**Why OpenBao rather than Vault.** Neither is in Debian 13's archive.
+HashiCorp Vault has been under the Business Source License since 2023 (not
+an open-source licence; Debian removed it); OpenBao is its fork under the
+MPL 2.0, run by the Linux Foundation (OpenSSF), with the same API, the same
+concepts and an almost identical CLI (`bao` instead of `vault`, `BAO_ADDR`
+and `BAO_TOKEN`, with `VAULT_` variables still read). Its releases ship a
+`.deb` with a systemd unit and a default `openbao.hcl`, which this story
+installs as is. A game under the GPL that teaches free software on Debian
+picks the free fork; everything learnt (unseal, policies, tokens, KV v2,
+audit) carries over to Vault word for word.
+
+### Chapter 1 — Sealed (done)
+
+Saturday 6 March 2027, 07:40. A storm cut the power at 03:12; padlock came
+back at 03:58, OpenBao sealed. Bunks failed five times ("Vault is sealed")
+and systemd gave up (start-limit-hit). Twelve guests arrive at nine. Shares:
+yours on a USB key (`/media/usb`), Hiroko's and Nnamdi's in messages,
+Desta's read from a blurred photo (one character wrong).
+
+| Step | Command learnt |
+|---|---|
+| The state | `bao status` (Sealed, Unseal Progress 0/3, exit code 2) |
+| The shares | `bao operator unseal` (typed at the hidden prompt, or as an argument) |
+| The app | `systemctl status bunks`, `journalctl -u bunks`, `sudo systemctl restart bunks` |
+| Checked | `curl http://127.0.0.1:8080/health` |
+
+Goal checked on the state: OpenBao unsealed, Bunks running with a valid
+token, a health check that answered after the unseal. Several solutions:
+any three good shares, prompt or argument, status or not. Expected traps:
+`bao operator init` (already initialized), the same share twice (the
+progress doesn't move), Desta's blurred share (the attempt fails at the
+threshold and resets), Bunks restarted while sealed, OpenBao restarted (it
+comes back sealed and forgets the shares given).
+
+### Chapter 2 — Need to Know (done)
+
+Tuesday 9 March, 10:15. Ruslan's notes: Bunks starts with the root token of
+the init, kept in `bunks.env`. Each admin has an orphan token with the
+`admin` policy in `~/.vault-token`.
+
+| Step | Command learnt |
+|---|---|
+| The secrets | `bao kv list secret/`, `bao kv get secret/bunks/db` |
+| The policy | an HCL file (`path "secret/data/bunks/*" { capabilities = ["read"] }`), `bao policy write`, `policy list/read` |
+| The token | `bao token create -policy=bunks [-ttl] [-display-name]`, `bao token lookup` |
+| The proof | `bao token capabilities TOKEN PATH` |
+| The switch | `bunks.env`, `sudo systemctl restart bunks`, `curl …/health` |
+| The root token | `bao token revoke ROOT_TOKEN` |
+
+Goal checked on the state: Bunks runs with a token (with a TTL, not root)
+that can read its two secrets, cannot write them, and is denied the
+treasurer's and the Wi-Fi's secrets, the policies and token creation; the
+root token revoked; a health check after the switch. Several solutions: a
+policy on `secret/data/bunks/*` or the two exact paths, `-ttl`, `-period` or
+the default 768h, `kv get` or `token capabilities` to check. Expected traps:
+a rule on `secret/bunks/*` (KV v2 puts `data/` in the API path: permission
+denied), a policy too wide (`secret/*`), a token created with the root token
+(revoked with it, its child), the root token revoked while Bunks still uses
+it, flags after the arguments (ignored, with OpenBao's warning).
+
+### Chapter 3 — Leaked Token (done)
+
+Monday 22 March, 16:45. At 14:02 Nnamdi pasted the start of `bunks.env`,
+token included, in a public forum post; at 14:31 (13:31 UTC in the log)
+someone used it from 203.0.113.77. Hiroko got a new API key from the
+payment provider.
+
+| Step | Command learnt |
+|---|---|
+| Whose token | `bao token lookup TOKEN` (display name, policies, accessor, TTL) |
+| What it did | `bao write sys/audit-hash/file input=TOKEN`, `sudo grep`/`sudo jq` on `/var/log/openbao/audit.log` |
+| Shut | `bao token revoke TOKEN` (or `-accessor`) |
+| Rotate | `bao kv patch secret/bunks/payments api_key=…` (`kv metadata get`, `kv rollback`) |
+| A new token | `bao token create -policy=bunks`, `bunks.env`, restart, health |
+
+Goal checked on the state: the leaked token revoked; the payments secret's
+latest version holds the new key and the account; the database secret
+unchanged; Bunks running with a new narrow token, started after the
+rotation; the attacker's requests seen in an output; a health check after
+the restart. Several solutions: the HMAC or the remote address to find the
+entries, `grep` or `jq`, `kv patch` or `kv put` with both fields. Expected
+traps: `kv put` with the key only (the account is gone, Bunks refuses to
+start), the database password changed in OpenBao only (it no longer matches
+the database; the log shows it wasn't read), Bunks restarted with the
+revoked token, a new token too wide, Bunks restarted before the rotation.
+

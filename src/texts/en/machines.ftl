@@ -76,3 +76,6 @@ machine-stapler = stapler
 
 ## The Tenants' Union
 machine-latch = latch
+
+## The Hostel
+machine-padlock = padlock

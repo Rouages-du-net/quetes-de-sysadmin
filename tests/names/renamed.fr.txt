@@ -1985,6 +1985,27 @@ keys-change-hands
   /home/you/.config/sops/age → /home/vous/.config/sops/age
   /home/you/.config/sops/age/keys.txt → /home/vous/.config/sops/age/keys.txt
 
+sealed
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/message_from_hiroko.txt → /home/vous/message_d_hiroko.txt
+  /home/you/message_from_nnamdi.txt → /home/vous/message_de_nnamdi.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+  /media/usb → /media/cle
+  /media/usb/unseal-share-3.txt → /media/cle/unseal-share-3.txt
+
+need-to-know
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/notes_from_ruslan.txt → /home/vous/notes_de_ruslan.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+
+leaked-token
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/forum_post.txt → /home/vous/message_du_forum.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

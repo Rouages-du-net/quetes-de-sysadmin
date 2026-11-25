@@ -106,3 +106,5 @@ password-step-free-32 = step-free-32
 ## The Walking Club
 password-switchback-27 = switchback-27
 password-mind-the-damp-24 = mind-the-damp-24
+## The Hostel
+password-bunk-bed-42 = bunk-bed-42

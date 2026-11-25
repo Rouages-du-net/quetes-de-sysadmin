@@ -106,3 +106,5 @@ password-step-free-32 = sin-escalon-32
 ## El Club de Senderismo
 password-switchback-27 = zigzag-27
 password-mind-the-damp-24 = ojo-con-la-humedad-24
+## The Hostel
+password-bunk-bed-42 = litera-42

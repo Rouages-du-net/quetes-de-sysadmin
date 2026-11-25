@@ -547,3 +547,9 @@ name-message_from_hinewai-txt = message_from_hinewai.txt
 name-message_from_taslima-txt = message_from_taslima.txt
 name-message_from_ikenna-txt = message_from_ikenna.txt
 name-message_from_makoa-txt = message_from_makoa.txt
+## The Hostel
+name-message_from_desta-txt = message_from_desta.txt
+name-message_from_hiroko-txt = message_from_hiroko.txt
+name-message_from_nnamdi-txt = message_from_nnamdi.txt
+name-notes_from_ruslan-txt = notes_from_ruslan.txt
+name-forum_post-txt = forum_post.txt

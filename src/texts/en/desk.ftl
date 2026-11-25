@@ -102,3 +102,4 @@ machine-cairn-motd = The Mapping Party — cairn, the Wayfinders collective's DN
 machine-stile-motd = The Walking Club — stile, the Open Paths walking club's server: Trailbook (walks and sign-ups) in a container behind nginx, https://walks.openpaths.example. Its account: trailbook.
 machine-stapler-motd = The Zine Library — stapler, the zine library's Debian server: nginx, the catalogue app under php-fpm (confined by AppArmor), the zines' scans in /srv/scans. sudo aa-status shows what AppArmor confines.
 machine-latch-motd = The Tenants' Union — latch, the Larkspur Tenants' Union's server (Repairline, its repairs app, and PostgreSQL). The code is in /srv/repairline, its secrets kept with sops and age.
+machine-padlock-motd = The Hostel — padlock, the cooperative hostel's server: OpenBao, the vault for the secrets of Bunks, its booking site. bao status before anything else.
