@@ -39,7 +39,7 @@ for (const language of languagesFor('mixed-fleet'))
   describe(`Next Door Windows — ${language}`, () => {
     const fr = language === 'fr';
     const t = translator(language);
-    const by = <T,>(values: { en: T; fr: T; es: T }) => values[language as 'en' | 'fr' | 'es'] ?? values.en;
+    const by = <T,>(values: { en: T; fr: T; es: T; de: T }) => values[language as 'en' | 'fr' | 'es' | 'de'] ?? values.en;
     const CABINET = machineName(t, 'cabinet');
     const YOU = name(t, 'you');
     const SUDO = password(t, 'drafting-2029');
@@ -63,7 +63,7 @@ for (const language of languagesFor('mixed-fleet'))
       expect(flag('bad-interpreter')).toBe(true);
       const run = play(['bash nightly-copy.sh']);
       expect(run).toContain("nightly-copy.sh: line 5: $'\\r': command not found");
-      expect(run).toContain(by({ en: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory", fr: "nightly-copy.sh: line 6: cd : $'/srv/projects\\r' : aucun fichier ou dossier de ce nom", es: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No existe el fichero o el directorio" }));
+      expect(run).toContain(by({ en: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No such file or directory", fr: "nightly-copy.sh: line 6: cd : $'/srv/projects\\r' : aucun fichier ou dossier de ce nom", es: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': No existe el fichero o el directorio", de: "nightly-copy.sh: line 6: cd: $'/srv/projects\\r': Datei oder Verzeichnis nicht gefunden" }));
       expect(first(play(['file nightly-copy.sh']))).toBe('nightly-copy.sh: Bourne-Again shell script, ASCII text executable, with CRLF line terminators');
       expect(play(['cat -A nightly-copy.sh'])).toContain('#!/bin/bash^M$');
       expect(flag('crlf')).toBe(true);
