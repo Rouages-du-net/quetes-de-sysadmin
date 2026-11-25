@@ -63,7 +63,7 @@ other-door-event-scan4 =
     Wer lauscht, und auf welchen Adressen? (ss -tlnp)
 other-door-event-sockets =
     PostgreSQL lauscht zweimal: 0.0.0.0:5432 (jede IPv4-Adresse) und
-    [::]:5432 (jede IPv6-Adresse). Die Admin-Seiten lauschen auf *:8080: ein
+    auf [::]:5432 (jede IPv6-Adresse). Die Admin-Seiten lauschen auf *:8080: ein
     IPv6-Socket, der auch IPv4 annimmt (IPV6_V6ONLY aus). Daran ist nichts
     falsch: Das Büro braucht die Datenbank. Es ist Aufgabe der Firewall,
     zu wählen, wer hereinkommt. Lies ihre Regeln (nft list ruleset).

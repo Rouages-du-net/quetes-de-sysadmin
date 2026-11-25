@@ -147,7 +147,7 @@ line-endings-event-end =
       Dateien.
     - Unter Windows können Editoren in LF speichern (VS Code, Notepad++),
       und die git-Einstellung core.autocrlf wandelt beim Auschecken um;
-      .gitattributes gewinnt und reist mit dem Repository.
+      die .gitattributes gewinnt und reist mit dem Repository.
 
     EIN ANDERER WEG
     WSL (das Windows-Subsystem für Linux) lässt ein echtes Linux auf dem

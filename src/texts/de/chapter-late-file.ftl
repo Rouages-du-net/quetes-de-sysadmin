@@ -20,8 +20,8 @@ late-file-email-ayesha =
     Timer. Und der Batch hat nichts gesagt: Der Dienst endete
     „erfolgreich“.
 
-    Ich habe ihn um 8:10 von Hand auf die richtige Datei angewandt und das
-    .done weggenommen (das Rechenzentrum schreibt contrib.ebc.done, sobald
+    Ich habe ihn um 8:10 von Hand auf die richtige Datei angewandt und
+    das .done weggenommen (das Rechenzentrum schreibt contrib.ebc.done, sobald
     sein Upload vollständig ist). Der Bericht stimmt jetzt: Niemand wird
     doppelt belastet.
 
@@ -87,8 +87,8 @@ late-file-event-end =
     Der Timer startete den Batch zu einer festen Uhrzeit, ob die Datei da
     war oder nicht, und das Wrapper-Skript endete mit einem echo: Sein
     Exit-Code war immer 0. Das Programm hatte getan, was man ihm sagte. Du
-    hast die Verrohrung drumherum geändert: Der Batch wartet jetzt auf das
-    .done des Rechenzentrums (das Zeichen, dass der Upload vollständig
+    hast die Verrohrung drumherum geändert: Der Batch wartet jetzt auf
+    das .done des Rechenzentrums (das Zeichen, dass der Upload vollständig
     ist), nimmt es weg, sobald die Datei verarbeitet ist, versucht es in
     der Nacht erneut und gibt den Rückgabewert des Programms weiter, damit
     ein Scheitern gesehen wird.

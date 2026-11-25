@@ -46,8 +46,8 @@ both-ways-event-refused6 =
     diesen Rückfall, oder dessen IPv4 schlecht ist, wartet oder scheitert.
     Auf kai: ss -tlnp.
 both-ways-event-sockets =
-    nginx lauscht auf 0.0.0.0:80: nur IPv4. Und die App lauscht auf
-    [::1]:3000, dem IPv6-Loopback, nicht mehr auf 127.0.0.1. Zwei Spuren,
+    nginx lauscht auf 0.0.0.0:80: nur IPv4. Und die App lauscht auf die
+    Adresse [::1]:3000, das IPv6-Loopback, nicht mehr auf 127.0.0.1. Zwei Spuren,
     eine pro Familie.
 both-ways-event-bad-gateway =
     502 Bad Gateway: nginx hat geantwortet, konnte aber die App dahinter
