@@ -61,7 +61,7 @@ departure-event-script-lost =
     gelöschten Kontos).
 
     Zum Glück enthält das Backup von gestern /home: Schau in
-    /srv/backups nach (als root). Nächstes Mal: zuerst schauen, was ein
+    /srv/sicherungen nach (als root). Nächstes Mal: zuerst schauen, was ein
     Konto ausführt, dann löschen.
 departure-event-task-personal =
     Das Backup steht in DEINER crontab. Es läuft… bis zu dem Tag, an dem

@@ -57,7 +57,7 @@ report-report-audit =
          sudoers(5), NOPASSWD.
 
     C4 — Eine Datei mit Geheimnissen ist für alle lesbar           [mittel]
-         /srv/orders/.env enthält die Adresse der Datenbank mit ihrem
+         /srv/bestellungen/.env enthält die Adresse der Datenbank mit ihrem
          Passwort. Jedes Konto auf dem Server kann sie lesen.
 
     Erwartet: für jeden Befund die Korrektur, dann die Prüfung, dass sie
@@ -89,7 +89,7 @@ report-event-account-incomplete =
     sudo chage -l lucas  (man chage, man usermod).
 report-event-app-blind =
     Das Geheimnis ist nicht mehr für alle lesbar… aber die Bestell-App kann
-    es auch nicht mehr lesen! Sie läuft als Konto „orders“ und liest .env
+    es auch nicht mehr lesen! Sie läuft als Konto „bestellungen“ und liest .env
     beim Start: Beim nächsten Neustart käme sie nicht wieder hoch. Schau,
     wem die Datei gehört (ls -l): Ziel ist, den anderen Konten die Tür zu
     schließen, nicht der App.
