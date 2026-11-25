@@ -13,7 +13,7 @@ hint-boot-order-end =
     .lead = Der einzige Beweis: ein Neustart. Dann schau dir die Dienste an (man reboot, man systemctl).
     .solution = sudo reboot, dann ssh kantine und systemctl status menu (oder systemctl --failed).
 
-## Kapitel 2 — Die Neustartschleife
+## Kapitel 2 — Die Neustart-Schleife
 
 hint-restart-loop-limit =
     .lead = Was hat systemd letzte Nacht gemacht? systemctl status menu, journalctl -u menu: Schau dir die Zeiten der Neustarts an.

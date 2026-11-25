@@ -1,8 +1,8 @@
-### Geschichte „Die Kantine“, Kapitel 2 „Die Neustartschleife“: Restart=,
+### Geschichte „Die Kantine“, Kapitel 2 „Die Neustart-Schleife“: Restart=,
 ### RestartSec=, das Startlimit, PartOf=. Unit-Namen, Pfade und die
 ### Meldungen von systemd werden nicht übersetzt.
 
-chapter-restart-loop = Die Neustartschleife
+chapter-restart-loop = Die Neustart-Schleife
     .summary = Restart=always sollte die App von selbst zurückbringen: Letzte Nacht hat es nach einer halben Sekunde aufgegeben. Sorg dafür, dass sie die Neustarts von PostgreSQL übersteht.
 
 ## Dateien
@@ -63,7 +63,7 @@ restart-loop-event-end =
     nach ihm. Ibrahim: „Die Küche hat nicht einmal etwas gemerkt. Heute
     Nacht lasse ich die Updates laufen.“
 
-    Gut gemacht! Du hast das Kapitel „Die Neustartschleife“ abgeschlossen.
+    Gut gemacht! Du hast das Kapitel „Die Neustart-Schleife“ abgeschlossen.
 
     WAS PASSIERT IST
     Wenn PostgreSQL neu startet, verliert die App ihre Verbindung und
