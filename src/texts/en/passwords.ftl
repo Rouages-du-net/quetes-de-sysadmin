@@ -103,3 +103,5 @@ password-spring-gala-58 = spring-gala-58
 password-kibble-2031 = kibble-2031
 password-lantern-thistle-otter-64 = lantern-thistle-otter-64
 password-step-free-32 = step-free-32
+## The Hostel
+password-bunk-bed-42 = bunk-bed-42

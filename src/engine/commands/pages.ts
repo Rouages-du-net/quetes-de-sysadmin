@@ -184,6 +184,7 @@ export const PAGES: Record<string, Page> = {
   garage: { section: 8, options: ['c', 'h', 's', 'V'] },
   aws: { options: ['-profile', '-region', '-endpoint-url', '-no-sign-request', '-no-verify-ssl', '-output', '-recursive', '-dryrun', '-delete', '-exclude', '-include', '-expires-in'] },
   tofu: { options: ['chdir', 'auto-approve', 'var', 'var-file', 'lock', 'detailed-exitcode', 'refresh-only', 'destroy', 'out', 'check', 'diff', 'recursive', 'upgrade', 'raw', 'json', 'no-color'] },
+  bao: { options: ['address', 'format', 'field', 'mount', 'version', 'policy', 'ttl', 'period', 'orphan', 'display-name', 'no-default-policy', 'accessor', 'self', 'reset', 'detailed', 'non-interactive', 'no-store', 'remove-data'] },
   rclone: { options: ['n', 'v', 'P', '-config', '-backup-dir', '-suffix', '-no-check-certificate'] },
   upscmd: { section: 8, options: ['l', 'u', 'p', 'w', 't', 'V', 'h'] },
   upsrw: { section: 8, options: ['s', 'l', 'u', 'p', 'w', 't', 'V', 'h'] },

@@ -23,7 +23,7 @@ export const PATH: Path[] = [
       'alarm', 'containment', 'eradication', 'hardening', 'dormant-accounts', 'lost-disk',
       'expiry-date', 'chain-of-trust', 'stolen-laptop', 'who-can-push', 'leaky-pipeline', 'signed-release',
       'kept-forever', 'access-request', 'forget-me', 'least-privilege', 'public-bucket',
-      'new-neighbour', 'wrong-label', 'port-and-boolean',
+      'new-neighbour', 'wrong-label', 'port-and-boolean', 'sealed', 'need-to-know', 'leaked-token',
     ],
   },
   {

@@ -1392,6 +1392,12 @@
    "ownOptions": true
   }
  ],
+ "bao": [
+  "openbao",
+  {
+   "ownOptions": true
+  }
+ ],
  "caddy": [
   "caddy",
   {

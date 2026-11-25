@@ -103,3 +103,5 @@ password-spring-gala-58 = gala-printemps-58
 password-kibble-2031 = croquettes-2031
 password-lantern-thistle-otter-64 = lanterne-chardon-loutre-64
 password-step-free-32 = sans-marche-32
+## The Hostel
+password-bunk-bed-42 = lits-superposes-42

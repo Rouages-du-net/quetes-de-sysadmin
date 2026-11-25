@@ -73,3 +73,6 @@ machine-noticeboard = pizarra
 
 ## The Mapping Party
 machine-cairn = hito
+
+## The Hostel
+machine-padlock = candado

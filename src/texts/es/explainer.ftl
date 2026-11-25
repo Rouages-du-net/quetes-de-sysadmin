@@ -142,3 +142,9 @@ explainer-tofu-init = Este directorio de trabajo no está inicializado, o ya no 
 explainer-tofu-variable = Una variable está declarada (un bloque variable) pero nada le da valor: ni valor por defecto, ni archivo .tfvars, ni -var. Un valor dado con -var solo dura lo que dura el comando; los archivos terraform.tfvars y *.auto.tfvars se leen cada vez, igual que las variables de entorno TF_VAR_nombre.
 
 explainer-tofu-argument = La configuración no corresponde al esquema del proveedor: un argumento que no conoce (a menudo una errata, y OpenTofu propone entonces el nombre correcto), un argumento obligatorio que falta, o un bloque mal colocado. El mensaje da el archivo y la línea; tofu validate lo comprueba todo sin tocar nada, y la documentación del proveedor lista los argumentos de cada recurso.
+
+explainer-bao-sealed = OpenBao está sellado: guarda sus datos cifrados y no puede leerlos hasta reconstruir su clave raíz con suficientes fragmentos de clave. bao status muestra el umbral y el progreso; cada persona que tiene un fragmento da el suyo con bao operator unseal. Un servidor siempre arranca sellado, tras reiniciar la máquina o el servicio (salvo con desellado automático).
+
+explainer-bao-preflight = Los comandos bao kv preguntan primero qué motor KV está montado en esa ruta, y esa petición necesita un token cuyas políticas concedan algo bajo el punto de montaje. Comprueba qué token se usa (bao token lookup, BAO_TOKEN, ~/.vault-token) y sus políticas.
+
+explainer-bao-denied = OpenBao rechazó la petición: el token usado no tiene ninguna política que conceda esa capacidad en esa ruta, o el token ya no es válido (revocado, caducado). bao token lookup muestra el token y sus políticas; bao token capabilities RUTA muestra lo que puede hacer ahí. Con un motor KV versión 2, las políticas deben nombrar la ruta de la API (secret/data/..., secret/metadata/...), no la que acepta bao kv.

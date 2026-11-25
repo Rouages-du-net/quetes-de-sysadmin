@@ -222,6 +222,42 @@ and `docs/` at [v3.6.2](https://github.com/hashicorp/terraform-provider-dns).
 | named's update log ("signer … approved", "updating zone '…/IN': deleting rrset at", "adding an RR at"), `rndc: 'reload' failed: dynamic zone` | from BIND 9.20's `update.c` and `rndc` as remembered; not re-read here |
 | `tofu -help`'s command list | confirmed (`cmd/tofu/help.go`, each command's `Synopsis()`), reduced to the commands the game has |
 
+## OpenBao v2.7.3 (The Hostel)
+
+Sources: OpenBao's `internal/command/{status,format,base,base_helpers,operator_unseal,operator_init,operator_seal,login,token_create,token_lookup,token_revoke,token_capabilities,policy_write,policy_read,policy_list,policy_delete,kv_get,kv_put,kv_patch,kv_list,kv_rollback,kv_metadata_get,kv_helpers,read,write,audit_list,secrets_list,version,main}.go`,
+`api/{response,client,env,sys_seal}.go`, `internal/http/sys_seal.go`,
+`internal/vault/{request_handling,seal_manager,seal,core,cluster,token_store,logical_system}.go`,
+`internal/vault/policy/{policy,policy_store}.go`, `internal/vault/barrier/barrier.go`,
+`internal/audit/format.go`, `internal/command/server/config.go`, `sdk/logical/{error,response_util}.go`,
+`sdk/helper/{consts/error,consts/token_consts,hclutil/hcl}.go`, `internal/builtin/credential/token/cli.go`,
+the package's `.release/linux/` (`openbao.hcl`, `openbao.service`, `nfpm.yaml`, `postinst`) and
+`website/content/docs/` at [tag v2.7.3](https://github.com/openbao/openbao/tree/v2.7.3) (released 19 November 2026).
+
+| Item | Result |
+| --- | --- |
+| `bao status`'s table: Seal Type, Initialized, Sealed, Total Shares, Threshold, Unseal Progress N/T and Unseal Nonce while sealed, Version, Commit Date, Storage Type, Cluster Name/ID once unsealed, HA Enabled; exit code 2 while sealed | confirmed (`format.go` `formatSealStatusStruct`, `OutputSealStatusStruct`, `status.go`) |
+| Tables: columnize with four spaces, "n/a" for an empty cell, the dashed header; Go's `%v` (`<nil>`, `[a b]`, `map[k:v]`) and `%q` (`["bunks" "default"]`); `∞` for a token without TTL; durations as `humanDuration` (768h, 2h30s) | confirmed (`base_helpers.go`, `format.go` `OutputSecret`/`OutputMap`) |
+| "Unseal Key (will be hidden): ", "Error unsealing: …", a duplicate share ignored, "'key' must be a valid hex or base64 string", "invalid key: key is shorter than minimum 16 bytes", the parts cleared after the threshold | confirmed (`operator_unseal.go`, `sys_seal.go`, `seal_manager.go` `recordUnsealPart`/`getUnsealKey`) |
+| A wrong share: "invalid key: failed to decrypt keys from storage: cipher: message authentication failed" | confirmed in `seal.go` (`readStoredKeys`); the last part is Go's AES-GCM error, as go-kms-wrapping returns it |
+| "Error initializing: … * Vault is already initialized", "Vault is sealed" (503), "Success! Vault is sealed." | confirmed (`core.go`, `consts/error.go`, `operator_init.go`, `operator_seal.go`) |
+| The API error's layout ("Error making API request.", "URL: METHOD URL", "Code: N. Errors:", "* …", "Raw Message" when the body isn't JSON) | confirmed (`api/response.go`) |
+| An ACL denial: "1 error occurred:\n\t* permission denied\n\n"; a missing or revoked token: "permission denied"; lookup of an unknown token: "bad token" | confirmed (`request_handling.go` `CheckToken`, `fetchACLTokenEntryAndEntity`, `token_store.go` `handleLookup`) |
+| The KV preflight on `sys/internal/ui/mounts/PATH` and "preflight capability check returned 403, please ensure client's policies grant access to path "…/"" | confirmed (`kv_helpers.go`, `logical_system.go` `pathInternalUIMountRead`, `hasMountAccess`) |
+| `kv get`'s "Secret Path" / "Metadata" / "Data" headers (padEqualSigns), "No value found at …", "Field "…" not present in secret"; kv put/patch/rollback/metadata get outputs and errors | confirmed (`kv_get.go`, `kv_put.go`, `kv_patch.go`, `kv_rollback.go`, `kv_metadata_get.go`, `kv_helpers.go`); the field message is from `PrintRawField` |
+| Tokens: "s." + 24 base62 characters with the default `disable_sscts`; accessor 24 characters; the default policy's text; child tokens revoked with their parent; "child policies must be subset of parent" without sudo; the 768h default and maximum TTL | confirmed (`token_store.go`, `server/config.go`, `policy_store.go`); the cap without a warning is a simplification |
+| `token lookup`'s fields (accessor, creation_time, creation_ttl, display_name, entity_id, expire_time, explicit_max_ttl, id, issue_time, meta, num_uses, orphan, path, policies, renewable, ttl, type) | confirmed (`token_store.go` `handleLookup`) |
+| `token create`'s table (token, token_accessor, token_duration, token_renewable, token_policies, identity_policies, policies) | confirmed (`format.go` `OutputSecret`) |
+| `token capabilities`: sorted, comma-separated; "deny", "root" | confirmed (`token_capabilities.go`) |
+| Policy errors: "failed to parse policy: path "x": path "x": invalid capability "reed"" (the path named twice), "invalid key "…" on line N" in a multierror; "Success! Uploaded policy: NAME" | confirmed (`policy/policy.go` `parsePaths`/`parsePath`, `hclutil.CheckHCLKeys`, `policy_write.go`); HCL v1's own syntax messages ("object expected closing RBRACE got: EOF") from memory of hashicorp/hcl v1, not re-read |
+| Priority between matching rules (first wildcard, trailing `*`, number of `+`, length, lexical order) | confirmed (`website/content/docs/concepts/policies.mdx`) |
+| `login`: "Success! You are now authenticated…", the BAO_TOKEN warning, "Error authenticating: error looking up token: …", "Token (will be hidden): " | confirmed (`login.go`, `credential/token/cli.go`) |
+| "Command flags must be provided before positional arguments. The following arguments will not be parsed as flags: [...]" | confirmed (`base_helpers.go` `generateFlagWarnings`) |
+| The audit entries' field names (time, type, auth{client_token, accessor, display_name, policies, token_policies, policy_results, token_type, token_ttl, token_issue_time}, request{id, operation, mount_point, mount_type, client_token, client_token_accessor, namespace, path, data, remote_address, remote_port}, response, error) and `hmac-sha256:` + hex | confirmed (`audit/format.go`); the set of fields kept per entry is reduced |
+| `/sys/audit-hash/:path` returning `hash` | confirmed (`website/content/docs/api/system/audit-hash.mdx`) |
+| `bao audit list` ("Path Type Description"), `bao secrets list` ("Path Type Accessor Description"), the root help's command list and synopses | confirmed (`audit_list.go`, `secrets_list.go`, `main.go`, each command's `Synopsis()`) |
+| The package: `/etc/openbao/openbao.hcl` (pebbledb storage, TLS listener on 0.0.0.0:8200), `openbao.service` (Description in quotes, `Type=notify`, `ExecReload=/bin/kill --signal HUP`), the self-signed certificate of `postinst` | confirmed (`.release/linux/`); the declarative `audit "file"` stanza from `website/content/docs/configuration/audit.mdx` |
+| "Client sent an HTTP request to an HTTPS server." for plain HTTP to the listener | Go's `net/http` server answer, from memory |
+
 ## Not checked against sources
 
 These stay in the table of differences as they were: the IBM i messages

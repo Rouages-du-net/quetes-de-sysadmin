@@ -93,6 +93,7 @@ const MODELS: [string[], string[], string[]][] = [
   [['ipmitool'], ['power'], []],
   [['garage'], ['garage'], ['/etc/garage.toml']],
   [['tofu'], ['tofu'], ['/usr/bin/tofu']],
+  [['bao'], ['bao'], ['/etc/openbao']],
   [['aws', 'rclone'], ['garage'], []],
   [['ansible', 'ansible-playbook', 'ansible-inventory', 'ansible-doc'], ['ansible'], ['/etc/ansible']],
   [['caddy'], ['caddy'], ['/etc/caddy']],

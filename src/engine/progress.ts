@@ -127,6 +127,9 @@ export const CODE_ORDER = [
   'port-and-boolean',
   'first-plan',
   'drift',
+  'sealed',
+  'need-to-know',
+  'leaked-token',
 ];
 
 // Crockford's Base32: no I, L, O nor U, which would be confused when copying.

@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`), OpenTofu (`iac`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`), OpenBao (`openbao`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -962,6 +962,28 @@ presents them for people.
   Femi's evening and his `tofu apply` holding the lock in chapter 2,
   `state.onKill` releasing it); `first-plan.ts`, `drift.ts` (`converged`:
   code, state and named agree). Tests: `tests/mapping-party.test.ts`.
+- `src/engine/openbao.ts`: OpenBao 2.7, the open-source fork of HashiCorp
+  Vault (`state.bao` on the principal: the Shamir seal, `parts` counted
+  once, a wrong share failing the attempt, `seal()` at each start; tokens
+  `s.` + base62 (`mint`, `lookupToken`, `revokeTree`: children revoked with
+  their parent, `ttlLeft`); ACL policies in HCL (`parsePolicy` with
+  OpenBao's errors, `matches` for `*` and `+`, Vault's priority rules,
+  `capabilitiesOf`, `allowed` with sudo on root-protected paths); KV
+  version 2 at `secret/` (`data/`, `metadata/`, versions, patch); the file
+  audit device (`auditLines`, strings HMAC'd, `hmacSha256`,
+  `sys/audit-hash`); `request()` is the API: the seal, the token, the ACL,
+  the handler, the audit entries, `runs` for the story); `bao` in
+  `commands/bao.ts` (columnize tables, Go's `%v`/`%q`, flags before the
+  arguments, the hidden prompts of `operator unseal` and `login`,
+  `~/.vault-token`), the `openbao` family. `chapters/hostel.ts`: what the
+  chapters of "The Hostel" share (`padlock`, the cooperative hostel's
+  server: OpenBao from its `.deb`, Bunks the booking site, a modelled unit
+  that reads `/etc/bunks/bunks.env` and its two secrets at start
+  (`bunksStart`), `narrow()` for a token that reads them and nothing else,
+  the past replayed into the audit log by `initialiseStory`, `storyCurl`
+  for the health page, Desta's new admin token if you revoke yours);
+  `sealed.ts`, `need-to-know.ts`, `leaked-token.ts`. Tests:
+  `tests/hostel.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

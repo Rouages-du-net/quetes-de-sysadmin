@@ -535,3 +535,9 @@ name-review-md = revision.md
 name-message_from_andile-txt = mensaje_de_andile.txt
 name-notes_from_yusra-txt = notas_de_yusra.txt
 name-message_from_femi-txt = mensaje_de_femi.txt
+## The Hostel
+name-message_from_desta-txt = mensaje_de_desta.txt
+name-message_from_hiroko-txt = mensaje_de_hiroko.txt
+name-message_from_nnamdi-txt = mensaje_de_nnamdi.txt
+name-notes_from_ruslan-txt = notas_de_ruslan.txt
+name-forum_post-txt = mensaje_del_foro.txt

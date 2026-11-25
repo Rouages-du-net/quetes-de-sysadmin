@@ -1966,6 +1966,27 @@ drift
   /home/you/message_from_femi.txt → /home/tu/mensaje_de_femi.txt
   /home/you/.tofurc → /home/tu/.tofurc
 
+sealed
+  /home/you → /home/tu
+  /home/you/message_from_desta.txt → /home/tu/mensaje_de_desta.txt
+  /home/you/message_from_hiroko.txt → /home/tu/mensaje_de_hiroko.txt
+  /home/you/message_from_nnamdi.txt → /home/tu/mensaje_de_nnamdi.txt
+  /home/you/.vault-token → /home/tu/.vault-token
+  /media/usb → /media/memoria
+  /media/usb/unseal-share-3.txt → /media/memoria/unseal-share-3.txt
+
+need-to-know
+  /home/you → /home/tu
+  /home/you/message_from_desta.txt → /home/tu/mensaje_de_desta.txt
+  /home/you/notes_from_ruslan.txt → /home/tu/notas_de_ruslan.txt
+  /home/you/.vault-token → /home/tu/.vault-token
+
+leaked-token
+  /home/you → /home/tu
+  /home/you/message_from_desta.txt → /home/tu/mensaje_de_desta.txt
+  /home/you/forum_post.txt → /home/tu/mensaje_del_foro.txt
+  /home/you/.vault-token → /home/tu/.vault-token
+
 desk
   /home/you → /home/tu
   /home/you/welcome.txt → /home/tu/bienvenida.txt

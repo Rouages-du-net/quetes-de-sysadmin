@@ -175,3 +175,6 @@ wrong-label
 port-and-boolean
 first-plan
 drift
+sealed
+need-to-know
+leaked-token

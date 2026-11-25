@@ -5964,6 +5964,85 @@
      "events": 12
     }
    ]
+  },
+  {
+   "id": "hostel",
+   "after": [
+    "spare-key",
+    "first-plan"
+   ],
+   "texts": [
+    "chapter-leaked-token.ftl",
+    "chapter-need-to-know.ftl",
+    "chapter-sealed.ftl",
+    "hints-hostel.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "sealed",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 12
+    },
+    {
+     "id": "need-to-know",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 13
+    },
+    {
+     "id": "leaked-token",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "jq",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 14
+    }
+   ]
   }
  ]
 }
