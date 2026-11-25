@@ -538,3 +538,21 @@ name-review-md = retour.md
 name-message_from_andile-txt = message_d_andile.txt
 name-notes_from_yusra-txt = notes_de_yusra.txt
 name-message_from_femi-txt = message_de_femi.txt
+## Le Club de marche
+name-message_from_soo-ah-txt = message_de_soo-ah.txt
+name-notes_from_bolat-txt = notes_de_bolat.txt
+name-message_from_ayasha-txt = message_d_ayasha.txt
+## La Fanzinothèque
+name-message_from_nomvula-txt = message_de_nomvula.txt
+name-notes_from_bartek-txt = notes_de_bartek.txt
+name-message_from_hinewai-txt = message_de_hinewai.txt
+## The Tenants' Union
+name-message_from_taslima-txt = message_de_taslima.txt
+name-message_from_ikenna-txt = message_d_ikenna.txt
+name-message_from_makoa-txt = message_de_makoa.txt
+## The Hostel
+name-message_from_desta-txt = message_de_desta.txt
+name-message_from_hiroko-txt = message_d_hiroko.txt
+name-message_from_nnamdi-txt = message_de_nnamdi.txt
+name-notes_from_ruslan-txt = notes_de_ruslan.txt
+name-forum_post-txt = message_du_forum.txt

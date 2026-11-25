@@ -22,6 +22,7 @@
 import { NeedsLoading } from './loading';
 import type { Command } from './commands/index';
 import type * as Ansible from './families/ansible';
+import type * as Apparmor from './families/apparmor';
 import type * as Apache from './families/apache';
 import type * as Caddy from './families/caddy';
 import type * as Cobol from './families/cobol';
@@ -41,11 +42,14 @@ import type * as Luks from './families/luks';
 import type * as Mariadb from './families/mariadb';
 import type * as Nut from './families/nut';
 import type * as Objects from './families/objects';
+import type * as Podman from './families/podman';
+import type * as Openbao from './families/openbao';
 import type * as Postfix from './families/postfix';
 import type * as Postgres from './families/postgres';
 import type * as Prometheus from './families/prometheus';
 import type * as Rhel from './families/rhel';
 import type * as Rsnapshot from './families/rsnapshot';
+import type * as Secrets from './families/secrets';
 import type * as Samba from './families/samba';
 import type * as Security from './families/security';
 import type * as Storage from './families/storage';
@@ -55,6 +59,7 @@ import entries from './families.json';
 
 export const FAMILIES = {
   ansible: () => import('./families/ansible'),
+  apparmor: () => import('./families/apparmor'),
   apache: () => import('./families/apache'),
   caddy: () => import('./families/caddy'),
   cobol: () => import('./families/cobol'),
@@ -74,11 +79,14 @@ export const FAMILIES = {
   mariadb: () => import('./families/mariadb'),
   nut: () => import('./families/nut'),
   objects: () => import('./families/objects'),
+  podman: () => import('./families/podman'),
+  openbao: () => import('./families/openbao'),
   postfix: () => import('./families/postfix'),
   postgres: () => import('./families/postgres'),
   prometheus: () => import('./families/prometheus'),
   rhel: () => import('./families/rhel'),
   rsnapshot: () => import('./families/rsnapshot'),
+  secrets: () => import('./families/secrets'),
   samba: () => import('./families/samba'),
   security: () => import('./families/security'),
   storage: () => import('./families/storage'),
@@ -89,6 +97,7 @@ export type Family = keyof typeof FAMILIES;
 
 interface Hooks {
   ansible: typeof Ansible.HOOKS;
+  apparmor: typeof Apparmor.HOOKS;
   apache: typeof Apache.HOOKS;
   caddy: typeof Caddy.HOOKS;
   cobol: typeof Cobol.HOOKS;
@@ -108,11 +117,14 @@ interface Hooks {
   mariadb: typeof Mariadb.HOOKS;
   nut: typeof Nut.HOOKS;
   objects: typeof Objects.HOOKS;
+  podman: typeof Podman.HOOKS;
+  openbao: typeof Openbao.HOOKS;
   postfix: typeof Postfix.HOOKS;
   postgres: typeof Postgres.HOOKS;
   prometheus: typeof Prometheus.HOOKS;
   rhel: typeof Rhel.HOOKS;
   rsnapshot: typeof Rsnapshot.HOOKS;
+  secrets: typeof Secrets.HOOKS;
   samba: typeof Samba.HOOKS;
   security: typeof Security.HOOKS;
   storage: typeof Storage.HOOKS;

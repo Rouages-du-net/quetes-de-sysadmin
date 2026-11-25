@@ -535,3 +535,21 @@ name-review-md = review.md
 name-message_from_andile-txt = message_from_andile.txt
 name-notes_from_yusra-txt = notes_from_yusra.txt
 name-message_from_femi-txt = message_from_femi.txt
+## The Walking Club
+name-message_from_soo-ah-txt = message_from_soo-ah.txt
+name-notes_from_bolat-txt = notes_from_bolat.txt
+name-message_from_ayasha-txt = message_from_ayasha.txt
+## The Zine Library
+name-message_from_nomvula-txt = message_from_nomvula.txt
+name-notes_from_bartek-txt = notes_from_bartek.txt
+name-message_from_hinewai-txt = message_from_hinewai.txt
+## The Tenants' Union
+name-message_from_taslima-txt = message_from_taslima.txt
+name-message_from_ikenna-txt = message_from_ikenna.txt
+name-message_from_makoa-txt = message_from_makoa.txt
+## The Hostel
+name-message_from_desta-txt = message_from_desta.txt
+name-message_from_hiroko-txt = message_from_hiroko.txt
+name-message_from_nnamdi-txt = message_from_nnamdi.txt
+name-notes_from_ruslan-txt = notes_from_ruslan.txt
+name-forum_post-txt = forum_post.txt

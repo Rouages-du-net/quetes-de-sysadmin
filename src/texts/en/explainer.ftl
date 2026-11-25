@@ -266,3 +266,57 @@ explainer-tofu-argument = The configuration doesn't match the provider's schema:
         Missing required argument
         Unsupported block type
         Invalid resource type
+explainer-podman-subids = Rootless Podman builds a user namespace for the account: inside, 0 is the account itself and 1, 2, 3… are its subordinate ids, read from /etc/subuid and /etc/subgid (ACCOUNT:FIRST:COUNT). An account without a range gets a namespace of one id, and no image whose files belong to other ids can be unpacked in it. Look at both files (man subuid); usermod --add-subuids and --add-subgids add a range. Podman keeps the account's namespace: after changing the files, podman system migrate rebuilds it.
+    .match =
+        cannot find UID/GID for user
+        potentially insufficient UIDs or GIDs
+
+explainer-privileged-port = A program that isn't root can't listen on a port below net.ipv4.ip_unprivileged_port_start (1024 by default): with rootless Podman, the program that publishes the port (pasta, or rootlessport) runs as your account. Publish a port from 1024 up and leave 80 and 443 to a reverse proxy (nginx, Caddy) that forwards to it. Lowering the sysctl opens these ports to every account's programs, not just yours.
+    .match =
+        (Permission denied) for option '-t
+        cannot expose privileged port
+
+explainer-user-bus = systemctl --user (and journalctl --user) talk to your account's own service manager through its bus, which they find with $XDG_RUNTIME_DIR (/run/user/UID). A login sets it (pam_systemd); sudo, su and cron don't. The manager must also be running: it starts with the account's first session, or at boot if the account lingers (loginctl enable-linger). From root, systemctl --user -M ACCOUNT@ reaches another account's manager.
+    .match =
+        XDG_RUNTIME_DIR not defined
+        Failed to connect to user scope bus
+explainer-apparmor-root = Reading or changing AppArmor's policy is root's business: the profiles loaded in the kernel, which processes they confine, loading or removing one. Run the command with sudo. (aa-status --enabled alone works without it.)
+    .match =
+        You do not have enough privilege to read the profile set
+        attempted to load a profile while confined
+        ERROR: [Errno 13] Permission denied:
+
+explainer-apparmor-parser = apparmor_parser couldn't read the profile, so it loaded nothing: the kernel keeps the version it had. The message names the file and the line ("in profile" gives the file the error is in, an included one perhaps); every rule ends with a comma, and a missing comma is reported on the next line. A file of local/ or abstractions/ is not a profile: load the profile that includes it. man apparmor.d gives the syntax; apparmor_parser -Q checks a file without loading it.
+    .match =
+        AppArmor parser error for
+
+explainer-sops-no-key = sops couldn't decrypt the file's data key: none of the age identities it found matches the file's recipients (listed under Group 0), or it found none at all. It reads SOPS_AGE_KEY, SOPS_AGE_KEY_FILE and ~/.config/sops/age/keys.txt of the account running it (root's own under sudo). Either the file wasn't encrypted for your key, or sops isn't looking where your key is: sops can only decrypt for a recipient chosen when encrypting (.sops.yaml, --age, updatekeys).
+    .match =
+        Failed to get the data key required to decrypt the SOPS file
+
+explainer-sops-mac = The file was changed outside sops: the MAC, computed over all the values when sops last wrote the file, no longer matches them (or a value's own tag fails). An ENC[…] value edited by hand, a line removed or a clear value changed is enough. Take the file back from git, and change values with sops edit or sops set; --ignore-mac only helps to recover a damaged file.
+    .match =
+        MAC mismatch
+        does not match sops' data format
+        Could not decrypt with AES_GCM
+
+explainer-sops-no-rule = sops doesn't know who to encrypt this new file for: no --age on the command line, no .sops.yaml in the current directory or above it, or no creation rule whose path_regex matches the file (the path relative to .sops.yaml's directory). Run sops from the repository, and check the rule's regular expression.
+    .match =
+        config file not found, or has no creation rules, and no keys provided through command line options
+
+explainer-age-keygen-exists = age-keygen never overwrites a file: losing a secret key would make everything encrypted for it unreadable. Use the key that is already there (age-keygen -y FILE prints its public key), or choose another file name on purpose. It also fails when the file's directory doesn't exist yet (mkdir -p).
+    .match =
+        failed to open output file
+
+explainer-bao-sealed = OpenBao is sealed: it holds its data encrypted and cannot read it until it rebuilds its root key from enough key shares. bao status shows the threshold and the progress; each share holder gives theirs with bao operator unseal. A server always starts sealed, after a reboot or a restart (unless auto-unseal is set up).
+    .match =
+        Vault is sealed
+
+explainer-bao-preflight = The bao kv commands first ask which KV engine is mounted at that path, and that request needs a token whose policies grant something under the mount. Check which token is used (bao token lookup, BAO_TOKEN, ~/.vault-token) and its policies.
+    .match =
+        preflight capability check returned 403
+
+explainer-bao-denied = OpenBao refused the request: the token used has no policy granting this capability on this path, or the token itself is invalid (revoked, expired). bao token lookup shows the token and its policies; bao token capabilities PATH shows what it may do there. With a KV version 2 engine, policies must name the API path (secret/data/..., secret/metadata/...), not the one bao kv takes.
+    .match =
+        1 error occurred:
+        bad token$

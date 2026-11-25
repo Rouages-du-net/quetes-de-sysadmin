@@ -103,3 +103,8 @@ password-spring-gala-58 = gala-printemps-58
 password-kibble-2031 = croquettes-2031
 password-lantern-thistle-otter-64 = lanterne-chardon-loutre-64
 password-step-free-32 = sans-marche-32
+## Le Club de marche
+password-switchback-27 = lacet-27
+password-mind-the-damp-24 = gare-a-l-humidite-24
+## The Hostel
+password-bunk-bed-42 = lits-superposes-42

@@ -1939,6 +1939,73 @@ drift
   /home/you/message_from_femi.txt → /home/vous/message_de_femi.txt
   /home/you/.tofurc → /home/vous/.tofurc
 
+no-root-needed
+  /home/you → /home/vous
+  /home/you/message_from_soo-ah.txt → /home/vous/message_de_soo-ah.txt
+  /home/you/notes_from_bolat.txt → /home/vous/notes_de_bolat.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LISEZMOI.txt
+
+logged-out
+  /home/you → /home/vous
+  /home/you/message_from_ayasha.txt → /home/vous/message_d_ayasha.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LISEZMOI.txt
+
+denied-upload
+  /home/you → /home/vous
+  /home/you/message_from_nomvula.txt → /home/vous/message_de_nomvula.txt
+  /home/you/notes_from_bartek.txt → /home/vous/notes_de_bartek.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+backup-profile
+  /home/you → /home/vous
+  /home/you/message_from_hinewai.txt → /home/vous/message_de_hinewai.txt
+  /home/you/.ssh → /home/vous/.ssh
+  /home/you/.ssh/id_ed25519 → /home/vous/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/vous/.ssh/id_ed25519.pub
+
+out-of-the-open
+  /home/you → /home/vous
+  /home/you/message_from_taslima.txt → /home/vous/message_de_taslima.txt
+
+keys-change-hands
+  /home/you → /home/vous
+  /home/you/message_from_taslima.txt → /home/vous/message_de_taslima.txt
+  /home/you/message_from_ikenna.txt → /home/vous/message_d_ikenna.txt
+  /home/you/message_from_makoa.txt → /home/vous/message_de_makoa.txt
+  /home/you/.config → /home/vous/.config
+  /home/you/.config/sops → /home/vous/.config/sops
+  /home/you/.config/sops/age → /home/vous/.config/sops/age
+  /home/you/.config/sops/age/keys.txt → /home/vous/.config/sops/age/keys.txt
+
+sealed
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/message_from_hiroko.txt → /home/vous/message_d_hiroko.txt
+  /home/you/message_from_nnamdi.txt → /home/vous/message_de_nnamdi.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+  /media/usb → /media/cle
+  /media/usb/unseal-share-3.txt → /media/cle/unseal-share-3.txt
+
+need-to-know
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/notes_from_ruslan.txt → /home/vous/notes_de_ruslan.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+
+leaked-token
+  /home/you → /home/vous
+  /home/you/message_from_desta.txt → /home/vous/message_de_desta.txt
+  /home/you/forum_post.txt → /home/vous/message_du_forum.txt
+  /home/you/.vault-token → /home/vous/.vault-token
+
 desk
   /home/you → /home/vous
   /home/you/welcome.txt → /home/vous/bienvenue.txt

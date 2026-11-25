@@ -535,3 +535,21 @@ name-review-md = revision.md
 name-message_from_andile-txt = mensaje_de_andile.txt
 name-notes_from_yusra-txt = notas_de_yusra.txt
 name-message_from_femi-txt = mensaje_de_femi.txt
+## El Club de Senderismo
+name-message_from_soo-ah-txt = mensaje_de_soo-ah.txt
+name-notes_from_bolat-txt = notas_de_bolat.txt
+name-message_from_ayasha-txt = mensaje_de_ayasha.txt
+## The Zine Library
+name-message_from_nomvula-txt = mensaje_de_nomvula.txt
+name-notes_from_bartek-txt = notas_de_bartek.txt
+name-message_from_hinewai-txt = mensaje_de_hinewai.txt
+## The Tenants' Union
+name-message_from_taslima-txt = mensaje_de_taslima.txt
+name-message_from_ikenna-txt = mensaje_de_ikenna.txt
+name-message_from_makoa-txt = mensaje_de_makoa.txt
+## The Hostel
+name-message_from_desta-txt = mensaje_de_desta.txt
+name-message_from_hiroko-txt = mensaje_de_hiroko.txt
+name-message_from_nnamdi-txt = mensaje_de_nnamdi.txt
+name-notes_from_ruslan-txt = notas_de_ruslan.txt
+name-forum_post-txt = mensaje_del_foro.txt

@@ -2142,23 +2142,40 @@ export class Shell implements Game {
       else if (args[0] === 'sudo') {
         args = args.slice(1);
         root = true;
-        // sudo -E keeps the environment (the user may: ALL implies SETENV).
-        if (args[0] === '-E' || args[0] === '--preserve-env') {
-          keepEnv = true;
-          args = args.slice(1);
+        // sudo's options, in any order: -E keeps the environment (the user may: ALL
+        // implies SETENV), -u ACCOUNT, -i or -s (a shell), grouped too (-iu ACCOUNT).
+        let shellFlag: string | null = null;
+        let unknownAccount = false;
+        const account = (name: string) => {
+          as = name;
+          if (!this.accounts.users[as] && as !== 'root') unknownAccount = true;
+        };
+        for (;;) {
+          const a = args[0] ?? '';
+          if (a === '-E' || a === '--preserve-env') {
+            keepEnv = true;
+            args = args.slice(1);
+          } else if (a === '-u' || a === '--user') {
+            account(args[1] ?? '');
+            args = args.slice(2);
+          } else if (a.startsWith('--user=')) {
+            account(a.slice(7));
+            args = args.slice(1);
+          } else if (/^-[is]u$/.test(a)) {
+            shellFlag = `-${a[1]}`;
+            account(args[1] ?? '');
+            args = args.slice(2);
+          } else if (!shellFlag && ['-i', '--login', '-s', '--shell'].includes(a)) {
+            shellFlag = a;
+            args = args.slice(1);
+          } else break;
         }
-        if (args[0] === '-u') {
-          as = args[1] ?? '';
-          args = args.slice(2);
-          if (!this.accounts.users[as] && as !== 'root') {
-            this.error(this.t('sudo-account-unknown', { account: as }));
-            input = '';
-            return;
-          }
+        if (unknownAccount) {
+          this.error(this.t('sudo-account-unknown', { account: as }));
+          input = '';
+          return;
         }
         // sudo -i, sudo -s (or sudo bash): a shell as root (or -u's account); with a command, the command alone.
-        const shellFlag = ['-i', '--login', '-s', '--shell'].includes(args[0] ?? '') ? args[0] : null;
-        if (shellFlag) args = args.slice(1);
         if ((shellFlag && !args.length) || (args.length === 1 && args[0] === 'bash' && segments.length === 1)) {
           const login = shellFlag === '-i' || shellFlag === '--login';
           const shellPath = this.accounts.users[as]?.shell ?? '/bin/bash';
@@ -2386,10 +2403,20 @@ export class Shell implements Game {
       try {
         // A compiled program (cobc): it runs, it doesn't go through sh.
         if (n.type === 'file' && n.program) return family('cobol').runProgram(this, n.program, rest);
+        // A program the story runs itself (state.programs: its path → what it does), not through sh.
+        const own = (this.state.programs as Record<string, (game: Shell, args: string[]) => string> | undefined)?.[this.realPath(cmd)];
+        if (own) return own(this, rest);
         return launchScript(this, cmd, rest);
       } finally {
         this.who = before;
       }
+    }
+    // A story's own program found in the PATH (root's has /usr/local/sbin): run like its path.
+    const programs = this.state.programs as Record<string, unknown> | undefined;
+    if (programs && !COMMANDS[cmd]) {
+      const dirs = (root ? this.as : this.who) === 'root' ? ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin'] : ['/usr/local/bin', '/usr/bin'];
+      const found = dirs.map((d) => `${d}/${cmd}`).find((p) => programs[p] && this.find(p)?.type === 'file');
+      if (found) return this.launch([found, ...rest], input, root, last);
     }
     // A man page for a file (section 5, e.g. sshd_config) is not a command.
     const command: Command | undefined = COMMANDS[cmd]?.section === 5 ? undefined : COMMANDS[cmd];

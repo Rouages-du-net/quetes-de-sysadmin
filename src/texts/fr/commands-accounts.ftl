@@ -35,6 +35,9 @@ usermod-date-invalid = usermod : date « { $date } » non valable
 usermod-uid-invalid = usermod : identifiant d'utilisateur « { $uid } » non valable
 usermod-uid-exists = usermod : l'UID « { $uid } » existe déjà
 usermod-used = usermod : l'utilisateur { $user } est actuellement utilisé par le processus { $pid }
+# { $range }: what was given to -v/-w (FIRST-LAST)
+usermod-subuid-invalid = usermod : plage d'UID subordonnés « { $range } » non valable
+usermod-subgid-invalid = usermod : plage de GID subordonnés « { $range } » non valable
 
 ## userdel, gpasswd, chage (shadow-utils en français)
 

@@ -35,6 +35,9 @@ usermod-date-invalid = usermod: invalid date '{ $date }'
 usermod-uid-invalid = usermod: invalid user ID '{ $uid }'
 usermod-uid-exists = usermod: UID '{ $uid }' already exists
 usermod-used = usermod: user { $user } is currently used by process { $pid }
+# { $range }: what was given to -v/-w (FIRST-LAST)
+usermod-subuid-invalid = usermod: invalid subordinate uid range '{ $range }'
+usermod-subgid-invalid = usermod: invalid subordinate gid range '{ $range }'
 
 ## userdel, gpasswd, chage (shadow-utils)
 

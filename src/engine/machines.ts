@@ -118,6 +118,14 @@ export const MACHINES: Machine[] = [
   { ...machine('kettle', '192.0.2.170', 'language-cafe'), os: 'rhel' },
   // The Mapping Party: a mapping collective's DNS server (BIND), its zone kept as code with OpenTofu.
   machine('cairn', '192.0.2.176', 'mapping-party'),
+  // The Walking Club: a walking club's Debian server, its web app in a rootless Podman container behind nginx.
+  machine('stile', '192.0.2.184', 'walking-club'),
+  // The Zine Library: a volunteer zine library's Debian server (nginx, php-fpm and its AppArmor profile, a backup script to confine).
+  machine('stapler', '192.0.2.190', 'zine-library'),
+  // The Tenants' Union: a tenants' union's server (Repairline, its repairs app, and PostgreSQL), its secrets kept with sops and age in git.
+  machine('latch', '192.0.2.196', 'tenants-union'),
+  // The Hostel: a cooperative hostel's secrets server (OpenBao), behind its booking site Bunks.
+  machine('padlock', '192.0.2.226', 'hostel'),
 ];
 
 /**

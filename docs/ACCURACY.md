@@ -91,6 +91,35 @@ Sources: `pigeonhole/src/lib-sieve/{sieve-lexer,sieve-validator,sieve-ast}.c`,
 | Lexer: unexpected character | corrected: a control character shown as `0x..` (`_char_sanitize`) |
 | `doveadm search … larger X` with a bad size | corrected: "Invalid size: X" (str_parse_get_size); sizes like `10k`, `2 MiB` accepted |
 
+## Podman 5.4.2, passt and systemd 257 (The Walking Club)
+
+Sources: Podman's sources at [v5.4.2](https://github.com/containers/podman/tree/v5.4.2)
+(Debian 13: podman 5.4.2+ds1-2+b2): `pkg/rootless/rootless_linux.go`,
+`vendor/github.com/containers/storage/pkg/idtools/idtools.go`,
+`vendor/github.com/containers/common/pkg/config/config.go`,
+`vendor/github.com/containers/common/libnetwork/pasta/pasta_linux.go`,
+`vendor/github.com/rootless-containers/rootlesskit/v2/pkg/port/builtin/parent/parent.go`,
+`vendor/github.com/containers/common/pkg/chown/chown_unix.go`,
+`vendor/github.com/containers/storage/containers.go`, `libpod/container_internal.go`,
+`vendor/github.com/containers/image/v5/{copy,storage}`, `cmd/quadlet/main.go`,
+`pkg/systemd/quadlet/quadlet.go`, `cmd/podman/generate/systemd.go`,
+`cmd/podman/system/unshare.go`; passt's `conf.c` and `log.h` at
+2025_05_03.587980c (Debian 13: 0.0~git20250503.587980c-2+deb13u1); systemd's
+`src/shared/bus-util.c` (`bus_log_connect_error`) and `src/shared/install.c` at v257.
+
+| Item | Result |
+| --- | --- |
+| "cannot find UID/GID for user X: no subuid ranges found for user \"X\" in /etc/subuid - check rootless mode in man pages." (ERRO), "Using rootless single mapping into the namespace. This might break some images. Check /etc/subuid and /etc/subgid for adding sub*ids if not using a network user" (WARN) | confirmed |
+| "potentially insufficient UIDs or GIDs available in user namespace (requested 0:42 for /etc/gshadow): Check /etc/subuid and /etc/subgid if configured locally and run \"podman system migrate\": lchown …: invalid argument", wrapped by "writing blob: adding layer with blob …: processing tar file(…): exit status 1" | confirmed (the blob's trusted identity printed as `"sha256:…"/""/"sha256:…"`) |
+| The four user session warnings ("The cgroupv2 manager is set to systemd but there is no systemd user session available" … "Falling back to --cgroup-manager=cgroupfs") | confirmed |
+| Rootless ports: Podman 5 uses pasta by default (`default_rootless_network_cmd`), "pasta failed with exit code 1:" followed by passt's "Failed to bind port 80 (Permission denied) for option '-t 80-80:8080-8080'" | confirmed; rootlesskit's "cannot expose privileged port 80, you can add 'net.ipv4.ip_unprivileged_port_start=80' to /etc/sysctl.conf (currently 1024), or choose a larger port number (>= 1024)" kept for `--network slirp4netns` (prefixed "rootlessport ") |
+| `:U`: "failed to chown recursively host path: lchown …: operation not permitted" | confirmed (the message); EPERM on files the namespace doesn't map is the kernel's |
+| "creating container storage: the container name \"X\" is already in use by ID. You have to remove that container to be able to reuse that name: that name is already in use", "cannot remove container ID as it is running - running or paused containers cannot be removed without force: container state improper", "please use unshare with rootless", generate systemd's DEPRECATED text, "short-name \"X\" did not resolve to an alias and no unqualified-search registries are defined in …" | confirmed |
+| Quadlet: "converting \"X.container\": unsupported key 'K' in group 'Container' in PATH", "no Image or Rootfs key specified", the generated unit's lines (`--replace --rm --cgroups=split --sdnotify=conmon -d`, `systemd-%N`, `Type=notify`, `KillMode=mixed`, `[X-Container]`), dry run's `---NAME.service---` | confirmed; the order of the generated file's groups is approximated |
+| systemctl --user: "Failed to connect to user scope bus via local transport: $DBUS_SESSION_BUS_ADDRESS and $XDG_RUNTIME_DIR not defined (consider using --machine=<user>@.host --user to connect to bus of other user)" | confirmed; "Failed to enable unit: Unit … is transient or generated" (`src/shared/install.c`, `install_changes_dump`: no final period) |
+| `podman ps`/`images` layout (tabwriter 12, 2, 2; COMMAND cut at 17 characters; HumanDuration; HumanSizeWithPrecision 3) | confirmed |
+| `loginctl list-users` columns (UID USER LINGER STATE), "Could not enable linger: Access denied", "Failed to get user: User ID N is not logged in or lingering" | approximated (systemd 257's tables and logind's errors, not checked line by line) |
+
 ## NUT 2.8.1 (The Climbing Wall)
 
 Sources: `clients/{upsmon,upsmon.h,upsclient,upssched,upsc,upscmd,upsrw}.c`,
@@ -221,6 +250,93 @@ and `docs/` at [v3.6.2](https://github.com/hashicorp/terraform-provider-dns).
 | The provider: import IDs are FQDNs with the final dot ("Not a fully-qualified DNS name"), zone/name/ttl ForceNew, addresses updated by set difference, TTL default 3600 | confirmed (`provider.go`, `resource_dns_a_record_set.go`, the CNAME resource's plan modifiers) |
 | named's update log ("signer … approved", "updating zone '…/IN': deleting rrset at", "adding an RR at"), `rndc: 'reload' failed: dynamic zone` | from BIND 9.20's `update.c` and `rndc` as remembered; not re-read here |
 | `tofu -help`'s command list | confirmed (`cmd/tofu/help.go`, each command's `Synopsis()`), reduced to the commands the game has |
+## AppArmor 4.1.0 (The Zine Library)
+
+Sources: `binutils/aa_status.c`, `parser/parser_main.c`,
+`utils/apparmor/{tools,aa,ui}.py`, `utils/aa-logprof`, `utils/logprof.conf`
+and `profiles/apparmor.d/php-fpm` at
+[apparmor-4.1](https://gitlab.com/apparmor/apparmor/-/tree/apparmor-4.1)
+(Debian 13: apparmor 4.1.0-1, https://packages.debian.org/trixie/apparmor);
+the man pages of https://manpages.debian.org/trixie/apparmor/ and
+https://manpages.debian.org/trixie/apparmor-utils/; the file list of
+apparmor-profiles 4.1.0-1 (https://packages.debian.org/trixie/all/apparmor-profiles/filelist);
+https://wiki.debian.org/AppArmor/HowToUse.
+
+| Item | Result |
+| --- | --- |
+| aa-status: "apparmor module is loaded.", "%zd profiles are loaded.", "%zd profiles are in %s mode." for enforce, complain, prompt, kill, unconfined, "%zd processes have profiles defined.", "%zd processes are unconfined but have a profile defined.", the process line "   %s (%s) %s" (the profile left out when it is the program's path), "You do not have enough privilege to read the profile set." and exit code 4 | confirmed |
+| The tools: "Setting %s to complain mode.", "Setting %s to enforce mode.", "Disabling %s.", "Profile for %s not found, skipping", "%s does not exist, please double-check the path.", "Can't find %s in the system path list…", "Profile for %s already exists - skipping.", "Writing updated profile for %s.", "Reading log entries from %s.", "Updating AppArmor profiles in %s.", "Complain-mode changes:", "Enforce-mode changes:", "Can't find system log … Please check permissions.", "The logfile %s does not exist. Please check the path."; the disable/ link; apparmor_parser -r after a mode change; aa-autodep's complain flag, interpreter `ix` and bash abstraction; the menu's button order | confirmed |
+| The php-fpm profile (its rules, `include if exists <php-fpm.d>`, `include if exists <local/php-fpm>`); aa-genprof's two choices and its Finish to enforce mode (aa-genprof(8)) | confirmed |
+| apparmor_parser's syntax errors ("syntax error, unexpected TOK_CLOSE, expecting TOK_END_OF_RULE", "unexpected TOK_MODE, expecting TOK_OPEN", "Could not open '…'"), "Invalid mode, 'x' must be preceded by exec qualifier…", "Conflict 'a' and 'w' perms are mutually exclusive."; the kernel's record fields (`class="file"`, `capability=2  capname="dac_read_search"`); aa-logprof's header labels and the Save menu's words; severities | from memory of real outputs, not checked against the 4.1 sources |
+
+## SOPS v3.10.2 and age v1.2.1 (The Tenants' Union)
+
+Sources: SOPS's `usererrors.go`, `sops.go` (`Tree.Encrypt`, `Tree.Decrypt`,
+`shouldBeEncrypted`, `decryptKey`), `aes/cipher.go`, `age/keysource.go`,
+`stores/{flatten.go,stores.go,dotenv/store.go}`, `config/config.go`,
+`cmd/sops/{main.go,encrypt.go,decrypt.go,edit.go,rotate.go}`,
+`cmd/sops/common/common.go`, `cmd/sops/codes/codes.go`,
+`cmd/sops/subcommand/updatekeys/updatekeys.go`, `version/version.go` at
+v3.10.2 (the module from proxy.golang.org, github.com/getsops/sops/v3);
+age's `cmd/age-keygen/keygen.go`, `x25519.go`, `parse.go`, `age.go`,
+`internal/bech32/bech32.go` at v1.2.1 (filippo.io/age; Debian 13 ships
+1.2.1-1, sources.debian.org). Git's ignored-file message from Git 2.47's
+`advice.c` hint as Git ≥ 2.46 prints it (`git config set`).
+
+| Item | Result |
+| --- | --- |
+| "Failed to get the data key required to decrypt the SOPS file.", "Group 0: FAILED", each key's "FAILED" with `- |` and `|` lines wrapped at 60, the trailer wrapped at 75 | confirmed (`usererrors.go`); the blank line between two keys keeps the two-space prefix, as `prefixer` writes it |
+| "failed to create reader for decrypting sops data key with age: no identity matched any of the recipients", "failed to load age identities: failed to open file: open …: no such file or directory", "failed to open SOPS_AGE_KEY_FILE file: …" | confirmed (`age/keysource.go`, `age.go`) |
+| "MAC mismatch. File has …, computed …", "Error decrypting tree: Error walking tree: Could not decrypt value: …", "Input string … does not match sops' data format", "Could not decrypt with AES_GCM: cipher: message authentication failed" | confirmed (`common.go`, `sops.go`, `aes/cipher.go`; Go's `crypto/cipher` message) |
+| "config file not found, or has no creation rules, and no keys provided through command line options" and its ": error loading config: no matching creation rules found" | confirmed (`main.go`, `config.go`) |
+| "File already encrypted"'s user message wrapped at 75, exit code 203 | confirmed (`encrypt.go`, `codes.go`) |
+| updatekeys: "Syncing keys for file", "already up to date", "The following changes will be made to the file's groups:", "Group 1", `+++`, `---`, "Is this okay? (y/n):", "synced with new keys", "left unchanged", the same data key | confirmed (`updatekeys.go`, `common.go` PrettyPrintDiffs) |
+| rotate: a new data key, `--add-age` to the first group, `--rm-age` from every group | confirmed (`rotate.go`) |
+| edit: SOPS_EDITOR, EDITOR, then vim, nano, vi; "File has not changed, exiting." (200); the example file of a new dotenv file | confirmed (`edit.go`, `stores.go` ExampleFlatTree) |
+| The dotenv store: `#` comments, `KEY=value`, `\n` escapes, the `sops_` prefix, keys sorted, `__map_`/`__list_` flattening, "invalid dotenv input line" | confirmed (`dotenv/store.go`, `flatten.go`) |
+| A plain dotenv file given to `-d`: Go's time parsing error on an empty `sops_lastmodified` | confirmed by reading `ToInternal` (`time.Parse(time.RFC3339, "")`); not run |
+| Exit codes 2, 3, 4, 8, 25, 51, 91, 92, 100, 128, 200, 201, 203 | confirmed (`codes.go`) |
+| age-keygen: usage text, "Public key: …" on stderr when the output isn't a terminal, the world-readable warning, "failed to open output file …: file exists", the report line, "too many arguments", `-y`'s "no identities found in the input" | confirmed (`keygen.go`) |
+| Bech32 errors ("invalid checksum", "invalid character data part", "separator '1' at invalid position") and "malformed recipient …" | confirmed (`internal/bech32`, `x25519.go`) |
+| `sops --version` without network: the "[warning] failed to retrieve latest version from upstream" line and the note on `--check-for-updates` | wording confirmed (`version.go`); the Go network error inside is an approximation |
+| urfave/cli's "Incorrect Usage. flag provided but not defined: -x" | from urfave/cli v1's behaviour as remembered; not re-read here |
+| `sops --help` | abridged from `main.go`'s `UsageText` and flags (kept in the table of differences) |
+
+## OpenBao v2.7.3 (The Hostel)
+
+Sources: OpenBao's `internal/command/{status,format,base,base_helpers,operator_unseal,operator_init,operator_seal,login,token_create,token_lookup,token_revoke,token_capabilities,policy_write,policy_read,policy_list,policy_delete,kv_get,kv_put,kv_patch,kv_list,kv_rollback,kv_metadata_get,kv_helpers,read,write,audit_list,secrets_list,version,main}.go`,
+`api/{response,client,env,sys_seal}.go`, `internal/http/sys_seal.go`,
+`internal/vault/{request_handling,seal_manager,seal,core,cluster,token_store,logical_system}.go`,
+`internal/vault/policy/{policy,policy_store}.go`, `internal/vault/barrier/barrier.go`,
+`internal/audit/format.go`, `internal/command/server/config.go`, `sdk/logical/{error,response_util}.go`,
+`sdk/helper/{consts/error,consts/token_consts,hclutil/hcl}.go`, `internal/builtin/credential/token/cli.go`,
+the package's `.release/linux/` (`openbao.hcl`, `openbao.service`, `nfpm.yaml`, `postinst`) and
+`website/content/docs/` at [tag v2.7.3](https://github.com/openbao/openbao/tree/v2.7.3) (released 19 November 2026).
+
+| Item | Result |
+| --- | --- |
+| `bao status`'s table: Seal Type, Initialized, Sealed, Total Shares, Threshold, Unseal Progress N/T and Unseal Nonce while sealed, Version, Commit Date, Storage Type, Cluster Name/ID once unsealed, HA Enabled; exit code 2 while sealed | confirmed (`format.go` `formatSealStatusStruct`, `OutputSealStatusStruct`, `status.go`) |
+| Tables: columnize with four spaces, "n/a" for an empty cell, the dashed header; Go's `%v` (`<nil>`, `[a b]`, `map[k:v]`) and `%q` (`["bunks" "default"]`); `∞` for a token without TTL; durations as `humanDuration` (768h, 2h30s) | confirmed (`base_helpers.go`, `format.go` `OutputSecret`/`OutputMap`) |
+| "Unseal Key (will be hidden): ", "Error unsealing: …", a duplicate share ignored, "'key' must be a valid hex or base64 string", "invalid key: key is shorter than minimum 16 bytes", the parts cleared after the threshold | confirmed (`operator_unseal.go`, `sys_seal.go`, `seal_manager.go` `recordUnsealPart`/`getUnsealKey`) |
+| A wrong share: "invalid key: failed to decrypt keys from storage: cipher: message authentication failed" | confirmed in `seal.go` (`readStoredKeys`); the last part is Go's AES-GCM error, as go-kms-wrapping returns it |
+| "Error initializing: … * Vault is already initialized", "Vault is sealed" (503), "Success! Vault is sealed." | confirmed (`core.go`, `consts/error.go`, `operator_init.go`, `operator_seal.go`) |
+| The API error's layout ("Error making API request.", "URL: METHOD URL", "Code: N. Errors:", "* …", "Raw Message" when the body isn't JSON) | confirmed (`api/response.go`) |
+| An ACL denial: "1 error occurred:\n\t* permission denied\n\n"; a missing or revoked token: "permission denied"; lookup of an unknown token: "bad token" | confirmed (`request_handling.go` `CheckToken`, `fetchACLTokenEntryAndEntity`, `token_store.go` `handleLookup`) |
+| The KV preflight on `sys/internal/ui/mounts/PATH` and "preflight capability check returned 403, please ensure client's policies grant access to path "…/"" | confirmed (`kv_helpers.go`, `logical_system.go` `pathInternalUIMountRead`, `hasMountAccess`) |
+| `kv get`'s "Secret Path" / "Metadata" / "Data" headers (padEqualSigns), "No value found at …", "Field "…" not present in secret"; kv put/patch/rollback/metadata get outputs and errors | confirmed (`kv_get.go`, `kv_put.go`, `kv_patch.go`, `kv_rollback.go`, `kv_metadata_get.go`, `kv_helpers.go`); the field message is from `PrintRawField` |
+| Tokens: "s." + 24 base62 characters with the default `disable_sscts`; accessor 24 characters; the default policy's text; child tokens revoked with their parent; "child policies must be subset of parent" without sudo; the 768h default and maximum TTL | confirmed (`token_store.go`, `server/config.go`, `policy_store.go`); the cap without a warning is a simplification |
+| `token lookup`'s fields (accessor, creation_time, creation_ttl, display_name, entity_id, expire_time, explicit_max_ttl, id, issue_time, meta, num_uses, orphan, path, policies, renewable, ttl, type) | confirmed (`token_store.go` `handleLookup`) |
+| `token create`'s table (token, token_accessor, token_duration, token_renewable, token_policies, identity_policies, policies) | confirmed (`format.go` `OutputSecret`) |
+| `token capabilities`: sorted, comma-separated; "deny", "root" | confirmed (`token_capabilities.go`) |
+| Policy errors: "failed to parse policy: path "x": path "x": invalid capability "reed"" (the path named twice), "invalid key "…" on line N" in a multierror; "Success! Uploaded policy: NAME" | confirmed (`policy/policy.go` `parsePaths`/`parsePath`, `hclutil.CheckHCLKeys`, `policy_write.go`); HCL v1's own syntax messages ("object expected closing RBRACE got: EOF") from memory of hashicorp/hcl v1, not re-read |
+| Priority between matching rules (first wildcard, trailing `*`, number of `+`, length, lexical order) | confirmed (`website/content/docs/concepts/policies.mdx`) |
+| `login`: "Success! You are now authenticated…", the BAO_TOKEN warning, "Error authenticating: error looking up token: …", "Token (will be hidden): " | confirmed (`login.go`, `credential/token/cli.go`) |
+| "Command flags must be provided before positional arguments. The following arguments will not be parsed as flags: [...]" | confirmed (`base_helpers.go` `generateFlagWarnings`) |
+| The audit entries' field names (time, type, auth{client_token, accessor, display_name, policies, token_policies, policy_results, token_type, token_ttl, token_issue_time}, request{id, operation, mount_point, mount_type, client_token, client_token_accessor, namespace, path, data, remote_address, remote_port}, response, error) and `hmac-sha256:` + hex | confirmed (`audit/format.go`); the set of fields kept per entry is reduced |
+| `/sys/audit-hash/:path` returning `hash` | confirmed (`website/content/docs/api/system/audit-hash.mdx`) |
+| `bao audit list` ("Path Type Description"), `bao secrets list` ("Path Type Accessor Description"), the root help's command list and synopses | confirmed (`audit_list.go`, `secrets_list.go`, `main.go`, each command's `Synopsis()`) |
+| The package: `/etc/openbao/openbao.hcl` (pebbledb storage, TLS listener on 0.0.0.0:8200), `openbao.service` (Description in quotes, `Type=notify`, `ExecReload=/bin/kill --signal HUP`), the self-signed certificate of `postinst` | confirmed (`.release/linux/`); the declarative `audit "file"` stanza from `website/content/docs/configuration/audit.mdx` |
+| "Client sent an HTTP request to an HTTPS server." for plain HTTP to the listener | Go's `net/http` server answer, from memory |
 
 ## Not checked against sources
 

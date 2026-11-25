@@ -289,9 +289,14 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | `rspamc`, `rspamadm` (the `inbound` family) | `rspamc [symbols]` on files, directories (recursively) or stdin (`-i`, `-F`, `-r`), laid out as `rspamc.cxx` prints it (`[Metric: default]`, Action, Spam, Score, symbols sorted with strcmp, `Message-ID` or `undef`, `Urls`/`Emails` when the message has some), `stat` (actions, learned, the Bayes statfiles), `learn_spam`, `learn_ham` (`success = true;`, HTTP 208 for a message already learned), `uptime`; `rspamadm configtest` (syntax OK, ucl errors, exit 1), `configdump [actions|multimap|settings]` | rspamc talks to the local rspamd only; no `-j`, `counters` prints its header only; `configdump` knows three sections |
 | Postfix receiving (`inbound.ts`, The Lifeboat) | `smtpd` for `virtual_mailbox_domains` (others: `Relay access denied`), `smtpd_milters` with rspamd's proxy on `inet:localhost:11332` and `milter_default_action`, `virtual_alias_maps` (`orig_to=` in the log), `virtual_transport = lmtp:unix:private/dovecot-lmtp`, the lines of smtpd, cleanup, qmgr, lmtp and bounce in `mail.log` as Postfix 3.10 writes them | no real SMTP session; `virtual_alias_maps` is read from its text file (no `postmap` needed); a deferred inbound message is retried by its sender's side, not from Postfix's queue (`mailq` doesn't show it) |
 | OpenTofu (`hcl.ts`, `tofu.ts`, The Mapping Party) | OpenTofu v1.13.10's CLI as its sources write it: HCL bodies, blocks, templates and hclsyntax's syntax errors; `fmt` (indentation, aligned `=`, exit code 3 with `-check`, `-diff`); `init` from a filesystem mirror (`.terraform.lock.hcl` with an `h1:` hash, the "Incomplete lock file information" warning); `validate` against hashicorp/dns 3.6.2's schema (`dns_a_record_set`, `dns_aaaa_record_set`, `dns_cname_record`: required, optional, computed, ForceNew); variables from defaults, `TF_VAR_`, `terraform.tfvars`, `*.auto.tfvars`, `-var-file`, `-var`; plan and apply with refresh, drift, `+ ~ - -/+`, hidden unchanged attributes, `-detailed-exitcode`, `-refresh-only`, `-destroy`, import blocks; the local backend's state (JSON format 4, serial, lineage, `.backup`) and lock (Lock Info, force-unlock refused); `import`, `state list/show/rm/mv`, `output` (`-raw`, `-json`); the diagnostics' box at 78 columns | one provider, no modules, workspaces, `count`/`for_each`, data sources, functions, operators, conditionals or heredocs; remote backends and `-generate-config-out` absent; the TSIG key isn't checked; an unset variable is an error, as with `-input=false` (tofu never prompts for it); a saved plan (`-out`) is a marker, `tofu apply FILE` is not supported; named keeps dynamic updates in memory and a growing `.jnl`, never rewrites the zone file, and a restart doesn't replay the journal against a hand-edited file (BIND would refuse it as out of sync); only `-help` of a few subcommands is OpenTofu's own text |
+| SOPS and age (`sops.ts`, `commands/secrets.ts`, The Tenants' Union) | SOPS 3.10.2 (the upstream .deb; SOPS isn't in Debian's archive) and age 1.2.1 (Debian 13): age's X25519 keys written as real Bech32 with its checksum (`AGE-SECRET-KEY-1…`, `age1…`, "malformed recipient … invalid checksum"), the identity file age-keygen writes (`# created:`, `# public key:`), `-o` that never overwrites (`O_EXCL`, mode 0600, "failed to open output file"), `-y`, the public key and the world-readable warning on stderr; SOPS's dotenv store (comments kept and encrypted as `type:comment`, the metadata as sorted `sops_…` lines flattened like `stores/flatten.go`, `\n` escaped), the `ENC[AES256_GCM,data:…,iv:…,tag:…,type:str]` format with a 32-byte IV, a 16-byte tag and the key's path as additional data, the MAC over all values encrypted with the last modification date, `_unencrypted` by default, `encrypted_regex`/`unencrypted_regex`/suffixes; `.sops.yaml` found from the current directory upwards, `path_regex` relative to its directory, `age` as a comma-separated (or folded) string or `key_groups`; the identities from `SOPS_AGE_KEY`, `SOPS_AGE_KEY_FILE` and `$XDG_CONFIG_HOME` or `~/.config/sops/age/keys.txt` (root's own under sudo); `-e`, `-d`, `-r`, `-i`, `--output`, `--extract`, `--age`, `--add-age`, `--rm-age`, `--ignore-mac`, `encrypt`, `decrypt`, `edit` (SOPS_EDITOR, EDITOR, then vim, nano, vi; "File has not changed, exiting."), `rotate` (a new data key), `updatekeys` (the diff, "Is this okay? (y/n):", Go's log lines, the same data key), `set`, `filestatus`; the messages and exit codes of `usererrors.go` (the no-key report, wrapped like `go-wordwrap`), `aes/cipher.go`, `common.go` and `codes.go` (128, 51, 25, 100, 200, 203); the binary store for other extensions | the cryptography is a deterministic stand-in: SHA-256 keystreams and tags instead of AES-GCM, a hashed wrapping of the data key instead of X25519 and ChaCha20-Poly1305 (the armored age file has the real header's shape, not its cryptography), two SHA-256 instead of SHA-512 for the MAC, and the public key derived from the secret by a hash: nothing outside the game could decrypt these files, nor the game decrypt real ones; only the dotenv and binary stores (no YAML, JSON or INI); no PGP, KMS or Vault keys, no Shamir threshold, no `exec-env`, `exec-file`, `publish`, `keyservice` or `groups`; an editor that leaves invalid syntax ends the edit instead of reopening it; `sops --help` is abridged; `--version` always reports that the version check failed (no network) |
+| `.gitignore` (`ignoredBy` in `commands/git.ts`) | gitignore(5)'s patterns in a repository that tracks subdirectories: comments, `!`, a trailing `/` for directories, anchoring by a `/`, `*`, `?`, `[]`, `**`; an ignored file left out of `git status` and `git add .`, a tracked file staying tracked, `git add` of an ignored file refused with Git 2.47's message unless `-f` | only the root's `.gitignore` (no nested ones, no `.git/info/exclude`, no `core.excludesFile`); no `git check-ignore` |
+| OpenBao (`openbao.ts`, `commands/bao.ts`, The Hostel) | OpenBao v2.7.3's CLI and API as its sources write them: `bao status` (the seal status table, exit code 2 while sealed), `operator unseal` (hidden prompt, hex or base64 shares, a share counted once, a wrong share failing the attempt at the threshold and resetting it, "invalid key: failed to decrypt keys from storage: cipher: message authentication failed"), `operator init` (already initialized), `operator seal` (sudo); tokens `s.` + 24 base62 characters (OpenBao disables server-side consistent tokens by default), accessors, policies, parents and orphans revoked with their tree, TTLs up to 768h, `token create/lookup/revoke/capabilities/renew`, `login` and `~/.vault-token`; ACL policies in HCL (`path`, `capabilities`, `*` and `+`, the priority rules, deny, sudo on root-protected paths, "invalid capability", unclosed blocks, invalid keys); KV version 2 at `secret/` (the preflight on `sys/internal/ui/mounts/`, `data/` and `metadata/` paths, versions, `kv get/put/patch/list/rollback/metadata get`, `-field`, `-version`, `-mount`); `read`, `write`, `list` on API paths; the file audit device (one JSON object per request and response, strings HMAC'd with the device's salt, `sys/audit-hash`); the API's error layout ("Error making API request.", URL, "Code: N. Errors:", the multierror "1 error occurred" of an ACL denial); flags after arguments ignored with OpenBao's warning; `BAO_ADDR`/`VAULT_ADDR`, `BAO_TOKEN`/`VAULT_TOKEN`, plain HTTP to the TLS listener refused | one KV mount and the token auth method only: no AppRole, userpass, namespaces, leases, identity, response wrapping, transit, PKI or database engines; no rekey, generate-root, raft or auto-unseal; TLS isn't checked (the CLI reaches https://127.0.0.1:8200 without a CA; curl to port 8200 says self-signed without `-k`); `-format=json` prints a reduced response; audit entries keep the main fields (time, type, auth, request with path, remote_address, response data), the request ids and ports are made up; the unseal nonce and ids are derived, not random UUIDs; the subcommands not modelled are absent from the help; colours are not used |
 | NUT's model (`nut.ts`, The Climbing Wall) | NUT 2.8.1 as Debian 13 ships it: `ups.conf`, `upsd.conf` (LISTEN only at start), `upsd.users` (actions, instcmds, `upsmon primary`/`secondary` and the old master/slave), `upsmon.conf`, `upssched.conf` read like parseconf; the units `nut-driver@NAME`, `nut-server`, `nut-monitor`; upsd's protocol errors and logins; the variables of usbhid-ups with the APC HID subdriver (`ups.status` CAL, OL/OB, DISCHRG, CHRG, LB, RB, FSD; the writable ones of apc-hid.c, `battery.mfr.date`); upsmon's poll loop, its default notification messages, `POLLFAIL_LOG_THROTTLE_MAX`, is_ups_critical, MINSUPPLIES, the primary's forced shutdown (FSD, HOSTSYNC, FINALDELAY, POWERDOWNFLAG, SHUTDOWNCMD) and the kill power at the end of the halt (offdelay, ondelay), messages of `clients/upsmon.c`; upssched's timers and its "must be set before any ATs"; a quick test's results ("Done and passed", "Done and warning") | one UPS, on USB; time in one-second steps, fifteen seconds per command, the whole drill during `upsmon -c fsd`; a halt has a fixed duration per machine and stops the services at its start; the battery's runtime is a simple function of charge, health and load; a quick test doesn't switch to battery; no SSL, no `upsmon -p`; upssched's pipe and lock are not created; the journal of the end of a halt (nutshutdown) is not written, as journald has stopped |
 | `upsc`, `upscmd`, `upsrw`, `upsmon`, `upsd`, `upsdrvctl`, `upssched`, `ipmitool` (`commands/nut.ts`, the `nut` family) | the clients' usage texts, "Init SSL without certificate database" on stderr, "OK" on stderr, `Error: Unknown UPS`, `Instant command failed: Access denied`, `Set variable failed: …`, the prompts for a missing username, password or value; `upsc -l`/`-L`/`-c`; `upsmon -c fsd|reload|stop` and `-K`, its "Failed to signal the currently running daemon"; `upsd -c`; `upsdrvctl -t shutdown`; ipmitool's `chassis status`, `chassis policy`, `power status`, `sel list` | upsmon and upsd typed alone start their service; ipmitool only reaches the local BMC; `upscmd -w` and `upsrw -w` don't wait |
 | Garage's model (`garage.ts`, The Dance Troupe) | Garage v2 as its documentation and sources describe it: a cluster of nodes with roles (zone, capacity, tags) in a versioned layout whose changes are staged (`assign`, `--replace`, `remove`, `revert`) and applied with `--version N` (its refusals: the version number missing or wrong, fewer nodes with a capacity than the replication factor); `replication_factor = 3`, a quorum of two; buckets with global aliases, website access (the web endpoint serves any object to anyone, the index and error documents, the bucket chosen by the Host header or `bucket.root_domain`); keys `GK…` with a 64-hex secret, per-bucket read, write and owner, `--create-bucket`; the S3 API's checks and messages in Garage's order (`Garage does not support anonymous access yet`, `Date is too old` for a request dated more than 24 hours before the server's clock, `AuthorizationHeaderMalformed` with the scope expected, `No such key`, `Invalid signature`, `Bucket not found`, `Operation is not allowed for this key.`), presigned URLs refused past a week (`X-Amz-Expires may not exceed a week`) or once expired; lifecycle rules limited to Expiration and AbortIncompleteMultipartUpload | the signature is a digest of the secret and the request, not SigV4's HMAC chain, so nothing outside the game could check it; there is no RPC: the CLI reads the cluster's state directly, and `-h`/`-s` are accepted but ignored; data placement is per zone, not per partition, and a new layout's transfer is immediate; no multipart uploads (a big object is stored whole, with a multipart-looking ETag); lifecycle rules are stored, not run; no K2V, no admin API; `garage layout show` and `apply` print no partition statistics (Garage's "Optimal partition size" table), and usable capacity is always 100 %; after a replacement the dead node is not listed as "draining metadata"; the command line's own errors (a missing argument, an unknown subcommand) use clap 4's wording, Garage 2.1 parses with structopt (clap 2) |
+| AppArmor's model (`apparmor.ts`, The Zine Library) | AppArmor 4.1.0 as Debian 13 ships it: profiles of `/etc/apparmor.d` read like apparmor_parser (abi, includes with `if exists` and directories, variables from the tunables, `profile NAME ATTACHMENT flags=(…)`, file rules with `owner`, `deny`, `audit`, the modes r w a l k m and ix px ux cx, capability rules; other rules accepted), globbing (`*`, `**`, `?`, `{a,b}`, `[…]`), the policy in the kernel (load, replace, remove; a replaced profile reaches the processes it confines, a removed one leaves them unconfined, a profile attaches at exec), enforce and complain (deny rules hold, unlogged), the audit records `apparmor="DENIED"`/`"ALLOWED"`/`"STATUS"` in the kernel's log, or in `/var/log/audit/audit.log` (and the journal) once auditd runs; `disable/` links; the php-fpm profile of `apparmor-profiles` | the world's other profiles, abstractions and tunables are trimmed; hats and subprofiles are listed but not entered; a child executed `cx` stays under its parent; network, signal, unix, dbus, mount rules have no effect; no profile cache, no policy namespaces, no `kill`/`prompt` behaviour; only the accesses the story's programs make are checked; the parser's syntax errors are fewer and their wording approximated (missing comma, mode, top-level rule, missing include); a profile reloaded unchanged still writes a `profile_replace` record |
+| `aa-status`, `apparmor_parser`, `aa-enforce`, `aa-complain`, `aa-disable`, `aa-autodep`, `aa-logprof`, `aa-genprof` (`commands/apparmor.ts`, the `apparmor` family) | aa-status's layout and counts (binutils/aa_status.c), its exit code 4 and "You do not have enough privilege to read the profile set."; apparmor_parser's `-r`, `-a`, `-R`, `-Q`, `-N`, `-C`, `-v` ("Replacement succeeded for …"), "Unable to replace … Permission denied; attempted to load a profile while confined?", "Profile already exists", "Profile doesn't exist"; the tools' "Setting %s to complain mode.", "Disabling %s.", "Profile for %s not found, skipping", "Writing updated profile for %s.", the flags rewritten in the file and the profile reloaded; aa-autodep's profile (complain, base, a script's interpreter `ix` and the bash abstraction); aa-logprof's questions (Profile, Path, New Mode, Severity, the numbered options, Allow, Deny, Ignore, Glob, Glob with Extension, New, Owner, Abort, Finish; Inherit, Unconfined, Deny for an exec; the capability; "= Changed Local Profiles =", Save, View) | a question is answered with a letter and Enter; aa-logprof adds its rules before the profile's closing brace instead of rewriting the profile in order, proposes only the nameservice, bash and ssl_certs abstractions, and rates severity for a handful of paths; Child and Named exec modes are not offered; aa-genprof can't watch another window (its Scan reads what came after its mark); the Python tools' errors as root-less are simplified to "ERROR: [Errno 13] Permission denied: '…'"; no `--json` for aa-logprof, `aa-status --json` is minimal; the tools answer in English in every language |
 | `garage`, `aws`, `rclone` (`objects-client.ts`, the `objects` family) | `garage`: its outputs and the admin API's errors ("Error: GetBucketInfo returned NoSuchBucket (404): …") as Garage 2.1.0's CLI prints them, status (healthy and failed nodes), node id, layout show/assign/remove/revert/apply, bucket list/info/create/delete/allow/deny/website, key list/info (`--show-secret`)/create/delete/rename/allow/deny, stats; needs root (it reads `/etc/garage.toml`). The AWS CLI v2: settings from the command line, the environment and `~/.aws/credentials` and `~/.aws/config` (profiles, `endpoint_url`), `aws s3` ls (PRE, `--recursive`, `--human-readable`, `--summarize`), cp, mv, rm, sync (`--delete`, `--exclude`, `--include`, `--dryrun`, size and date), mb, rb, presign (default 3600 s, any duration signed without checking, as botocore does), website; `aws s3api` list-buckets, list-objects-v2, head-object, get-object, delete-object, get/delete-bucket-website, get-bucket-versioning, put/get/delete lifecycle; `aws configure` (its four questions), set, get, list, list-profiles; messages "An error occurred (CODE) when calling the OP operation: MESSAGE", HeadObject's bare status, `Unable to locate credentials`, `upload failed:`, exit codes 1, 252, 253, 254, 255. rclone 1.60 (Debian 13): `--config`, `RCLONE_CONFIG`, an s3 remote's `access_key_id`, `secret_access_key`, `region`, `endpoint`, `no_check_certificate`; ls, lsl, lsd, cat, size, copy, copyto, sync (deletes what the source lacks; `--backup-dir` on the same remote, not overlapping; `--suffix`; nothing deleted after an error), check (sizes and MD5s, its NOTICE counts, exit code 1), `-n`, `-v`; the AWS SDK v1's error format and the three attempts | aws and rclone only reach the endpoints the story declares (`s3.kestrel.example`, the local node on port 3900, the web endpoint); aws's sync compares size and modification time as the CLI does, rclone sizes and MD5s (not times); rclone's statistics block is shortened and its retries print one summary line per attempt; no `rclone config` wizard, mount, serve or other backends; curl towards the cluster knows `-I`, `-i`, `-o`, `-O`, `-s`, `-f`, `-w` and `-H` |
 | restic over sftp (`commands/restic.ts`, The Shelter) | `-r sftp:user@host:/path` and `RESTIC_REPOSITORY`: the repository on another machine of the story, read and written there, its files read as that account; an unknown host (`ssh: Could not resolve hostname`) or account (`Permission denied (publickey)`) and restic's sftp error; `snapshots --path`, `--host`, `--latest N` (per host and paths), `--json` | the account's key is assumed to be in place (no ssh agent, no key or known_hosts check); no `restic init` over sftp |
 | The Shelter's network (`chapters/shelter.ts`) | curl from the story's machines towards the site's name (through meadow's resolver and its cache) and the story's addresses: Hillside's address and paddock time out after the flood, Riverbend's public address is forwarded to haven, whose ufw and nginx answer; the `postgresql` package (Debian 13's 17) makes the postgres account and an empty cluster | a fixed port forward; the request's source seen by haven's firewall is a fixed outside address; the app connects to its database without a role of its own; restored files belong to root |
@@ -301,6 +306,8 @@ checked, are listed in [ACCURACY.md](ACCURACY.md).
 | firewalld (`firewalld.ts`, `firewall-cmd`) | firewalld 2.4.3: runtime and permanent configurations, `--reload` and `--runtime-to-permanent`, zones and their sources, services, ports and rich rules (source address, service or port, accept/reject/drop) as `Rich_Rule` writes them back; `--list-all`'s layout, "success", "Warning: ALREADY_ENABLED", `INVALID_SERVICE`/`INVALID_PORT`/`INVALID_RULE`, "Authorization failed." without root, "FirewallD is not running" | IPv4 TCP only; a subset of the services (`--get-services`); no policies, ipsets, ICMP, masquerade, forwarding, direct rules or `firewall-offline-cmd`; a rejected connection fails at once |
 | `dnf`, `rpm` (`rpm.ts`, `commands/rhel-packages.ts`) | DNF 4.20 (Rocky and RHEL 10's dnf, not dnf5): install (the transaction table, "Is this ok [y/N]:", `-y`), remove, search (its sections), info, list, provides (also in /usr/bin and /usr/sbin), repolist, history, makecache; "No match for argument", "Unable to find a match", the superuser error; rpm `-q`, `-qa`, `-qi`, `-ql`, `-qc`, `-qf`, `-V`; Rocky 10.3's packages and versions | a few dozen packages; no download, GPG prompt or scriptlet output; dependencies listed by hand; `rpm -i`/`-e` refused (use dnf); `dnf upgrade` has nothing to do |
 | httpd on Rocky (`httpd-rhel.ts`, The Language Café) | httpd 2.4.63 as Rocky packages it: `httpd.conf` and `conf.d/*.conf` (Listen, DocumentRoot, `<Directory>` with Require, `<VirtualHost>`, ServerName/ServerAlias, ProxyPass), welcome.conf's test page for a refused "/", AH00072/AH00015 at start, AH00132, AH00035, AH01630, AH00957/AH00959/AH01114 in error_log, the access log, "Server configured, listening on" in the journal | other known directives are accepted and ignored (unknown ones: AH00526); no `httpd -t` or `apachectl`; a failed proxy worker is not put in error state for 60 s; no TLS |
+| Rootless Podman (`podman.ts`, The Walking Club) | Podman 5.4.2 as Debian 13 ships it: each account's own images and containers; the user namespace from `/etc/subuid`/`/etc/subgid` (the account as 0, its ranges from 1), built at the account's first command and kept until `podman system migrate` or a reboot; without ranges the "cannot find UID/GID … no subuid ranges found" error and the single mapping warning, then the layer's "potentially insufficient UIDs or GIDs" error; `--userns=keep-id[:uid=,gid=]`; `:U` chowning from inside the namespace (refused on files it doesn't map), `:Z` accepted and doing nothing (no SELinux); ports published by pasta (refused below `net.ipv4.ip_unprivileged_port_start`, or taken) or rootlessport (`--network slirp4netns`); the user session warnings when the account's manager doesn't run; a container started from a session lives in the account's manager and dies with it; the app's process under its host uid in `ps` and pasta's sockets in `ss` | one registry declared by the story; the pause process is the namespace itself; no pods, networks, volumes' commands or healthchecks; `podman run` without `-d` returns like `-d`; `exec` knows `id`, `whoami`, `ls`, `cat`, `touch`; `podman info` shows part of its fields; container ids derived, not random |
+| Quadlet, `systemctl --user`, `loginctl` (`podman.ts`, `commands/podman.ts`, the `podman` family) | `.container` files read from `~/.config/containers/systemd` and `/etc/containers/systemd/users[/UID]`, converted like Podman 5.4.2's Quadlet (the `[X-Container]` group, `--replace --rm --cgroups=split --sdnotify=conmon -d`, `systemd-%N`, "unsupported key", "no Image or Rootfs key specified"), at `daemon-reload` and when the manager starts; `user@UID.service` started by `loginctl enable-linger` and at boot when `/var/lib/systemd/linger/ACCOUNT` exists, stopped by `disable-linger`; `systemctl --user` found through `$XDG_RUNTIME_DIR` or `-M ACCOUNT@` (systemd 257's bus errors), `enable` on a generated unit refused; `journalctl --user`, `--user-unit` | the manager's units are only Quadlet's (no hand-written user units, no timers); `loginctl` has `enable-linger`, `disable-linger`, `show-user`, `list-users`, `list-sessions`; only the player's ssh session exists; the generator's errors go to the system journal under `user@UID.service` |
 | `tcpdump`, `socat`, `pidof` | `tcpdump` on a VRRP node's link: the advertisements of the nodes and of other routers, gratuitous ARP and the gateway's ARP requests and their replies, as tcpdump 4.99 prints them (`-n`, `-v` with the virtual addresses, `-e`, `-c`, `-i`, names from `/etc/hosts`, 224.0.0.18 as `vrrp.mcast.net`), seen before the firewall; filters `vrrp`, `arp`, `proto 112`, `ip proto 112`, `host`, `src`, `dst`, `and`, `or`, `not`, parentheses; root only; `socat` between STDIO and a UNIX socket (the stats socket's rights, `Connection refused` when nothing listens); `pidof` (`-s`, exit code 1) | `tcpdump` sees no other traffic (TCP, UDP: no packet), captures ten seconds without `-c` (as if Ctrl-C), `-w`/`-r` files; socat's other address types |
 | `jq` | jq 1.7's core: paths, `[]`, `?`, pipes, commas, objects and arrays, string interpolation, comparisons, arithmetic, `and`/`or`/`not`, `//`, and common functions (`select`, `map`, `length`, `keys`, `has`, `to_entries`, `sort_by`, `group_by`, `join`, `test`, `startswith`…), `@csv`, `@tsv`; `-r`, `-c`, `-n`, `-S`, `-e`, `-R`, `-s` | variables, `reduce`, `def`, paths, most `@` formats, streaming |
 | An outside database (The Pool) | `db.pool.internal` accepts one password for the account `booking` (`k.story.dbPassword`), checked when the app starts (node-postgres's `password authentication failed`, SQLSTATE 28P01); a password change on the database keeps the open sessions, as PostgreSQL does | the database itself (no `psql` to it), several accounts |
@@ -5058,6 +5065,223 @@ another process), `-lock=false`, applying the old code (the site back on
 the dead host), `terraform.tfstate` edited by hand, `tofu state rm` to make
 a difference go away, status created instead of imported (this provider
 lets it pass).
+## Story 50: The Walking Club (two chapters)
+
+Rootless containers with Podman, as Debian 13 ships it (podman
+5.4.2+ds1-2+b2, passt 0.0~git20250503.587980c, systemd 257). Open Paths
+(Sentiers ouverts, Senderos Abiertos), a volunteers' walking club, lists its
+walks and takes the sign-ups through Trailbook, a web app in an image
+(`registry.example/openpaths/trailbook:2.3`, its own USER uid 1000), behind
+nginx on `stile` (192.0.2.184, `portillo` in Spanish); the site is
+`walks.openpaths.example`. Soo-ah chairs the club, Bolat ran the app with
+Docker as root in 2031, Ayasha created the service account `trailbook`
+(`useradd --system`: uid 997, no subordinate ids). Engine: `podman.ts` and
+the `podman` family (`podman`, `loginctl`, `/usr/libexec/podman/quadlet`,
+`systemctl --user` through a hook of the core's systemctl). Built in
+`chapters/walking-club.ts`; it opens after "Full Powers" (Docker's uid
+shared with the host) and "Boot Order", and extends the deployment path.
+Sources: https://docs.podman.io/en/v5.4.2/ (podman-run, podman-unshare,
+podman-system-migrate, podman-systemd.unit), the rootless tutorial, Podman
+v5.4.2's sources, subuid(5), loginctl(1), systemctl(1).
+
+### Chapter 1 — No Root Needed (done)
+
+Monday 12 April 2033, 9:20. Docker is stopped; the data in
+`/srv/trailbook/data` belongs to uid 1000 (you: Docker's container uid was
+the host's).
+
+| Step | Command learnt |
+|---|---|
+| As the service | `sudo -iu trailbook` (or `sudo -u trailbook podman …`) |
+| Subordinate ids | `cat /etc/subuid /etc/subgid`, `usermod --add-subuids/--add-subgids FIRST-LAST`, `podman system migrate` |
+| The image | `podman pull`, `podman images` |
+| The port | `podman run -p 127.0.0.1:8080:8080` behind nginx, not 80 (pasta's "Permission denied") |
+| The data's owner | `podman unshare cat /proc/self/uid_map`, `podman unshare ls -ln`, `sudo chown`, `-v …:/data:U`, `--userns=keep-id`, `podman unshare chown` |
+| The check | `podman top trailbook user huser`, `curl -k https://walks.openpaths.example/` |
+
+Goal checked on the state: trailbook has its own ranges (65536, no overlap)
+in both files; one of trailbook's rootless containers runs the image with
+`/srv/trailbook/data` at `/data` and opened the club's database; the site
+answers through nginx; no rootful container runs; the data isn't
+world-writable; `net.ipv4.ip_unprivileged_port_start` is 1024 or more, now
+and at boot. Several solutions: `:U`, `--userns=keep-id`, `podman unshare
+chown -R 1000:1000`, the ranges with usermod or nano. Expected traps: `sudo
+podman` (rootful), `chmod 777`, the sysctl lowered to 0, a range copied from
+another account, a named volume (an empty database), `:U` on files the
+namespace doesn't map.
+
+### Chapter 2 — Logged Out (done)
+
+Wednesday 14 April, 9:05. Ayasha started the container over ssh as
+trailbook; at 18:02 she logged out and logind stopped `user@997.service`
+with it.
+
+| Step | Command learnt |
+|---|---|
+| What happened | `journalctl --since … --until …`, `podman ps -a` (Exited (143)) |
+| Quadlet | `~/.config/containers/systemd/trailbook.container` (`[Container]`, `[Install] WantedBy=default.target`), `/usr/libexec/podman/quadlet -dryrun -user` |
+| Linger | `loginctl enable-linger trailbook`, `loginctl list-users`, `show-user -p Linger` |
+| The user manager | `export XDG_RUNTIME_DIR=/run/user/$(id -u)` or `systemctl --user -M trailbook@`, `daemon-reload`, `start`, `status`, `cat` |
+| The proof | `sudo reboot`, `journalctl -u user@997 -b`, curl |
+
+Goal checked on the state: trailbook lingers; a unit generated from a
+`.container` file is wanted by default.target, was started by the manager
+at this boot (after a reboot) and runs the container serving the club's
+data; the site answers; no rootful container and no active system unit
+running podman. Several solutions: the user's own shell with
+`XDG_RUNTIME_DIR`, or `-M trailbook@ --user` from root; the file written
+before or after linger; any unit or container name. Expected traps: `nohup
+podman run`, a system unit calling `sudo -u trailbook podman`, `podman
+generate systemd` (deprecated), `systemctl --user enable` on a generated
+unit, a Quadlet key that doesn't exist, a reboot before linger.
+## Story 51: The Zine Library (two chapters)
+
+The Zine Library, a volunteer-run library of zines, keeps its catalogue
+(zinecat, a small PHP app under `php8.4-fpm`, behind nginx) and the scans of
+its zines on `stapler` (192.0.2.190), a Debian 13 server where AppArmor
+4.1.0-1 confines php-fpm with the `php-fpm` profile of `apparmor-profiles`
+(upstream's file, unchanged). Nomvula coordinates the volunteers, Bartek set
+up the server in 2031 (the site's rules in `/etc/apparmor.d/local/php-fpm`),
+Rahim moved the scans to the new disk, Hinewai wrote the nightly backup
+script. AppArmor from the sysadmin's side, defensive throughout: read the
+kernel's refusals, add a rule where it belongs, write a profile from what a
+program really does. Engine: `apparmor.ts` (profiles read like
+apparmor_parser, the kernel's policy, what each process is confined by, the
+decisions and their audit records), its commands in `commands/apparmor.ts`
+(the `apparmor` family, loaded with the story), two explanations in the error
+explainer. The story is built in `chapters/zine-library.ts`. It opens after
+"Shared Rights" (file permissions) and "The Proxy" (nginx), and extends the
+security and web paths. The debriefs contrast AppArmor's paths with SELinux's
+labels.
+
+### Chapter 1 — Denied (done)
+
+Friday 11 March 2033, 17:40, the night before the zine fair. At 15:12 Rahim
+moved the scans from `/var/www/zinecat/scans` to `/srv/scans` and changed
+`config.php`: the catalogue answers 500 and every upload fails, though
+`/srv/scans` belongs to www-data. Each command, a visitor looks at the
+catalogue and a volunteer uploads a scan.
+
+| Step | Command learnt |
+|---|---|
+| Who says no | `journalctl -k`, `dmesg`: `apparmor="DENIED" operation="open" profile="php-fpm" name="/srv/scans/"`, `operation="mknod"` |
+| The profile | `aa-status`, `/etc/apparmor.d/php-fpm` and its `include if exists <local/php-fpm>` |
+| The rule, in its place | `/srv/scans/ r,` and `/srv/scans/** rw,` in `local/php-fpm`, `apparmor_parser -r /etc/apparmor.d/php-fpm` (or `systemctl reload apparmor`) |
+
+Goal checked on the state: php-fpm's profile loaded in enforce mode and
+confining the workers, allowing the directory `config.php` names to be listed
+and written, not `/etc/shadow`; the vendor's file as shipped (flags aside);
+the scans' directory not writable by all; the last upload went through.
+Several solutions: the local file, a file of `/etc/apparmor.d/php-fpm.d`,
+`owner` rules, a glob `{,**}`; `apparmor_parser -r` or a reload of the
+service; even the scans moved back. Expected traps: `aa-disable` (and the
+workers left unconfined once it is enabled again, until php-fpm restarts),
+`aa-complain` left on, the vendor's profile edited, `chmod 777`, the local
+file edited but not reloaded, the local file given to the parser, a missing
+comma, read without write, `/** rw`.
+
+### Chapter 2 — A Profile of Our Own (done)
+
+Tuesday 22 March 2033, 19:10. Hinewai's `zine-backup` runs as root and tars
+what `/etc/zine-backup.conf` lists; in February `/etc` was added and
+`/etc/shadow` ended up on a shared USB key. Rahim installed auditd: the
+records go to `/var/log/audit/audit.log`.
+
+| Step | Command learnt |
+|---|---|
+| The script | `/usr/local/sbin/zine-backup`, `/etc/zine-backup.conf` |
+| A first profile | `aa-autodep` (complain mode, base, bash, `/usr/bin/dash ix`) |
+| Watching it | `sudo zine-backup` or `systemctl start zine-backup`, `apparmor="ALLOWED"` in audit.log |
+| The rules | `aa-logprof` (Inherit, Allow, Glob, the nameservice abstraction, `capability dac_read_search`), or a profile by hand |
+| Enforced | `aa-enforce`, a run again, `/etc/shadow` in SOURCES refused (`apparmor="DENIED"`) |
+
+Goal checked on the state: the profile attaching to the script loaded in
+enforce mode, in enforce mode in its file too, reaching nothing a backup
+never needs (`/etc/shadow`, root's and your SSH keys, `/etc/sudoers`, writing
+`/etc/passwd` or `/etc/cron.d`, tar unconfined), and the last run confined by
+it, successful, with the scans and the catalogue archived. Several solutions:
+aa-logprof's questions answered in many ways, aa-genprof's steps, a profile
+written by hand. Expected traps: enforcing before observing, the archive's
+dated name allowed as is, `/** rwix` (and its missing capability), tar as
+`ux`, complain mode left on, a profile that doesn't attach.
+
+## Story 52: The Tenants' Union (two chapters)
+
+The Larkspur Tenants' Union (the same name in every language) helps the
+tenants of an estate get repairs done: Repairline, its small Flask app,
+takes their requests and the union chases the landlord. It runs on `latch`
+(`loquet` in French, `pestillo` in Spanish, 192.0.2.196, the story's
+machine): the code in `/srv/repairline` (a git working copy of the group
+union, pushed to `/srv/git/repairline.git`), its settings deployed by
+`deploy.sh` to `/etc/repairline/env` (the service's `EnvironmentFile=`),
+PostgreSQL's role `repairline`. Its secrets are kept in git with SOPS
+(https://getsops.io/, 3.10.2) and age (https://age-encryption.org/, 1.2.1):
+the server has its own age key in `/etc/repairline/age.key`. Taslima is the
+union's secretary, Makoa the volunteer who wrote most of the code, Ikenna
+the new volunteer. Engine: `sops.ts` and `commands/secrets.ts` (the
+`secrets` family, loaded with the story, with the `postgres` family);
+`.gitignore` in `commands/git.ts`; four explanations in the error explainer
+(no key for the data key, the MAC, no creation rule, an existing key file).
+The story is built in `chapters/tenants-union.ts`. It opens after "The
+Traces" (a leaked database password changed on both sides) and "The Bare
+Repository" (git, push), and extends the security and deployment paths.
+
+### Chapter 1 — Out of the Open (done)
+
+Tuesday 8 March 2033, 19:05. Repairline's `.env` holds the database
+password, committed in clear by Makoa in January; Makoa then mirrored the
+repository on a public forge for three days. Taslima wants the `.env`
+encrypted for the server and for you, and a rule for the next secrets file.
+
+| Step | Command learnt |
+|---|---|
+| The leak | `git log -p` (the password in the history, in every clone) |
+| A key of your own | `mkdir -p ~/.config/sops/age`, `age-keygen -o ~/.config/sops/age/keys.txt`, `age-keygen -y` |
+| The rule | `.sops.yaml`: `creation_rules`, `path_regex`, `age` (the server's key from the README, yours) |
+| Encryption | `sops --encrypt --in-place .env` |
+| The rotation | `sudo -u postgres psql -c "ALTER ROLE repairline PASSWORD '…'"`, `sops set` or `sops edit` |
+| The deploy | `deploy.sh`: `SOPS_AGE_KEY_FILE=/etc/repairline/age.key`, `sops --decrypt` |
+| Shared | `git commit`, `git push` |
+
+Goal checked on the state: the app runs with a new password (at least 12
+characters), read from `/etc/repairline/env`, which only root can read;
+HEAD's `.env` is a SOPS file for the server's key and yours that decrypts
+to that password; `.sops.yaml`'s rule covers `.env` and `mail.env`;
+`deploy.sh` decrypts; origin has the same; no commit holds the new password
+in clear. Several solutions: `sops set` or `sops edit`, the password changed
+before or after encrypting, `> file` or `--output`, `age` as a string or a
+key group, one commit or several. Expected traps: base64 ("encryption"
+anyone reverses), `.env` in `.gitignore` (a tracked file stays tracked, the
+history keeps it; `git add` then refuses the file), a file encrypted for
+Makoa only (the deploy copies the ciphertext, the app fails to start),
+encrypted for the server but not for you, `sudo` without
+`SOPS_AGE_KEY_FILE` (root has no key), the new password committed in
+clear, the encrypted file committed with the old password.
+
+### Chapter 2 — Keys Change Hands (done)
+
+Tuesday 26 April. `.env` and `mail.env` are encrypted for the server, for
+you and for Makoa. Makoa leaves the tech team; Ikenna joins it and sent his
+public key (and offers to take your `keys.txt` instead).
+
+| Step | Command learnt |
+|---|---|
+| The rule | `.sops.yaml`: Ikenna in, Makoa out |
+| The files | `sops updatekeys .env` ("Is this okay? (y/n):"), `-y` |
+| The data key | `sops rotate --in-place` (or `--add-age`/`--rm-age`) |
+| The secret | `ALTER ROLE`, `sops edit .env` or `sops set` |
+| Deploy, share | `sudo ./deploy.sh`, `git commit`, `git push` |
+
+Goal checked on the state: the rule and both files are for the server, you
+and Ikenna, not Makoa (Ikenna's key opens them); both data keys differ
+from the ones Makoa could open; a new database password, in `.env`,
+deployed and used by the app; HEAD and origin agree; your private key is
+nowhere but your `keys.txt`, readable by you only. Several solutions:
+updatekeys then rotate, or rotate with `--add-age`/`--rm-age` and the rule
+edited; `sops edit` or `sops set`. Expected traps: your `keys.txt` copied
+for Ikenna (or made readable), an `ENC[…]` value edited by hand (its tag,
+or a missing line's MAC), updatekeys without rotate (the same data key), the
+rule committed without updating the files.
 
 ## Ideas for later
 
@@ -5087,3 +5311,106 @@ The format of a quest (files, events, debrief, tests) is described in
 4. Check it can be finished: a test that replays it in every language (the
    solution, another one, the false leads), then in Chromium at 1000 and
    375 px. Give it its section in this document.
+## Story 53: The Hostel (three chapters)
+
+A cooperative youth hostel keeps the secrets of its booking site, Bunks (the
+database password, the payment provider's API key), in OpenBao
+(https://openbao.org/, v2.7.3) on `padlock` (`cadenas` in French, `candado`
+in Spanish, 192.0.2.226), a Debian 13 server: a KV version 2 engine at
+`secret/`, the token auth method, a file audit device declared in
+`openbao.hcl`, the Shamir seal (five shares, threshold three). Bunks reads its
+two secrets once, when it starts, with the token of `/etc/bunks/bunks.env`.
+Desta coordinates the hostel; Ruslan, the volunteer who installed padlock, is
+away; Hiroko keeps the accounts; Nnamdi looks after the website. Engine:
+`openbao.ts` and `commands/bao.ts` (the `openbao` family, loaded with the
+story, and the `jq` family for the audit log); three explanations in the
+error explainer (sealed, the KV preflight, a 403). The story is built in
+`chapters/hostel.ts`. It opens after "The Spare Key" (keys kept apart) and
+"The First Plan" (HCL), and extends the security path.
+
+**Why OpenBao rather than Vault.** Neither is in Debian 13's archive.
+HashiCorp Vault has been under the Business Source License since 2023 (not
+an open-source licence; Debian removed it); OpenBao is its fork under the
+MPL 2.0, run by the Linux Foundation (OpenSSF), with the same API, the same
+concepts and an almost identical CLI (`bao` instead of `vault`, `BAO_ADDR`
+and `BAO_TOKEN`, with `VAULT_` variables still read). Its releases ship a
+`.deb` with a systemd unit and a default `openbao.hcl`, which this story
+installs as is. A game under the GPL that teaches free software on Debian
+picks the free fork; everything learnt (unseal, policies, tokens, KV v2,
+audit) carries over to Vault word for word.
+
+### Chapter 1 — Sealed (done)
+
+Saturday 6 March 2027, 07:40. A storm cut the power at 03:12; padlock came
+back at 03:58, OpenBao sealed. Bunks failed five times ("Vault is sealed")
+and systemd gave up (start-limit-hit). Twelve guests arrive at nine. Shares:
+yours on a USB key (`/media/usb`), Hiroko's and Nnamdi's in messages,
+Desta's read from a blurred photo (one character wrong).
+
+| Step | Command learnt |
+|---|---|
+| The state | `bao status` (Sealed, Unseal Progress 0/3, exit code 2) |
+| The shares | `bao operator unseal` (typed at the hidden prompt, or as an argument) |
+| The app | `systemctl status bunks`, `journalctl -u bunks`, `sudo systemctl restart bunks` |
+| Checked | `curl http://127.0.0.1:8080/health` |
+
+Goal checked on the state: OpenBao unsealed, Bunks running with a valid
+token, a health check that answered after the unseal. Several solutions:
+any three good shares, prompt or argument, status or not. Expected traps:
+`bao operator init` (already initialized), the same share twice (the
+progress doesn't move), Desta's blurred share (the attempt fails at the
+threshold and resets), Bunks restarted while sealed, OpenBao restarted (it
+comes back sealed and forgets the shares given).
+
+### Chapter 2 — Need to Know (done)
+
+Tuesday 9 March, 10:15. Ruslan's notes: Bunks starts with the root token of
+the init, kept in `bunks.env`. Each admin has an orphan token with the
+`admin` policy in `~/.vault-token`.
+
+| Step | Command learnt |
+|---|---|
+| The secrets | `bao kv list secret/`, `bao kv get secret/bunks/db` |
+| The policy | an HCL file (`path "secret/data/bunks/*" { capabilities = ["read"] }`), `bao policy write`, `policy list/read` |
+| The token | `bao token create -policy=bunks [-ttl] [-display-name]`, `bao token lookup` |
+| The proof | `bao token capabilities TOKEN PATH` |
+| The switch | `bunks.env`, `sudo systemctl restart bunks`, `curl …/health` |
+| The root token | `bao token revoke ROOT_TOKEN` |
+
+Goal checked on the state: Bunks runs with a token (with a TTL, not root)
+that can read its two secrets, cannot write them, and is denied the
+treasurer's and the Wi-Fi's secrets, the policies and token creation; the
+root token revoked; a health check after the switch. Several solutions: a
+policy on `secret/data/bunks/*` or the two exact paths, `-ttl`, `-period` or
+the default 768h, `kv get` or `token capabilities` to check. Expected traps:
+a rule on `secret/bunks/*` (KV v2 puts `data/` in the API path: permission
+denied), a policy too wide (`secret/*`), a token created with the root token
+(revoked with it, its child), the root token revoked while Bunks still uses
+it, flags after the arguments (ignored, with OpenBao's warning).
+
+### Chapter 3 — Leaked Token (done)
+
+Monday 22 March, 16:45. At 14:02 Nnamdi pasted the start of `bunks.env`,
+token included, in a public forum post; at 14:31 (13:31 UTC in the log)
+someone used it from 203.0.113.77. Hiroko got a new API key from the
+payment provider.
+
+| Step | Command learnt |
+|---|---|
+| Whose token | `bao token lookup TOKEN` (display name, policies, accessor, TTL) |
+| What it did | `bao write sys/audit-hash/file input=TOKEN`, `sudo grep`/`sudo jq` on `/var/log/openbao/audit.log` |
+| Shut | `bao token revoke TOKEN` (or `-accessor`) |
+| Rotate | `bao kv patch secret/bunks/payments api_key=…` (`kv metadata get`, `kv rollback`) |
+| A new token | `bao token create -policy=bunks`, `bunks.env`, restart, health |
+
+Goal checked on the state: the leaked token revoked; the payments secret's
+latest version holds the new key and the account; the database secret
+unchanged; Bunks running with a new narrow token, started after the
+rotation; the attacker's requests seen in an output; a health check after
+the restart. Several solutions: the HMAC or the remote address to find the
+entries, `grep` or `jq`, `kv patch` or `kv put` with both fields. Expected
+traps: `kv put` with the key only (the account is gone, Bunks refuses to
+start), the database password changed in OpenBao only (it no longer matches
+the database; the log shows it wasn't read), Bunks restarted with the
+revoked token, a new token too wide, Bunks restarted before the rotation.
+

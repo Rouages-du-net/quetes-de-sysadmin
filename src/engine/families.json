@@ -1323,6 +1323,61 @@
    "ownOptions": true
   }
  ],
+ "aa-autodep": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-complain": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-disable": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-enforce": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-genprof": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-logprof": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "aa-status": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
+ "age-keygen": [
+  "secrets",
+  {
+   "ownOptions": true
+  }
+ ],
  "amtool": [
   "prometheus",
   {
@@ -1367,6 +1422,19 @@
    "ownOptions": true
   }
  ],
+ "apparmor.d": [
+  "apparmor",
+  {
+   "section": 5
+  }
+ ],
+ "apparmor_parser": [
+  "apparmor",
+  {
+   "ownOptions": true,
+   "section": 8
+  }
+ ],
  "audit2allow": [
   "rhel",
   {
@@ -1388,6 +1456,12 @@
  ],
  "aws": [
   "objects",
+  {
+   "ownOptions": true
+  }
+ ],
+ "bao": [
+  "openbao",
   {
    "ownOptions": true
   }
@@ -1764,6 +1838,13 @@
    "ownOptions": true
   }
  ],
+ "loginctl": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
  "lp": [
   "cups",
   {
@@ -1998,6 +2079,19 @@
    "ownOptions": true
   }
  ],
+ "podman": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true
+  }
+ ],
+ "podman-systemd.unit": [
+  "podman",
+  {
+   "section": 5
+  }
+ ],
  "postconf": [
   "postfix",
   {
@@ -2101,6 +2195,14 @@
   "libvirt",
   {
    "ownOptions": true
+  }
+ ],
+ "quadlet": [
+  "podman",
+  {
+   "section": 1,
+   "ownOptions": true,
+   "directory": "/usr/libexec/podman"
   }
  ],
  "radtest": [
@@ -2275,6 +2377,18 @@
   {
    "section": 1,
    "ownOptions": true
+  }
+ ],
+ "sops": [
+  "secrets",
+  {
+   "ownOptions": true
+  }
+ ],
+ "subuid": [
+  "podman",
+  {
+   "section": 5
   }
  ],
  "system": [

@@ -285,7 +285,7 @@ presents them for people.
   the tools only some stories use (Windows' shells and cmdlets, k8s,
   libvirt, CUPS, Prometheus, keepalived/HAProxy, Forgejo, IBM i, COBOL,
   Ansible, Caddy, LDAP/RADIUS, MariaDB, Dovecot/rspamd (`inbound`), NUT,
-  Garage (`objects`), OpenTofu (`iac`); `tls`: openssl, certbot and `pki.ts`; `docker`
+  Garage (`objects`), OpenTofu (`iac`), rootless Podman (`podman`), AppArmor (`apparmor`), SOPS and age (`secrets`), OpenBao (`openbao`); `tls`: openssl, certbot and `pki.ts`; `docker`
   (with Compose); `apache`; `postfix` (`mail.ts`; `mail` asks it for
   `submit`); `postgres` (psql, pg_dump, the cluster's tools); `security`:
   nmap, Lynis, gpg; `samba`; `storage`: smartctl, mdadm, sfdisk, LVM's
@@ -962,6 +962,89 @@ presents them for people.
   Femi's evening and his `tofu apply` holding the lock in chapter 2,
   `state.onKill` releasing it); `first-plan.ts`, `drift.ts` (`converged`:
   code, state and named agree). Tests: `tests/mapping-party.test.ts`.
+- `src/engine/podman.ts`: rootless Podman 5.4.2 (`state.podman`: each
+  account's images and containers, the user namespace from `/etc/subuid`
+  and `/etc/subgid` (`freshMaps`, `keepIdMaps`, `toHost`, `toNs`, built at
+  the account's first command, `podman system migrate`), the image's layers
+  that a single mapping can't hold, `:U` from inside the namespace, pasta's
+  and rootlessport's ports (`net.ipv4.ip_unprivileged_port_start`), the
+  user session warnings; each account's manager `user@UID.service`
+  (`managerService`, linger from `/var/lib/systemd/linger`), Quadlet's
+  `.container` files converted at `daemon-reload` and when the manager
+  starts (`convert`, `generate`), `settle()` after each command (a reboot,
+  a manager that starts or stops); `REGISTRY` and `PAPPS`, the images and
+  apps a story declares); `podman`, `loginctl`, Quadlet's dry run and
+  `systemctl --user` (a hook of the core's systemctl) in
+  `commands/podman.ts` (the `podman` family); `podman unshare` shows the
+  namespace's ids through `state.idView` (read by `ls -l`); `usermod
+  --add-subuids/--add-subgids`; `journalctl --user`, `--user-unit`
+  (`Input.userUnit`). `chapters/walking-club.ts`: what the chapters of "The
+  Walking Club" share (`stile`, the walking club's server: nginx in front of
+  Trailbook, the service account trailbook, the data's owner, Ayasha's
+  session replayed in chapter 2; `walksCurl` through `state.storyCurl`;
+  five seconds per command and the sysctl files reapplied at a reboot in
+  `passTime`); `no-root-needed.ts`, `logged-out.ts`. Tests:
+  `tests/walking-club.test.ts`.
+- `src/engine/apparmor.ts`: AppArmor 4.1 on a Debian machine
+  (`state.apparmor`: the profiles loaded in the kernel and their mode, each
+  process's confinement `tasks`, attached at exec by `execTask`; profiles of
+  `/etc/apparmor.d` read like apparmor_parser, `parseFile`, `globToRegex`,
+  `expandBraces`; `check` decides an access and writes its audit record
+  to the kernel's log, or to `/var/log/audit/audit.log` with auditd;
+  `loadAll` for apparmor.service; `withFlags` for the mode in a file); the
+  `apparmor` family: `aa-status`, `apparmor_parser`, `aa-enforce`,
+  `aa-complain`, `aa-disable`, `aa-autodep`, `aa-logprof` and `aa-genprof`
+  (their questions) and the `apparmor.d(5)` page in `commands/apparmor.ts`.
+  A story's own program run by its path or name (`state.programs` in
+  `shell.ts`). `chapters/zine-library.ts`: what the chapters of "The Zine
+  Library" share (`stapler`, the library's server: nginx, the zinecat app
+  under php-fpm and its profile, the scans, `request` for each visit and
+  upload, `storyCurl`, a visit and an upload per command in `passTime`;
+  the backup script `runBackup`, confined as the kernel would, its runs in
+  `story.runs`, `tooWide`); `denied-upload.ts`, `backup-profile.ts`. Tests:
+  `tests/zine-library.test.ts`.
+- `src/engine/sops.ts`: SOPS 3.10.2 and age 1.2.1, simulated (age keys in
+  real Bech32 derived from a seed, `ageKey`, `parseRecipient`,
+  `parseIdentities`; the data key wrapped in an armored age file,
+  `wrapKey`/`unwrapKey`; `ENC[AES256_GCM,…]` values with their tag and the
+  key's path, `encryptValue`/`decryptValue`; the MAC; the dotenv store and
+  its `sops_` metadata, `encryptFile`/`decryptFile`, the no-key report
+  `noKeyError`; `.sops.yaml`'s creation rules, `readSopsConfig`,
+  `findConfig`, `ruleFor`; `state.sops.seq` makes every key and data key
+  new, deterministically); `sops` (encrypt, decrypt, edit through nano,
+  rotate, updatekeys and its question, set, filestatus; the identities from
+  `SOPS_AGE_KEY`, `SOPS_AGE_KEY_FILE`, `~/.config/sops/age/keys.txt`) and
+  `age-keygen` in `commands/secrets.ts`, the `secrets` family; `.gitignore`
+  (`ignoredBy`, a repository with `deep`) and the `gitignore(5)` page in
+  `commands/git.ts`. `chapters/tenants-union.ts`: what the chapters of "The
+  Tenants' Union" share (`latch`, the Larkspur Tenants' Union's server:
+  `/srv/repairline` and its history, origin, the server's age key, the
+  repairline service reading `/etc/repairline/env` at start, PostgreSQL's
+  role; the keys of the server, Makoa, Ikenna and yours; chapter 2's
+  encrypted files with fixed data keys, `state.startKeys`); `out-of-the-open.ts`,
+  `keys-change-hands.ts`. Tests: `tests/tenants-union.test.ts`.
+- `src/engine/openbao.ts`: OpenBao 2.7, the open-source fork of HashiCorp
+  Vault (`state.bao` on the principal: the Shamir seal, `parts` counted
+  once, a wrong share failing the attempt, `seal()` at each start; tokens
+  `s.` + base62 (`mint`, `lookupToken`, `revokeTree`: children revoked with
+  their parent, `ttlLeft`); ACL policies in HCL (`parsePolicy` with
+  OpenBao's errors, `matches` for `*` and `+`, Vault's priority rules,
+  `capabilitiesOf`, `allowed` with sudo on root-protected paths); KV
+  version 2 at `secret/` (`data/`, `metadata/`, versions, patch); the file
+  audit device (`auditLines`, strings HMAC'd, `hmacSha256`,
+  `sys/audit-hash`); `request()` is the API: the seal, the token, the ACL,
+  the handler, the audit entries, `runs` for the story); `bao` in
+  `commands/bao.ts` (columnize tables, Go's `%v`/`%q`, flags before the
+  arguments, the hidden prompts of `operator unseal` and `login`,
+  `~/.vault-token`), the `openbao` family. `chapters/hostel.ts`: what the
+  chapters of "The Hostel" share (`padlock`, the cooperative hostel's
+  server: OpenBao from its `.deb`, Bunks the booking site, a modelled unit
+  that reads `/etc/bunks/bunks.env` and its two secrets at start
+  (`bunksStart`), `narrow()` for a token that reads them and nothing else,
+  the past replayed into the audit log by `initialiseStory`, `storyCurl`
+  for the health page, Desta's new admin token if you revoke yours);
+  `sealed.ts`, `need-to-know.ts`, `leaked-token.ts`. Tests:
+  `tests/hostel.test.ts`.
 - `src/interface/`: the interface. `game.ts`: `mount()`, the entry, builds
   each part with a shared context (`context.ts`: the options, texts,
   console, progress, display settings, and what one part asks of another;

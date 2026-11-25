@@ -73,3 +73,11 @@ machine-noticeboard = pizarra
 
 ## The Mapping Party
 machine-cairn = hito
+machine-stile = portillo
+machine-stapler = grapadora
+
+## The Tenants' Union
+machine-latch = pestillo
+
+## The Hostel
+machine-padlock = candado

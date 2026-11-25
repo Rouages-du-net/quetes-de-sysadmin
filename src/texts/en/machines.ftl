@@ -71,3 +71,11 @@ machine-noticeboard = noticeboard
 
 ## The Mapping Party
 machine-cairn = cairn
+machine-stile = stile
+machine-stapler = stapler
+
+## The Tenants' Union
+machine-latch = latch
+
+## The Hostel
+machine-padlock = padlock

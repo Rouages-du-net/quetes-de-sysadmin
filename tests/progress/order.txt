@@ -175,3 +175,12 @@ wrong-label
 port-and-boolean
 first-plan
 drift
+no-root-needed
+logged-out
+denied-upload
+backup-profile
+out-of-the-open
+keys-change-hands
+sealed
+need-to-know
+leaked-token

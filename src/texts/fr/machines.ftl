@@ -71,3 +71,11 @@ machine-noticeboard = panneau
 
 ## The Mapping Party
 machine-cairn = cairn
+machine-stile = echalier
+machine-stapler = agrafeuse
+
+## The Tenants' Union
+machine-latch = loquet
+
+## The Hostel
+machine-padlock = cadenas

@@ -695,6 +695,21 @@ them safely.
   (`rhel.ts`, `selinux.ts`, `firewalld.ts`, `rpm.ts`, `httpd-rhel.ts`;
   the `rhel` family). Later: updates (`dnf updateinfo`, `--security`,
   `dnf history undo`, `dnf needs-restarting -r`).
+- [x] **Rootless containers** (Podman 5.4, Debian 13): an app moved from
+  Docker as root to Podman under its own account (subordinate ids, the
+  namespace's mapping and the data's owner, unprivileged ports behind a
+  reverse proxy), then kept running with nobody logged in (Quadlet, linger,
+  a reboot). Done: story 50, "The Walking Club" (`podman.ts`; `podman`,
+  `loginctl`, Quadlet's dry run and `systemctl --user` in the `podman`
+  family; `usermod --add-subuids`; three errors in the error explainer).
+- [x] **AppArmor** (Debian 13's mandatory access control): a web app's
+  data moved and refused by its profile, and a profile of one's own for a
+  script that runs as root. Done: story 51, "The Zine Library"
+  (`apparmor.ts`: profiles, the kernel's policy, attachment at exec, enforce
+  and complain, audit records in the kernel's log or audit.log;
+  `aa-status`, `apparmor_parser`, `aa-enforce`, `aa-complain`,
+  `aa-disable`, `aa-autodep`, `aa-logprof`, `aa-genprof` in the `apparmor`
+  family; two errors in the error explainer).
 
 - [x] **The disaster recovery plan** (the series' finale, on existing
   models): a written plan made true (RPO, RTO, owners, backups within
@@ -711,6 +726,23 @@ them safely.
   Party" (`hcl.ts`: HCL and `tofu fmt`; `tofu.ts`: the hashicorp/dns
   provider on the game's BIND, the local state and its lock, plans and
   drift, import; the `iac` family; four errors in the error explainer).
+
+- [x] **Secrets in git** (SOPS and age): a `.env` committed in clear and
+  leaked, encrypted with a creation rule, its password rotated and
+  decrypted at deploy time; then a volunteer's key added, a leaver's
+  removed, the data key and the secret rotated. Done: story 52, "The
+  Tenants' Union" (`sops.ts`: age keys in Bech32, the dotenv store, the
+  ENC[…] values, the MAC, `.sops.yaml`; `sops` and `age-keygen` in the
+  `secrets` family; `.gitignore` in git; four errors in the error
+  explainer).
+- [x] **A secrets manager** (OpenBao, the open-source fork of HashiCorp
+  Vault): a server sealed after a power cut and unsealed with three key
+  shares, an app moved from the root token to a narrow policy and a token
+  with a TTL, a leaked token traced in the audit log, revoked, and the
+  secret it read rotated. Done: story 53, "The Hostel" (`openbao.ts`: the
+  Shamir seal, tokens and their tree, ACL policies in HCL, KV version 2,
+  the file audit device and its HMACs; `commands/bao.ts`; the `openbao`
+  family; three errors in the error explainer).
 
 - [x] **Self-hosted object storage** (Garage, S3 clients): a website
   bucket that also served private documents, a backup that failed on a

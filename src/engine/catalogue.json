@@ -5964,6 +5964,325 @@
      "events": 12
     }
    ]
+  },
+  {
+   "id": "walking-club",
+   "after": [
+    "full-powers",
+    "boot-order"
+   ],
+   "texts": [
+    "chapter-logged-out.ftl",
+    "chapter-no-root-needed.ftl",
+    "hints-walking-club.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "no-root-needed",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "nano",
+      "sudo",
+      "id",
+      "getent",
+      "ps",
+      "ss",
+      "curl",
+      "systemctl",
+      "journalctl",
+      "sysctl",
+      "usermod",
+      "chown",
+      "chmod",
+      "podman",
+      "exit"
+     ],
+     "events": 14
+    },
+    {
+     "id": "logged-out",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "echo",
+      "nano",
+      "sudo",
+      "id",
+      "getent",
+      "ps",
+      "ss",
+      "curl",
+      "systemctl",
+      "journalctl",
+      "sysctl",
+      "usermod",
+      "chown",
+      "chmod",
+      "podman",
+      "exit",
+      "loginctl",
+      "quadlet",
+      "mkdir",
+      "export",
+      "env",
+      "nohup",
+      "reboot"
+     ],
+     "events": 13
+    }
+   ]
+  },
+  {
+   "id": "zine-library",
+   "after": [
+    "shared-rights",
+    "proxy"
+   ],
+   "texts": [
+    "chapter-backup-profile.ftl",
+    "chapter-denied-upload.ftl",
+    "chapter-memory.ftl",
+    "hints-zine-library.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "denied-upload",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "diff",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "dmesg",
+      "ps",
+      "curl",
+      "chmod",
+      "aa-status",
+      "apparmor_parser",
+      "aa-enforce",
+      "aa-complain",
+      "aa-disable",
+      "exit"
+     ],
+     "events": 14
+    },
+    {
+     "id": "backup-profile",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "diff",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "ps",
+      "tar",
+      "aa-status",
+      "apparmor_parser",
+      "aa-enforce",
+      "aa-complain",
+      "aa-disable",
+      "aa-autodep",
+      "aa-logprof",
+      "aa-genprof",
+      "exit"
+     ],
+     "events": 10
+    }
+   ]
+  },
+  {
+   "id": "tenants-union",
+   "after": [
+    "traces",
+    "bare-repo"
+   ],
+   "texts": [
+    "chapter-keys-change-hands.ftl",
+    "chapter-out-of-the-open.ftl",
+    "hints-tenants-union.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "out-of-the-open",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "mkdir",
+      "chmod",
+      "cp",
+      "mv",
+      "rm",
+      "echo",
+      "export",
+      "install",
+      "sh",
+      "sudo",
+      "git",
+      "sops",
+      "age-keygen",
+      "psql",
+      "systemctl",
+      "journalctl",
+      "base64",
+      "exit"
+     ],
+     "events": 19
+    },
+    {
+     "id": "keys-change-hands",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "nano",
+      "mkdir",
+      "chmod",
+      "cp",
+      "mv",
+      "rm",
+      "echo",
+      "export",
+      "install",
+      "sh",
+      "sudo",
+      "git",
+      "sops",
+      "age-keygen",
+      "psql",
+      "systemctl",
+      "journalctl",
+      "exit"
+     ],
+     "events": 14
+    }
+   ]
+  },
+  {
+   "id": "hostel",
+   "after": [
+    "spare-key",
+    "first-plan"
+   ],
+   "texts": [
+    "chapter-leaked-token.ftl",
+    "chapter-need-to-know.ftl",
+    "chapter-sealed.ftl",
+    "hints-hostel.ftl"
+   ],
+   "chapters": [
+    {
+     "id": "sealed",
+     "number": 1,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 12
+    },
+    {
+     "id": "need-to-know",
+     "number": 2,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "grep",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 13
+    },
+    {
+     "id": "leaked-token",
+     "number": 3,
+     "commands": [
+      "ls",
+      "cd",
+      "pwd",
+      "cat",
+      "less",
+      "head",
+      "tail",
+      "grep",
+      "jq",
+      "nano",
+      "sudo",
+      "systemctl",
+      "journalctl",
+      "curl",
+      "bao",
+      "exit"
+     ],
+     "events": 14
+    }
+   ]
   }
  ]
 }

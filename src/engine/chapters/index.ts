@@ -54,6 +54,10 @@ import { chapters as danceTroupe } from '../stories/dance-troupe';
 import { chapters as shelter } from '../stories/shelter';
 import { chapters as languageCafe } from '../stories/language-cafe';
 import { chapters as mappingParty } from '../stories/mapping-party';
+import { chapters as walkingClub } from '../stories/walking-club';
+import { chapters as zineLibrary } from '../stories/zine-library';
+import { chapters as tenantsUnion } from '../stories/tenants-union';
+import { chapters as hostel } from '../stories/hostel';
 
 // Stories open little by little: each one says, in `after`, the chapters
 // to finish before receiving its key (see unlocking.ts and docs/SCENARIOS.md).
@@ -107,6 +111,10 @@ export const STORIES: Story[] = [
   { id: 'shelter', after: ['restore-drill', 'zones'], chapters: shelter },
   { id: 'language-cafe', after: ['firewall', 'proxy'], chapters: languageCafe },
   { id: 'mapping-party', after: ['works-for-me', 'playbook'], chapters: mappingParty },
+  { id: 'walking-club', after: ['full-powers', 'boot-order'], chapters: walkingClub },
+  { id: 'zine-library', after: ['shared-rights', 'proxy'], chapters: zineLibrary },
+  { id: 'tenants-union', after: ['traces', 'bare-repo'], chapters: tenantsUnion },
+  { id: 'hostel', after: ['spare-key', 'first-plan'], chapters: hostel },
 ];
 
 // All chapters, across all stories (unique identifiers).

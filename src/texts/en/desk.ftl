@@ -99,3 +99,7 @@ machine-wings-motd = The Dance Troupe — wings, the Kestrel Dance Company's ser
 machine-meadow-motd = The Shelter — meadow, Hillside Animal Shelters' small server at a hosting cooperative: the restic repository (/srv/restic), the disaster recovery plan (/srv/drp), and the zone's hidden primary DNS. paddock, the main server, is in Hillside's cellar.
 machine-kettle-motd = The Language Café — kettle, Common Tongue's small server in the café's back office: Rocky Linux 10 (not Debian: dnf, firewalld, SELinux). Its site shows on the café's screen, noticeboard.
 machine-cairn-motd = The Mapping Party — cairn, the Wayfinders collective's DNS server (BIND, zone wayfinders.example), its records kept as code with OpenTofu in /srv/dns. tofu plan before anything else.
+machine-stile-motd = The Walking Club — stile, the Open Paths walking club's server: Trailbook (walks and sign-ups) in a container behind nginx, https://walks.openpaths.example. Its account: trailbook.
+machine-stapler-motd = The Zine Library — stapler, the zine library's Debian server: nginx, the catalogue app under php-fpm (confined by AppArmor), the zines' scans in /srv/scans. sudo aa-status shows what AppArmor confines.
+machine-latch-motd = The Tenants' Union — latch, the Larkspur Tenants' Union's server (Repairline, its repairs app, and PostgreSQL). The code is in /srv/repairline, its secrets kept with sops and age.
+machine-padlock-motd = The Hostel — padlock, the cooperative hostel's server: OpenBao, the vault for the secrets of Bunks, its booking site. bao status before anything else.
