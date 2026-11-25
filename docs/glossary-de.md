@@ -174,3 +174,28 @@ Names chosen in these stories (check with a native reviewer):
 - Plays of The Theatre: „Die Schneekönigin“, „Der Leuchtturmwärter“, „Die zwölf Geschworenen“.
 - Ansible handler of The Fleet: `Neuladen ssh` / `neuladen ssh` (one word before „ssh“, as the test expects).
 - Host name in The Co-op's keys: `lina@werkstatt`; the canteen's bookings header `uhrzeit;name;personen`.
+## Stories group 1
+
+The Data Centre, The Lost Packet, The Time Machine, The Archives, The
+Neighbourhood Letters, The Workshop, The Gazette, The Game Library, On Call,
+The Community Centre, The Co-op.
+
+- chapter titles: Erster Tag, Zweiter Tag, Die Nacht des Neustarts, Der große Brand, Das Zertifikat ist abgelaufen; Tür zu, Die Firewall, Der Wächter (sentinel), Eine Wohngemeinschaft (sharing a home), Bei mir geht's, Konzertabend, Der Port, Wiederholungstäter, Das Repair-Café; Das Update, Die Komposition, Das Loch in der Firewall, Alle Macht; Das nackte Repository, Zurückrollen, Blau und Grün, Der Kanarienvogel, Die Migration; Das Lösegeld, Die Snapshots, Die Datenbank; Die volle Platte, Der Speicher, Die Inodes, Die Uhr, Die Sonde, Das Post-Mortem, Der Engpass; Die Schlüssel, Der Sprung, Der Tunnel, Die Übertragungen, Der Webhoster; Der Abschied, Gemeinsame Rechte, Das Geheimnis, Der Proxy, Die Updates, Automatische Updates
+- recovery plan (DRP) → **Notfallplan (NFP)** (file `NFP.txt`)
+- release notes → **Versionshinweise**; health check → **Gesundheitsprüfung**; slot (blue/green) → **Slot**, blau/grün; canary → **Kanarienvogel**
+- bare repository → **Bare-Repository**; working copy → **Arbeitskopie**; snapshot (git, the Time Machine) → **Schnappschuss**; snapshot (restic, rsnapshot) → **Snapshot**
+- to fix forward → **nach vorn reparieren**; expand/contract → **erweitern/verkleinern**
+- post-mortem → **Post-Mortem**; blameless → **ohne Schuldzuweisung**; timeline → **Zeitverlauf**; actions → **Maßnahmen** (the template's headings: Zusammenfassung, Zeitverlauf, Auswirkung, Ursachen, Was gut lief, Maßnahmen; placeholder „(zu ergänzen“)
+- probe → **Sonde**; drill → **Übung** (Störungsübung); false alarm → **Fehlalarm**; threshold → **Schwelle**
+- on-call shift → **Bereitschaft**; outage → **Störung**, **Ausfall**; bottleneck → **Engpass**; memory leak → **Speicherleck**; parent process → **Elternprozess**
+- listeners (radio) → **Hörerschaft**; readers → **Leserschaft**; patrons (library) → **Leserschaft**
+- gateway → **Gateway**; bastion → **Bastion-Host**; jump → **springen**; tunnel → **Tunnel**; web host → **Webhoster**; shared hosting → **Shared Hosting**
+- key pair → **Schlüsselpaar**; passphrase → **Passphrase**; host key → **Hostschlüssel**; fingerprint → **Fingerabdruck**
+- dry run → **Probelauf**; to roll back → **zurückrollen**; to switch over → **umschalten**
+- jail (fail2ban) → **Jail**; ban → **sperren**, **Sperre**; repeat offender → **Wiederholungstäter**; rate limit → **Ratenbegrenzung**; burst → **Burst**
+- virtual host → **virtueller Host**; reverse proxy → **Reverse Proxy**; trailing slash → **Schrägstrich am Ende**
+- ransom note → **Lösegeldforderung**; encryptor → **Verschlüsseler**; offline backup → **Offline-Backup**; read-only → **nur lesend**
+- statement (till) → **Abrechnung**; payment key → **Zahlungsschlüssel**; till → **Kasse**
+- the radio → **Radio Viertel** (unit descriptions keep their English words, like French); the media library → **Mediathek im Viertel**; the newspaper's site → **Die Stadtteilzeitung** (typo „Stadtteilzeitunng“)
+- identifiers kept in English as Spanish does: the Kiosk's migration `rename_subscribers_mail_to_email` and its columns `subscribers.mail`
+- typed words of these stories (not in names.ftl): the till's `ZAHLUNG_SCHLUESSEL`, `anmelden`, `zahlung`, `schluessel_widerrufen`; the wiki admin's `/admin/freigeben/`, `/admin/ablehnen/`; the game library's columns `id,name,exemplare`, `id,karte,viertel`, `id,spiel_id,mitglied_id,ausgeliehen_am,zurueck_am`; the ransomware's option `--leise`, the USB label `SICHERUNG`; the post-mortem's alert subject `Radio-Alarm`; Lina's host `werkstatt`
