@@ -74,3 +74,23 @@ adduser, git's commit summary „1 file changed“). Main forms:
 - Story titles: „Der Radierer“, „Der Äther“ (The Airwaves), „Der Zettelkatalog“, „Der Nachtlauf“ (The Night Batch), „Die alte Sonne“, „Die Mieterinitiative“ (The Tenants' Union), „Die Werkzeugbibliothek“ (The Tool Library), „Spam“ (Junk Mail).
 - The Eraser's world: `Huette`, `Huegel`, `SignalSchule`, `Uebungsraum`, `Muelleimer` (the Bin), `ziel = /Koenigreich/Muelleimer`, `flickerin.txt` (mender), `.ersatzbirne`.
 - Passwords: `sonnenblume`, `butter-brezel-91` (butter-brioche), `expressschlinge-42` (quickdraw), `vorsicht-feuchtigkeit-24` (mind-the-damp).
+
+## Stories group 5
+
+The Climbing Wall, The Dance Troupe, The Shelter, The Language Café, The
+Mapping Party, The Walking Club, The Zine Library, The Tenants' Union, The
+Hostel (with The Firewall and On Call's Memory, which their catalogue lists).
+
+- drill (power, restore) → **Übung**; power cut → **Stromausfall**; flicker → **Flackern**; outage that lasts → **anhaltender Ausfall**
+- UPS primary / secondary → kept as NUT's **primary** / **secondary**; power restore policy → **Power-Restore-Policy**; battery quick test / deep test → **Schnelltest** / **Tiefentest**; waiver → **Haftungsverzicht**
+- bucket, website access, presigned URL → **Bucket**, **Website-Zugriff**, **vorsignierte URL**; node, zone, layout → **Knoten**, **Zone**, **Layout**; key (access key) → **Schlüssel**; dry run → **Probelauf**
+- disaster recovery plan → **Notfallwiederherstellungsplan**; owner (of a service) → **verantwortliche Person**, column **Verantwortlich**; restore beside → **daneben wiederherstellen**; post-incident review → **Nachbetrachtung** (blameless: **ohne Schuldzuweisung**); timeline / actions → **Zeitleiste** / **Maßnahmen**
+- the plan's durations: German units are read by the engine (`24h`, `2 Tage`, `1 Woche`, `4 Std`, `30 Minuten`)
+- runtime / permanent configuration (firewalld) → **Laufzeitkonfiguration** / **permanente Konfiguration**; rich rule → **Rich Rule**; label, relabel → **Label**, **Relabel** / **neu kennzeichnen**; boolean → **Boolean**
+- state, drift, lock (OpenTofu) → **State**, **Drift**, **Sperre**; record set → **Record Set**; mirror → **Mirror**
+- subordinate ids → **untergeordnete IDs**; user namespace → **User-Namespace**; to linger → **lingern** (Linger); service manager → **Dienstmanager**
+- confined / unconfined → **eingeschränkt** / **uneingeschränkt**; complain / enforce mode → **Complain-Modus** / **Enforce-Modus**
+- recipient (sops) → **Empfänger**; data key → **Datenschlüssel**; creation rule → **Creation Rule**; to rotate → **rotieren**; leaked → **durchgesickert**
+- sealed / unseal → **versiegelt** / **entsiegeln**; key share → **Schlüsselteil**, **Teil**; threshold → **Schwelle**; root token → **Root-Token**; policy → **Policy** (plural Policys); orphan token → **Orphan-Token**
+- story titles: „Die Kletterhalle“, „Die Tanzgruppe“, „Das Tierheim“, „Das Sprachcafé“, „Die Mapping-Party“, „Der Wanderverein“, „Die Zine-Bibliothek“, „Die Mieterinitiative“, „Die Herberge“; chapters to check: „Der letzte Ausfall“, „Der Reihe nach“, „Die Kopie außer Haus“, „Keine Berechtigung, aber…“, „Ganz ohne root“, „Raus aus dem Offenen“, „Nur was nötig ist“
+- proper names kept: Overhang (the hall), Kestrel Dance Company, Old Mill, Common Tongue, Hillside, Riverbend, Open Paths; the shelter's animals are given German names (Keks, Pfeffer…)
