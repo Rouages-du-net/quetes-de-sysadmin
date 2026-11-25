@@ -148,9 +148,9 @@ for (const language of languagesFor('airwaves'))
       expect(all).toMatch(/-rw-r--r-- 1 root root +\d+ .* ca\.key/);
       contains(all, 'chmod 600');
       all = run('sudo chmod 600 /srv/ca/private/ca.key', 'sudo chmod 700 /srv/ca/private', 'cat /srv/ca/private/ca.key');
-      expect(all).toMatch(/(Permission (denied|non accordée)|Permiso denegado)/);
+      expect(all).toMatch(/(Permission (denied|non accordée)|Permiso denegado|Keine Berechtigung)/);
       run('openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out intranet.key');
-      expect(run('ls -l intranet.key')).toMatch(/^-rw------- 1 (you|vous|tu) (you|vous|tu)/);
+      expect(run('ls -l intranet.key')).toMatch(/^-rw------- 1 (you|vous|tu|du) (you|vous|tu|du)/);
       run('openssl req -new -key intranet.key -subj /CN=intranet.airwaves.internal -addext "subjectAltName=DNS:intranet.airwaves.internal,DNS:board.airwaves.internal" -out intranet.csr');
       expect(run('openssl req -in intranet.csr -noout -text')).toContain('Requested Extensions:\n                    X509v3 Subject Alternative Name: \n                        DNS:intranet.airwaves.internal, DNS:board.airwaves.internal');
       all = run('sudo openssl x509 -req -in intranet.csr -CA /srv/ca/ca.crt -CAkey /srv/ca/private/ca.key -days 365 -copy_extensions copy -out intranet.crt');
