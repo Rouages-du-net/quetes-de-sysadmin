@@ -74,3 +74,27 @@ adduser, git's commit summary „1 file changed“). Main forms:
 - Story titles: „Der Radierer“, „Der Äther“ (The Airwaves), „Der Zettelkatalog“, „Der Nachtlauf“ (The Night Batch), „Die alte Sonne“, „Die Mieterinitiative“ (The Tenants' Union), „Die Werkzeugbibliothek“ (The Tool Library), „Spam“ (Junk Mail).
 - The Eraser's world: `Huette`, `Huegel`, `SignalSchule`, `Uebungsraum`, `Muelleimer` (the Bin), `ziel = /Koenigreich/Muelleimer`, `flickerin.txt` (mender), `.ersatzbirne`.
 - Passwords: `sonnenblume`, `butter-brezel-91` (butter-brioche), `expressschlinge-42` (quickdraw), `vorsicht-feuchtigkeit-24` (mind-the-damp).
+
+## Stories group 3
+
+(The Bastion, The Other Unix, The Old Sun, The Night Batch, The Order Book,
+Next Door Windows, The Music School, The Card Catalogue, The Pantry, The
+Ferry, The Bike Share; also the shared chapters The Bulletin, The Departure,
+The Report.)
+
+- email headers → **Von:**, **An:**, **Betreff:**; forwarded → **WG:**, reply → **AW:**
+- incident (the write-up) → **Incident** in file headings, **Vorfall** in prose; containment → **Eindämmung**; eradication → **Beseitigung**; hardening → **Härtung**
+- watchdog (a process) → **Wachhund**; miner → **Miner**; way back (persistence) → **Hintertür**
+- drop-in (a configuration fragment) → **Drop-in**; default-deny → **standardmäßig verweigern**
+- fingerprint (key) → **Fingerabdruck**; signature → **Signatur**; keyring → **Schlüsselbund**
+- finding (audit) → **Befund**; leaver → **ausscheidende Person**, plural **Ausscheidende**
+- service bureau (mainframe) → **Rechenzentrum**; record (fixed-width) → **Satz**; header / trailer record → **Kopfsatz** / **Schlusssatz**; packed decimal → **gepackte Dezimalzahl**; wrapper script → **Wrapper-Skript**; rehearsal → **Probe**
+- return code → **Rückgabewert** (also the chapter title); exit code → **Exit-Code**
+- IBM i: inquiry message → **Abfragenachricht**; job log → **Jobprotokoll**; job queue → **Jobwarteschlange**; spooled file → **Spooldatei**; output queue → **Ausgabewarteschlange**; save file → **Sicherungsdatei**; save-while-active → **Sichern bei aktivem System**; history log → **Protokoll (History Log)**; library → **Bibliothek**; green screen → **grüner Bildschirm**
+- Windows: share → **Freigabe**; share/NTFS permissions → **Freigabe-/NTFS-Berechtigungen**; inheritance → **Vererbung**; scheduled task → **geplante Aufgabe**; Task Scheduler → **Aufgabenplanung**; event log → **Ereignisprotokoll**; logon type → **Anmeldetyp**; service account → **Dienstkonto**; password manager → **Passwortmanager**; vault → **Tresor**; Recycle Bin (AD) → **AD-Papierkorb**; domain controller → **Domänencontroller**; Group Policy → **Gruppenrichtlinie**; security filtering → **Sicherheitsfilterung**; link (GPO) → **Verknüpfung**; global / domain local group → **globale / domänenlokale Gruppe**. Values, group, share and folder names, cmdlets and their outputs stay English, as the English-language Windows prints them (as fr and es do).
+- HR ticket → **Personalticket**; arrival / departure → **Eintritt** / **Austritt**
+- LUKS: key slot → **Schlüsselplatz**; key file → **Schlüsseldatei**; passphrase → **Passphrase**; mapping → **Mapping**; treasurer → **Kassenwartin**; restore drill → **Wiederherstellungsübung**
+- IPv6: link-local → **link-lokal**; router advertisement → **Router-Ankündigung**; neighbour discovery → **Nachbarerkennung**; serial (DNS zone) → **Seriennummer**; secondary → **Secondary**
+- Prometheus: target → **Target**; scrape → **scrapen**; alerting rule → **Alarmregel**; alert fires → **geht los (firing)**; silence → **Stummschaltung**; on call → **Bereitschaft**; to page → **anpiepen**
+- Chapter titles: „Der Alarm“, „Eindämmung“, „Beseitigung“, „Härtung“, „Das Bulletin“, „Der Abschied“, „Der Bericht“, „Das Skript, das nicht mehr lief“, „Hier gibt es kein systemd“, „Die letzte Regel gewinnt“, „Erst lesen, dann anfassen“, „Bytes in falscher Reihenfolge“, „Erst vertrauen, dann umschalten“, „Feste Breite“, „Rückgabewert“, „Die verspätete Datei“, „Warten auf Antwort“, „Papier, das niemand druckt“, „Gesichert, bis auf eine“, „Unsichtbare Zeichen“, „Die Freigabe nebenan“, „Die andere Seite“, „Zwei Schlösser“, „Ausgesperrt“, „Die Logflut“, „Das stille Backup“, „Kommen und Gehen“, „Das alte Passwort“, „Die Richtlinie, die nicht greift“, „Türen und schlafende Konten“, „Die verlorene Platte“, „Der Zweitschlüssel“, „Die Wiederherstellungsübung“, „Die neue Karte“, „Die andere Tür“, „In beide Richtungen“, „Der tote Winkel“, „Der Schwellenwert“, „Ruhezeiten“. Cross-references used: „Der Wächter“ (The Sentinel), „Das Verzeichnis“ (The Directory), „Die Wache“, „Das Audit“.
+- Shared with groups 1 and 2: chapter-firewall.ftl is taken unchanged from group 1; chapter-bulletin, chapter-departure and chapter-report (also in The Watch, The Co-op, The Audit) are translated here.
