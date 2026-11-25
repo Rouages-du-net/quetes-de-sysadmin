@@ -116,3 +116,31 @@ when they are words (`datei`, `ADRESSE`, `KONTO`), kept when technical
 - Active Directory: domain controller → **Domänencontroller**; forest → **Gesamtstruktur**; organizational unit → **Organisationseinheit** (OU); domain local group → **lokale Domänengruppe**; Recycle Bin → **Papierkorb**; resultant set of policy → **Richtlinienergebnissatz**; Group Policy object → **Gruppenrichtlinienobjekt** (GPO); lockout → **Sperre**
 - The player's Windows profile `C:\Users\you` → `C:\Users\du`; the machine `cabinet` in commands and account names → `schrank`, `SCHRANK\alice`
 - Kept in English, as the tools print them: messages and states of Windows, PowerShell, SMF, IBM i and OpenSSH quoted in the pages („Access is denied“, „completed normally“, „The property already exists.“)
+## Manual wave 3
+
+From `Remove-GPO` to `apparmor_d`: Group Policy, LUKS, shell builtins and
+jobs, compression, small tools, CUPS, Forgejo, libvirt, keepalived/HAProxy,
+Dovecot/rspamd, NUT, Garage/aws/rclone, OpenTofu, OpenBao, SOPS/age, the rhel
+family (dnf, firewalld, SELinux), rootless Podman, AppArmor. Synopsis
+placeholders are German capitals (DATEI, GERÄT, VERZEICHNIS, BENUTZER,
+PASSWORT, SCHLÜSSELDATEI, ABBILD, GRÖSSE…), or lowercase where the English is
+lowercase (datei, befehl, ziel).
+
+- GPO link → **Verknüpfung**; link order → **Verknüpfungsreihenfolge**; enforced → **erzwungen**; block inheritance → **Vererbung blockieren**; security filtering → **Sicherheitsfilterung**; trustee → **Berechtigter (Trustee)**; resultant set of policy → **Richtlinienergebnissatz**; Group Policy → **Gruppenrichtlinien**; domain controller → **Domänencontroller**; workstation (Windows) → **Arbeitsplatz**
+- device → **Gerät**; key slot → **Schlüsselplatz (Key Slot)**; key file → **Schlüsseldatei**; passphrase → **Passphrase**; mapping (dm-crypt) → **Zuordnung (Mapping)**; header → **Header**; label (file system) → **Label**
+- fingerprint (checksum) → **Fingerabdruck**; to unmount → **aushängen**
+- shell built-in → **eingebauter Befehl der Shell**; positional parameters → **Positionsparameter**; job → **Job**; to linger (loginctl) → **verweilen**; service manager → **Dienstmanager**; user namespace → **User-Namespace**; subordinate ids → **untergeordnete IDs**; to chown → **übereignen**
+- print job → **Druckauftrag**, **Auftrag**; queue → **Warteschlange**; default destination → **Standardziel**; driverless → **treiberlos**; to enable/disable a queue → **aktivieren/deaktivieren**
+- scrape (Prometheus) → **abfragen**; target → **Ziel**; alert → **Alarm**; firing → **feuernd**; silence → **Silence** (kept); receiver → **Empfänger**; sample → **Messwert**; recording/alerting rule → **Aufzeichnungsregel/Alarmregel**
+- forge → **Forge**; collaborator → **Mitwirkende**; protected branch → **geschützter Branch**; run (CI) → **Lauf**; token, scope, secret → **Token**, **Scope**, **Secret** (kept)
+- guest (VM) → **Gast**; disk image → **Abbild** (Plattenabbild); backing chain → **Backing-Kette**; overlay → **Overlay**; to flatten → **flachklopfen**; dry run → **Probelauf**
+- advertisement (VRRP) → **Ankündigung (Advertisement)**; node → **Knoten** (Kubernetes: **Node**); check (health) → **Prüfung**; drain → kept
+- mailbox → **Postfach**; envelope → **Umschlag (Envelope)**; Trash → **Papierkorb**
+- UPS → **USV** (plural USVs); kill power command → **Abschaltbefehl**; forced shutdown → **erzwungenes Herunterfahren**; power restore policy → **Richtlinie bei Stromrückkehr**; primary/secondary (NUT) → kept
+- bucket, layout, remote (rclone) → kept; web endpoint → **Web-Endpunkt**; website access → **Website-Zugriff**
+- state (OpenTofu) → **State**; drift → **Drift**; to adopt (import) → **übernehmen**
+- seal / unseal (OpenBao) → **Siegel**, **versiegeln**/**entsiegeln**; key share → **Schlüsselanteil**; vault → **Tresor**; policy (OpenBao) → **Policy**
+- data key (SOPS) → **Datenschlüssel**; recipient (age) → **Empfänger**; identity → **Identität**
+- runtime / permanent (firewalld) → **Laufzeitkonfiguration** / **permanente Konfiguration**; rich rule → **Rich Rule**
+- denial (SELinux) → **Verstoß**; relabel → **Relabeling**, **neu labeln**; boolean → **Boolean**; policy (SELinux, AppArmor) → **Richtlinie**
+- profile (AppArmor) → **Profil**; confined/unconfined → **eingeschränkt/uneingeschränkt**; enforce/complain mode → **Modus enforce/complain** (kept); attachment → **Anhang (Attachment)**
