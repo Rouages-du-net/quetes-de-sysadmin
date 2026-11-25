@@ -51,13 +51,13 @@ least-privilege-note-lwazi =
     - habe ich bind-address = 0.0.0.0 in 50-server.cnf gesetzt, „um sicher
       zu sein“.
     Es funktioniert. Ich weiß, es ist nicht schön. Du erreichst barrow mit
-    ssh von trowel aus; sudo funktioniert dort auch.
+    ssh von kelle aus; sudo funktioniert dort auch.
 
 ## Events
 
 least-privilege-event-scan =
     3306/tcp open, von Selins Zuhause aus: MariaDB antwortet allen im
-    Internet, über den Büroanschluss von trowel. Das allein ist kein
+    Internet, über den Büroanschluss von kelle. Das allein ist kein
     Einbruch, aber jedes Konto, das Verbindungen von '%' annimmt, kann von
     überall ausprobiert werden. Wer darf sich verbinden, von wo, mit welchen
     Rechten? (sudo mariadb; SELECT user, host, plugin FROM mysql.user; SHOW
@@ -77,7 +77,7 @@ least-privilege-event-all-on-all =
     App, in die eingebrochen wird, gibt all das weiter. Vergib nur auf
     plots.*, und nur, was die App tut (man mariadb: GRANT, REVOKE).
 least-privilege-event-any-host =
-    '%' als Host bedeutet „von jeder Adresse“: da trowel im Internet
+    '%' als Host bedeutet „von jeder Adresse“: da kelle im Internet
     lauscht, kann jede Person das Passwort dieses Kontos ausprobieren. Die
     App kommt immer von barrow: nenne seine Adresse (oder das hintere
     Netzwerk, '198.51.100.%').
@@ -123,7 +123,7 @@ least-privilege-event-still-open =
 least-privilege-event-app-cut =
     Die App erreicht den Server nicht mehr („Can't connect to server“). Die
     Datenbank muss von barrow aus erreichbar bleiben, über das hintere
-    Netzwerk: 127.0.0.1 ist nur trowel selbst, und eine Firewall-Regel muss
+    Netzwerk: 127.0.0.1 ist nur kelle selbst, und eine Firewall-Regel muss
     barrow hereinlassen.
 least-privilege-event-network =
     Port 3306 ist vom Internet aus geschlossen, und barrow erreicht ihn

@@ -51,7 +51,7 @@ firewall-event-filter =
     status verbose.
     
     Letzter Schritt, wie bei SSH: prüfe, dass du noch hereinkommst.
-    exit, dann ssh letters.
+    exit, dann ssh briefe.
 firewall-event-end =
     Neue Verbindung erfolgreich: die Firewall lässt SSH durch. Yasmine lässt
     ihren Scan noch einmal laufen: 22, 80 und 443 offen, 3306 gefiltert.

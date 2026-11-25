@@ -78,7 +78,7 @@ hint-wrong-side-end =
 ## Chapter 3 — The Tight Fit
 
 hint-tight-fit-swap =
-    .lead = Fehlt hearth Speicher? Schau dir sein RAM und seinen Swap an.
+    .lead = Fehlt herd Speicher? Schau dir sein RAM und seinen Swap an.
     .solution = free -h
 hint-tight-fit-memstat =
     .lead = Was bekommt jeder Gast, und was braucht er wirklich? (man virsh, dominfo, dommemstat)
@@ -105,5 +105,5 @@ hint-tight-fit-cleaned =
     .lead = Es hat funktioniert: das Sicherheitsnetz kann weg, und das alte, das niemand benutzen wird, auch.
     .solution = virsh snapshot-list records; virsh snapshot-delete records before-grow; virsh snapshot-delete records before-trixie
 hint-tight-fit-end =
-    .lead = Prüfe: kein Swap auf hearth, Platz auf records, kein Snapshot mehr.
+    .lead = Prüfe: kein Swap auf herd, Platz auf records, kein Snapshot mehr.
     .solution = free -h; virsh snapshot-list records; ssh records, dann df -h /

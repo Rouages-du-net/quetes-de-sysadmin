@@ -32,7 +32,7 @@ spam-tide-message-leilani =
     
     Leilani
 spam-tide-note-yerlan =
-    Notizen von Yerlan (rspamd auf slipway)
+    Notizen von Yerlan (rspamd auf helling)
     
     - rspamd bewertet jede eingehende Nachricht: Postfix übergibt sie über
       den Milter (smtpd_milters = inet:localhost:11332 in main.cf).

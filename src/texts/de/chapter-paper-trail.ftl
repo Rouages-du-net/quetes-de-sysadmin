@@ -17,7 +17,7 @@ paper-trail-message-ines =
     
     Zwei Dinge, und das zweite macht mir Sorgen.
     
-    chalk hat heute Morgen einen Alarm geschickt: /var ist fast voll.
+    kreide hat heute Morgen einen Alarm geschickt: /var ist fast voll.
     Darius, der sich vor dir darum gekümmert hat, hat im November „das
     Multifunktionsgerät debuggt“; ich weiß nicht, was er hinterlassen hat.
     

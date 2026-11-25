@@ -21,7 +21,7 @@ mailbox-full-message-marisol =
     zurückbekommen hat, „Mail delivery failed“. Wir sind mitten im
     Winteraufruf.
     
-    Unser Mailserver ist slipway, wo du gerade bist; sudo funktioniert mit
+    Unser Mailserver ist helling, wo du gerade bist; sudo funktioniert mit
     deinem Passwort. Yerlan hat ihn vor Jahren eingerichtet und eine Notiz
     hinterlassen. Der Vorstand hat gestern beschlossen, Saoirse 2 GB statt 1
     zu geben, da sie alle Fotos und die Dokumente der Sponsoren bekommt;
@@ -29,7 +29,7 @@ mailbox-full-message-marisol =
     
     Marisol
 mailbox-full-note-yerlan =
-    Notizen von Yerlan (slipway, 2028, seitdem ein paar Ergänzungen)
+    Notizen von Yerlan (helling, 2028, seitdem ein paar Ergänzungen)
     
     - Postfix empfängt die Mail für lifeboat.example und gibt sie über LMTP
       an Dovecot (virtual_transport in /etc/postfix/main.cf). Alles wird in
@@ -147,7 +147,7 @@ mailbox-full-event-end =
     - passwd-file und seine Zusatzfelder: https://doc.dovecot.org/2.4.1/core/config/auth/databases/passwd_file.html
 
 ## What the three chapters share, kept here so that it loads with the
-## story: the mail that arrives on slipway (subjects, bodies, the words each
+## story: the mail that arrives on helling (subjects, bodies, the words each
 ## kind of mail is made of). A list is separated by |. rspamd's Bayes
 ## learns these words: the spam's and the ham's lists must not overlap.
 

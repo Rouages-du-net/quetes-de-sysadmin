@@ -22,21 +22,21 @@ sleeping-connections-message-halima =
     Buchungs-App), sitzt bis heute Abend im Zug; er sagt, es ist „die
     Datenbank“, und hat dir eine Notiz hinterlassen.
     
-    Die Datenbank lebt auf trowel, wo du gerade bist. sudo funktioniert mit
+    Die Datenbank lebt auf kelle, wo du gerade bist. sudo funktioniert mit
     deinem Passwort. Könntest du nachsehen? Bitte lass das Problem nicht nur
     für eine Stunde verschwinden: nächsten Samstag wird es genauso sein.
     
     Halima
 sleeping-connections-note-lwazi =
-    Notizen von Lwazi (trowel, 2027, letzten Frühling ergänzt)
+    Notizen von Lwazi (kelle, 2027, letzten Frühling ergänzt)
     
-    - Auf trowel läuft MariaDB (das Debian-Paket, der Dienst mariadb). Die
+    - Auf kelle läuft MariaDB (das Debian-Paket, der Dienst mariadb). Die
       Datenbank ist plots: members, plots, waitlist, bookings.
     - Plotline läuft auf shed (198.51.100.133) und verbindet sich über das
-      hintere Netzwerk als plotline mit trowel. bookings enthält jede
+      hintere Netzwerk als plotline mit kelle. bookings enthält jede
       Buchung seit 2019: allein der Gießplan bucht jeden Abend jede
       Parzelle.
-    - Als root auf trowel öffnet sudo mariadb die Datenbank (Debian lässt
+    - Als root auf kelle öffnet sudo mariadb die Datenbank (Debian lässt
       den root des Systems über den Socket herein, ohne Passwort).
     - Die Konfiguration: /etc/mysql/mariadb.conf.d/50-server.cnf. Die Logs
       gehen ins Journal: journalctl -u mariadb.

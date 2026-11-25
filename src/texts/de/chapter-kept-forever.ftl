@@ -27,12 +27,12 @@ kept-forever-message-amara =
     nichts länger. Mir ist lieber, wir finden es selbst heraus, als dass ein
     Mitglied es für uns herausfindet.
     
-    Du bist auf baton, dem Server des Chors; sudo funktioniert mit deinem
+    Du bist auf taktstock, dem Server des Chors; sudo funktioniert mit deinem
     Passwort.
     
     Amara
 kept-forever-note-ruben =
-    Notizen von Ruben (baton, 2027)
+    Notizen von Ruben (taktstock, 2027)
     
     - nginx liefert www.riversidechoir.example aus /var/www/choir aus; der
       Mitgliederbereich (/members/) ist die App des Chors (gunicorn, Port

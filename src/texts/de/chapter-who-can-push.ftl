@@ -30,7 +30,7 @@ who-can-push-message-wanjiru =
     Gedächtnisses unseres Projekts, und sie müssen seinen Namen behalten.
     
     Dein Konto auf der Forge heißt „du“, ein Admin, vorerst mit demselben
-    Passwort wie auf anvil; ein API-Token für dich liegt in ~/.forgejo-token. Die API
+    Passwort wie auf amboss; ein API-Token für dich liegt in ~/.forgejo-token. Die API
     antwortet unter https://forge.lendshed.example/api/v1 (man
     forgejo-api). Dein Klon des Repositorys liegt in ~/lendshed.
     

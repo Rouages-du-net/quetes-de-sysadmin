@@ -23,11 +23,11 @@ chain-of-trust-message-adaeze =
     Aber Mateo sagt, seine Überwachung auf mast ist rot, seit er sie
     geschrieben hat (/usr/local/bin/check-sites, ihr Log in
     /var/log/check-sites.log), und der neue Studio-PC, den er in Riverside
-    aufgestellt hat, booth, lehnt sowohl das Archiv als auch das Intranet
+    aufgestellt hat, kabine, lehnt sowohl das Archiv als auch das Intranet
     ab. Er hat vorgeschlagen, -k hinzuzufügen, „damit es grün wird“; ich
     habe gesagt, ich frage zuerst dich.
     
-    Du erreichst booth von mast aus: ssh booth (dein Schlüssel liegt
+    Du erreichst kabine von mast aus: ssh kabine (dein Schlüssel liegt
     darauf).
     
     Adaeze
@@ -62,11 +62,11 @@ chain-of-trust-event-pem-ignored =
     update-ca-certificates ignoriert sie: es nimmt nur Dateien, die auf .crt
     enden (der Inhalt ist dasselbe PEM). Benenne sie um.
 chain-of-trust-event-key-on-booth =
-    Ein privater Schlüssel der Zertifizierungsstelle liegt auf booth! Ein
+    Ein privater Schlüssel der Zertifizierungsstelle liegt auf kabine! Ein
     Client braucht nur das Zertifikat, den öffentlichen Teil: wer den
     Schlüssel hat, kann Zertifikate signieren, denen jede Station vertrauen
-    würde. Lösche ihn sofort von booth (im echten Leben bedeutet ein
-    geleakter Schlüssel eine neue Zertifizierungsstelle: hier ist booth noch
+    würde. Lösche ihn sofort von kabine (im echten Leben bedeutet ein
+    geleakter Schlüssel eine neue Zertifizierungsstelle: hier ist kabine noch
     nicht im Netzwerk, Adaeze lässt es diesmal durchgehen).
 chain-of-trust-event-mast-trusts =
     mast vertraut jetzt Airwaves Root CA: sie liegt in /etc/ssl/certs und
@@ -96,17 +96,17 @@ chain-of-trust-event-chain =
     weil es sich die Zwischenzertifikate merkt, denen es begegnet ist; curl
     und eine frische Maschine tun das nicht.
 chain-of-trust-event-booth =
-    booth vertraut jetzt der Root des Verbunds (nur ihr Zertifikat liegt
+    kabine vertraut jetzt der Root des Verbunds (nur ihr Zertifikat liegt
     dort, nicht ihr Schlüssel).
 chain-of-trust-event-end =
-    Mateo: „Alles grün, und booth spielt die Jingles. Ich habe -k aus meinen
+    Mateo: „Alles grün, und kabine spielt die Jingles. Ich habe -k aus meinen
     Notizen genommen, versprochen.“
     
     Gut gemacht! Du hast „Die Vertrauenskette“ abgeschlossen.
     
     WAS PASSIERT IST
     Zwei getrennte Probleme ergaben dieselbe Meldung, „unable to get local
-    issuer certificate“. Erstens vertrauten weder mast noch booth der Root
+    issuer certificate“. Erstens vertrauten weder mast noch kabine der Root
     des Verbunds: Debian vertraut dem, was update-ca-certificates in
     /etc/ssl/certs legt, aus der Liste von Mozilla und aus den .crt-Dateien
     von /usr/local/share/ca-certificates. Dann schickte das Archiv sein

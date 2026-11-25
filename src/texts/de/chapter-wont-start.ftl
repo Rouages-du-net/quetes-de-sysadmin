@@ -17,7 +17,7 @@ wont-start-message-folake =
     
     Die Anmeldung für die Sommer-Schwimmkurse öffnet um 9:00 Uhr auf der
     Buchungs-Site, und dafür braucht es Version 2.3.1 der App. Rui hat sie
-    heute Morgen auf lane deployt, unserem Kubernetes-Server, kurz bevor er
+    heute Morgen auf bahn deployt, unserem Kubernetes-Server, kurz bevor er
     in den Zug gestiegen ist, und er hat mir geschrieben: „der neue Pod
     startet nicht, keine Zeit, sorry!“.
     
@@ -31,7 +31,7 @@ wont-start-message-folake =
 wont-start-note-rui =
     Notiz von Rui
     
-    Auf lane läuft k3s, ein Kubernetes auf einer einzigen Maschine. kubectl
+    Auf bahn läuft k3s, ein Kubernetes auf einer einzigen Maschine. kubectl
     funktioniert mit deinem Konto (~/.kube/config). Alles von der
     Buchungs-App liegt im Namespace swim: ein Deployment, booking (zwei
     Pods), und seine Einstellungen, die ConfigMap booking-config.

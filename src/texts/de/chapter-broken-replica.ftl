@@ -22,7 +22,7 @@ broken-replica-message-moana =
     Berichtswerkzeug auf die Warteliste gesetzt, direkt auf rake. Es hat
     mich gelassen, also dachte ich, das ist in Ordnung.
     
-    Lwazi sagt, rake ist eine „Replica“ von trowel, und die nächtlichen
+    Lwazi sagt, rake ist eine „Replica“ von kelle, und die nächtlichen
     Backups werden auch darauf gemacht. Ich hätte gern, dass Esi auf der
     Liste bleibt, bitte!
     
@@ -30,7 +30,7 @@ broken-replica-message-moana =
 broken-replica-note-lwazi =
     Lwazi, April 2031
     
-    - trowel ist der Primary: Plotline (auf barrow) schreibt dorthin. Sein
+    - kelle ist der Primary: Plotline (auf barrow) schreibt dorthin. Sein
       Binärlog geht nach /var/log/mysql. rake (198.51.100.132) repliziert
       ihn, mit GTIDs, als repl. Moanas Berichte lesen rake, damit sie die
       Site nie bremsen.
@@ -38,20 +38,20 @@ broken-replica-note-lwazi =
     - Backups: /usr/local/sbin/plots-backup auf rake, jede Nacht um 2:30
       (/etc/cron.d/plots-backup), nach /var/backups/mariadb. Ich habe nie
       versucht, eines wiederherzustellen.
-    - ssh rake von trowel aus; sudo funktioniert dort mit deinem Passwort.
+    - ssh rake von kelle aus; sudo funktioniert dort mit deinem Passwort.
 
 ## Events
 
 broken-replica-event-stopped =
     Slave_IO_Running: Yes, Slave_SQL_Running: No. Der IO-Thread kopiert noch,
-    was trowel schreibt, aber der SQL-Thread, der es anwendet, hat am
+    was kelle schreibt, aber der SQL-Thread, der es anwendet, hat am
     Samstag um 18:12 angehalten, und Seconds_Behind_Master ist NULL.
-    Last_SQL_Error sagt warum: eine Zeile, die trowel in plots.waitlist
+    Last_SQL_Error sagt warum: eine Zeile, die kelle in plots.waitlist
     eingefügt hat, id 1043, existiert schon auf rake. Vergleiche diese Zeile
     auf beiden Servern.
 broken-replica-event-cause =
     Auf rake ist der Wartelisteneintrag 1043 Esi, am Samstag um 17:46 von
-    Hand geschrieben; auf trowel ist 1043 Wairimu, die sich um 18:12 auf
+    Hand geschrieben; auf kelle ist 1043 Wairimu, die sich um 18:12 auf
     der Site eingetragen hat. Eine Replica darf nur empfangen, was ihr
     Primary schickt: ein einziger Schreibvorgang auf ihr genügt, damit die
     beiden Kopien voneinander abweichen. Was hätte Moanas Werkzeug daran
@@ -59,12 +59,12 @@ broken-replica-event-cause =
 broken-replica-event-skipped =
     Der SQL-Thread läuft wieder, am scheiternden Event vorbei: Wairimus
     Zeile wurde übersprungen, nicht angewendet. Die 1043 von rake ist immer
-    noch Esi, und Wairimu existiert nur auf trowel. Die Replica enthält
+    noch Esi, und Wairimu existiert nur auf kelle. Die Replica enthält
     jetzt still eine andere Datenbank. Vergleiche die Tabellen auf beiden
     Servern (CHECKSUM TABLE plots.waitlist; auf jedem).
 broken-replica-event-skip-again =
     Jetzt { $count } Events übersprungen. Jedes Überspringen wirft eine
-    Änderung weg, die trowel gemacht hat: die Replica folgt, aber immer
+    Änderung weg, die kelle gemacht hat: die Replica folgt, aber immer
     weiter weg von ihrem Primary. Überspringen versteckt einen Fehler, es
     repariert keine Daten.
 broken-replica-event-read-only =
@@ -80,22 +80,22 @@ broken-replica-event-repaired =
     die zwei Tage Änderungen nachgeholt, die es verpasst hatte.
 broken-replica-event-diverged =
     Die Replica läuft, aber die Prüfsummen unterscheiden sich: rake enthält
-    nicht dieselben Zeilen wie trowel. Die Replikation wendet nur Änderungen
+    nicht dieselben Zeilen wie kelle. Die Replikation wendet nur Änderungen
     an; sie vergleicht und repariert nie, was schon abweicht. Finde die
     Zeilen, die sich unterscheiden, oder bau rake aus einem konsistenten
-    Dump von trowel neu (mariadb-dump --single-transaction --master-data
+    Dump von kelle neu (mariadb-dump --single-transaction --master-data
     --gtid).
 broken-replica-event-identical =
     Dieselben Prüfsummen auf beiden Servern: rake ist wieder eine genaue
-    Kopie von trowel.
+    Kopie von kelle.
 broken-replica-event-jun =
-    Esi steht auf der Warteliste, auf trowel, wo Schreibvorgänge hingehören;
+    Esi steht auf der Warteliste, auf kelle, wo Schreibvorgänge hingehören;
     rake empfängt ihre Zeile wie jede andere.
 broken-replica-event-locking-dump =
     Ohne --single-transaction hat mariadb-dump die Tabellen gesperrt,
     während es sie las (LOCK TABLES): während des ganzen Dumps wartete der
     SQL-Thread von rake dahinter (beobachte Seconds_Behind_Master), und auf
-    trowel hätte die Site gewartet. Für InnoDB-Tabellen liest
+    kelle hätte die Site gewartet. Für InnoDB-Tabellen liest
     --single-transaction einen konsistenten Snapshot, ohne etwas zu sperren.
 broken-replica-event-inconsistent-dump =
     Dieser Dump hat jede Tabelle zu einem anderen Zeitpunkt gelesen,
@@ -108,7 +108,7 @@ broken-replica-event-script =
     Das nächtliche Skript macht seine Dumps jetzt mit --single-transaction:
     ein konsistenter Snapshot, ohne die Replikation anzuhalten.
 broken-replica-event-backup =
-    Ein konsistenter Dump von rake, gemacht, während es mit trowel im
+    Ein konsistenter Dump von rake, gemacht, während es mit kelle im
     Gleichschritt war. Ein Backup zählt allerdings erst, wenn du es
     wiederhergestellt hast.
 broken-replica-event-restored =
@@ -128,7 +128,7 @@ broken-replica-event-end =
     der SQL-Thread von rake bei einem doppelten Schlüssel an, und die
     Replica fiel zwei Tage zurück, mit ihr die nächtlichen Backups. Du hast
     rake schreibgeschützt gemacht, die verirrte Zeile dort entfernt und Esi
-    auf trowel hinzugefügt, die Replikation neu gestartet und geprüft, dass
+    auf kelle hinzugefügt, die Replikation neu gestartet und geprüft, dass
     beide Server dieselben Zeilen enthalten; dann hast du das Backup
     konsistent gemacht und es durch eine Wiederherstellung bewiesen.
     

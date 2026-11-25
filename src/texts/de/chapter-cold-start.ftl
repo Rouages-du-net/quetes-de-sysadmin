@@ -16,13 +16,13 @@ cold-start-message-grace =
     Guten Morgen, und willkommen im Gesundheitszentrum Mühlbach!
     
     Der Sturm in der Samstagnacht hat den Strom für drei Stunden
-    abgeschaltet, länger als die USV hält. hearth, der Server im
+    abgeschaltet, länger als die USV hält. herd, der Server im
     Hinterzimmer, ist von selbst wieder gestartet, als der Strom zurückkam.
     Das Terminbuch (agenda) und die Patientenakten (records) funktionieren;
     die Buchhaltung (ledger) nicht, und Priya muss am Mittwoch die
     Gehaltsabrechnung verschicken.
     
-    Alle unsere Server sind virtuelle Maschinen auf hearth (KVM, mit
+    Alle unsere Server sind virtuelle Maschinen auf herd (KVM, mit
     libvirt): du bist in der Gruppe libvirt, und sudo funktioniert mit
     deinem Passwort. Ilse, die alles eingerichtet hat, ist an die Küste
     gezogen; sie hat eine Notiz in deinem Home-Verzeichnis hinterlassen.
@@ -32,7 +32,7 @@ cold-start-message-grace =
     
     Grace
 cold-start-note-ilse =
-    Notizen von Ilse (hearth)
+    Notizen von Ilse (herd)
     
     - virsh ist dein Freund: virsh list --all zeigt jede VM, ob sie läuft
       oder nicht. ~/.config/libvirt/libvirt.conf lässt virsh auf
@@ -62,7 +62,7 @@ cold-start-message-priya =
 ## Events
 
 cold-start-event-list =
-    ledger ist „shut off“: agenda und records kamen mit hearth zurück,
+    ledger ist „shut off“: agenda und records kamen mit herd zurück,
     ledger nicht. Eine Domain startet nur mit ihrem Host, wenn sie als
     autostart markiert ist (virsh dominfo zeigt es). Bevor du sie startest,
     schau sie dir an: virsh dominfo ledger.
@@ -173,7 +173,7 @@ cold-start-event-autostart =
     zurücklassen.
 cold-start-event-ssh =
     Du bist auf ledger: Priyas Buchhaltung liegt in /srv/ledger/books. Komm
-    mit exit zurück zu hearth.
+    mit exit zurück zu herd.
 cold-start-event-end =
     Grace: „Priya sagt, die Buchhaltung ist vollständig da, die
     Gehaltsabrechnung am Mittwoch wie geplant. Danke!“
@@ -181,7 +181,7 @@ cold-start-event-end =
     Gut gemacht! Du hast „Der Kaltstart“ abgeschlossen.
     
     WAS PASSIERT IST
-    Der Stromausfall vom Samstag hat hearth neu gestartet. agenda und
+    Der Stromausfall vom Samstag hat herd neu gestartet. agenda und
     records waren als autostart markiert; ledger nicht. Von Hand gestartet,
     pausierte sie sofort: über ein Jahr hatte Ilse drei externe
     Disk-only-Snapshots davon gemacht und sie nie zusammengeführt. Jeder

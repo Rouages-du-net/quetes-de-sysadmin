@@ -19,7 +19,7 @@ hint-sleeping-connections-persisted =
     .solution = sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf: wait_timeout = 300 unter [mariadbd]
 hint-sleeping-connections-slow-log =
     .lead = Jede Parzellenseite ist auch langsam: lass MariaDB die langsamen Abfragen notieren (das Slow Query Log), dann lies es.
-    .solution = sudo mariadb -e "SET GLOBAL slow_query_log = ON; SET GLOBAL long_query_time = 1"; dann sudo tail /var/lib/mysql/trowel-slow.log (SHOW VARIABLES LIKE 'slow_query_log_file')
+    .solution = sudo mariadb -e "SET GLOBAL slow_query_log = ON; SET GLOBAL long_query_time = 1"; dann sudo tail /var/lib/mysql/kelle-slow.log (SHOW VARIABLES LIKE 'slow_query_log_file')
 hint-sleeping-connections-explain =
     .lead = Frag MariaDB, wie es diese Abfrage ausführt (EXPLAIN): welcher Index, wie viele Zeilen?
     .solution = sudo mariadb plots -e "EXPLAIN SELECT * FROM bookings WHERE plot_id = 17 ORDER BY starts_on DESC"
@@ -63,8 +63,8 @@ hint-broken-replica-stopped =
     .lead = Geh auf rake und frag die Replica nach ihrem Status: welcher Thread läuft, welcher hat angehalten, und warum?
     .solution = ssh rake; sudo mariadb -e "SHOW REPLICA STATUS\G"
 hint-broken-replica-cause =
-    .lead = Der Fehler nennt eine Tabelle und eine id: schau dir diese Zeile auf rake an, dann auf trowel.
-    .solution = sudo mariadb plots -e "SELECT * FROM waitlist WHERE id = 1043" (auf rake, dann auf trowel)
+    .lead = Der Fehler nennt eine Tabelle und eine id: schau dir diese Zeile auf rake an, dann auf kelle.
+    .solution = sudo mariadb plots -e "SELECT * FROM waitlist WHERE id = 1043" (auf rake, dann auf kelle)
 hint-broken-replica-read-only =
     .lead = Hindere zuerst alle daran, wieder auf rake zu schreiben (man mariadb: read_only).
     .solution = auf rake: sudo mariadb -e "SET GLOBAL read_only = ON"
@@ -72,14 +72,14 @@ hint-broken-replica-read-only-kept =
     .lead = Lass es einen Neustart überstehen: die Konfiguration von rake hat schon eine Zeile dafür.
     .solution = auf rake: sudo nano /etc/mysql/mariadb.conf.d/50-server.cnf: read_only = ON (Kommentarzeichen entfernen)
 hint-broken-replica-repaired =
-    .lead = Entferne die verirrte Zeile auf rake (rake muss enthalten, was trowel schickt), dann starte den SQL-Thread wieder und sieh zu, wie er aufholt.
+    .lead = Entferne die verirrte Zeile auf rake (rake muss enthalten, was kelle schickt), dann starte den SQL-Thread wieder und sieh zu, wie er aufholt.
     .solution = auf rake: sudo mariadb plots -e "DELETE FROM waitlist WHERE id = 1043"; sudo mariadb -e "START REPLICA"; sudo mariadb -e "SHOW REPLICA STATUS\G" | grep -E 'Running|Behind|Error'
 hint-broken-replica-identical =
     .lead = Beweise, dass beide Server dieselben Zeilen enthalten: berechne auf jedem die Prüfsummen der Tabellen.
-    .solution = sudo mariadb -e "CHECKSUM TABLE plots.members, plots.plots, plots.waitlist, plots.bookings" (auf trowel und auf rake)
+    .solution = sudo mariadb -e "CHECKSUM TABLE plots.members, plots.plots, plots.waitlist, plots.bookings" (auf kelle und auf rake)
 hint-broken-replica-jun =
     .lead = Esis Zeile ist auf rake verloren gegangen: füge sie wieder hinzu, dort, wo Schreibvorgänge hingehören.
-    .solution = auf trowel: sudo mariadb plots -e "INSERT INTO waitlist (name, email, wants, added_on) VALUES ('Esi Boateng', 'esi.boateng@mail.example', 'half', '2031-05-31')"
+    .solution = auf kelle: sudo mariadb plots -e "INSERT INTO waitlist (name, email, wants, added_on) VALUES ('Esi Boateng', 'esi.boateng@mail.example', 'half', '2031-05-31')"
 hint-broken-replica-script =
     .lead = Der nächtliche Dump liest die Tabellen ohne konsistenten Snapshot: repariere die Zeile mit mariadb-dump im Skript (man mariadb-dump).
     .solution = auf rake: sudo nano /usr/local/sbin/plots-backup: mariadb-dump --single-transaction plots > …
@@ -90,5 +90,5 @@ hint-broken-replica-restored =
     .lead = Stell diesen Dump in eine Schmierdatenbank auf rake wieder her, dann vergleiche ihn mit plots.
     .solution = auf rake: sudo mariadb -e "CREATE DATABASE restore_check"; sudo sh -c 'mariadb restore_check < /var/backups/mariadb/plots-2031-06-02.sql'; sudo mariadb -e "CHECKSUM TABLE restore_check.waitlist, plots.waitlist"
 hint-broken-replica-end =
-    .lead = Prüf das Ganze: read_only auf rake (jetzt und in seiner Datei), der Status der Replica, die Prüfsummen, Esi auf trowel, das Skript, ein wiederhergestellter Dump.
+    .lead = Prüf das Ganze: read_only auf rake (jetzt und in seiner Datei), der Status der Replica, die Prüfsummen, Esi auf kelle, das Skript, ein wiederhergestellter Dump.
     .solution = auf rake: sudo mariadb -e "SELECT @@read_only"; sudo mariadb -e "SHOW REPLICA STATUS\G" | grep -E 'Running|Behind'

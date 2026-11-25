@@ -20,7 +20,7 @@ stuck-queue-message-ines =
     den Museumsausflug, der heute Abend mit nach Hause muss.
     
     Joe sagt, der Drucker selbst ist jetzt in Ordnung (siehe seine Notiz).
-    Alles läuft über chalk, den kleinen Server im Büroschrank: darauf läuft
+    Alles läuft über kreide, den kleinen Server im Büroschrank: darauf läuft
     CUPS, und du bist in der Gruppe lpadmin, also kannst du die
     Warteschlangen verwalten.
     

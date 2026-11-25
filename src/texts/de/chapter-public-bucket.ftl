@@ -22,7 +22,7 @@ public-bucket-message-esperanza =
     https://www.kestrel.example/members/medical-contacts-2032.csv öffnet
     sich für alle.
     
-    Unsere Dateien liegen auf wings, wo du gerade bist (sudo funktioniert
+    Unsere Dateien liegen auf kulissen, wo du gerade bist (sudo funktioniert
     mit deinem Passwort), und auf den zwei anderen Maschinen dessen, was
     Teodora „den Cluster“ nannte. Teodora hat alles eingerichtet, bevor sie
     weggezogen ist, und Notizen hinterlassen. Hiroshi, der die Website
@@ -34,10 +34,10 @@ public-bucket-message-esperanza =
     
     Esperanza
 public-bucket-notes-teodora =
-    Notizen von Teodora (wings, 2029, seitdem ein paar Ergänzungen)
+    Notizen von Teodora (kulissen, 2029, seitdem ein paar Ergänzungen)
     
     - Unsere Dateien liegen in Garage, einem Objektspeicher mit S3-API, auf
-      drei Nodes: wings (hier, das Studio), vault (im Theater Alte Mühle, es
+      drei Nodes: kulissen (hier, das Studio), vault (im Theater Alte Mühle, es
       hat Glasfaser) und porch (bei Siosaia). Jedes Objekt ist auf allen
       dreien gespeichert. sudo garage status zeigt sie.
     - Garage hält Objekte in Buckets. sudo garage bucket list, sudo garage

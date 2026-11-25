@@ -33,7 +33,7 @@ hint-wont-start-end =
 ## Chapter 2 — The Front Desk
 
 hint-front-desk-not-found =
-    .lead = Frag die Site so, wie eine Besucherin es täte, von lane aus: Traefik lauscht auf Port 80 und unterscheidet die Sites am Host-Header (man curl).
+    .lead = Frag die Site so, wie eine Besucherin es täte, von bahn aus: Traefik lauscht auf Port 80 und unterscheidet die Sites am Host-Header (man curl).
     .solution = curl -H 'Host: booking.pool.example' http://localhost/
 hint-front-desk-ingress-port =
     .lead = Schau dir den Ingress im Detail an: an welchen Service und welchen Port schickt er? Das Log von Traefik sagt, was es davon hält.

@@ -35,7 +35,7 @@ sorting-office-message-marisol =
     
     Marisol
 sorting-office-note-yerlan =
-    Notizen von Yerlan (Sieve auf slipway)
+    Notizen von Yerlan (Sieve auf helling)
     
     - Dovecot führt Sieve-Skripte aus, wenn es Mail zustellt (LMTP, Plugin
       sieve): zuerst die globalen (/etc/dovecot/sieve/before.d: Spam nach

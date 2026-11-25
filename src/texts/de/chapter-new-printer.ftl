@@ -16,7 +16,7 @@ new-printer-message-ines =
     Hallo!
     
     Der neue Multifunktionsdrucker fürs Lehrerzimmer ist angeschlossen (der
-    Lieferschein liegt in deinem Verzeichnis). Könntest du ihn auf chalk
+    Lieferschein liegt in deinem Verzeichnis). Könntest du ihn auf kreide
     hinzufügen und ihn für alle zum Standarddrucker machen? Das Kollegium
     soll von seinen PCs und Macs darauf drucken, so wie auf dem
     Bürodrucker.
@@ -75,7 +75,7 @@ new-printer-event-pupil-printed =
     
     Ein Chromebook hat auf dem Multifunktionsgerät gedruckt. cupsd.conf
     teilt alles mit „Allow @LOCAL“ in <Location />, und @LOCAL bedeutet
-    jedes Netzwerk, in dem chalk eine Schnittstelle hat: ip -br addr zeigt
+    jedes Netzwerk, in dem kreide eine Schnittstelle hat: ip -br addr zeigt
     drei, darunter das VLAN der Kinder, für den Bibliotheksdrucker. Neue
     Warteschlangen werden standardmäßig geteilt (DefaultShared). Wer was
     schickt: /var/log/cups/access_log.
@@ -134,7 +134,7 @@ new-printer-event-end =
     Das Multifunktionsgerät spricht IPP Everywhere: die Warteschlange
     { $queue } ist treiberlos (-m everywhere), bei der Anlage aktiviert (-E
     nach -p) und Standard des Servers (lpadmin -d). cupsd.conf teilte alles
-    mit „Allow @LOCAL“, und @LOCAL umfasst das VLAN der Kinder, wo chalk die
+    mit „Allow @LOCAL“, und @LOCAL umfasst das VLAN der Kinder, wo kreide die
     Bibliothek bedient: du hast das Multifunktionsgerät aufs Kollegium
     beschränkt, nach Netzwerk oder nach Gruppe, und im access_log geprüft,
     wer hereinkam. Der LaserJet spricht nur Port 9100: die Warteschlange

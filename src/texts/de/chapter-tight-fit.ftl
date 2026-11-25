@@ -42,10 +42,10 @@ tight-fit-retention =
 ## Events
 
 tight-fit-event-swap =
-    hearth swappt: sein RAM ist voll, und der Kernel schiebt Speicherseiten
+    herd swappt: sein RAM ist voll, und der Kernel schiebt Speicherseiten
     auf die Platte und holt sie dann zurück. Jeder Gast wird langsamer. Wer
     nimmt was? virsh list, virsh dominfo für jeden Gast (Used memory), virsh
-    nodeinfo für hearth, und von innen: virsh dommemstat records.
+    nodeinfo für herd, und von innen: virsh dommemstat records.
 tight-fit-event-memstat =
     records hat 16 GiB bekommen. Was es wirklich braucht, ist „actual“ minus
     dem, was „unused“ ist, und dem, was nur Cache ist (disk_caches): etwa
@@ -58,15 +58,15 @@ tight-fit-event-too-high =
     Start.
 tight-fit-event-config-only =
     --config ändert die Definition, für den nächsten Start: records hält
-    jetzt immer noch 16 GiB, und hearth swappt weiter. --live ändert den
+    jetzt immer noch 16 GiB, und herd swappt weiter. --live ändert den
     laufenden Gast (der Balloon); beides zusammen ist die übliche Antwort.
 tight-fit-event-memory-fixed =
-    hearth swappt nicht mehr, und die Definitionen passen auch beim nächsten
+    herd swappt nicht mehr, und die Definitionen passen auch beim nächsten
     Start in sein RAM: die Gäste bekommen zusammen weniger, als der Host
-    hat, mit Platz für hearth selbst.
+    hat, mit Platz für herd selbst.
 tight-fit-event-guest-full =
     Das Root-Dateisystem von records ist voll: 20 GiB, und die Exporte
-    müssen bleiben. Die Platte muss wachsen: zuerst das Image (von hearth
+    müssen bleiben. Die Platte muss wachsen: zuerst das Image (von herd
     aus), dann die Partition und das Dateisystem (im Gast). Aber Grace hat
     zuerst um einen Weg zurück gebeten.
 tight-fit-event-lock =
@@ -118,9 +118,9 @@ tight-fit-event-end =
     Gut gemacht! Du hast „Eng bemessen“ abgeschlossen.
     
     WAS PASSIERT IST
-    Den Gästen von hearth war mehr Speicher versprochen worden, als hearth
+    Den Gästen von herd war mehr Speicher versprochen worden, als herd
     hat; records allein hielt 16 GiB, mit Cache gefüllt, für 3,4 GiB
-    echten Bedarf, und hearth swappte. Du hast records 6 GiB gegeben, jetzt
+    echten Bedarf, und herd swappte. Du hast records 6 GiB gegeben, jetzt
     und bei seinem nächsten Start (setmem --live --config). Seine Platte war
     voll mit Exporten, die bleiben müssen: du hast einen Snapshot gemacht,
     das Image vergrößert (virsh blockresize, während er läuft, oder

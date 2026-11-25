@@ -18,7 +18,7 @@ wrong-side-message-grace =
     
     1. Hamid hat letzte Woche portal eingerichtet, die virtuelle Maschine
     für das Terminportal der Patientinnen und Patienten. Er sagt, es
-    funktioniert „auf hearth“, aber am Empfang öffnet sich nichts. Er hat
+    funktioniert „auf herd“, aber am Empfang öffnet sich nichts. Er hat
     eine Notiz auf dem PC des Empfangs hinterlassen (ssh reception).
     
     2. Seit gestern Nachmittag zeigt das Terminbuch des Empfangs (agenda)
@@ -31,8 +31,8 @@ wrong-side-message-grace =
 wrong-side-note-hamid =
     Notiz von Hamid (Empfang)
     
-    Das Portal: ich habe es auf hearth mit virt-install installiert, alle
-    Optionen auf Standard. Auf hearth zeigt curl http://192.168.122.47/ das
+    Das Portal: ich habe es auf herd mit virt-install installiert, alle
+    Optionen auf Standard. Auf herd zeigt curl http://192.168.122.47/ das
     Portal. Hier, im Browser des Empfangs, nichts.
     
     Die Schulungskopie: ich habe agenda.qcow2 nach agenda-training.qcow2
@@ -48,21 +48,21 @@ wrong-side-note-hamid =
 wrong-side-event-nat-seen =
     Die Schnittstelle von portal hängt am Netzwerk namens „default“: dem
     NAT-Netzwerk von libvirt, einer privaten Bridge (virbr0,
-    192.168.122.0/24), die nur innerhalb von hearth existiert. Seine Gäste
-    können hinaus (hearth maskiert sie), aber keine Maschine des Büros kann
+    192.168.122.0/24), die nur innerhalb von herd existiert. Seine Gäste
+    können hinaus (herd maskiert sie), aber keine Maschine des Büros kann
     herein: es gibt nirgends eine Route nach 192.168.122.0/24 außer auf
-    hearth. Prüfe es vom PC des Empfangs aus: ssh reception.
+    herd. Prüfe es vom PC des Empfangs aus: ssh reception.
 wrong-side-event-unreachable =
     Vom Empfang aus gesehen: nichts. Seine Pakete für 192.168.122.47 gehen
     an den Router des Büros, der von diesem Netzwerk nie gehört hat. Die
     anderen Gäste (agenda, ledger, records) haben eine Adresse im Netzwerk
     des Büros: wie sind sie angeschlossen? virsh domiflist agenda, und
-    /etc/network/interfaces auf hearth.
+    /etc/network/interfaces auf herd.
 wrong-side-event-nat-hack =
-    Eine DNAT-Regel auf hearth würde einen Port an portal weiterleiten… bis
+    Eine DNAT-Regel auf herd würde einen Port an portal weiterleiten… bis
     libvirt seine eigenen Regeln neu schreibt (das tut es, wenn sein
     Netzwerk neu startet), und portal wäre für alles andere immer noch
-    unsichtbar (ssh, die Überwachung). Der Gast braucht keine Tür in hearth:
+    unsichtbar (ssh, die Überwachung). Der Gast braucht keine Tür in herd:
     er muss selbst im Netzwerk des Büros sein, wie agenda.
 wrong-side-event-promisc =
     Der Promiscuous-Modus lässt eine Schnittstelle jeden Frame empfangen,
@@ -126,7 +126,7 @@ wrong-side-event-end =
     
     WAS PASSIERT IST
     portal wurde mit dem Standardnetzwerk von virt-install installiert: dem
-    NAT-Netzwerk von libvirt, das nur innerhalb von hearth existiert. Du
+    NAT-Netzwerk von libvirt, das nur innerhalb von herd existiert. Du
     hast seine Schnittstelle auf die Bridge br0 des Hosts verlegt, es
     gestoppt und gestartet, und das DHCP des Büros hat ihm eine Adresse
     gegeben, die alle erreichen. agenda-training, von Hand kopiert, hatte

@@ -16,7 +16,7 @@ front-desk-message-folake =
     
     Hallo!
     
-    Seit Freitag zeigt booking.pool.example auf lane: der alte Server ist
+    Seit Freitag zeigt booking.pool.example auf bahn: der alte Server ist
     weg, der Cluster muss die Site allein ausliefern. Kemal von der IT der
     Stadt hat am Freitagabend alles vorbereitet (seine Notiz liegt neben
     dieser Nachricht), aber heute Morgen sagt die Adresse nur „404 page not
@@ -30,17 +30,17 @@ front-desk-message-folake =
 front-desk-note-kemal =
     Notiz von Kemal (IT der Stadt)
     
-    Am Freitag habe ich die Buchungs-App auf lane aufgeräumt: ich habe das
+    Am Freitag habe ich die Buchungs-App auf bahn aufgeräumt: ich habe das
     Deployment entfernt und meine Manifeste angewendet (in ~/manifests, bei
     denen von Rui):
     - eine Readiness-Probe, damit ein Pod erst Traffic bekommt, wenn er
       bereit ist;
     - einen Service, booking, vor den Pods;
     - einen Ingress für booking.pool.example: das Traefik von k3s lauscht
-      auf den Ports 80 und 443 von lane und schickt jede Anfrage an den
+      auf den Ports 80 und 443 von bahn und schickt jede Anfrage an den
       Service, zu dem ihr Host und ihr Pfad führen.
     
-    Zum Testen von lane selbst aus:
+    Zum Testen von bahn selbst aus:
       curl -H 'Host: booking.pool.example' http://localhost/
     
     Die App lauscht auf Port 8080.
@@ -80,16 +80,16 @@ front-desk-event-not-ready =
     Kubelet fragt die App nach einem Pfad, den sie nicht hat, also bleiben
     die Pods bei 0/1, und der Service gibt ihnen keinen Traffic. Auf welchem
     Pfad antwortet die App? (curl auf die Adresse des Pods auf 8080 von
-    lane aus, oder kubectl exec … -- wget -qO- …)
+    bahn aus, oder kubectl exec … -- wget -qO- …)
 front-desk-event-node-port =
-    Ein NodePort öffnet Port { $port } auf lane selbst, für das ganze
+    Ein NodePort öffnet Port { $port } auf bahn selbst, für das ganze
     Internet, neben Traefik: kein Host, kein TLS, keine einzige
     Eingangstür. Das wird dem Sicherheitsbeauftragten der Stadt nicht
     gefallen. Mach den Service wieder zu einer ClusterIP: der Ingress ist
     der Eingang.
 front-desk-event-port-forward =
     kubectl port-forward erreicht die App durchaus (es überspringt sogar
-    die Readiness-Prüfung), aber nur von lane aus, nur solange der Befehl
+    die Readiness-Prüfung), aber nur von bahn aus, nur solange der Befehl
     läuft, und nur für dich. Ein gutes Testwerkzeug; keine Art, Besucher
     zu bedienen. Strg-C, um es zu stoppen.
 front-desk-event-probe-removed =
