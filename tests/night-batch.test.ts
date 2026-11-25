@@ -166,7 +166,7 @@ mv /srv/drop/contrib.ebc.done /srv/batch/archive/
       r = edit('nano /opt/batch/run-night.sh', (t) => t.replace('#!/bin/sh', '#!/bin/sh\ntest -f /srv/drop/contrib.ebc.done || exit 0'));
       edit('sudo nano /etc/systemd/system/night-batch.timer', (t) => t.replace('*-*-* 03:00:00', '*-*-* 02..06:00/10'));
       r = play(['sudo systemctl daemon-reload']);
-      expect(r.match(/, (return code|code retour|código de retorno) 0\./g)!.length).toBeGreaterThan(2);
+      expect(r.match(/, (return code|code retour|código de retorno|Rückgabewert) 0\./g)!.length).toBeGreaterThan(2);
       // Taken away, but the final echo hides the return code 8.
       r = edit('nano /opt/batch/run-night.sh', (t) => t.replace('test -f /srv/drop/contrib.ebc.done || exit 0', 'test -f /srv/drop/contrib.ebc.done || exit 0\nrm /srv/drop/contrib.ebc.done'));
       expect(r).toContain('03:30');
