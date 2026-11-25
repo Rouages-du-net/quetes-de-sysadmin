@@ -422,7 +422,8 @@ export class Console {
     } else if (sh.reboot && this.remote) {
       // The machine reboots: the server closes the connection.
       sh.reboot = false;
-      const { domain } = this.remote.machine;
+      // The machine's name in the language, as ssh connected to it.
+      const domain = machineDomain(this.t, this.remote.machine);
       this.remote = null;
       chunks.push(`Connection to ${domain} closed by remote host.\nConnection to ${domain} closed.`);
     } else if (sh.connectionRequest) {

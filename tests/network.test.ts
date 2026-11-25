@@ -65,7 +65,7 @@ for (const language of LANGUAGES)
       expect(end.remote?.shell.chapter.id).toBe('root');
       const last = play(end, ['cat arrival.txt', 'chmod o-w memories', 'sudo cp ~/eraser.conf.fixed /etc/eraser.conf', 'sunflower']);
       expect(end.finished).toEqual(ERASER);
-      expect(last).toContain('~/.ssh/id_datacenter');
+      expect(last).toContain(L('~/.ssh/id_datacenter'));
       expect(play(end, ['exit', 'ls -a ~/.ssh'])).toContain(L('id_library'));
       play(end, ['ssh datacenter', 'yes']);
       expect(end.prompt()).toBe(L('you@datacenter:~$'));
@@ -126,7 +126,7 @@ for (const language of LANGUAGES)
         .map((c) => c.id);
       const c = new Console({ language, finished: [...ERASER, ...finished] });
       // The old server's key, known from the previous chapters.
-      const old = `datacenter.internal ${hostKey(storyMachine('datacenter')!)}`;
+      const old = `${L('datacenter.internal')} ${hostKey(storyMachine('datacenter')!)}`;
       c.workstation.place('test', '~/.ssh/known_hosts', { type: 'file', content: old, lines: true });
       const refusal = play(c, ['ssh datacenter']);
       expect(refusal).toContain('WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!');
@@ -148,7 +148,7 @@ for (const language of LANGUAGES)
       expect(play(c, ['ssh datacenter'])).not.toContain('WARNING');
       expect(c.prompt()).toBe(L('you@datacenter:~$'));
       expect(play(c, ['exit', 'ssh-keygen -l -f ~/.ssh/known_hosts'])).toContain(
-        `${fingerprint(storyMachine('datacenter')!, '-after-fire')} datacenter.internal (ED25519)`,
+        `${fingerprint(storyMachine('datacenter')!, '-after-fire')} ${L('datacenter.internal')} (ED25519)`,
       );
     });
 
