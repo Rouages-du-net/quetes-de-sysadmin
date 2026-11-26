@@ -144,8 +144,10 @@ ce projet indépendant.
   [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 - **Sans pisteur**, sans publicité, sans ressource tierce.
 - **En anglais d'abord**, et en français (page `/fr/`, attribut
-  `lang="fr"`) ; d'autres langues viendront (allemand, espagnol, mandarin,
-  coréen…) : les textes sont séparés du code. Le projet est né en
+  `lang="fr"`) ; l'espagnol (`/es/`) et l'allemand (`/de/`) sont des
+  traductions en cours, et d'autres langues viendront (mandarin, coréen…) :
+  les textes sont séparés du code (voir
+  [docs/TRANSLATING.md](docs/TRANSLATING.md)). Le projet est né en
   français : le code est maintenant en anglais, sauf des identifiants de
   données (histoires, chapitres, lieux) et des commentaires qui suivent.
 

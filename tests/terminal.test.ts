@@ -122,7 +122,7 @@ describe('The terminal', () => {
     expect(gameLanguage('EN-gb')).toBe('en');
     expect(gameLanguage('xx')).toBe('en');
     expect(translator().language).toBe('en');
-    expect(translator('de').language).toBe('en');
+    expect(translator('xx-YY').language).toBe('en');
     expect(new Console({}).t.language).toBe('en');
   });
 });

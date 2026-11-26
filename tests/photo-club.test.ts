@@ -155,6 +155,7 @@ for (const language of languagesFor('photo-club'))
       expect(all).toMatch(/-rw-r--r-- \d+ 1002 +1500 +3570000 .* heron\.jpg/);
       if (language === 'en') expect(all).toMatch(/cp: cannot create .*roll-04\.tif.*Permission denied/);
       if (language === 'es') expect(all).toMatch(/cp: no se puede crear .*roll-04\.tif.*Permiso denegado/);
+      if (language === 'de') expect(all).toMatch(/cp: .*roll-04\.tif.*Keine Berechtigung/);
       contains(all, 'devient nobody');
       all = run('sudo chown sam /mnt/photos/2028-outings/heron.jpg', 'sudo usermod -u 1002 sam');
       expect(all).toContain(t('chown-not-allowed', { target: '/mnt/photos/2028-outings/heron.jpg' }));

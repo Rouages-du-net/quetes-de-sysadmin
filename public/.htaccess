@@ -20,8 +20,8 @@ ErrorDocument 404 /404.html
   # the first language asked for is French, English otherwise. 302, so that
   # the choice is made again on each visit (and by each browser).
   # Only the complete languages are chosen here (src/texts/languages.json,
-  # checked by tests/languages.test.ts): Spanish, a translation in progress,
-  # lives at /es/ without being offered; once complete, add
+  # checked by tests/languages.test.ts): Spanish and German, translations in
+  # progress, live at /es/ and /de/ without being offered; once complete, add
   #   RewriteCond %{HTTP:Accept-Language} ^es [NC]
   #   RewriteRule ^$ /es/ [L,R=302]
   RewriteCond %{HTTP:Accept-Language} ^fr [NC]

@@ -398,13 +398,13 @@ export interface PlanRow {
 
 export type ServiceId = 'website' | 'adoptions' | 'vetlink' | 'newsletter';
 
-/** A duration as the plan writes it (4h, 30 min, 1 day, 24 h, 2d, 1 w, 2 días…), in milliseconds; null if unreadable. */
+/** A duration as the plan writes it (4h, 30 min, 1 day, 24 h, 2d, 1 w, 2 días, 2 Tage…), in milliseconds; null if unreadable. */
 export function duration(text: string): number | null {
-  const m = /^\s*(\d+(?:[.,]\d+)?)\s*(min|mins|minutes?|minutos?|m|h|hrs?|hours?|heures?|horas?|d|days?|d\u00edas?|dias?|j|jours?|w|weeks?|sem|semaines?|semanas?)\s*$/i.exec(text);
+  const m = /^\s*(\d+(?:[.,]\d+)?)\s*(min|mins|minutes?|minutos?|minuten?|m|h|hrs?|hours?|heures?|horas?|std|stunden?|d|days?|d\u00edas?|dias?|j|jours?|t|tage?n?|w|weeks?|sem|semaines?|semanas?|wo|wochen?)\s*$/i.exec(text);
   if (!m) return null;
   const n = Number(m[1].replace(',', '.'));
   const u = m[2].toLowerCase();
-  const unit = /^m/.test(u) ? 60_000 : /^h/.test(u) ? 3_600_000 : /^(d|j)/.test(u) ? DAY : 7 * DAY;
+  const unit = /^m/.test(u) ? 60_000 : /^(h|st)/.test(u) ? 3_600_000 : /^(d|j|t)/.test(u) ? DAY : 7 * DAY;
   return n * unit;
 }
 

@@ -204,9 +204,10 @@ for (const language of LANGUAGES)
         const s = new Shell(chapter('backup'), language);
         const nothing = crontab(s, (t) => t + L('0 12 * * * rsync -a ~/memories/ /mnt/backup/memories/\n'));
         contains(nothing, 'aucune tâche de ta crontab ne tombait cette nuit');
-        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/s\/$/, '/')));
-        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').replace(/s$/, '')}" failed: No such file or directory (2)`));
-        crontab(s, (t) => t.replace(L('~/memories/').replace(/s\/$/, '/'), L('~/memories/')));
+        // A typo: the directory's last letter left out.
+        const mail = crontab(s, (t) => t.replace('0 12', '0 2').replace(L('~/memories/'), L('~/memories/').replace(/.\/$/, '/')));
+        expect(mail).toContain(L(`rsync: [sender] link_stat "${L('/home/you/memories').slice(0, -1)}" failed: No such file or directory (2)`));
+        crontab(s, (t) => t.replace(L('~/memories/').replace(/.\/$/, '/'), L('~/memories/')));
         expect(s.flags.has('night-ok')).toBe(true);
         const perdu = s.execute(L('rsync -a --delete ~/memories/ /mnt/backup/memories/'))!;
         contains(perdu, 'de la sauvegarde aussi');
@@ -1904,7 +1905,33 @@ for (const language of LANGUAGES)
         '- Comprobar la configuración antes de cada reinicio (ExecStartPre=).',
         '- Reiniciar el repetidor después de cada cambio.',
       ].join('\n');
-      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES };
+      // The same post-mortem, written in German.
+      const POSTMORTEM_DE = [
+        '# Post-Mortem: Ausfall der Livesendung, Nacht vom 11. auf den 12. September 2027',
+        '',
+        '## Zusammenfassung',
+        'Die Livesendung ist Sonntagnacht ausgefallen, dann hat Théo sie neu gestartet.',
+        '',
+        '## Zeitverlauf',
+        '- 02:13: Das automatische Update startet das Relay neu, das nicht zurückkommt.',
+        '- 02:15: erster Alarm der Sonde.',
+        '- 02:41: Théo meldet sich an.',
+        '- 02:58: Das Relay läuft wieder.',
+        '',
+        '## Auswirkung',
+        '45 Minuten Stille in der Livesendung.',
+        '',
+        '## Ursachen',
+        'unattended-upgrades (needrestart) hat das Relay neu gestartet; eine unbekannte Option (bitrate_max) wartete seit dem 20. August in stream.conf.',
+        '',
+        '## Was gut lief',
+        'Die Sonde hat innerhalb von 2 Minuten gewarnt.',
+        '',
+        '## Maßnahmen',
+        '- Die Konfiguration vor jedem Neustart prüfen (ExecStartPre=).',
+        '- Das Relay nach jeder Änderung neu starten.',
+      ].join('\n');
+      const written: Record<string, string> = { fr: POSTMORTEM, es: POSTMORTEM_ES, de: POSTMORTEM_DE };
 
       it('solution: the night’s logs, then the complete post-mortem', () => {
         const { s, tout: all } = play('post-mortem', [

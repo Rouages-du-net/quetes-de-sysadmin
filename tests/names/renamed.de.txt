@@ -1,0 +1,2020 @@
+lighthouse
+  /Hut → /Huette
+  /Hut/welcome.txt → /Huette/willkommen.txt
+  /Hut/message.txt → /Huette/nachricht.txt
+  /Hut/Beach → /Huette/Strand
+  /Hut/Beach/sign.txt → /Huette/Strand/schild.txt
+  /Hut/Beach/mender.txt → /Huette/Strand/flickerin.txt
+  /Hut/Beach/seashell → /Huette/Strand/muschel
+  /Hut/Hill → /Huette/Huegel
+  /Hut/Hill/wind.txt → /Huette/Huegel/wind.txt
+  /Hut/Hill/SignalSchool → /Huette/Huegel/SignalSchule
+  /Hut/Hill/SignalSchool/headteacher.txt → /Huette/Huegel/SignalSchule/schulleiterin.txt
+  /Hut/Hill/SignalSchool/PracticeRoom → /Huette/Huegel/SignalSchule/Uebungsraum
+  /Hut/Hill/SignalSchool/PracticeRoom/exercise.txt → /Huette/Huegel/SignalSchule/Uebungsraum/uebung.txt
+  /Hut/Hill/SignalSchool/PracticeRoom/crab → /Huette/Huegel/SignalSchule/Uebungsraum/krabbe
+  /Hut/Hill/SignalSchool/PracticeRoom/Bucket → /Huette/Huegel/SignalSchule/Uebungsraum/Eimer
+  /Hut/Hill/SignalSchool/Lessons → /Huette/Huegel/SignalSchule/Lektionen
+  /Hut/Hill/SignalSchool/Lessons/lesson_1_manual.txt → /Huette/Huegel/SignalSchule/Lektionen/lektion_1_handbuch.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_2_paths.txt → /Huette/Huegel/SignalSchule/Lektionen/lektion_2_pfade.txt
+  /Hut/Hill/SignalSchool/Lessons/lesson_3_hidden.txt → /Huette/Huegel/SignalSchule/Lektionen/lektion_3_versteckt.txt
+  /Hut/Hill/SignalSchool/Lessons/.secret_note → /Huette/Huegel/SignalSchule/Lektionen/.geheime_notiz
+  /Hut/Hill/SignalSchool/Lessons/lesson_4_rename.txt → /Huette/Huegel/SignalSchule/Lektionen/lektion_4_umbenennen.txt
+  /Hut/Hill/SignalSchool/Library → /Huette/Huegel/SignalSchule/Bibliothek
+  /Hut/Hill/SignalSchool/Library/book_of_commands.txt → /Huette/Huegel/SignalSchule/Bibliothek/buch_der_befehle.txt
+  /Hut/Harbour → /Huette/Hafen
+  /Hut/Harbour/captain.txt → /Huette/Hafen/kapitaenin.txt
+  /Hut/Harbour/Boathouse → /Huette/Hafen/Bootshaus
+  /Hut/Harbour/Boathouse/inventory.txt → /Huette/Hafen/Bootshaus/inventar.txt
+  /Hut/Harbour/Storeroom → /Huette/Hafen/Lager
+  /Hut/Harbour/Storeroom/label.txt → /Huette/Hafen/Lager/etikett.txt
+  /Hut/Harbour/Storeroom/.spare_bulb → /Huette/Hafen/Lager/.ersatzbirne
+  /Hut/Pier → /Huette/Steg
+  /Hut/Pier/net → /Huette/Steg/netz
+  /Hut/Pier/clue.txt → /Huette/Steg/hinweis.txt
+  /Hut/Pier/Lighthouse → /Huette/Steg/Leuchtturm
+  /Hut/Pier/Lighthouse/keeper.txt → /Huette/Steg/Leuchtturm/waerterin.txt
+  /Hut/Pier/Lighthouse/Stairs → /Huette/Steg/Leuchtturm/Treppe
+  /Hut/Pier/Lighthouse/Stairs/steps.txt → /Huette/Steg/Leuchtturm/Treppe/stufen.txt
+  /Hut/Pier/Lighthouse/Stairs/Lantern → /Huette/Steg/Leuchtturm/Treppe/Laterne
+  /Hut/Pier/Lighthouse/Stairs/Lantern/lantern.txt → /Huette/Steg/Leuchtturm/Treppe/Laterne/laterne.txt
+
+village
+  /Quay → /Kai
+  /Quay/crier.txt → /Kai/ausruferin.txt
+  /Quay/scroll_of_spells.txt → /Kai/schriftrolle_der_zauber.txt
+  /Quay/Market → /Kai/Markt
+  /Quay/Market/stallholder.txt → /Kai/Markt/haendlerin.txt
+  /Quay/Market/apple → /Kai/Markt/apfel
+  /Quay/Market/apple_2 → /Kai/Markt/apfel_2
+  /Quay/Market/cheese → /Kai/Markt/kaese
+  /Quay/Bakery → /Kai/Baeckerei
+  /Quay/Bakery/baker.txt → /Kai/Baeckerei/baecker.txt
+  /Quay/Bakery/sourdough → /Kai/Baeckerei/sauerteig
+  /Quay/Workshop → /Kai/Werkstatt
+  /Quay/Workshop/maker.txt → /Kai/Werkstatt/bastlerin.txt
+  /Quay/School → /Kai/Schule
+  /Quay/School/teacher.txt → /Kai/Schule/lehrer.txt
+  /Quay/TownHall → /Kai/Rathaus
+  /Quay/TownHall/clerk.txt → /Kai/Rathaus/schreiber.txt
+  /Quay/TownHall/notice_dance.txt → /Kai/Rathaus/aushang_tanz.txt
+  /Quay/TownHall/notice_cat.txt → /Kai/Rathaus/aushang_katze.txt
+  /Quay/TownHall/notice_sewers.txt → /Kai/Rathaus/aushang_kanal.txt
+  /Quay/TownHall/notice_market.txt → /Kai/Rathaus/aushang_markt.txt
+  /Quay/TownHall/notice_clock.txt → /Kai/Rathaus/aushang_uhr.txt
+  /Quay/TownHall/.doormat → /Kai/Rathaus/.fussmatte
+  /Quay/TownHall/Archives → /Kai/Rathaus/Archiv
+  /Quay/TownHall/Archives/archivist.txt → /Kai/Rathaus/Archiv/archivarin.txt
+  /Quay/TownHall/Archives/chronicle.txt → /Kai/Rathaus/Archiv/chronik.txt
+  /Quay/Alley → /Kai/Gasse
+  /Quay/Alley/barricade → /Kai/Gasse/barrikade
+  /Quay/Alley/Yard → /Kai/Gasse/Hof
+  /Quay/Alley/Yard/wall.txt → /Kai/Gasse/Hof/mauer.txt
+  /Quay/Alley/Yard/Sewer → /Kai/Gasse/Hof/Kanalisation
+  /Quay/Alley/Yard/Sewer/rats.txt → /Kai/Gasse/Hof/Kanalisation/ratten.txt
+  /Quay/Alley/Yard/Sewer/Tunnel → /Kai/Gasse/Hof/Kanalisation/Tunnel
+  /Quay/Alley/Yard/Sewer/Tunnel/nour.txt → /Kai/Gasse/Hof/Kanalisation/Tunnel/nour.txt
+
+root
+  /home/you → /home/du
+  /home/you/arrival.txt → /home/du/ankunft.txt
+  /home/you/admin_manual.txt → /home/du/admin_handbuch.txt
+  /home/you/journal.txt → /home/du/tagebuch.txt
+  /home/you/eraser.conf.fixed → /home/du/radierer.conf.korrigiert
+  /home/you/memories → /home/du/erinnerungen
+  /home/you/memories/school → /home/du/erinnerungen/schule
+  /home/you/memories/first_program → /home/du/erinnerungen/erstes_programm
+  /home/you/memories/garden → /home/du/erinnerungen/garten
+  /home/you/memories/song → /home/du/erinnerungen/lied
+  /home/you/memories/journey → /home/du/erinnerungen/reise
+  /home/you/memories/friend → /home/du/erinnerungen/freundin
+  /home/you/memories/library → /home/du/erinnerungen/bibliothek
+  /home/you/memories/first_server → /home/du/erinnerungen/erster_server
+  /home/nour/diary.txt → /home/nour/tagebuch_privat.txt
+  /etc/eraser.conf → /etc/radierer.conf
+  /var/log/eraser.log → /var/log/radierer.log
+  /root/notes.txt → /root/notizen.txt
+
+backup
+  /home/you → /home/du
+  /home/you/note_from_maelle.txt → /home/du/notiz_von_maelle.txt
+  /home/you/memories → /home/du/erinnerungen
+  /home/you/memories/first-letter.txt → /home/du/erinnerungen/erster-brief.txt
+  /home/you/memories/lighthouse.txt → /home/du/erinnerungen/leuchtturm.txt
+  /home/you/memories/village.txt → /home/du/erinnerungen/dorf.txt
+  /home/you/memories/nour.txt → /home/du/erinnerungen/nour.txt
+  /home/you/memories/eraser.txt → /home/du/erinnerungen/radierer.txt
+  /mnt/backup → /mnt/sicherung
+
+first-day
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /home/you/notes_awa.txt → /home/du/notes_awa.txt
+
+second-day
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /home/you/notes_awa.txt → /home/du/notes_awa.txt
+
+reboot-night
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /home/you/notes_awa.txt → /home/du/notes_awa.txt
+
+fire
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /mnt/backup → /mnt/sicherung
+  /mnt/backup/DRP.txt → /mnt/sicherung/NFP.txt
+  /mnt/backup/medialibrary-2026-10-21.tar.gz → /mnt/sicherung/medialibrary-2026-10-21.tar.gz
+  /mnt/backup/medialibrary-2026-10-22.tar.gz → /mnt/sicherung/medialibrary-2026-10-22.tar.gz
+  /mnt/backup/medialibrary-2026-10-23.tar.gz → /mnt/sicherung/medialibrary-2026-10-23.tar.gz
+
+certificate
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /home/you/message_from_lea.txt → /home/du/nachricht_von_lea.txt
+
+lost-packet
+  /home/you → /home/du
+  /home/you/note_from_kofi.txt → /home/du/notiz_von_kofi.txt
+  /home/you/notebook.txt → /home/du/notizbuch.txt
+
+manuscript
+  /home/you → /home/du
+  /home/you/message_from_ines.txt → /home/du/nachricht_von_ines.txt
+  /home/you/novel → /home/du/roman
+  /home/you/novel/.git → /home/du/roman/.git
+  /home/you/novel/.git/HEAD → /home/du/roman/.git/HEAD
+  /home/you/novel/novel.txt → /home/du/roman/roman.txt
+  /home/you/poems → /home/du/gedichte
+  /home/you/poems/sea.txt → /home/du/gedichte/meer.txt
+  /home/you/poems/lighthouse.txt → /home/du/gedichte/leuchtturm.txt
+  /home/you/poems/zohra.txt → /home/du/gedichte/zohra.txt
+  /home/you/help_git.txt → /home/du/hilfe_git.txt
+
+archives
+  /home/you → /home/du
+  /home/you/letter_from_rosa.txt → /home/du/brief_von_rosa.txt
+  /home/you/notes_rosa.txt → /home/du/notes_rosa.txt
+  /home/you/collection → /home/du/bestand
+  /home/you/collection/readme.txt → /home/du/bestand/liesmich.txt
+  /home/you/collection/manuscripts → /home/du/bestand/manuskripte
+  /home/you/collection/manuscripts/marie_diary.txt → /home/du/bestand/manuskripte/tagebuch_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/du/bestand/manuskripte/briefe_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/du/bestand/manuskripte/rezepte_aus_dem_viertel.txt
+  /home/you/collection/maps → /home/du/bestand/karten
+  /home/you/collection/maps/map_1890.png → /home/du/bestand/karten/karte_1890.png
+  /home/you/collection/maps/map_1954.png → /home/du/bestand/karten/karte_1954.png
+  /home/you/collection/maps/render.tmp → /home/du/bestand/karten/render.tmp
+  /home/you/collection/press → /home/du/bestand/presse
+  /home/you/collection/press/gazette_1936.pdf → /home/du/bestand/presse/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/du/bestand/presse/gazette_1968.pdf
+  /home/you/collection/press/export.tmp → /home/du/bestand/presse/export.tmp
+  /home/you/collection/recordings → /home/du/bestand/aufnahmen
+  /home/you/collection/recordings/market_songs.ogg → /home/du/bestand/aufnahmen/marktlieder.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/du/bestand/aufnahmen/interview_fatou.ogg
+  /home/you/collection/recordings/raw.tmp → /home/du/bestand/aufnahmen/roh.tmp
+  /media/usb → /media/stick
+
+versions
+  /home/you → /home/du
+  /home/you/note_from_rosa.txt → /home/du/notiz_von_rosa.txt
+  /home/you/notes_restic.txt → /home/du/notes_restic.txt
+  /home/you/.config → /home/du/.config
+  /home/you/.config/restic → /home/du/.config/restic
+  /home/you/.config/restic/password → /home/du/.config/restic/passwort
+  /home/you/collection → /home/du/bestand
+  /home/you/collection/readme.txt → /home/du/bestand/liesmich.txt
+  /home/you/collection/manuscripts → /home/du/bestand/manuskripte
+  /home/you/collection/manuscripts/marie_diary.txt → /home/du/bestand/manuskripte/tagebuch_marie.txt
+  /home/you/collection/manuscripts/letters_1914.txt → /home/du/bestand/manuskripte/briefe_1914.txt
+  /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/du/bestand/manuskripte/rezepte_aus_dem_viertel.txt
+  /home/you/collection/maps → /home/du/bestand/karten
+  /home/you/collection/maps/map_1890.png → /home/du/bestand/karten/karte_1890.png
+  /home/you/collection/maps/map_1954.png → /home/du/bestand/karten/karte_1954.png
+  /home/you/collection/press → /home/du/bestand/presse
+  /home/you/collection/press/gazette_1936.pdf → /home/du/bestand/presse/gazette_1936.pdf
+  /home/you/collection/press/gazette_1968.pdf → /home/du/bestand/presse/gazette_1968.pdf
+  /home/you/collection/recordings → /home/du/bestand/aufnahmen
+  /home/you/collection/recordings/market_songs.ogg → /home/du/bestand/aufnahmen/marktlieder.ogg
+  /home/you/collection/recordings/interview_fatou.ogg → /home/du/bestand/aufnahmen/interview_fatou.ogg
+  /home/you/collection/scans → /home/du/bestand/scans
+  /home/you/collection/scans/register_1.png → /home/du/bestand/scans/register_1.png
+  /home/you/collection/scans/register_2.png → /home/du/bestand/scans/register_2.png
+  /home/you/collection/scans/register_3.png → /home/du/bestand/scans/register_3.png
+  /mnt/townhall → /mnt/rathaus
+  /mnt/townhall/restic-library → /mnt/rathaus/restic-bibliothek
+
+shut-the-door
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+firewall
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+  /home/you/scan_yasmine.txt → /home/du/scan_yasmine.txt
+
+sentinel
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+
+sharing
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+  /home/you/note_from_rania.txt → /home/du/notiz_von_rania.txt
+  /opt/agenda/README.txt → /opt/agenda/LIESMICH.txt
+
+works-for-me
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+  /home/you/help_dns.txt → /home/du/hilfe_dns.txt
+
+concert
+  /home/you → /home/du
+  /home/you/message_from_kofi.txt → /home/du/nachricht_von_kofi.txt
+  /home/you/help_logs.txt → /home/du/hilfe_logs.txt
+
+port
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+
+repeat-offenders
+  /home/you → /home/du
+  /home/you/email_rania.txt → /home/du/email_rania.txt
+
+repair-cafe
+  /home/you → /home/du
+  /home/you/email_kofi.txt → /home/du/email_kofi.txt
+  /home/you/note_from_rania.txt → /home/du/notiz_von_rania.txt
+
+update
+  /home/you → /home/du
+  /home/you/message_from_yasmine.txt → /home/du/nachricht_von_yasmine.txt
+  /home/you/notes_docker.txt → /home/du/notes_docker.txt
+
+compose
+  /home/you → /home/du
+  /home/you/message_from_yasmine.txt → /home/du/nachricht_von_yasmine.txt
+  /home/you/help_compose.txt → /home/du/hilfe_compose.txt
+
+firewall-hole
+  /home/you → /home/du
+  /home/you/message_from_rania.txt → /home/du/nachricht_von_rania.txt
+  /home/you/note_from_yasmine.txt → /home/du/notiz_von_yasmine.txt
+  /usr/base-system → /usr/basissystem
+
+full-powers
+  /home/you → /home/du
+  /home/you/message_from_yasmine.txt → /home/du/nachricht_von_yasmine.txt
+  /home/you/note_from_rania.txt → /home/du/notiz_von_rania.txt
+  /srv/gallery → /srv/galerie
+  /srv/gallery/compose.yaml → /srv/galerie/compose.yaml
+  /srv/gallery/README.txt → /srv/galerie/LIESMICH.txt
+  /srv/gallery/photos → /srv/galerie/photos
+  /srv/gallery/photos/benchy-first-try.jpg → /srv/galerie/photos/benchy-erster-versuch.jpg
+  /srv/gallery/photos/benchy-success.jpg → /srv/galerie/photos/benchy-geschafft.jpg
+  /srv/gallery/photos/laser-cut-lamp.jpg → /srv/galerie/photos/gelaserte-lampe.jpg
+  /srv/gallery/photos/wooden-clock.jpg → /srv/galerie/photos/holzuhr.jpg
+  /srv/gallery/photos/line-following-robot.jpg → /srv/galerie/photos/linienfolger-roboter.jpg
+  /srv/gallery/photos/kids-soldering-workshop.jpg → /srv/galerie/photos/loetkurs-kinder.jpg
+  /srv/gallery/photos/repaired-bike.jpg → /srv/galerie/photos/repariertes-fahrrad.jpg
+  /srv/gallery/photos/revived-toaster.jpg → /srv/galerie/photos/geretteter-toaster.jpg
+  /srv/gallery/photos/led-sign.jpg → /srv/galerie/photos/led-schild.jpg
+  /srv/gallery/photos/shared-toolbox.jpg → /srv/galerie/photos/gemeinsame-werkzeugkiste.jpg
+  /srv/gallery/photos/digital-embroidery.jpg → /srv/galerie/photos/digitale-stickerei.jpg
+  /srv/gallery/photos/homemade-drone.jpg → /srv/galerie/photos/selbstgebaute-drohne.jpg
+  /srv/gallery/photos/custom-keyboard.jpg → /srv/galerie/photos/eigene-tastatur.jpg
+  /srv/gallery/photos/fablab-party.jpg → /srv/galerie/photos/fablab-party.jpg
+
+bare-repo
+  /home/you → /home/du
+  /home/you/message_from_samia.txt → /home/du/nachricht_von_samia.txt
+  /home/you/note_from_theo.txt → /home/du/notiz_von_theo.txt
+  /home/you/gazette → /home/du/gazette
+  /home/you/gazette/.git → /home/du/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/du/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/du/gazette/index.html
+  /home/you/gazette/style.css → /home/du/gazette/style.css
+  /home/you/gazette/agenda.html → /home/du/gazette/agenda.html
+  /home/you/gazette/strassenfest.html → /home/du/gazette/strassenfest.html
+
+rollback
+  /home/you → /home/du
+  /home/you/message_from_samia.txt → /home/du/nachricht_von_samia.txt
+  /home/you/gazette → /home/du/gazette
+  /home/you/gazette/.git → /home/du/gazette/.git
+  /home/you/gazette/.git/HEAD → /home/du/gazette/.git/HEAD
+  /home/you/gazette/index.html → /home/du/gazette/index.html
+  /home/you/gazette/style.css → /home/du/gazette/style.css
+  /home/you/gazette/agenda.html → /home/du/gazette/agenda.html
+  /home/you/gazette/strassenfest.html → /home/du/gazette/strassenfest.html
+  /home/you/gazette/tests.sh → /home/du/gazette/tests.sh
+
+blue-green
+  /home/you → /home/du
+  /home/you/message_from_samia.txt → /home/du/nachricht_von_samia.txt
+
+canary
+  /home/you → /home/du
+  /home/you/message_from_samia.txt → /home/du/nachricht_von_samia.txt
+
+migration
+  /home/you → /home/du
+  /home/you/message_from_samia.txt → /home/du/nachricht_von_samia.txt
+  /home/you/note_from_theo.txt → /home/du/notiz_von_theo.txt
+
+ransom
+  /home/you → /home/du
+  /home/you/message_from_berenice.txt → /home/du/nachricht_von_berenice.txt
+  /home/frontdesk → /home/empfang
+  /home/frontdesk/.cache → /home/empfang/.cache
+  /home/frontdesk/.cache/.upd → /home/empfang/.cache/.akt
+  /home/frontdesk/.cache/.upd/system-update → /home/empfang/.cache/.akt/system-aktualisierung
+  /srv/share → /srv/freigabe
+  /srv/share/inventory.csv → /srv/freigabe/inventar.csv
+  /srv/share/volunteer-rota.txt → /srv/freigabe/dienstplan-ehrenamt.txt
+  /srv/share/games-day-poster.txt → /srv/freigabe/spieletag-plakat.txt
+  /srv/share/rules → /srv/freigabe/regeln
+  /srv/share/rules/goose-game.txt → /srv/freigabe/regeln/gaensespiel.txt
+  /srv/share/rules/ludo.txt → /srv/freigabe/regeln/mensch-aergere-dich-nicht.txt
+  /srv/share/rules/draughts.txt → /srv/freigabe/regeln/dame.txt
+  /mnt/nas/share → /mnt/nas/freigabe
+  /mnt/usb → /mnt/stick
+
+snapshots
+  /home/you → /home/du
+  /home/you/message_from_berenice.txt → /home/du/nachricht_von_berenice.txt
+  /home/frontdesk → /home/empfang
+  /srv/share → /srv/freigabe
+  /srv/share/inventory.csv → /srv/freigabe/inventar.csv
+  /srv/share/volunteer-rota.txt → /srv/freigabe/dienstplan-ehrenamt.txt
+  /srv/share/games-day-poster.txt → /srv/freigabe/spieletag-plakat.txt
+  /srv/share/rules → /srv/freigabe/regeln
+  /srv/share/rules/goose-game.txt → /srv/freigabe/regeln/gaensespiel.txt
+  /srv/share/rules/ludo.txt → /srv/freigabe/regeln/mensch-aergere-dich-nicht.txt
+  /srv/share/rules/draughts.txt → /srv/freigabe/regeln/dame.txt
+  /srv/share/rules/rules-scans.pdf → /srv/freigabe/regeln/regeln-scans.pdf
+  /mnt/usb → /mnt/stick
+
+database
+  /home/you → /home/du
+  /home/you/message_from_berenice.txt → /home/du/nachricht_von_berenice.txt
+  /home/you/note_from_malo.txt → /home/du/notiz_von_malo.txt
+
+full-disk
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /srv/radio/shows → /srv/radio/sendungen
+  /srv/radio/shows/morgenmagazin-2027-08-14.ogg → /srv/radio/sendungen/morgenmagazin-2027-08-14.ogg
+
+memory
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /opt/podcast/convert.py → /opt/podcast/konvertieren.py
+
+inodes
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /srv/radio/shows → /srv/radio/sendungen
+  /srv/radio/shows/morgenmagazin-2027-08-27.ogg → /srv/radio/sendungen/morgenmagazin-2027-08-27.ogg
+  /srv/radio/shows/morgenmagazin-2027-08-28.ogg → /srv/radio/sendungen/morgenmagazin-2027-08-28.ogg
+  /srv/radio/shows/nachtprogramm-2027-08-28.ogg → /srv/radio/sendungen/nachtprogramm-2027-08-28.ogg
+  /srv/radio/stats/README.txt → /srv/radio/stats/LIESMICH.txt
+
+clock
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /home/you/mail_hosting.txt → /home/du/mail_hoster.txt
+
+probe
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /srv/radio/shows → /srv/radio/sendungen
+  /srv/radio/shows/morgenmagazin-2027-09-06.ogg → /srv/radio/sendungen/morgenmagazin-2027-09-06.ogg
+  /srv/radio/shows/nachtprogramm-2027-09-06.ogg → /srv/radio/sendungen/nachtprogramm-2027-09-06.ogg
+  /srv/radio/podcasts/thumbnails → /srv/radio/podcasts/vorschaubilder
+  /srv/radio/podcasts/README.txt → /srv/radio/podcasts/LIESMICH.txt
+
+post-mortem
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /home/you/notes_theo.txt → /home/du/notes_theo.txt
+  /home/you/postmortem.md → /home/du/postmortem.md
+
+bottleneck
+  /home/you → /home/du
+  /home/you/message_from_zoe.txt → /home/du/nachricht_von_zoe.txt
+  /srv/radio/recordings → /srv/radio/aufnahmen
+
+keys
+  /home/you → /home/du
+  /home/you/email_yasmine.txt → /home/du/email_yasmine.txt
+
+keys:wiki
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+
+keys:archives
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+
+jump
+  /home/you → /home/du
+  /home/you/email_yasmine.txt → /home/du/email_yasmine.txt
+  /home/you/.ssh → /home/du/.ssh
+
+jump:wiki
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/note_gaspard.txt → /home/du/note_gaspard.txt
+  /srv/wiki/pages/home.md → /srv/wiki/pages/start.md
+
+jump:archives
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+
+tunnel
+  /home/you → /home/du
+  /home/you/email_yasmine.txt → /home/du/email_yasmine.txt
+  /home/you/.ssh → /home/du/.ssh
+
+tunnel:wiki
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/note_gaspard.txt → /home/du/note_gaspard.txt
+
+tunnel:archives
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+
+transfers
+  /home/you → /home/du
+  /home/you/email_yasmine.txt → /home/du/email_yasmine.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/config → /home/du/.ssh/config
+  /home/you/.ssh/id_backup → /home/du/.ssh/id_sicherung
+  /home/you/.ssh/id_backup.pub → /home/du/.ssh/id_sicherung.pub
+  /srv/share → /srv/freigabe
+  /srv/share/minutes → /srv/freigabe/protokolle
+  /srv/share/minutes/agm-2026.txt → /srv/freigabe/protokolle/mv-2026.txt
+  /srv/share/minutes/board-2027-09.txt → /srv/freigabe/protokolle/vorstand-2027-09.txt
+  /srv/share/posters → /srv/freigabe/plakate
+  /srv/share/posters/street-party.pdf → /srv/freigabe/plakate/strassenfest.pdf
+  /srv/share/room-bookings.txt → /srv/freigabe/raumbuchungen.txt
+
+transfers:wiki
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /srv/wiki/exports/report-2027.pdf → /srv/wiki/exports/bericht-2027.pdf
+
+transfers:archives
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/backups → /srv/sicherungen
+  /srv/backups/share → /srv/sicherungen/freigabe
+  /srv/backups/share/minutes → /srv/sicherungen/freigabe/protokolle
+  /srv/backups/share/minutes/agm-2026.txt → /srv/sicherungen/freigabe/protokolle/mv-2026.txt
+
+web-host
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/email_yasmine.txt → /home/du/email_yasmine.txt
+  /home/you/email_hosting.txt → /home/du/email_hoster.txt
+  /home/you/notes-gaspard.txt → /home/du/notes-gaspard.txt
+
+web-host:wiki
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /srv/wiki/site/membership.html → /srv/wiki/site/mitgliedschaft.html
+
+departure
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /home/marc/bin/till-backup.sh → /home/marc/bin/kasse-sicherung.sh
+  /home/marc/notes.txt → /home/marc/notizen.txt
+  /srv/backups → /srv/sicherungen
+  /srv/backups/2027-10-18 → /srv/sicherungen/2027-10-18
+  /srv/backups/2027-10-18/home → /srv/sicherungen/2027-10-18/home
+  /srv/backups/2027-10-18/home/marc → /srv/sicherungen/2027-10-18/home/marc
+  /srv/backups/2027-10-18/home/marc/bin → /srv/sicherungen/2027-10-18/home/marc/bin
+  /srv/backups/2027-10-18/home/marc/bin/till-backup.sh → /srv/sicherungen/2027-10-18/home/marc/bin/kasse-sicherung.sh
+
+shared-rights
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+  /srv/till/statements → /srv/till/abrechnungen
+  /srv/till/statements/2027-10-17.txt → /srv/till/abrechnungen/2027-10-17.txt
+  /srv/till/statements/2027-10-18.txt → /srv/till/abrechnungen/2027-10-18.txt
+
+secret
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+
+proxy
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+
+updates
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+
+auto-updates
+  /home/you → /home/du
+  /home/you/email_awa.txt → /home/du/email_awa.txt
+
+vlan
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+  /home/you/switch-plan.txt → /home/du/switch-plan.txt
+
+dhcp
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+
+zones
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+  /home/you/notes-from-sacha.txt → /home/du/notizen-von-sacha.txt
+
+remote-work
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+  /home/you/malik-laptop.conf → /home/du/malik-laptop.conf
+
+dmz
+  /home/you → /home/du
+  /home/you/email_ines.txt → /home/du/email_ines.txt
+  /home/you/switch-plan.txt → /home/du/switch-plan.txt
+
+annex
+  /home/you → /home/du
+  /home/you/email_sami.txt → /home/du/email_sami.txt
+  /home/you/annex-wg0.conf → /home/du/annex-wg0.conf
+  /home/you/malik-laptop.conf → /home/du/malik-laptop.conf
+
+directory
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+  /home/you/ines-template.ldif → /home/du/ines-vorlage.ldif
+  /home/you/malik-laptop.conf → /home/du/malik-laptop.conf
+
+wifi
+  /home/you → /home/du
+  /home/you/email_malik.txt → /home/du/email_malik.txt
+  /home/you/ap-offices.txt → /home/du/ap-bueros.txt
+  /home/you/malik-laptop.conf → /home/du/malik-laptop.conf
+
+scope
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/engagement_letter.txt → /home/du/auftragsschreiben.txt
+  /home/you/audit_notes.md → /home/du/auditnotizen.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+report
+  /home/you → /home/du
+  /home/you/email_nadia.txt → /home/du/email_nadia.txt
+  /home/you/audit_report.txt → /home/du/auditbericht.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/orders → /srv/bestellungen
+  /srv/orders/.env → /srv/bestellungen/.env
+  /srv/orders/app → /srv/bestellungen/app
+  /srv/orders/app/server.js → /srv/bestellungen/app/server.js
+
+exposure
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/audit_scan.txt → /home/du/auditscan.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+traces
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/orders → /srv/bestellungen
+  /srv/orders/.env → /srv/bestellungen/.env
+
+follow-up
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/closing_report.md → /home/du/abschlussbericht.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+tired-disk
+  /home/you → /home/du
+  /home/you/message_from_odile.txt → /home/du/nachricht_von_odile.txt
+  /home/you/host_procedure.txt → /home/du/hoster_verfahren.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/fruehjahrsausstellung
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/fruehjahrsausstellung/abzuege.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/hafenausflug
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/hafenausflug/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/nachtwettbewerb
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/nachtwettbewerb/raw.tar
+  /var/mail/you → /var/mail/du
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
+
+new-disk
+  /home/you → /home/du
+  /home/you/message_from_odile.txt → /home/du/nachricht_von_odile.txt
+  /home/you/host_procedure.txt → /home/du/hoster_verfahren.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/fruehjahrsausstellung
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/fruehjahrsausstellung/abzuege.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/hafenausflug
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/hafenausflug/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/nachtwettbewerb
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/nachtwettbewerb/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
+
+more-room
+  /home/you → /home/du
+  /home/you/message_from_odile.txt → /home/du/nachricht_von_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/fruehjahrsausstellung
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/fruehjahrsausstellung/abzuege.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/hafenausflug
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/hafenausflug/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/nachtwettbewerb
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/nachtwettbewerb/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/herbstarchiv
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/herbstarchiv/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
+
+stuck-boot
+  /home/you → /home/du
+  /root/message_from_odile.txt → /root/nachricht_von_odile.txt
+  /srv/photos/2025/spring-show → /srv/photos/2025/fruehjahrsausstellung
+  /srv/photos/2025/spring-show/prints.tar → /srv/photos/2025/fruehjahrsausstellung/abzuege.tar
+  /srv/photos/2026/harbour-trip → /srv/photos/2026/hafenausflug
+  /srv/photos/2026/harbour-trip/raw.tar → /srv/photos/2026/hafenausflug/raw.tar
+  /srv/photos/2027/night-contest → /srv/photos/2027/nachtwettbewerb
+  /srv/photos/2027/night-contest/raw.tar → /srv/photos/2027/nachtwettbewerb/raw.tar
+  /srv/photos/2027/autumn-archives → /srv/photos/2027/herbstarchiv
+  /srv/photos/2027/autumn-archives/raw.tar → /srv/photos/2027/herbstarchiv/raw.tar
+  /var/www/gallery → /var/www/galerie
+  /var/www/gallery/index.html → /var/www/galerie/index.html
+
+bulletin
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/baeckerei
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/baeckerei
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/security_bulletin.txt → /home/du/sicherheitsbulletin.txt
+  /home/you/watch.md → /home/du/beobachtung.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /var/www/bakery → /var/www/baeckerei
+  /var/www/bakery/index.html → /var/www/baeckerei/index.html
+
+priority
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/baeckerei
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/baeckerei
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/priority.md → /home/du/prioritaet.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /var/www/bakery → /var/www/baeckerei
+  /var/www/bakery/index.html → /var/www/baeckerei/index.html
+
+fix
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/baeckerei
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/baeckerei
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /var/www/bakery → /var/www/baeckerei
+  /var/www/bakery/index.html → /var/www/baeckerei/index.html
+
+proof
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/baeckerei
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/baeckerei
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /var/www/bakery → /var/www/baeckerei
+  /var/www/bakery/index.html → /var/www/baeckerei/index.html
+
+routine
+  /etc/nginx/sites-available/bakery → /etc/nginx/sites-available/baeckerei
+  /etc/nginx/sites-enabled/bakery → /etc/nginx/sites-enabled/baeckerei
+  /home/you → /home/du
+  /home/you/email_salome.txt → /home/du/email_salome.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /var/www/bakery → /var/www/baeckerei
+  /var/www/bakery/index.html → /var/www/baeckerei/index.html
+
+postman
+  /home/you → /home/du
+  /home/you/email_nour.txt → /home/du/email_nour.txt
+
+signature
+  /home/you → /home/du
+  /home/you/message_from_nour.txt → /home/du/nachricht_von_nour.txt
+
+policy
+  /home/you → /home/du
+  /home/you/email_nour.txt → /home/du/email_nour.txt
+  /home/you/newsmail_letter.txt → /home/du/newsmail_schreiben.txt
+  /home/you/dmarc_reports → /home/du/dmarc_berichte
+  /home/you/dmarc_reports/mailbox.example-2027-05-16.xml → /home/du/dmarc_berichte/mailbox.example-2027-05-16.xml
+  /home/you/dmarc_reports/post.example-2027-05-16.xml → /home/du/dmarc_berichte/post.example-2027-05-16.xml
+
+inventory
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/ansible → /home/du/ansible
+  /home/you/ansible/ansible.cfg → /home/du/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/du/ansible/inventory.ini
+  /home/you/email_theo.txt → /home/du/email_theo.txt
+
+playbook
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/du/.ssh/known_hosts
+  /home/you/ansible → /home/du/ansible
+  /home/you/ansible/ansible.cfg → /home/du/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/du/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/du/ansible/site.yml
+  /home/you/message_from_theo.txt → /home/du/nachricht_von_theo.txt
+
+rehearsal
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/known_hosts → /home/du/.ssh/known_hosts
+  /home/you/ansible → /home/du/ansible
+  /home/you/ansible/ansible.cfg → /home/du/ansible/ansible.cfg
+  /home/you/ansible/inventory.ini → /home/du/ansible/inventory.ini
+  /home/you/ansible/site.yml → /home/du/ansible/site.yml
+  /home/you/ansible/ssh.yml → /home/du/ansible/ssh.yml
+  /home/you/note_from_theo.txt → /home/du/notiz_von_theo.txt
+
+padlock
+  /home/you → /home/du
+  /home/you/message_from_ines.txt → /home/du/nachricht_von_ines.txt
+
+boot-order
+  /home/you → /home/du
+  /home/you/message_from_ibrahim.txt → /home/du/nachricht_von_ibrahim.txt
+
+restart-loop
+  /home/you → /home/du
+  /home/you/message_from_ibrahim.txt → /home/du/nachricht_von_ibrahim.txt
+
+slow-boot
+  /home/you → /home/du
+  /home/you/message_from_ibrahim.txt → /home/du/nachricht_von_ibrahim.txt
+
+late-disk
+  /home/you → /home/du
+  /home/you/message_from_ibrahim.txt → /home/du/nachricht_von_ibrahim.txt
+
+heavy-load
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+
+quota
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+  /home/you/mail_from_the_host.txt → /home/du/mail_vom_hoster.txt
+
+too-many-files
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+
+stuck-process
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+
+too-many-clients
+  /home/you → /home/du
+  /home/you/message_from_camille.txt → /home/du/nachricht_von_camille.txt
+
+slow-query
+  /home/you → /home/du
+  /home/you/message_from_camille.txt → /home/du/nachricht_von_camille.txt
+
+read-only
+  /home/you → /home/du
+  /home/you/message_from_camille.txt → /home/du/nachricht_von_camille.txt
+
+failover
+  /home/you → /home/du
+  /home/you/message_from_camille.txt → /home/du/nachricht_von_camille.txt
+
+central-logs
+  /home/you → /home/du
+  /home/you/message_from_lou.txt → /home/du/nachricht_von_lou.txt
+
+journal-full
+  /home/you → /home/du
+  /home/you/message_from_lou.txt → /home/du/nachricht_von_lou.txt
+
+ssh-alerts
+  /home/you → /home/du
+  /home/you/message_from_lou.txt → /home/du/nachricht_von_lou.txt
+
+nfs-export
+  /srv/photos/README.txt → /srv/photos/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_margot.txt → /home/du/nachricht_von_margot.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+nfs-export:darkroom
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+nfs-owners
+  /srv/photos/README.txt → /srv/photos/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_margot.txt → /home/du/nachricht_von_margot.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+nfs-owners:darkroom
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+samba-share
+  /srv/photos/README.txt → /srv/photos/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_margot.txt → /home/du/nachricht_von_margot.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+samba-share:darkroom
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+alarm
+  /home/you → /home/du
+  /home/you/email_nadia.txt → /home/du/email_nadia.txt
+  /home/you/incident.md → /home/du/incident.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+containment
+  /home/you → /home/du
+  /home/you/email_nadia.txt → /home/du/email_nadia.txt
+  /home/you/incident.md → /home/du/incident.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+eradication
+  /home/you → /home/du
+  /home/you/email_selma.txt → /home/du/email_selma.txt
+  /home/you/incident.md → /home/du/incident.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+hardening
+  /home/you → /home/du
+  /home/you/email_nadia.txt → /home/du/email_nadia.txt
+  /home/you/incident.md → /home/du/incident.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+portable-script
+  /home/you → /home/du
+  /home/you/message_from_yanis.txt → /home/du/nachricht_von_yanis.txt
+  /home/you/nightly-backup.sh → /home/du/nightly-backup.sh
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+rc-services
+  /home/you → /home/du
+  /home/you/message_from_romy.txt → /home/du/nachricht_von_romy.txt
+  /home/you/lucien-notes.txt → /home/du/notizen-lucien.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+last-rule
+  /home/you → /home/du
+  /home/you/message_from_romy.txt → /home/du/nachricht_von_romy.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+read-first
+  /export/home/you → /export/home/du
+  /export/home/you/email_inaya.txt → /export/home/du/email_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/du/notizen-odette.txt
+  /export/home/you/migration.md → /export/home/du/migration.md
+  /export/home/you/.ssh → /export/home/du/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/du/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/du/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/du/.ssh/id_ed25519.pub
+  /export/backup → /export/sicherung
+  /export/backup/pgdata-weekly.tar → /export/sicherung/pgdata-weekly.tar
+
+read-first:greenhouse
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+byte-order
+  /export/home/you → /export/home/du
+  /export/home/you/email_inaya.txt → /export/home/du/email_inaya.txt
+  /export/home/you/odette-notes.txt → /export/home/du/notizen-odette.txt
+  /export/home/you/migration.md → /export/home/du/migration.md
+  /export/home/you/.ssh → /export/home/du/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/du/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/du/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/du/.ssh/id_ed25519.pub
+  /export/backup → /export/sicherung
+  /export/backup/pgdata-weekly.tar → /export/sicherung/pgdata-weekly.tar
+
+byte-order:greenhouse
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+switch-over
+  /export/home/you → /export/home/du
+  /export/home/you/email_inaya.txt → /export/home/du/email_inaya.txt
+  /export/home/you/migration.md → /export/home/du/migration.md
+  /export/home/you/.ssh → /export/home/du/.ssh
+  /export/home/you/.ssh/authorized_keys → /export/home/du/.ssh/authorized_keys
+  /export/home/you/.ssh/id_ed25519 → /export/home/du/.ssh/id_ed25519
+  /export/home/you/.ssh/id_ed25519.pub → /export/home/du/.ssh/id_ed25519.pub
+  /export/backup → /export/sicherung
+  /export/backup/pgdata-weekly.tar → /export/sicherung/pgdata-weekly.tar
+
+switch-over:greenhouse
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+copybook
+  /home/you → /home/du
+  /home/you/email_ayesha.txt → /home/du/email_ayesha.txt
+  /home/you/check.txt → /home/du/pruefung.txt
+
+return-code
+  /home/you → /home/du
+  /home/you/email_ayesha.txt → /home/du/email_ayesha.txt
+
+late-file
+  /home/you → /home/du
+  /home/you/email_ayesha.txt → /home/du/email_ayesha.txt
+
+inquiry
+  /home/you → /home/du
+  /home/you/email_kwame.txt → /home/du/email_kwame.txt
+  /home/you/notes-margit.txt → /home/du/notizen-margit.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+inquiry:sieve
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+spooled
+  /home/you → /home/du
+  /home/you/email_kwame.txt → /home/du/email_kwame.txt
+  /home/you/notes-margit.txt → /home/du/notizen-margit.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+spooled:sieve
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+save-file
+  /home/you → /home/du
+  /home/you/email_kwame.txt → /home/du/email_kwame.txt
+  /home/you/notes-margit.txt → /home/du/notizen-margit.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+save-file:sieve
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+line-endings
+  /home/you → /home/du
+  /home/you/email_ifeoma.txt → /home/du/email_ifeoma.txt
+  /home/you/ops → /home/du/ops
+  /home/you/ops/.git → /home/du/ops/.git
+  /home/you/ops/.git/HEAD → /home/du/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/du/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/du/ops/nightly-copy.sh
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notizen.txt
+
+smb-mount
+  /home/you → /home/du
+  /home/you/email_ifeoma.txt → /home/du/email_ifeoma.txt
+  /home/you/notes-priya.txt → /home/du/notizen-priya.txt
+  /home/you/ops → /home/du/ops
+  /home/you/ops/.git → /home/du/ops/.git
+  /home/you/ops/.git/HEAD → /home/du/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/du/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/du/ops/nightly-copy.sh
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notizen.txt
+
+smb-mount:cabinet
+  /C/Users/you → /C/Users/du
+  /C/Users/you/Desktop → /C/Users/du/Desktop
+  /C/Users/you/Documents → /C/Users/du/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/du/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/liesmich.txt
+
+full-volume
+  /home/you → /home/du
+  /home/you/email_ifeoma.txt → /home/du/email_ifeoma.txt
+  /home/you/cabinet-report.txt → /home/du/schrank-bericht.txt
+  /home/you/ops → /home/du/ops
+  /home/you/ops/.git → /home/du/ops/.git
+  /home/you/ops/.git/HEAD → /home/du/ops/.git/HEAD
+  /home/you/ops/about.txt → /home/du/ops/about.txt
+  /home/you/ops/nightly-copy.sh → /home/du/ops/nightly-copy.sh
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /srv/projects/current/notes.txt → /srv/projects/current/notizen.txt
+
+full-volume:cabinet
+  /C/Users/you → /C/Users/du
+  /C/Users/you/Desktop → /C/Users/du/Desktop
+  /C/Users/you/Documents → /C/Users/du/Documents
+  /C/Users/you/Documents/cabinet-handover.txt → /C/Users/du/Documents/cabinet-handover.txt
+  /D/Shares/plans/Templates/readme.txt → /D/Shares/plans/Templates/liesmich.txt
+
+two-locks
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+
+service-logon
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/vault-svc_agenda.txt → /C/Users/du/Documents/tresor-svc_agenda.txt
+
+log-flood
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+
+silent-backup
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/vault-svc_backup.txt → /C/Users/du/Documents/tresor-svc_backup.txt
+
+comings-and-goings
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/conventions.txt → /C/Users/du/Documents/konventionen.txt
+  /C/Users/du/Documents/hr-0112-arrival.txt → /C/Users/du/Documents/pers-0112-eintritt.txt
+  /C/Users/du/Documents/hr-0113-departure.txt → /C/Users/du/Documents/pers-0113-austritt.txt
+
+stale-password
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/conventions.txt → /C/Users/du/Documents/konventionen.txt
+  /C/Users/du/Documents/vault-svc_scans.txt → /C/Users/du/Documents/tresor-svc_scans.txt
+
+stale-password:stacks
+  /D/Shares/Archives → /D/Shares/Archiv
+  /D/Shares/Archives/Incoming → /D/Shares/Archiv/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archiv/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archiv/finding-aid-mills.docx
+
+unapplied-policy
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/conventions.txt → /C/Users/du/Documents/konventionen.txt
+
+unapplied-policy:stacks
+  /D/Shares/Archives → /D/Shares/Archiv
+  /D/Shares/Archives/Incoming → /D/Shares/Archiv/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archiv/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archiv/finding-aid-mills.docx
+
+dormant-accounts
+  /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
+  /C/Users/du/Documents/conventions.txt → /C/Users/du/Documents/konventionen.txt
+  /C/Users/du/Documents/city-it-audit.txt → /C/Users/du/Documents/stadt-it-audit.txt
+
+dormant-accounts:stacks
+  /D/Shares/Archives → /D/Shares/Archiv
+  /D/Shares/Archives/Incoming → /D/Shares/Archiv/Incoming
+  /D/Shares/Archives/Incoming/parish-register-1882-p014.pdf → /D/Shares/Archiv/Incoming/parish-register-1882-p014.pdf
+  /D/Shares/Archives/finding-aid-mills.docx → /D/Shares/Archiv/finding-aid-mills.docx
+
+lost-disk
+  /home/you → /home/du
+  /home/you/message_from_fatou.txt → /home/du/nachricht_von_fatou.txt
+  /home/you/note_from_mei.txt → /home/du/notiz_von_mei.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+spare-key
+  /home/you → /home/du
+  /home/you/message_from_fatou.txt → /home/du/nachricht_von_fatou.txt
+  /home/you/note_from_mei.txt → /home/du/notiz_von_mei.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+restore-drill
+  /home/you → /home/du
+  /home/you/message_from_fatou.txt → /home/du/nachricht_von_fatou.txt
+  /home/you/drill.txt → /home/du/uebung.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+restore-drill:spare
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+new-card
+  /home/you → /home/du
+  /home/you/message_from_amaru.txt → /home/du/nachricht_von_amaru.txt
+  /home/you/email_from_rangi.txt → /home/du/email_von_rangi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+new-card:lookout
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+other-door
+  /home/you → /home/du
+  /home/you/message_from_amaru.txt → /home/du/nachricht_von_amaru.txt
+  /home/you/scan_report.txt → /home/du/scanbericht.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+other-door:lookout
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+both-ways
+  /home/you → /home/du
+  /home/you/message_from_amaru.txt → /home/du/nachricht_von_amaru.txt
+  /home/you/note_from_lucia.txt → /home/du/notiz_von_lucia.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+both-ways:lookout
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+blind-spot
+  /home/you → /home/du
+  /home/you/message_from_ngozi.txt → /home/du/nachricht_von_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/du/notiz_von_tomas.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+blind-spot:saddle
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+blind-spot:hub
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+threshold
+  /home/you → /home/du
+  /home/you/message_from_ngozi.txt → /home/du/nachricht_von_ngozi.txt
+  /home/you/note_from_tomas.txt → /home/du/notiz_von_tomas.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+threshold:saddle
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/rental/RELEASE-NOTES.txt → /srv/rental/VERSIONSHINWEISE.txt
+
+threshold:hub
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+quiet-hours
+  /home/you → /home/du
+  /home/you/message_from_ngozi.txt → /home/du/nachricht_von_ngozi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+quiet-hours:saddle
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+quiet-hours:hub
+  /home/you → /home/du
+  /home/you/README.txt → /home/du/LIESMICH.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wont-start
+  /home/you → /home/du
+  /home/you/message_from_folake.txt → /home/du/nachricht_von_folake.txt
+  /home/you/note_from_rui.txt → /home/du/notiz_von_rui.txt
+  /home/you/manifests → /home/du/manifests
+  /home/you/manifests/namespace.yaml → /home/du/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/du/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/du/manifests/booking.yaml
+  /home/you/.kube → /home/du/.kube
+  /home/you/.kube/config → /home/du/.kube/config
+
+front-desk
+  /home/you → /home/du
+  /home/you/message_from_folake.txt → /home/du/nachricht_von_folake.txt
+  /home/you/note_from_kemal.txt → /home/du/notiz_von_kemal.txt
+  /home/you/manifests → /home/du/manifests
+  /home/you/manifests/namespace.yaml → /home/du/manifests/namespace.yaml
+  /home/you/manifests/config.yaml → /home/du/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/du/manifests/booking.yaml
+  /home/you/manifests/service.yaml → /home/du/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/du/manifests/ingress.yaml
+  /home/you/.kube → /home/du/.kube
+  /home/you/.kube/config → /home/du/.kube/config
+
+locker-room
+  /home/you → /home/du
+  /home/you/message_from_folake.txt → /home/du/nachricht_von_folake.txt
+  /home/you/note_from_kemal.txt → /home/du/notiz_von_kemal.txt
+  /home/you/new_db_password.txt → /home/du/neues_db_passwort.txt
+  /home/you/manifests → /home/du/manifests
+  /home/you/manifests/.git → /home/du/manifests/.git
+  /home/you/manifests/.git/HEAD → /home/du/manifests/.git/HEAD
+  /home/you/manifests/.git/config → /home/du/manifests/.git/config
+  /home/you/manifests/namespace.yaml → /home/du/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/du/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/du/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/du/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/du/manifests/booking.yaml
+  /home/you/.kube → /home/du/.kube
+  /home/you/.kube/config → /home/du/.kube/config
+
+deep-end
+  /home/you → /home/du
+  /home/you/message_from_folake.txt → /home/du/nachricht_von_folake.txt
+  /home/you/note_from_rui.txt → /home/du/notiz_von_rui.txt
+  /home/you/manifests → /home/du/manifests
+  /home/you/manifests/namespace.yaml → /home/du/manifests/namespace.yaml
+  /home/you/manifests/service.yaml → /home/du/manifests/service.yaml
+  /home/you/manifests/ingress.yaml → /home/du/manifests/ingress.yaml
+  /home/you/manifests/config.yaml → /home/du/manifests/config.yaml
+  /home/you/manifests/booking.yaml → /home/du/manifests/booking.yaml
+  /home/you/.kube → /home/du/.kube
+  /home/you/.kube/config → /home/du/.kube/config
+
+stuck-queue
+  /home/you → /home/du
+  /home/you/message_from_ines.txt → /home/du/nachricht_von_ines.txt
+  /home/you/note_from_joe.txt → /home/du/notiz_von_joe.txt
+
+new-printer
+  /home/you → /home/du
+  /home/you/message_from_ines.txt → /home/du/nachricht_von_ines.txt
+  /home/you/delivery_note.txt → /home/du/lieferschein.txt
+
+paper-trail
+  /home/you → /home/du
+  /home/you/message_from_ines.txt → /home/du/nachricht_von_ines.txt
+  /home/you/dpo_request.txt → /home/du/dsb_anfrage.txt
+
+expiry-date
+  /srv/ca/README.txt → /srv/ca/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_adaeze.txt → /home/du/nachricht_von_adaeze.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+chain-of-trust
+  /srv/ca/README.txt → /srv/ca/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_adaeze.txt → /home/du/nachricht_von_adaeze.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+chain-of-trust:booth
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /home/you/note_from_mateo.txt → /home/du/notiz_von_mateo.txt
+
+stolen-laptop
+  /srv/ca/README.txt → /srv/ca/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/message_from_adaeze.txt → /home/du/nachricht_von_adaeze.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+who-can-push
+  /home/you → /home/du
+  /home/you/message_from_wanjiru.txt → /home/du/nachricht_von_wanjiru.txt
+  /home/you/note_from_tomasz.txt → /home/du/notiz_von_tomasz.txt
+  /home/you/.forgejo-token → /home/du/.forgejo-token
+  /home/you/.gitconfig → /home/du/.gitconfig
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/du/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/du/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/du/lendshed
+  /home/you/lendshed/README.md → /home/du/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/du/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/du/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/du/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/du/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/du/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/du/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/du/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/du/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/du/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/du/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/du/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/du/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/du/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/du/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/du/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/du/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/du/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/du/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/du/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/du/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/du/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/du/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/du/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/du/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/du/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/du/lendshed/.git/config
+
+leaky-pipeline
+  /home/you → /home/du
+  /home/you/message_from_rosa.txt → /home/du/nachricht_von_rosa.txt
+  /home/you/.forgejo-token → /home/du/.forgejo-token
+  /home/you/.gitconfig → /home/du/.gitconfig
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/du/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/du/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/du/lendshed
+  /home/you/lendshed/README.md → /home/du/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/du/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/du/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/du/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/du/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/du/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/du/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/du/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/du/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/du/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/du/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/du/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/du/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/du/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/du/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/du/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/du/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/du/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/du/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/du/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/du/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/du/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/du/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/du/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/du/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/du/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/du/lendshed/.git/config
+
+signed-release
+  /home/you → /home/du
+  /home/you/message_from_aroha.txt → /home/du/nachricht_von_aroha.txt
+  /home/you/note_from_wanjiru.txt → /home/du/notiz_von_wanjiru.txt
+  /home/you/.forgejo-token → /home/du/.forgejo-token
+  /home/you/.gitconfig → /home/du/.gitconfig
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/old_ed25519 → /home/du/.ssh/old_ed25519
+  /home/you/.ssh/old_ed25519.pub → /home/du/.ssh/old_ed25519.pub
+  /home/you/lendshed → /home/du/lendshed
+  /home/you/lendshed/README.md → /home/du/lendshed/README.md
+  /home/you/lendshed/LICENSE → /home/du/lendshed/LICENSE
+  /home/you/lendshed/requirements.txt → /home/du/lendshed/requirements.txt
+  /home/you/lendshed/mkdocs.yml → /home/du/lendshed/mkdocs.yml
+  /home/you/lendshed/docs → /home/du/lendshed/docs
+  /home/you/lendshed/docs/index.md → /home/du/lendshed/docs/index.md
+  /home/you/lendshed/docs/install.md → /home/du/lendshed/docs/install.md
+  /home/you/lendshed/docs/opening-hours.md → /home/du/lendshed/docs/opening-hours.md
+  /home/you/lendshed/lendshed → /home/du/lendshed/lendshed
+  /home/you/lendshed/lendshed/__init__.py → /home/du/lendshed/lendshed/__init__.py
+  /home/you/lendshed/lendshed/app.py → /home/du/lendshed/lendshed/app.py
+  /home/you/lendshed/lendshed/loans.py → /home/du/lendshed/lendshed/loans.py
+  /home/you/lendshed/lendshed/catalogue.py → /home/du/lendshed/lendshed/catalogue.py
+  /home/you/lendshed/lendshed/reminders.py → /home/du/lendshed/lendshed/reminders.py
+  /home/you/lendshed/lendshed/static → /home/du/lendshed/lendshed/static
+  /home/you/lendshed/lendshed/static/scanner.js → /home/du/lendshed/lendshed/static/scanner.js
+  /home/you/lendshed/tests → /home/du/lendshed/tests
+  /home/you/lendshed/tests/test_loans.py → /home/du/lendshed/tests/test_loans.py
+  /home/you/lendshed/tests/test_catalogue.py → /home/du/lendshed/tests/test_catalogue.py
+  /home/you/lendshed/MAINTAINERS.md → /home/du/lendshed/MAINTAINERS.md
+  /home/you/lendshed/CHANGELOG.md → /home/du/lendshed/CHANGELOG.md
+  /home/you/lendshed/.forgejo → /home/du/lendshed/.forgejo
+  /home/you/lendshed/.forgejo/workflows → /home/du/lendshed/.forgejo/workflows
+  /home/you/lendshed/.forgejo/workflows/ci.yml → /home/du/lendshed/.forgejo/workflows/ci.yml
+  /home/you/lendshed/.git → /home/du/lendshed/.git
+  /home/you/lendshed/.git/HEAD → /home/du/lendshed/.git/HEAD
+  /home/you/lendshed/.git/config → /home/du/lendshed/.git/config
+
+cold-start
+  /home/you → /home/du
+  /home/you/message_from_grace.txt → /home/du/nachricht_von_grace.txt
+  /home/you/note_from_ilse.txt → /home/du/notiz_von_ilse.txt
+  /home/you/message_from_priya.txt → /home/du/nachricht_von_priya.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.config → /home/du/.config
+  /home/you/.config/libvirt → /home/du/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/du/.config/libvirt/libvirt.conf
+
+cold-start:ledger
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LIESMICH.txt
+
+cold-start:agenda
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+cold-start:records
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-side
+  /home/you → /home/du
+  /home/you/message_from_grace.txt → /home/du/nachricht_von_grace.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.config → /home/du/.config
+  /home/you/.config/libvirt → /home/du/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/du/.config/libvirt/libvirt.conf
+
+wrong-side:ledger
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LIESMICH.txt
+
+wrong-side:agenda
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-side:records
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-side:portal
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-side:agenda-training
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-side:reception
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /home/you/note_from_hamid.txt → /home/du/notiz_von_hamid.txt
+
+tight-fit
+  /home/you → /home/du
+  /home/you/message_from_grace.txt → /home/du/nachricht_von_grace.txt
+  /home/you/note_from_joon.txt → /home/du/notiz_von_joon.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.config → /home/du/.config
+  /home/you/.config/libvirt → /home/du/.config/libvirt
+  /home/you/.config/libvirt/libvirt.conf → /home/du/.config/libvirt/libvirt.conf
+
+tight-fit:ledger
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+  /srv/ledger/README.txt → /srv/ledger/LIESMICH.txt
+
+tight-fit:agenda
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+tight-fit:records
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+tight-fit:portal
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+tight-fit:agenda-training
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+no-failover
+  /home/you → /home/du
+  /home/you/message_from_zainab.txt → /home/du/nachricht_von_zainab.txt
+  /home/you/note_from_bastien.txt → /home/du/notiz_von_bastien.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+no-failover:lb2
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+no-failover:web1
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+no-failover:web2
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+no-failover:web3
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+sick-server
+  /home/you → /home/du
+  /home/you/message_from_zainab.txt → /home/du/nachricht_von_zainab.txt
+  /home/you/message_from_teodor.txt → /home/du/nachricht_von_teodor.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+sick-server:lb2
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+sick-server:web1
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+sick-server:web2
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+sick-server:web3
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+split-brain
+  /home/you → /home/du
+  /home/you/message_from_kirsi.txt → /home/du/nachricht_von_kirsi.txt
+  /home/you/message_from_zainab.txt → /home/du/nachricht_von_zainab.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+split-brain:lb2
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+split-brain:web1
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+split-brain:web2
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+split-brain:web3
+  /srv/booking/README.txt → /srv/booking/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+kept-forever
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+  /home/you/note_from_ruben.txt → /home/du/notiz_von_ruben.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+access-request
+  /home/you → /home/du
+  /home/you/message_from_amara.txt → /home/du/nachricht_von_amara.txt
+  /home/you/request_from_priya.txt → /home/du/anfrage_von_priya.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+forget-me
+  /home/you → /home/du
+  /home/you/message_from_kenji.txt → /home/du/nachricht_von_kenji.txt
+  /home/you/message_from_tomas.txt → /home/du/nachricht_von_tomas.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+sleeping-connections
+  /home/you → /home/du
+  /home/you/message_from_halima.txt → /home/du/nachricht_von_halima.txt
+  /home/you/note_from_lwazi.txt → /home/du/notiz_von_lwazi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+least-privilege
+  /home/you → /home/du
+  /home/you/message_from_halima.txt → /home/du/nachricht_von_halima.txt
+  /home/you/scan_from_selin.txt → /home/du/scan_von_selin.txt
+  /home/you/note_from_lwazi.txt → /home/du/notiz_von_lwazi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+least-privilege:barrow
+  /srv/plotline/README.txt → /srv/plotline/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+broken-replica
+  /home/you → /home/du
+  /home/you/message_from_moana.txt → /home/du/nachricht_von_moana.txt
+  /home/you/note_from_lwazi.txt → /home/du/notiz_von_lwazi.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+broken-replica:rake
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+mailbox-full
+  /home/you → /home/du
+  /home/you/message_from_marisol.txt → /home/du/nachricht_von_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/du/notiz_von_yerlan.txt
+
+spam-tide
+  /home/you → /home/du
+  /home/you/message_from_leilani.txt → /home/du/nachricht_von_leilani.txt
+  /home/you/note_from_yerlan.txt → /home/du/notiz_von_yerlan.txt
+
+sorting-office
+  /home/you → /home/du
+  /home/you/message_from_marisol.txt → /home/du/nachricht_von_marisol.txt
+  /home/you/note_from_yerlan.txt → /home/du/notiz_von_yerlan.txt
+  /home/you/sample-booking.eml → /home/du/beispiel-buchung.eml
+  /home/you/sample-list.eml → /home/du/beispiel-liste.eml
+
+last-cut
+  /home/you → /home/du
+  /home/you/message_from_nkechi.txt → /home/du/nachricht_von_nkechi.txt
+  /home/you/notes_from_haruto.txt → /home/du/notizen_von_haruto.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+down-in-order
+  /home/you → /home/du
+  /home/you/message_from_akosua.txt → /home/du/nachricht_von_akosua.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+down-in-order:harness
+  /srv/archive/README.txt → /srv/archive/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+old-battery
+  /home/you → /home/du
+  /home/you/message_from_thandiwe.txt → /home/du/nachricht_von_thandiwe.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+old-battery:harness
+  /srv/archive/README.txt → /srv/archive/LIESMICH.txt
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+public-bucket
+  /home/you → /home/du
+  /home/you/message_from_esperanza.txt → /home/du/nachricht_von_esperanza.txt
+  /home/you/notes_from_teodora.txt → /home/du/notizen_von_teodora.txt
+  /home/you/.aws → /home/du/.aws
+  /home/you/.aws/credentials → /home/du/.aws/credentials
+  /home/you/.aws/config → /home/du/.aws/config
+  /home/you/bin → /home/du/bin
+  /home/you/bin/deploy-site → /home/du/bin/deploy-site
+  /home/you/site → /home/du/site
+  /home/you/site/index.html → /home/du/site/index.html
+  /home/you/site/agenda.html → /home/du/site/agenda.html
+  /home/you/site/classes.html → /home/du/site/classes.html
+  /home/you/site/404.html → /home/du/site/404.html
+  /home/you/site/css → /home/du/site/css
+  /home/you/site/css/style.css → /home/du/site/css/style.css
+  /home/you/site/images → /home/du/site/images
+  /home/you/site/images/gala-2031.jpg → /home/du/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/du/site/images/studio.jpg
+
+offsite-copy
+  /home/you → /home/du
+  /home/you/message_from_linh.txt → /home/du/nachricht_von_linh.txt
+  /home/you/message_from_anahera.txt → /home/du/nachricht_von_anahera.txt
+  /home/you/notes_from_teodora.txt → /home/du/notizen_von_teodora.txt
+  /home/you/.aws → /home/du/.aws
+  /home/you/.aws/credentials → /home/du/.aws/credentials
+  /home/you/.aws/config → /home/du/.aws/config
+  /home/you/bin → /home/du/bin
+  /home/you/bin/deploy-site → /home/du/bin/deploy-site
+  /home/you/site → /home/du/site
+  /home/you/site/index.html → /home/du/site/index.html
+  /home/you/site/agenda.html → /home/du/site/agenda.html
+  /home/you/site/classes.html → /home/du/site/classes.html
+  /home/you/site/404.html → /home/du/site/404.html
+  /home/you/site/css → /home/du/site/css
+  /home/you/site/css/style.css → /home/du/site/css/style.css
+  /home/you/site/images → /home/du/site/images
+  /home/you/site/images/gala-2031.jpg → /home/du/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/du/site/images/studio.jpg
+
+big-file
+  /home/you → /home/du
+  /home/you/message_from_farrukh.txt → /home/du/nachricht_von_farrukh.txt
+  /home/you/message_from_siosaia.txt → /home/du/nachricht_von_siosaia.txt
+  /home/you/notes_from_teodora.txt → /home/du/notizen_von_teodora.txt
+  /home/you/.aws → /home/du/.aws
+  /home/you/.aws/credentials → /home/du/.aws/credentials
+  /home/you/.aws/config → /home/du/.aws/config
+  /home/you/bin → /home/du/bin
+  /home/you/bin/deploy-site → /home/du/bin/deploy-site
+  /home/you/site → /home/du/site
+  /home/you/site/index.html → /home/du/site/index.html
+  /home/you/site/agenda.html → /home/du/site/agenda.html
+  /home/you/site/classes.html → /home/du/site/classes.html
+  /home/you/site/404.html → /home/du/site/404.html
+  /home/you/site/css → /home/du/site/css
+  /home/you/site/css/style.css → /home/du/site/css/style.css
+  /home/you/site/images → /home/du/site/images
+  /home/you/site/images/gala-2031.jpg → /home/du/site/images/gala-2031.jpg
+  /home/you/site/images/studio.jpg → /home/du/site/images/studio.jpg
+
+what-we-have
+  /home/you → /home/du
+  /home/you/message_from_teuila.txt → /home/du/nachricht_von_teuila.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+what-we-have:paddock
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+rebuild
+  /home/you → /home/du
+  /home/you/message_from_teuila.txt → /home/du/nachricht_von_teuila.txt
+  /home/you/envelope.txt → /home/du/umschlag.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+rebuild:haven
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+switch-and-learn
+  /home/you → /home/du
+  /home/you/message_from_teuila.txt → /home/du/nachricht_von_teuila.txt
+  /home/you/review.md → /home/du/rueckblick.md
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+switch-and-learn:haven
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+new-neighbour
+  /home/you → /home/du
+  /home/you/message_from_dilnoza.txt → /home/du/nachricht_von_dilnoza.txt
+  /home/you/notes_from_seun.txt → /home/du/notizen_von_seun.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+new-neighbour:noticeboard
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+wrong-label
+  /home/you → /home/du
+  /home/you/message_from_thuy.txt → /home/du/nachricht_von_thuy.txt
+  /home/you/message_from_itzel.txt → /home/du/nachricht_von_itzel.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+wrong-label:noticeboard
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+port-and-boolean
+  /home/you → /home/du
+  /home/you/message_from_dilnoza.txt → /home/du/nachricht_von_dilnoza.txt
+  /home/you/notes_from_tenzin.txt → /home/du/notizen_von_tenzin.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+port-and-boolean:noticeboard
+  /home/you → /home/du
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/authorized_keys → /home/du/.ssh/authorized_keys
+
+first-plan
+  /home/you → /home/du
+  /home/you/message_from_andile.txt → /home/du/nachricht_von_andile.txt
+  /home/you/notes_from_yusra.txt → /home/du/notizen_von_yusra.txt
+  /home/you/.tofurc → /home/du/.tofurc
+
+drift
+  /home/you → /home/du
+  /home/you/message_from_andile.txt → /home/du/nachricht_von_andile.txt
+  /home/you/message_from_femi.txt → /home/du/nachricht_von_femi.txt
+  /home/you/.tofurc → /home/du/.tofurc
+
+no-root-needed
+  /home/you → /home/du
+  /home/you/message_from_soo-ah.txt → /home/du/nachricht_von_soo-ah.txt
+  /home/you/notes_from_bolat.txt → /home/du/notizen_von_bolat.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LIESMICH.txt
+
+logged-out
+  /home/you → /home/du
+  /home/you/message_from_ayasha.txt → /home/du/nachricht_von_ayasha.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+  /srv/trailbook/README.txt → /srv/trailbook/LIESMICH.txt
+
+denied-upload
+  /home/you → /home/du
+  /home/you/message_from_nomvula.txt → /home/du/nachricht_von_nomvula.txt
+  /home/you/notes_from_bartek.txt → /home/du/notizen_von_bartek.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+backup-profile
+  /home/you → /home/du
+  /home/you/message_from_hinewai.txt → /home/du/nachricht_von_hinewai.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/id_ed25519 → /home/du/.ssh/id_ed25519
+  /home/you/.ssh/id_ed25519.pub → /home/du/.ssh/id_ed25519.pub
+
+out-of-the-open
+  /home/you → /home/du
+  /home/you/message_from_taslima.txt → /home/du/nachricht_von_taslima.txt
+
+keys-change-hands
+  /home/you → /home/du
+  /home/you/message_from_taslima.txt → /home/du/nachricht_von_taslima.txt
+  /home/you/message_from_ikenna.txt → /home/du/nachricht_von_ikenna.txt
+  /home/you/message_from_makoa.txt → /home/du/nachricht_von_makoa.txt
+  /home/you/.config → /home/du/.config
+  /home/you/.config/sops → /home/du/.config/sops
+  /home/you/.config/sops/age → /home/du/.config/sops/age
+  /home/you/.config/sops/age/keys.txt → /home/du/.config/sops/age/keys.txt
+
+sealed
+  /home/you → /home/du
+  /home/you/message_from_desta.txt → /home/du/nachricht_von_desta.txt
+  /home/you/message_from_hiroko.txt → /home/du/nachricht_von_hiroko.txt
+  /home/you/message_from_nnamdi.txt → /home/du/nachricht_von_nnamdi.txt
+  /home/you/.vault-token → /home/du/.vault-token
+  /media/usb → /media/stick
+  /media/usb/unseal-share-3.txt → /media/stick/unseal-share-3.txt
+
+need-to-know
+  /home/you → /home/du
+  /home/you/message_from_desta.txt → /home/du/nachricht_von_desta.txt
+  /home/you/notes_from_ruslan.txt → /home/du/notizen_von_ruslan.txt
+  /home/you/.vault-token → /home/du/.vault-token
+
+leaked-token
+  /home/you → /home/du
+  /home/you/message_from_desta.txt → /home/du/nachricht_von_desta.txt
+  /home/you/forum_post.txt → /home/du/forumsbeitrag.txt
+  /home/you/.vault-token → /home/du/.vault-token
+
+desk
+  /home/you → /home/du
+  /home/you/welcome.txt → /home/du/willkommen.txt
+  /home/you/.ssh → /home/du/.ssh
+  /home/you/.ssh/config → /home/du/.ssh/config

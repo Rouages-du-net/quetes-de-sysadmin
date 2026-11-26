@@ -624,6 +624,71 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 
+// The German page, a draft like the Spanish one: built and playable, marked
+// as a translation in progress, kept out of search engines, offered by no
+// other page; The Eraser in German, with the tools' German messages.
+for (const width of [1000, 375]) {
+  const page = await browser.newPage({ viewport: { width: width, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  await withCsp(page);
+  await page.goto(`${BASE}/de/`);
+  const game = page.locator('quetes-de-sysadmin');
+  check((await page.locator('html').getAttribute('lang')) === 'de', `de ${width} px: the page is in German`);
+  check((await page.locator('meta[name="robots"]').getAttribute('content')) === 'noindex', `de ${width} px: a draft is not indexed`);
+  check((await page.locator('.draft-banner').textContent()).includes('Übersetzung in Arbeit'), `de ${width} px: the banner says the translation is in progress`);
+  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).join(' ') === '/en/ /fr/', `de ${width} px: links to the complete languages`);
+  check((await game.locator('.output').textContent()).includes('Willkommen an deinem Rechner'), `de ${width} px: the game speaks German`);
+  check((await game.locator('.prompt').textContent()) === 'du@rechner:~$', `de ${width} px: the player's account is du, the workstation rechner`);
+  const input = game.locator('form input');
+  await input.fill('ls -y');
+  await input.press('Enter');
+  check((await game.locator('.output').textContent()).includes('„ls --help“ liefert weitere Informationen.'), `de ${width} px: coreutils' German messages`);
+  await input.fill('ssh koenigreich');
+  await input.press('Enter');
+  await input.fill('yes');
+  await input.press('Enter');
+  await page.waitForFunction(() => document.querySelector('quetes-de-sysadmin')?.shadowRoot?.querySelector('.prompt')?.textContent?.startsWith('du@koenigreich'));
+  check((await game.locator('.output').textContent()).includes('Du wachst in der Hütte eines Fischers auf'), `de ${width} px: The Eraser in German`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `de ${width} px: no horizontal scrolling`);
+  // Longer words than English's: each visible button's text fits in it, on a
+  // wide screen (at 375 px the tool buttons keep only their icon, the menu's
+  // texts wrap; the reread button is only shown with the focus).
+  const overflowing = await game.locator('button:visible').evaluateAll((bs) =>
+    bs
+      .filter((b) => !b.classList.contains('reread-button'))
+      .filter((b) => {
+        const range = document.createRange();
+        range.selectNodeContents(b);
+        return range.getBoundingClientRect().width > b.getBoundingClientRect().width + 1;
+      })
+      .map((b) => b.textContent),
+  );
+  if (width === 1000) check(overflowing.length === 0, `de ${width} px: no button's text overflows ${overflowing.join(', ')}`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/de-${width}.png` });
+  check(errors.length === 0, `de ${width} px: no console error ${errors.join(' ')}`);
+  // The teachers' page in German.
+  await page.goto(`${BASE}/de/lehrkraefte/`);
+  check((await page.locator('h1').textContent()).includes('Für Lehrkräfte'), `de ${width} px: the teachers' page in German`);
+  check((await page.locator('#c-lighthouse dt').first().textContent()) === 'Ziel', `de ${width} px: sheets in German`);
+  check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `de ${width} px: sheets without horizontal scrolling`);
+  if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/de-teachers-${width}.png` });
+  check(errors.length === 0, `de ${width} px: sheets without console error ${errors.join(' ')}`);
+  await page.close();
+}
+{
+  // No page of a complete language offers the draft.
+  const page = await browser.newPage();
+  await page.goto(`${BASE}/en/`);
+  check((await page.locator('a[href^="/de/"], link[hreflang="de"]').count()) === 0, 'de: the English page offers no draft');
+  const feed = await page.request.get(`${BASE}/de/feed.xml`);
+  const manifest = await (await page.request.get(`${BASE}/de/manifest.webmanifest`)).json();
+  check(feed.ok() && (await feed.text()).includes('Sysadmin-Quests: neue Geschichten'), 'de: the German feed');
+  check(manifest.lang === 'de' && manifest.start_url === '/de/', 'de: the German manifest');
+  await page.close();
+}
+
 // A game started in French and resumed in English (the same save):
 // ssh kingdom (royaume in French) connects with the English account (you), not with "vous".
 {

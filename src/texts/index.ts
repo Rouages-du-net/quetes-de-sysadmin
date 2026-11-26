@@ -137,6 +137,10 @@ export const loadAllTexts = () => Promise.all(Object.keys(GROUPS).map(loadGroup)
 // pour qu'un signe ne se retrouve jamais seul en début de ligne.
 const TYPOGRAPHY: Record<Language, (text: string) => string> = {
   fr: (text) => text.replace(/« /g, '« ').replace(/ ([:;!?»])/g, ' $1'),
+  // German: a non-breaking space inside "z. B.", "d. h.", "u. a.", "o. Ä." and
+  // after "Nr." before a number, so that they never break across two lines
+  // (the quotes „…“ are written in the texts themselves).
+  de: (text) => text.replace(/\b([zdouZDOU])\. (B|h|a|Ä)\./g, '$1.\u00a0$2.').replace(/\bNr\. (?=\d)/g, 'Nr.\u00a0'),
 };
 export const typography = (text: string, language: Language) => TYPOGRAPHY[language]?.(text) ?? text;
 

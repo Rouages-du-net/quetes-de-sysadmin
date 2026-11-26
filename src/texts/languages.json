@@ -2,7 +2,8 @@
   "languages": {
     "en": { "name": "English", "status": "complete" },
     "fr": { "name": "Français", "status": "complete" },
-    "es": { "name": "Español", "status": "draft" }
+    "es": { "name": "Español", "status": "draft" },
+    "de": { "name": "Deutsch", "status": "draft" }
   },
   "storyFiles": {
     "junk-mail": ["gardens.ftl"],

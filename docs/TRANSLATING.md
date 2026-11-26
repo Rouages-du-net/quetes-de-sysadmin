@@ -12,7 +12,7 @@ text missing from a translation shows in English (`LANGUAGE_BY_DEFAULT` and
 `gameLanguage()` in `src/texts/index.ts`); see "Complete and draft languages"
 below. The `help` command works in every
 language, like bash's builtin; each language adds its own name for it
-(`command-help`: `aide` in French, `ayuda` in Spanish).
+(`command-help`: `aide` in French, `ayuda` in Spanish, `hilfe` in German).
 
 ## The files
 
@@ -179,6 +179,7 @@ Each language is **complete** or a **draft**, in `src/texts/languages.json`.
 | `en` | English | reference, default and fallback language; complete (texts, manual, tool messages as with `LANG=C`, names of the Eraser's and the workstation's places and objects, documents and data on the other stories' servers, `you` and `eraser` accounts) |
 | `fr` | French | complete; the project's original language: translation of the English names of places, machines, accounts and passwords |
 | `es` | Spanish | draft: the interface, the dialogs, the shell's and the commands' messages (from the Spanish catalogues of the [Translation Project](https://translationproject.org/team/es.html) and of git: `ls: no se puede acceder a…`, `No existe el fichero o el directorio`), the names of places, objects, machines and passwords, the workstation, The Eraser, the stories' titles and summaries, the whole manual (every page; command names, options, paths and quoted tool messages stay as the tools write them). `npm run coverage:texts -- es` says what is left |
+| `de` | German | draft: the interface, the dialogs, the shell's and the commands' messages (from the German catalogues of the [Translation Project](https://translationproject.org/team/de.html) and of git: `ls: Zugriff auf '…' nicht möglich`, `Datei oder Verzeichnis nicht gefunden`), the names of places, objects, machines and passwords of every story, the workstation, The Eraser (`Der Radierer`) and its manual pages, the stories' titles and summaries. The term choices are in [glossary-de.md](glossary-de.md). `npm run coverage:texts -- de` says what is left |
 
 Spanish is neutral international Spanish, usable in Spain and in Latin
 America, with the informal "tú", like the French "tu"; inclusive where it is
@@ -187,6 +188,16 @@ heavy forms. In prose, a file is an *archivo* and a directory a *carpeta*
 (*directorio* in the manual); the tools' own messages keep their official
 translation (*fichero*). Names you type have no accent and no ñ
 (`EscuelaDeSenales`, `contrasena`).
+
+German is standard German with the informal "du" (capitalised only at the
+start of a sentence), using the terms German admins really use: English
+where they say it (Server, Log, Backup, Deployment, Repository), German
+where they do (Datei, Verzeichnis, Benutzer, Passwort, Rechte). Inclusive
+through neutral phrasing first (Lehrkräfte, Lernende, die Person, Admins),
+the middle dot only where nothing neutral exists. Prose quotes are „…“.
+Names you type have no umlaut and no ß (`Huegel`, `Baeckerei`,
+`koenigreich`). The choices are listed in [glossary-de.md](glossary-de.md),
+for the next translators and a native reviewer.
 
 ## Complete and draft languages
 
@@ -218,7 +229,8 @@ A **draft** is a translation in progress, file by file:
 - the tests replay, in a draft, the stories it translates
   (`languagesFor()` in `tests/names.ts`), and check that it translates The
   Eraser and the core files first;
-- the site builds its pages (`/es/`, `/es/docentes/`…, see
+- the site builds its pages (`/es/`, `/es/docentes/`, `/de/`,
+  `/de/lehrkraefte/`…, see
   `src/site-languages.ts`) with a banner ("translation in progress"),
   `noindex`, and no link from the other languages nor redirection from the
   root: nobody lands there by chance on a game half in English. The
