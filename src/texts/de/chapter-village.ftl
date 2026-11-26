@@ -126,10 +126,17 @@ village-column =
     Jahr 104: Der Apfelmarkt fällt aus (es regnet).
     Jahr 130: Der Leuchtturm der Insel wird entzündet, um die Boote zu leiten.
     Jahr 131: Der Radierer lebt an der Wurzel, ganz unten, unter der Kanalisation des Dorfes.
+    Jahr 133: Die Bäckerei gewinnt den regionalen Brotpreis.
+    Jahr 136: Ein Sturm reißt das Vordach des Markts mit.
+    Jahr 140: Die Kanalarbeiter hängen ein Vorhängeschloss an den Deckel der Kanalisation. Ihr Passwort: otter. Leg ein Objekt mit diesem Namen neben den Deckel, im Hof, und er geht auf.
+    Jahr 145: Die Schule bekommt eine zweite Tafel.
+    Jahr 150: Die Uhr wird zum ersten Mal repariert.
+    Jahr 152: Das Archiv zieht unter das Rathaus.
+    Jahr 160: Der Apfelmarkt findet statt (Sonnenschein).
 village-archives-blocked = Die Tür des Archivs ist verschlossen. Die Plakate im Rathaus verraten dir vielleicht mehr.
 village-barricade = Eine Barrikade aus Brettern, Fässern und kaputten Stühlen, in aller Eile errichtet. Viel zu schwer, um sie zu verschieben.
 village-barricade-protected-mv = Du ziehst mit aller Kraft… nichts. Die Barrikade ist zu schwer für mv. Aber du kennst einen radikaleren Zauber.
-village-wall = Ein gepflasterter Hof. Ganz hinten ein halb offener Kanaldeckel: die Kanalisation.
+village-wall = Ein gepflasterter Hof. Ganz hinten der Deckel der Kanalisation, mit einem Vorhängeschloss. Ein Schild: „Nur für Kanalarbeiter. Unser Passwort steht in der Chronik des Dorfs, im Archiv.“
 village-rats =
     Ein Heer von Ratten versperrt den Weg.
 
@@ -147,6 +154,7 @@ village-nour =
     Er ist diese Rutsche hinuntergerutscht, Richtung Wurzel, und hat dabei
     gemurmelt: „ausradieren, ausradieren, der Befehl der Wurzel…“ Dann
     haben mir die Ratten den Weg versperrt.“
+village-manhole-blocked = Der Kanaldeckel ist mit einem Vorhängeschloss gesichert. Das Passwort der Kanalarbeiter steht in der Chronik des Dorfs, im Archiv. Sie ist lang: grep findet die Zeile, die du brauchst.
 village-gallery-blocked = „Piep!“ Die Ratten versperren den Tunnel.
 village-yard-blocked = Eine Barrikade versperrt den Eingang zum Hof.
 village-alley-blocked = Das Tor der Gasse ist geschlossen. Es öffnet sich zu einer festen Uhrzeit… aber die Uhr des Dorfes ist stehen geblieben.
@@ -158,6 +166,7 @@ village-event-class-without-nour = An der Schule entsteht ein Klassenzimmer. Die
 village-event-barricade =
     Puff! Die Barrikade verschwindet. Der Hof ist zugänglich.
     (rm geht über keinen Papierkorb: Sie kommt nie wieder.)
+village-event-manhole = Klick! Das Schloss erkennt das Passwort: Der Deckel gleitet zur Seite. Die Kanalisation ist offen.
 village-event-rats = Die Ratten stürzen sich auf den Käse und schleppen ihn in ein Loch. Der Tunnel ist frei.
 village-event-nour-without-class = „Ich würde gern zurück“, sagt Nour, „aber der Radierer hat mein Klassenzimmer ausradiert. Kannst du es an der Schule wieder aufbauen?“ (mkdir)
 village-event-nour =

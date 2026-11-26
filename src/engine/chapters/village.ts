@@ -15,6 +15,9 @@ const CLASS = `${M}/School/Classroom`;
 // The Workshop's gears (gear, gear_2…), under their name in the language.
 const engrenages = (j: Game) => j.count(path(j.t, WORKSHOP), name(j.t, 'gear'));
 
+// The Sewer's manhole: the password (in the chronicle) left as an object in the Yard.
+const unlocked = (j: Game) => j.exists(path(j.t, `${YARD}/otter`));
+
 // A notice: one sentence per line (grep reads them line by line).
 const shows = (text: string) => f(text, { lines: true });
 
@@ -26,8 +29,9 @@ export const village: Chapter = {
   names: true,
   welcome: 'crier.txt',
   final: 'nour',
-  // In the game: the sourdough, the gears, the barricade, the rats, then Nour and her Class.
-  steps: ['sourdough', 'gear', 'gears', 'barricade', 'rats', 'nour-without-class', 'class', 'nour'],
+  // In the game: the sourdough, the gears, the barricade, the manhole (its password is a line
+  // of the long chronicle: grep's exercise), the rats, then Nour and her Class.
+  steps: ['sourdough', 'gear', 'gears', 'barricade', 'manhole', 'rats', 'nour-without-class', 'class', 'nour'],
   createWorld: (t) =>
     d({
       Quay: d({
@@ -96,6 +100,8 @@ export const village: Chapter = {
                       (game) => (game.exists(path(game.t, `${SEWER}/rats.txt`)) ? game.t('village-gallery-blocked') : null),
                     ),
                   },
+                  // Padlocked until an object named after the sewer workers' password lies in the Yard.
+                  (game) => (unlocked(game) ? null : game.t('village-manhole-blocked')),
                 ),
               },
               (game) => (game.exists(path(game.t, `${ALLEY}/barricade`)) ? game.t('village-yard-blocked') : null),
@@ -134,6 +140,11 @@ export const village: Chapter = {
       id: 'barricade',
       condition: (j) => !j.exists(path(j.t, `${ALLEY}/barricade`)),
       message: (j) => j.t('village-event-barricade'),
+    },
+    {
+      id: 'manhole',
+      condition: (j) => unlocked(j),
+      message: (j) => j.t('village-event-manhole'),
     },
     {
       id: 'rats',

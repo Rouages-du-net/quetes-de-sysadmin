@@ -126,10 +126,17 @@ village-column =
     Año 104: se cancela la feria de la manzana (llueve).
     Año 130: se enciende el faro de la isla para guiar a los barcos.
     Año 131: el Borrador vive en la Raíz, en lo más hondo, bajo las alcantarillas del Pueblo.
+    Año 133: la panadería gana el premio regional del pan.
+    Año 136: una tormenta se lleva el toldo del mercado.
+    Año 140: los poceros ponen un candado a la tapa de la Alcantarilla. Su contraseña: nutria. Deja un objeto con ese nombre junto a la tapa, en el Patio, y se abre.
+    Año 145: la escuela recibe una segunda pizarra.
+    Año 150: el reloj se repara por primera vez.
+    Año 152: el archivo se muda bajo el Ayuntamiento.
+    Año 160: la feria de la manzana se celebra (sol radiante).
 village-archives-blocked = La puerta del Archivo está cerrada con llave. Los carteles del Ayuntamiento quizá te digan más.
 village-barricade = Una barricada de tablas, barriles y sillas rotas, levantada deprisa. Demasiado pesada para moverla.
 village-barricade-protected-mv = Tiras con todas tus fuerzas… nada. La barricada pesa demasiado para mv. Pero conoces un hechizo más radical.
-village-wall = Un patio empedrado. Al fondo, una tapa de alcantarilla entreabierta: la Alcantarilla.
+village-wall = Un patio empedrado. Al fondo, la tapa de la Alcantarilla, con un candado. Un letrero: «Solo poceros. Nuestra contraseña está escrita en la crónica del Pueblo, en el Archivo».
 village-rats =
     Un ejército de ratas corta el paso.
 
@@ -146,6 +153,7 @@ village-nour =
     «¡Gracias por venir! Seguí al Borrador hasta aquí. Se deslizó por
     este tobogán, hacia la Raíz, murmurando: "borrar, borrar, la orden
     de la raíz…". Luego las ratas me cortaron el paso.»
+village-manhole-blocked = La tapa de la alcantarilla tiene un candado. La contraseña de los poceros está en la crónica del Pueblo, en el Archivo. Es larga: grep encuentra la línea que necesitas.
 village-gallery-blocked = «¡Iii!» Las ratas bloquean la Galeria.
 village-yard-blocked = Una barricada bloquea la entrada del Patio.
 village-alley-blocked = La verja del Callejon está cerrada. Se abre a una hora fija… pero el reloj del Pueblo se ha parado.
@@ -157,6 +165,7 @@ village-event-class-without-nour = Un Aula se levanta en la Escuela. Los niños 
 village-event-barricade =
     ¡Puf! La barricada desaparece. El Patio es accesible.
     (rm no pasa por ninguna papelera: nunca volverá.)
+village-event-manhole = ¡Clic! El candado reconoce la contraseña: la tapa se desliza a un lado. La Alcantarilla está abierta.
 village-event-rats = Las ratas se lanzan sobre el queso y se lo llevan a un agujero. La Galeria está despejada.
 village-event-nour-without-class = «Me gustaría volver», dice Nour, «pero el Borrador borró mi Aula. ¿Puedes reconstruirla, en la Escuela?» (mkdir)
 village-event-nour =

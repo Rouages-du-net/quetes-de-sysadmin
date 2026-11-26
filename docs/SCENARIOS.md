@@ -434,6 +434,7 @@ The boat drops the character at the harbour Town.
 | Boulangerie | three sourdoughs for the baker | `cp` |
 | Atelier | make a gear, then five: the clock starts again and opens the Alley's gate | `touch`, `cp` |
 | Ruelle | a barricade too heavy for `mv` | `rm` (and no recycle bin) |
+| Ruelle/Cour | the Sewer's manhole is padlocked: its password (`loutre`, `otter` in English) is one line of the long chronicle; an object of that name in the Yard opens it, so the chapter can't be won without `grep` | `grep Egout chronique.txt`, `touch loutre` |
 | Ruelle/Cour/Egout | pay the rats with the Market's cheese, without going back | `cp ~/Marche/fromage .` (full path, `.`) |
 | Egout/Galerie | find Nour at the edge of the Slide | — |
 | Ecole | rebuild Nour's Classroom (a place) | `mkdir` |

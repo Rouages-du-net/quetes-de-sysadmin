@@ -125,6 +125,9 @@ for (const language of LANGUAGES)
           'mv barricade ..',
           'rm barricade',
           'cd Yard/Sewer',
+          'grep Sewer ~/TownHall/Archives/chronicle.txt',
+          'touch Yard/otter',
+          'cd Yard/Sewer',
           'cd Tunnel',
           'cp ~/Market/cheese .',
           'cd Tunnel',
@@ -135,6 +138,8 @@ for (const language of LANGUAGES)
         contains(all, 'La porte des Archives est fermée à clé');
         contains(all, '« Pas mon dernier levain ! »');
         contains(all, 'La barricade est trop lourde pour mv');
+        contains(all, 'est cadenassée');
+        contains(all, 'loutre. Pose un objet de ce nom');
         contains(all, 'l’Effaceur a effacé ma Classe');
         expect(s.finished).toBe(true);
       });
