@@ -66,6 +66,7 @@ name-sourdough = sauerteig
 name-Workshop = Werkstatt
 name-maker-txt = bastlerin.txt
 name-gear = zahnrad
+name-otter = otter
 name-School = Schule
 name-teacher-txt = lehrer.txt
 name-Classroom = Klassenzimmer

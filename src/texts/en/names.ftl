@@ -66,6 +66,7 @@ name-sourdough = sourdough
 name-Workshop = Workshop
 name-maker-txt = maker.txt
 name-gear = gear
+name-otter = otter
 name-School = School
 name-teacher-txt = teacher.txt
 name-Classroom = Classroom

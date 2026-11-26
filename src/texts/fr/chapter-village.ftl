@@ -124,10 +124,17 @@ village-column =
     An 104 : la foire aux pommes est annulée (il pleut).
     An 130 : on allume le phare de l'île pour guider les bateaux.
     An 131 : l'Effaceur vit à la Racine, tout en bas, sous les égouts du Bourg.
+    An 133 : la boulangerie gagne le prix régional du pain.
+    An 136 : une tempête emporte l'auvent du marché.
+    An 140 : les égoutiers cadenassent la plaque de l'Egout. Leur mot de passe : loutre. Pose un objet de ce nom à côté de la plaque, dans la Cour, et elle s'ouvre.
+    An 145 : l'école reçoit un second tableau noir.
+    An 150 : l'horloge est réparée pour la première fois.
+    An 152 : les archives déménagent sous la Mairie.
+    An 160 : la foire aux pommes a lieu (grand soleil).
 village-archives-blocked = La porte des Archives est fermée à clé. Les affiches de la Mairie en disent peut-être plus.
 village-barricade = Une barricade de planches, de tonneaux et de chaises cassées, dressée à la hâte. Bien trop lourde pour être déplacée.
 village-barricade-protected-mv = Tu tires de toutes tes forces… rien. La barricade est trop lourde pour mv. Mais tu connais un sort plus radical.
-village-wall = Une cour pavée. Au fond, une plaque d'égout entrouverte : l'Egout.
+village-wall = Une cour pavée. Au fond, la plaque de l'Egout, fermée par un cadenas. Un panneau : « Réservé aux égoutiers. Notre mot de passe est écrit dans la chronique du Bourg, aux Archives. »
 village-rats =
     Une armée de rats bloque le passage.
 
@@ -144,6 +151,7 @@ village-nour =
     « Merci d'être venu·e ! J'ai suivi l'Effaceur jusqu'ici. Il a glissé par
     ce Toboggan, vers la Racine, en marmonnant : "effacer, effacer, l'ordre
     de la racine…" Puis les rats m'ont bloquée. »
+village-manhole-blocked = La plaque d'égout est cadenassée. Le mot de passe des égoutiers est dans la chronique du Bourg, aux Archives. Elle est longue : grep trouve la ligne qu'il te faut.
 village-gallery-blocked = « Couic ! » Les rats te barrent la Galerie.
 village-yard-blocked = Une barricade bloque l’entrée de la Cour.
 village-alley-blocked = La grille de la Ruelle est fermée. Elle s’ouvre à heure fixe… mais l’horloge du Bourg est arrêtée.
@@ -155,6 +163,7 @@ village-event-class-without-nour = Une Classe se dresse à l’École. Les enfan
 village-event-barricade =
     Pouf ! La barricade disparaît. La Cour est accessible.
     (rm ne passe par aucune corbeille : elle ne reviendra jamais.)
+village-event-manhole = Clic ! Le cadenas reconnaît le mot de passe : la plaque glisse sur le côté. L'Egout est ouvert.
 village-event-rats = Les rats se jettent sur le fromage et l’emportent dans un trou. La Galerie est libre.
 village-event-nour-without-class = « Je veux bien rentrer », dit Nour, « mais l’Effaceur a effacé ma Classe. Tu peux la reconstruire, à l’École ? » (mkdir)
 village-event-nour =

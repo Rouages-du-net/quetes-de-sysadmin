@@ -66,6 +66,7 @@ name-sourdough = masamadre
 name-Workshop = Taller
 name-maker-txt = artesana.txt
 name-gear = engranaje
+name-otter = nutria
 name-School = Escuela
 name-teacher-txt = maestra.txt
 name-Classroom = Aula

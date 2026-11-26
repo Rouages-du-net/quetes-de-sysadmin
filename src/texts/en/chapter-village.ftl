@@ -126,10 +126,17 @@ village-column =
     Year 104: the apple fair is cancelled (it's raining).
     Year 130: the island's lighthouse is lit to guide the boats.
     Year 131: the Eraser lives at the Root, at the very bottom, beneath the Village sewers.
+    Year 133: the bakery wins the regional bread prize.
+    Year 136: a storm carries off the market's awning.
+    Year 140: the sewer workers padlock the Sewer's manhole. Their password: otter. Leave an object of that name beside the manhole, in the Yard, and it opens.
+    Year 145: the school gets a second blackboard.
+    Year 150: the clock is repaired for the first time.
+    Year 152: the archives move under the TownHall.
+    Year 160: the apple fair takes place (sunshine).
 village-archives-blocked = The door of the Archives is locked. The posters at the TownHall may tell you more.
 village-barricade = A barricade of planks, barrels and broken chairs, put up in a hurry. Far too heavy to be moved.
 village-barricade-protected-mv = You pull with all your might… nothing. The barricade is too heavy for mv. But you know a more radical spell.
-village-wall = A paved courtyard. At the far end, a half-open manhole cover: the Sewer.
+village-wall = A paved courtyard. At the far end, the Sewer's manhole cover, padlocked. A sign: "Sewer workers only. Our password is written in the Village chronicle, in the Archives."
 village-rats =
     An army of rats is blocking the way.
 
@@ -146,6 +153,7 @@ village-nour =
     "Thank you for coming! I followed the Eraser all the way here. It slid down
     this slide, towards the Root, muttering: "erase, erase, the order
     of the root…" Then the rats blocked my way."
+village-manhole-blocked = The manhole cover is padlocked. The sewer workers' password is in the Village chronicle, in the Archives. It is long: grep finds the line you need.
 village-gallery-blocked = "Squeak!" The rats block the Tunnel.
 village-yard-blocked = A barricade blocks the entrance to the Yard.
 village-alley-blocked = The gate of the Alley is closed. It opens at a set time… but the Village clock has stopped.
@@ -157,6 +165,7 @@ village-event-class-without-nour = A Classroom rises at the School. The children
 village-event-barricade =
     Poof! The barricade disappears. The Yard is accessible.
     (rm goes through no bin: it will never come back.)
+village-event-manhole = Click! The padlock recognises the password: the manhole cover slides aside. The Sewer is open.
 village-event-rats = The rats pounce on the cheese and carry it off into a hole. The Tunnel is clear.
 village-event-nour-without-class = "I'd like to go back," says Nour, "but the Eraser erased my Classroom. Can you rebuild it, at the School?" (mkdir)
 village-event-nour =

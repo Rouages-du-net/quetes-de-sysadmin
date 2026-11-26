@@ -68,6 +68,7 @@ name-sourdough = levain
 name-Workshop = Atelier
 name-maker-txt = artisane.txt
 name-gear = engrenage
+name-otter = loutre
 name-School = Ecole
 name-teacher-txt = institutrice.txt
 name-Classroom = Classe
