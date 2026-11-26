@@ -25,6 +25,7 @@ stories-locked = { $count ->
    *[other] 🔒 Noch { $count } Geschichten gesperrt
 }
 button-next = Nächstes Kapitel →
+end-done = ✓ Kapitel abgeschlossen.
 button-restart = Dieses Kapitel neu starten
 tips = Tipps: Tab vervollständigt Namen von Befehlen, Verzeichnissen und Dateien, ↑ holt frühere Befehle zurück, „hilfe“ listet die Befehle, die du kennst, „man befehl“ öffnet das Handbuch, „exit“ bringt dich zurück an deinen Rechner. Wie in den meisten Linux-Terminals kopiert das Markieren von Text, und ein Rechtsklick fügt ihn ein. Dein Fortschritt wird in diesem Browser gespeichert.
 # { $lines }: number of lines not shown
@@ -496,6 +497,7 @@ display-quit-focus = Vollbild verlassen (Esc)
 ## Difficulty of a chapter or a story (1 to 5, see difficulty.ts)
 difficulty = Schwierigkeit: { $level } von 5
 difficulty-tidy = Schwierigkeit: { $min } bis { $max } von 5
+difficulty-title = Schwierigkeitsgrad
 
 ## Tips: one-time advice, shown when a shortcut or a habit would help (see tips.ts)
 

@@ -69,7 +69,9 @@ export function menuPart(ctx: Context, extras: { startHereEntry: HTMLElement; in
     pathList,
   );
   const { startHereEntry, incidentBlock, streakLine, reminderEntry, feedbackEntry } = extras;
-  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, viewChoice, startHereEntry, incidentBlock, streakLine, reminderEntry, storiesList, lockedBlock, pathBlock, feedbackEntry);
+  // The view's choice on the left; "Where do I start?" and the daily reminder, quieter, on the right.
+  const menuBar = el('div', { class: 'menu-bar' }, viewChoice, el('div', { class: 'menu-extras' }, startHereEntry, reminderEntry));
+  const storiesNav = el('nav', { class: 'stories', 'aria-label': t('stories-title') }, menuBar, incidentBlock, streakLine, storiesList, lockedBlock, pathBlock, feedbackEntry);
 
   const chaptersNavs = STORIES.map((h, i) =>
     el('nav', { class: 'chapters', 'aria-label': t('chapters-title', { story: storyTitle(i) }), 'data-chapters': String(i) },
@@ -83,7 +85,8 @@ export function menuPart(ctx: Context, extras: { startHereEntry: HTMLElement; in
           el('span', { class: 'state' })))))),
   );
   const following = el('button', { type: 'button', class: 'button primary' }, ...quiet(t('button-next')));
-  const end = el('div', { class: 'end', hidden: '' }, following);
+  // Shown inside the terminal, just under the prompt, where the player's eyes are (see game.ts).
+  const end = el('div', { class: 'end', hidden: '' }, el('span', { class: 'end-done' }, ...quiet(t('end-done'))), following);
   // After a chapter: the Les rouages du net page that explains its concept.
   const rouagesList = el('ul', {});
   const forUnderstand = el('aside', { class: 'to-understand', hidden: '' }, el('p', {}, typo(t('rouages-intro'))), rouagesList);

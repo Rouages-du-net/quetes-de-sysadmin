@@ -114,6 +114,10 @@
 /* The incident of the day: a small button, not a card. */
 .qds .stories .incident-button { display: inline-block; width: auto; height: auto; padding: 0.3rem 0.8rem; }
 /* The daily reminder (see src/engine/reminder.ts): a quiet button under it. */
+.qds .menu-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.4rem 1rem; margin: 0 0 0.75rem; }
+.qds .menu-bar .view-choice { margin: 0; }
+.qds .menu-extras { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-left: auto; }
+.qds .menu-extras > p { margin: 0; }
 .qds .reminder-entry { margin: 0 0 0.75rem; }
 .qds .stories .reminder-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_background); color: var(--_text); cursor: pointer; }
 .qds .stories .reminder-button:hover, .qds .stories .reminder-button:focus-visible { border-color: var(--_accent); }
@@ -223,6 +227,7 @@
 /* Difficulty, from 1 to 5 stars (the level in words is for screen readers). */
 .qds .difficulty { font-size: 0.8rem; color: var(--_amber); letter-spacing: 0.05em; }
 .qds .stories .difficulty { grid-column: 1 / -1; }
+.qds .difficulty-rest { color: color-mix(in oklab, var(--_muted) 45%, transparent); }
 .qds .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 .qds .terminal {
@@ -266,7 +271,9 @@
   caret-color: var(--_terminal-text);
 }
 
-.qds .end { margin-top: 1rem; }
+.qds .end { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0.75rem 0; padding: 0.6rem 0.75rem; border: 1px solid var(--_terminal-prompt); border-left-width: 4px; border-radius: 0.4rem; font-family: var(--_font); }
+.qds .end[hidden] { display: none; }
+.qds .end-done { color: var(--_terminal-prompt); font-weight: 600; }
 .qds .button {
   font: inherit;
   font-weight: 600;
@@ -693,8 +700,8 @@
 /* "Where do I start?" (see start-here.ts): a small button of the menu, the
    first visit's card above it, and the questions in a dialog. */
 .qds .start-here-entry { margin: 0 0 0.75rem; }
-.qds .stories .start-here-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 0.8rem; border: 1px solid var(--_accent); border-radius: 0.4rem; background: var(--_card); color: var(--_text); cursor: pointer; }
-.qds .stories .start-here-button:hover, .qds .stories .start-here-button:focus-visible { box-shadow: inset 0 0 0 1px var(--_accent); }
+.qds .stories .start-here-button { display: inline-block; width: auto; height: auto; font: inherit; font-size: 0.85rem; padding: 0.25rem 0.75rem; border: 1px solid var(--_border); border-radius: 0.4rem; background: var(--_background); color: var(--_text); cursor: pointer; }
+.qds .stories .start-here-button:hover, .qds .stories .start-here-button:focus-visible { border-color: var(--_accent); }
 .qds .start-here-entry[hidden], .qds .start-offer[hidden] { display: none; }
 .qds .start-offer { margin: 0 0 0.75rem; padding: 0.75rem 1rem; border: 1px solid var(--_accent); border-left-width: 4px; border-radius: 0.5rem; background: var(--_card); color: var(--_text); }
 .qds .start-offer h2 { margin: 0 0 0.25rem; font-size: 1.05rem; }
