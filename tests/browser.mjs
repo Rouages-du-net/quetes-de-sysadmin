@@ -182,6 +182,8 @@ for (const width of [1000, 375]) {
   await input.fill('mv .ampoule_de_secours ~/Jetee/Phare/Escalier/Lanterne/ampoule');
   await input.press('Enter');
   check(await game.locator('.end').isVisible(), `${width} px: end of chapter 1, "Next chapter" button`);
+  check((await game.locator('.terminal .end').count()) === 1, `${width} px: "Next chapter" sits in the terminal, under the prompt`);
+  if (process.env.CAPTURES) await game.locator('.terminal').screenshot({ path: `${process.env.CAPTURES}/next-chapter-${width}.png` });
   // The summary: one line in the terminal, the details in a dialog.
   check(/Bilan : \d+:\d\d · \d+ commandes/.test(await game.locator('.output .summary').textContent()), `${width} px: the chapter summary is displayed`);
   await game.locator('.summary-button').click();

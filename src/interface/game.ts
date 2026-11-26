@@ -22,7 +22,7 @@
 //                        progress, achievements, summary (compare), start
 //                        here, feedback, reminder
 
-import { stars, type Level } from '../engine/difficulty';
+import type { Level } from '../engine/difficulty';
 import { Console } from '../engine/console';
 import type { Shell } from '../engine/shell';
 // The menu reads the catalogue; a story's chapters load when it is opened (story-registry.ts).
@@ -148,8 +148,13 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     level: (min: Level, max: Level = min) =>
       el(
         'span',
-        { class: 'difficulty' },
-        el('span', { 'aria-hidden': 'true' }, min === max ? stars(min) : `${'★'.repeat(min)} – ${'★'.repeat(max)}`),
+        { class: 'difficulty', title: t('difficulty-title') },
+        el(
+          'span',
+          { 'aria-hidden': 'true' },
+          // Full stars only: the missing ones greyed, so they don't read like a score.
+          ...(min === max ? ['★'.repeat(min), el('span', { class: 'difficulty-rest' }, '★'.repeat(5 - min))] : [`${'★'.repeat(min)} – ${'★'.repeat(max)}`]),
+        ),
         el('span', { class: 'visually-hidden' }, min === max ? t('difficulty', { level: min }) : t('difficulty-tidy', { min, max })),
       ),
   };
@@ -206,6 +211,9 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   ctx.badgeUpdate = fresh.badgeUpdate;
   const autosave = autosavePart(ctx);
   ctx.autosave = autosave.autosave;
+  // "Next chapter" inside the terminal, right under the prompt: the player looks there, not
+  // under the terminal; Escape then Tab from the command line reaches it.
+  term.form.after(menu.end);
   const settings = settingsPart(ctx, { terminal: term.terminal, touchesBar: term.touchesBar, applyView: menu.applyView, pressViews: menu.pressViews, autosaveTurned: autosave.turned });
   ctx.applyDisplay = settings.applyDisplay;
 
@@ -247,7 +255,7 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     el('a', { href: 'https://web.mit.edu/mprat/Public/web/Terminus/Web/main.html', hreflang: 'en' }, t('credit-link-original')));
 
   const game = el('div', { class: 'qds', lang: t.language },
-    startHere.startOffer, menu.storiesNav, ...menu.chaptersNavs, examBar, autosave.resumeBanner, autosave.resumeStatus, settings.screen, menu.end, menu.forUnderstand, tips, chapterActions, exam.examChoice, credit,
+    startHere.startOffer, menu.storiesNav, ...menu.chaptersNavs, examBar, autosave.resumeBanner, autosave.resumeStatus, settings.screen, menu.forUnderstand, tips, chapterActions, exam.examChoice, credit,
     mapWindow.mapWindow, notebook.notebookWindow, progress.progressWindow, mission.missionWindow, achievements.achievementsWindow, chapterSummary.summarySlot, onCall.onCallWindow, onCall.onCallEndWindow, reminder.slot, exam.examWindow, startHere.startSlot, feedback.slot, out.announcer);
   ctx.game = game;
   root.append(game);

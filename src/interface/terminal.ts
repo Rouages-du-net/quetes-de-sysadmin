@@ -422,6 +422,7 @@ export function terminalPart(ctx: Context, out: ReturnType<typeof outputPart>, s
   terminal.addEventListener('animationend', () => terminal.classList.remove('scene-connection', 'scene-reboot'));
 
   return {
+    form,
     input,
     field,
     prompt,
