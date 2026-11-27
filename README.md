@@ -132,7 +132,10 @@ this independent project.
   reports from real NVDA, VoiceOver or TalkBack users are welcome),
   contrast, reduced motion, forced colours, mobile; see
   [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
-- **No trackers**, no ads, no third-party resources.
+- **No ads, no cookies, no third-party resources**; anonymous visit
+  statistics on the project's own server (Umami), off under Do Not Track,
+  Global Privacy Control and in exam mode: what is counted is listed in
+  [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#statistics).
 - **English first**, French too; Spanish (`/es/`) and German (`/de/`) are
   translations in progress, and more languages will come (Mandarin,
   Korean…): texts are kept apart from the code (see

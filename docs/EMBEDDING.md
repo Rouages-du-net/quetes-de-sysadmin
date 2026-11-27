@@ -3,8 +3,10 @@
 — [Version française](INTEGRER.md)
 
 The game is a standalone **web component**: a single JavaScript file, with no
-dependency, no tracker and no request to the outside. It works in any HTML
-page (static site, CMS, learning platform…).
+dependency, no cookie and no third-party resource. It works in any HTML
+page (static site, CMS, learning platform…). From sysadmin.rouages.net, it
+counts anonymous visit statistics on the project's own Umami server (see
+"Privacy" below; `stats="off"` turns them off).
 
 ## In two lines
 
@@ -35,6 +37,7 @@ another domain than your page, set the same header.
 | `save-key` | text | the save's key in `localStorage` (default `quetes-de-sysadmin`); change it to keep several games apart on one site |
 | `theme` | `light`, `dark` | forces a theme (default: the system's) |
 | `exam-control` | `page` | your page shows its own exam-mode checkbox (see below): the game's, at its bottom, is hidden |
+| `stats` | `off` | no visit statistics from your page (see "Privacy") |
 
 The French attribute names used before still work:
 `langue`, `histoire`, `cle`, and `theme="clair"` / `"sombre"`.
@@ -116,7 +119,32 @@ Pratusevich).
 
 ## Privacy
 
-The game sends nothing: no data leaves the browser. Progress is kept in the
+**Visit statistics.** The file served by sysadmin.rouages.net counts, on
+the project's own [Umami](https://umami.is) server, a few anonymous
+figures, so that we know where the game is used: one view when the game
+loads (your page's host name and path, without its query string; the
+origin of the site the visitor came from, if another one; the screen's
+size and the browser's language), then an event when a story is opened
+(its id), when a chapter is finished (its id) and the game's language. No
+cookie, no identifier kept in the browser, no third-party script: the game
+posts these figures itself. Never what the player types, their save, their
+progress codes or their name. Nothing is sent in exam mode, nor when the
+browser asks not to be tracked (Do Not Track, Global Privacy Control). The
+exact list: [docs/DEPLOYMENT.md, "Statistics"](DEPLOYMENT.md#statistics).
+
+To turn them off on your page, add `stats="off"`:
+
+```html
+<quetes-de-sysadmin stats="off"></quetes-de-sysadmin>
+```
+
+If your page has its own Content Security Policy, its `connect-src` must
+allow the statistics server for them to be counted; otherwise the browser
+blocks the request (and may say so in its console) and the game plays the
+same. A copy of `dist/integration/` built without the statistics variables
+(the default, see `.env.example`) sends nothing at all.
+
+**Everything else stays in the browser.** Progress is kept in the
 `localStorage` of the host page, under the chosen key. Next to it, the same
 key with a suffix keeps the display settings (`KEY-display`), on-call
 results (`KEY-on-call`, from which the on-call streak is computed), the last

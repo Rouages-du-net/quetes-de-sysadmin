@@ -1137,8 +1137,21 @@ presents them for people.
   (`site.ts`, `install.ts`, imported by `Base.astro`, texts in
   `Base.astro`); icons in `public/icons/`, drawn by `scripts/icons.mjs`.
   Tests: `tests/pwa.test.ts`, the PWA part of `tests/browser.mjs`.
+- `src/stats.ts`: anonymous visit statistics, posted to Umami's API
+  (`/api/send`) without its script, from the build-time variables
+  `PUBLIC_UMAMI_HOST`, `PUBLIC_UMAMI_SITE_ID`, `PUBLIC_UMAMI_EMBED_ID`
+  (`.env.example`; missing: no counter, nothing sent): the site's counter
+  for its pages (`src/pwa/visit.ts`: page views, `app-opened`) and the
+  element on them, the embeds' counter for the element built by
+  `vite.integration.config.ts` (`__QDS_EMBED__`, one view at load,
+  `stats="off"`); the game's events `story-opened` and `chapter-finished`
+  (`options.track` in `interface/game.ts`); Do Not Track, Global Privacy
+  Control and exam mode send nothing; `src/stats-build.ts` adds the host
+  to `dist/.htaccess`'s `connect-src`; GitHub's repository variables in
+  `deploy.yml`; tests `tests/stats.test.ts`; see `docs/DEPLOYMENT.md`,
+  "Statistics".
 - `src/element.ts`: the `<quetes-de-sysadmin>` element (Shadow DOM);
-  attributes `lang`, `story`, `save-key`, `theme="light|dark"`,
+  attributes `lang`, `story`, `save-key`, `theme="light|dark"`, `stats="off"`,
   `exam-control="page"` (with the `exam` property and the `exam-change`
   event; the home page's checkbox under "For teachers" in
   `src/exam-control.ts`) (the French
@@ -1283,8 +1296,13 @@ The game will be translated into more languages. All code must allow it:
   has no ligatures; a block that scrolls takes a tab stop; forced colours
   and reduced motion are handled at the end of `styles.css`; the terminal
   colours' contrast is checked by `tests/terminal-contrast.test.ts`.
-- No tracker, no ads, no third-party resource (fonts and scripts served by
-  the site). Progress in `localStorage`, with no account.
+- No ads, no cookies, no third-party resource (fonts and scripts served by
+  the site). Progress in `localStorage`, with no account. The one thing
+  that leaves the browser: anonymous visit statistics on the project's own
+  Umami server (`src/stats.ts`), only in a build given `PUBLIC_UMAMI_*`,
+  never under Do Not Track, Global Privacy Control or in exam mode, and
+  never anything typed, a save, a progress code or a name; what is sent is
+  listed in `docs/DEPLOYMENT.md`, "Statistics": keep that list exact.
 - Never put real personal data in the quests.
 
 ## Accuracy

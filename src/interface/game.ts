@@ -292,7 +292,21 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     if (onCall.active()) onCall.onCallUpdate();
   }, 1000);
 
+  // Visit statistics (options.track, src/stats.ts): the story opened, the
+  // chapter finished, with the game's language; nothing in exam mode, and
+  // never what is typed, the save or the progress codes.
+  const track = (name: string, data: Record<string, string>) => {
+    if (!gameTerminal.exam) options.track?.(name, { ...data, language: t.language });
+  };
+  // The chapters' sessions already counted as finished.
+  const counted = new WeakSet<Shell>();
+
   ctx.after = (sh: Shell | null = null) => {
+    const current = gameTerminal.remote;
+    if (current?.shell.finished && !counted.has(current.shell)) {
+      counted.add(current.shell);
+      track('chapter-finished', { story: current.story.id, chapter: current.shell.chapter.id });
+    }
     chapterSummary.noteSummary();
     onCall.onCallUpdate();
     exam.examEnd();
@@ -349,8 +363,10 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
     const loaded = loadedStory(STORIES[h].id)!;
     const chapter = c === undefined ? undefined : loaded.chapters[c];
     fresh.storySeen(h);
-    if (gameTerminal.remote?.story === loaded && chapter) out.show(gameTerminal.open(chapter));
+    const sameStory = gameTerminal.remote?.story === loaded;
+    if (sameStory && chapter) out.show(gameTerminal.open(chapter));
     else out.show(gameTerminal.connect(storyMachine(STORIES[h].id)!.name, chapter));
+    if (!sameStory) track('story-opened', { story: STORIES[h].id });
     // In exam mode, a chapter that (re)starts starts the timer; an already finished chapter doesn't.
     ctx.examStart = gameTerminal.exam && !gameTerminal.remote?.shell.finished ? Date.now() : null;
     if (ctx.examStart !== null) out.show(t('exam-start'), 'exam-result');
@@ -401,6 +417,8 @@ export function mount(root: HTMLElement | ShadowRoot, options: Options = {}) {
   if (display.tour !== 'done' && !finished.length && !Object.keys(ctx.notebook).length && !gameTerminal.exam) setTimeout(tour.startTour, 300);
   return {
     root: game,
+    /** The game's language (the visit statistics of an embedded game, src/element.ts). */
+    language: t.language,
     /** Exam mode, on or off. */
     exam: () => gameTerminal.exam,
     /** Opens "Report a problem or an idea" (the site's footer asks for it, see src/pwa/site.ts). */

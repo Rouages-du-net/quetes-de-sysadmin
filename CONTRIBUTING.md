@@ -63,8 +63,13 @@ agents, but its rules apply to everyone.
   readable by screen readers, AA contrast, `prefers-reduced-motion`
   respected; WCAG 2.2 AA, checked by `tests/a11y.mjs` (add a new page,
   dialog or state to its list), see `docs/ACCESSIBILITY.md`.
-- **No trackers, no third-party resources**, and nothing that breaks the
-  Content Security Policy in `public/.htaccess` (no inline scripts).
+- **No ads, no cookies, no third-party resources**, and nothing that breaks
+  the Content Security Policy in `public/.htaccess` (no inline scripts). The
+  only thing that leaves the browser is the anonymous visit statistics of
+  `src/stats.ts` (the project's own Umami server, only in a build given its
+  variables; off under Do Not Track, Global Privacy Control and in exam
+  mode): what they send is listed in `docs/DEPLOYMENT.md`, "Statistics".
+  Never add to it anything typed, a save, a progress code or a name.
 
 ## Languages
 

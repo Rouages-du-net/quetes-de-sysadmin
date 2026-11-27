@@ -47,6 +47,14 @@ texte copié. Le texte est construit par `src/engine/feedback.ts`.
 - **Accessible** : jouable au clavier et sur un écran de 375 px ; WCAG 2.2 AA,
   vérifié par `tests/a11y.mjs` (y ajouter toute nouvelle page, fenêtre ou
   situation), voir `docs/ACCESSIBILITY.md` (en anglais).
+- **Sans publicité, sans cookie, sans ressource tierce**, et rien qui casse
+  la politique de sécurité (CSP) de `public/.htaccess` (pas de script en
+  ligne). Seules sortent du navigateur les statistiques de visite anonymes
+  de `src/stats.ts` (le propre serveur Umami du projet, seulement dans une
+  construction qui a ses variables ; coupées avec Do Not Track, Global
+  Privacy Control et en mode examen) : ce qu'elles envoient est listé dans
+  `docs/DEPLOYMENT.md`, « Statistics » (en anglais). N'y ajoute jamais ce
+  qui est tapé, une sauvegarde, un code de progression ni un nom.
 
 ## Le format d'une quête
 

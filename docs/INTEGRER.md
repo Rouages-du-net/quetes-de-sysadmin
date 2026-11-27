@@ -3,7 +3,9 @@
 — [English version](EMBEDDING.md) (la version de référence)
 
 Le jeu est un **composant web** autonome : un seul fichier JavaScript, sans
-dépendance, sans pisteur, sans requête vers l'extérieur. Il fonctionne dans
+dépendance, sans cookie, sans ressource tierce. Depuis sysadmin.rouages.net,
+il compte des statistiques de visite anonymes sur le serveur Umami du projet
+(voir « Vie privée » plus bas ; `stats="off"` les coupe). Il fonctionne dans
 n'importe quelle page HTML (site statique, CMS, plateforme de cours…).
 
 ## En deux lignes
@@ -36,6 +38,7 @@ que ta page, configure le même en-tête.
 | `save-key` | texte | clé de sauvegarde dans `localStorage` (par défaut `quetes-de-sysadmin`) ; à changer pour séparer plusieurs jeux sur un même site |
 | `theme` | `light`, `dark` | force un thème (par défaut, celui du système) |
 | `exam-control` | `page` | ta page affiche sa propre case du mode examen (voir plus bas) : celle du jeu, en bas, est cachée |
+| `stats` | `off` | aucune statistique de visite depuis ta page (voir « Vie privée ») |
 
 Les anciens noms français marchent toujours : `langue`, `histoire`, `cle`,
 et `theme="clair"` / `"sombre"`.
@@ -118,8 +121,34 @@ inspiré de Terminus, créé au MIT par Shawn Conrad et Michele Pratusevich).
 
 ## Vie privée
 
-Le jeu n'envoie rien : aucune donnée ne quitte le navigateur. La progression
-est gardée dans le `localStorage` de la page qui l'accueille, sous la clé
+**Statistiques de visite.** Le fichier servi par sysadmin.rouages.net
+compte, sur le propre serveur [Umami](https://umami.is) du projet, quelques
+chiffres anonymes, pour savoir où le jeu sert : une vue au chargement du
+jeu (le nom d'hôte et le chemin de ta page, sans ses paramètres ; l'origine
+du site d'où vient la personne, si c'en est un autre ; la taille de l'écran
+et la langue du navigateur), puis un événement quand une histoire est
+ouverte (son identifiant), quand un chapitre est fini (son identifiant), et
+la langue du jeu. Pas de cookie, pas d'identifiant gardé dans le
+navigateur, pas de script tiers : le jeu envoie lui-même ces chiffres.
+Jamais ce que le joueur ou la joueuse tape, sa sauvegarde, ses codes de
+progression ni son nom. Rien n'est envoyé en mode examen, ni quand le
+navigateur demande à ne pas être suivi (Do Not Track, Global Privacy
+Control). La liste exacte : [docs/DEPLOYMENT.md, « Statistics »](DEPLOYMENT.md#statistics).
+
+Pour les couper sur ta page, ajoute `stats="off"` :
+
+```html
+<quetes-de-sysadmin stats="off"></quetes-de-sysadmin>
+```
+
+Si ta page a sa propre politique de sécurité (CSP), son `connect-src` doit
+autoriser le serveur de statistiques pour qu'elles soient comptées ; sinon
+le navigateur bloque la requête (et peut le signaler dans sa console) et le
+jeu marche de la même façon. Une copie de `dist/integration/` construite
+sans les variables des statistiques (le cas par défaut, voir
+`.env.example`) n'envoie rien du tout.
+
+**Tout le reste reste dans le navigateur.** La progression est gardée dans le `localStorage` de la page qui l'accueille, sous la clé
 choisie. À côté, la même clé suivie d'un suffixe garde les réglages
 d'affichage (`CLE-display`), les résultats d'astreinte (`CLE-on-call`, d'où
 se calcule la série d'astreintes), les dernières parties de chaque chapitre

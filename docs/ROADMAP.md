@@ -31,7 +31,9 @@ keeps this credit and the link to the original.
   real target; security quests stay defensive.
 - **Accessible**: keyboard, screen readers (announced output), AA contrast,
   reduced motion, usable on mobile (virtual keyboard).
-- **Local progress** (`localStorage`), no account, no tracker.
+- **Local progress** (`localStorage`), no account, no cookie; anonymous
+  visit statistics only (the project's own Umami, see
+  [DEPLOYMENT.md](DEPLOYMENT.md#statistics)).
 - **English first** (the game started in French), with the texts kept apart
   from the code so it can be translated (German, Spanish, Mandarin,
   Korean…).

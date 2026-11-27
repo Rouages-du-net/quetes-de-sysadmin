@@ -7,7 +7,8 @@ import { versionDefine } from './src/version.mjs';
 // tests/setup.ts loads them all and registers every story.
 export default defineConfig({
   plugins: [qdsTexts()],
-  define: versionDefine(),
+  // No statistics server in the tests (src/stats.ts): Vitest only reads VITE_* variables.
+  define: { ...versionDefine(), __QDS_EMBED__: 'false' },
   // No transform cache on disk: it would keep import.meta.glob's list of
   // story modules (story-registry.ts) and the texts' groups after a story or
   // a text file is added.

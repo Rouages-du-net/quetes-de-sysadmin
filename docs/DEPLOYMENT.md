@@ -16,7 +16,9 @@ Workflow `.github/workflows/deploy.yml`:
    375 px, no console error, with the CSP of `.htaccess`, the root's
    language choice, the 404 page, embedding in another page, the installable
    game: manifests, service worker, offline play, the footer's button) and
-   `tests/a11y.mjs`.
+   `tests/a11y.mjs`. This build has no statistics server (see
+   "Statistics"); on `main` only, `test` then builds again with the
+   statistics' variables, and that build is the one deployed.
 2. **deploy** (`main` only, once both have passed): upload of `dist/` over FTPS, then a check of
    the live site (the `/en/` and `/fr/` pages, the root's redirection to
    each language, the redirect of the old `/enseignants/` address, the CORS
@@ -54,6 +56,18 @@ Repository → *Settings* → *Secrets and variables* → *Actions* (or the
 | `FTP_PASSWORD` | its password |
 | `FTP_SERVER_DIR` | optional: remote directory, ending with `/` (default `./`, the root of the restricted account) |
 
+Then, for the visit statistics (optional, see "Statistics"), the
+**Variables** tab of the same page (repository variables, not secrets: the
+values end up in the public JavaScript and `.htaccess`):
+
+| Variable | Value |
+|---|---|
+| `PUBLIC_UMAMI_HOST` | the Umami server, `https://` only, e.g. `https://ct.mayetco.fr` |
+| `PUBLIC_UMAMI_SITE_ID` | the website id Umami gives for the site's own pages (a website whose domain is `sysadmin.rouages.net`) |
+| `PUBLIC_UMAMI_EMBED_ID` | the website id for the game embedded in other sites (a second website in Umami: its views carry the host pages' names) |
+
+Without `PUBLIC_UMAMI_HOST`, or without an id, that counter is off.
+
 ### 3. First deployment
 
 *Actions* → "Test and deploy to sysadmin.rouages.net" → *Run workflow*
@@ -68,7 +82,9 @@ log says which check fails.
   delete this file on the server.
 - **CSP**: `public/.htaccess` only allows the site's own scripts
   (`script-src 'self'`). Never add an inline `<script>` or a third-party
-  resource; the browser test fails if you do.
+  resource; the browser test fails if you do. Its `connect-src` is
+  `'self'`; a build with `PUBLIC_UMAMI_HOST` adds that server to it in
+  `dist/.htaccess` (`src/stats-build.ts`), and nothing else.
 - **Embeddable file**: `/integration/quetes-de-sysadmin.js` is served with
   `Access-Control-Allow-Origin: *`, which another site needs to load it as a
   `<script type="module">`, and revalidated on every visit (its name doesn't
@@ -167,3 +183,54 @@ log says which check fails.
   on `/fr/`, 960 to 588, then 482 for the embeddable file.
 - **Rolling back**: revert the faulty commit (`git revert`) and push to
   `main`; the workflow uploads the previous version again.
+
+## Statistics
+
+Anonymous visit statistics, counted by the project's own
+[Umami](https://umami.is) server, so we know which pages, stories and
+chapters are used and where the game is embedded. No Umami script is
+loaded: `src/stats.ts` posts to Umami's tracking API itself
+(`POST {PUBLIC_UMAMI_HOST}/api/send`, as Umami's tracker does), with
+`credentials: 'omit'` (no cookie), and keeps nothing in the browser (no
+identifier: Umami recognises a visit from a hash of the request, which it
+rotates). A failed request is dropped in silence; the game never waits for it.
+
+**Configuration**: the build-time variables `PUBLIC_UMAMI_HOST`,
+`PUBLIC_UMAMI_SITE_ID` and `PUBLIC_UMAMI_EMBED_ID` (see `.env.example`;
+in GitHub Actions, the repository's variables, see "Setting up"). When the
+host or a counter's id is missing, that counter doesn't exist and no code
+path sends anything: local development, forks, the tests and the build
+checked in Chromium send nothing. The host is added to `connect-src` in
+`dist/.htaccess` only when it is set.
+
+**Two counters**:
+
+- **site** (`PUBLIC_UMAMI_SITE_ID`): the pages of sysadmin.rouages.net
+  (`src/pwa/visit.ts`, every page of `Base.astro`), and the game's events on
+  them;
+- **embed** (`PUBLIC_UMAMI_EMBED_ID`): the game embedded in another site
+  from `dist/integration/`: one view when the game loads, with the host
+  page's name and path, then the game's events. On the site's own pages
+  the element uses the site's counter (no double count). A host page turns
+  it off with `stats="off"` (`docs/EMBEDDING.md`).
+
+**What is sent**, in each request: the counter's website id, the page's
+host name, its path (`location.pathname`, never the query string nor the
+fragment), its title, the screen's size (`1280x800`), the browser's
+language (`navigator.language`), and the referrer reduced to another
+site's origin (`https://forum.example/`; empty from the same site). And:
+
+| When | Name | Data |
+|---|---|---|
+| a page of the site is shown | (page view) | `language`: the page's |
+| the installed game (PWA) is launched: display-mode standalone, not from another page of the site | `app-opened` | `language` |
+| the embedded game has loaded (embed counter) | (page view) | `language`: the game's |
+| a story is opened (its machine connected) | `story-opened` | `story`, `language` |
+| a chapter's objective is reached | `chapter-finished` | `story`, `chapter`, `language` |
+
+**Never sent**: commands or anything typed, the save, the progress codes,
+the notebook, the player's name, answers to "Where do I start?", times,
+hints. **Nothing at all** in exam mode (saved by the game, or turned on by
+the page), nor when the browser sends Do Not Track
+(`navigator.doNotTrack === '1'`) or Global Privacy Control
+(`navigator.globalPrivacyControl`). Tests: `tests/stats.test.ts`.

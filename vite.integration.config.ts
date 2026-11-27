@@ -11,7 +11,10 @@ import { versionDefine } from './src/version.mjs';
 export default defineConfig({
   publicDir: false,
   plugins: [qdsTexts()],
-  define: versionDefine(),
+  // __QDS_EMBED__: the element counts on the embeds' statistics counter
+  // (src/stats.ts); PUBLIC_*: the statistics server, as Astro reads them.
+  define: { ...versionDefine(), __QDS_EMBED__: 'true' },
+  envPrefix: 'PUBLIC_',
   build: {
     outDir: 'dist/integration',
     emptyOutDir: true,

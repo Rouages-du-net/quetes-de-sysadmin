@@ -24,6 +24,12 @@ export interface Options {
   examOutside?: boolean;
   /** Called when exam mode is turned on or off (to keep the page's checkbox in step). */
   onExam?: (exam: boolean) => void;
+  /**
+   * Counts an event of the visit statistics (src/stats.ts): a story opened,
+   * a chapter finished, with the game's language. Never called in exam mode;
+   * absent when the build has no statistics server or the page turned them off.
+   */
+  track?: (name: string, data: Record<string, string>) => void;
 }
 
 // Display (theme, size, menu view, colours): a setting of this browser only.
