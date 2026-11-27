@@ -53,6 +53,11 @@ switch-over-event-not-kept =
     Vorsicht: Die alten Daten oder ihr Snapshot sind weg. Bis sich der neue
     Server bewährt hat (ein paar Wochen Betrieb, ein wiederhergestelltes
     Backup), ist der alte Rechner der Weg zurück.
+switch-over-event-uncounted =
+    Der Katalog schreibt jetzt auf greenhouse, und die alte Datenbank ist
+    eingefroren. Aber niemand hat geprüft, ob greenhouse jede Zeile hat:
+    Zähl sie dort (SELECT count(*)), der Beweis, den Inaya braucht, bevor
+    die Ausleihe wieder öffnet.
 switch-over-event-end =
     Inaya: „Erste Ausleihe auf dem neuen Server: Bohne ‚Mère Hélène‘, an
     Zoë. Und die Sun steht immer noch im Schrank, ruhig, für alle Fälle.“

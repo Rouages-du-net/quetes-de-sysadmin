@@ -53,6 +53,11 @@ switch-over-event-not-kept =
     que le nouveau serveur n'a pas fait ses preuves (quelques semaines
     d'usage, une sauvegarde restaurée), l'ancienne machine est le chemin du
     retour.
+switch-over-event-uncounted =
+    Le catalogue écrit maintenant sur greenhouse, et l'ancienne base est
+    figée. Mais personne n'a vérifié que greenhouse a toutes les lignes :
+    compte-les là-bas (SELECT count(*)), la preuve qu'il faut à Inaya avant
+    de rouvrir le guichet.
 switch-over-event-end =
     Inaya : « Premier prêt sur le nouveau serveur : Bean 'Mère Hélène', pour
     Zoë. Et le Sun est toujours dans le placard, tranquille, au cas où. »

@@ -2858,7 +2858,7 @@ solutions: `pg_dump -E UTF8`, or `iconv` and the `SET` line changed too.
 
 Goal checked on the state: the catalogue online and writing to greenhouse,
 the old database read-only or stopped, its data directory and the snapshot
-still there. Expected traps: restarting the catalogue without changing its
+still there, and a count query run on greenhouse. Expected traps: restarting the catalogue without changing its
 configuration (it still writes to the old box), erasing the old data or
 the snapshot.
 

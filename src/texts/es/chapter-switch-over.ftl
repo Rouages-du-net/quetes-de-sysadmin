@@ -53,6 +53,11 @@ switch-over-event-not-kept =
     Cuidado: los datos viejos o su instantánea han desaparecido. Hasta que
     el servidor nuevo haya demostrado lo que vale (unas semanas de uso, una
     copia restaurada), la máquina vieja es el camino de vuelta.
+switch-over-event-uncounted =
+    El catálogo escribe ahora en greenhouse, y la base antigua está
+    congelada. Pero nadie ha comprobado que greenhouse tenga todas las
+    filas: cuéntalas allí (SELECT count(*)), la prueba que Inaya necesita
+    antes de reabrir el mostrador.
 switch-over-event-end =
     Inaya: «Primer préstamo en el servidor nuevo: la judía 'Mère Hélène',
     para Zoë. Y el Sun sigue en el armario, tranquilo, por si acaso.»

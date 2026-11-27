@@ -10,7 +10,8 @@
 //     (svcadm disable postgresql_84); keep its data and the ZFS snapshot.
 // Objective checked on the state: the catalogue online and writing to
 // greenhouse, the old database read-only or stopped, its data directory and
-// the snapshot still there.
+// the snapshot still there; and greenhouse's rows counted (the 'counted'
+// event: a count query run there).
 // Sources: https://www.postgresql.org/docs/16/runtime-config-client.html
 // (default_transaction_read_only), https://docs.oracle.com/cd/E26505_01/
 // (svcadm).
@@ -56,8 +57,15 @@ export const switchOver: Chapter = {
     { id: 'frozen', condition: oldFrozen, message: (j) => j.t('switch-over-event-frozen') },
     { id: 'not-kept', condition: (j) => !kept(j), message: (j) => j.t('switch-over-event-not-kept') },
     {
+      // Switched and frozen, but greenhouse's data never counted.
+      id: 'uncounted',
+      condition: (j) => appOnline(j) && toGreenhouse(j) && oldFrozen(j) && kept(j) && !j.flags.has('counted'),
+      message: (j) => j.t('switch-over-event-uncounted'),
+    },
+    {
       id: 'end',
-      condition: (j) => appOnline(j) && toGreenhouse(j) && oldFrozen(j) && kept(j) && (seedsOn(greenhouse(j))?.tables.lendings.lines.length ?? 0) >= 14,
+      condition: (j) =>
+        appOnline(j) && toGreenhouse(j) && oldFrozen(j) && kept(j) && j.flags.has('counted') && (seedsOn(greenhouse(j))?.tables.lendings.lines.length ?? 0) >= 14,
       message: (j) => j.t('switch-over-event-end'),
     },
   ],
