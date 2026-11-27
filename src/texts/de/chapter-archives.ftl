@@ -62,8 +62,11 @@ archives-event-full =
     nicht auf den Stick. Du musst VORHER Platz schaffen: Was im Bestand ist
     nicht wertvoll? (du -h bestand, dann find bestand -name "*.tmp")
 archives-event-tmp =
-    Drei temporäre Dateien, zusammen 120 MB! Rosa sagt, wir dürfen sie
-    wegwerfen. find kann sie in einem Rutsch löschen, mit -delete am Ende:
+    Überall temporäre Dateien: in jedem Ordner, tiefer unten bei den Scans,
+    sogar in versteckten Ordnern (ihr Name beginnt mit einem Punkt: ls zeigt
+    sie ohne -a nicht). Zusammen etwa 128 MB! Rosa sagt, wir dürfen sie
+    wegwerfen. find sucht auf allen Ebenen und kann sie in einem Rutsch
+    löschen, mit -delete am Ende:
 
       find bestand -name "*.tmp" -delete
 
@@ -72,6 +75,12 @@ archives-event-loss =
     Autsch: Eine wertvolle Datei des Bestands ist verschwunden, und
     find -delete geht, wie rm, über keinen Papierkorb… Im echten Leben macht man deshalb Backups, BEVOR man
     aufräumt. Hier kannst du das Kapitel neu starten (Link unter dem Terminal).
+archives-event-leftovers =
+    Das Archiv passt auf den Stick… aber es trägt noch temporäre Dateien mit
+    (tar -tzf zeigt sie). Manche versteckten sich tiefer, oder in versteckten
+    Ordnern: ls zeigt nur eine Ebene, und keine Namen, die mit einem Punkt
+    beginnen. find sucht überall:  find bestand -name "*.tmp"
+    Wirf sie weg und erstelle das Archiv neu.
 archives-event-cleanup =
     Aufgeräumt. Prüfe mit du -sh bestand, dann erstelle das komprimierte
     Archiv direkt auf dem Stick:

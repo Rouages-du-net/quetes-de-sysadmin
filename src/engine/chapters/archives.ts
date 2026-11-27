@@ -27,17 +27,30 @@ const PRECIOUS = [
   'collection/recordings/interview_fatou.ogg',
 ];
 
-// A tar archive on the stick containing all the precious files.
-function archiveComplete(j: Pick<Game, 'find' | 'player' | 't'>): File | null {
+const isTmp = (p: string) => p.endsWith('.tmp');
+
+// A tar archive on the stick containing all the precious files (clean: and
+// no temporary file).
+function archiveComplete(j: Pick<Game, 'find' | 'player' | 't'>, clean = false): File | null {
   const key = j.find(path(j.t, KEY));
   if (key?.type !== 'directory') return null;
   for (const n of Object.values(key.children) as File[]) {
     if (n.type !== 'file' || !n.archive) continue;
     const paths = Object.keys(n.archive.files).map((c) => c.replace(new RegExp(`^(\\./|~/|home/${j.player}/)`), ''));
+    if (clean && paths.some(isTmp)) continue;
     if (PRECIOUS.map((p) => path(j.t, p)).every((p) => paths.some((c) => c === p || c.endsWith('/' + p)))) return n;
   }
   return null;
 }
+
+// The temporary files still in the collection, at any depth, hidden
+// folders included (ls shows only the first level; find sees them all).
+function tmpLeft(j: Pick<Game, 'find' | 't'>): number {
+  const walk = (n: any): number =>
+    n?.type === 'directory' ? Object.entries(n.children).reduce((sum, [k, c]) => sum + walk(c) + ((c as any).type === 'file' && isTmp(k) ? 1 : 0), 0) : 0;
+  return walk(j.find(path(j.t, `${M}/collection`)));
+}
+const saved = (j: Game) => tmpLeft(j) === 0 && archiveComplete(j, true);
 
 export const archives: Chapter = {
   id: 'archives',
@@ -62,6 +75,9 @@ export const archives: Chapter = {
           collection: d({
             'readme.txt': f(t('archives-readme')),
             manuscripts: d({
+              // Leftovers of the scanning software, scattered deeper and in
+              // hidden places: only a recursive search finds them all.
+              '.autosave.tmp': binary(t('archives-file-temporary'), 0.5),
               'marie_diary.txt': text(t('archives-journal-marie'), 3),
               'letters_1914.txt': text(t('archives-letters-1914'), 2.5),
               'neighbourhood_recipes.txt': text(t('archives-recipes-neighbourhood'), 1.5),
@@ -70,16 +86,24 @@ export const archives: Chapter = {
               'map_1890.png': binary(t('archives-image-png'), 6),
               'map_1954.png': binary(t('archives-image-png'), 5),
               'render.tmp': binary(t('archives-file-temporary'), 30),
+              scans: d({
+                scan_batch_2: d({
+                  'page_07.tmp': binary(t('archives-file-temporary'), 3),
+                  '.cache': d({ 'thumb_07.tmp': binary(t('archives-file-temporary'), 1) }),
+                }),
+              }),
             }),
             press: d({
               'gazette_1936.pdf': binary(t('archives-document-pdf'), 4),
               'gazette_1968.pdf': binary(t('archives-document-pdf'), 4.5),
               'export.tmp': binary(t('archives-file-temporary'), 40),
+              '.drafts': d({ 'export_old.tmp': binary(t('archives-file-temporary'), 2) }),
             }),
             recordings: d({
               'market_songs.ogg': binary(t('archives-its-ogg'), 12),
               'interview_fatou.ogg': binary(t('archives-its-ogg'), 15),
               'raw.tmp': binary(t('archives-file-temporary'), 50),
+              studio_sessions: d({ 'take_03.tmp': binary(t('archives-file-temporary'), 1.5) }),
             }),
           }),
         }),
@@ -109,13 +133,19 @@ export const archives: Chapter = {
     },
     {
       id: 'cleanup',
-      condition: (j) => j.exists(path(j.t, `${M}/collection`)) && !['maps/render.tmp', 'press/export.tmp', 'recordings/raw.tmp'].some((t) => j.exists(path(j.t, `${M}/collection/${t}`))),
+      condition: (j) => j.exists(path(j.t, `${M}/collection`)) && tmpLeft(j) === 0,
       message: (j) => j.t('archives-event-cleanup'),
     },
     {
+      // An archive that fits, but carries temporary files the cleanup missed.
+      id: 'leftovers',
+      condition: (j) => !saved(j) && !!archiveComplete(j) && !archiveComplete(j, true),
+      message: (j) => j.t('archives-event-leftovers'),
+    },
+    {
       id: 'saved',
-      condition: (j) => !!archiveComplete(j),
-      message: (j) => j.t('archives-event-saved', { size: (archiveComplete(j)!.size ?? 0) / Mo }),
+      condition: (j) => !!saved(j),
+      message: (j) => j.t('archives-event-saved', { size: (archiveComplete(j, true)!.size ?? 0) / Mo }),
     },
   ],
 };

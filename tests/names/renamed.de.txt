@@ -160,6 +160,7 @@ archives
   /home/you/collection → /home/du/bestand
   /home/you/collection/readme.txt → /home/du/bestand/liesmich.txt
   /home/you/collection/manuscripts → /home/du/bestand/manuskripte
+  /home/you/collection/manuscripts/.autosave.tmp → /home/du/bestand/manuskripte/.autospeichern.tmp
   /home/you/collection/manuscripts/marie_diary.txt → /home/du/bestand/manuskripte/tagebuch_marie.txt
   /home/you/collection/manuscripts/letters_1914.txt → /home/du/bestand/manuskripte/briefe_1914.txt
   /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/du/bestand/manuskripte/rezepte_aus_dem_viertel.txt
@@ -167,14 +168,23 @@ archives
   /home/you/collection/maps/map_1890.png → /home/du/bestand/karten/karte_1890.png
   /home/you/collection/maps/map_1954.png → /home/du/bestand/karten/karte_1954.png
   /home/you/collection/maps/render.tmp → /home/du/bestand/karten/render.tmp
+  /home/you/collection/maps/scans → /home/du/bestand/karten/scans
+  /home/you/collection/maps/scans/scan_batch_2 → /home/du/bestand/karten/scans/stapel_2
+  /home/you/collection/maps/scans/scan_batch_2/page_07.tmp → /home/du/bestand/karten/scans/stapel_2/seite_07.tmp
+  /home/you/collection/maps/scans/scan_batch_2/.cache → /home/du/bestand/karten/scans/stapel_2/.cache
+  /home/you/collection/maps/scans/scan_batch_2/.cache/thumb_07.tmp → /home/du/bestand/karten/scans/stapel_2/.cache/vorschau_07.tmp
   /home/you/collection/press → /home/du/bestand/presse
   /home/you/collection/press/gazette_1936.pdf → /home/du/bestand/presse/gazette_1936.pdf
   /home/you/collection/press/gazette_1968.pdf → /home/du/bestand/presse/gazette_1968.pdf
   /home/you/collection/press/export.tmp → /home/du/bestand/presse/export.tmp
+  /home/you/collection/press/.drafts → /home/du/bestand/presse/.entwuerfe
+  /home/you/collection/press/.drafts/export_old.tmp → /home/du/bestand/presse/.entwuerfe/export_alt.tmp
   /home/you/collection/recordings → /home/du/bestand/aufnahmen
   /home/you/collection/recordings/market_songs.ogg → /home/du/bestand/aufnahmen/marktlieder.ogg
   /home/you/collection/recordings/interview_fatou.ogg → /home/du/bestand/aufnahmen/interview_fatou.ogg
   /home/you/collection/recordings/raw.tmp → /home/du/bestand/aufnahmen/roh.tmp
+  /home/you/collection/recordings/studio_sessions → /home/du/bestand/aufnahmen/studio_aufnahmen
+  /home/you/collection/recordings/studio_sessions/take_03.tmp → /home/du/bestand/aufnahmen/studio_aufnahmen/take_03.tmp
   /media/usb → /media/stick
 
 versions

@@ -61,8 +61,11 @@ archives-event-full =
     la clé. Il faut faire de la place AVANT : que contient le fonds qui n'est
     pas précieux ? (du -h fonds, puis find fonds -name "*.tmp")
 archives-event-tmp =
-    Trois fichiers temporaires, 120 Mo à eux trois ! Rosa dit qu'on peut les
-    jeter. find peut les effacer d'un coup, avec -delete à la fin :
+    Des fichiers temporaires partout : dans chaque dossier, plus bas parmi les
+    numérisations, et même dans des dossiers cachés (leur nom commence par un
+    point : ls ne les montre pas sans -a). Environ 128 Mo à eux tous ! Rosa
+    dit qu'on peut les jeter. find cherche à tous les niveaux et peut les
+    effacer d'un coup, avec -delete à la fin :
 
       find fonds -name "*.tmp" -delete
 
@@ -71,6 +74,12 @@ archives-event-loss =
     Aïe : un fichier précieux du fonds a disparu, et find -delete, comme rm, ne passe par aucune corbeille…
     Dans la vraie vie, c'est pour cela qu'on fait des sauvegardes AVANT de faire
     le ménage. Ici, tu peux recommencer le chapitre (lien sous le terminal).
+archives-event-leftovers =
+    L'archive tient sur la clé… mais elle emporte encore des fichiers
+    temporaires (tar -tzf les montre). Certains se cachaient plus bas, ou
+    dans des dossiers cachés : ls ne montre qu'un niveau, et pas les noms
+    qui commencent par un point. find cherche partout :  find fonds -name "*.tmp"
+    Jette-les, puis refais l'archive.
 archives-event-cleanup =
     Le ménage est fait. Vérifie avec du -sh fonds, puis crée l'archive
     compressée directement sur la clé :

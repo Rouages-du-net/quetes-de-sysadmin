@@ -653,9 +653,11 @@ poems in safety: `git init`, `git add .`, `git commit -m`.
 ## Story 5: The Archives (done, two chapters)
 
 The neighbourhood library's server shuts down at midnight; Rosa only has a
-64 MB USB stick. `du -sh` and `df -h` show that the collection (174 MB)
+64 MB USB stick. `du -sh` and `df -h` show that the collection (182 MB)
 doesn't fit; `tar` fails ("No space left on device"). `find fonds -name
-"*.tmp"` finds 120 MB of temporary files, deleted with `-delete`. The
+"*.tmp"` finds 128 MB of temporary files, deleted with `-delete`: three big
+ones in plain sight, five small ones deeper or in hidden folders, which
+`ls` misses (an archive that still carries one doesn't count). The
 compressed archive (`tar -czf`) is then 48 MB; `tar -tzf` checks it. An
 archivist's moral: a single copy isn't a backup.
 

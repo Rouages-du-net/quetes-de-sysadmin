@@ -579,6 +579,23 @@ for (const language of LANGUAGES)
         ]);
         expect(s.finished).toBe(true);
       });
+
+      it('The Archives — false lead: only the .tmp files ls shows are removed', () => {
+        const { s, tout: all } = play('archives', [
+          'ls collection/maps collection/press collection/recordings',
+          'rm collection/maps/render.tmp collection/press/export.tmp collection/recordings/raw.tmp',
+          'tar -czf /media/usb/collection.tar.gz collection',
+        ]);
+        contains(all, 'elle emporte encore des fichiers');
+        expect(s.finished).toBe(false);
+        // find sees them all, the hidden ones too.
+        const found = s.execute(L('find collection -name "*.tmp"')) ?? '';
+        expect(found).toContain(L('collection/maps/scans/scan_batch_2/.cache/thumb_07.tmp'));
+        expect(found).toContain(L('collection/manuscripts/.autosave.tmp'));
+        s.execute(L('find collection -name "*.tmp" -delete'));
+        s.execute(L('tar -czf /media/usb/collection.tar.gz collection'));
+        expect(s.finished).toBe(true);
+      });
     });
 
     describe('The Archives, chapter 2 — The versions (restic)', () => {

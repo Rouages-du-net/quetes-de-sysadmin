@@ -6,7 +6,7 @@
 ## Capítulo 1 — El Archivo
 
 hint-archives-cleanup =
-    .lead = Los fondos no caben en la memoria de 64 MB. du muestra adónde va el espacio, y Rosa habla de archivos temporales (.tmp) que se pueden tirar: find puede localizarlos en todas las subcarpetas, y borrarlos.
+    .lead = Los fondos no caben en la memoria de 64 MB. du muestra adónde va el espacio, y Rosa habla de archivos temporales (.tmp) que se pueden tirar: find puede localizarlos en todas las subcarpetas, y borrarlos. Algunos se esconden muy abajo, o en carpetas ocultas.
     .solution = find fondos -name "*.tmp" para verlos, y luego find fondos -name "*.tmp" -delete (con el -name, o se va todo).
 hint-archives-saved =
     .lead = La limpieza está hecha: ahora mete todos los fondos en UN archivo comprimido, escrito directamente en la memoria (/media/memoria). Mira man tar: -c crea, -z comprime, -f nombra el archivo.

@@ -62,8 +62,11 @@ archives-event-full =
     Hay que hacer sitio ANTES: ¿qué hay en los fondos que no sea valioso?
     (du -h fondos, y luego find fondos -name "*.tmp")
 archives-event-tmp =
-    ¡Tres archivos temporales, 120 MB entre los tres! Rosa dice que podemos
-    tirarlos. find puede borrarlos de una vez, con -delete al final:
+    Archivos temporales por todas partes: en cada carpeta, más abajo entre
+    los escaneos, e incluso en carpetas ocultas (su nombre empieza por un
+    punto: ls no las muestra sin -a). ¡Unos 128 MB entre todos! Rosa dice
+    que podemos tirarlos. find busca en todos los niveles y puede borrarlos
+    de una vez, con -delete al final:
 
       find fondos -name "*.tmp" -delete
 
@@ -73,6 +76,12 @@ archives-event-loss =
     como rm, no pasa por ninguna papelera… En la vida real, por eso se
     hacen copias de seguridad ANTES de limpiar. Aquí puedes reiniciar el
     capítulo (enlace debajo del terminal).
+archives-event-leftovers =
+    El archivo cabe en la memoria… pero aún lleva archivos temporales
+    (tar -tzf los muestra). Algunos se escondían más abajo, o en carpetas
+    ocultas: ls solo muestra un nivel, y no los nombres que empiezan por un
+    punto. find busca en todas partes:  find fondos -name "*.tmp"
+    Tíralos y vuelve a hacer el archivo.
 archives-event-cleanup =
     La limpieza está hecha. Compruébalo con du -sh fondos y luego crea el
     archivo comprimido directamente en la memoria:
