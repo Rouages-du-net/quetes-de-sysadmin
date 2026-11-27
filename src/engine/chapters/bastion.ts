@@ -69,10 +69,10 @@ export const DROPIN_TEXT = `# Selma's first deployments used a password, until h
 PasswordAuthentication yes`;
 
 // The keys in deploy's authorized_keys: Selma's, and the one the intruder
-// added, whose comment imitates a legitimate one.
+// added, with the same comment as hers: only the fingerprint tells them apart.
 export const deployKeys = () => ({
   selma: generateKey('bastion-selma', 'selma@studio').isPublic,
-  intruder: generateKey('bastion-intruder', 'deploy@ci-runner').isPublic,
+  intruder: generateKey('bastion-intruder', 'selma@studio').isPublic,
 });
 export const selmaFingerprint = () => keyFingerprint(deployKeys().selma);
 export const DEPLOY_KEYS = '/home/deploy/.ssh/authorized_keys';
@@ -163,7 +163,7 @@ chmod +x kworkerd
 cat > .w
 nohup /bin/sh .w >/dev/null 2>&1 &
 (crontab -l; echo '@reboot /bin/sh ${WATCHDOG_PATH}') | crontab -
-echo '${generateKey('bastion-intruder', 'deploy@ci-runner').isPublic}' >> ~/.ssh/authorized_keys
+echo '${generateKey('bastion-intruder', 'selma@studio').isPublic}' >> ~/.ssh/authorized_keys
 echo "${INJECTED.replace(/"/g, '\\"')}" >> /srv/delivery/server.js
 exit`;
 

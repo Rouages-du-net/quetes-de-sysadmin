@@ -53,7 +53,7 @@ hint-eradication-restored =
     .lead = Restaura server.js desde el archivo cuya firma es correcta (man tar, -x y -C).
     .solution = sudo tar -xzf /srv/releases/delivery-2.3.1.tar.gz -C /srv (reescribe /srv/delivery/server.js; compáralo con el del archivo con diff si tienes dudas).
 hint-eradication-end =
-    .lead = Comprueba: ningún @reboot, sync-orders conservado, solo la clave de Selma, /tmp/.cache desaparecido, server.js como en la versión, la aplicación funcionando y nada relanzado.
+    .lead = Comprueba: ningún @reboot, sync-orders conservado, solo la clave de Selma, /tmp/.cache desaparecido, server.js como en la versión cuya firma comprobaste, la aplicación funcionando y nada relanzado.
     .solution = sudo crontab -u deploy -l, sudo ssh-keygen -lf /home/deploy/.ssh/authorized_keys, sudo ls -la /tmp/.cache, sudo systemctl restart delivery, ps aux | grep cache.
 
 ## Capítulo 4 — El refuerzo

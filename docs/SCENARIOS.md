@@ -2718,9 +2718,11 @@ it relaunches the miner: its `server.js` was changed), `usermod -L` alone.
 
 Goal checked on the state: no `@reboot` line and `sync-orders` kept, the
 intruder's key removed and Selma's kept, the miner's files gone,
-`server.js` identical to the release, the app running and nothing
-relaunched. Expected traps: `crontab -r`, emptying `authorized_keys`,
-trusting the key's comment, restoring from the rebuilt copy, restarting the
+`server.js` identical to the release and that release's signature checked
+(a `Good signature` seen: fixing the file by hand is not enough), the app
+running and nothing relaunched. Expected traps: `crontab -r`, emptying
+`authorized_keys`, trusting the key's comment (both keys say
+`selma@studio`), restoring from the rebuilt copy, restarting the
 app before `server.js` is clean.
 
 ### Chapter 4 — Hardening (done)
