@@ -33,9 +33,7 @@ sleeping-connections-note-lwazi =
     - Auf kelle läuft MariaDB (das Debian-Paket, der Dienst mariadb). Die
       Datenbank ist plots: members, plots, waitlist, bookings.
     - Plotline läuft auf shed (198.51.100.133) und verbindet sich über das
-      hintere Netzwerk als plotline mit kelle. bookings enthält jede
-      Buchung seit 2019: allein der Gießplan bucht jeden Abend jede
-      Parzelle.
+      hintere Netzwerk als plotline mit kelle.
     - Als root auf kelle öffnet sudo mariadb die Datenbank (Debian lässt
       den root des Systems über den Socket herein, ohne Passwort).
     - Die Konfiguration: /etc/mysql/mariadb.conf.d/50-server.cnf. Die Logs
