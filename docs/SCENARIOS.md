@@ -636,8 +636,8 @@ gives the method: test step by step, from near to far.
 | `ping 9.9.9.9` | the internet works |
 | `ping letters.example` | "Temporary failure in name resolution": DNS |
 | `dig letters.example`, `cat /etc/resolv.conf` | the computer asks the old home router, which is gone |
-| `dig @9.9.9.9 letters.example` | the name does exist |
-| `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS repaired |
+| `dig @9.9.9.9 letters.example`, `dig @192.168.1.1 letters.example` | the name does exist, and the new router answers DNS |
+| `sudo nano /etc/resolv.conf` (`nameserver 192.168.1.1` or `9.9.9.9`) | DNS repaired, once a dig has shown a server answering |
 | `ping letters.example` | 100 % packet loss… |
 | `traceroute letters.example` | home router, ISP, exchange point, host, then silence |
 | `curl -I https://letters.example` | `HTTP/2 200`: the server was just ignoring ping |

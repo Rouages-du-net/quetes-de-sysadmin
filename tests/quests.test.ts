@@ -513,12 +513,28 @@ for (const language of LANGUAGES)
           'dig letters.example',
           'cat /etc/resolv.conf',
           'dig @9.9.9.9 letters.example',
-          'sudo cp /etc/resolv.conf.box /etc/resolv.conf',
+          'dig @192.168.1.1 letters.example',
+          'sudo nano /etc/resolv.conf',
           'anthill',
-          'ping letters.example',
-          'traceroute letters.example',
-          'curl -I https://letters.example',
         ]);
+        // No file next to it gives the right line: it comes from the diagnosis.
+        s.saveEdition(s.edition!.text.replace('192.168.1.250', '192.168.1.1'));
+        s.quitEdition();
+        for (const line of ['ping letters.example', 'traceroute letters.example', 'curl -I https://letters.example']) s.execute(line);
+        expect(s.finished).toBe(true);
+      });
+
+      it('The Lost Package — false lead: a nameserver guessed without the diagnosis', () => {
+        const { s, tout: all } = play('lost-packet', ['cat notebook.txt', 'ls /etc', 'sudo nano /etc/resolv.conf', 'anthill']);
+        expect(all).not.toContain('resolv.conf.box');
+        s.saveEdition(s.edition!.text.replace('192.168.1.250', '9.9.9.9'));
+        s.quitEdition();
+        // The name resolves, but nothing showed a DNS server answering: not over yet.
+        expect(s.execute('curl -I https://letters.example')).toContain('HTTP/2 200');
+        expect(s.finished).toBe(false);
+        // The diagnosis (a DNS server that answers) then the page: the end.
+        s.execute('dig letters.example');
+        s.execute('curl -I https://letters.example');
         expect(s.finished).toBe(true);
       });
 
