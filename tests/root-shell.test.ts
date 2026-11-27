@@ -111,6 +111,7 @@ describe('A chapter solved from a root shell', () => {
     run('ants-2026');
     expect(s.prompt()).toMatch(/^root@.*~#$/);
     expect(run("awk '{print $9}' /var/log/nginx/access.log | sort | uniq -c")).toMatch(/\d+ 504/);
+    expect(run("awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c")).toContain('198.51.100.23');
     const site = '/etc/nginx/sites-available/letters';
     const edit = (change: (t: string) => string) => {
       run(`nano ${site}`);
