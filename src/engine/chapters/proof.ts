@@ -6,7 +6,9 @@
 // refused (400), but that is worth noting.
 // Objective checked on the state: both packages confirmed up to date (apt
 // list --upgradable empty), the attempt found in access.log (grep), and the
-// site still served.
+// site still served, in any order. The packages are already at the fixed
+// versions when the chapter starts: what is checked is that apt (or dpkg)
+// was asked to prove it ('versions'), not only believed.
 // Sources: https://manpages.debian.org/trixie/apt/apt.8.en.html,
 // https://nginx.org/en/docs/http/ngx_http_log_module.html
 
@@ -32,6 +34,11 @@ const okUpToDate = (j: Game) => apt(j).installed.nginx === CVE.nginx.corrigee &&
 const okFound = (j: Game) =>
   j.last.commands.some((c) => ['grep', 'cat', 'less', 'head', 'tail'].includes(c[0])) && j.last.output.includes(SUSPICIOUS);
 const siteOk = (j: Game) => j.last.commands.some((c) => c[0] === 'curl') && /200/.test(j.last.output);
+// apt's lists ("Listing... Done"), or a dpkg/apt answer naming both fixed versions.
+const okProven = (j: Game) =>
+  j.last.commands.some((c) => c[0] === 'apt' || c[0] === 'apt-cache' || c[0] === 'dpkg' || c[0] === 'dpkg-query') &&
+  okUpToDate(j) &&
+  (/Listing\.\.\. Done/.test(j.last.output) || (j.last.output.includes(CVE.nginx.corrigee) && j.last.output.includes(CVE.rsync.corrigee)));
 
 export const proof: Chapter = {
   id: 'proof',
@@ -62,13 +69,16 @@ export const proof: Chapter = {
       home: { 'email_salome.txt': f(t('proof-email-salome')) },
       logAccess: ACCESS,
     }),
+  afterCommand: (j) => {
+    if (siteOk(j)) j.state.siteServed = true;
+  },
   events: [
-    {
-      id: 'versions',
-      condition: (j) => j.last.commands.some((c) => c[0] === 'apt') && okUpToDate(j) && /Listing\.\.\. Done/.test(j.last.output),
-      message: (j) => j.t('proof-event-versions'),
-    },
+    { id: 'versions', condition: okProven, message: (j) => j.t('proof-event-versions') },
     { id: 'found', condition: okFound, message: (j) => j.t('proof-event-found', { address: SUSPICIOUS }) },
-    { id: 'end', condition: (j) => okUpToDate(j) && j.flags.has('found') && siteOk(j), message: (j) => j.t('proof-event-end') },
+    {
+      id: 'end',
+      condition: (j) => okUpToDate(j) && j.flags.has('versions') && j.flags.has('found') && !!j.state.siteServed,
+      message: (j) => j.t('proof-event-end'),
+    },
   ],
 };

@@ -2145,7 +2145,8 @@ already been tried.
 | Look for an attempt | `grep "HTTP/2" /var/log/nginx/access.log` |
 | Check the site holds | `curl -I http://fournil.example/` |
 
-Goal checked on the state: both packages confirmed up to date, an earlier
+Goal checked on the state: both packages confirmed up to date by apt (they
+already are at the start: believing it isn't enough), an earlier
 attempt found in the access log (an empty HTTP/2 request, refused by nginx,
 a few days before the fix), and the site still served.
 

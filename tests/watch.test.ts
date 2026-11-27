@@ -146,6 +146,15 @@ ${CVE.ssh.id} (openssh-server) : ${w('already protected (KbdInteractiveAuthentic
       expect(c.finished).toContain('proof');
     });
 
+    it('chapter 4 — false lead: believing the fix without asking apt', () => {
+      const { c, jouer: play } = part(['bulletin', 'priority', 'fix']);
+      play(['grep "HTTP/2" /var/log/nginx/access.log', 'curl -I http://bakery.example/']);
+      expect(c.finished).not.toContain('proof');
+      // The proof can come last: the site was already seen served.
+      play(['apt list --upgradable']);
+      expect(c.finished).toContain('proof');
+    });
+
     // ——— Chapter 5: "Keeping watch" ———
     const TWENTY_ACTIVE = (t: string) => t.replace('"0"', '"1"').replace('"0"', '"1"');
     const restrict = (t: string) =>
