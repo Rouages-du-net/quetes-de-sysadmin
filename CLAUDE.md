@@ -250,7 +250,9 @@ presents them for people.
   the `net-tools` tip of `tips.ts` for `ifconfig`, `route`, `netstat`.
 - `ls -l` (`longRow`, `longLines`, `lsDate`: links, dates by the six
   months rule, `total`), `ls -F`, `du` in 4 KiB blocks, `cp -u`, `touch`,
-  `find -prune`/`-xdev`/`-ls` in `commands/files.ts`; `nowOf()` of
+  `find -prune`/`-xdev`/`-ls`, `rm -r` (`removeSteps`: a generator for
+  `-i`'s questions; `systemPlace`, `storyPlace` kept whole) and `mv` of a
+  place in `commands/files.ts`; `nowOf()` of
   `time.ts`: the date a file without `mtime` has; curl's progress meter
   (`progressMeter`) in `commands/network.ts`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,
@@ -317,7 +319,10 @@ presents them for people.
   installed: its model or configuration), minus `Chapter.withhold`; sudo
   only with the chapter's password; read by `Shell.known()` (help, Tab,
   highlighting, `type`, `man`); an internal host with its own `commands`
-  inherits nothing. The teachers' sheets keep only the new own commands.
+  inherits nothing. `EVERYDAY` (ps, df, free, uptime, whoami, id, groups,
+  date, hostname, uname, which, pwd, echo): every chapter has them where its
+  machine's system does (`everydayHere`), unless withheld. The teachers'
+  sheets keep only the new own commands.
 - `src/engine/difficulty.ts`: each chapter's difficulty, 1 to 5, computed
   on an absolute scale from the chapters it assumes (its prerequisites) and
   from its size (nothing to set by hand): adding a story never changes the

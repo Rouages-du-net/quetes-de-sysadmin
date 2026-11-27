@@ -67,6 +67,10 @@ concert-event-still-too =
     multiplied by the robot's number of addresses, must stay well below
     what the calendar can serve (about twenty pages per second). And does
     the limit really apply to /agenda/?
+concert-event-who =
+    The calendar holds. But Kofi asked who is asking for what, and the
+    association will want to know who was flooding it: look in the access
+    log (help_logs.txt has the recipes).
 concert-event-end =
     All human visits get through, the robot is slowed down, and the
     calendar can breathe. Kofi: "The time shows up! The concert starts at

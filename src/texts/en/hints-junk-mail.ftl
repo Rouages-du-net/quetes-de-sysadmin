@@ -40,7 +40,7 @@ hint-policy-report =
     .lead = The reports in dmarc_reports are XML: each "record" says who sent (source_ip), how many, and what SPF, DKIM and DMARC gave. Look for the addresses that aren't 203.0.113.30.
     .solution = grep source_ip dmarc_reports/*.xml, then less on the report: 198.51.100.77 (newsmail.example) passes SPF and DKIM for its own domain, not for gardens.example.
 hint-policy-aligned =
-    .lead = The newsletter must be signed with d=gardens.example: newsmail_letter.txt says how to delegate a selector. Mind the trailing dot, and the serial.
+    .lead = The newsletter must be signed with d=gardens.example: newsmail_letter.txt says how to delegate a selector, and the reports say which one (selector). Mind the trailing dot, and the serial.
     .solution = Add "nm1._domainkey IN CNAME nm1.dkim.newsmail.example." to the zone, raise the serial, sudo rndc reload; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
 hint-policy-end =
     .lead = Now that the newsletter is aligned, the policy can be tightened: the p= tag of the _dmarc record (keep rua=).

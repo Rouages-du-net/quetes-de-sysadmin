@@ -42,7 +42,11 @@ policy-letter-newsmail =
     Pour que nous signions avec votre domaine, déléguez-nous un sélecteur.
     Ajoutez dans la zone DNS de votre domaine :
 
-        nm1._domainkey.VOTRE-DOMAINE.   CNAME   nm1.dkim.newsmail.example.
+        SELECTEUR._domainkey.VOTRE-DOMAINE.   CNAME   SELECTEUR.dkim.newsmail.example.
+
+    SELECTEUR est le sélecteur de votre compte : celui avec lequel nous
+    signons déjà vos campagnes (le s= de leur signature DKIM, que donnent
+    aussi les rapports DMARC que vous recevez).
 
     Nos serveurs vérifient votre DNS toutes les heures : dès que le CNAME
     est visible, vos campagnes sont signées avec d=VOTRE-DOMAINE.

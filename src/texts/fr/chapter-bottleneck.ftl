@@ -19,10 +19,10 @@ bottleneck-message-zoe =
     J'ai regardé top : la machine a l'air surchargée, mais le processeur
     ne fait presque rien. Je n'y comprends rien.
 
-    Ce que je sais : à 16 h, l'archivage du jour (radio-archives) recopie
-    les enregistrements dans /srv/archives. Il ne faut surtout pas
-    l'arrêter : les émissions de la journée doivent être archivées ce
-    soir. Mais il ne doit pas casser le direct, ni aujourd'hui ni demain. »
+    Quoi que tu trouves, n'arrête rien : tout ce qui tourne sur ce
+    serveur a son rôle, et les émissions de la journée doivent être
+    archivées ce soir. Mais le direct ne doit pas casser, ni aujourd'hui
+    ni demain. »
 
     Pour regarder le disque : man iostat, man pidstat.
 

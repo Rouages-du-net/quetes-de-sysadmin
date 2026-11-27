@@ -102,5 +102,5 @@ hint-bottleneck-iowait =
     .lead = Zoé dice que el procesador casi no hace nada. Mira la línea %Cpu(s) de top: cada columna tiene su significado (man top), y una de ellas cuenta el tiempo pasado esperando al disco.
     .solution = top («wa» es enorme: eso es el iowait); luego iostat -x y sudo pidstat -d para ver el disco saturado y quién lo mantiene ocupado
 hint-bottleneck-end =
-    .lead = El archivado (radio-archives) satura el disco, pero no hay que detenerlo. ionice no sirve con el planificador «none»; un límite de ancho de banda puesto por systemd funciona siempre (man systemd.resource-control: IOWriteBandwidthMax=), en el disco correcto (iostat lo nombra), ni demasiado bajo ni demasiado alto.
+    .lead = Lo que mantiene ocupado el disco (pidstat nombra su proceso; systemctl list-timers dice qué arranca a las 16:00) no debe detenerse. ionice no sirve con el planificador «none»; un límite de ancho de banda puesto por systemd funciona siempre (man systemd.resource-control: IOWriteBandwidthMax=), en el disco correcto (iostat lo nombra), ni demasiado bajo ni demasiado alto.
     .solution = sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M" (guardado en /etc), luego iostat -x para comprobarlo; si el archivado está parado: sudo systemctl start radio-archives

@@ -40,7 +40,7 @@ hint-policy-report =
     .lead = Les rapports de rapports_dmarc sont du XML : chaque « record » dit qui a envoyé (source_ip), combien, et ce qu'ont donné SPF, DKIM et DMARC. Cherche les adresses qui ne sont pas 203.0.113.30.
     .solution = grep source_ip rapports_dmarc/*.xml, puis less sur le rapport : 198.51.100.77 (newsmail.example) passe SPF et DKIM pour son domaine, pas pour gardens.example.
 hint-policy-aligned =
-    .lead = La lettre doit être signée avec d=gardens.example : lettre_newsmail.txt dit comment déléguer un sélecteur. Attention au point final, et au serial.
+    .lead = La lettre doit être signée avec d=gardens.example : lettre_newsmail.txt dit comment déléguer un sélecteur, et les rapports disent lequel (selector). Attention au point final, et au serial.
     .solution = Ajouter « nm1._domainkey IN CNAME nm1.dkim.newsmail.example. » à la zone, augmenter le serial, sudo rndc reload ; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
 hint-policy-end =
     .lead = Maintenant que la lettre est alignée, la politique peut se durcir : la balise p= de l'enregistrement _dmarc (garde rua=).

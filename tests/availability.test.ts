@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Shell } from '../src/engine/shell';
 import { STORIES } from '../src/engine/chapters';
 import { assumed } from '../src/engine/unlocking';
-import { inherited, inheritedHere, installed } from '../src/engine/availability';
+import { EVERYDAY, everydayHere, inherited, inheritedHere, installed } from '../src/engine/availability';
 import { allSheets } from '../src/engine/sheets';
 import { colourise } from '../src/engine/highlighting';
 import { COMMANDS } from '../src/engine/commands';
@@ -93,6 +93,60 @@ describe('Commands inherited from the chapters a chapter assumes', () => {
     expect(s.known()).not.toContain(x);
     expect(s.execute(`${x} --help`)).toContain("you don't have this command yet");
   });
+});
+
+describe('The everyday commands', () => {
+  it('a chapter has them although no chapter it assumes teaches them', () => {
+    // The first chapter assumes nothing: ps, df, whoami… are there all the same.
+    const c = chapter('lighthouse');
+    expect(assumed('lighthouse')).toEqual([]);
+    const s = shell(c);
+    for (const x of ['ps', 'df', 'free', 'uptime', 'whoami', 'id', 'date', 'hostname', 'uname', 'which']) {
+      expect(c.commands).not.toContain(x);
+      expect(s.known()).toContain(x);
+    }
+    expect(s.execute('whoami')).toBe('you');
+    expect(s.execute('ps')).not.toContain("you don't have this command yet");
+    // help lists them with the chapter's own commands, not as learned earlier.
+    expect(s.execute('help')).toContain('whoami');
+    expect(s.execute('help')).not.toContain('Learned in earlier chapters');
+  });
+
+  it('only the basic ones: a tool to learn stays not learned', () => {
+    const s = shell('lighthouse');
+    for (const x of ['kill', 'find', 'grep', 'tar', 'chmod', 'systemctl']) if (!chapter('lighthouse').commands.includes(x)) expect(s.known()).not.toContain(x);
+  });
+
+  it('a chapter that teaches one keeps it as its own, and the sheets keep only own new commands', () => {
+    const teaching = STORIES.flatMap((h) => h.chapters).find((c) => c.commands.includes('ps'))!;
+    expect(shell(teaching).known()).toContain('ps');
+    for (const f of allSheets()) for (const x of f.fresh) expect(f.chapter.commands).toContain(x);
+  });
+
+  it('withhold still keeps one out', () => {
+    const strict: Chapter = { ...chapter('lighthouse'), withhold: ['ps'] };
+    const s = shell(strict);
+    expect(s.known()).not.toContain('ps');
+    expect(s.execute('ps')).toContain("you don't have this command yet");
+  });
+
+  it('only where the machine’s system has them', () => {
+    // Windows has none of the Unix ones.
+    const s = shell('service-logon');
+    expect(everydayHere(s, chapter('service-logon')).filter((x) => !COMMANDS[x]?.winexe && !COMMANDS[x]?.cmdlet)).toEqual([]);
+    // FreeBSD has the POSIX ones.
+    const bsd = shell('rc-services');
+    expect(everydayHere(bsd, chapter('rc-services'))).toEqual(expect.arrayContaining(['ps', 'df', 'id', 'date', 'uname']));
+  });
+
+  it('none of them breaks on any chapter’s machine', () => {
+    for (const story of STORIES)
+      for (const c of story.chapters) {
+        const s = shell(c);
+        for (const x of everydayHere(s, c)) expect(() => s.execute(x), `${c.id}: ${x}`).not.toThrow();
+      }
+    expect(EVERYDAY.length).toBeLessThan(20);
+  }, 120_000);
 });
 
 describe('Inherited commands exist on the machine, as its system has them', () => {

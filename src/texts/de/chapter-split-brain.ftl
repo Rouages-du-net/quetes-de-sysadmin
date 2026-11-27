@@ -18,14 +18,11 @@ split-brain-message-kirsi =
     Letzte Nacht (Dienstag, ab 21:30) haben wir die neuen Edge-Router
     installiert: ein Paar, edge-a (192.0.2.252) und edge-b (192.0.2.253),
     die sich das Gateway 192.0.2.254 mit VRRP teilen, damit das Gateway den
-    Ausfall eines Routers übersteht. Bei der Gelegenheit haben wir unsere
-    Härtungs-Baseline (v3, nftables) auf lb2 angewendet; lb1 bekommt sie
-    nächste Woche.
+    Ausfall eines Routers übersteht.
     
     Heute Morgen ist das Log der Edge-Router voll mit Zeilen wie diesen:
       arp: 192.0.2.108 moved from 52:54:00:6c:01:04 to 52:54:00:6c:01:05 on vlan20
       arp: 192.0.2.108 moved from 52:54:00:6c:01:05 to 52:54:00:6c:01:04 on vlan20
-      vrrp: VRID 51: advert from 192.0.2.104 with a different address list, ignored
     
     Zwei Maschinen antworten für 192.0.2.108. Ich bin sicher, es sind
     nicht die Router ;)

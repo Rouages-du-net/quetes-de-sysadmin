@@ -49,6 +49,10 @@ switch-over-event-not-kept =
     Careful: the old data or its snapshot are gone. Until the new server
     has proved itself (a few weeks of use, a restored backup), the old box
     is the way back.
+switch-over-event-uncounted =
+    The catalogue now writes to greenhouse, and the old base is frozen. But
+    nobody has checked that greenhouse holds every row: count them there
+    (SELECT count(*)), the proof Inaya needs before the desk reopens.
 switch-over-event-end =
     Inaya: "First lending on the new server: Bean 'Mère Hélène', to Zoë. And
     the Sun is still in the cupboard, quiet, just in case."

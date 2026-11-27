@@ -20,9 +20,11 @@ describe('Command-line highlighting', () => {
     const s = sh();
     expect(kinds(s, 'ls')).toEqual([['ls', 'command']]);
     expect(kinds(s, 'lss')).toEqual([['lss', 'unknown']]);
-    // nmap and echo exist in the game, but not yet in this chapter: the shell would refuse them.
+    // nmap and kubectl exist in the game, but not yet in this chapter: the shell would refuse them.
     expect(kinds(s, 'nmap')[0][1]).toBe('unknown');
-    expect(kinds(s, 'echo x')[0][1]).toBe('unknown');
+    expect(kinds(s, 'kubectl get pods')[0][1]).toBe('unknown');
+    // echo is an everyday command: every chapter has it (availability.ts).
+    expect(kinds(s, 'echo x')[0][1]).toBe('command');
     expect(kinds(s, '/bin/ls')).toEqual([['/bin/ls', 'command']]);
     expect(kinds(s, 'help')).toEqual([['help', 'command']]);
   });

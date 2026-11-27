@@ -69,7 +69,8 @@ export const seen = (j: Game, text: string | RegExp) => {
   const all = `${last.output}\n${last.errors.join('\n')}`;
   return typeof text === 'string' ? all.includes(text) : text.test(all);
 };
-export const mailUser = (j: Game, name: string): MailUser => lookup(j, USER(name))!;
+// An account gone from /etc/dovecot/users (removed by the player) has no home, no quota, no scripts.
+export const mailUser = (j: Game, name: string): MailUser => lookup(j, USER(name)) ?? { user: USER(name), uid: 0, gid: 0, home: '/nonexistent', fields: {} };
 
 // ——— Making messages ———
 

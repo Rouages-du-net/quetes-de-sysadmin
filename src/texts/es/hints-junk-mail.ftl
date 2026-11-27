@@ -40,7 +40,7 @@ hint-policy-report =
     .lead = Los informes de informes_dmarc están en XML: cada «record» dice quién envió (source_ip), cuántos, y qué dieron SPF, DKIM y DMARC. Busca las direcciones que no son 203.0.113.30.
     .solution = grep source_ip informes_dmarc/*.xml, y luego less sobre el informe: 198.51.100.77 (newsmail.example) pasa SPF y DKIM para su propio dominio, no para gardens.example.
 hint-policy-aligned =
-    .lead = El boletín tiene que firmarse con d=gardens.example: carta_newsmail.txt dice cómo delegar un selector. Cuidado con el punto final, y con el serial.
+    .lead = El boletín tiene que firmarse con d=gardens.example: carta_newsmail.txt dice cómo delegar un selector, y los informes dicen cuál (selector). Cuidado con el punto final, y con el serial.
     .solution = Añade «nm1._domainkey IN CNAME nm1.dkim.newsmail.example.» a la zona, sube el serial, sudo rndc reload; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
 hint-policy-end =
     .lead = Ahora que el boletín está alineado, se puede endurecer la política: la etiqueta p= del registro _dmarc (conserva rua=).

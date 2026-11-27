@@ -263,6 +263,15 @@ for (const language of languagesFor('blood-drive'))
       contains(everything(), 'Vous avez terminé Le Cerveau coupé en deux.');
     });
 
+    it("chapter 3 — false lead: Kirsi's message gives the symptom, not the causes (lb2's baseline, VRID 51)", () => {
+      const { run } = play(['no-failover', 'sick-server']);
+      const all = run('cat message_from_kirsi.txt');
+      expect(all).toContain('192.0.2.108 moved from');
+      expect(all).not.toContain('VRID');
+      expect(all).not.toContain('nftables');
+      expect(all).not.toContain('lb2');
+    });
+
     it('chapter 3 — false leads: keepalived stopped on lb2, priorities; another solution: nft add rule then the file, unicast_peer', () => {
       const { run, edit, finished, everything } = play(['no-failover', 'sick-server']);
       run('ssh lb2');

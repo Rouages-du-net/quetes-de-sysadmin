@@ -102,5 +102,5 @@ hint-bottleneck-iowait =
     .lead = Zoé dit que le processeur ne fait presque rien. Regarde la ligne %Cpu(s) de top : chaque colonne a son sens (man top), l'une d'elles compte le temps passé à attendre le disque.
     .solution = top (« wa » est énorme : c'est l'iowait) ; puis iostat -x et sudo pidstat -d pour voir le disque saturé et qui l'occupe
 hint-bottleneck-end =
-    .lead = L'archivage (radio-archives) sature le disque, mais il ne faut pas l'arrêter. ionice ne sert à rien avec l'ordonnanceur « none » ; une limite de débit posée par systemd marche toujours (man systemd.resource-control : IOWriteBandwidthMax=), sur le bon disque (iostat le nomme), ni trop basse ni trop haute.
+    .lead = Ce qui occupe le disque (pidstat nomme son processus ; systemctl list-timers dit ce qui démarre à 16 h) ne doit pas être arrêté. ionice ne sert à rien avec l'ordonnanceur « none » ; une limite de débit posée par systemd marche toujours (man systemd.resource-control : IOWriteBandwidthMax=), sur le bon disque (iostat le nomme), ni trop basse ni trop haute.
     .solution = sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M" (enregistré dans /etc), puis iostat -x pour vérifier ; si l'archivage est arrêté : sudo systemctl start radio-archives

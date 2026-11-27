@@ -92,7 +92,7 @@ describe('Jobs', () => {
   it('watch shows a screen, redrawn when the output changes, until Ctrl-C', () => {
     const s = shell();
     const first = s.execute('watch -n 5 wc -l notes.txt') ?? '';
-    expect(first.split('\n')[0]).toMatch(/^Every 5\.0s: wc -l notes\.txt +sysadmin$/);
+    expect(first.split('\n')[0]).toMatch(/^Every 5\.0s: wc -l notes\.txt +sysadmin: \w{3} \w{3} [ \d]\d \d\d:\d\d:\d\d \w+ \d{4}$/);
     expect(first).toContain('2 notes.txt');
     expect(s.follow?.screen).toBe(true);
     expect(s.follow!.read()).toBe('');

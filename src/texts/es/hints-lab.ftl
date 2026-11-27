@@ -18,10 +18,10 @@ hint-tired-disk-removed =
     .lead = Cada partición de sdb tiene que salir de su arreglo: primero declarada averiada, luego retirada (man mdadm). Hay dos arreglos.
     .solution = sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2, y luego lo mismo para /dev/sdb3 en /dev/md1.
 hint-tired-disk-ticket =
-    .lead = El procedimiento del proveedor pide un solo dato del disco: el que no cambia nunca, aunque cambien los nombres sda y sdb (man smartctl, o man lsblk).
-    .solution = sudo smartctl -i /dev/sdb (Serial Number), y luego nano ~/ticket.txt: una solicitud de sustitución con ese número, y no el de sda.
+    .lead = El procedimiento del proveedor pide dos cosas del disco: el identificador que no cambia nunca, aunque cambien los nombres sda y sdb, y el atributo SMART que muestra que falla (man smartctl).
+    .solution = sudo smartctl -a /dev/sdb (Serial Number, y el valor bruto de Reallocated_Sector_Ct: 1208), y luego nano ~/ticket.txt: una solicitud de sustitución con los dos, y no el número de sda.
 hint-tired-disk-end =
-    .lead = Hace falta todo a la vez: nada de sdb en los arreglos, sda todavía activo en los dos, y una solicitud que solo da el número de serie de sdb.
+    .lead = Hace falta todo a la vez: nada de sdb en los arreglos, sda todavía activo en los dos, y una solicitud que da el número de serie de sdb (no el de sda) y sus sectores reasignados.
     .solution = cat /proc/mdstat ([U_] para md0 y md1, sin sdb) y cat ~/ticket.txt (solo el número de sdb).
 
 ## Capítulo 2 — El disco nuevo

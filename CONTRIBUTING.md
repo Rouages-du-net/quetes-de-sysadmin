@@ -181,7 +181,9 @@ A command every story may meet (`sleep`, `base64`) stays in the core.
   the commands of every chapter it assumes (its story's `after`
   prerequisites and its story's earlier chapters) that exist on its machine
   (`src/engine/availability.ts`); the others answer "you don't have this
-  command yet", and their manual stays readable with `man`. `withhold`
+  command yet", and their manual stays readable with `man`. A few basic
+  everyday commands (`ps`, `df`, `whoami`, `date`…: `EVERYDAY` there) are
+  in every chapter whose machine has them. `withhold`
   keeps an assumed command gated when it would do the lesson for the
   player.
 - `createWorld(t)`: the starting file system; texts come from `t('…')`,

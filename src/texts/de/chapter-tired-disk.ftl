@@ -18,7 +18,10 @@ lab-procedure-host =
     2. Nennen Sie uns in Ihrer Anfrage die Seriennummer (S/N) der zu
        tauschenden Platte, und nur diese: Die Namen sda oder sdb können
        sich von einem Bootvorgang zum nächsten ändern, die Seriennummer
-       nicht (smartctl -i oder lsblk -o zeigen sie).
+       nicht (smartctl -i oder lsblk -o zeigen sie). Geben Sie dazu die
+       Zahl der umgelagerten Sektoren der Platte an (den Rohwert des
+       SMART-Attributs 5, Reallocated_Sector_Ct): Ein Gesamturteil genügt
+       uns nicht.
     3. Wir greifen innerhalb von 24 Stunden ein. Die neue Platte wird leer
        geliefert: Es ist an Ihnen, sie zu partitionieren und Ihr RAID neu
        aufzubauen.
@@ -99,9 +102,15 @@ tired-disk-event-ticket-false =
     Das Ticket enthält die Seriennummer von sda: Das ist die GESUNDE
     Platte! Der Hoster würde die einzige Platte ziehen, die noch
     funktioniert. Korrigiere { $file }: nur die Seriennummer von sdb.
+# { $file }: der Name des Tickets
+tired-disk-event-ticket-count =
+    { $file } nennt die Seriennummer von sdb, aber der Hoster verlangt
+    auch die Zahl ihrer umgelagerten Sektoren: die Zahl, die zeigt, dass
+    die Platte versagt, was auch immer ihr Gesamturteil sagt.
 tired-disk-event-ticket =
-    Das Ticket nennt die Seriennummer der zu tauschenden Platte. Odile
-    schickt es, sobald die Platte aus ihren Arrays heraus ist.
+    Das Ticket nennt die Seriennummer der zu tauschenden Platte und die
+    umgelagerten Sektoren, die den Tausch begründen. Odile schickt es,
+    sobald die Platte aus ihren Arrays heraus ist.
 tired-disk-event-end =
     Odile: „Abgeschickt! Der Hoster antwortet, dass er die Platte heute
     Nacht tauscht.“

@@ -17,7 +17,9 @@ lab-procedure-host =
     2. Give us in your request the serial number (S/N) of the disk to
        replace, and only that one: the names sda or sdb can change from
        one boot to the next, the serial number does not
-       (smartctl -i or lsblk -o show it).
+       (smartctl -i or lsblk -o show it). Add the disk's count of
+       reallocated sectors (the raw value of SMART attribute 5,
+       Reallocated_Sector_Ct): an overall verdict is not enough for us.
     3. We step in within 24 hours. The new disk is delivered blank: it is
        up to you to partition it and rebuild your RAID.
 lab-syslog =
@@ -93,9 +95,15 @@ tired-disk-event-ticket-false =
     The ticket contains sda's serial number: that's the HEALTHY disk! The
     host would unplug the only disk that still works. Fix { $file }:
     only sdb's serial number.
+# { $file }: the ticket's name
+tired-disk-event-ticket-count =
+    { $file } gives sdb's serial number, but the host also asks for its
+    count of reallocated sectors: the figure that shows the disk is
+    failing, whatever its overall verdict says.
 tired-disk-event-ticket =
-    The ticket gives the serial number of the disk to replace. Odile will
-    send it as soon as the disk is out of its arrays.
+    The ticket gives the serial number of the disk to replace and the
+    reallocated sectors that justify it. Odile will send it as soon as the
+    disk is out of its arrays.
 tired-disk-event-end =
     Odile: "Sent! The host replies they'll swap the disk tonight."
 

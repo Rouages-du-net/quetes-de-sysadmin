@@ -33,8 +33,7 @@ sleeping-connections-note-lwazi =
     - trowel runs MariaDB (Debian's package, the mariadb service). The
       database is plots: members, plots, waitlist, bookings.
     - Plotline runs on shed (198.51.100.133) and connects to trowel over the
-      back network, as plotline. bookings holds every booking since 2019:
-      the watering rota alone books every plot every evening.
+      back network, as plotline.
     - As root on trowel, sudo mariadb opens the database (Debian lets the
       system's root in through the socket, no password).
     - The configuration: /etc/mysql/mariadb.conf.d/50-server.cnf. The logs

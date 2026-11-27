@@ -77,6 +77,11 @@ works-for-me-event-point-final =
     con el nombre de la zona. cafe.example (sin el punto) se convierte en
     cafe.example.cafe.example.: dig @localhost www.cafe.example lo muestra.
     Para un nombre completo: cafe.example. con el punto.
+works-for-me-event-unchecked =
+    Los dos servidores autoritativos dan ya la dirección nueva. Pero los
+    clientes del café no les preguntan directamente: sus ordenadores pasan
+    por un resolvedor, como el de /etc/resolv.conf. ¿Qué les responde?
+    (dig cafe.example, sin @)
 works-for-me-event-end =
     ns1 y ns2 dan la misma respuesta: cafe.example y www.cafe.example
     llevan al servidor de Las Cartas. Los resolvedores seguirán, como muy

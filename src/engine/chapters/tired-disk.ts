@@ -8,7 +8,7 @@
 // replace, and not the other one's.
 // Objective checked on the state: no partition of sdb left in an array,
 // sda's members still active, and ~/ticket.txt giving sdb's serial number
-// (and not sda's).
+// (and not sda's) and its reallocated sectors (1208, from smartctl -A/-a).
 // Sources: https://www.smartmontools.org/wiki/FAQ, smartctl(8), mdadm(8),
 // https://raid.wiki.kernel.org/index.php/Replacing_a_failed_drive
 
@@ -27,7 +27,10 @@ const outSdb = (j: Game) => sdbRemains(j).length === 0;
 const sdaIntact = (j: Game) => Object.values(st(j).arrays).every((g) => active(g).some((m) => m.part.startsWith('sda')));
 const keySda = (j: Game) => Object.values(st(j).arrays).some((g) => g.members.some((m) => m.part.startsWith('sda') && m.state !== 'active'));
 const ticket = (j: Game) => j.read(path(j.t, TICKET)) ?? '';
-const ticketOk = (j: Game) => ticket(j).includes(SERIES.sdb) && !ticket(j).includes(SERIES.sda);
+// The host's procedure: sdb's serial number (not sda's), and its reallocated
+// sectors (Reallocated_Sector_Ct's raw value, only smartctl -A/-a gives it).
+const counted = (j: Game) => /\b1[ ,.\u00a0\u202f]?208\b/.test(ticket(j));
+const ticketOk = (j: Game) => ticket(j).includes(SERIES.sdb) && !ticket(j).includes(SERIES.sda) && counted(j);
 
 export const fatigue: Chapter = {
   id: 'tired-disk',
@@ -112,6 +115,11 @@ export const fatigue: Chapter = {
       id: 'ticket-false',
       condition: (j) => ticket(j).includes(SERIES.sda),
       message: (j) => j.t('tired-disk-event-ticket-false', { file: name(j.t, 'ticket.txt') }),
+    },
+    {
+      id: 'ticket-count',
+      condition: (j) => ticket(j).includes(SERIES.sdb) && !counted(j),
+      message: (j) => j.t('tired-disk-event-ticket-count', { file: name(j.t, 'ticket.txt') }),
     },
     { id: 'ticket', condition: ticketOk, message: (j) => j.t('tired-disk-event-ticket') },
     {

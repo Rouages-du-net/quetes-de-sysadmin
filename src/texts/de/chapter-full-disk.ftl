@@ -17,9 +17,8 @@ full-disk-message-zoe =
     sehe nicht, was sie gefüllt haben könnte, wir haben in letzter Zeit
     nichts hinzugefügt.
 
-    Ich habe letzte Woche nur ein bisschen am Stream-Relay herumgebastelt
-    (dem Dienst radio-stream), um Aussetzer zu verstehen. Es muss wieder
-    laufen, und es darf nicht wieder passieren.
+    Die nächsten Sendungen müssen wieder aufgenommen werden, und es darf
+    nicht wieder passieren.
 
     Für sudo: antenne-2027.“
 full-disk-conf-stream =

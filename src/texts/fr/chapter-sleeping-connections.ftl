@@ -34,9 +34,7 @@ sleeping-connections-note-lwazi =
     - truelle fait tourner MariaDB (le paquet Debian, le service mariadb).
       La base s'appelle plots : members, plots, waitlist, bookings.
     - Plotline tourne sur shed (198.51.100.133) et se connecte à truelle par
-      le réseau arrière, en tant que plotline. bookings garde toutes les
-      réservations depuis 2019 : le tour d'arrosage à lui seul réserve
-      chaque parcelle tous les soirs.
+      le réseau arrière, en tant que plotline.
     - En root sur truelle, sudo mariadb ouvre la base (Debian laisse entrer
       le root du système par la socket, sans mot de passe).
     - La configuration : /etc/mysql/mariadb.conf.d/50-server.cnf. Les
