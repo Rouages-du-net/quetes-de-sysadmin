@@ -3094,7 +3094,7 @@ folder, not its files), unquoted `(OI)(CI)` in PowerShell.
 | Refused | `Start-Service Agenda` ("cannot be started"), `sc.exe start` (FAILED 1069), `net start` |
 | Why | `Get-WinEvent -FilterHashtable @{LogName='System'; Id=7000,7038}` or `Get-EventLog System -EntryType Error`: 7038 "unable to log on as .\svc_agenda" at Sunday's boot, after the 1074 restart |
 | Which account | `Get-CimInstance Win32_Service -Filter "Name='Agenda'" \| Select-Object Name, StartName, State`, `sc.exe qc Agenda`; `Get-LocalUser svc_agenda \| Select-Object Name, PasswordLastSet` (Friday) |
-| The new password | `Get-Content Documents\vault-svc_agenda.txt` (the password manager's entry Mariam exported) |
+| The new password | `Get-Content Documents\vault-service-accounts.txt` (the server's entries Mariam exported: svc_backup, svc_agenda, the Agenda's web admin; the StartName says which) |
 | Give it to the service | `sc.exe config Agenda obj= .\svc_agenda password= …` (`sc` alone is Set-Content in PowerShell), `Start-Service Agenda` |
 
 Goal checked on the state: the Agenda runs under `svc_agenda` with the
@@ -3102,8 +3102,11 @@ account's current password stored, StartType Automatic, and `svc_agenda`
 isn't an administrator. Expected traps: `sc config` in PowerShell (the
 alias), LocalSystem (it starts, the check refuses it: least privilege), a
 new password set on the account only, a mistyped password, the service
-disabled or set to Manual, `svc_agenda` added to Administrators. Deleting
-the exported entry is thanked, not required.
+disabled or set to Manual, `svc_agenda` added to Administrators, the
+service under `svc_backup` or with the web admin's password. Mariam's email
+gives the symptom only (down since the update restart): the 7038 and the
+StartName lead to the account, PasswordLastSet to Friday's change. Deleting
+the exported file is thanked, not required.
 
 ### Chapter 3 — The Log Flood (done)
 

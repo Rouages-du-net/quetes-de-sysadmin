@@ -18,30 +18,39 @@ service-logon-email-mariam =
     get "This site can't be reached" on http://stave.internal:8080, and
     families can't book their trial lessons.
 
-    On Friday, his last day, Gabriel changed the password of the
-    Agenda's account, svc_agenda: our insurer's security audit asks us
-    to change the service passwords every year. He saved the new one in
-    the password manager. The server restarted on Sunday night for
-    Windows Update.
-
-    I exported the password manager's entry for you, in
-    Documents\vault-svc_agenda.txt. Please delete that file when you're
-    done.
+    The server restarted on Sunday night for Windows Update. Gabriel, who
+    looked after it, left on Friday; in case you need them, I exported
+    the server's entries from the password manager, in
+    Documents\vault-service-accounts.txt. Please delete that file when
+    you're done.
 
     Could you get the Agenda back up, without breaking anything else?
 
     Mariam
 
-# { $password }: the account's new password (not translated).
+# { $agenda }, { $backup }, { $admin }: the passwords (not translated).
 service-logon-vault =
-    Password manager - one entry, exported by Mariam (10 December 2029)
+    Password manager - folder "stave", exported by Mariam (10 December 2029)
+
+    Title:     stave - svc_backup
+    Username:  svc_backup
+    Password:  { $backup }
+    Modified:  3 June 2029 (Gabriel)
+    Notes:     Local account. Changed every year (insurer's audit,
+               item 4.2).
 
     Title:     stave - svc_agenda
     Username:  svc_agenda
-    Password:  { $password }
+    Password:  { $agenda }
     Modified:  7 December 2029, 16:42 (Gabriel)
-    Notes:     Local account of the Agenda service on stave.
-               Changed every year (insurer's audit, item 4.2).
+    Notes:     Local account. Changed every year (insurer's audit,
+               item 4.2).
+
+    Title:     Agenda - web admin
+    Username:  admin
+    Password:  { $admin }
+    Modified:  2 September 2029 (Gabriel)
+    Notes:     http://stave.internal:8080/admin
 
 ## Events
 
@@ -61,14 +70,20 @@ service-logon-event-events =
     Win32_Service, or sc.exe qc)
 service-logon-event-account =
     StartName: .\svc_agenda, the local account (the dot means this
-    computer). Windows keeps that account's password with the service,
-    and nobody gave it the new one: Gabriel changed the account's
-    password, not the service's copy. The service kept running until
-    Sunday's restart, then tried the old one.
+    computer). Windows keeps that account's password with the service: if
+    someone changed the account's password, the service's copy didn't
+    follow. When was it last set? (Get-LocalUser, PasswordLastSet)
 service-logon-event-rotated =
-    PasswordLastSet: Friday, 16:42. That's Gabriel's change; the next
-    start, Sunday's, failed. The new password is in the password
-    manager's entry Mariam exported.
+    PasswordLastSet: Friday, 16:42, Gabriel's last day (the insurer's
+    audit asks for new service passwords every year). The service kept
+    running on its logon until Sunday's restart, then tried the old one.
+    The new password is in the entries Mariam exported: the one of the
+    account the service logs on as.
+service-logon-event-other-account =
+    The Agenda now logs on as { $account }: an account made for another
+    job, with rights the booking app doesn't need (svc_backup is a Backup
+    Operator: it can read every file on the server). The Agenda has its
+    own account, the one its StartName gave: svc_agenda.
 service-logon-event-sc-alias =
     In PowerShell, sc is not sc.exe: it's an alias of Set-Content, which
     writes into files, and doesn't know what to do with obj=. Type sc.exe

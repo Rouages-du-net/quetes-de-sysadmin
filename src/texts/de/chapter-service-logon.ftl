@@ -19,31 +19,40 @@ service-logon-email-mariam =
     http://notenlinien.internal:8080, und die Familien können ihre
     Probestunden nicht buchen.
 
-    Am Freitag, seinem letzten Tag, hat Gabriel das Passwort des Kontos
-    der Agenda geändert, svc_agenda: Das Sicherheitsaudit unserer
-    Versicherung verlangt, dass wir die Dienstpasswörter jedes Jahr
-    ändern. Er hat das neue im Passwortmanager gespeichert. Der Server hat
-    Sonntagnacht für Windows Update neu gestartet.
-
-    Ich habe dir den Eintrag aus dem Passwortmanager exportiert, in
-    Documents\tresor-svc_agenda.txt. Bitte lösch diese Datei, wenn du
-    fertig bist.
+    Der Server hat Sonntagnacht für Windows Update neu gestartet. Gabriel,
+    der sich darum gekümmert hat, ist am Freitag gegangen; für alle Fälle
+    habe ich dir die Einträge des Servers aus dem Passwortmanager
+    exportiert, in Documents\tresor-dienstkonten.txt. Bitte lösch diese
+    Datei, wenn du fertig bist.
 
     Könntest du die Agenda wieder zum Laufen bringen, ohne etwas anderes
     kaputt zu machen?
 
     Mariam
 
-# { $password }: the account's new password (not translated).
+# { $agenda }, { $backup }, { $admin }: the passwords (not translated).
 service-logon-vault =
-    Passwortmanager - ein Eintrag, exportiert von Mariam (10. Dezember 2029)
+    Passwortmanager - Ordner „notenlinien“, exportiert von Mariam (10. Dezember 2029)
+
+    Titel:         notenlinien - svc_backup
+    Benutzername:  svc_backup
+    Passwort:      { $backup }
+    Geändert:      3. Juni 2029 (Gabriel)
+    Notizen:       Lokales Konto. Jedes Jahr geändert (Audit der
+                   Versicherung, Punkt 4.2).
 
     Titel:         notenlinien - svc_agenda
     Benutzername:  svc_agenda
-    Passwort:      { $password }
+    Passwort:      { $agenda }
     Geändert:      7. Dezember 2029, 16:42 (Gabriel)
-    Notizen:       Lokales Konto des Dienstes Agenda auf notenlinien.
-                   Jedes Jahr geändert (Audit der Versicherung, Punkt 4.2).
+    Notizen:       Lokales Konto. Jedes Jahr geändert (Audit der
+                   Versicherung, Punkt 4.2).
+
+    Titel:         Agenda - Web-Admin
+    Benutzername:  admin
+    Passwort:      { $admin }
+    Geändert:      2. September 2029 (Gabriel)
+    Notizen:       http://notenlinien.internal:8080/admin
 
 ## Ereignisse
 
@@ -64,14 +73,22 @@ service-logon-event-events =
     genau? (Get-CimInstance Win32_Service, oder sc.exe qc)
 service-logon-event-account =
     StartName: .\svc_agenda, das lokale Konto (der Punkt bedeutet dieser
-    Computer). Windows bewahrt das Passwort dieses Kontos beim Dienst auf,
-    und niemand hat ihm das neue gegeben: Gabriel hat das Passwort des
-    Kontos geändert, nicht die Kopie des Dienstes. Der Dienst lief bis zum
-    Neustart am Sonntag weiter und hat dann das alte versucht.
+    Computer). Windows bewahrt das Passwort dieses Kontos beim Dienst auf:
+    Hat jemand das Passwort des Kontos geändert, ist die Kopie des
+    Dienstes nicht mitgegangen. Wann wurde es zuletzt gesetzt?
+    (Get-LocalUser, PasswordLastSet)
 service-logon-event-rotated =
-    PasswordLastSet: Freitag, 16:42. Das ist Gabriels Änderung; der
-    nächste Start, der vom Sonntag, ist gescheitert. Das neue Passwort
-    steht im Eintrag des Passwortmanagers, den Mariam exportiert hat.
+    PasswordLastSet: Freitag, 16:42, Gabriels letzter Tag (das Audit der
+    Versicherung verlangt jedes Jahr neue Dienstpasswörter). Der Dienst
+    lief mit seiner Anmeldung bis zum Neustart am Sonntag weiter und hat
+    dann das alte versucht. Das neue steht in den Einträgen, die Mariam
+    exportiert hat: in dem des Kontos, unter dem sich der Dienst anmeldet.
+service-logon-event-other-account =
+    Die Agenda meldet sich jetzt als { $account } an: ein Konto für eine
+    andere Aufgabe, mit Rechten, die die Buchungs-App nicht braucht
+    (svc_backup ist Backup Operator: Es kann jede Datei des Servers
+    lesen). Die Agenda hat ihr eigenes Konto, das ihr StartName nannte:
+    svc_agenda.
 service-logon-event-sc-alias =
     In PowerShell ist sc nicht sc.exe: Es ist ein Alias von Set-Content,
     das in Dateien schreibt und mit obj= nichts anfangen kann. Tipp sc.exe

@@ -41,8 +41,8 @@ hint-service-logon-account =
     .lead = Unter welchem Konto meldet sich der Dienst an? Get-Service sagt es nicht; WMI und sc.exe schon (Get-Help Get-CimInstance, man sc.exe).
     .solution = Get-CimInstance Win32_Service -Filter "Name='Agenda'" | Select-Object Name, StartName, State, oder sc.exe qc Agenda.
 hint-service-logon-configured =
-    .lead = Gib dem Dienst das neue Passwort des Kontos, aus dem Eintrag des Passwortmanagers in Documents (man sc.exe: config, obj=, password=; sc allein ist in PowerShell Set-Content).
-    .solution = Get-Content Documents\tresor-svc_agenda.txt, dann sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
+    .lead = Gib dem Dienst das neue Passwort des Kontos, aus den Einträgen des Passwortmanagers in Documents: dem des Kontos, unter dem sich der Dienst anmeldet (man sc.exe: config, obj=, password=; sc allein ist in PowerShell Set-Content).
+    .solution = Get-Content Documents\tresor-dienstkonten.txt (der Eintrag svc_agenda), dann sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
 hint-service-logon-end =
     .lead = Starte den Dienst, unter seinem eigenen Konto, und prüfe, dass er läuft und mit dem Server startet.
     .solution = Start-Service Agenda, dann Get-Service Agenda | Select-Object Status, StartType.

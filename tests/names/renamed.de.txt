@@ -1085,7 +1085,7 @@ two-locks
 
 service-logon
   /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
-  /C/Users/du/Documents/vault-svc_agenda.txt → /C/Users/du/Documents/tresor-svc_agenda.txt
+  /C/Users/du/Documents/vault-service-accounts.txt → /C/Users/du/Documents/tresor-dienstkonten.txt
 
 log-flood
   /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt

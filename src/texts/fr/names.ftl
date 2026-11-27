@@ -434,7 +434,6 @@ name-cabinet-report-txt = rapport-armoire.txt
 name-email_samir-txt = courriel_samir.txt
 name-email_mariam-txt = courriel_mariam.txt
 name-handover-txt = passation.txt
-name-vault-svc_agenda-txt = coffre-svc_agenda.txt
 name-email_beatriz-txt = courriel_beatriz.txt
 name-vault-svc_backup-txt = coffre-svc_backup.txt
 

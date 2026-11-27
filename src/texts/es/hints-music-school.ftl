@@ -41,8 +41,8 @@ hint-service-logon-account =
     .lead = ¿Con qué cuenta inicia sesión el servicio? Get-Service no lo dice; WMI y sc.exe sí (Get-Help Get-CimInstance, man sc.exe).
     .solution = Get-CimInstance Win32_Service -Filter "Name='Agenda'" | Select-Object Name, StartName, State, o sc.exe qc Agenda.
 hint-service-logon-configured =
-    .lead = Dale al servicio la nueva contraseña de la cuenta, de la entrada del gestor de contraseñas que está en Documents (man sc.exe: config, obj=, password=; sc a secas es Set-Content en PowerShell).
-    .solution = Get-Content Documents\caja-fuerte-svc_agenda.txt, luego sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
+    .lead = Dale al servicio la nueva contraseña de la cuenta, de las entradas del gestor de contraseñas que están en Documents: la de la cuenta con la que inicia sesión el servicio (man sc.exe: config, obj=, password=; sc a secas es Set-Content en PowerShell).
+    .solution = Get-Content Documents\caja-fuerte-cuentas-servicio.txt (la entrada svc_agenda), luego sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
 hint-service-logon-end =
     .lead = Arranca el servicio, con su propia cuenta, y comprueba que funciona y que arranca con el servidor.
     .solution = Start-Service Agenda, luego Get-Service Agenda | Select-Object Status, StartType.

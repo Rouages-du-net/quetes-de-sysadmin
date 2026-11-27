@@ -18,31 +18,39 @@ service-logon-email-mariam =
     ont « Ce site est inaccessible » sur http://portee.internal:8080, et
     les familles ne peuvent plus réserver leurs cours d'essai.
 
-    Vendredi, son dernier jour, Gabriel a changé le mot de passe du
-    compte de l'Agenda, svc_agenda : l'audit de sécurité de notre
-    assurance demande de changer les mots de passe des services chaque
-    année. Il a enregistré le nouveau dans le gestionnaire de mots de
-    passe. Le serveur a redémarré dimanche dans la nuit pour Windows
-    Update.
-
-    Je vous ai exporté l'entrée du gestionnaire de mots de passe, dans
-    Documents\coffre-svc_agenda.txt. Supprimez ce fichier quand vous
-    aurez fini, s'il vous plaît.
+    Le serveur a redémarré dimanche dans la nuit pour Windows Update.
+    Gabriel, qui s'en occupait, est parti vendredi ; au cas où, je vous
+    ai exporté les entrées du serveur dans le gestionnaire de mots de
+    passe, dans Documents\coffre-comptes-service.txt. Supprimez ce
+    fichier quand vous aurez fini, s'il vous plaît.
 
     Pouvez-vous remettre l'Agenda en route, sans rien casser d'autre ?
 
     Mariam
 
-# { $password } : le nouveau mot de passe du compte (non traduit).
+# { $agenda }, { $backup }, { $admin } : les mots de passe (non traduits).
 service-logon-vault =
-    Gestionnaire de mots de passe - une entrée, exportée par Mariam (10 décembre 2029)
+    Gestionnaire de mots de passe - dossier « portee », exporté par Mariam (10 décembre 2029)
+
+    Titre :          portee - svc_backup
+    Utilisateur :    svc_backup
+    Mot de passe :   { $backup }
+    Modifié :        3 juin 2029 (Gabriel)
+    Notes :          Compte local. Changé chaque année (audit de
+                     l'assurance, point 4.2).
 
     Titre :          portee - svc_agenda
     Utilisateur :    svc_agenda
-    Mot de passe :   { $password }
+    Mot de passe :   { $agenda }
     Modifié :        7 décembre 2029, 16 h 42 (Gabriel)
-    Notes :          Compte local du service Agenda sur portee.
-                     Changé chaque année (audit de l'assurance, point 4.2).
+    Notes :          Compte local. Changé chaque année (audit de
+                     l'assurance, point 4.2).
+
+    Titre :          Agenda - admin web
+    Utilisateur :    admin
+    Mot de passe :   { $admin }
+    Modifié :        2 septembre 2029 (Gabriel)
+    Notes :          http://portee.internal:8080/admin
 
 ## Événements
 
@@ -65,13 +73,22 @@ service-logon-event-events =
 service-logon-event-account =
     StartName : .\svc_agenda, le compte local (le point veut dire cet
     ordinateur). Windows garde le mot de passe de ce compte avec le
-    service, et personne ne lui a donné le nouveau : Gabriel a changé le
-    mot de passe du compte, pas la copie du service. Le service a continué
-    de tourner jusqu'au redémarrage de dimanche, puis a essayé l'ancien.
+    service : si quelqu'un a changé le mot de passe du compte, la copie
+    du service n'a pas suivi. Quand a-t-il été défini pour la dernière
+    fois ? (Get-LocalUser, PasswordLastSet)
 service-logon-event-rotated =
-    PasswordLastSet : vendredi, 16 h 42. C'est le changement de Gabriel ;
-    le démarrage suivant, celui de dimanche, a échoué. Le nouveau mot de
-    passe est dans l'entrée du gestionnaire que Mariam a exportée.
+    PasswordLastSet : vendredi, 16 h 42, le dernier jour de Gabriel
+    (l'audit de l'assurance demande de nouveaux mots de passe de service
+    chaque année). Le service a continué de tourner sur sa connexion
+    jusqu'au redémarrage de dimanche, puis a essayé l'ancien. Le nouveau
+    est dans les entrées que Mariam a exportées : celle du compte sous
+    lequel le service se connecte.
+service-logon-event-other-account =
+    L'Agenda se connecte maintenant en { $account } : un compte fait pour
+    un autre travail, avec des droits dont l'application de réservation
+    n'a pas besoin (svc_backup est Backup Operator : il peut lire tous les
+    fichiers du serveur). L'Agenda a son propre compte, celui que donnait
+    son StartName : svc_agenda.
 service-logon-event-sc-alias =
     Dans PowerShell, sc n'est pas sc.exe : c'est un alias de Set-Content,
     qui écrit dans des fichiers, et qui ne sait que faire de obj=. Tapez

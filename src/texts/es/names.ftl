@@ -431,7 +431,6 @@ name-cabinet-report-txt = informe-armario.txt
 name-email_samir-txt = correo_samir.txt
 name-email_mariam-txt = correo_mariam.txt
 name-handover-txt = traspaso.txt
-name-vault-svc_agenda-txt = caja-fuerte-svc_agenda.txt
 name-email_beatriz-txt = correo_beatriz.txt
 name-vault-svc_backup-txt = caja-fuerte-svc_backup.txt
 

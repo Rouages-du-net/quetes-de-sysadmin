@@ -431,7 +431,6 @@ name-cabinet-report-txt = schrank-bericht.txt
 name-email_samir-txt = email_samir.txt
 name-email_mariam-txt = email_mariam.txt
 name-handover-txt = uebergabe.txt
-name-vault-svc_agenda-txt = tresor-svc_agenda.txt
 name-email_beatriz-txt = email_beatriz.txt
 name-vault-svc_backup-txt = tresor-svc_backup.txt
 
