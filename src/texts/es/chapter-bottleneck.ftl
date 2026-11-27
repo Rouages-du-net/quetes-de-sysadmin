@@ -18,10 +18,10 @@ bottleneck-message-zoe =
     He mirado top: la máquina parece sobrecargada, pero el procesador no
     hace casi nada. No entiendo nada.
 
-    Lo que sí sé: a las 16:00, el archivado diario (radio-archives) copia
-    las grabaciones en /srv/archives. Hagas lo que hagas, no lo detengas:
-    los programas del día tienen que estar archivados esta noche. Pero no
-    debe romper el directo, ni hoy ni mañana.»
+    Encuentres lo que encuentres, no apagues nada: todo lo que corre en
+    este servidor tiene su función, y los programas del día tienen que
+    estar archivados esta noche. Pero el directo no debe romperse, ni hoy
+    ni mañana.»
 
     Para mirar el disco: man iostat, man pidstat.
 

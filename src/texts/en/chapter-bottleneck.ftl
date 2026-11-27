@@ -18,10 +18,10 @@ bottleneck-message-zoe =
     I looked at top: the machine seems overloaded, but the processor is
     doing almost nothing. I don't understand it at all.
 
-    What I do know: at 4 pm, the daily archiving (radio-archives) copies
-    the recordings into /srv/archives. Whatever you do, don't stop it:
-    the day's shows must be archived tonight. But it mustn't break the
-    live stream, neither today nor tomorrow."
+    Whatever you find, don't just switch things off: everything that
+    runs on this server has its job, and the day's shows must be
+    archived tonight. But the live stream mustn't break, neither today
+    nor tomorrow."
 
     To look at the disk: man iostat, man pidstat.
 

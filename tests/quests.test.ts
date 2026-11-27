@@ -1880,6 +1880,12 @@ for (const language of LANGUAGES)
         s.execute('sudo systemctl start radio-archives');
         expect(s.finished).toBe(true);
       });
+
+      it("false lead: Zoé's message doesn't name the archiving, pidstat has to find it", () => {
+        const { tout: all } = play('bottleneck', ['cat message_from_zoe.txt', 'systemctl list-timers']);
+        expect(all.split('radio-archives.timer')[0]).not.toContain('radio-archives');
+        expect(all).toContain('radio-archives.service');
+      });
     });
 
     describe("On-call, chapter 6 — The post-mortem (journalctl --since, last, blameless)", () => {
