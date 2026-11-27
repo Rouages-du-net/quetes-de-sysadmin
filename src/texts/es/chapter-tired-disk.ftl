@@ -17,7 +17,9 @@ lab-procedure-host =
     2. Indícanos en tu solicitud el número de serie (S/N) del disco que hay
        que sustituir, y solo ese: los nombres sda o sdb pueden cambiar de un
        arranque a otro, el número de serie no (smartctl -i o lsblk -o lo
-       muestran).
+       muestran). Añade el número de sectores reasignados del disco (el
+       valor bruto del atributo SMART 5, Reallocated_Sector_Ct): un
+       veredicto global no nos basta.
     3. Intervenimos en un plazo de 24 horas. El disco nuevo se entrega
        vacío: te toca a ti particionarlo y reconstruir tu RAID.
 lab-syslog =
@@ -93,9 +95,15 @@ tired-disk-event-ticket-false =
     La solicitud contiene el número de serie de sda: ¡es el disco SANO! El
     proveedor desconectaría el único disco que todavía funciona. Corrige
     { $file }: solo el número de serie de sdb.
+# { $file }: el nombre de la solicitud
+tired-disk-event-ticket-count =
+    { $file } da el número de serie de sdb, pero el proveedor pide también
+    su número de sectores reasignados: la cifra que muestra que el disco
+    falla, diga lo que diga su veredicto global.
 tired-disk-event-ticket =
-    La solicitud indica el número de serie del disco que hay que sustituir.
-    Odile la enviará en cuanto el disco esté fuera de sus arreglos.
+    La solicitud indica el número de serie del disco que hay que sustituir
+    y los sectores reasignados que lo justifican. Odile la enviará en
+    cuanto el disco esté fuera de sus arreglos.
 tired-disk-event-end =
     Odile: «¡Enviada! El proveedor responde que cambiará el disco esta
     noche».

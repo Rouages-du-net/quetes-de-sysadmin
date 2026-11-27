@@ -61,7 +61,7 @@ for (const language of languagesFor('lab'))
       expect(all).toContain('md1 : active raid1 sda3[0]\n      1919824896 blocks super 1.2 [2/1] [U_]');
       contains(all, 'ne fait plus partie');
       expect(s.finished).toBe(false);
-      all = play(['lsblk -d -o NAME,SERIAL', `echo "Please replace the disk S/N ${SERIES.sdb}" > ~/ticket.txt`]);
+      all = play(['lsblk -d -o NAME,SERIAL', `echo "Please replace the disk S/N ${SERIES.sdb}: 1208 reallocated sectors" > ~/ticket.txt`]);
       expect(all).toMatch(new RegExp(`sdb\\s+${SERIES.sdb}`));
       contains(all, 'Tu as terminé le chapitre 1 du Labo');
       expect(Object.values(st().arrays).every((g) => g.members.length === 1)).toBe(true);
@@ -92,7 +92,11 @@ for (const language of languagesFor('lab'))
       all = play([`echo "Disk to replace: ${SERIES.sda}" > ~/ticket.txt`]);
       contains(all, 'le numéro de série de sda');
       expect(s.finished).toBe(false);
-      play([`echo "Disk to replace: ${SERIES.sdb}" > ~/ticket.txt`]);
+      // The serial number alone (mail and lsblk give it): the host also wants SMART's figures.
+      all = play([`echo "Disk to replace: ${SERIES.sdb}" > ~/ticket.txt`]);
+      contains(all, 'secteurs réalloués');
+      expect(s.finished).toBe(false);
+      play([`echo "Disk to replace: ${SERIES.sdb} (Reallocated_Sector_Ct 1208)" > ~/ticket.txt`]);
       expect(s.finished).toBe(true);
     });
 

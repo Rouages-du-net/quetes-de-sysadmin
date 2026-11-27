@@ -18,10 +18,10 @@ hint-tired-disk-removed =
     .lead = Jede Partition von sdb muss ihr Array verlassen: zuerst für defekt erklärt, dann entfernt (man mdadm). Es gibt zwei Arrays.
     .solution = sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2, dann dasselbe für /dev/sdb3 in /dev/md1.
 hint-tired-disk-ticket =
-    .lead = Das Verfahren des Hosters verlangt eine einzige Angabe über die Platte: die, die sich nie ändert, auch wenn sich die Namen sda und sdb ändern (man smartctl, oder man lsblk).
-    .solution = sudo smartctl -i /dev/sdb (Serial Number), dann nano ~/ticket.txt: eine Austauschanfrage mit dieser Nummer, und nicht der von sda.
+    .lead = Das Verfahren des Hosters verlangt zwei Angaben über die Platte: die Kennung, die sich nie ändert, auch wenn sich die Namen sda und sdb ändern, und das SMART-Attribut, das zeigt, dass sie versagt (man smartctl).
+    .solution = sudo smartctl -a /dev/sdb (Serial Number, und der Rohwert von Reallocated_Sector_Ct: 1208), dann nano ~/ticket.txt: eine Austauschanfrage mit beidem, und nicht der Nummer von sda.
 hint-tired-disk-end =
-    .lead = Du brauchst alles zugleich: nichts mehr von sdb in den Arrays, sda in beiden noch aktiv, und ein Ticket, das nur die Seriennummer von sdb nennt.
+    .lead = Du brauchst alles zugleich: nichts mehr von sdb in den Arrays, sda in beiden noch aktiv, und ein Ticket, das die Seriennummer von sdb (nicht die von sda) und ihre umgelagerten Sektoren nennt.
     .solution = cat /proc/mdstat ([U_] für md0 und md1, ohne sdb) und cat ~/ticket.txt (nur die Nummer von sdb).
 
 ## Kapitel 2 — Die neue Platte

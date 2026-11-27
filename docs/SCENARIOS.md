@@ -1995,12 +1995,13 @@ the kernel has reread blocks from the other mirror. Yet SMART says
 | See the RAID | `cat /proc/mdstat`, `sudo mdadm --detail /dev/md0` |
 | Judge the disk | `sudo smartctl -a /dev/sdb`, then `/dev/sda` to compare |
 | Take `sdb` out | `sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2`, then `md1` and `sdb3` |
-| The ticket | `smartctl -i` or `lsblk -o NAME,SERIAL`, then `~/ticket.txt` with `sdb`'s serial number |
+| The ticket | `smartctl -a` (or `-i` and `-A`), then `~/ticket.txt` with `sdb`'s serial number and its reallocated sectors (1208), as the host's procedure asks |
 
 False leads: `--remove` without `--fail` ("Device or resource busy");
 taking out a member on `sda`, the healthy disk (put it back with
 `--re-add`); only one array of the two; a ticket giving `sda`'s serial
-number.
+number; a ticket with the serial number alone (smartd's mail and `lsblk` give
+it, but the host also wants SMART's reallocated sectors).
 
 ### Chapter 2 — The new disk (done)
 

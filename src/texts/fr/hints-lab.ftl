@@ -18,10 +18,10 @@ hint-tired-disk-removed =
     .lead = Chaque partition de sdb doit quitter sa grappe : d'abord déclarée défectueuse, puis retirée (man mdadm). Il y a deux grappes.
     .solution = sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2, puis la même chose pour /dev/sdb3 dans /dev/md1.
 hint-tired-disk-ticket =
-    .lead = La procédure de l'hébergeur demande une seule information sur le disque : celle qui ne change jamais, même si les noms sda et sdb changent (man smartctl, ou man lsblk).
-    .solution = sudo smartctl -i /dev/sdb (Serial Number), puis nano ~/ticket.txt : une demande de remplacement avec ce numéro, et pas celui de sda.
+    .lead = La procédure de l'hébergeur demande deux choses sur le disque : l'identifiant qui ne change jamais, même si les noms sda et sdb changent, et l'attribut SMART qui montre qu'il lâche (man smartctl).
+    .solution = sudo smartctl -a /dev/sdb (Serial Number, et la valeur brute de Reallocated_Sector_Ct : 1208), puis nano ~/ticket.txt : une demande de remplacement avec les deux, et pas le numéro de sda.
 hint-tired-disk-end =
-    .lead = Il faut tout à la fois : plus rien de sdb dans les grappes, sda toujours actif dans les deux, et un ticket qui ne cite que le numéro de série de sdb.
+    .lead = Il faut tout à la fois : plus rien de sdb dans les grappes, sda toujours actif dans les deux, et un ticket qui donne le numéro de série de sdb (pas celui de sda) et ses secteurs réalloués.
     .solution = cat /proc/mdstat ([U_] pour md0 et md1, sans sdb) et cat ~/ticket.txt (le numéro de sdb seulement).
 
 ## Chapitre 2 — Le disque neuf
