@@ -2882,8 +2882,10 @@ opens after "Trust, Then Switch" and "The Probe".
 | Convert | `/opt/batch/bin/ebc2asc` (field by field) into `/srv/batch/in/contrib.dat`; `check.txt` |
 
 Goal checked on the state: `contrib.dat` holds the 14 records converted
-with the right amounts, and `check.txt` gives 12 contributions and the
-control total 515.20. Expected traps: `iconv -f EBCDIC-US -t ASCII`
+with the right amounts, and `check.txt` gives the size (560), the 14
+records, 12 contributions, the control total 515.20 and the first amount's
+five bytes as the file stores them (00 00 04 25 0C, only `od`/`xxd`/`hexdump`
+show them: the converter alone doesn't fill the sheet). Expected traps: `iconv -f EBCDIC-US -t ASCII`
 ("illegal input sequence at position 75", inside the first amount),
 `iconv -f IBM037 -t UTF-8` (0x25 becomes a newline), `dd conv=ascii`
 (the amounts silently changed; ebc2asc then refuses them).
@@ -2946,8 +2948,12 @@ It opens after "The Late File" and "Transfers".
 | Release, reply | `ENDJOB JOB(412655/SORAYA/QPADEV0004)`, then the reply R |
 
 Goal checked on the state: every incoming order in ORDHDR, order 1847
-changed, no job waiting for a reply, the job queue empty, ORDWEB running.
-Expected traps: R while the record is still held (the question comes back),
+changed, no job waiting for a reply, the job queue empty, ORDWEB and
+Diego's session running. Kwame's email names nobody: two green screens are
+in order entry (Soraya's QPADEV0004, left open last night, and Diego's
+QPADEV0002, taking phone orders), both with ORDHDR open; only the record
+lock says which one holds order 1847. Expected traps: ending Diego's
+session (his order lost: no end), R while the record is still held (the question comes back),
 `ENDJOB` on the import or C (the run lost: `SBMJOB CMD(CALL
 PGM(ORDERS/ORDIMP))`, as Margit's notes say), G (the change skipped),
 `CALL` (the night's programs must run in batch).
@@ -3101,7 +3107,7 @@ folder, not its files), unquoted `(OI)(CI)` in PowerShell.
 | Refused | `Start-Service Agenda` ("cannot be started"), `sc.exe start` (FAILED 1069), `net start` |
 | Why | `Get-WinEvent -FilterHashtable @{LogName='System'; Id=7000,7038}` or `Get-EventLog System -EntryType Error`: 7038 "unable to log on as .\svc_agenda" at Sunday's boot, after the 1074 restart |
 | Which account | `Get-CimInstance Win32_Service -Filter "Name='Agenda'" \| Select-Object Name, StartName, State`, `sc.exe qc Agenda`; `Get-LocalUser svc_agenda \| Select-Object Name, PasswordLastSet` (Friday) |
-| The new password | `Get-Content Documents\vault-svc_agenda.txt` (the password manager's entry Mariam exported) |
+| The new password | `Get-Content Documents\vault-service-accounts.txt` (the server's entries Mariam exported: svc_backup, svc_agenda, the Agenda's web admin; the StartName says which) |
 | Give it to the service | `sc.exe config Agenda obj= .\svc_agenda password= …` (`sc` alone is Set-Content in PowerShell), `Start-Service Agenda` |
 
 Goal checked on the state: the Agenda runs under `svc_agenda` with the
@@ -3109,8 +3115,11 @@ account's current password stored, StartType Automatic, and `svc_agenda`
 isn't an administrator. Expected traps: `sc config` in PowerShell (the
 alias), LocalSystem (it starts, the check refuses it: least privilege), a
 new password set on the account only, a mistyped password, the service
-disabled or set to Manual, `svc_agenda` added to Administrators. Deleting
-the exported entry is thanked, not required.
+disabled or set to Manual, `svc_agenda` added to Administrators, the
+service under `svc_backup` or with the web admin's password. Mariam's email
+gives the symptom only (down since the update restart): the 7038 and the
+StartName lead to the account, PasswordLastSet to Friday's change. Deleting
+the exported file is thanked, not required.
 
 ### Chapter 3 — The Log Flood (done)
 
@@ -3223,7 +3232,7 @@ conventions' way).
 | From where | `Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4740} \| Format-List Message`: Caller Computer Name STACKS; `Get-ADUser -LDAPFilter '(lockoutTime>=1)'` |
 | There | `ssh stacks` (Windows' OpenSSH client); `Get-WinEvent` Security 4625: Logon Type 4 (batch) |
 | The source | `Get-ScheduledTask \| Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}`, `Get-ScheduledTaskInfo 'Scan Import'` (0x80070775), `schtasks /query /v /fo list`: the scan import, every 5 minutes, as LENDING\rsilva with the old password |
-| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (the vault's entry), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
+| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (its entry in the vault's export; `Get-ADUser -Properties Description` tells which account is the import's), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
 | Unlock | `exit`, `Unlock-ADAccount rsilva` |
 
 Since Rafael's change on Monday at 8:52, the chapter replays the task every
@@ -3233,12 +3242,14 @@ old password, Rafael is locked again. Goal checked on the state: rsilva
 isn't locked out half an hour after the unlock; no enabled task on stacks
 holds a wrong password for him; the scan import is Ready under a service
 account (OU=Service Accounts) whose stored password works, enabled, not an
-administrator; the lockout policy is unchanged (5 tries, at least 30
+administrator, that can write Archives (DL_Archives_RW); the lockout policy is unchanged (5 tries, at least 30
 minutes). Expected traps: unlocking first (it relocks), raising the
 threshold or disabling the lockout, resetting Rafael's password (it
 doesn't unlock), the task as SYSTEM, under a person's account or simply
-disabled (the scans stop arriving), a wrong password for svc_scans
-(refused, and it counts).
+disabled (the scans stop arriving), svc_backup (the vault's other entry,
+read-only on Archives), a wrong password for svc_scans (refused, and it
+counts). Nandini's export lists the service accounts with neutral notes:
+nothing in it names the task or the machine, so the trace is needed.
 
 ### Chapter 3 — The Policy That Doesn't Apply (done)
 

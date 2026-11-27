@@ -14,8 +14,8 @@ hint-copybook-converted =
     .lead = Una conversión de todo el archivo estropea los importes empaquetados. Las notas de Ramón (/opt/batch/NOTES.txt) nombran la herramienta que convierte campo a campo.
     .solution = /opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat, luego cat /srv/batch/in/contrib.dat.
 hint-copybook-end =
-    .lead = Rellena comprobacion.txt: el tamaño, los registros y lo que dice el registro final (la última línea del archivo convertido).
-    .solution = nano comprobacion.txt: 560 bytes, 14 registros, 12 cuotas, total de control 515.20 (T000012…+000051520).
+    .lead = Rellena comprobacion.txt: el tamaño, los registros lo que dice el registro final (la última línea del archivo convertido) y el primer importe tal como lo guarda el archivo original (bytes 34 a 38 del segundo registro, en od o xxd).
+    .solution = nano comprobacion.txt: 560 bytes, 14 registros, 12 cuotas, total de control 515.20 (T000012…+000051520), primer importe 00 00 04 25 0C.
 
 ## Capítulo 2 — Código de retorno
 

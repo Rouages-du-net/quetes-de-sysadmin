@@ -47,7 +47,7 @@ hint-stale-password-task =
     .lead = Logon type 4 is a batch logon: what runs on a schedule there, and as whom (Get-Help Get-ScheduledTask; the account is in its Principal)?
     .solution = Get-ScheduledTask | Select-Object TaskName, @{"{"}n='User';e={"{"}$_.Principal.UserId{"}"}{"}"}, or schtasks /query /v /fo list: Scan Import runs as LENDING\rsilva.
 hint-stale-password-fixed =
-    .lead = The task needs an account of its own, not Rafael's: Tomas made one, its password is in the vault Nandini exported (Get-Help Set-ScheduledTask).
+    .lead = The task needs an account of its own, not Rafael's: Tomas made one for this job (the service accounts' descriptions say which, Get-ADUser -Properties Description), its password is in the vault Nandini exported (Get-Help Set-ScheduledTask).
     .solution = Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password '<the vault's password>' (or schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …).
 hint-stale-password-end =
     .lead = The source is fixed: now give Rafael his account back, from register (Get-Help Unlock-ADAccount).

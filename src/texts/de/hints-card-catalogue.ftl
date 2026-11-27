@@ -47,7 +47,7 @@ hint-stale-password-task =
     .lead = Anmeldetyp 4 ist eine Batch-Anmeldung: Was läuft dort nach Zeitplan, und als wer (Get-Help Get-ScheduledTask; das Konto steht in ihrem Principal)?
     .solution = Get-ScheduledTask | Select-Object TaskName, @{"{"}n='User';e={"{"}$_.Principal.UserId{"}"}{"}"}, oder schtasks /query /v /fo list: Scan Import läuft als LENDING\rsilva.
 hint-stale-password-fixed =
-    .lead = Die Aufgabe braucht ein eigenes Konto, nicht Rafaels: Tomas hat eines angelegt, sein Passwort steht im Tresor, den Nandini exportiert hat (Get-Help Set-ScheduledTask).
+    .lead = Die Aufgabe braucht ein eigenes Konto, nicht Rafaels: Tomas hat eines für diesen Job angelegt (die Beschreibungen der Dienstkonten sagen, welches, Get-ADUser -Properties Description), sein Passwort steht im Tresor, den Nandini exportiert hat (Get-Help Set-ScheduledTask).
     .solution = Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password '<das Passwort aus dem Tresor>' (oder schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …).
 hint-stale-password-end =
     .lead = Die Quelle ist repariert: Gib Rafael jetzt sein Konto zurück, von register aus (Get-Help Unlock-ADAccount).

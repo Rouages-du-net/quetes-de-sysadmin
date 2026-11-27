@@ -69,7 +69,7 @@ export const OFFSITE_LAST = Date.UTC(2029, 9, 1, 3, 0, 0);
 
 // The player's own password (the key is what logs on; the domain keeps one anyway).
 const PLAYER_PASSWORD = 'Catalogue-2030-adm';
-// The service account of the scan import, its password in the password manager (Documents\vault-svc_scans.txt).
+// The service account of the scan import, its password in the password manager (Documents\vault-service-accounts.txt).
 export const SCANS_PASSWORD = 'Folio-8vt-Rq37';
 // Rafael's passwords: the one he had until Monday (still stored in the task), and his new one.
 export const RAFAEL_OLD = 'Parchment-41-Rs';

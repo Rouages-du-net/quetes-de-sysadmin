@@ -67,9 +67,8 @@ inquiry-email-kwame =
     en marcha otra vez, sin perder los pedidos web de anoche? Las listas
     se imprimen solas en cuanto se han ejecutado los trabajos de la noche.
 
-    Soraya añade: «Anoche me fui con prisa, sonó el teléfono mientras
-    estaba con el pedido 1847 (La Mie d'Inès), en la pantalla verde. No
-    cambié nada, creo que lo dejé abierto.»
+    La oficina abrió a las siete: los pedidos por teléfono se toman en la
+    pantalla verde como siempre, así que, por favor, no le cortes a nadie.
 
     Tu perfil es TU, contraseña muela-2029: tn5250 molino desde tu puesto
     para la pantalla verde, o ssh molino para el lado Unix.
@@ -103,8 +102,9 @@ inquiry-event-cause =
     Ahí está: el registro 28 de ORDHDR, el pedido 1847, lo retiene el
     trabajo 412655/SORAYA/QPADEV0004, la pantalla verde de Soraya, que
     quedó abierta anoche en ese pedido. Mientras su sesión lo retenga, la
-    importación no puede modificar el pedido. Soraya dice que no cambió
-    nada: se puede terminar su sesión.
+    importación no puede modificar el pedido. Kwame la llama: sonó el
+    teléfono, se fue con prisa y no cambió nada. Se puede terminar su
+    sesión.
 inquiry-event-retry-locked =
     R volvió a intentarlo, pero el registro sigue retenido: el trabajo
     esperó otra vez, y volvió la misma pregunta. Reintentar solo sirve una
@@ -124,6 +124,14 @@ inquiry-event-skipped =
     pedido 1847 se quedó fuera, en silencio. La panadería recibirá la
     cantidad antigua. Libera el registro y vuelve a enviar la importación:
     aplicará lo que se saltó.
+inquiry-event-wrong-session =
+    Terminaste la sesión de Diego: estaba escribiendo el pedido de una
+    panadería por teléfono, y se ha perdido. Su sesión tenía ORDHDR
+    abierto, como toda pantalla de entrada de pedidos, pero ningún
+    registro: el bloqueo de registro (DSPRCDLCK, o las anotaciones del
+    trabajo de la importación) nombra el trabajo que retiene el pedido
+    1847. «Deshacer la última entrada» (Punto de restauración) te lleva a
+    antes de ese comando.
 inquiry-event-web-ended =
     Se terminó ORDWEB: los pedidos web de las panaderías ya no llegan.
     Pertenece al subsistema ORDSBS: vuelve a arrancarlo (ENDSBS y luego

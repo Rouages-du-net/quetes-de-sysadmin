@@ -3778,7 +3778,7 @@
       "system",
       "db2"
      ],
-     "events": 13
+     "events": 14
     },
     {
      "id": "spooled",
@@ -4024,7 +4024,7 @@
       "Remove-Item",
       "Get-Help"
      ],
-     "events": 14
+     "events": 15
     },
     {
      "id": "log-flood",
@@ -4135,7 +4135,7 @@
       "exit",
       "Get-Help"
      ],
-     "events": 14
+     "events": 15
     },
     {
      "id": "unapplied-policy",

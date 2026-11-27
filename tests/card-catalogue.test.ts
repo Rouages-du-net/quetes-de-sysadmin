@@ -16,7 +16,7 @@ import type { Shell } from '../src/engine/shell';
 import { domainOf, findIdentity, lockedOut } from '../src/engine/windows-ad';
 import { windows } from '../src/engine/windows';
 import { findTask } from '../src/engine/windows-tasks';
-import { SCANS_PASSWORD } from '../src/engine/chapters/card-catalogue';
+import { BACKUP_PASSWORD, SCANS_PASSWORD } from '../src/engine/chapters/card-catalogue';
 import { resultant } from '../src/engine/windows-gpo';
 import { token } from '../src/engine/windows-acl';
 import { firewallAllows } from '../src/engine/windows-firewall';
@@ -176,6 +176,11 @@ for (const language of languagesFor('card-catalogue'))
     it('chapter 2 — solution: locked, 4740 names stacks, the task, svc_scans, then unlock', () => {
       const { c, play, flag, banner, dc, ad, user } = part(['comings-and-goings']);
       contains(banner, 'Le mot de passe périmé');
+      // The vault lists the service accounts, without naming a task or a machine.
+      const vault = play([`Get-Content Documents\\${name(t, 'vault-service-accounts.txt')}`]);
+      expect(vault).toContain(SCANS_PASSWORD);
+      expect(vault).toContain('svc_backup');
+      expect(vault).not.toMatch(new RegExp(`Rafael|${STACKS}`, 'i'));
       expect(lockedOut(ad(), user('rsilva')!, windows(dc()).clock)).toBe(true);
       expect(play(['Search-ADAccount -LockedOut | Select-Object -ExpandProperty SamAccountName'])).toMatch(/^rsilva/);
       expect(flag('locked')).toBe(true);
@@ -235,6 +240,15 @@ for (const language of languagesFor('card-catalogue'))
       contains(end, 'Bravo');
       expect(c.finished).toContain('stale-password');
       expect(ad().policy.threshold).toBe(5);
+    });
+
+    it("chapter 2 — false lead: the vault's other service account, read-only on Archives", () => {
+      const { c, play, flag } = part(['comings-and-goings']);
+      play(['ssh stacks', 'yes', `Set-ScheduledTask 'Scan Import' -User 'LENDING\\svc_backup' -Password '${BACKUP_PASSWORD}'`]);
+      expect(flag('read-only')).toBe(true);
+      expect(flag('fixed')).toBe(false);
+      play(['exit', 'Unlock-ADAccount rsilva']);
+      expect(c.finished).not.toContain('stale-password');
     });
 
     // ——— Chapter 3: "The Policy That Doesn't Apply" ———

@@ -438,7 +438,6 @@ name-cabinet-report-txt = schrank-bericht.txt
 name-email_samir-txt = email_samir.txt
 name-email_mariam-txt = email_mariam.txt
 name-handover-txt = uebergabe.txt
-name-vault-svc_agenda-txt = tresor-svc_agenda.txt
 name-email_beatriz-txt = email_beatriz.txt
 name-vault-svc_backup-txt = tresor-svc_backup.txt
 
@@ -447,7 +446,7 @@ name-email_nandini-txt = email_nandini.txt
 name-hr-0112-arrival-txt = pers-0112-eintritt.txt
 name-hr-0113-departure-txt = pers-0113-austritt.txt
 name-conventions-txt = konventionen.txt
-name-vault-svc_scans-txt = tresor-svc_scans.txt
+name-vault-service-accounts-txt = tresor-dienstkonten.txt
 name-city-it-audit-txt = stadt-it-audit.txt
 
 ## The Pantry

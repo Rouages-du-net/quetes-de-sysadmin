@@ -1103,7 +1103,7 @@ two-locks
 
 service-logon
   /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
-  /C/Users/vous/Documents/vault-svc_agenda.txt → /C/Users/vous/Documents/coffre-svc_agenda.txt
+  /C/Users/vous/Documents/vault-service-accounts.txt → /C/Users/vous/Documents/coffre-comptes-service.txt
   /C/Users/vous/email_mariam.txt → /C/Users/vous/courriel_mariam.txt
 
 log-flood
@@ -1123,7 +1123,7 @@ comings-and-goings
 
 stale-password
   /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
-  /C/Users/vous/Documents/vault-svc_scans.txt → /C/Users/vous/Documents/coffre-svc_scans.txt
+  /C/Users/vous/Documents/vault-service-accounts.txt → /C/Users/vous/Documents/coffre-comptes-service.txt
   /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
 
 unapplied-policy

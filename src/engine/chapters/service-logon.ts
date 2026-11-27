@@ -14,8 +14,11 @@
 //     Name, StartName, State, or sc.exe qc Agenda: the account;
 //     Get-LocalUser svc_agenda | Select-Object Name, PasswordLastSet:
 //     Friday;
-//   - the new password: the password manager's entry Mariam exported
-//     (Documents\vault-svc_agenda.txt), never guessed;
+//   - the new password: in the password manager's entries Mariam exported
+//     (Documents\vault-service-accounts.txt: svc_agenda, svc_backup and the
+//     Agenda's web admin, neutral notes), never guessed; Mariam's email only
+//     gives the symptom, so the logon failure (7038) and the account
+//     (StartName) say which entry;
 //   - sc.exe config Agenda obj= .\svc_agenda password= … (in PowerShell,
 //     "sc" is Set-Content: sc.exe), Start-Service Agenda.
 // Objective checked on the state: the Agenda runs, under svc_agenda, with
@@ -23,7 +26,8 @@
 // svc_agenda isn't an administrator.
 // False leads: LocalSystem (it starts, but the booking app would have every
 // right on the server), resetting svc_agenda's password again without
-// telling the service, disabling the service or setting it to Manual.
+// telling the service, disabling the service or setting it to Manual, the
+// service under another account of the vault (svc_backup).
 // Sources: https://learn.microsoft.com/windows/win32/services/service-user-accounts,
 // https://learn.microsoft.com/windows-server/administration/windows-commands/sc-config,
 // https://learn.microsoft.com/troubleshoot/windows-server/system-management-components/event-id-7000-7011-7009,
@@ -34,7 +38,7 @@ import type { Game } from '../shell';
 import { logEvent, windows, type WinService } from '../windows';
 import { findService, serviceUser, startService } from '../windows-services';
 import { token } from '../windows-acl';
-import { AGENDA_PASSWORD, HOME, quietEvents, ran, rebootEvents, said, stave } from './music-school';
+import { AGENDA_PASSWORD, BACKUP_PASSWORD, HOME, quietEvents, ran, rebootEvents, said, stave } from './music-school';
 
 // Monday 10 December 2029, 8:50.
 export const NOW = Date.UTC(2029, 11, 10, 8, 50, 0);
@@ -45,6 +49,8 @@ const REBOOT = Date.UTC(2029, 11, 9, 3, 2, 0);
 const BOOT = REBOOT + 95_000;
 // The new password, in the password manager (a Windows password: not translated).
 export const NEW_PASSWORD = 'Rondo-7kq-Vt29';
+// The Agenda's web admin password (the app's own login, no Windows account), in the same export.
+export const WEB_ADMIN_PASSWORD = 'Cadenza-2kd-Wm63';
 
 const machine = stave({
   clock: NOW,
@@ -58,7 +64,14 @@ const machine = stave({
     'email_mariam.txt': { type: 'file', content: t('service-logon-email-mariam').replace(/\n/g, '\r\n'), lines: true, mtime: NOW - 25 * 60_000 },
     Documents: {
       type: 'directory',
-      children: { 'vault-svc_agenda.txt': { type: 'file', content: t('service-logon-vault', { password: NEW_PASSWORD }).replace(/\n/g, '\r\n'), lines: true, mtime: NOW - 20 * 60_000 } },
+      children: {
+        'vault-service-accounts.txt': {
+          type: 'file',
+          content: t('service-logon-vault', { agenda: NEW_PASSWORD, backup: BACKUP_PASSWORD, admin: WEB_ADMIN_PASSWORD }).replace(/\n/g, '\r\n'),
+          lines: true,
+          mtime: NOW - 20 * 60_000,
+        },
+      },
     },
   }),
 });
@@ -68,7 +81,7 @@ const runsAs = (j: Game) => serviceUser(j, agenda(j));
 const ownAccount = (j: Game) => runsAs(j)?.toLowerCase() === 'svc_agenda';
 const passwordMatches = (j: Game) => ownAccount(j) && agenda(j).password === windows(j).passwords.svc_agenda;
 const adminAccount = (j: Game) => token(j, 'svc_agenda').has('BUILTIN\\Administrators');
-const vault = (j: Game) => j.find(`/C/Users/${j.player}/Documents/${name(j.t, 'vault-svc_agenda.txt')}`);
+const vault = (j: Game) => j.find(`/C/Users/${j.player}/Documents/${name(j.t, 'vault-service-accounts.txt')}`);
 
 export const COMMANDS_SERVICE_LOGON = [
   'Get-Service', 'Start-Service', 'Restart-Service', 'Set-Service', 'Get-WinEvent', 'Get-EventLog', 'Get-CimInstance', 'Select-Object', 'Get-LocalUser',
@@ -120,6 +133,7 @@ export const serviceLogon: Chapter = {
     },
     { id: 'sc-alias', condition: (j) => said(j, "A positional parameter cannot be found that accepts argument '"), message: (j) => j.t('service-logon-event-sc-alias') },
     { id: 'local-system', condition: (j) => runsAs(j) === null, message: (j) => j.t('service-logon-event-local-system') },
+    { id: 'other-account', condition: (j) => runsAs(j) !== null && !ownAccount(j), message: (j) => j.t('service-logon-event-other-account', { account: runsAs(j) ?? '' }) },
     { id: 'reset', condition: (j) => windows(j).passwords.svc_agenda !== NEW_PASSWORD, message: (j) => j.t('service-logon-event-reset') },
     {
       id: 'wrong-password',

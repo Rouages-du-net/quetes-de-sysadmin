@@ -441,7 +441,6 @@ name-cabinet-report-txt = rapport-armoire.txt
 name-email_samir-txt = courriel_samir.txt
 name-email_mariam-txt = courriel_mariam.txt
 name-handover-txt = passation.txt
-name-vault-svc_agenda-txt = coffre-svc_agenda.txt
 name-email_beatriz-txt = courriel_beatriz.txt
 name-vault-svc_backup-txt = coffre-svc_backup.txt
 
@@ -450,7 +449,7 @@ name-email_nandini-txt = courriel_nandini.txt
 name-hr-0112-arrival-txt = rh-0112-arrivee.txt
 name-hr-0113-departure-txt = rh-0113-depart.txt
 name-conventions-txt = conventions.txt
-name-vault-svc_scans-txt = coffre-svc_scans.txt
+name-vault-service-accounts-txt = coffre-comptes-service.txt
 name-city-it-audit-txt = audit-informatique-ville.txt
 
 ## L'Épicerie solidaire
