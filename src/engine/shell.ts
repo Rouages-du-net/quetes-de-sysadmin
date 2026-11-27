@@ -131,7 +131,7 @@ export interface Game {
   read(path: string): string | null;
   count(place: string, prefix: string): number;
   erase(path: string): void;
-  can(n: Node, right: 'r' | 'w' | 'x', user?: string): boolean;
+  can(n: Node | null | undefined, right: 'r' | 'w' | 'x', user?: string): boolean;
   // The machine's accounts and groups; an account's groups (primary first).
   accounts: Accounts;
   groupsFor(user: string): string[];
@@ -632,7 +632,9 @@ export class Shell implements Game {
   // Unix permissions: the owner only has the owner's rights, a group member
   // only the group's, others only the others' (even if the group or others
   // have more). root has every right.
-  can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
+  can(n: Node | null | undefined, right: 'r' | 'w' | 'x', user = this.who): boolean {
+    // Nothing there (removed by the player): no right on it.
+    if (!n) return false;
     // Through an NFS mount, the server decides, with this machine's numbers (see nfs.ts).
     const remote = nfsAccess(this, n, right, user) ?? cifsAccess(this, n, right, user);
     if (remote !== null) return remote;

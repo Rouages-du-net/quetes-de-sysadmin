@@ -868,8 +868,14 @@ them safely.
     rule, the language's months) and `total`, aligned like GNU ls; `tar`
     lists directories; `curl -o` shows its progress meter (`-s` silences
     it); `cp -u`, `ls -F`, `touch` on an existing file, `find -prune`/
-    `-xdev`/`-ls`. Left: `mv` of a directory and `rm -r` (refused by
-    design), hard links' count in `ls -l`.
+    `-xdev`/`-ls`; `rm -r`/`-R`/`-rf`/`-ri` and `mv` of a directory, as
+    GNU does them (`rm -rf /` refused like `--preserve-root`; what the story
+    protects, `chattr +i`, permissions, NFS and CIFS rules apply to every
+    file of a tree; the system's own places and the story's locked places
+    are kept whole, a test wipes every chapter's trees and none ends nor
+    breaks); `ls -l` counts a file's hard links (the names of the same
+    node: `ln`, rsnapshot's `cp -al`). Nothing left from this review's
+    finer points.
 - [ ] **An offensive story**: understanding an attack by replaying it, not
   just reading its outcome. Outside the game's usual scope ("Game rules" in
   `CLAUDE.md`: security quests stay defensive); a guide for whoever wants to

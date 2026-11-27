@@ -21,7 +21,7 @@ cat-usage = Uso: cat archivo
 mv-usage = Uso: mv origen destino
 mv-missing = mv: no se puede efectuar `stat' sobre '{ $target }': No existe el fichero o el directorio
 # Simplificación del juego: los lugares no se mueven.
-mv-place = mv: { $target } es un lugar; en este juego solo se mueven objetos
+mv-place = mv: no se puede mover '{ $target }': dentro hay un lugar de la historia, y el juego deja los lugares de la historia donde están
 mv-permission = mv: no se puede mover '{ $target }': Permiso denegado
 cp-usage = Uso: cp origen destino
 cp-missing = cp: no se puede efectuar `stat' sobre '{ $target }': No existe el fichero o el directorio
@@ -41,7 +41,7 @@ ln-missing = No existe el fichero o el directorio
 ln-access-impossible = ln: fallo al acceder a '{ $target }': No existe el fichero o el directorio
 ln-physical-directory = ln: { $target }: no se permiten enlaces fuertes para directorios
 rm-missing = rm: no se puede borrar '{ $target }': No existe el fichero o el directorio
-rm-directory = rm: no se puede borrar '{ $target }': Es un directorio (haría falta rm -r, y es peligroso: aquí no lo usamos)
+rm-directory = rm: no se puede borrar '{ $target }': Es un directorio
 rm-permission = rm: no se puede borrar '{ $target }': Permiso denegado
 touch-usage = Uso: touch archivo
 mkdir-usage = Uso: mkdir lugar
@@ -107,6 +107,25 @@ rm-ask-empty = rm: ¿borrar el fichero regular vacío '{ $target }'? (s/n)
 rm-ask-link = rm: ¿borrar el enlace simbólico '{ $target }'? (s/n)
 rm-removed = '{ $target }' borrado
 rm-removed-directory = directorio borrado: '{ $target }'
+rm-ask-descend = rm: ¿descender al directorio '{ $target }'? (s/n)
+rm-ask-directory = rm: ¿borrar el directorio '{ $target }'? (s/n)
+rm-dot = rm: rehusando borrar el directorio '.' o '..': se omite '{ $target }'
+rm-preserve-root =
+    rm: es peligroso operar recursivamente sobre '{ $target }'
+    rm: use --no-preserve-root para anular esta medida de seguridad
+rm-busy = rm: no se puede borrar '{ $target }': Dispositivo o recurso ocupado
+rm-not-permitted = rm: no se puede borrar '{ $target }': Operación no permitida
+rm-other-device = rm: se omite '{ $target }', porque está en un dispositivo diferente
+# Diferencias deliberadas con rm y mv de GNU: el juego conserva los lugares del sistema y los de la historia.
+rm-system = rm: no se puede borrar '{ $target }': el juego conserva los lugares propios del sistema (/, /etc, /usr/lib, /var/log…), que root podría destruir en un servidor real
+rm-story-place = rm: no se puede borrar '{ $target }': dentro hay un lugar de la historia, y el juego conserva los lugares de la historia
+mv-system = mv: no se puede mover '{ $target }': el juego deja los lugares propios del sistema (/, /etc, /usr/lib, /var/log…) donde están
+mv-into-itself = mv: no se puede mover '{ $source }' a un subdirectorio de sí mismo, '{ $target }'
+mv-busy = mv: no se puede mover '{ $source }' a '{ $target }': Dispositivo o recurso ocupado
+mv-over-file = mv: no se puede sobreescribir el no directorio '{ $target }' con el directorio '{ $source }'
+mv-not-empty = mv: no se puede mover '{ $source }' a '{ $target }': El directorio no está vacío
+mv-over-directory = mv: no se puede sobreescribir el directorio '{ $target }' con un no directorio
+mv-denied = mv: no se puede mover '{ $source }' a '{ $target }': Permiso denegado
 rmdir-usage =
     rmdir: falta un operando
     Pruebe 'rmdir --help' para más información.

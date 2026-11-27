@@ -21,7 +21,7 @@ cat-usage = Usage: cat file
 mv-usage = Usage: mv source destination
 mv-missing = mv: cannot stat '{ $target }': No such file or directory
 # Game simplification: places are not moved.
-mv-place = mv: { $target } is a place; in this game, you only move objects
+mv-place = mv: cannot move '{ $target }': a place of the story is inside, and the game keeps the story's places where they are
 mv-permission = mv: cannot move '{ $target }': Permission denied
 cp-usage = Usage: cp source destination
 cp-missing = cp: cannot stat '{ $target }': No such file or directory
@@ -41,7 +41,7 @@ ln-missing = No such file or directory
 ln-access-impossible = ln: failed to access '{ $target }': No such file or directory
 ln-physical-directory = ln: { $target }: hard link not allowed for directory
 rm-missing = rm: cannot remove '{ $target }': No such file or directory
-rm-directory = rm: cannot remove '{ $target }': Is a directory (you would need rm -r, and it's dangerous: we don't use it here)
+rm-directory = rm: cannot remove '{ $target }': Is a directory
 rm-permission = rm: cannot remove '{ $target }': Permission denied
 touch-usage = Usage: touch file
 mkdir-usage = Usage: mkdir place
@@ -107,6 +107,25 @@ rm-ask-empty = rm: remove regular empty file '{ $target }'?
 rm-ask-link = rm: remove symbolic link '{ $target }'? 
 rm-removed = removed '{ $target }'
 rm-removed-directory = removed directory '{ $target }'
+rm-ask-descend = rm: descend into directory '{ $target }'?
+rm-ask-directory = rm: remove directory '{ $target }'?
+rm-dot = rm: refusing to remove '.' or '..' directory: skipping '{ $target }'
+rm-preserve-root =
+    rm: it is dangerous to operate recursively on '{ $target }'
+    rm: use --no-preserve-root to override this failsafe
+rm-busy = rm: cannot remove '{ $target }': Device or resource busy
+rm-not-permitted = rm: cannot remove '{ $target }': Operation not permitted
+rm-other-device = rm: skipping '{ $target }', since it's on a different device
+# Deliberate differences from GNU rm and mv: the game keeps the system's places and the story's.
+rm-system = rm: cannot remove '{ $target }': the game keeps the system's own places (/, /etc, /usr/lib, /var/log…), which root could destroy on a real server
+rm-story-place = rm: cannot remove '{ $target }': a place of the story is inside, and the game keeps the story's places
+mv-system = mv: cannot move '{ $target }': the game keeps the system's own places (/, /etc, /usr/lib, /var/log…) where they are
+mv-into-itself = mv: cannot move '{ $source }' to a subdirectory of itself, '{ $target }'
+mv-busy = mv: cannot move '{ $source }' to '{ $target }': Device or resource busy
+mv-over-file = mv: cannot overwrite non-directory '{ $target }' with directory '{ $source }'
+mv-not-empty = mv: cannot move '{ $source }' to '{ $target }': Directory not empty
+mv-over-directory = mv: cannot overwrite directory '{ $target }' with non-directory
+mv-denied = mv: cannot move '{ $source }' to '{ $target }': Permission denied
 rmdir-usage =
     rmdir: missing operand
     Try 'rmdir --help' for more information.

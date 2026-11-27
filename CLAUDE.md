@@ -250,7 +250,9 @@ presents them for people.
   the `net-tools` tip of `tips.ts` for `ifconfig`, `route`, `netstat`.
 - `ls -l` (`longRow`, `longLines`, `lsDate`: links, dates by the six
   months rule, `total`), `ls -F`, `du` in 4 KiB blocks, `cp -u`, `touch`,
-  `find -prune`/`-xdev`/`-ls` in `commands/files.ts`; `nowOf()` of
+  `find -prune`/`-xdev`/`-ls`, `rm -r` (`removeSteps`: a generator for
+  `-i`'s questions; `systemPlace`, `storyPlace` kept whole) and `mv` of a
+  place in `commands/files.ts`; `nowOf()` of
   `time.ts`: the date a file without `mtime` has; curl's progress meter
   (`progressMeter`) in `commands/network.ts`.
 - `commands/restic.ts`: restic repositories (snapshots, deduplication, keys,

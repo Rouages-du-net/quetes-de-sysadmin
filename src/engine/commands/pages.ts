@@ -251,7 +251,7 @@ export const PAGES: Record<string, Page> = {
   'mkfs.ext4': { section: 8, options: ['L', 'F', 'q'] },
   sha256sum: { options: ['c'] },
   readlink: { long: { canonicalize: 'f' }, options: ['f'] },
-  rm: { long: { force: 'f', interactive: '', verbose: 'v', recursive: 'r', dir: 'd' }, options: ['f', 'i', 'v', 'r', 'R', 'd'] },
+  rm: { long: { force: 'f', interactive: '', verbose: 'v', recursive: 'r', dir: 'd', 'preserve-root': '', 'no-preserve-root': '', 'one-file-system': '' }, options: ['f', 'i', 'v', 'r', 'R', 'd'] },
   rmdir: { long: { parents: 'p', verbose: 'v', 'ignore-fail-on-non-empty': '' }, options: ['p', 'v'] },
   sh: { options: ['c', 'e', 'u', 'x', 'n'] },
   seq: { options: ['w', 's', 'f'] },
