@@ -60,6 +60,18 @@ ${CVE.curl.id} (curl) : ${w('already fixed, the installed version is past the fi
       expect(c.finished).toContain('bulletin');
     });
 
+    it('chapter 1 — false lead: waiting for Salomé to give the answer', () => {
+      const { c, jouer: play, editer: edit } = part();
+      // No review before watch.md is touched.
+      const first = play(['ls']);
+      expect(first).not.toContain('Salomé');
+      // Her review says what is wrong, never which package goes where.
+      const review = edit('nano watch.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*|\(zu vervollständigen[^\n]*/g, 'x'));
+      expect(review).toContain(w('Salomé reviews your sort', 'Salomé relit ton tri', 'Salomé revisa tu clasificación', 'Salomé sieht deine Sortierung durch'));
+      for (const p of ['nginx', 'rsync', 'certbot', 'curl', 'openssh']) expect(review).not.toContain(p);
+      expect(c.finished).not.toContain('bulletin');
+    });
+
     it('chapter 1 — false leads: certbot or curl classed as "concerns us"', () => {
       const { c, editer: edit } = part();
       const bad = () => `# ${w('Watch', 'Veille', 'Vigilancia', 'Beobachtung')}

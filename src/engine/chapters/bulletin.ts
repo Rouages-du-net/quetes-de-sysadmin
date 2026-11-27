@@ -79,7 +79,11 @@ export const bulletin: Chapter = {
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialise: initialiseWatch,
+  initialise: (j) => {
+    initialiseWatch(j);
+    // Salomé only rereads what changed: the starting template counts as already read.
+    j.state.readWatch = readDoc(j);
+  },
   createWorld: (t) =>
     watchWorld(t, {
       home: { 'email_salome.txt': f(t('bulletin-email-salome')), 'security_bulletin.txt': f(t('bulletin-file'), { lines: true }), 'watch.md': f(t('bulletin-template'), { lines: true }) },
