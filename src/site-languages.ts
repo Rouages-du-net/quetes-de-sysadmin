@@ -1,11 +1,12 @@
 // The site's languages: every language of the game has its pages (/en/,
 // /fr/, /es/, /de/…), each page's address in each language, and what the site
-// offers. A complete language (src/texts/languages.json) is offered: the
-// root sends browsers to it (public/.htaccess), the other pages link to it
-// (the header's language links, hreflang). A draft is built and reachable at
-// its address, but marked as a translation in progress (a banner), kept out
-// of search engines (noindex) and offered nowhere, so that nobody lands by
-// chance on a game half in English (tests/languages.test.ts).
+// offers. A complete language (src/texts/languages.json) is offered
+// everywhere: the root sends browsers to it (public/.htaccess), the other
+// pages link to it (the header's language links, hreflang). A draft (a
+// translation waiting for a native speaker's review) is in the header's
+// language links with a "beta" label, and its pages carry a banner; it stays
+// out of search engines (noindex, no hreflang) and the root never sends a
+// browser to it (tests/languages.test.ts).
 
 import { COMPLETE_LANGUAGES, LANGUAGES, isComplete, languageName, type Language } from './texts';
 
@@ -30,6 +31,6 @@ export const PAGES = {
   }),
 } satisfies Record<string, Alternates | ((story: string) => Alternates)>;
 
-/** The other languages a page links to: the complete ones it exists in. */
+/** The other languages a page links to (the header's links): the complete ones it exists in, then the drafts, marked beta. */
 export const offered = (lang: Language, alternates: Alternates = {}) =>
-  COMPLETE_LANGUAGES.filter((l) => l !== lang && alternates[l]).map((l) => ({ lang: l, href: alternates[l], name: languageName(l) }));
+  SITE_LANGUAGES.filter((l) => l !== lang && alternates[l]).map((l) => ({ lang: l, href: alternates[l], name: languageName(l), beta: !isComplete(l) }));

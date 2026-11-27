@@ -231,10 +231,12 @@ A **draft** is a translation in progress, file by file:
   Eraser and the core files first;
 - the site builds its pages (`/es/`, `/es/docentes/`, `/de/`,
   `/de/lehrkraefte/`…, see
-  `src/site-languages.ts`) with a banner ("translation in progress"),
-  `noindex`, and no link from the other languages nor redirection from the
-  root: nobody lands there by chance on a game half in English. The
-  installed app doesn't precache it.
+  `src/site-languages.ts`) with a banner (a translation under review, or
+  in progress, asking to report mistakes) and `noindex`; the other pages'
+  language links show it with a "beta" label, but no `hreflang` and no
+  redirection from the root point to it: nobody lands there by chance
+  before a native speaker has reviewed it. The installed app doesn't
+  precache it.
 
 `npm run coverage:texts` lists, for each draft, the files and the manual's
 pages still in English, story by story.

@@ -545,7 +545,8 @@ for (const width of [1000, 375]) {
   await input.fill('ls -y');
   await input.press('Enter');
   check((await game.locator('.output').textContent()).includes("Try 'ls --help' for more information."), `en ${width} px: command messages are those of LANG=C`);
-  check((await page.locator('.language a').getAttribute('href')) === '/fr/', `en ${width} px: link to the French page`);
+  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href') + (a.querySelector('.beta') ? ' beta' : '')))).join(', ') === '/fr/, /de/ beta, /es/ beta', `en ${width} px: links to French, then German and Spanish marked beta`);
+  check((await page.locator('link[rel="alternate"][hreflang]').evaluateAll((ls) => ls.map((l) => l.getAttribute('hreflang')))).join(' ') === 'fr x-default', `en ${width} px: hreflang only for the complete languages`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${width} px: no horizontal scrolling`);
   check(errors.length === 0, `en ${width} px: no console error ${errors.join(' ')}`);
   if (process.env.CAPTURES) await page.screenshot({ path: `${process.env.CAPTURES}/en-${width}.png` });
@@ -555,7 +556,7 @@ for (const width of [1000, 375]) {
   await page.waitForURL(/\/en\/teachers\//);
   check((await page.locator('h1').textContent()).includes('For teachers'), `en ${width} px: the teachers' page in English`);
   check((await page.locator('#c-bottleneck dt').first().textContent()) === 'Goal', `en ${width} px: sheets in English`);
-  check((await page.locator('.language a').getAttribute('href')) === '/fr/enseignants/', `en ${width} px: link to the sheets in French`);
+  check((await page.locator('.language a[hreflang="fr"]').getAttribute('href')) === '/fr/enseignants/', `en ${width} px: link to the sheets in French`);
   check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `en ${width} px: sheets without horizontal scrolling`);
   check(errors.length === 0, `en ${width} px: sheets without console error ${errors.join(' ')}`);
   await page.close();
@@ -574,8 +575,8 @@ for (const width of [1000, 375]) {
   const game = page.locator('quetes-de-sysadmin');
   check((await page.locator('html').getAttribute('lang')) === 'es', `es ${width} px: the page is in Spanish`);
   check((await page.locator('meta[name="robots"]').getAttribute('content')) === 'noindex', `es ${width} px: a draft is not indexed`);
-  check((await page.locator('.draft-banner').textContent()).includes('Traducción en curso'), `es ${width} px: the banner says the translation is in progress`);
-  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).join(' ') === '/en/ /fr/', `es ${width} px: links to the complete languages`);
+  check((await page.locator('.draft-banner').textContent()).includes('Traducción en revisión (beta)'), `es ${width} px: the banner says the translation is under review`);
+  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).join(' ') === '/en/ /fr/ /de/', `es ${width} px: links to the other languages`);
   check((await game.locator('.output').textContent()).includes('Te damos la bienvenida a tu puesto'), `es ${width} px: the game speaks Spanish`);
   check((await game.locator('.prompt').textContent()) === 'tu@puesto:~$', `es ${width} px: the player's account is tu, the workstation puesto`);
   const input = game.locator('form input');
@@ -615,10 +616,10 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 {
-  // No page of a complete language offers the draft.
+  // A complete language's page links to the draft only as a beta, with no hreflang.
   const page = await browser.newPage();
   await page.goto(`${BASE}/en/`);
-  check((await page.locator('a[href^="/es/"], link[hreflang="es"]').count()) === 0, 'es: the English page offers no draft');
+  check((await page.locator('.language a[href="/es/"] .beta').count()) === 1 && (await page.locator('link[hreflang="es"]').count()) === 0, 'es: the English page links to the draft as a beta, no hreflang');
   const feed = await page.request.get(`${BASE}/es/feed.xml`);
   const manifest = await (await page.request.get(`${BASE}/es/manifest.webmanifest`)).json();
   check(feed.ok() && (await feed.text()).includes('Misiones de Sysadmin'), 'es: the Spanish feed');
@@ -639,8 +640,8 @@ for (const width of [1000, 375]) {
   const game = page.locator('quetes-de-sysadmin');
   check((await page.locator('html').getAttribute('lang')) === 'de', `de ${width} px: the page is in German`);
   check((await page.locator('meta[name="robots"]').getAttribute('content')) === 'noindex', `de ${width} px: a draft is not indexed`);
-  check((await page.locator('.draft-banner').textContent()).includes('Übersetzung in Arbeit'), `de ${width} px: the banner says the translation is in progress`);
-  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).join(' ') === '/en/ /fr/', `de ${width} px: links to the complete languages`);
+  check((await page.locator('.draft-banner').textContent()).includes('Übersetzung in Prüfung (Beta)'), `de ${width} px: the banner says the translation is under review`);
+  check((await page.locator('.language a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).join(' ') === '/en/ /fr/ /es/', `de ${width} px: links to the other languages`);
   check((await game.locator('.output').textContent()).includes('Willkommen an deinem Rechner'), `de ${width} px: the game speaks German`);
   check((await game.locator('.prompt').textContent()) === 'du@rechner:~$', `de ${width} px: the player's account is du, the workstation rechner`);
   const input = game.locator('form input');
@@ -680,10 +681,10 @@ for (const width of [1000, 375]) {
   await page.close();
 }
 {
-  // No page of a complete language offers the draft.
+  // A complete language's page links to the draft only as a beta, with no hreflang.
   const page = await browser.newPage();
   await page.goto(`${BASE}/en/`);
-  check((await page.locator('a[href^="/de/"], link[hreflang="de"]').count()) === 0, 'de: the English page offers no draft');
+  check((await page.locator('.language a[href="/de/"] .beta').count()) === 1 && (await page.locator('link[hreflang="de"]').count()) === 0, 'de: the English page links to the draft as a beta, no hreflang');
   const feed = await page.request.get(`${BASE}/de/feed.xml`);
   const manifest = await (await page.request.get(`${BASE}/de/manifest.webmanifest`)).json();
   check(feed.ok() && (await feed.text()).includes('Sysadmin-Quests: neue Geschichten'), 'de: the German feed');
@@ -1092,7 +1093,7 @@ for (const width of [1000, 375]) {
   await page.locator('.teacher-route').evaluate((d) => (d.open = true));
   check((await display('.teacher-route')) !== 'none' && (await page.locator('.route pre').count()) > 0, `story sheet ${width} px: the teacher's version opened, printed`);
   await page.emulateMedia({ media: null });
-  await page.locator('.language a').click();
+  await page.locator('.language a[hreflang="fr"]').click();
   await page.waitForURL(/\/fr\/enseignants\/fiches\/letters\/$/);
   check((await page.locator('h2#questions').textContent()).includes('Vérifier'), `story sheet ${width} px: the sheet in French`);
   check(errors.length === 0, `story sheet ${width} px: no console error ${errors.join(' ')}`);
