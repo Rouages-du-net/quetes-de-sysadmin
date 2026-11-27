@@ -58,6 +58,18 @@ for (const language of languagesFor('other-unix'))
       expect(play(['cat /var/backups/state.conf'])).toContain(`last=${YESTERDAY}`);
     });
 
+    it('chapter 1 — false lead: making the archive by hand, without fixing the script', () => {
+      const { c, play, edit } = part();
+      play([`tar -czf /var/backups/site-${YESTERDAY}.tar.gz /usr/local/www/club`]);
+      edit('nano /var/backups/state.conf', (t) => t.replace(/^last=.*$/m, `last=${YESTERDAY}`));
+      play([`echo "Backup of ${YESTERDAY} done (1 bytes)."`, 'cat nightly-backup.sh']);
+      expect(c.finished).not.toContain('portable-script');
+      // The script, fixed, still has to run to its end.
+      edit('nano nightly-backup.sh', (t) => t.replace('#!/bin/bash', '#!/bin/sh').replace('date -d yesterday', 'date -v-1d').replace('stat -c %s', 'stat -f %z').replace('sed -i "', `sed -i '' "`));
+      expect(play(['sh nightly-backup.sh'])).toContain(`Backup of ${YESTERDAY} done`);
+      expect(c.finished).toContain('portable-script');
+    });
+
     it('chapter 1 — false leads: bash from pkg is not enough, Linux commands are not there', () => {
       const { c, play, edit } = part();
       expect(play(['systemctl status'])).toContain('systemctl: not found');

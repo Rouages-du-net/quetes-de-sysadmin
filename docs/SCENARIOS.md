@@ -2762,8 +2762,10 @@ Firewall" and "The Bare Repository" (scripts).
 | sed | `sed -i "s/…/"` reads the file's name as the script (`undefined label`), `sed -i '' "s/…/"` |
 
 Goal checked on the state: yesterday's archive in `/var/backups`, and
-`state.conf` updated with yesterday's date. Expected traps: installing bash
-(the GNU options still fail), `systemctl` and the other Linux commands.
+`state.conf` updated with yesterday's date, by a run of `nightly-backup.sh`
+that reaches its last line. Expected traps: installing bash (the GNU
+options still fail), `systemctl` and the other Linux commands, making the
+archive and editing `state.conf` by hand.
 
 ### Chapter 2 — No systemd Here (done)
 

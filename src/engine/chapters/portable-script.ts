@@ -12,9 +12,11 @@
 //     word (-i '' for none), and otherwise reads the file name as the script
 //     (here, /var/ is an address and b a branch: "undefined label").
 // Objective checked on the state: yesterday's archive in /var/backups, and
-// state.conf updated with yesterday's date. Several solutions pass (the
-// base system's tools, or GNU's from a package: gdate…), as long as the
-// script ran to the end.
+// state.conf updated with yesterday's date, by a run of nightly-backup.sh
+// itself that reached its last line ("Backup of … done"): an archive made
+// by hand and state.conf edited with nano don't fix the script. Several
+// solutions pass (the base system's tools, or GNU's from a package:
+// gdate…), as long as the script ran to the end.
 // Sources: https://man.freebsd.org/cgi/man.cgi?query=date,
 // https://man.freebsd.org/cgi/man.cgi?query=sed,
 // https://man.freebsd.org/cgi/man.cgi?query=stat,
@@ -34,11 +36,17 @@ SIZE=$(stat -c %s /var/backups/site-$DAY.tar.gz)
 sed -i "s/^last=.*/last=$DAY/" /var/backups/state.conf
 echo "Backup of $DAY done ($SIZE bytes)."`;
 
+const SCRIPT_NAME = 'nightly-backup.sh';
+
 const STATE_CONF = `# Written by nightly-backup.sh: the last good backup.
 last=2029-09-01`;
 
 const archive = (j: Game) => j.exists(`/var/backups/site-${YESTERDAY}.tar.gz`);
 const recorded = (j: Game) => new RegExp(`^last=${YESTERDAY}$`, 'm').test(j.read('/var/backups/state.conf') ?? '');
+// The script run (./nightly-backup.sh, sh nightly-backup.sh, sudo…), not a command that only names it.
+const RUNNERS = ['sh', 'bash', 'dash', 'sudo', 'env', 'nohup', 'time'];
+const runsScript = (c: string[]) => (RUNNERS.includes(c[0]) || c[0].endsWith(SCRIPT_NAME)) && c.some((a) => a.endsWith(SCRIPT_NAME));
+const ranToTheEnd = (j: Game) => j.last.commands.some(runsScript) && new RegExp(`Backup of ${YESTERDAY} done \\(\\d+ bytes\\)`).test(j.last.output);
 const said = (j: Game, text: string) => j.last.errors.some((e) => e.includes(text)) || j.last.output.includes(text);
 
 export const portableScript: Chapter = {
@@ -69,6 +77,6 @@ export const portableScript: Chapter = {
     { id: 'stat', condition: (j) => said(j, 'stat: illegal option -- c'), message: (j) => j.t('portable-script-event-stat') },
     // BSD sed reads the file's name as its script: the error varies with the name.
     { id: 'sed', condition: (j) => said(j, 'sed: 1: "/var/backups/state.conf"'), message: (j) => j.t('portable-script-event-sed') },
-    { id: 'end', condition: (j) => archive(j) && recorded(j), message: (j) => j.t('portable-script-event-end') },
+    { id: 'end', condition: (j) => ranToTheEnd(j) && archive(j) && recorded(j), message: (j) => j.t('portable-script-event-end') },
   ],
 };
