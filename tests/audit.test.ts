@@ -8,6 +8,8 @@ import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { translator } from '../src/texts';
 import { password } from '../src/engine/world';
+import { bakeryKeys } from '../src/engine/chapters/audit';
+import { keyFingerprint } from '../src/engine/machines';
 import { inLanguage, machinesInLanguage, languagesFor } from './names';
 
 // The Eraser, then the chapters to finish to receive the story's key.
@@ -155,7 +157,9 @@ for (const language of languagesFor('audit'))
     const NEW = 'tradition-loaf-2028-harvest';
     // The database password the intruder read, in the language (brioche-beurre-91 in French).
     const OLD = password(translator(language), 'butter-brioche-91');
-    const withoutIntruder = (t: string) => t.split('\n').filter((l) => !l.includes(L('nadia@laptop'))).join('\n');
+    // Both keys say nadia@shop: the intruder's is told apart by its body (its fingerprint).
+    const INTRUDER_KEY = bakeryKeys(translator(language)).unknown.split(' ')[1];
+    const withoutIntruder = (t: string) => t.split('\n').filter((l) => !l.includes(INTRUDER_KEY)).join('\n');
     const withoutTag = (t: string) => t.split('\n').filter((l) => !l.includes('203.0.113.99')).join('\n');
 
     it('chapter 4 — solution: journal, last, fingerprint, key removed, crontab cleaned', () => {
@@ -164,8 +168,8 @@ for (const language of languagesFor('audit'))
       expect(all).toContain('203.0.113.99');
       expect(all).toContain('Accepted publickey for nadia from 203.0.113.99 port 52144 ssh2: ED25519 SHA256:');
       all = play([`sudo ssh-keygen -l -f ${KEYS}`]);
-      expect(all).toContain(`${L('nadia@shop')} (ED25519)`);
-      expect(all).toContain(`${L('nadia@laptop')} (ED25519)`);
+      expect(all).toContain(`${keyFingerprint(bakeryKeys(translator(language)).unknown)} ${L('nadia@shop')} (ED25519)`);
+      expect(all.split(`${L('nadia@shop')} (ED25519)`).length).toBe(3);
       edit(`sudo nano ${KEYS}`, withoutIntruder);
       expect(c.finished).not.toContain('traces');
       all = play(['sudo crontab -u nadia -l']);
@@ -185,9 +189,24 @@ for (const language of languagesFor('audit'))
       expect(c.finished).toContain('traces');
     });
 
+    it('chapter 4 — false lead: cleaning up without reading the journal', () => {
+      const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
+      // The comments are the same: nothing but the fingerprint says which key is the night's.
+      expect(play([`sudo cat ${KEYS}`]).split(L('nadia@shop')).length).toBe(3);
+      edit(`sudo nano ${KEYS}`, withoutIntruder);
+      edit('sudo crontab -u nadia -e', withoutTag);
+      play([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD '${NEW}'"`]);
+      edit(`sudo nano ${ENV}`, (t) => t.replace(OLD, NEW));
+      play(['sudo systemctl restart orders']);
+      expect(c.finished).not.toContain('traces');
+      play(['last nadia']);
+      expect(c.finished).toContain('traces');
+    });
+
     it('chapter 4 — the password: too short, one side only, forgetting to restart', () => {
       const { c, jouer: play, editer: edit } = part(['scope', 'report', 'exposure']);
       const e = (id: string) => c.shell.flags.has(id);
+      play(['last nadia']);
       edit(`sudo nano ${KEYS}`, withoutIntruder);
       edit('sudo crontab -u nadia -e', withoutTag);
       expect(play(['psql -c "ALTER ROLE orders PASSWORD \'x\'"'])).toContain('does not exist');
@@ -203,6 +222,7 @@ for (const language of languagesFor('audit'))
       expect(c.finished).toContain('traces');
       // The same case without a restart: "to be restarted".
       const b = part(['scope', 'report', 'exposure']);
+      b.jouer(['last nadia']);
       b.editer(`sudo nano ${KEYS}`, withoutIntruder);
       b.editer('sudo crontab -u nadia -e', withoutTag);
       b.jouer([`sudo -u postgres psql -c "ALTER ROLE orders PASSWORD '${NEW}'"`]);

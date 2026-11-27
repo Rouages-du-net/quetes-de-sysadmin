@@ -321,7 +321,6 @@ name-orders = commandes
 name-backup-sh = sauvegarde.sh
 name-neighbour-internal = voisin.internal
 name-shop = boutique
-name-laptop = portable
 name-bakery-example = fournil.example
 name-bakery = fournil
 name-lab = labo

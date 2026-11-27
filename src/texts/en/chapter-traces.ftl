@@ -36,8 +36,9 @@ traces-email-salome =
        was read is a secret to change, for real: the new one must work
        everywhere, and the orders app must not go down.
 
-    Note: a comment in a key ("nadia@laptop") proves nothing, anyone can
-    write whatever they want. Compare the fingerprints.
+    Note: both keys in her file end with "nadia@shop". A key's comment
+    proves nothing, anyone can write whatever they want. Compare the
+    fingerprints.
 
     Salomé
     (For sudo, your password is still: flour-2028)
@@ -54,11 +55,13 @@ traces-event-found =
     Which key in /home/nadia/.ssh/authorized_keys has that fingerprint?
     (man ssh-keygen, option -l)
 traces-event-key-identified =
-    There is the fingerprint of each key in the file. Compare with the one
-    in the journal: the second key is the one used that night, and yet it
-    carries the comment "nadia@laptop". The comment is only a label.
+    There is the fingerprint of each key in the file: both carry the comment
+    "nadia@shop", only their fingerprints differ. The comment is only a
+    label.
 
-    Remove that line (and only that one) from authorized_keys.
+    The key used that night is the one whose fingerprint is in the
+    journal's 3:12 a.m. line: remove that line (and only that one) from
+    authorized_keys.
 traces-event-nadia-locked-out =
     Warning: Nadia's key is no longer in authorized_keys! She could no
     longer log in. Put her key back (the one whose fingerprint is in the

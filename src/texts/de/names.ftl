@@ -318,7 +318,6 @@ name-orders = bestellungen
 name-backup-sh = sicherung.sh
 name-neighbour-internal = nachbar.internal
 name-shop = laden
-name-laptop = laptop
 name-bakery-example = baeckerei.example
 name-bakery = baeckerei
 name-lab = labor

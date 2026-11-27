@@ -5,8 +5,8 @@
 //   - journalctl -u ssh, last: who, when, from where, with which key (the
 //     fingerprint is in the log);
 //   - sudo ssh-keygen -l -f ~nadia/.ssh/authorized_keys: which of the two
-//     keys has this fingerprint. The comment proves
-//     nothing: only the fingerprint counts (nadia@laptop);
+//     keys has this fingerprint. Both keys carry the comment nadia@shop:
+//     only the fingerprint counts;
 //   - remove this key, and only it (Nadia must still be able to log in);
 //   - look for what the intruder left: a cron job of Nadia's
 //     (sudo crontab -u nadia -l) that calls back to their server every ten
@@ -20,7 +20,8 @@
 // crontab -r (the backup disappears too), trusting the key's comment,
 // changing the password on one side only (the app no longer reconnects on
 // restart), a password too short or unchanged.
-// Objective checked on the state: the intruder's key removed and Nadia's
+// Objective checked on the state: the night's login found in the journal or
+// last ('found'), the intruder's key removed and Nadia's
 // kept, the intruder's job removed and the backup kept, a new database
 // password long enough, the same in PostgreSQL and in .env, and the app
 // restarted with it.
@@ -260,6 +261,6 @@ export const traces: Chapter = {
       message: (j) => j.t('traces-event-app-down'),
     },
     { id: 'password', condition: okPassword, message: (j) => j.t('traces-event-password') },
-    { id: 'end', condition: (j) => okKeys(j) && cronOk(j) && okPassword(j), message: (j) => j.t('traces-event-end') },
+    { id: 'end', condition: (j) => j.flags.has('found') && okKeys(j) && cronOk(j) && okPassword(j), message: (j) => j.t('traces-event-end') },
   ],
 };

@@ -1904,8 +1904,8 @@ doesn't reread its configuration by itself).
 
 In ssh's log, a login to Nadia's account in the night of 13 March at 3:12
 am, from 203.0.113.99; Nadia was asleep. Her `authorized_keys` holds two
-keys: the other one passes itself off as one of Nadia's keys
-(`nadia@portable`); only the fingerprint gives it away.
+keys, both with Nadia's comment (`nadia@shop`); only the fingerprint, in
+the log and in `ssh-keygen -l`, tells them apart.
 
 | Step | Command learnt |
 |---|---|
@@ -1916,7 +1916,8 @@ keys: the other one passes itself off as one of Nadia's keys
 | What it read | `sudo cat /home/nadia/.bash_history`: the intruder read `/srv/commandes/.env` (world-readable before "The Report") |
 | Change the secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, the same password in `.env`'s `DATABASE_URL`, `sudo systemctl restart commandes` |
 
-Goal checked on the state: the intruder's key removed and Nadia's kept; the
+Goal checked on the state: the night's login found (journal or `last`); the
+intruder's key removed and Nadia's kept; the
 intruder's job removed and the backup kept; a new database password of at
 least twelve characters, the same in PostgreSQL and in `.env`, and the app
 restarted with it. Expected traps: trusting the key's comment, erasing the

@@ -318,7 +318,6 @@ name-orders = pedidos
 name-backup-sh = copia.sh
 name-neighbour-internal = vecino.internal
 name-shop = tienda
-name-laptop = portatil
 name-bakery-example = obrador.example
 name-bakery = obrador
 name-lab = laboratorio

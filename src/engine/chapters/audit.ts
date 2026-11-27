@@ -28,8 +28,9 @@ export const INTERNET = '198.51.100.23';
 // machine, in the language (nadia@shop, nadia@boutique).
 export const bakeryKeys = (t: Translate) => ({
   nadia: generateKey('audit-nadia', `nadia@${name(t, 'shop')}`).isPublic,
-  // A key passing itself off as one of Nadia's: only its fingerprint gives it away.
-  unknown: generateKey('audit-unknown', `nadia@${name(t, 'laptop')}`).isPublic,
+  // A key passing itself off as Nadia's, with the same comment: only its
+  // fingerprint (in ssh's journal, ssh-keygen -l) gives it away.
+  unknown: generateKey('audit-unknown', `nadia@${name(t, 'shop')}`).isPublic,
 });
 
 // The orders app: its service account, its systemd service, its PostgreSQL
