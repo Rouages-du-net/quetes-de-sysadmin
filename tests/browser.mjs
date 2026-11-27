@@ -1471,6 +1471,8 @@ for (const width of [1000, 375]) {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // Which address failed, for the message below ("Failed to load resource" alone says nothing).
+  page.on('requestfailed', (r) => errors.push(`(${r.url().replace(BASE, '')})`));
   await withCsp(page);
   await page.goto(`${BASE}/en/`);
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
