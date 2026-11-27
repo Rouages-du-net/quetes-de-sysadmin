@@ -2289,8 +2289,11 @@ was already there, a YAML error, a misspelt module. Other accepted solution:
 
 Goal checked on the state: on the three centres, the file and the
 configuration loaded by sshd say `PasswordAuthentication no`, and the last
-full run changed nothing. Expected trap: the file changed without sshd being
-reloaded (the handler is only notified on a change).
+full run changed nothing; Ansible's record of the runs shows the change was
+rehearsed (a `--check` run, then a first real change limited to part of the
+centres). Expected traps: the file changed without sshd being reloaded (the
+handler is only notified on a change); all three centres at once, without
+the rehearsal (the chapter must then be restarted).
 
 ## Story 19: The Patch (one chapter)
 

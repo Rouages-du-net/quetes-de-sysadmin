@@ -37,5 +37,5 @@ hint-rehearsal-canary =
     .lead = One centre first: the --limit option. Then check you can still connect to it.
     .solution = ansible-playbook ssh.yml --limit north, then ansible north -m ping
 hint-rehearsal-end =
-    .lead = Each centre must have reloaded sshd (sshd -T on a centre). Where the line is already there, the handler won't be notified again: reload ssh yourself. Then run the playbook again to check changed=0.
+    .lead = The order counts: --check first, then one centre, then the others. Each centre must have reloaded sshd (sshd -T on a centre). Where the line is already there, the handler won't be notified again: reload ssh yourself. Then run the playbook again to check changed=0.
     .solution = ansible centres -b -m service -a "name=ssh state=reloaded" if needed, ansible-playbook ssh.yml, then ansible-playbook ssh.yml again (changed=0).

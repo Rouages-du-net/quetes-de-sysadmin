@@ -92,6 +92,12 @@ rehearsal-event-not-reload =
     recargado el servicio. Y volver a ejecutar el playbook no cambiará eso:
     la línea ya está, la tarea dice «ok», ya no notifica. Tienes que recargar
     ssh tú, en los centros afectados (el módulo service, con ansible).
+rehearsal-event-unrehearsed =
+    El cambio salió de verdad sin el ensayo completo: o ninguna pasada
+    --check fue antes, o los tres centros lo recibieron de golpe. Aquí nadie
+    se quedó fuera, pero nada lo mostró antes. Théo: «Lo repetimos, como
+    debe ser.» Reinicia el capítulo (desde el menú), luego ensaya con
+    --check --diff y empieza por un solo centro (--limit).
 rehearsal-event-end =
     En los tres centros, sshd rechaza ahora las contraseñas, y volver a
     ejecutar el playbook no cambia nada. Théo: «Y nadie se ha quedado

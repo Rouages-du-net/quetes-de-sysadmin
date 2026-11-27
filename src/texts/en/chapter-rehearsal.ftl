@@ -90,6 +90,12 @@ rehearsal-event-not-reload =
     is already there, the task says "ok", it no longer notifies. You have
     to reload ssh yourself, on the centres concerned (the service module,
     with ansible).
+rehearsal-event-unrehearsed =
+    The change went out for real without the full rehearsal: either no
+    --check run came first, or all three centres got it at once. Here
+    nobody got locked out, but nothing showed it beforehand. Théo: "Let's
+    do it again, properly." Restart the chapter (from the menu), then
+    rehearse with --check --diff and start with one centre (--limit).
 rehearsal-event-end =
     On all three centres, sshd now refuses passwords, and running the
     playbook again changes nothing. Théo: "And nobody got locked out."

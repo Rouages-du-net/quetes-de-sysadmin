@@ -37,5 +37,5 @@ hint-rehearsal-canary =
     .lead = Un seul centre d'abord : l'option --limit. Puis vérifie que tu t'y connectes encore.
     .solution = ansible-playbook ssh.yml --limit north, puis ansible north -m ping
 hint-rehearsal-end =
-    .lead = Chaque centre doit avoir rechargé sshd (sshd -T sur un centre). Là où la ligne est déjà là, le handler ne sera plus notifié : recharge ssh toi-même. Puis relance le playbook pour vérifier changed=0.
+    .lead = L'ordre compte : --check d'abord, puis un centre, puis les autres. Chaque centre doit avoir rechargé sshd (sshd -T sur un centre). Là où la ligne est déjà là, le handler ne sera plus notifié : recharge ssh toi-même. Puis relance le playbook pour vérifier changed=0.
     .solution = ansible centres -b -m service -a "name=ssh state=reloaded" si besoin, ansible-playbook ssh.yml, puis encore ansible-playbook ssh.yml (changed=0).

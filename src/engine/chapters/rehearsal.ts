@@ -8,7 +8,10 @@
 // service, sshd -T (on a centre).
 // Objective checked on the state: on all three centres, sshd_config says
 // PasswordAuthentication no and sshd has loaded it; the last complete run
-// changed nothing.
+// changed nothing; and Ansible's own record of the runs shows the change
+// was rehearsed: the first real run that changed sshd_config was limited
+// (--limit) to part of the centres, after a --check run. A run that changed all three at once, unrehearsed, can't be undone
+// by the story: the chapter must be restarted.
 // Sources: https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_checkmode.html,
 // https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html
 
@@ -23,6 +26,15 @@ const centreState = (n: string) => centre(n, { motd: (t) => `${t('playbook-line-
 const ditFile = (h: Shell) => readConfig(h).values.passwordauthentication;
 const ditLoad = (h: Shell) => (h.state.sshd?.load as Record<string, string> | undefined)?.passwordauthentication;
 const executions = (j: Game) => history(j as Shell).executions;
+const SSHD = '/etc/ssh/sshd_config';
+// The centres where a run changed sshd_config.
+const touched = (e: ReturnType<typeof executions>[number]) => Object.values(e.changes).filter((l) => l.includes(SSHD)).length;
+// The first real run that changed sshd_config, and whether a check run came before it.
+const firstChange = (j: Game) => executions(j).findIndex((e) => !e.check && touched(e) > 0);
+const rehearsed = (j: Game) => {
+  const i = firstChange(j);
+  return i > 0 && !!executions(j)[i].limit && touched(executions(j)[i]) < NAMES.length && executions(j).slice(0, i).some((e) => e.check);
+};
 const seen = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 
 export const rehearsal: Chapter = {
@@ -63,8 +75,13 @@ export const rehearsal: Chapter = {
       message: (j) => j.t('rehearsal-event-not-reload'),
     },
     {
+      id: 'unrehearsed',
+      condition: (j) => firstChange(j) >= 0 && !rehearsed(j),
+      message: (j) => j.t('rehearsal-event-unrehearsed'),
+    },
+    {
       id: 'end',
-      condition: (j) => NAMES.every((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) === 'no') && idempotent(j),
+      condition: (j) => NAMES.every((n) => ditFile(onCentre(j, n)) === 'no' && ditLoad(onCentre(j, n)) === 'no') && idempotent(j) && rehearsed(j),
       message: (j) => j.t('rehearsal-event-end'),
     },
   ],

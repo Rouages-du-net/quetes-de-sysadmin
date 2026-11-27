@@ -169,5 +169,27 @@ for (const language of languagesFor('fleet'))
         if (fr) expect(all).toContain("qu'on s'y connecte toujours");
         expect(c.finished).toContain('rehearsal');
       });
+
+      it('false lead: all three centres at once, without the rehearsal', () => {
+        const { c, jouer: play, ecrire: write, centre } = part(['inventory', 'playbook'], 'rehearsal');
+        play(['cd ansible']);
+        write('ssh.yml', sameName);
+        let all = play(['ansible-playbook ssh.yml', 'ansible-playbook ssh.yml']);
+        expect(all).toMatch(/east +: ok=2 +changed=0/);
+        expect(centre('east').state.sshd.load.passwordauthentication).toBe('no');
+        if (fr) expect(all).toContain('Recommence le');
+        expect(c.finished).not.toContain('rehearsal');
+        // A check run afterwards doesn't make it rehearsed.
+        all = play(['ansible-playbook ssh.yml --check --diff', 'ansible-playbook ssh.yml --limit north', 'ansible-playbook ssh.yml']);
+        expect(c.finished).not.toContain('rehearsal');
+      });
+
+      it('false lead: --check, then all three at once', () => {
+        const { c, jouer: play, ecrire: write } = part(['inventory', 'playbook'], 'rehearsal');
+        play(['cd ansible']);
+        write('ssh.yml', sameName);
+        play(['ansible-playbook ssh.yml --check --diff', 'ansible-playbook ssh.yml', 'ansible-playbook ssh.yml']);
+        expect(c.finished).not.toContain('rehearsal');
+      });
     });
   });
