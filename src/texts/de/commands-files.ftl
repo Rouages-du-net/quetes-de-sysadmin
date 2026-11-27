@@ -21,7 +21,7 @@ cat-usage = Aufruf: cat datei
 mv-usage = Aufruf: mv quelle ziel
 mv-missing = mv: der Aufruf von stat für '{ $target }' ist nicht möglich: Datei oder Verzeichnis nicht gefunden
 # Vereinfachung des Spiels: Orte werden nicht verschoben.
-mv-place = mv: { $target } ist ein Ort; in diesem Spiel verschiebst du nur Objekte
+mv-place = mv: '{ $target }' kann nicht verschoben werden: Darin liegt ein Ort der Geschichte, und das Spiel lässt die Orte der Geschichte, wo sie sind
 mv-permission = mv: '{ $target }' kann nicht verschoben werden: Keine Berechtigung
 cp-usage = Aufruf: cp quelle ziel
 cp-missing = cp: der Aufruf von stat für '{ $target }' ist nicht möglich: Datei oder Verzeichnis nicht gefunden
@@ -41,7 +41,7 @@ ln-missing = Datei oder Verzeichnis nicht gefunden
 ln-access-impossible = ln: Zugriff auf '{ $target }' fehlgeschlagen: Datei oder Verzeichnis nicht gefunden
 ln-physical-directory = ln: { $target }: Harte Verknüpfung auf ein Verzeichnis nicht erlaubt
 rm-missing = rm: Entfernen von '{ $target }' nicht möglich: Datei oder Verzeichnis nicht gefunden
-rm-directory = rm: Entfernen von '{ $target }' nicht möglich: Ist ein Verzeichnis (dafür bräuchtest du rm -r, und das ist gefährlich: Hier benutzen wir es nicht)
+rm-directory = rm: Entfernen von '{ $target }' nicht möglich: Ist ein Verzeichnis
 rm-permission = rm: Entfernen von '{ $target }' nicht möglich: Keine Berechtigung
 touch-usage = Aufruf: touch datei
 mkdir-usage = Aufruf: mkdir ort
@@ -107,6 +107,25 @@ rm-ask-empty = rm: normale leere Datei '{ $target }' entfernen?
 rm-ask-link = rm: symbolische Verknüpfung '{ $target }' entfernen?
 rm-removed = '{ $target }' wurde entfernt
 rm-removed-directory = Verzeichnis '{ $target }' wurde entfernt
+rm-ask-descend = rm: in Verzeichnis '{ $target }' absteigen?
+rm-ask-directory = rm: Verzeichnis '{ $target }' entfernen?
+rm-dot = rm: Entfernen des Verzeichnisses '.' oder '..' verweigert: '{ $target }' wird übersprungen
+rm-preserve-root =
+    rm: Es ist gefährlich, rekursiv auf '{ $target }' zu arbeiten
+    rm: Verwenden Sie --no-preserve-root, um diese Sicherheitsmaßnahme zu umgehen
+rm-busy = rm: Entfernen von '{ $target }' nicht möglich: Das Gerät oder die Ressource ist belegt
+rm-not-permitted = rm: Entfernen von '{ $target }' nicht möglich: Die Operation ist nicht erlaubt
+rm-other-device = rm: '{ $target }' wird übersprungen, da es sich auf einem anderen Gerät befindet
+# Gewollte Unterschiede zu rm und mv von GNU: Das Spiel bewahrt die Orte des Systems und die der Geschichte.
+rm-system = rm: Entfernen von '{ $target }' nicht möglich: Das Spiel bewahrt die eigenen Orte des Systems (/, /etc, /usr/lib, /var/log…), die root auf einem echten Server zerstören könnte
+rm-story-place = rm: Entfernen von '{ $target }' nicht möglich: Darin liegt ein Ort der Geschichte, und das Spiel bewahrt die Orte der Geschichte
+mv-system = mv: '{ $target }' kann nicht verschoben werden: Das Spiel lässt die eigenen Orte des Systems (/, /etc, /usr/lib, /var/log…), wo sie sind
+mv-into-itself = mv: '{ $source }' kann nicht in ein Unterverzeichnis von sich selbst verschoben werden, '{ $target }'
+mv-busy = mv: '{ $source }' kann nicht nach '{ $target }' verschoben werden: Das Gerät oder die Ressource ist belegt
+mv-over-file = mv: Nicht-Verzeichnis '{ $target }' kann nicht mit Verzeichnis '{ $source }' überschrieben werden
+mv-not-empty = mv: '{ $source }' kann nicht nach '{ $target }' verschoben werden: Verzeichnis nicht leer
+mv-over-directory = mv: Verzeichnis '{ $target }' kann nicht mit einem Nicht-Verzeichnis überschrieben werden
+mv-denied = mv: '{ $source }' kann nicht nach '{ $target }' verschoben werden: Keine Berechtigung
 rmdir-usage =
     rmdir: Fehlender Operand
     „rmdir --help“ liefert weitere Informationen.

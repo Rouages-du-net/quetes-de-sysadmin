@@ -41,7 +41,7 @@ import { drain, flush, list as runTree, newRun, show, subshell, type Run, type S
 import { prefix as dialectPrefix, type ScriptRun } from './dialect';
 import { arithmetic, ArithError, type ArithVars } from './arith';
 import { addJob, notices, type Job } from './jobs';
-import { inherited, inheritedHere } from './availability';
+import { everydayHere, inherited, inheritedHere } from './availability';
 import { permitted, read as readSudoers, sudoersFile } from './sudoers';
 import { debianDefaults } from './debian';
 
@@ -131,7 +131,7 @@ export interface Game {
   read(path: string): string | null;
   count(place: string, prefix: string): number;
   erase(path: string): void;
-  can(n: Node, right: 'r' | 'w' | 'x', user?: string): boolean;
+  can(n: Node | null | undefined, right: 'r' | 'w' | 'x', user?: string): boolean;
   // The machine's accounts and groups; an account's groups (primary first).
   accounts: Accounts;
   groupsFor(user: string): string[];
@@ -632,7 +632,9 @@ export class Shell implements Game {
   // Unix permissions: the owner only has the owner's rights, a group member
   // only the group's, others only the others' (even if the group or others
   // have more). root has every right.
-  can(n: Node, right: 'r' | 'w' | 'x', user = this.who): boolean {
+  can(n: Node | null | undefined, right: 'r' | 'w' | 'x', user = this.who): boolean {
+    // Nothing there (removed by the player): no right on it.
+    if (!n) return false;
     // Through an NFS mount, the server decides, with this machine's numbers (see nfs.ts).
     const remote = nfsAccess(this, n, right, user) ?? cifsAccess(this, n, right, user);
     if (remote !== null) return remote;
@@ -1050,8 +1052,9 @@ export class Shell implements Game {
    */
   private commandSets(): { own: string[]; kept: string[] } {
     const mine = this.chapter.commands;
-    const own = [...new Set([...mine, ...mine.flatMap((c) => COMPANIONS[c] ?? []), 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, this.t('command-help')])];
     const source = this.inheritsFrom;
+    const everyday = source ? everydayHere(this, source) : [];
+    const own = [...new Set([...mine, ...mine.flatMap((c) => COMPANIONS[c] ?? []), 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, ...everyday, this.t('command-help')])];
     const inherited = source ? inheritedHere(this, source) : [];
     const kept = [...new Set([...inherited, ...inherited.flatMap((c) => COMPANIONS[c] ?? [])])].filter((c) => !own.includes(c));
     return { own, kept };

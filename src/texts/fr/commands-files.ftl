@@ -21,7 +21,7 @@ cat-usage = Usage : cat fichier
 mv-usage = Usage : mv source destination
 mv-missing = mv : impossible d'évaluer '{ $target }' : aucun fichier ou dossier de ce nom
 # Simplification du jeu : on ne déplace pas les lieux.
-mv-place = mv : { $target } est un lieu ; dans ce jeu, on ne déplace que des objets
+mv-place = mv : impossible de déplacer '{ $target }' : un lieu de l’histoire s’y trouve, et le jeu garde les lieux de l’histoire à leur place
 mv-permission = mv : impossible de déplacer '{ $target }' : Permission non accordée
 cp-usage = Usage : cp source destination
 cp-missing = cp : impossible d'évaluer '{ $target }' : aucun fichier ou dossier de ce nom
@@ -41,7 +41,7 @@ ln-missing = Aucun fichier ou dossier de ce nom
 ln-access-impossible = ln: impossible d'accéder à '{ $target }': Aucun fichier ou dossier de ce nom
 ln-physical-directory = ln: { $target } : les liens physiques ne sont pas permis pour un répertoire
 rm-missing = rm : impossible de supprimer '{ $target }' : aucun fichier ou dossier de ce nom
-rm-directory = rm : impossible de supprimer '{ $target }' : est un dossier (il faudrait rm -r, et c’est dangereux : on ne l’utilise pas ici)
+rm-directory = rm : impossible de supprimer '{ $target }' : est un dossier
 rm-permission = rm : impossible de supprimer '{ $target }' : Permission non accordée
 touch-usage = Usage : touch fichier
 mkdir-usage = Usage : mkdir lieu
@@ -107,6 +107,25 @@ rm-ask-empty = rm : supprimer '{ $target }' du type fichier vide ?
 rm-ask-link = rm : supprimer '{ $target }' du type lien symbolique ? 
 rm-removed = '{ $target }' supprimé
 rm-removed-directory = répertoire '{ $target }' supprimé
+rm-ask-descend = rm : descendre dans le répertoire '{ $target }' ?
+rm-ask-directory = rm : supprimer '{ $target }' du type répertoire ?
+rm-dot = rm : refus de supprimer le répertoire '.' ou '..' : '{ $target }' ignoré
+rm-preserve-root =
+    rm : il est dangereux d'opérer récursivement sur '{ $target }'
+    rm : utilisez --no-preserve-root pour inhiber cette mesure de sécurité
+rm-busy = rm : impossible de supprimer '{ $target }' : Périphérique ou ressource occupé
+rm-not-permitted = rm : impossible de supprimer '{ $target }' : Opération non permise
+rm-other-device = rm : '{ $target }' ignoré, car il est sur un autre périphérique
+# Différences voulues avec rm et mv de GNU : le jeu garde les lieux du système et ceux de l’histoire.
+rm-system = rm : impossible de supprimer '{ $target }' : le jeu garde les lieux du système (/, /etc, /usr/lib, /var/log…), que root pourrait détruire sur un vrai serveur
+rm-story-place = rm : impossible de supprimer '{ $target }' : un lieu de l’histoire s’y trouve, et le jeu garde les lieux de l’histoire
+mv-system = mv : impossible de déplacer '{ $target }' : le jeu garde les lieux du système (/, /etc, /usr/lib, /var/log…) à leur place
+mv-into-itself = mv : impossible de déplacer '{ $source }' vers un sous-répertoire de lui-même, '{ $target }'
+mv-busy = mv : impossible de déplacer '{ $source }' vers '{ $target }' : Périphérique ou ressource occupé
+mv-over-file = mv : impossible d'écraser le non-répertoire '{ $target }' par le répertoire '{ $source }'
+mv-not-empty = mv : impossible de déplacer '{ $source }' vers '{ $target }' : Le dossier n'est pas vide
+mv-over-directory = mv : impossible d'écraser le répertoire '{ $target }' par un non-répertoire
+mv-denied = mv : impossible de déplacer '{ $source }' vers '{ $target }' : Permission non accordée
 rmdir-usage =
     rmdir : opérande manquant
     Saisissez « rmdir --help » pour plus d'informations.

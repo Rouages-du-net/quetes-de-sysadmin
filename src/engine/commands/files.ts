@@ -28,6 +28,28 @@ export const inode = (n: Node) => {
   return INODES.get(n)!;
 };
 
+// A file's hard links (ls -l's second column): how many names the same node
+// has in the machine's tree (ln without -s, rsnapshot's cp -al). Counted
+// once per command: the tree is walked when ls -l first needs it.
+const NAMES = new WeakMap<object, Map<Node, number>>();
+const namesOf = (game: Shell, n: Node): number => {
+  const key = game.last as object;
+  let names = NAMES.get(key);
+  if (!names) {
+    names = new Map();
+    const walk = (d: Node) => {
+      if (d.type !== 'directory') return;
+      for (const c of Object.values(d.children)) {
+        if (c.type === 'file') names!.set(c, (names!.get(c) ?? 0) + 1);
+        else walk(c);
+      }
+    };
+    walk(game.root);
+    NAMES.set(key, names);
+  }
+  return Math.max(1, names.get(n) ?? 1);
+};
+
 // tar -tv's date: 2027-01-01 09:30.
 const isoMinute = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
 // tar -cvv, -xvv: the long listing, like -tv (one -v alone gives the names).
@@ -95,7 +117,7 @@ function longRow(game: Shell, name: string, n: Node, human: boolean, numeric = f
   const bytes = n.type === 'directory' ? 4096 : sizeFor(n, game);
   const size = human ? readable(bytes, game.t.language) : String(bytes);
   // A place has two links, plus one per place inside it (their ..).
-  const links = n.type === 'directory' ? 2 + Object.values(n.children).filter((c) => c.type === 'directory').length : 1;
+  const links = n.type === 'directory' ? 2 + Object.values(n.children).filter((c) => c.type === 'directory').length : namesOf(game, n);
   const date = lsDate(game, n.type === 'file' ? n.mtime : undefined);
   // A symbolic link: "l", rwxrwxrwx permissions, size = length of the target path.
   if (n.type === 'file' && n.link !== undefined)
@@ -297,21 +319,43 @@ const shownDestination = (game: Shell, source: string, dest: string) =>
   game.find(dest)?.type === 'directory' ? `${dest.replace(/\/$/, '')}/${game.name(source)}` : dest;
 
 const moveOne: One = (game, source, dest, letters) => {
-  const n = game.find(source);
+  // mv moves a symbolic link itself, never what it points to.
+  const n = game.find(source, false) ?? game.find(source);
   if (!n) return game.error(game.t('mv-missing', { target: source })) || null;
-  // Game simplification: objects are moved, never places.
-  if (n.type === 'directory') return game.error(game.t('mv-place', { target: source })) || null;
-  if (n.isProtected?.mv) return game.error(n.isProtected.mv) || null;
+  if (n.type === 'file' && n.isProtected?.mv) return game.error(n.isProtected.mv) || null;
   const target = destination(game, source, dest);
   const reason = game.block(source) ?? game.block(target + '/..');
   if (reason) return game.error(reason) || null;
-  if (game.resolve(source) === target) return null;
+  const from = game.resolve(source);
+  if (from === target) return null;
+  const there = game.find(target, false);
+  // The destination as GNU shows it: as given, joined with the name when it is a place.
+  const shown = shownDestination(game, source, dest);
+  if (n.type === 'directory') {
+    // A place: renamed, or moved with all it holds (see "rm -r and mv of a place").
+    if (target.startsWith(from + '/')) return game.error(game.t('mv-into-itself', { source, target: shown })) || null;
+    if (systemPlace(from)) return game.error(game.t('mv-system', { target: source })) || null;
+    if (storyPlace(n)) return game.error(game.t('mv-place', { target: source })) || null;
+    const stuck = unmovable(n);
+    if (stuck) return game.error(stuck) || null;
+    if (mountPaths(game).some((m) => m === from || m.startsWith(from + '/')) || mountPaths(game).includes(target)) return game.error(game.t('mv-busy', { source, target: shown })) || null;
+    if (there?.type === 'file') return game.error(game.t('mv-over-file', { source, target: shown })) || null;
+    if (there?.type === 'directory' && Object.keys(there.children).length) return game.error(game.t('mv-not-empty', { source, target: shown })) || null;
+  } else if (there?.type === 'directory') return game.error(game.t('mv-over-directory', { target: shown })) || null;
   if (immutable(n) || appendOnly(n) || immutable(game.find(source + '/..'))) return game.error(`mv: cannot move '${source}' to '${target}': Operation not permitted`, 1) || null;
   if (!game.writtenIn(source)) return game.error(game.t('mv-permission', { target: source })) || null;
+  const parent = game.find(source + '/..') as Node & { type: 'directory' };
+  const name = game.name(source);
+  // Into another place, a place must be writable itself (its ".." changes).
+  if (n.type === 'directory' && game.resolve(source + '/..') !== game.resolve(target + '/..') && !game.can(n, 'w')) return game.error(game.t('mv-denied', { source, target: shown })) || null;
+  // Taken out first: on the same medium, a move takes no more room.
+  delete parent.children[name];
   const error = game.place('mv', target, n);
-  if (error) return game.error(error) || null;
-  game.erase(source);
-  return letters.has('v') ? game.t('mv-renamed', { source, destination: shownDestination(game, source, dest) }) : null;
+  if (error) {
+    parent.children[name] = n;
+    return game.error(error) || null;
+  }
+  return letters.has('v') ? game.t('mv-renamed', { source, destination: shown }) : null;
 };
 
 const copyOne: One = (game, source, dest, letters) => {
@@ -330,6 +374,153 @@ const copyOne: One = (game, source, dest, letters) => {
   if (error) return game.error(error) || null;
   return letters.has('v') ? `'${source}' -> '${shownDestination(game, source, dest)}'` : null;
 };
+
+// ——— rm -r and mv of a place (GNU coreutils 9.7:
+// https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html,
+// https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html) ———
+
+/**
+ * The system's own places: /, the places right under it, and those right
+ * under /usr and /var. rm -r and mv leave them alone, a deliberate
+ * difference from a real server (where root may destroy them): a whole
+ * system wiped would end any chapter, or win one that checks only that
+ * something is gone.
+ */
+export const systemPlace = (absolute: string): boolean => {
+  const parts = absolute.split('/').filter(Boolean);
+  return parts.length <= 1 || (parts.length === 2 && ['usr', 'var'].includes(parts[0]));
+};
+
+/** A place of the story's own, or one that holds one: a place with a lock (Directory.blocked), open or not. */
+const storyPlace = (n: Node): boolean => n.type === 'directory' && (!!n.blocked || Object.values(n.children).some(storyPlace));
+
+/** The first object of a tree that refuses to move (File.isProtected.mv), with its message. */
+const unmovable = (n: Node): string | null => {
+  if (n.type === 'file') return n.isProtected?.mv ?? null;
+  for (const c of Object.values(n.children)) {
+    const m = unmovable(c);
+    if (m) return m;
+  }
+  return null;
+};
+
+const mountPaths = (game: Shell): string[] => ((game.state.mounts ?? []) as { path: string }[]).map((m) => m.path);
+
+/** /proc and /sys: the kernel's files, which nobody removes (unlink gives EPERM). */
+const kernelFile = (absolute: string) => /^\/(proc|sys)\//.test(absolute);
+
+/** May this entry be unlinked from its place? The error to write, or null. */
+function unlinkRefusal(game: Shell, path: string, n: Node): string | null {
+  const absolute = game.resolve(path);
+  if (n.type === 'file' && n.isProtected?.rm) return n.isProtected.rm;
+  const reason = game.block(path);
+  if (reason) return reason;
+  if (n.type === 'directory' && mountPaths(game).includes(absolute)) return game.t('rm-busy', { target: path });
+  // chattr +i or +a (on it or on its place), a kernel file: even root may not.
+  const place = game.find(path + '/..');
+  if (kernelFile(absolute) || immutable(n) || appendOnly(n) || immutable(place) || (n.type === 'directory' && appendOnly(place))) return game.t('rm-not-permitted', { target: path });
+  // Deleting a file means changing the place that holds it: it takes
+  // write permission on that place, not on the file.
+  if (!game.writtenIn(path)) return game.t('rm-permission', { target: path });
+  return null;
+}
+
+/**
+ * rm's work, as a generator: it yields each question of -i (and receives
+ * the answer), and writes the errors and what -v says as it goes.
+ */
+export function* removeSteps(
+  game: Shell,
+  targets: string[],
+  letters: Set<string>,
+  o: { noPreserve: boolean; oneFileSystem: boolean },
+  done: string[],
+): Generator<string, void, boolean> {
+  const ask = letters.has('i') && !letters.has('f');
+  const recursive = letters.has('r');
+  const removed = (path: string, n: Node) => {
+    game.erase(path);
+    if (letters.has('v')) done.push(game.t(n.type === 'directory' ? 'rm-removed-directory' : 'rm-removed', { target: path }));
+  };
+  // A file: the checks, then -i's question.
+  function* file(path: string, n: Node): Generator<string, boolean, boolean> {
+    const refusal = unlinkRefusal(game, path, n);
+    if (refusal) return (game.error(refusal, 1), false);
+    if (ask) {
+      const empty = n.type === 'file' && n.link === undefined && sizeFor(n, game) === 0;
+      const key = n.type === 'file' && n.link !== undefined ? 'rm-ask-link' : empty ? 'rm-ask-empty' : 'rm-ask';
+      if (!(yield game.t(key, { target: path }))) return false;
+    }
+    removed(path, n);
+    return true;
+  }
+  // A place, depth first. Once something inside stays, GNU rm doesn't try
+  // the places that hold it (no question, no "Directory not empty").
+  function* tree(path: string, n: Node & { type: 'directory' }, device: string | null): Generator<string, boolean, boolean> {
+    const absolute = game.resolve(path);
+    if (systemPlace(absolute)) return (game.error(game.t('rm-system', { target: path })), false);
+    const reason = game.block(path);
+    if (reason) return (game.error(reason), false);
+    const names = Object.keys(n.children).sort(compareNames);
+    if (names.length) {
+      if (ask && !(yield game.t('rm-ask-descend', { target: path }))) return false;
+      if (!game.traverses(path) || !game.can(n, 'r') || !game.can(n, 'x')) return (game.error(game.t('rm-permission', { target: path })), false);
+      // --one-file-system: a place mounted from another medium is left as it is.
+      const here = game.mount(absolute)?.path ?? null;
+      if (o.oneFileSystem && device !== null && here !== device) return (game.error(game.t('rm-other-device', { target: path })), false);
+      let all = true;
+      for (const name of names) {
+        const child = n.children[name];
+        if (!child) continue;
+        const sub = `${path.replace(/\/+$/, '')}/${name}`;
+        const ok = child.type === 'directory' ? yield* tree(sub, child, here) : yield* file(sub, child);
+        all = all && ok;
+      }
+      if (!all) return false;
+    }
+    const refusal = unlinkRefusal(game, path, n);
+    if (refusal) return (game.error(refusal, 1), false);
+    if (ask && !(yield game.t('rm-ask-directory', { target: path }))) return false;
+    removed(path, n);
+    return true;
+  }
+  for (const target of targets) {
+    // rm deletes the link itself, never its target.
+    const n = game.find(target, false);
+    const last = target.replace(/\/+$/, '').split('/').pop();
+    if (!n) {
+      if (!letters.has('f')) game.error(game.t('rm-missing', { target }));
+      continue;
+    }
+    if (n.type === 'file') {
+      yield* file(target, n);
+      continue;
+    }
+    if (recursive && (last === '.' || last === '..')) {
+      game.error(game.t('rm-dot', { target }));
+      continue;
+    }
+    if (recursive && game.resolve(target) === '/') {
+      game.error(game.t(o.noPreserve ? 'rm-system' : 'rm-preserve-root', { target }));
+      continue;
+    }
+    if (!recursive) {
+      // -d: an empty place, like rmdir.
+      if (letters.has('d') && !Object.keys(n.children).length) {
+        const refusal = unlinkRefusal(game, target, n);
+        if (refusal) game.error(refusal, 1);
+        else if (!ask || (yield game.t('rm-ask-directory', { target }))) removed(target, n);
+      } else game.error(game.t('rm-directory', { target }));
+      continue;
+    }
+    // A tree that holds a place of the story (a lock): the game keeps it whole.
+    if (storyPlace(n)) {
+      game.error(game.t('rm-story-place', { target }));
+      continue;
+    }
+    yield* tree(target, n, game.mount(game.resolve(target))?.path ?? null);
+  }
+}
 
 // ——— find (GNU findutils 4.9: https://www.gnu.org/software/findutils/manual/html_mono/find.html) ———
 
@@ -876,54 +1067,26 @@ export const FILES: Record<string, Command> = {
     },
   },
 
-  // rm [-f] [-i] [-v] file…: -f says nothing of what is missing and never asks.
+  // rm [-f] [-i] [-r|-R] [-d] [-v] file…, like GNU coreutils 9.7's
+  // (https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html):
+  // -f says nothing of what is missing and never asks; -r removes a place
+  // and everything in it, depth first (see removeTree).
   rm: {
     launch: ({ args, game }) => {
-      const { letters, rest } = options(args);
+      const noPreserve = args.includes('--no-preserve-root');
+      const oneFileSystem = args.includes('--one-file-system');
+      const { letters, rest } = options(args.filter((a) => !['--no-preserve-root', '--preserve-root', '--one-file-system'].includes(a)));
+      if (letters.has('R')) letters.add('r');
       if (!rest.length) return letters.has('f') ? '' : game.error(game.t('rm-usage'));
       const done: string[] = [];
-      const remove = (targets: string[]): string => {
-        for (let k = 0; k < targets.length; k++) {
-          const target = targets[k];
-          // rm deletes the link itself, never its target.
-          const n = game.find(target, false);
-          if (!n) {
-            if (!letters.has('f')) game.error(game.t('rm-missing', { target: target }));
-          } else if (n.type === 'directory') {
-            // -d: an empty place, like rmdir.
-            if (letters.has('d') && !Object.keys(n.children).length && !letters.has('r') && !letters.has('R')) {
-              if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
-              else {
-                game.erase(target);
-                if (letters.has('v')) done.push(game.t('rm-removed-directory', { target: target }));
-              }
-            } else game.error(game.t('rm-directory', { target: target }));
-          } else if (n.isProtected?.rm) game.error(n.isProtected.rm);
-          else if (game.block(target)) game.error(game.block(target)!);
-          // chattr +i or +a (on it or on its place): even root may not.
-          else if (immutable(n) || appendOnly(n) || immutable(game.find(target + '/..'))) game.error(`rm: cannot remove '${target}': Operation not permitted`, 1);
-          // Deleting a file means changing the place that holds it: it takes
-          // write permission on that place, not on the file.
-          else if (!game.writtenIn(target)) game.error(game.t('rm-permission', { target: target }));
-          else if (letters.has('i') && !letters.has('f')) {
-            const empty = n.type === 'file' && n.link === undefined && sizeFor(n, game) === 0;
-            const key = n.type === 'file' && n.link !== undefined ? 'rm-ask-link' : empty ? 'rm-ask-empty' : 'rm-ask';
-            game.ask(`${game.t(key, { target: target })} `, (answer) => {
-              if (yes(game, answer)) {
-                game.erase(target);
-                if (letters.has('v')) done.push(game.t('rm-removed', { target: target }));
-              }
-              return [done.splice(0).join('\n'), remove(targets.slice(k + 1))].filter(Boolean).join('\n');
-            });
-            return done.splice(0).join('\n');
-          } else {
-            game.erase(target);
-            if (letters.has('v')) done.push(game.t('rm-removed', { target: target }));
-          }
-        }
+      const steps = removeSteps(game, rest, letters, { noPreserve, oneFileSystem }, done);
+      // The questions of -i: each answer resumes the removal where it stopped.
+      const drive = (answer?: boolean): string => {
+        const step = answer === undefined ? steps.next() : steps.next(answer);
+        if (!step.done) game.ask(`${step.value} `, (response) => [done.splice(0).join('\n'), drive(yes(game, response))].filter(Boolean).join('\n'));
         return done.splice(0).join('\n');
       };
-      return remove(rest);
+      return drive();
     },
   },
 
