@@ -795,8 +795,13 @@ them safely.
     system has them and the tool is installed there; The Watch's "fix"
     went from 14 commands to more than 50. The teachers' sheets still list
     only the chapter's new ones, and `help` shows the inherited ones on a
-    line of their own. Left: a command no assumed chapter teaches is still
-    "not learned yet" (`ps` in a chapter whose path never met it).
+    line of their own. A few basic everyday commands (`ps`, `df`, `free`,
+    `uptime`, `whoami`, `id`, `groups`, `date`, `hostname`, `uname`,
+    `which`, `pwd`, `echo`: `EVERYDAY`) are in every chapter whose machine
+    has them, even if no assumed chapter teaches them; a chapter that
+    teaches one lists it as before, `withhold` still keeps one out. Left: a
+    tool beyond that list stays "not learned yet" until a chapter teaches
+    it, by design.
   - [x] **A Debian machine's default state**: a chapter that models no
     mounts, processes, memory or network gets those of a small Debian 13
     virtual machine (`src/engine/debian.ts`): `df -h`, `mount`, `findmnt`,

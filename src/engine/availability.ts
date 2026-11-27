@@ -150,6 +150,21 @@ export function inherited(chapter: Chapter, stories: readonly Story[] = STORIES)
   return [...out];
 }
 
+// The basic, harmless everyday commands a sysadmin types by reflex: every
+// chapter has them where they exist on its machine's system (and its tool is
+// there), even if no chapter it assumes teaches them; they only look, never
+// solve. A chapter whose lesson is one of them lists it in its own commands,
+// unchanged; `Chapter.withhold` still keeps one out. The teachers' sheets
+// keep only a chapter's own new commands (sheets.ts): these never show there.
+export const EVERYDAY = ['ps', 'df', 'free', 'uptime', 'whoami', 'id', 'groups', 'date', 'hostname', 'uname', 'which', 'pwd', 'echo'];
+
+/** The everyday commands this session's machine has, for this chapter. */
+export function everydayHere(game: Game, chapter: Chapter): string[] {
+  const withheld = new Set(chapter.withhold ?? []);
+  const platform = platformOf(game);
+  return EVERYDAY.filter((c) => !withheld.has(c) && commandPlatforms(c).has(platform) && installed(game, c));
+}
+
 // Per chapter, computed once.
 const cache = new WeakMap<Chapter, string[]>();
 

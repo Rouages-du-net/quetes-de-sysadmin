@@ -145,7 +145,9 @@ le cœur.
   son histoire et les chapitres précédents de son histoire) qui existent
   sur sa machine (`src/engine/availability.ts`) ; les autres répondent
   « tu n'as pas encore cette commande », et leur manuel reste lisible avec
-  `man`. `withhold` garde fermée une commande supposée quand elle ferait
+  `man`. Quelques commandes de tous les jours (`ps`, `df`, `whoami`,
+  `date`… : `EVERYDAY`) sont dans chaque chapitre dont la machine les a.
+  `withhold` garde fermée une commande supposée quand elle ferait
   la leçon à la place du joueur ou de la joueuse.
 - `createWorld(t)` : le système de fichiers de départ ; les textes viennent
   de `t('…')`, jamais du code.

@@ -41,7 +41,7 @@ import { drain, flush, list as runTree, newRun, show, subshell, type Run, type S
 import { prefix as dialectPrefix, type ScriptRun } from './dialect';
 import { arithmetic, ArithError, type ArithVars } from './arith';
 import { addJob, notices, type Job } from './jobs';
-import { inherited, inheritedHere } from './availability';
+import { everydayHere, inherited, inheritedHere } from './availability';
 import { permitted, read as readSudoers, sudoersFile } from './sudoers';
 import { debianDefaults } from './debian';
 
@@ -1050,8 +1050,9 @@ export class Shell implements Game {
    */
   private commandSets(): { own: string[]; kept: string[] } {
     const mine = this.chapter.commands;
-    const own = [...new Set([...mine, ...mine.flatMap((c) => COMPANIONS[c] ?? []), 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, this.t('command-help')])];
     const source = this.inheritsFrom;
+    const everyday = source ? everydayHere(this, source) : [];
+    const own = [...new Set([...mine, ...mine.flatMap((c) => COMPANIONS[c] ?? []), 'man', 'apropos', 'whatis', 'clear', 'exit', 'history', ...ALWAYS_THERE, ...everyday, this.t('command-help')])];
     const inherited = source ? inheritedHere(this, source) : [];
     const kept = [...new Set([...inherited, ...inherited.flatMap((c) => COMPANIONS[c] ?? [])])].filter((c) => !own.includes(c));
     return { own, kept };
