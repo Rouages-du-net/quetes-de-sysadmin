@@ -19,15 +19,12 @@ split-brain-message-kirsi =
     Anoche (martes, desde las 21:30) instalamos los nuevos routers de
     borde: una pareja, edge-a (192.0.2.252) y edge-b (192.0.2.253), que
     comparten la puerta de enlace 192.0.2.254 con VRRP, para que la
-    puerta de enlace sobreviva al fallo de un router. Ya puestos,
-    aplicamos nuestra configuración básica de bastionado (v3, nftables) a
-    lb2; lb1 la recibe la semana que viene.
+    puerta de enlace sobreviva al fallo de un router.
 
     Esta mañana el registro de los routers de borde está lleno de líneas
     como estas:
       arp: 192.0.2.108 moved from 52:54:00:6c:01:04 to 52:54:00:6c:01:05 on vlan20
       arp: 192.0.2.108 moved from 52:54:00:6c:01:05 to 52:54:00:6c:01:04 on vlan20
-      vrrp: VRID 51: advert from 192.0.2.104 with a different address list, ignored
 
     Dos máquinas responden por 192.0.2.108. Seguro que no son los
     routers ;)

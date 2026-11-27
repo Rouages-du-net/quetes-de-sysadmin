@@ -18,13 +18,11 @@ split-brain-message-kirsi =
     Last night (Tuesday, from 21:30) we installed the new edge routers:
     a pair, edge-a (192.0.2.252) and edge-b (192.0.2.253), sharing the
     gateway 192.0.2.254 with VRRP, so the gateway survives a router
-    failure. While we were at it, we applied our hardening baseline (v3,
-    nftables) to lb2; lb1 gets it next week.
+    failure.
 
     This morning the edge routers' log is full of lines like these:
       arp: 192.0.2.108 moved from 52:54:00:6c:01:04 to 52:54:00:6c:01:05 on vlan20
       arp: 192.0.2.108 moved from 52:54:00:6c:01:05 to 52:54:00:6c:01:04 on vlan20
-      vrrp: VRID 51: advert from 192.0.2.104 with a different address list, ignored
 
     Two machines answer for 192.0.2.108. I'm sure it's not the routers ;)
 

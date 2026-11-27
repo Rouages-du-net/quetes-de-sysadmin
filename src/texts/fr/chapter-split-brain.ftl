@@ -19,14 +19,11 @@ split-brain-message-kirsi =
     Cette nuit (mardi, à partir de 21 h 30), nous avons installé les
     nouveaux routeurs de bordure : une paire, edge-a (192.0.2.252) et
     edge-b (192.0.2.253), qui partagent la passerelle 192.0.2.254 avec
-    VRRP, pour que la passerelle survive à la panne d'un routeur. Tant
-    qu'on y était, nous avons appliqué notre socle de durcissement (v3,
-    nftables) à lb2 ; lb1 l'aura la semaine prochaine.
+    VRRP, pour que la passerelle survive à la panne d'un routeur.
 
     Ce matin, le journal des routeurs est plein de lignes comme celles-ci :
       arp: 192.0.2.108 moved from 52:54:00:6c:01:04 to 52:54:00:6c:01:05 on vlan20
       arp: 192.0.2.108 moved from 52:54:00:6c:01:05 to 52:54:00:6c:01:04 on vlan20
-      vrrp: VRID 51: advert from 192.0.2.104 with a different address list, ignored
 
     Deux machines répondent pour 192.0.2.108. Je suis sûre que ce ne sont
     pas les routeurs ;)

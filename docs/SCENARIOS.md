@@ -4293,7 +4293,8 @@ Wednesday 5 June, 9:20. On Tuesday night the network team installed a VRRP
 pair of edge routers for the gateway (VRID 51, their vendor's default) and
 applied their nftables baseline to lb2, whose input chain drops VRRP. lb2
 no longer hears lb1: both hold the address, the gateway's ARP entry swings,
-every other donor's connection is reset.
+every other donor's connection is reset. Kirsi's message only gives the ARP
+flapping: both causes are found on the machines (journalctl, tcpdump, nft).
 
 | Step | Command learnt |
 |---|---|
