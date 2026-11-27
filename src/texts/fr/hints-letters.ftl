@@ -48,8 +48,8 @@ hint-sharing-end =
 ## Chapitre 5 — Ça marche chez moi
 
 hint-works-for-me-end =
-    .lead = /etc/hosts ne vaut que pour une machine : il faut corriger la zone de cafe.example (/etc/bind/zones/db.cafe.example, voir aide_dns.txt). Nouvelle adresse, un www, un numéro de série augmenté pour que ns2 recopie la zone, et le point final des noms complets.
-    .solution = sudo nano /etc/bind/zones/db.cafe.example : 203.0.113.10 à la place de 198.51.100.80, serial 2027032001, et la ligne www IN CNAME cafe.example. (avec le point) ; puis named-checkzone cafe.example /etc/bind/zones/db.cafe.example et sudo rndc reload
+    .lead = /etc/hosts ne vaut que pour une machine : il faut corriger la zone de cafe.example (/etc/bind/zones/db.cafe.example, voir aide_dns.txt). Nouvelle adresse, un www, un numéro de série augmenté pour que ns2 recopie la zone, et le point final des noms complets. Puis regarder ce que voient les clients : le résolveur public (dig sans @).
+    .solution = sudo nano /etc/bind/zones/db.cafe.example : 203.0.113.10 à la place de 198.51.100.80, serial 2027032001, et la ligne www IN CNAME cafe.example. (avec le point) ; puis named-checkzone cafe.example /etc/bind/zones/db.cafe.example et sudo rndc reload ; enfin dig cafe.example (le résolveur : l'ancienne adresse, son TTL)
 
 ## Chapitre 6 — Le soir du concert
 

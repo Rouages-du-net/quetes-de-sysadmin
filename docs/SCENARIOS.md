@@ -834,7 +834,8 @@ is authoritative for the zone (BIND, `named`); the registry keeps a copy
 
 Goal checked on the state: both authoritative servers answer the new address
 for `cafe.example` and `www.cafe.example`, the MX is still there, the
-Lettres' zone hasn't moved.
+Lettres' zone hasn't moved; and the public resolver was asked once the zone
+was right (its cached answer, the TTL).
 
 Expected traps: the "home-made" `/etc/hosts`, the resolver keeping the old
 answer in cache (a 24-hour TTL), a mistyped address (`bad dotted quad`, the

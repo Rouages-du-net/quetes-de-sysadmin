@@ -756,7 +756,20 @@ for (const language of LANGUAGES)
       it('another solution: an A record for www, and systemctl reload named', () => {
         const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
         modify(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
-        s.execute('sudo systemctl reload named');
+        contains(s.execute('sudo systemctl reload named') ?? '', 'passent par un résolveur');
+        expect(s.finished).toBe(false);
+        contains(s.execute('host cafe.example 9.9.9.9') ?? '', 'les caches');
+        expect(s.finished).toBe(true);
+      });
+
+      it('false lead: the zone fixed, but the resolver (the TTL) never asked', () => {
+        const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
+        modify(s, (t) => t.replace('2026091501', '2027032001').replace('198.51.100.80', '203.0.113.10') + '\nwww IN CNAME cafe.example.');
+        s.execute('sudo rndc reload');
+        s.execute('dig @localhost cafe.example');
+        s.execute('dig @ns2.registry.example www.cafe.example');
+        expect(s.finished).toBe(false);
+        s.execute('dig cafe.example');
         expect(s.finished).toBe(true);
       });
     });
