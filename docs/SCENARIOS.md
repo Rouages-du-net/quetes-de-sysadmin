@@ -2935,8 +2935,12 @@ It opens after "The Late File" and "Transfers".
 | Release, reply | `ENDJOB JOB(412655/SORAYA/QPADEV0004)`, then the reply R |
 
 Goal checked on the state: every incoming order in ORDHDR, order 1847
-changed, no job waiting for a reply, the job queue empty, ORDWEB running.
-Expected traps: R while the record is still held (the question comes back),
+changed, no job waiting for a reply, the job queue empty, ORDWEB and
+Diego's session running. Kwame's email names nobody: two green screens are
+in order entry (Soraya's QPADEV0004, left open last night, and Diego's
+QPADEV0002, taking phone orders), both with ORDHDR open; only the record
+lock says which one holds order 1847. Expected traps: ending Diego's
+session (his order lost: no end), R while the record is still held (the question comes back),
 `ENDJOB` on the import or C (the run lost: `SBMJOB CMD(CALL
 PGM(ORDERS/ORDIMP))`, as Margit's notes say), G (the change skipped),
 `CALL` (the night's programs must run in batch).

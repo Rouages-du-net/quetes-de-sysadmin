@@ -72,10 +72,9 @@ inquiry-email-kwame =
     Nacht zu verlieren? Die Listen drucken sich von selbst, sobald die
     Nacht-Jobs gelaufen sind.
 
-    Soraya ergänzt: „Ich bin gestern Abend in Eile gegangen, das Telefon
-    hat geklingelt, als ich gerade bei Bestellung 1847 war (La Mie d'Inès),
-    auf dem grünen Bildschirm. Ich habe nichts geändert, ich glaube, ich
-    habe sie offen gelassen.“
+    Das Büro hat um sieben aufgemacht: Die Telefonbestellungen werden wie
+    immer am grünen Bildschirm aufgenommen, also bitte niemanden
+    rauswerfen.
 
     Dein Profil ist DU, Passwort muehlstein-2029: tn5250 muehle von deinem
     Rechner für den grünen Bildschirm, oder ssh muehle für die Unix-Seite.
@@ -110,8 +109,9 @@ inquiry-event-cause =
     Da ist es: Satz 28 von ORDHDR, Bestellung 1847, wird vom Job
     412655/SORAYA/QPADEV0004 gehalten, Sorayas grünem Bildschirm, gestern
     Abend auf dieser Bestellung offen gelassen. Solange ihre Sitzung ihn
-    hält, kann der Import die Bestellung nicht ändern. Soraya sagt, sie hat
-    nichts geändert: Ihre Sitzung kann beendet werden.
+    hält, kann der Import die Bestellung nicht ändern. Kwame ruft sie an:
+    Das Telefon hat geklingelt, sie ist in Eile gegangen und hat nichts
+    geändert. Ihre Sitzung kann beendet werden.
 inquiry-event-retry-locked =
     R hat es erneut versucht, aber der Satz ist immer noch gesperrt: Der
     Job hat wieder gewartet, und dieselbe Frage ist zurückgekommen. Ein
@@ -132,6 +132,13 @@ inquiry-event-skipped =
     an Bestellung 1847 wurde stillschweigend ausgelassen. Die Bäckerei
     bekommt die alte Menge. Gib den Satz frei und übergib den Import dann
     erneut: Er wendet an, was er übersprungen hat.
+inquiry-event-wrong-session =
+    Du hast Diegos Sitzung beendet: Er hat gerade die Bestellung einer
+    Bäckerei am Telefon eingetippt, und sie ist verloren. Seine Sitzung
+    hatte ORDHDR offen, wie jeder Bestellbildschirm, aber keinen Satz:
+    Die Satzsperre (DSPRCDLCK oder das Jobprotokoll des Imports) nennt
+    den Job, der Bestellung 1847 hält. „Letzte Eingabe rückgängig machen“
+    (Wiederherstellungspunkt) bringt dich vor diesen Befehl zurück.
 inquiry-event-web-ended =
     ORDWEB wurde beendet: Die Web-Bestellungen der Bäckereien kommen nicht
     mehr an. Er gehört zum Subsystem ORDSBS: Starte es wieder (ENDSBS, dann
