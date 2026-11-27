@@ -40,7 +40,7 @@ hint-policy-report =
     .lead = Die Berichte in dmarc_berichte sind XML: Jeder „record“ sagt, wer gesendet hat (source_ip), wie viel, und was SPF, DKIM und DMARC ergeben haben. Such die Adressen, die nicht 203.0.113.30 sind.
     .solution = grep source_ip dmarc_berichte/*.xml, dann less auf den Bericht: 198.51.100.77 (newsmail.example) besteht SPF und DKIM für die eigene Domain, nicht für gardens.example.
 hint-policy-aligned =
-    .lead = Der Newsletter muss mit d=gardens.example signiert sein: newsmail_schreiben.txt sagt, wie man einen Selektor delegiert. Achte auf den Punkt am Ende, und die Seriennummer.
+    .lead = Der Newsletter muss mit d=gardens.example signiert sein: newsmail_schreiben.txt sagt, wie man einen Selektor delegiert, und die Berichte sagen, welchen (selector). Achte auf den Punkt am Ende, und die Seriennummer.
     .solution = Füg „nm1._domainkey IN CNAME nm1.dkim.newsmail.example.“ zur Zone hinzu, erhöh die Seriennummer, sudo rndc reload; dig TXT nm1._domainkey.gardens.example @ns2.registry.example
 hint-policy-end =
     .lead = Jetzt, wo der Newsletter ausgerichtet ist, kann die Richtlinie verschärft werden: das Tag p= des Eintrags _dmarc (rua= behalten).

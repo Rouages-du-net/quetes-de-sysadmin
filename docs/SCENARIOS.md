@@ -2242,8 +2242,8 @@ alone, "key not secure" (DNSSEC, harmless), the serial.
 
 | Step | Command learnt |
 |---|---|
-| Read the aggregate reports | `grep source_ip rapports_dmarc/*.xml`, `less` (the unaligned provider, a spoofer) |
-| Align the provider | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.`, the serial |
+| Read the aggregate reports | `grep source_ip dmarc_reports/*.xml`, `less` (the unaligned provider and its `<selector>`, a spoofer) |
+| Align the provider | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.` (the provider's page says `SELECTOR`: `nm1` comes from the reports), the serial |
 | Tighten | `_dmarc IN TXT "v=DMARC1; p=quarantine; rua=…"` |
 
 Goal checked on the state: the internet sees p=quarantine (or reject) with
