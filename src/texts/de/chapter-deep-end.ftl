@@ -12,33 +12,28 @@ chapter-deep-end = Das tiefe Becken
 deep-end-message-folake =
     Von: Folake (Uferbad, Kasse und Büro)
     Samstag, 23. Juni, 9:15
-    
+
     Hallo, entschuldige, dass ich dich an einem Samstag anrufe!
-    
+
     Heute ist der regionale Schwimmwettkampf: zweihundert Schwimmerinnen und
     Schwimmer, ihre Vereine, ihre Familien, und alle schauen sich Zeitplan
     und Ergebnisse auf der Buchungs-Site an. Seit dem Start um 8:00 sagt sie
     nur „404 page not found“. Letzten Samstag hat sie den ganzen Vormittag
     gehalten.
-    
+
     Rui hat gestern Abend eine neue Version eingespielt (seine Notiz liegt
     hier). Er ist beim Wettkampf, als Zeitnehmer: vor Mittag kann er sein
     Handy nicht anfassen.
-    
+
     Folake
 deep-end-note-rui =
     Notiz von Rui (Freitag, 18:20)
-    
-    Ich habe 2.4.0 angewendet: ein Cache für die Ergebnisse, damit die
-    Zeitplan-Seite morgen schneller ist. Ich habe auch Requests und Limits
-    für den Speicher hinzugefügt, wie im Kubernetes-Tutorial (64Mi und
-    128Mi): das ist sauberer. Die Pods sind gut gestartet.
-    
-    Zur Info: beim Wettkampf letzten Samstag (auf 2.3.1, ohne Limits)
-    zeigte kubectl top pod in der Spitze höchstens 230Mi pro Pod.
-    
-    Die Releases: 2.3.1 (seit 4. Juni), 2.4.0 (heute Abend).
-    
+
+    Ich habe das neue Release angewendet: ein Cache für die Ergebnisse,
+    damit die Zeitplan-Seite morgen schneller ist. Ich habe auch Requests
+    und Limits für den Speicher hinzugefügt, wie im Kubernetes-Tutorial:
+    das ist sauberer. Die Pods sind gut gestartet.
+
     Rui
 
 ## Events
@@ -52,7 +47,8 @@ deep-end-event-oom =
 deep-end-event-top =
     kubectl top fragt den metrics-server, was jeder Pod gerade braucht
     (kubectl top node für die ganze Maschine). Vergleiche es mit dem Limit
-    im Deployment und mit dem, was Rui beim letzten Wettkampf gemessen hat.
+    im Deployment; unter der Last des Wettkampfs ändert es sich von Minute
+    zu Minute: schau mehr als einmal hin, die Spitze zählt.
 deep-end-event-history =
     kubectl rollout history listet die Revisionen des Deployments, mit
     ihrem CHANGE-CAUSE: 2.4.0 hat gestern einen neuen Cache gebracht. Ein
@@ -99,10 +95,11 @@ deep-end-event-rolled-back =
     Das Deployment fährt wieder 2.3.1. Steht es in den Dateien, und hat es
     genug Platz für die Spitze des Wettkampfs?
 deep-end-event-below-peak =
-    Dieses Limit liegt unter dem, was 2.3.1 in der Spitze des letzten
-    Wettkampfs gebraucht hat (230Mi, Ruis Notiz): in der vollsten Minute
-    würde sie wieder beendet. Setze es über die Spitze, mit Spielraum.
-deep-end-event-limit-raised = Das Speicherlimit liegt jetzt über der Spitze, die Rui gemessen hat.
+    Dieses Limit liegt unter dem, was 2.3.1 in den vollsten Minuten des
+    Wettkampfs braucht: in der Spitze würde sie wieder beendet. Miss es
+    (kubectl top pod, mehr als einmal) und setze das Limit über die Spitze,
+    mit Spielraum.
+deep-end-event-limit-raised = Das Speicherlimit liegt jetzt über der Spitze des Wettkampfs.
 deep-end-event-requests-low =
     Die Requests liegen weit unter dem, was die App unter Last braucht: der
     Scheduler reserviert nur so viel und könnte andere Pods dorthin setzen,
@@ -120,9 +117,9 @@ deep-end-event-end =
     Folake: „Die Ergebnisse sind auf den Bildschirmen und auf allen Handys!
     Rui sagt zwischen zwei Läufen, dass er seinen Cache nächstes Mal an
     einem ruhigen Werktag ausprobiert.“
-    
+
     Gut gemacht! Du hast „Das tiefe Becken“ abgeschlossen.
-    
+
     WAS PASSIERT IST
     Ruis Limits, aus einem Tutorial kopiert (128Mi), waren an einem ruhigen
     Abend in Ordnung; unter der Last des Wettkampfs braucht die App bis zu
@@ -131,7 +128,7 @@ deep-end-event-end =
     dem anderen. Und der Ergebnis-Cache von 2.4.0 vergisst nie: mit mehr
     Platz füllt er auch den. Du bist zu 2.3.1 zurückgekehrt und hast
     Requests und Limits nach dem Gemessenen gesetzt, in der Datei.
-    
+
     GUTE PRAXIS
     - Messen, bevor man festlegt: kubectl top pod und node, zur vollsten
       Zeit (besser: eine Historie, aus Prometheus). Requests: was die App
@@ -148,7 +145,7 @@ deep-end-event-end =
       Leck kann den ganzen Node nehmen.
     - kubectl rollout undo ändert, was läuft, nicht die Dateien: schreib die
       Reparatur auch ins Manifest.
-    
+
     DOKUMENTATION
     - Ressourcenverwaltung für Pods und Container: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     - Speicherressourcen für Container und Pods zuweisen (ein Limit überschreiten, OOM): https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/

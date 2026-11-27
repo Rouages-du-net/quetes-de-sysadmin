@@ -30,15 +30,10 @@ deep-end-message-folake =
 deep-end-note-rui =
     Mot de Rui (vendredi, 18 h 20)
 
-    J'ai appliqué la 2.4.0 : un cache des résultats, pour que la page des
-    horaires soit plus rapide demain. J'ai aussi ajouté des requests et des
-    limits de mémoire, comme dans le tutoriel de Kubernetes (64Mi et
-    128Mi) : c'est plus propre. Les pods ont bien démarré.
-
-    Pour mémoire, au meeting de samedi dernier (en 2.3.1, sans limites),
-    kubectl top pod a montré au plus 230Mi par pod au pic.
-
-    Les versions : 2.3.1 (depuis le 4 juin), 2.4.0 (ce soir).
+    J'ai appliqué la nouvelle version : un cache des résultats, pour que la
+    page des horaires soit plus rapide demain. J'ai aussi ajouté des
+    requests et des limits de mémoire, comme dans le tutoriel de
+    Kubernetes : c'est plus propre. Les pods ont bien démarré.
 
     Rui
 
@@ -53,7 +48,8 @@ deep-end-event-oom =
 deep-end-event-top =
     kubectl top demande au metrics-server ce que chaque pod utilise en ce
     moment (kubectl top node pour toute la machine). Comparez avec la limite
-    du Deployment, et avec ce que Rui a mesuré au dernier meeting.
+    du Deployment ; sous la charge du meeting, ça bouge d'une minute à
+    l'autre : regardez plus d'une fois, c'est le pic qui compte.
 deep-end-event-history =
     kubectl rollout history liste les révisions du Deployment, avec leur
     CHANGE-CAUSE : la 2.4.0 a apporté hier un nouveau cache. Un Deployment
@@ -100,11 +96,12 @@ deep-end-event-rolled-back =
     Le Deployment tourne de nouveau en 2.3.1. Est-ce dans les fichiers, et
     a-t-il assez de place pour le pic du meeting ?
 deep-end-event-below-peak =
-    Cette limite est sous ce que la 2.3.1 a utilisé au pic du dernier
-    meeting (230Mi, le mot de Rui) : à la minute la plus chargée, elle
-    serait de nouveau tuée. Mettez-la au-dessus du pic, avec une marge.
+    Cette limite est sous ce que la 2.3.1 utilise aux minutes les plus
+    chargées du meeting : au pic, elle serait de nouveau tuée. Mesurez-le
+    (kubectl top pod, plus d'une fois) et mettez la limite au-dessus du pic,
+    avec une marge.
 deep-end-event-limit-raised =
-    La limite de mémoire est maintenant au-dessus du pic mesuré par Rui.
+    La limite de mémoire est maintenant au-dessus du pic du meeting.
 deep-end-event-requests-low =
     Les requests sont bien en dessous de ce que l'appli utilise sous
     charge : l'ordonnanceur ne réserve que ça, et pourrait placer d'autres

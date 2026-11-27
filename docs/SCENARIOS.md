@@ -3718,7 +3718,7 @@ every 10 seconds under load, and a line in its log each minute).
 | Step | Command learnt |
 |---|---|
 | Killed | `kubectl get pods` (restarts, `CrashLoopBackOff`), `kubectl describe pod` (`Last State: Terminated`, `Reason: OOMKilled`, `Exit Code: 137`, `Limits`) |
-| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources); Rui's note: 230Mi at the last meet's peak |
+| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources): up to 230Mi at the meet's peak, which only measuring shows (Rui's note gives no figure nor release) |
 | What changed | `kubectl rollout history deployment/booking` (CHANGE-CAUSE), `--revision=N`; `kubectl logs` (the cache) |
 | Back | `kubectl rollout undo deployment/booking --to-revision=3` or the image in the file |
 | Room | `resources.requests.memory` and `resources.limits.memory` in `booking.yaml`, `kubectl apply -f`, `kubectl rollout status` |
