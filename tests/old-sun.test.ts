@@ -127,6 +127,16 @@ data/postgres@before-migration`;
       expect(play(['sudo -u postgres psql -d seeds -c "DELETE FROM lendings WHERE id = 1"'])).toContain('read-only transaction');
     });
 
+    it('chapter 3 — false lead: switched and frozen without counting on greenhouse', () => {
+      const { c, play, edit, flag } = part(['read-first', 'byte-order']);
+      edit('sudo nano /etc/opt/seed-catalogue/catalogue.ini', (t) => t.replace('db_host = localhost', 'db_host = greenhouse.internal'));
+      play(['sudo svcadm enable seed-catalogue', 'sudo svcadm disable postgresql_84:default_64bit']);
+      expect(flag('uncounted')).toBe(true);
+      expect(c.finished).not.toContain('switch-over');
+      play(['ssh greenhouse', 'yes', 'sudo -u postgres psql -d seeds -c "SELECT count(*) FROM lendings"']);
+      expect(c.finished).toContain('switch-over');
+    });
+
     it('chapter 3 — false lead: restarted without changing the configuration', () => {
       const { c, play, flag } = part(['read-first', 'byte-order']);
       play(['sudo svcadm enable seed-catalogue']);

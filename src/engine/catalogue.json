@@ -507,7 +507,7 @@
       "systemctl",
       "journalctl"
      ],
-     "events": 5
+     "events": 6
     },
     {
      "id": "concert",
@@ -539,7 +539,7 @@
       "id",
       "whoami"
      ],
-     "events": 5
+     "events": 6
     },
     {
      "id": "port",
@@ -2138,7 +2138,7 @@
       "smartctl",
       "mdadm"
      ],
-     "events": 10
+     "events": 11
     },
     {
      "id": "new-disk",
@@ -3606,7 +3606,7 @@
       "tar",
       "iconv"
      ],
-     "events": 6
+     "events": 7
     }
    ]
   },

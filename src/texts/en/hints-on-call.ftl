@@ -101,5 +101,5 @@ hint-bottleneck-iowait =
     .lead = Zoé says the processor is doing almost nothing. Look at top's %Cpu(s) line: each column has its meaning (man top), and one of them counts the time spent waiting for the disk.
     .solution = top ("wa" is huge: that is iowait); then iostat -x and sudo pidstat -d to see the saturated disk and who keeps it busy
 hint-bottleneck-end =
-    .lead = The archiving (radio-archives) saturates the disk, but it must not be stopped. ionice is useless with the "none" scheduler; a bandwidth limit set by systemd always works (man systemd.resource-control: IOWriteBandwidthMax=), on the right disk (iostat names it), neither too low nor too high.
+    .lead = Whatever keeps the disk busy (pidstat names its process; systemctl list-timers tells what starts at 4 pm) must not be stopped. ionice is useless with the "none" scheduler; a bandwidth limit set by systemd always works (man systemd.resource-control: IOWriteBandwidthMax=), on the right disk (iostat names it), neither too low nor too high.
     .solution = sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M" (saved in /etc), then iostat -x to check; if the archiving is stopped: sudo systemctl start radio-archives

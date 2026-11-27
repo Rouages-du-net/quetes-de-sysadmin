@@ -15,9 +15,8 @@ full-disk-message-zoe =
     device". The server says its disk is full, but I can't see
     what could have filled it, we haven't added anything lately.
 
-    I just tinkered a bit with the stream relay (the radio-stream
-    service) last week, to understand some dropouts. It needs to
-    get going again, and it mustn't happen again.
+    The next shows have to be recorded again, and it mustn't
+    happen again.
 
     For sudo: antenna-2027."
 full-disk-conf-stream =

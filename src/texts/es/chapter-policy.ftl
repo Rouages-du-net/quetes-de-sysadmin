@@ -41,7 +41,11 @@ policy-letter-newsmail =
     Para que firmemos con tu dominio, deléganos un selector. Añade a la zona
     DNS de tu dominio:
 
-        nm1._domainkey.TU-DOMINIO.   CNAME   nm1.dkim.newsmail.example.
+        SELECTOR._domainkey.TU-DOMINIO.   CNAME   SELECTOR.dkim.newsmail.example.
+
+    SELECTOR es el selector de tu cuenta: aquel con el que ya firmamos tus
+    campañas (el s= de su firma DKIM, que también dan los informes DMARC
+    que recibes).
 
     Nuestros servidores comprueban tu DNS cada hora: en cuanto el CNAME es
     visible, tus campañas se firman con d=TU-DOMINIO.

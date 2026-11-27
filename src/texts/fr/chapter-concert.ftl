@@ -67,6 +67,10 @@ concert-event-still-too =
     par le nombre d'adresses du robot, doit rester bien sous ce que
     l'agenda sait servir (une vingtaine de pages par seconde). Et la limite
     s'applique-t-elle bien à /agenda/ ?
+concert-event-who =
+    L'agenda tient. Mais Kofi demandait qui demande quoi, et l'association
+    voudra savoir qui l'inondait : regarde dans le journal des accès
+    (aide_journaux.txt a les recettes).
 concert-event-end =
     Toutes les visites humaines passent, le robot est freiné, et l'agenda
     respire. Kofi : « L'horaire s'affiche ! Le concert commence à

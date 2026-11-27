@@ -128,6 +128,7 @@ for (const language of languagesFor('allotments'))
       all = run('sudo mariadb -e "SET GLOBAL slow_query_log = ON; SET GLOBAL long_query_time = 1"', 'sudo mariadb -e "SHOW VARIABLES LIKE \'slow_query_log_file\'"', 'sudo tail -n 8 /var/lib/mysql/*-slow.log');
       expect(all).toMatch(/# Query_time: 38\.\d+  Lock_time: 0\.000087  Rows_sent: 412  Rows_examined: 1834212/);
       expect(all).toContain('# User@Host: plotline[plotline] @  [198.51.100.133]');
+      expect(all).toMatch(/SELECT \* FROM bookings WHERE plot_id = \d+/);
       all = run('sudo mariadb plots -e "EXPLAIN SELECT * FROM bookings WHERE plot_id = 17 ORDER BY starts_on DESC"');
       expect(all).toContain('|  1 | SIMPLE      | bookings | ALL  | NULL          | NULL | NULL    | NULL | 1834212 | Using where; Using filesort |');
       contains(all, 'type ALL, key NULL, rows 1834212');
@@ -135,6 +136,13 @@ for (const language of languagesFor('allotments'))
       expect(all).toContain('| ref  | idx_plot      | idx_plot | 4       | const |  412 | Using filesort |');
       expect(finished()).toBe(true);
       contains(everything(), 'Vous avez terminé Connexions endormies.');
+    });
+
+    it("chapter 1 — false lead: the note doesn't point at the slow table or its column", () => {
+      const { run } = play([]);
+      const note = run('cat message_from_halima.txt', 'cat note_from_lwazi.txt');
+      expect(note).not.toContain('plot_id');
+      expect(note).not.toContain('2019');
     });
 
     it('chapter 1 — false leads: a restart alone, max_connections at 10000, an index on the wrong column; another solution: the monitor, the file, a restart', () => {

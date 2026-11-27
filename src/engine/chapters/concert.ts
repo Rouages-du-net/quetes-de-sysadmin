@@ -8,7 +8,8 @@
 // requests per second per address); the access log shows it.
 // Objective checked on the state: during the last minute, all the visitors'
 // requests were served, and rate limiting refused at least 60 % of the
-// bot's requests (429 or 503).
+// bot's requests (429 or 503); and the player has found the bot in the log
+// (the 'robot' event: its addresses counted with awk, cut or uniq).
 // Sources: https://nginx.org/en/docs/http/ngx_http_limit_req_module.html,
 // https://blog.nginx.org/blog/rate-limiting-nginx, https://pubs.opengroup.org/onlinepubs/9799919799/utilities/awk.html
 
@@ -277,8 +278,14 @@ export const concert: Chapter = {
       message: (j) => j.t('concert-event-still-too'),
     },
     {
+      // The limit holds, but Kofi's question (who asks for what?) is still open.
+      id: 'who',
+      condition: (j) => succeeded(summary(j)) && !j.flags.has('robot'),
+      message: (j) => j.t('concert-event-who'),
+    },
+    {
       id: 'end',
-      condition: (j) => succeeded(summary(j)),
+      condition: (j) => succeeded(summary(j)) && j.flags.has('robot'),
       message: (j) => j.t('concert-event-end'),
     },
   ],

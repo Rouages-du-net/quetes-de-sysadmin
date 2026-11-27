@@ -17,7 +17,9 @@ lab-procedure-host =
     2. Indiquez dans votre demande le numéro de série (S/N) du disque à
        remplacer, et seulement celui-là : les noms sda ou sdb peuvent
        changer d'un démarrage à l'autre, pas le numéro de série
-       (smartctl -i ou lsblk -o le montrent).
+       (smartctl -i ou lsblk -o le montrent). Ajoutez le nombre de
+       secteurs réalloués du disque (la valeur brute de l'attribut SMART 5,
+       Reallocated_Sector_Ct) : un verdict global ne nous suffit pas.
     3. Nous intervenons sous 24 heures. Le disque neuf est livré vierge :
        à vous de le partitionner et de reconstruire votre RAID.
 lab-syslog =
@@ -94,9 +96,15 @@ tired-disk-event-ticket-false =
     Le ticket contient le numéro de série de sda : c'est le disque SAIN !
     L'hébergeur débrancherait le seul disque qui marche encore. Corrige
     { $file } : seulement le numéro de série de sdb.
+# { $file } : le nom du ticket
+tired-disk-event-ticket-count =
+    { $file } donne le numéro de série de sdb, mais l'hébergeur demande
+    aussi son nombre de secteurs réalloués : le chiffre qui montre que le
+    disque lâche, quoi qu'en dise son verdict global.
 tired-disk-event-ticket =
-    Le ticket donne le numéro de série du disque à remplacer. Odile
-    l'enverra dès que le disque sera sorti de ses grappes.
+    Le ticket donne le numéro de série du disque à remplacer et les
+    secteurs réalloués qui le justifient. Odile l'enverra dès que le
+    disque sera sorti de ses grappes.
 tired-disk-event-end =
     Odile : « Envoyé ! L'hébergeur répond qu'il change le disque cette nuit. »
 

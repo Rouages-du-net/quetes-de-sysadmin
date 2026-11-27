@@ -8,7 +8,8 @@
 // player must understand why resolvers still give the old address (the TTL).
 // Objective checked on the state: both authoritative servers answer the
 // new address for cafe.example and www.cafe.example, the mail (MX) is still
-// there, and the Letters' zone hasn't changed.
+// there, and the Letters' zone hasn't changed; and the player has asked the
+// public resolver once the zone was right (the 'cache' event: the TTL).
 // Sources: https://bind9.readthedocs.io/en/stable/chapter3.html (zones),
 // https://bind9.readthedocs.io/en/stable/manpages.html (named-checkzone, rndc, dig),
 // RFC 1034 and 1035 (TTL, SOA, CNAME).
@@ -278,8 +279,15 @@ export const atMe: Chapter = {
       message: (j) => j.t('works-for-me-event-point-final'),
     },
     {
+      // Both authoritative servers are right, but the customers' side (the
+      // resolver and its cache) hasn't been looked at yet.
+      id: 'unchecked',
+      condition: (j) => good(j, 'primary') && good(j, 'secondary') && !j.flags.has('cache'),
+      message: (j) => j.t('works-for-me-event-unchecked'),
+    },
+    {
       id: 'end',
-      condition: (j) => good(j, 'primary') && good(j, 'secondary'),
+      condition: (j) => good(j, 'primary') && good(j, 'secondary') && j.flags.has('cache'),
       message: (j) => j.t('works-for-me-event-end'),
     },
   ],

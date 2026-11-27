@@ -18,11 +18,10 @@ bottleneck-message-zoe =
     Ich habe in top geschaut: Die Maschine wirkt überlastet, aber der
     Prozessor tut fast nichts. Ich verstehe es überhaupt nicht.
 
-    Was ich weiß: Um 16 Uhr kopiert die tägliche Archivierung
-    (radio-archives) die Aufnahmen nach /srv/archives. Was auch immer du
-    tust, stopp sie nicht: Die Sendungen des Tages müssen heute Abend
-    archiviert sein. Aber sie darf den Livestream nicht kaputtmachen,
-    weder heute noch morgen.“
+    Was auch immer du findest, schalte nichts einfach ab: Alles, was auf
+    diesem Server läuft, hat seine Aufgabe, und die Sendungen des Tages
+    müssen heute Abend archiviert sein. Aber der Livestream darf nicht
+    kaputtgehen, weder heute noch morgen.“
 
     Um dir die Platte anzusehen: man iostat, man pidstat.
 

@@ -35,8 +35,7 @@ sleeping-connections-note-lwazi =
     - paleta ejecuta MariaDB (el paquete de Debian, el servicio mariadb).
       La base de datos es plots: members, plots, waitlist, bookings.
     - Plotline funciona en shed (198.51.100.133) y se conecta a paleta por
-      la red interna, como plotline. bookings contiene todas las reservas
-      desde 2019: solo el turno de riego reserva cada parcela cada tarde.
+      la red interna, como plotline.
     - Como root en paleta, sudo mariadb abre la base de datos (Debian deja
       entrar al root del sistema por el socket, sin contraseña).
     - La configuración: /etc/mysql/mariadb.conf.d/50-server.cnf. Los

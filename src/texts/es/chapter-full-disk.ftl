@@ -16,9 +16,8 @@ full-disk-message-zoe =
     device". El servidor dice que su disco está lleno, pero no veo qué ha
     podido llenarlo, no hemos añadido nada últimamente.
 
-    Solo trasteé un poco con el repetidor del directo (el servicio
-    radio-stream) la semana pasada, para entender unos cortes. Hay que
-    volver a ponerlo en marcha, y que no vuelva a pasar.
+    Los próximos programas tienen que volver a grabarse, y que no
+    vuelva a pasar.
 
     Para sudo: antena-2027.»
 full-disk-conf-stream =

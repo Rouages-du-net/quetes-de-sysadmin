@@ -834,7 +834,8 @@ is authoritative for the zone (BIND, `named`); the registry keeps a copy
 
 Goal checked on the state: both authoritative servers answer the new address
 for `cafe.example` and `www.cafe.example`, the MX is still there, the
-Lettres' zone hasn't moved.
+Lettres' zone hasn't moved; and the public resolver was asked once the zone
+was right (its cached answer, the TTL).
 
 Expected traps: the "home-made" `/etc/hosts`, the resolver keeping the old
 answer in cache (a 24-hour TTL), a mistyped address (`bad dotted quad`, the
@@ -862,7 +863,8 @@ reload, the game plays a minute of traffic, written to `access.log`.
 
 Goal checked on the state: during the last simulated minute, every visitor
 request was served, and rate limiting refused at least 60 % of the robot's
-requests.
+requests; and the robot was found in the log (its addresses counted with
+`awk`, `cut` or `uniq`).
 
 Expected traps: `limit_req` without `limit_req_zone` ("zero size shared
 memory zone"), a limit without burst (a page and its four files at once:
@@ -1993,12 +1995,13 @@ the kernel has reread blocks from the other mirror. Yet SMART says
 | See the RAID | `cat /proc/mdstat`, `sudo mdadm --detail /dev/md0` |
 | Judge the disk | `sudo smartctl -a /dev/sdb`, then `/dev/sda` to compare |
 | Take `sdb` out | `sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2`, then `md1` and `sdb3` |
-| The ticket | `smartctl -i` or `lsblk -o NAME,SERIAL`, then `~/ticket.txt` with `sdb`'s serial number |
+| The ticket | `smartctl -a` (or `-i` and `-A`), then `~/ticket.txt` with `sdb`'s serial number and its reallocated sectors (1208), as the host's procedure asks |
 
 False leads: `--remove` without `--fail` ("Device or resource busy");
 taking out a member on `sda`, the healthy disk (put it back with
 `--re-add`); only one array of the two; a ticket giving `sda`'s serial
-number.
+number; a ticket with the serial number alone (smartd's mail and `lsblk` give
+it, but the host also wants SMART's reallocated sectors).
 
 ### Chapter 2 — The new disk (done)
 
@@ -2239,8 +2242,8 @@ alone, "key not secure" (DNSSEC, harmless), the serial.
 
 | Step | Command learnt |
 |---|---|
-| Read the aggregate reports | `grep source_ip rapports_dmarc/*.xml`, `less` (the unaligned provider, a spoofer) |
-| Align the provider | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.`, the serial |
+| Read the aggregate reports | `grep source_ip dmarc_reports/*.xml`, `less` (the unaligned provider and its `<selector>`, a spoofer) |
+| Align the provider | `nm1._domainkey IN CNAME nm1.dkim.newsmail.example.` (the provider's page says `SELECTOR`: `nm1` comes from the reports), the serial |
 | Tighten | `_dmarc IN TXT "v=DMARC1; p=quarantine; rua=…"` |
 
 Goal checked on the state: the internet sees p=quarantine (or reject) with
@@ -2855,7 +2858,7 @@ solutions: `pg_dump -E UTF8`, or `iconv` and the `SET` line changed too.
 
 Goal checked on the state: the catalogue online and writing to greenhouse,
 the old database read-only or stopped, its data directory and the snapshot
-still there. Expected traps: restarting the catalogue without changing its
+still there, and a count query run on greenhouse. Expected traps: restarting the catalogue without changing its
 configuration (it still writes to the old box), erasing the old data or
 the snapshot.
 
@@ -4290,7 +4293,8 @@ Wednesday 5 June, 9:20. On Tuesday night the network team installed a VRRP
 pair of edge routers for the gateway (VRID 51, their vendor's default) and
 applied their nftables baseline to lb2, whose input chain drops VRRP. lb2
 no longer hears lb1: both hold the address, the gateway's ARP entry swings,
-every other donor's connection is reset.
+every other donor's connection is reset. Kirsi's message only gives the ARP
+flapping: both causes are found on the machines (journalctl, tcpdump, nft).
 
 | Step | Command learnt |
 |---|---|

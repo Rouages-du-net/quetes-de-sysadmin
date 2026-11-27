@@ -77,6 +77,11 @@ works-for-me-event-point-final =
     Zonennamen ergänzt. cafe.example (ohne Punkt) wird zu
     cafe.example.cafe.example.: dig @localhost www.cafe.example zeigt es.
     Für einen vollständigen Namen: cafe.example. mit dem Punkt.
+works-for-me-event-unchecked =
+    Beide autoritativen Server antworten jetzt mit der neuen Adresse. Aber
+    die Gäste des Cafés fragen sie nicht direkt: Ihre Rechner gehen über
+    einen Resolver, wie den in /etc/resolv.conf. Was antwortet er ihnen?
+    (dig cafe.example, ohne @)
 works-for-me-event-end =
     ns1 und ns2 geben dieselbe Antwort: cafe.example und www.cafe.example
     führen zum Server der Briefe. Die Resolver ziehen nach, spätestens wenn

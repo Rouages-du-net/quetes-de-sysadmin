@@ -67,6 +67,10 @@ concert-event-still-too =
     der Zahl der Adressen des Roboters, muss deutlich unter dem bleiben,
     was der Kalender ausliefern kann (etwa zwanzig Seiten pro Sekunde). Und
     gilt die Begrenzung wirklich für /agenda/?
+concert-event-who =
+    Der Kalender hält. Aber Kofi wollte wissen, wer was anfragt, und der
+    Verein wird wissen wollen, wer ihn überflutet hat: Schau ins
+    Zugriffsprotokoll (hilfe_logs.txt hat die Rezepte).
 concert-event-end =
     Alle menschlichen Besuche kommen durch, der Roboter wird gebremst, und
     der Kalender kann atmen. Kofi: „Die Uhrzeit wird angezeigt! Das

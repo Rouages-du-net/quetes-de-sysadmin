@@ -18,10 +18,10 @@ hint-tired-disk-removed =
     .lead = Each partition of sdb must leave its array: first declared faulty, then removed (man mdadm). There are two arrays.
     .solution = sudo mdadm --manage /dev/md0 --fail /dev/sdb2 --remove /dev/sdb2, then the same for /dev/sdb3 in /dev/md1.
 hint-tired-disk-ticket =
-    .lead = The host's procedure asks for a single piece of information about the disk: the one that never changes, even if the names sda and sdb do (man smartctl, or man lsblk).
-    .solution = sudo smartctl -i /dev/sdb (Serial Number), then nano ~/ticket.txt: a replacement request with that number, and not sda's.
+    .lead = The host's procedure asks for two things about the disk: the identifier that never changes, even if the names sda and sdb do, and the SMART attribute that shows it failing (man smartctl).
+    .solution = sudo smartctl -a /dev/sdb (Serial Number, and the raw value of Reallocated_Sector_Ct: 1208), then nano ~/ticket.txt: a replacement request with both, and not sda's number.
 hint-tired-disk-end =
-    .lead = You need everything at once: nothing left of sdb in the arrays, sda still active in both, and a ticket that only gives sdb's serial number.
+    .lead = You need everything at once: nothing left of sdb in the arrays, sda still active in both, and a ticket that gives sdb's serial number (not sda's) and its reallocated sectors.
     .solution = cat /proc/mdstat ([U_] for md0 and md1, without sdb) and cat ~/ticket.txt (sdb's number only).
 
 ## Chapter 2 — The new disk

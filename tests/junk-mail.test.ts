@@ -175,8 +175,9 @@ for (const language of languagesFor('junk-mail'))
       const CNAME = 'nm1._domainkey IN CNAME nm1.dkim.newsmail.example.';
       it('solution: read the reports, delegate nm1, switch to quarantine', () => {
         const { c, jouer: play, ecrire: write } = part(['postman', 'signature'], 'policy');
-        let all = play(['ls dmarc_reports', 'grep source_ip dmarc_reports/mailbox.example-2027-05-16.xml', 'dig TXT _dmarc.gardens.example +short']);
+        let all = play(['ls dmarc_reports', 'grep source_ip dmarc_reports/mailbox.example-2027-05-16.xml', 'grep -A1 newsmail dmarc_reports/post.example-2027-05-16.xml', 'dig TXT _dmarc.gardens.example +short']);
         expect(all).toContain('<source_ip>198.51.100.77</source_ip>');
+        expect(all).toContain('<selector>nm1</selector>');
         expect(all).toContain('"v=DMARC1; p=none; rua=mailto:dmarc@gardens.example"');
         if (fr) expect(all).toContain('alignement');
         if (fr) expect(all).toContain('se fait passer pour');
@@ -190,6 +191,17 @@ for (const language of languagesFor('junk-mail'))
         expect(all).toContain('"v=DMARC1; p=quarantine; rua=mailto:dmarc@gardens.example"');
         if (fr) expect(all).toContain('https://www.rfc-editor.org/rfc/rfc7489');
         expect(c.finished).toContain('policy');
+      });
+
+      it("false lead: the provider's page doesn't give the selector, only the reports do", () => {
+        const { c, jouer: play, ecrire: write } = part(['postman', 'signature'], 'policy');
+        const page = play([`cat ${L('newsmail_letter.txt')}`]);
+        expect(page).toContain('newsmail.example');
+        expect(page).not.toContain('nm1');
+        // The help page's line copied as it is: nothing is delegated.
+        write(ZONE, (t) => serial('2027051701', '2027052401')(t).replace('p=none', 'p=quarantine') + 'SELECTOR._domainkey IN CNAME SELECTOR.dkim.newsmail.example.\n');
+        play(['sudo rndc reload']);
+        expect(c.finished).not.toContain('policy');
       });
 
       it('false leads: quarantine too early, the provider\'s include, CNAME without a dot, two DMARC; reject accepted', () => {

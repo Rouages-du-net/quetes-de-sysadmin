@@ -102,5 +102,5 @@ hint-bottleneck-iowait =
     .lead = Zoé sagt, der Prozessor tue fast nichts. Schau auf die Zeile %Cpu(s) von top: Jede Spalte hat ihre Bedeutung (man top), und eine davon zählt die Zeit, die mit Warten auf die Platte verbracht wird.
     .solution = top („wa“ ist riesig: das ist iowait); dann iostat -x und sudo pidstat -d, um die ausgelastete Platte zu sehen und wer sie beschäftigt
 hint-bottleneck-end =
-    .lead = Die Archivierung (radio-archives) lastet die Platte aus, darf aber nicht gestoppt werden. ionice ist mit dem Scheduler „none“ nutzlos; eine von systemd gesetzte Bandbreitengrenze funktioniert immer (man systemd.resource-control: IOWriteBandwidthMax=), auf der richtigen Platte (iostat nennt sie), weder zu niedrig noch zu hoch.
+    .lead = Was die Platte auslastet (pidstat nennt seinen Prozess; systemctl list-timers sagt, was um 16 Uhr startet), darf nicht gestoppt werden. ionice ist mit dem Scheduler „none“ nutzlos; eine von systemd gesetzte Bandbreitengrenze funktioniert immer (man systemd.resource-control: IOWriteBandwidthMax=), auf der richtigen Platte (iostat nennt sie), weder zu niedrig noch zu hoch.
     .solution = sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 20M" (in /etc gespeichert), dann iostat -x zum Prüfen; wenn die Archivierung gestoppt ist: sudo systemctl start radio-archives

@@ -756,7 +756,20 @@ for (const language of LANGUAGES)
       it('another solution: an A record for www, and systemctl reload named', () => {
         const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
         modify(s, (t) => t.replace('2026091501', '2026091502').replaceAll('198.51.100.80', '203.0.113.10') + '\nwww 300 IN A 203.0.113.10');
-        s.execute('sudo systemctl reload named');
+        contains(s.execute('sudo systemctl reload named') ?? '', 'passent par un résolveur');
+        expect(s.finished).toBe(false);
+        contains(s.execute('host cafe.example 9.9.9.9') ?? '', 'les caches');
+        expect(s.finished).toBe(true);
+      });
+
+      it('false lead: the zone fixed, but the resolver (the TTL) never asked', () => {
+        const { s } = play('works-for-me', ['sudo id', 'ants-2026']);
+        modify(s, (t) => t.replace('2026091501', '2027032001').replace('198.51.100.80', '203.0.113.10') + '\nwww IN CNAME cafe.example.');
+        s.execute('sudo rndc reload');
+        s.execute('dig @localhost cafe.example');
+        s.execute('dig @ns2.registry.example www.cafe.example');
+        expect(s.finished).toBe(false);
+        s.execute('dig cafe.example');
         expect(s.finished).toBe(true);
       });
     });
@@ -802,7 +815,10 @@ for (const language of LANGUAGES)
         const { s } = play('concert', ['sudo id', 'ants-2026']);
         s.execute("echo 'limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;' | sudo tee /etc/nginx/conf.d/limits.conf");
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
-        s.execute('sudo systemctl reload nginx');
+        // False lead: a tutorial's limit, without ever reading the log.
+        contains(s.execute('sudo systemctl reload nginx') ?? '', 'qui demande quoi');
+        expect(s.finished).toBe(false);
+        s.execute("sudo cut -d ' ' -f 1 /var/log/nginx/access.log | sort | uniq -c");
         expect(s.finished).toBe(true);
       });
     });
@@ -1555,6 +1571,12 @@ for (const language of LANGUAGES)
         expect(s.execute('sudo lsof -p 1730')).toContain('/var/log/radio/stream.log.1');
         expect(s.finished).toBe(false);
       });
+
+      it("false lead: Zoé's message doesn't name the culprit, du has to find it", () => {
+        const { tout: all } = play('full-disk', ['cat message_from_zoe.txt']);
+        expect(all).not.toContain('radio-stream');
+        expect(all).not.toContain('stream.log');
+      });
     });
 
     describe("On-call, chapter 2 — Memory (OOM killer, MemoryMax=, Restart=, zombies)", () => {
@@ -1873,6 +1895,12 @@ for (const language of LANGUAGES)
         s.execute('sudo systemctl set-property radio-archives "IOWriteBandwidthMax=/dev/vda 25M"');
         s.execute('sudo systemctl start radio-archives');
         expect(s.finished).toBe(true);
+      });
+
+      it("false lead: Zoé's message doesn't name the archiving, pidstat has to find it", () => {
+        const { tout: all } = play('bottleneck', ['cat message_from_zoe.txt', 'systemctl list-timers']);
+        expect(all.split('radio-archives.timer')[0]).not.toContain('radio-archives');
+        expect(all).toContain('radio-archives.service');
       });
     });
 
