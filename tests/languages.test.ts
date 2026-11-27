@@ -1,6 +1,7 @@
 // The languages of the game and of the site: complete or draft
-// (src/texts/languages.json). A draft is built but not offered (the root's
-// redirection, the pages' language links), and plays a story it doesn't
+// (src/texts/languages.json). A draft is built, linked from the other pages
+// with a "beta" label, but not offered by the root's redirection nor
+// hreflang, and plays a story it doesn't
 // translate yet with that story's English world, while the commands answer
 // in the language.
 import { describe, expect, it } from 'vitest';
@@ -32,11 +33,12 @@ describe('Languages', () => {
     expect(rules.sort()).toEqual(COMPLETE_LANGUAGES.filter((l) => l !== 'en').sort());
   });
 
-  it('each page exists in every language of the site, and links only to complete languages', () => {
+  it('each page exists in every language of the site, and links to the others, drafts marked beta', () => {
     for (const page of [PAGES.home, PAGES.teachers, PAGES.classTable, PAGES.sheet('eraser')])
       for (const l of SITE_LANGUAGES) expect(page[l as keyof typeof page], `${l}`).toMatch(new RegExp(`^/${l}/`));
-    for (const l of SITE_LANGUAGES) expect(offered(l, PAGES.home).every((o) => isComplete(o.lang))).toBe(true);
-    for (const l of drafts) expect(offered('en', PAGES.home).map((o) => o.lang)).not.toContain(l);
+    // The header links to every other language; a draft is marked beta (and gets no hreflang, see Base.astro).
+    for (const l of SITE_LANGUAGES) expect(offered(l, PAGES.home).every((o) => o.beta === !isComplete(o.lang))).toBe(true);
+    for (const l of drafts) expect(offered('en', PAGES.home).find((o) => o.lang === l)?.beta).toBe(true);
     // The pages of a language are where PAGES says (src/pages/<language>/).
     for (const l of SITE_LANGUAGES) expect(readdirSync(`src/pages/${l}`)).toEqual(expect.arrayContaining(['index.astro', 'feed.xml.ts', 'manifest.webmanifest.ts']));
   });
