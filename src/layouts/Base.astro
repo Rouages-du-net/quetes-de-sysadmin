@@ -10,6 +10,7 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
 import '../styles/site.css';
 import { isComplete, offered, type Alternates } from '../site-languages';
+import { SITE_COUNTER } from '../stats';
 
 interface Props {
   title: string;
@@ -101,6 +102,11 @@ const TEXTS = {
   },
 };
 const T = TEXTS[lang as keyof typeof TEXTS] ?? TEXTS.en;
+// The footer's privacy sentence: with the visit statistics when the build
+// counts them (src/stats.ts, PUBLIC_UMAMI_*), and the page listing what
+// they send.
+const counted = SITE_COUNTER !== null;
+const STATISTICS = 'https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/docs/DEPLOYMENT.md#statistics';
 const home = `/${lang}/`;
 const feed = { href: `/${lang}/feed.xml`, title: T.feedTitle, label: T.feedLabel };
 const install = T.install;
@@ -164,7 +170,8 @@ const install = T.install;
       Code sous licence <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
       textes sous <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr">CC BY-SA 4.0</a>.
       <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Code source</a> ·
-      un projet de <a href="https://rouages.net">Les rouages du net</a>. Sans pisteur ni publicité.
+      un projet de <a href="https://rouages.net">Les rouages du net</a>.
+      {counted ? <>Sans publicité ni cookie : des <a href={STATISTICS} hreflang="en">statistiques de visite anonymes</a> sur notre propre serveur (Umami), coupées si ton navigateur demande à ne pas être suivi (Do Not Track, GPC) et en mode examen.</> : 'Sans publicité, sans cookie, sans statistiques de visite.'}
     </p>
     </>
     ) : lang === 'es' ? (
@@ -180,7 +187,8 @@ const install = T.install;
       Código bajo licencia <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
       textos bajo <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es">CC BY-SA 4.0</a>.
       <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Código fuente</a> ·
-      un proyecto de <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. Sin rastreadores ni publicidad.
+      un proyecto de <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>.
+      {counted ? <>Sin publicidad ni cookies: <a href={STATISTICS} hreflang="en">estadísticas de visita anónimas</a> en nuestro propio servidor (Umami), desactivadas si tu navegador pide no ser rastreado (Do Not Track, GPC) y en el modo examen.</> : 'Sin publicidad, sin cookies, sin estadísticas de visita.'}
     </p>
     </>
     ) : lang === 'de' ? (
@@ -196,7 +204,8 @@ const install = T.install;
       Code unter der Lizenz <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
       Texte unter <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.de">CC BY-SA 4.0</a>.
       <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Quellcode</a> ·
-      ein Projekt von <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. Ohne Tracker und ohne Werbung.
+      ein Projekt von <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>.
+      {counted ? <>Ohne Werbung und ohne Cookies: <a href={STATISTICS} hreflang="en">anonyme Besuchsstatistiken</a> auf unserem eigenen Server (Umami), abgeschaltet, wenn dein Browser darum bittet, nicht verfolgt zu werden (Do Not Track, GPC), und im Prüfungsmodus.</> : 'Ohne Werbung, ohne Cookies, ohne Besuchsstatistiken.'}
     </p>
     </>
     ) : (
@@ -211,7 +220,8 @@ const install = T.install;
           Code under the <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin/blob/main/LICENSE">GPL v3</a>,
           texts under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
           <a href="https://github.com/Rouages-du-net/quetes-de-sysadmin">Source code</a> ·
-          a project by <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>. No trackers, no ads.
+          a project by <a href="https://rouages.net" hreflang="fr">Les rouages du net</a>.
+          {counted ? <>No ads, no cookies: <a href={STATISTICS}>anonymous visit statistics</a> on our own server (Umami), off when your browser asks not to be tracked (Do Not Track, GPC) and in exam mode.</> : 'No ads, no cookies, no visit statistics.'}
         </p>
       </>
     )}

@@ -1,6 +1,8 @@
 // Check in Chromium: the standalone page and the game embedded in another
 // page, at 1000 and 375 px wide, with no console error or overflow,
 // no third-party resource, under the security policy (CSP) of public/.htaccess.
+// The build checked is made without a statistics server (src/stats.ts): no
+// request may leave for one, nor for anywhere else.
 // Run after "npm run build":
 //   npm run preview &   then   npm run test:browser
 // CHROMIUM variable: path to the browser (by default the development
@@ -53,8 +55,10 @@ browser.newContext = async (options = {}) => {
 browser.newPage = async (options = {}) => settled(await newPage({ serviceWorkers: 'block', ...options }));
 
 // The preview server doesn't read .htaccess: we add ourselves the CSP
-// header Apache will send, so that a violation fails the test.
-const CSP = readFileSync('public/.htaccess', 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
+// header Apache will send, so that a violation fails the test: the built
+// one (dist/.htaccess, where the build adds a statistics server, see
+// src/stats-build.ts), otherwise public/'s.
+const CSP = readFileSync(existsSync('dist/.htaccess') ? 'dist/.htaccess' : 'public/.htaccess', 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
 // Every page gets the site's CSP; the intro tour (a first visit's bubbles) is
 // marked as seen, except where the test is about it (tour: true).
 const withCsp = async (page, { tour = false } = {}) => {

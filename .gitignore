@@ -4,3 +4,4 @@ dist/
 test-results/
 .astro/
 !public/icons/*.png
+.env

@@ -142,7 +142,10 @@ ce projet indépendant.
   les bienvenus), contraste, mouvements réduits, couleurs
   forcées, mobile ; détails en anglais dans
   [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
-- **Sans pisteur**, sans publicité, sans ressource tierce.
+- **Sans publicité, sans cookie, sans ressource tierce** ; des statistiques
+  de visite anonymes sur le propre serveur du projet (Umami), coupées avec
+  Do Not Track, Global Privacy Control et en mode examen : ce qui est compté
+  est listé dans [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#statistics).
 - **En anglais d'abord**, et en français (page `/fr/`, attribut
   `lang="fr"`) ; l'espagnol (`/es/`) et l'allemand (`/de/`) sont des
   traductions en cours, et d'autres langues viendront (mandarin, coréen…) :

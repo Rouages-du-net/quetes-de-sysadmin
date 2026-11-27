@@ -10,11 +10,14 @@
 // the element's `exam` property and its `exam-change` event). The method
 // openFeedback() opens "Report a problem or an idea" (the site's footer uses it). The older
 // French names still work: histoire, cle, theme="clair" | "sombre", langue.
+// stats="off": no visit statistics from this page (src/stats.ts; they are
+// off anyway when the game was built without a statistics server).
 // The game lives in a shadow root (Shadow DOM): its styles do not spill
 // onto the page, and the page's styles do not break it. Colours are set
 // from outside with the --qds-* variables (see styles.css).
 
 import type { mount } from './interface/game';
+import { elementCounter, send } from './stats';
 
 // The stories' French ids, from before they were English: a page that
 // still uses them opens the same story.
@@ -92,10 +95,17 @@ export class SysadminQuests extends HTMLElement {
     Promise.all([import('./interface/game'), texts]).then(([{ mount }]) => {
       frame.remove();
       this.removeAttribute('aria-busy');
+      // Statistics (src/stats.ts): on the site's pages, the site's counter
+      // (its pages count their own views, src/pwa/visit.ts); embedded in
+      // another site, the embeds' counter, with one view for the game's
+      // load, unless the page says stats="off". Never in exam mode.
+      const counter = elementCounter(__QDS_EMBED__, this.getAttribute('stats'));
+      const track = counter ? (name: string, data: Record<string, string>) => void (this.exam || send(counter, name, data)) : undefined;
       this.game = mount(root, {
         story,
         saveKey,
         language,
+        track,
         examOutside: this.getAttribute('exam-control') === 'page',
         onExam: (exam) => this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam }, bubbles: true })),
       });
@@ -103,6 +113,7 @@ export class SysadminQuests extends HTMLElement {
       if (this.game.exam()) this.dispatchEvent(new CustomEvent('exam-change', { detail: { exam: true }, bubbles: true }));
       if (this.wantedExam !== undefined) this.game.askExam(this.wantedExam);
       if (this.wantedFeedback) this.game.openFeedback();
+      if (__QDS_EMBED__ && counter && !this.exam) send(counter, undefined, { language: this.game.language });
     });
   }
 }
