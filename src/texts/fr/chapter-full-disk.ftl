@@ -15,9 +15,8 @@ full-disk-message-zoe =
     device ». Le serveur dit que son disque est plein, mais je ne vois pas
     ce qui a pu le remplir, on n'a rien ajouté ces jours-ci.
 
-    J'avais juste un peu bidouillé le relais du flux (le service
-    radio-stream) la semaine dernière, pour comprendre des coupures. Il
-    faudrait que ça reparte, et que ça ne se reproduise pas.
+    Il faudrait que les prochaines émissions s'enregistrent, et que ça
+    ne se reproduise pas.
 
     Pour sudo : antenne-2027. »
 full-disk-conf-stream =

@@ -1555,6 +1555,12 @@ for (const language of LANGUAGES)
         expect(s.execute('sudo lsof -p 1730')).toContain('/var/log/radio/stream.log.1');
         expect(s.finished).toBe(false);
       });
+
+      it("false lead: Zoé's message doesn't name the culprit, du has to find it", () => {
+        const { tout: all } = play('full-disk', ['cat message_from_zoe.txt']);
+        expect(all).not.toContain('radio-stream');
+        expect(all).not.toContain('stream.log');
+      });
     });
 
     describe("On-call, chapter 2 — Memory (OOM killer, MemoryMax=, Restart=, zombies)", () => {
