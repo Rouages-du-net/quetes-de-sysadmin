@@ -24,23 +24,29 @@ stale-password-email-nandini =
     He swears he types the right password, only on his PC at the
     Central desk, and he hasn't written the old one anywhere.
 
-    Could you find out what's going on? I exported the vault entry
-    Tomas told me you'd need: Documents\vault-svc_scans.txt. Delete it
-    when you're done.
+    Could you find out what's going on? Tomas said the service accounts'
+    passwords might help, so I exported their vault entries:
+    Documents\vault-service-accounts.txt. Delete it when you're done.
 
     Nandini
 
-# { $password }: the account's password (not translated).
+# { $scans }, { $backup }: the accounts' passwords (not translated).
 stale-password-vault =
-    Password manager - one entry, exported by Nandini (9 January 2030)
+    Password manager - folder "Service accounts", exported by Nandini (9 January 2030)
+
+    Title:     LENDING - svc_backup
+    Username:  LENDING\svc_backup
+    Password:  { $backup }
+    Modified:  15 March 2029 (Tomas)
+    Notes:     Service account. OU=Service Accounts, password never
+               expires.
 
     Title:     LENDING - svc_scans
     Username:  LENDING\svc_scans
-    Password:  { $password }
+    Password:  { $scans }
     Modified:  12 December 2029 (Tomas)
-    Notes:     Service account for the scan import on stacks
-               (replaces Rafael's account in the task). OU=Service
-               Accounts, password never expires.
+    Notes:     Service account. OU=Service Accounts, password never
+               expires.
 
 ## Time passing
 
@@ -101,6 +107,12 @@ stale-password-event-person =
     controller's administrator's). The next time that person changes a
     password, or leaves, the import breaks, or locks them out. A job has
     its own service account: svc_scans, its password in the vault.
+stale-password-event-read-only =
+    The import runs as svc_backup now: a service account, but the
+    offsite copy's, and it can only read Archives (DL_Archives_RO). The
+    scans would stay in D:\Scans. Which account was made for the
+    import? Its description says it (Get-ADUser -Properties
+    Description).
 stale-password-event-task-off =
     The scan import doesn't run any more: Rafael won't be locked, but the
     archive scanner's PDFs pile up in D:\Scans and never reach Archives.

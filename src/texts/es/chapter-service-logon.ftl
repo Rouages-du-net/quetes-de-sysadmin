@@ -19,31 +19,40 @@ service-logon-email-mariam =
     http://pentagrama.internal:8080, y las familias no pueden reservar sus
     clases de prueba.
 
-    El viernes, su último día, Gabriel cambió la contraseña de la cuenta de
-    la Agenda, svc_agenda: la auditoría de seguridad de nuestra
-    aseguradora nos pide cambiar las contraseñas de los servicios cada
-    año. Guardó la nueva en el gestor de contraseñas. El servidor se
-    reinició el domingo por la noche por Windows Update.
-
-    Te he exportado la entrada del gestor de contraseñas, en
-    Documents\caja-fuerte-svc_agenda.txt. Por favor, borra ese archivo
-    cuando termines.
+    El servidor se reinició el domingo por la noche por Windows Update.
+    Gabriel, que se ocupaba de él, se fue el viernes; por si acaso, te he
+    exportado las entradas del servidor del gestor de contraseñas, en
+    Documents\caja-fuerte-cuentas-servicio.txt. Por favor, borra ese
+    archivo cuando termines.
 
     ¿Podrías volver a poner en marcha la Agenda, sin romper nada más?
 
     Mariam
 
-# { $password }: la nueva contraseña de la cuenta (no se traduce).
+# { $agenda }, { $backup }, { $admin }: las contraseñas (no se traducen).
 service-logon-vault =
-    Gestor de contraseñas - una entrada, exportada por Mariam (10 de
-    diciembre de 2029)
+    Gestor de contraseñas - carpeta «pentagrama», exportada por Mariam
+    (10 de diciembre de 2029)
+
+    Título:     pentagrama - svc_backup
+    Usuario:    svc_backup
+    Contraseña: { $backup }
+    Modificada: 3 de junio de 2029 (Gabriel)
+    Notas:      Cuenta local. Se cambia cada año (auditoría de la
+                aseguradora, punto 4.2).
 
     Título:     pentagrama - svc_agenda
     Usuario:    svc_agenda
-    Contraseña: { $password }
+    Contraseña: { $agenda }
     Modificada: 7 de diciembre de 2029, 16:42 (Gabriel)
-    Notas:      Cuenta local del servicio Agenda en pentagrama.
-                Se cambia cada año (auditoría de la aseguradora, punto 4.2).
+    Notas:      Cuenta local. Se cambia cada año (auditoría de la
+                aseguradora, punto 4.2).
+
+    Título:     Agenda - admin web
+    Usuario:    admin
+    Contraseña: { $admin }
+    Modificada: 2 de septiembre de 2029 (Gabriel)
+    Notas:      http://pentagrama.internal:8080/admin
 
 ## Events
 
@@ -64,14 +73,23 @@ service-logon-event-events =
     (Get-CimInstance Win32_Service, o sc.exe qc)
 service-logon-event-account =
     StartName: .\svc_agenda, la cuenta local (el punto significa este
-    equipo). Windows guarda la contraseña de esa cuenta con el servicio, y
-    nadie le dio la nueva: Gabriel cambió la contraseña de la cuenta, no la
-    copia del servicio. El servicio siguió funcionando hasta el reinicio
-    del domingo, y entonces probó la antigua.
+    equipo). Windows guarda la contraseña de esa cuenta con el servicio:
+    si alguien cambió la contraseña de la cuenta, la copia del servicio no
+    la siguió. ¿Cuándo se estableció por última vez? (Get-LocalUser,
+    PasswordLastSet)
 service-logon-event-rotated =
-    PasswordLastSet: el viernes, 16:42. Es el cambio de Gabriel; el
-    arranque siguiente, el del domingo, falló. La nueva contraseña está en
-    la entrada del gestor de contraseñas que exportó Mariam.
+    PasswordLastSet: el viernes, 16:42, el último día de Gabriel (la
+    auditoría de la aseguradora pide contraseñas de servicio nuevas cada
+    año). El servicio siguió funcionando con su sesión hasta el reinicio
+    del domingo, y entonces probó la antigua. La nueva está en las
+    entradas que exportó Mariam: la de la cuenta con la que inicia sesión
+    el servicio.
+service-logon-event-other-account =
+    La Agenda inicia sesión ahora como { $account }: una cuenta hecha para
+    otro trabajo, con derechos que la aplicación de reservas no necesita
+    (svc_backup es Backup Operator: puede leer todos los archivos del
+    servidor). La Agenda tiene su propia cuenta, la que daba su StartName:
+    svc_agenda.
 service-logon-event-sc-alias =
     En PowerShell, sc no es sc.exe: es un alias de Set-Content, que escribe
     en archivos, y no sabe qué hacer con obj=. Escribe sc.exe completo (en

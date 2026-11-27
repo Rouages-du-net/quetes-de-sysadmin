@@ -57,8 +57,8 @@ eradication-event-key-all =
     intruder's key had to go: compare the fingerprints (ssh-keygen -lf)
     with the one in her email.
 eradication-event-key =
-    The intruder's key is removed, Selma's is kept. The comment
-    (deploy@ci-runner) looked legitimate: only the fingerprint told them apart.
+    The intruder's key is removed, Selma's is kept. Both said selma@studio: a
+    comment is free text, only the fingerprint told them apart.
 eradication-event-files =
     The miner and its watchdog are gone from /tmp/.cache.
 eradication-event-bad-signature =
@@ -70,6 +70,10 @@ eradication-event-verified =
     published. You can restore from it.
 eradication-event-restored =
     server.js is identical to the release again: the added line is gone.
+eradication-event-unverified =
+    server.js looks like the release again, but nothing proves it: the
+    intruder may have changed more than one line. Check the signature of
+    Selma's release (gpg --verify) before trusting it.
 eradication-event-relaunched =
     The app has started again, and with it the watchdog and the miner:
     server.js still relaunches them, and its script is still there. Stop

@@ -38,9 +38,8 @@ lost-packet-notebook =
 
     Les commandes réseau répondent en anglais, comme sur un vrai système :
     « packet loss » = paquets perdus, « timed out » = délai dépassé.
-# Commentaires des fichiers /etc/resolv.conf et /etc/resolv.conf.box (après « # »)
+# Commentaire du fichier /etc/resolv.conf (après « # »)
 lost-packet-resolv-comment = Écrit lors de l'installation, avec l'ancienne box
-lost-packet-resolv-box-comment = Réglage conseillé par la nouvelle box
 
 ## La page du site, renvoyée par curl (HTML)
 
@@ -74,9 +73,11 @@ lost-packet-event-dns-other =
     Le nom existe, c'est le réglage de l'ordinateur qui est faux : il interroge
     192.168.1.250, l'adresse de l'ANCIENNE box, qui n'existe plus.
 
-    Le bon réglage est dans /etc/resolv.conf.box. Ce fichier appartient à root :
-    sudo cp /etc/resolv.conf.box /etc/resolv.conf
-lost-packet-event-dns-repaired = Le DNS est réparé : l'ordinateur interroge maintenant la nouvelle box. Réessaie :  ping letters.example
+    La nouvelle box (192.168.1.1) répond-elle aussi au DNS ? Demande-lui :
+    dig @192.168.1.1 letters.example
+    Puis mets un serveur DNS qui répond sur la ligne « nameserver ». Le
+    fichier appartient à root :  sudo nano /etc/resolv.conf
+lost-packet-event-dns-repaired = Le DNS est réparé : l'ordinateur interroge maintenant un serveur qui répond. Réessaie :  ping letters.example
 lost-packet-event-ping-lost =
     Le nom est traduit ({ $ip })… mais 100 % des paquets sont perdus !
     Le site serait-il en panne ? Ou les paquets se perdent-ils en route ?

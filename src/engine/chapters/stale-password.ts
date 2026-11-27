@@ -25,13 +25,14 @@
 // Objective checked on the state: rsilva isn't locked out half an hour
 // after the unlock; no task on stacks holds a wrong password for rsilva;
 // the scan import runs (Ready) under a service account (OU=Service
-// Accounts) whose stored password works and who isn't an administrator;
+// Accounts) whose stored password works, who can write Archives and isn't an
+// administrator;
 // the domain's lockout policy is unchanged (5 attempts, 30 minutes).
 // False leads: only unlocking (it locks again), raising the threshold or
 // disabling the lockout, resetting Rafael's password (it doesn't unlock,
 // and the task still has the older one), the task as SYSTEM, under
-// another person's account or the player's, or simply disabled (the scans
-// stop arriving).
+// another person's account or the player's, under svc_backup (read-only on
+// Archives), or simply disabled (the scans stop arriving).
 // Sources: https://learn.microsoft.com/troubleshoot/windows-server/windows-security/account-lockout-event-id-4740,
 // https://learn.microsoft.com/windows/security/threat-protection/auditing/event-4740,
 // https://learn.microsoft.com/windows/security/threat-protection/auditing/event-4625,
@@ -45,7 +46,7 @@ import { windows } from '../windows';
 import { allGroups, findAccount, lockedOut, type AdObject } from '../windows-ad';
 import { tasks, type WinTask } from '../windows-tasks';
 import { cmdletNamed } from '../commands/powershell';
-import { HOME, RAFAEL_NEW, SCANS_PASSWORD, ad, now, object, ou, passMinutes, ran, register, said, stacks, stacksHost, stacksName } from './card-catalogue';
+import { BACKUP_PASSWORD, HOME, RAFAEL_NEW, SCANS_PASSWORD, ad, now, object, ou, passMinutes, ran, register, said, stacks, stacksHost, stacksName } from './card-catalogue';
 
 // Wednesday 9 January 2030, 9:05.
 export const NOW = Date.UTC(2030, 0, 9, 9, 5, 0);
@@ -63,7 +64,7 @@ const machine = register({
   ...options,
   home: (t) => ({
     'email_nandini.txt': text(t('stale-password-email-nandini'), NOW - 15 * MIN),
-    Documents: { type: 'directory', children: { 'vault-svc_scans.txt': text(t('stale-password-vault', { password: SCANS_PASSWORD }), NOW - 10 * MIN) } },
+    Documents: { type: 'directory', children: { 'vault-service-accounts.txt': text(t('stale-password-vault', { scans: SCANS_PASSWORD, backup: BACKUP_PASSWORD }), NOW - 10 * MIN) } },
   }),
 });
 
@@ -87,7 +88,9 @@ const serviceAccount = (j: Game, t: WinTask) => {
   const o = taskAccount(j, t);
   return !!o && o.dn.toLowerCase().endsWith(`,${ou('Service Accounts').toLowerCase()}`) && !!o.enabled && t.logon === 'Password' && t.password === ad(j).passwords[o.guid] && !isAdmin(j, o);
 };
-const importRuns = (j: Game) => imports(j).some((t) => t.state === 'Ready' && serviceAccount(j, t));
+/** The import moves scans into Archives: its account must be able to write there. */
+const writesArchives = (j: Game, t: WinTask) => allGroups(ad(j), taskAccount(j, t)!).some((g) => g.name.toLowerCase() === 'dl_archives_rw');
+const importRuns = (j: Game) => imports(j).some((t) => t.state === 'Ready' && serviceAccount(j, t) && writesArchives(j, t));
 const fixed = (j: Game) => !stale(j) && importRuns(j);
 const policyKept = (j: Game) => {
   const p = ad(j).policy;
@@ -183,9 +186,14 @@ export const stalePassword: Chapter = {
       condition: (j) => imports(j).some((t) => t.state === 'Ready' && !!taskAccount(j, t) && taskAccount(j, t) !== rafael(j) && !serviceAccount(j, t)),
       message: (j) => j.t('stale-password-event-person'),
     },
+    {
+      id: 'read-only',
+      condition: (j) => imports(j).some((t) => t.state === 'Ready' && serviceAccount(j, t) && !writesArchives(j, t)),
+      message: (j) => j.t('stale-password-event-read-only'),
+    },
     { id: 'task-off', condition: (j) => !imports(j).some((t) => t.state === 'Ready'), message: (j) => j.t('stale-password-event-task-off') },
     { id: 'fixed', condition: fixed, message: (j) => j.t(locked(j) ? 'stale-password-event-fixed' : 'stale-password-event-fixed-unlocked') },
-    { id: 'vault-deleted', condition: (j) => !j.find(`/C/Users/${j.player}/Documents/${name(j.t, 'vault-svc_scans.txt')}`), message: (j) => j.t('stale-password-event-vault-deleted') },
+    { id: 'vault-deleted', condition: (j) => !j.find(`/C/Users/${j.player}/Documents/${name(j.t, 'vault-service-accounts.txt')}`), message: (j) => j.t('stale-password-event-vault-deleted') },
     { id: 'end', condition: (j) => fixed(j) && !locked(j) && !j.state.rafaelLocked && policyKept(j), message: (j) => j.t('stale-password-event-end') },
   ],
 };

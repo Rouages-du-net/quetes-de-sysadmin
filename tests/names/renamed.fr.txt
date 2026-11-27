@@ -160,6 +160,7 @@ archives
   /home/you/collection → /home/vous/fonds
   /home/you/collection/readme.txt → /home/vous/fonds/lisezmoi.txt
   /home/you/collection/manuscripts → /home/vous/fonds/manuscrits
+  /home/you/collection/manuscripts/.autosave.tmp → /home/vous/fonds/manuscrits/.autosauvegarde.tmp
   /home/you/collection/manuscripts/marie_diary.txt → /home/vous/fonds/manuscrits/journal_de_marie.txt
   /home/you/collection/manuscripts/letters_1914.txt → /home/vous/fonds/manuscrits/lettres_1914.txt
   /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/vous/fonds/manuscrits/recettes_du_quartier.txt
@@ -167,14 +168,23 @@ archives
   /home/you/collection/maps/map_1890.png → /home/vous/fonds/cartes/plan_1890.png
   /home/you/collection/maps/map_1954.png → /home/vous/fonds/cartes/plan_1954.png
   /home/you/collection/maps/render.tmp → /home/vous/fonds/cartes/rendu.tmp
+  /home/you/collection/maps/scans → /home/vous/fonds/cartes/numerisations
+  /home/you/collection/maps/scans/scan_batch_2 → /home/vous/fonds/cartes/numerisations/lot_2
+  /home/you/collection/maps/scans/scan_batch_2/page_07.tmp → /home/vous/fonds/cartes/numerisations/lot_2/page_07.tmp
+  /home/you/collection/maps/scans/scan_batch_2/.cache → /home/vous/fonds/cartes/numerisations/lot_2/.cache
+  /home/you/collection/maps/scans/scan_batch_2/.cache/thumb_07.tmp → /home/vous/fonds/cartes/numerisations/lot_2/.cache/vignette_07.tmp
   /home/you/collection/press → /home/vous/fonds/presse
   /home/you/collection/press/gazette_1936.pdf → /home/vous/fonds/presse/gazette_1936.pdf
   /home/you/collection/press/gazette_1968.pdf → /home/vous/fonds/presse/gazette_1968.pdf
   /home/you/collection/press/export.tmp → /home/vous/fonds/presse/export.tmp
+  /home/you/collection/press/.drafts → /home/vous/fonds/presse/.brouillons
+  /home/you/collection/press/.drafts/export_old.tmp → /home/vous/fonds/presse/.brouillons/export_ancien.tmp
   /home/you/collection/recordings → /home/vous/fonds/enregistrements
   /home/you/collection/recordings/market_songs.ogg → /home/vous/fonds/enregistrements/chants_du_marche.ogg
   /home/you/collection/recordings/interview_fatou.ogg → /home/vous/fonds/enregistrements/entretien_fatou.ogg
   /home/you/collection/recordings/raw.tmp → /home/vous/fonds/enregistrements/brut.tmp
+  /home/you/collection/recordings/studio_sessions → /home/vous/fonds/enregistrements/seances_studio
+  /home/you/collection/recordings/studio_sessions/take_03.tmp → /home/vous/fonds/enregistrements/seances_studio/prise_03.tmp
   /media/usb → /media/cle
 
 versions
@@ -1093,7 +1103,7 @@ two-locks
 
 service-logon
   /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
-  /C/Users/vous/Documents/vault-svc_agenda.txt → /C/Users/vous/Documents/coffre-svc_agenda.txt
+  /C/Users/vous/Documents/vault-service-accounts.txt → /C/Users/vous/Documents/coffre-comptes-service.txt
   /C/Users/vous/email_mariam.txt → /C/Users/vous/courriel_mariam.txt
 
 log-flood
@@ -1113,7 +1123,7 @@ comings-and-goings
 
 stale-password
   /C/Users/vous/Documents/handover.txt → /C/Users/vous/Documents/passation.txt
-  /C/Users/vous/Documents/vault-svc_scans.txt → /C/Users/vous/Documents/coffre-svc_scans.txt
+  /C/Users/vous/Documents/vault-service-accounts.txt → /C/Users/vous/Documents/coffre-comptes-service.txt
   /C/Users/vous/email_nandini.txt → /C/Users/vous/courriel_nandini.txt
 
 unapplied-policy

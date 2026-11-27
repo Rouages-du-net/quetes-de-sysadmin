@@ -101,10 +101,10 @@ hint-deep-end-leak =
     .lead = Laissez un peu de temps à la 2.4.0, et observez sa mémoire et ce qu'elle écrit dans son journal.
     .solution = kubectl top pod -n swim (deux fois, à une minute d'écart), kubectl logs deploy/booking -n swim --tail=5
 hint-deep-end-rolled-back =
-    .lead = Revenez à la version qui a tenu au dernier meeting, la 2.3.1 : dans le fichier (et kubectl rollout undo peut le faire tout de suite, vers la bonne révision).
+    .lead = Revenez à la version qui a tenu au dernier meeting (l'historique du Deployment dit laquelle) : dans le fichier (et kubectl rollout undo peut le faire tout de suite, vers la bonne révision).
     .solution = kubectl rollout undo deployment/booking -n swim --to-revision=N, ou nano ~/manifests/booking.yaml (image …:2.3.1) et kubectl apply -f ~/manifests/
 hint-deep-end-limit-raised =
-    .lead = Mettez la limite de mémoire au-dessus du pic mesuré par Rui (son mot), avec une marge, mais loin de tout le nœud.
+    .lead = Mettez la limite de mémoire au-dessus du pic que vous mesurez sous la charge du meeting (kubectl top pod, plus d'une fois : ça bouge), avec une marge, mais loin de tout le nœud.
     .solution = nano ~/manifests/booking.yaml (limits: memory: 320Mi), puis kubectl apply -f ~/manifests/
 hint-deep-end-requests =
     .lead = Mettez les requests de mémoire à ce que l'appli utilise d'habitude sous charge (kubectl top pod), sous la limite.

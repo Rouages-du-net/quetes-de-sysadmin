@@ -38,9 +38,8 @@ lost-packet-notebook =
 
     Network commands answer in English, as on a real system:
     "packet loss" = lost packets, "timed out" = no answer in time.
-# Comments in the files /etc/resolv.conf and /etc/resolv.conf.box (after "#")
+# Comment in the file /etc/resolv.conf (after "#")
 lost-packet-resolv-comment = Written at installation time, with the old router
-lost-packet-resolv-box-comment = Setting recommended by the new router
 
 ## The website's page, returned by curl (HTML)
 
@@ -75,9 +74,11 @@ lost-packet-event-dns-other =
     The name exists; it's the computer's setting that is wrong: it asks
     192.168.1.250, the address of the OLD router, which no longer exists.
 
-    The right setting is in /etc/resolv.conf.box. This file belongs to root:
-    sudo cp /etc/resolv.conf.box /etc/resolv.conf
-lost-packet-event-dns-repaired = DNS is fixed: the computer now asks the new router. Try again:  ping letters.example
+    Does the new router (192.168.1.1) answer DNS too? Ask it:
+    dig @192.168.1.1 letters.example
+    Then put a DNS server that answers on the "nameserver" line. The file
+    belongs to root:  sudo nano /etc/resolv.conf
+lost-packet-event-dns-repaired = DNS is fixed: the computer now asks a server that answers. Try again:  ping letters.example
 lost-packet-event-ping-lost =
     The name is translated ({ $ip })… but 100% of the packets are lost!
     Is the website down? Or are the packets getting lost on the way?

@@ -102,10 +102,10 @@ hint-deep-end-leak =
     .lead = Gib 2.4.0 ein wenig Zeit, und beobachte ihren Speicher und was sie loggt.
     .solution = kubectl top pod -n swim (zweimal, eine Minute auseinander), kubectl logs deploy/booking -n swim --tail=5
 hint-deep-end-rolled-back =
-    .lead = Geh zurück zu dem Release, das den letzten Wettkampf gehalten hat, 2.3.1: in der Datei (und kubectl rollout undo kann es sofort tun, zur richtigen Revision).
+    .lead = Geh zurück zu dem Release, das den letzten Wettkampf gehalten hat (die Historie des Deployments sagt, welches): in der Datei (und kubectl rollout undo kann es sofort tun, zur richtigen Revision).
     .solution = kubectl rollout undo deployment/booking -n swim --to-revision=N, oder nano ~/manifests/booking.yaml (image …:2.3.1) und kubectl apply -f ~/manifests/
 hint-deep-end-limit-raised =
-    .lead = Setze das Speicherlimit über die Spitze, die Rui gemessen hat (seine Notiz), mit Spielraum, aber bei weitem nicht den ganzen Node.
+    .lead = Setze das Speicherlimit über die Spitze, die du unter der Last des Wettkampfs misst (kubectl top pod, mehr als einmal: es ändert sich), mit Spielraum, aber bei weitem nicht den ganzen Node.
     .solution = nano ~/manifests/booking.yaml (limits: memory: 320Mi), dann kubectl apply -f ~/manifests/
 hint-deep-end-requests =
     .lead = Setze die Speicher-Requests auf das, was die App unter Last normalerweise braucht (kubectl top pod), unter dem Limit.

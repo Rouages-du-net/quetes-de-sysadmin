@@ -5,9 +5,9 @@
 //   - deploy's crontab: an @reboot line relaunches the watchdog; the line
 //     above it (sync-orders, every quarter of an hour) is Selma's and must
 //     stay (crontab -r would take it too);
-//   - deploy's authorized_keys: a second key, with a comment that looks
-//     legitimate (deploy@ci-runner); only the fingerprint Selma gives tells
-//     them apart (ssh-keygen -lf);
+//   - deploy's authorized_keys: a second key, with the same comment as
+//     Selma's (selma@studio); only the fingerprint Selma gives tells them
+//     apart (ssh-keygen -lf);
 //   - /tmp/.cache: the miner and its watchdog (the game has no rm -r: two rm);
 //   - /srv/delivery/server.js: changed at 02:43 that night (find -mtime,
 //     or the history): one line added at the end relaunches the watchdog
@@ -17,7 +17,9 @@
 //     good.
 // Objective checked on the state: no @reboot line and sync-orders kept,
 // the intruder's key removed and Selma's kept, /tmp/.cache gone,
-// server.js identical to the release, the app running and nothing
+// server.js identical to the release, whose signature was checked (the
+// 'verified' flag: a Good signature seen; a server.js fixed by hand or copied
+// from an unchecked archive is not enough), the app running and nothing
 // relaunched.
 // Sources: https://man7.org/linux/man-pages/man5/crontab.5.html,
 // https://man.openbsd.org/ssh-keygen, https://man7.org/linux/man-pages/man1/find.1.html,
@@ -43,7 +45,8 @@ const keyGone = (j: Game) => !hasKey(j, deployKeys().intruder);
 const selmaKept = (j: Game) => hasKey(j, deployKeys().selma);
 const filesGone = (j: Game) => !j.exists(MINER_PATH) && !j.exists(WATCHDOG_PATH);
 const restored = (j: Game) => (j.read(SERVER) ?? '').trim() === SERVER_JS.trim();
-const done = (j: Game) => cronClean(j) && cronKept(j) && keyGone(j) && selmaKept(j) && filesGone(j) && restored(j) && appAlive(j) && !intruderProcs(j).length;
+const verified = (j: Game) => j.flags.has('verified');
+const done = (j: Game) => cronClean(j) && cronKept(j) && keyGone(j) && selmaKept(j) && filesGone(j) && restored(j) && verified(j) && appAlive(j) && !intruderProcs(j).length;
 
 export const eradication: Chapter = {
   id: 'eradication',
@@ -78,6 +81,7 @@ export const eradication: Chapter = {
     { id: 'bad-signature', condition: (j) => j.last.output.includes('BAD signature'), message: (j) => j.t('eradication-event-bad-signature') },
     { id: 'verified', condition: (j) => j.last.output.includes('Good signature'), message: (j) => j.t('eradication-event-verified') },
     { id: 'restored', condition: restored, message: (j) => j.t('eradication-event-restored') },
+    { id: 'unverified', condition: (j) => restored(j) && !verified(j), message: (j) => j.t('eradication-event-unverified') },
     { id: 'relaunched', condition: (j) => !!j.state.relaunched, message: (j) => j.t('eradication-event-relaunched') },
     { id: 'end', condition: done, message: (j) => j.t('eradication-event-end') },
   ],

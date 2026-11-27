@@ -73,6 +73,7 @@ copybook-check =
     Número de registros (uno cada 40 bytes):
     Cuotas (registros de detalle):
     Total de control (en el registro final):
+    Importe de la primera cuota, sus 5 bytes en el archivo (hex):
 
 ## Events
 

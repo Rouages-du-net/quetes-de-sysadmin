@@ -14,8 +14,8 @@ hint-copybook-converted =
     .lead = A conversion of the whole file damages the packed amounts. Ramón's notes (/opt/batch/NOTES.txt) name the tool that converts field by field.
     .solution = /opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat, then cat /srv/batch/in/contrib.dat.
 hint-copybook-end =
-    .lead = Fill in check.txt: the size, the records, and what the trailer says (the last line of the converted file).
-    .solution = nano check.txt: 560 bytes, 14 records, 12 contributions, control total 515.20 (T000012…+000051520).
+    .lead = Fill in check.txt: the size, the records, what the trailer says (the last line of the converted file), and the first amount as the original file stores it (bytes 34 to 38 of the second record, in od or xxd).
+    .solution = nano check.txt: 560 bytes, 14 records, 12 contributions, control total 515.20 (T000012…+000051520), first amount 00 00 04 25 0C.
 
 ## Chapter 2 — Return Code
 

@@ -442,6 +442,11 @@ for (const language of languagesFor('pool'))
       expect(all).toContain('deployment.apps/booking unchanged');
     });
 
+    it("chapter 4 — Rui's note gives neither the peak, nor the releases, nor the limits: they are measured", () => {
+      const note = t('deep-end-note-rui');
+      for (const giveaway of ['230', '2.3.1', '2.4.0', '128Mi', '64Mi']) expect(note).not.toContain(giveaway);
+    });
+
     it('chapter 4 — another solution: the image and the resources changed in the file only', () => {
       const { play, edit, done } = part(C3);
       edit('nano manifests/booking.yaml', (x) => resources('192Mi', '384Mi')(x).replace('booking:2.4.0', 'booking:2.3.1'));

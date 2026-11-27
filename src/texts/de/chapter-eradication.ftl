@@ -59,9 +59,9 @@ eradication-event-key-all =
     Schlüssel des Eindringlings musste weg: Vergleiche die Fingerabdrücke
     (ssh-keygen -lf) mit dem aus ihrer E-Mail.
 eradication-event-key =
-    Der Schlüssel des Eindringlings ist entfernt, Selmas ist geblieben. Der
-    Kommentar (deploy@ci-runner) sah legitim aus: Nur der Fingerabdruck hat
-    sie unterschieden.
+    Der Schlüssel des Eindringlings ist entfernt, Selmas ist geblieben. Beide
+    trugen selma@studio: Ein Kommentar ist freier Text, nur der Fingerabdruck
+    hat sie unterschieden.
 eradication-event-files =
     Der Miner und sein Wachhund sind aus /tmp/.cache verschwunden.
 eradication-event-bad-signature =
@@ -75,6 +75,10 @@ eradication-event-verified =
 eradication-event-restored =
     server.js ist wieder identisch mit dem Release: Die hinzugefügte Zeile
     ist weg.
+eradication-event-unverified =
+    server.js sieht wieder wie das Release aus, aber nichts beweist es: Der
+    Eindringling kann mehr als eine Zeile geändert haben. Prüfe die
+    Signatur von Selmas Release (gpg --verify), bevor du ihm vertraust.
 eradication-event-relaunched =
     Die App ist wieder gestartet, und mit ihr der Wachhund und der Miner:
     server.js startet sie immer noch, und sein Skript ist noch da. Stoppe

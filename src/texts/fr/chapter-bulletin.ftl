@@ -105,8 +105,8 @@ bulletin-words-fixed = déjà corrigé, déjà à jour, version installée, au-d
 
 bulletin-review = Salomé relit ton tri :
 bulletin-missing-template = Il reste des lignes « (à compléter) » du modèle.
-bulletin-missing-concerns = Sous « Concerne ce serveur », il doit y avoir exactement nginx, rsync et openssh-server (celle-ci s'applique, même si elle ne demande rien de plus ici) — ni certbot ni curl, qui n'ont rien à faire là.
-bulletin-missing-not-applicable = Sous « Sans objet », explique pourquoi pour chacune : certbot (regarde s'il est seulement installé) et curl (compare la version installée à la version corrigée du bulletin).
+bulletin-missing-concerns = Sous « Concerne ce serveur », la liste n'est pas encore juste : il manque une CVE, ou il y en a une qui n'a rien à faire là. Vérifie chaque paquet avec apt avant de le classer.
+bulletin-missing-not-applicable = Sous « Sans objet », explique pourquoi pour chaque CVE que tu y mets : ce qu'apt te dit de son paquet.
 
 ## Événements
 

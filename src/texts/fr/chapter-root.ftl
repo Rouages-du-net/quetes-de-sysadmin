@@ -132,6 +132,14 @@ root-event-protected =
     dans un journal :
 
       cat /var/log/effaceur.log
+root-event-still-open =
+    Le démon relit sa configuration : une seule cible, la Corbeille. Il laisse
+    tes souvenirs tranquilles… pour l'instant. Mais regarde :  ls -l
+    Le lieu souvenirs est toujours en rwxrwxrwx : n'importe quel utilisateur,
+    « effaceur » compris, peut encore y effacer. La prochaine erreur de
+    configuration n'attendra pas. Retire ce droit aux autres (o) :
+
+      chmod o-w souvenirs
 # { $loss } : « oui » si des souvenirs ont été effacés, sinon « non »
 root-event-fixed =
     Le démon relit sa configuration : « cible = /Royaume/Corbeille ». Une

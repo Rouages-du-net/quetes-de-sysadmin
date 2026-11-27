@@ -60,6 +60,18 @@ ${CVE.curl.id} (curl) : ${w('already fixed, the installed version is past the fi
       expect(c.finished).toContain('bulletin');
     });
 
+    it('chapter 1 — false lead: waiting for Salomé to give the answer', () => {
+      const { c, jouer: play, editer: edit } = part();
+      // No review before watch.md is touched.
+      const first = play(['ls']);
+      expect(first).not.toContain('Salomé');
+      // Her review says what is wrong, never which package goes where.
+      const review = edit('nano watch.md', (t) => t.replace(/\(à compléter[^\n]*|\(to complete[^\n]*|\(por completar[^\n]*|\(zu vervollständigen[^\n]*/g, 'x'));
+      expect(review).toContain(w('Salomé reviews your sort', 'Salomé relit ton tri', 'Salomé revisa tu clasificación', 'Salomé sieht deine Sortierung durch'));
+      for (const p of ['nginx', 'rsync', 'certbot', 'curl', 'openssh']) expect(review).not.toContain(p);
+      expect(c.finished).not.toContain('bulletin');
+    });
+
     it('chapter 1 — false leads: certbot or curl classed as "concerns us"', () => {
       const { c, editer: edit } = part();
       const bad = () => `# ${w('Watch', 'Veille', 'Vigilancia', 'Beobachtung')}
@@ -86,6 +98,16 @@ ${CVE.ssh.id} (openssh-server) : ${w('already protected (KbdInteractiveAuthentic
       expect(all).toContain(':80');
       expect(all.split('\n').filter((l) => l.startsWith('LISTEN')).join('\n')).not.toContain('rsync');
       edit('nano priority.md', () => DOC_PRIORITY(false));
+      expect(c.finished).toContain('priority');
+    });
+
+    it('chapter 2 — false lead: the right order without looking at what listens', () => {
+      const { c, jouer: play, editer: edit } = part(['bulletin']);
+      expect(play(['ls'])).not.toContain('Salomé');
+      const review = edit('nano priority.md', () => DOC_PRIORITY(false));
+      expect(review).toContain('ss -tlnp');
+      expect(c.finished).not.toContain('priority');
+      play(['ss -tlnp']);
       expect(c.finished).toContain('priority');
     });
 
@@ -121,6 +143,15 @@ ${CVE.ssh.id} (openssh-server) : ${w('already protected (KbdInteractiveAuthentic
       all = play(['grep "HTTP/2" /var/log/nginx/access.log']);
       expect(all).toContain('203.0.113.77');
       play(['curl -I http://bakery.example/']);
+      expect(c.finished).toContain('proof');
+    });
+
+    it('chapter 4 — false lead: believing the fix without asking apt', () => {
+      const { c, jouer: play } = part(['bulletin', 'priority', 'fix']);
+      play(['grep "HTTP/2" /var/log/nginx/access.log', 'curl -I http://bakery.example/']);
+      expect(c.finished).not.toContain('proof');
+      // The proof can come last: the site was already seen served.
+      play(['apt list --upgradable']);
       expect(c.finished).toContain('proof');
     });
 

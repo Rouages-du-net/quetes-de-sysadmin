@@ -38,9 +38,8 @@ lost-packet-notebook =
 
     Los comandos de red responden en inglés, como en un sistema real:
     «packet loss» = paquetes perdidos, «timed out» = sin respuesta a tiempo.
-# Comentarios de los archivos /etc/resolv.conf y /etc/resolv.conf.box (después de «#»)
+# Comentario del archivo /etc/resolv.conf (después de «#»)
 lost-packet-resolv-comment = Escrito en la instalación, con el router antiguo
-lost-packet-resolv-box-comment = Ajuste recomendado por el router nuevo
 
 ## La página del sitio, devuelta por curl (HTML)
 
@@ -75,9 +74,11 @@ lost-packet-event-dns-other =
     El nombre existe; lo que está mal es el ajuste del ordenador: pregunta
     a 192.168.1.250, la dirección del router ANTIGUO, que ya no existe.
 
-    El ajuste correcto está en /etc/resolv.conf.box. Este archivo pertenece
-    a root: sudo cp /etc/resolv.conf.box /etc/resolv.conf
-lost-packet-event-dns-repaired = El DNS está arreglado: el ordenador pregunta ahora al router nuevo. Vuelve a probar:  ping letters.example
+    ¿Responde también al DNS el router nuevo (192.168.1.1)? Pregúntale:
+    dig @192.168.1.1 letters.example
+    Luego pon en la línea «nameserver» un servidor DNS que responda. El
+    archivo pertenece a root:  sudo nano /etc/resolv.conf
+lost-packet-event-dns-repaired = El DNS está arreglado: el ordenador pregunta ahora a un servidor que responde. Vuelve a probar:  ping letters.example
 lost-packet-event-ping-lost =
     El nombre se traduce ({ $ip })… ¡pero se pierde el 100 % de los
     paquetes! ¿Está caído el sitio? ¿O se pierden los paquetes por el

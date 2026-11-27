@@ -8,7 +8,7 @@ import { STORIES } from '../src/engine/chapters';
 import { prerequisites } from '../src/engine/unlocking';
 import { translator } from '../src/texts';
 import { inLanguage, machinesInLanguage, languagesFor } from './names';
-import { ATTACKER, POOL, deployKeys } from '../src/engine/chapters/bastion';
+import { ATTACKER, POOL, deployKeys, selmaFingerprint } from '../src/engine/chapters/bastion';
 
 const ERASER = [...new Set([...STORIES.find((h) => h.id === 'eraser')!.chapters.map((c) => c.id), ...prerequisites('bastion')])];
 const MDP = 'sandwich-loaf-2029';
@@ -118,7 +118,9 @@ deploy, password, from ${ATTACKER}, 13/04 02:40`;
       edit('sudo crontab -u deploy -e', (t) => t.replace(/^@reboot.*$/m, ''));
       expect(flag('cron')).toBe(true);
       const all = play(['sudo ssh-keygen -lf /home/deploy/.ssh/authorized_keys']);
-      expect(all).toContain('deploy@ci-runner');
+      // Both keys say selma@studio: only the fingerprint tells them apart.
+      expect(all.match(/selma@studio/g)?.length).toBe(2);
+      expect(all).toContain(selmaFingerprint());
       edit('sudo nano /home/deploy/.ssh/authorized_keys', removeIntruder);
       expect(flag('key')).toBe(true);
       play(['sudo rm /tmp/.cache/kworkerd /tmp/.cache/.w']);
@@ -143,6 +145,20 @@ deploy, password, from ${ATTACKER}, 13/04 02:40`;
       edit('sudo nano /home/deploy/.ssh/authorized_keys', () => '');
       expect(flag('key-all')).toBe(true);
       expect(c.finished).not.toContain('eradication');
+    });
+
+    it('chapter 3 — false lead: the injected line removed by hand, without checking the release', () => {
+      const { c, play, edit, flag } = part(['alarm', 'containment']);
+      edit('sudo crontab -u deploy -e', (t) => t.replace(/^@reboot.*$/m, ''));
+      edit('sudo nano /home/deploy/.ssh/authorized_keys', removeIntruder);
+      play(['sudo rm /tmp/.cache/kworkerd /tmp/.cache/.w']);
+      edit('sudo nano /srv/delivery/server.js', (t) => t.split('\n').filter((l) => !l.includes('child_process')).join('\n'));
+      expect(flag('restored')).toBe(true);
+      expect(flag('unverified')).toBe(true);
+      expect(c.finished).not.toContain('eradication');
+      // Only a checked signature proves the file is Selma's.
+      play(['gpg --verify /srv/releases/delivery-2.3.1.tar.gz.asc /srv/releases/delivery-2.3.1.tar.gz']);
+      expect(c.finished).toContain('eradication');
     });
 
     // ——— Chapter 4: "Hardening" ———

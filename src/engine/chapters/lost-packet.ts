@@ -20,12 +20,17 @@ const TO_ISP = [BOX, hop('100.64.0.1', 'backhaul.isp.example', 4.2), hop('198.51
 const last = (j: { last: { commands: string[][] } }) => j.last.commands[0] ?? [];
 const succeededPing = (j: any, target: string) =>
   last(j)[0] === 'ping' && last(j).includes(target) && j.last.output.includes(' 0% packet loss');
-const repairedDns = (j: any) => /^\s*nameserver\s+(192\.168\.1\.1|9\.9\.9\.9)\s*$/m.test(j.read('/etc/resolv.conf') ?? '');
+// DNS repaired: a nameserver that answers (the new router or Quad9), once the
+// diagnosis has shown one answering (dig @SERVER: 'dns-other'). No file gives
+// the right line: it comes from the diagnosis, written with nano.
+const repairedDns = (j: any) =>
+  j.flags.has('dns-other') && /^\s*nameserver\s+(192\.168\.1\.1|9\.9\.9\.9)\s*$/m.test(j.read('/etc/resolv.conf') ?? '');
 
 export const pkg: Chapter = {
   id: 'lost-packet',
   number: 1,
-  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
+  commands: ['ls', 'cd', 'pwd', 'cat', 'less', 'cp', 'nano', 'ping', 'dig', 'traceroute', 'curl', 'sudo', 'grep'],
+  steps: ['box', 'internet', 'name', 'dns-silent', 'dns-other', 'dns-repaired', 'ping-lost', 'route', 'curl'],
   home: M,
   welcome: 'note_from_kofi.txt',
   names: true,
@@ -75,13 +80,6 @@ export const pkg: Chapter = {
               `
 # ${t('lost-packet-resolv-comment')}
 nameserver 192.168.1.250
-`,
-              { owner: 'root', lines: true },
-            ),
-            'resolv.conf.box': f(
-              `
-# ${t('lost-packet-resolv-box-comment')}
-nameserver 192.168.1.1
 `,
               { owner: 'root', lines: true },
             ),

@@ -47,7 +47,7 @@ hint-stale-password-task =
     .lead = Le type de connexion 4, c'est un traitement par lots : qu'est-ce qui tourne à heure fixe là-bas, et sous quel compte (Get-Help Get-ScheduledTask ; le compte est dans son Principal) ?
     .solution = Get-ScheduledTask | Select-Object TaskName, @{"{"}n='User';e={"{"}$_.Principal.UserId{"}"}{"}"}, ou schtasks /query /v /fo list : Scan Import tourne en LENDING\rsilva.
 hint-stale-password-fixed =
-    .lead = La tâche a besoin d'un compte à elle, pas de celui de Rafael : Tomas en a créé un, son mot de passe est dans le coffre exporté par Nandini (Get-Help Set-ScheduledTask).
+    .lead = La tâche a besoin d'un compte à elle, pas de celui de Rafael : Tomas en a créé un pour ce travail (les descriptions des comptes de service disent lequel, Get-ADUser -Properties Description), son mot de passe est dans le coffre exporté par Nandini (Get-Help Set-ScheduledTask).
     .solution = Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password '<le mot de passe du coffre>' (ou schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …).
 hint-stale-password-end =
     .lead = La source est corrigée : rendez maintenant son compte à Rafael, depuis registre (Get-Help Unlock-ADAccount).

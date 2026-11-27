@@ -38,8 +38,9 @@ traces-email-salome =
        secret lu est un secret à changer, pour de vrai : le nouveau doit
        marcher partout, et l'appli de commandes ne doit pas tomber.
 
-    Note : un commentaire dans une clé (« nadia@portable ») ne prouve rien,
-    n'importe qui peut écrire ce qu'il veut. Compare les empreintes.
+    Note : les deux clés de son fichier finissent par « nadia@boutique ». Le
+    commentaire d'une clé ne prouve rien, n'importe qui peut écrire ce qu'il
+    veut. Compare les empreintes.
 
     Salomé
     (Pour sudo, ton mot de passe est toujours : farine-2028)
@@ -56,12 +57,13 @@ traces-event-found =
     Quelle clé de /home/nadia/.ssh/authorized_keys a cette empreinte ?
     (man ssh-keygen, option -l)
 traces-event-key-identified =
-    Voilà l'empreinte de chaque clé du fichier. Compare avec celle du
-    journal : c'est la seconde qui a servi la nuit de la connexion, et elle
-    porte pourtant le commentaire « nadia@portable ». Le commentaire n'est
-    qu'une étiquette.
+    Voilà l'empreinte de chaque clé du fichier : toutes deux portent le
+    commentaire « nadia@boutique », seules leurs empreintes diffèrent. Le
+    commentaire n'est qu'une étiquette.
 
-    Retire cette ligne (et elle seule) de authorized_keys.
+    La clé qui a servi cette nuit-là est celle dont l'empreinte figure dans
+    la ligne de 3 h 12 du journal : retire cette ligne (et elle seule) de
+    authorized_keys.
 traces-event-nadia-locked-out =
     Attention : la clé de Nadia n'est plus dans authorized_keys ! Elle ne
     pourrait plus se connecter. Remets sa clé (celle dont l'empreinte est

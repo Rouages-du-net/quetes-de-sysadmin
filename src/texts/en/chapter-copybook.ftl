@@ -70,6 +70,7 @@ copybook-check =
     Number of records (one every 40 bytes):
     Contributions (detail records):
     Control total (in the trailer):
+    First contribution's amount, its 5 bytes in the file (hex):
 
 ## Events
 

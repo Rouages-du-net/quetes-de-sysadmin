@@ -64,9 +64,8 @@ inquiry-email-kwame =
     again, without losing last night's web orders? The lists print by
     themselves once the night's jobs have run.
 
-    Soraya adds: "I left in a hurry last night, the phone rang while I was
-    on order 1847 (La Mie d'Inès), on the green screen. I didn't
-    change anything, I think I left it open."
+    The office opened at seven: the phone orders are being taken on the
+    green screen as usual, so please don't cut anyone off.
 
     Your profile is YOU, password millstone-2029: tn5250 mill from your
     workstation for the green screen, or ssh mill for the Unix side.
@@ -98,8 +97,8 @@ inquiry-event-cause =
     There it is: record 28 of ORDHDR, order 1847, is held by job
     412655/SORAYA/QPADEV0004, Soraya's green screen, left open last night
     on that order. As long as her session holds it, the import can't
-    change the order. Soraya says she changed nothing: her session can be
-    ended.
+    change the order. Kwame calls her: the phone rang, she left in a
+    hurry, and she changed nothing. Her session can be ended.
 inquiry-event-retry-locked =
     R retried, but the record is still held: the job waited again, and
     the same question came back. Retrying only helps once the cause is
@@ -117,6 +116,12 @@ inquiry-event-skipped =
     G skipped the record: the import went on, but order 1847's change was
     left out, silently. The bakery will receive the old quantity. Free the
     record, then submit the import again: it applies what it skipped.
+inquiry-event-wrong-session =
+    You ended Diego's session: he was typing a bakery's order on the
+    phone, and it is lost. His session held ORDHDR open, like every order
+    entry screen, but no record: the record lock (DSPRCDLCK, or the
+    import's job log) names the job that holds order 1847. "Undo the last
+    input" (Restore point) takes you back to before that command.
 inquiry-event-web-ended =
     ORDWEB was ended: the bakeries' web orders no longer arrive. It
     belongs to the subsystem ORDSBS: start it again (ENDSBS then STRSBS

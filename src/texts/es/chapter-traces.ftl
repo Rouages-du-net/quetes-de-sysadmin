@@ -37,8 +37,9 @@ traces-email-salome =
        funcionar en todas partes, y la aplicación de pedidos no se puede
        caer.
 
-    Nota: un comentario en una clave («nadia@portatil») no demuestra nada,
-    cualquiera puede escribir lo que quiera. Compara las huellas.
+    Nota: las dos claves de su archivo terminan en «nadia@tienda». El
+    comentario de una clave no demuestra nada, cualquiera puede escribir lo
+    que quiera. Compara las huellas.
 
     Salomé
     (Para sudo, tu contraseña sigue siendo: harina-2028)
@@ -55,11 +56,12 @@ traces-event-found =
     ¿Qué clave de /home/nadia/.ssh/authorized_keys tiene esa huella?
     (man ssh-keygen, opción -l)
 traces-event-key-identified =
-    Ahí está la huella de cada clave del archivo. Compárala con la del
-    journal: la segunda clave es la que se usó esa noche, y sin embargo lleva
-    el comentario «nadia@portatil». El comentario no es más que una etiqueta.
+    Ahí está la huella de cada clave del archivo: las dos llevan el
+    comentario «nadia@tienda», solo sus huellas son distintas. El comentario
+    no es más que una etiqueta.
 
-    Quita esa línea (y solo esa) de authorized_keys.
+    La clave que se usó esa noche es aquella cuya huella aparece en la línea
+    de las 3:12 del journal: quita esa línea (y solo esa) de authorized_keys.
 traces-event-nadia-locked-out =
     Atención: ¡la clave de Nadia ya no está en authorized_keys! Ya no podría
     iniciar sesión. Vuelve a poner su clave (la que tiene la huella de los

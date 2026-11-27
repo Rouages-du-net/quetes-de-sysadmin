@@ -41,8 +41,8 @@ hint-service-logon-account =
     .lead = Which account does the service log on as? Get-Service doesn't say; WMI and sc.exe do (Get-Help Get-CimInstance, man sc.exe).
     .solution = Get-CimInstance Win32_Service -Filter "Name='Agenda'" | Select-Object Name, StartName, State, or sc.exe qc Agenda.
 hint-service-logon-configured =
-    .lead = Give the service the account's new password, from the password manager's entry in Documents (man sc.exe: config, obj=, password=; sc alone is Set-Content in PowerShell).
-    .solution = Get-Content Documents\vault-svc_agenda.txt, then sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
+    .lead = Give the service the account's new password, from the password manager's entries in Documents: the account the service logs on as (man sc.exe: config, obj=, password=; sc alone is Set-Content in PowerShell).
+    .solution = Get-Content Documents\vault-service-accounts.txt (the svc_agenda entry), then sc.exe config Agenda obj= .\svc_agenda password= Rondo-7kq-Vt29.
 hint-service-logon-end =
     .lead = Start the service, under its own account, and check it runs and starts with the server.
     .solution = Start-Service Agenda, then Get-Service Agenda | Select-Object Status, StartType.

@@ -40,9 +40,9 @@ traces-email-salome =
        muss, wirklich: Das neue muss überall funktionieren, und die
        Bestell-App darf nicht ausfallen.
 
-    Hinweis: Ein Kommentar in einem Schlüssel („nadia@laptop“) beweist
-    nichts, jede Person kann hineinschreiben, was sie will. Vergleich die
-    Fingerabdrücke.
+    Hinweis: Beide Schlüssel in ihrer Datei enden auf „nadia@laden“. Der
+    Kommentar eines Schlüssels beweist nichts, jede Person kann
+    hineinschreiben, was sie will. Vergleich die Fingerabdrücke.
 
     Salomé
     (Für sudo ist dein Passwort immer noch: mehl-2028)
@@ -59,12 +59,13 @@ traces-event-found =
     Welcher Schlüssel in /home/nadia/.ssh/authorized_keys hat diesen
     Fingerabdruck? (man ssh-keygen, Option -l)
 traces-event-key-identified =
-    Da ist der Fingerabdruck jedes Schlüssels in der Datei. Vergleich mit
-    dem im Journal: Der zweite Schlüssel ist der, der in dieser Nacht
-    benutzt wurde, und trotzdem trägt er den Kommentar „nadia@laptop“. Der
+    Da ist der Fingerabdruck jedes Schlüssels in der Datei: Beide tragen den
+    Kommentar „nadia@laden“, nur ihre Fingerabdrücke unterscheiden sich. Der
     Kommentar ist nur ein Etikett.
 
-    Entferne diese Zeile (und nur diese) aus authorized_keys.
+    Der Schlüssel aus dieser Nacht ist der, dessen Fingerabdruck in der
+    Zeile von 3:12 Uhr im Journal steht: Entferne diese Zeile (und nur
+    diese) aus authorized_keys.
 traces-event-nadia-locked-out =
     Achtung: Nadias Schlüssel ist nicht mehr in authorized_keys! Sie
     könnte sich nicht mehr anmelden. Leg ihren Schlüssel zurück (den,

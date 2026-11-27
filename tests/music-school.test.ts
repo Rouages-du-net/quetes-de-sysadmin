@@ -139,8 +139,11 @@ for (const language of languagesFor('music-school'))
       expect(flag('account')).toBe(true);
       expect(play(['Get-LocalUser svc_agenda | Select-Object Name, PasswordLastSet'])).toContain('12/7/2029 4:42:00 PM');
       expect(flag('rotated')).toBe(true);
-      const vault = play([`Get-Content Documents\\${N('vault-svc_agenda.txt')}`]);
+      const vault = play([`Get-Content Documents\\${N('vault-service-accounts.txt')}`]);
       expect(vault).toContain(NEW_PASSWORD);
+      // Several entries, none saying which one the Agenda uses.
+      expect(vault).toContain('svc_backup');
+      expect(vault).not.toMatch(/Agenda service|service Agenda|servicio Agenda|Dienstes Agenda/);
       expect(play([`sc config Agenda obj= .\\svc_agenda password= ${NEW_PASSWORD}`])).toContain("A positional parameter cannot be found that accepts argument 'obj='.");
       expect(flag('sc-alias')).toBe(true);
       expect(play([`sc.exe config Agenda obj= .\\svc_agenda password= ${NEW_PASSWORD}`])).toContain('[SC] ChangeServiceConfig SUCCESS');
@@ -150,7 +153,7 @@ for (const language of languagesFor('music-school'))
       contains(end, 'Bravo');
       expect(c.finished).toContain('service-logon');
       expect(findService(server(), 'Agenda')?.status).toBe('Running');
-      play([`Remove-Item Documents\\${N('vault-svc_agenda.txt')}`]);
+      play([`Remove-Item Documents\\${N('vault-service-accounts.txt')}`]);
       expect(flag('vault-deleted')).toBe(true);
     });
 
@@ -169,6 +172,19 @@ for (const language of languagesFor('music-school'))
       play([`sc config Agenda obj= .\\svc_agenda password= ${NEW_PASSWORD}`]);
       expect(play(['net start Agenda'])).toContain('The Agenda - lessons and rooms service was started successfully.');
       expect(c.finished).toContain('service-logon');
+    });
+
+    it("chapter 2 — false lead: the vault's other service account", () => {
+      const { c, play, flag, server } = part(['two-locks']);
+      play(['powershell', 'sc.exe config Agenda obj= .\\svc_backup password= Coda-5ty-Hn42', 'Start-Service Agenda']);
+      expect(flag('other-account')).toBe(true);
+      expect(findService(server(), 'Agenda')?.status).toBe('Running');
+      expect(c.finished).not.toContain('service-logon');
+      // The web admin's password is no Windows password of svc_agenda.
+      play(['Stop-Service Agenda', 'sc.exe config Agenda obj= .\\svc_agenda password= Cadenza-2kd-Wm63']);
+      expect(flag('wrong-password')).toBe(true);
+      expect(play(['Start-Service Agenda'])).toContain('cannot be started');
+      expect(c.finished).not.toContain('service-logon');
     });
 
     it('chapter 2 — false leads: LocalSystem, a new password for the account only, Disabled', () => {

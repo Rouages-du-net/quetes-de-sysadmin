@@ -710,7 +710,10 @@ export interface Play {
   handlers: Task[];
 }
 
-export class AnsibleError extends Error {}
+export class AnsibleError extends Error {
+  // What a run had done before the error (a play stopped half way).
+  execution?: Execution;
+}
 
 const TASK_WORDS = ['name', 'become', 'become_user', 'notify', 'changed_when', 'tags', 'listen', 'check_mode', 'ignore_errors', 'vars', 'register', 'when', 'loop'];
 const PLAY_WORDS = ['name', 'hosts', 'become', 'become_user', 'gather_facts', 'vars', 'tasks', 'handlers', 'remote_user', 'pre_tasks', 'post_tasks', 'serial'];
@@ -798,6 +801,8 @@ export interface Execution {
   hosts: Record<string, Summary>;
   // The paths changed on each host (for the stories).
   changes: Record<string, string[]>;
+  // Stopped by an error (ERROR!) before the end of the play.
+  aborted?: boolean;
 }
 
 /** Plays a playbook; returns the output, the recap and the exit code. */
@@ -864,7 +869,7 @@ export function play(c: Context, plays: Play[], limit: string | null, forcer = f
           if (path) (execution.changes[h] ??= []).push(path);
           for (const n of t.notify) {
             if (!p.handlers.some((x) => x.name === n || x.listening?.includes(n)))
-              throw new AnsibleError(`ERROR! The requested handler '${n}' was not found in either the main handlers list nor in the listening handlers list`);
+              throw Object.assign(new AnsibleError(`ERROR! The requested handler '${n}' was not found in either the main handlers list nor in the listening handlers list`), { execution: { ...execution, aborted: true } });
             (notified[n] ??= new Set()).add(h);
           }
         }

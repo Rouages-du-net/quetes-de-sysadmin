@@ -161,6 +161,7 @@ archives
   /home/you/collection → /home/tu/fondos
   /home/you/collection/readme.txt → /home/tu/fondos/leeme.txt
   /home/you/collection/manuscripts → /home/tu/fondos/manuscritos
+  /home/you/collection/manuscripts/.autosave.tmp → /home/tu/fondos/manuscritos/.autoguardado.tmp
   /home/you/collection/manuscripts/marie_diary.txt → /home/tu/fondos/manuscritos/diario_de_marie.txt
   /home/you/collection/manuscripts/letters_1914.txt → /home/tu/fondos/manuscritos/cartas_1914.txt
   /home/you/collection/manuscripts/neighbourhood_recipes.txt → /home/tu/fondos/manuscritos/recetas_del_barrio.txt
@@ -168,14 +169,23 @@ archives
   /home/you/collection/maps/map_1890.png → /home/tu/fondos/mapas/plano_1890.png
   /home/you/collection/maps/map_1954.png → /home/tu/fondos/mapas/plano_1954.png
   /home/you/collection/maps/render.tmp → /home/tu/fondos/mapas/render.tmp
+  /home/you/collection/maps/scans → /home/tu/fondos/mapas/escaneos
+  /home/you/collection/maps/scans/scan_batch_2 → /home/tu/fondos/mapas/escaneos/lote_2
+  /home/you/collection/maps/scans/scan_batch_2/page_07.tmp → /home/tu/fondos/mapas/escaneos/lote_2/pagina_07.tmp
+  /home/you/collection/maps/scans/scan_batch_2/.cache → /home/tu/fondos/mapas/escaneos/lote_2/.cache
+  /home/you/collection/maps/scans/scan_batch_2/.cache/thumb_07.tmp → /home/tu/fondos/mapas/escaneos/lote_2/.cache/miniatura_07.tmp
   /home/you/collection/press → /home/tu/fondos/prensa
   /home/you/collection/press/gazette_1936.pdf → /home/tu/fondos/prensa/gazette_1936.pdf
   /home/you/collection/press/gazette_1968.pdf → /home/tu/fondos/prensa/gazette_1968.pdf
   /home/you/collection/press/export.tmp → /home/tu/fondos/prensa/export.tmp
+  /home/you/collection/press/.drafts → /home/tu/fondos/prensa/.borradores
+  /home/you/collection/press/.drafts/export_old.tmp → /home/tu/fondos/prensa/.borradores/export_viejo.tmp
   /home/you/collection/recordings → /home/tu/fondos/grabaciones
   /home/you/collection/recordings/market_songs.ogg → /home/tu/fondos/grabaciones/cantos_del_mercado.ogg
   /home/you/collection/recordings/interview_fatou.ogg → /home/tu/fondos/grabaciones/entrevista_fatou.ogg
   /home/you/collection/recordings/raw.tmp → /home/tu/fondos/grabaciones/bruto.tmp
+  /home/you/collection/recordings/studio_sessions → /home/tu/fondos/grabaciones/sesiones_estudio
+  /home/you/collection/recordings/studio_sessions/take_03.tmp → /home/tu/fondos/grabaciones/sesiones_estudio/toma_03.tmp
   /media/usb → /media/memoria
 
 versions
@@ -1098,7 +1108,7 @@ two-locks
 
 service-logon
   /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
-  /C/Users/tu/Documents/vault-svc_agenda.txt → /C/Users/tu/Documents/caja-fuerte-svc_agenda.txt
+  /C/Users/tu/Documents/vault-service-accounts.txt → /C/Users/tu/Documents/caja-fuerte-cuentas-servicio.txt
   /C/Users/tu/email_mariam.txt → /C/Users/tu/correo_mariam.txt
 
 log-flood
@@ -1120,7 +1130,7 @@ comings-and-goings
 stale-password
   /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
   /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
-  /C/Users/tu/Documents/vault-svc_scans.txt → /C/Users/tu/Documents/caja-fuerte-svc_scans.txt
+  /C/Users/tu/Documents/vault-service-accounts.txt → /C/Users/tu/Documents/caja-fuerte-cuentas-servicio.txt
   /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
 
 stale-password:stacks

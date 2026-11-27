@@ -47,7 +47,7 @@ hint-stale-password-task =
     .lead = El tipo de inicio de sesión 4 es un inicio por lotes: ¿qué se ejecuta allí de forma programada, y con qué cuenta (Get-Help Get-ScheduledTask; la cuenta está en su Principal)?
     .solution = Get-ScheduledTask | Select-Object TaskName, @{"{"}n='User';e={"{"}$_.Principal.UserId{"}"}{"}"}, o schtasks /query /v /fo list: Scan Import se ejecuta como LENDING\rsilva.
 hint-stale-password-fixed =
-    .lead = La tarea necesita una cuenta propia, no la de Rafael: Tomas creó una, su contraseña está en la entrada del gestor que exportó Nandini (Get-Help Set-ScheduledTask).
+    .lead = La tarea necesita una cuenta propia, no la de Rafael: Tomas creó una para este trabajo (las descripciones de las cuentas de servicio dicen cuál, Get-ADUser -Properties Description), su contraseña está en las entradas del gestor que exportó Nandini (Get-Help Set-ScheduledTask).
     .solution = Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password '<la contraseña del gestor>' (o schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …).
 hint-stale-password-end =
     .lead = El origen está arreglado: ahora devuelve a Rafael su cuenta, desde registro (Get-Help Unlock-ADAccount).

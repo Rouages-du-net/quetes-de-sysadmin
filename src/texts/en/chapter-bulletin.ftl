@@ -103,8 +103,8 @@ bulletin-words-fixed = already fixed, already up to date, installed version, pas
 
 bulletin-review = Salomé reviews your sort:
 bulletin-missing-template = Some "(to complete)" lines of the template are still there.
-bulletin-missing-concerns = Under "Concerns this server" there must be exactly nginx, rsync and openssh-server (that one applies, even though it needs nothing more here) — neither certbot nor curl belong there.
-bulletin-missing-not-applicable = Under "Not applicable", explain why for each one: certbot (check whether it is even installed) and curl (compare the installed version with the bulletin's fixed version).
+bulletin-missing-concerns = Under "Concerns this server", the list isn't right yet: a CVE is missing, or one is there that shouldn't be. Check each package with apt before placing it.
+bulletin-missing-not-applicable = Under "Not applicable", explain why for each CVE you put there: what apt tells you about its package.
 
 ## Events
 

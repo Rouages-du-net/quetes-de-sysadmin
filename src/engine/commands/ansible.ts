@@ -160,6 +160,8 @@ function playbook(game: Shell, args: string[]): string {
     if (code) game.status = code;
   } catch (e) {
     if (!(e instanceof AnsibleError)) throw e;
+    // A play stopped by the error still changed what it changed before.
+    if (e.execution) history(game).executions.push({ ...e.execution, file: path, line: args.join(' '), limit: o.limit });
     c.outputs.push(e.message);
     game.status = 1;
   }

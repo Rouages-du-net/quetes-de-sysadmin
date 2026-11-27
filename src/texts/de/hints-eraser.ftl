@@ -53,8 +53,8 @@ hint-root-protected =
     .lead = Der Radierer löscht deine Erinnerungen, weil er in diesem Verzeichnis schreiben darf. ls -l zeigt die Rechte: r, w und x, für dich, deine Gruppe und die anderen.
     .solution = chmod o-w erinnerungen (die anderen können nicht mehr im Verzeichnis schreiben)
 hint-root-fixed =
-    .lead = Die Konfiguration des Radierers zielt wegen eines Leerzeichens zu viel auf den falschen Ort. Eine korrigierte Fassung wartet auf dich, aber /etc gehört root: Du brauchst sudo, und sein Passwort versteckt sich in deinem Tagebuch (grep kann nach einem Wort suchen).
-    .solution = grep "mein Passwort" tagebuch.txt, dann sudo cp ~/radierer.conf.korrigiert /etc/radierer.conf
+    .lead = Die Konfiguration des Radierers zielt wegen eines Leerzeichens zu viel auf den falschen Ort. Eine korrigierte Fassung wartet auf dich, aber /etc gehört root: Du brauchst sudo, und sein Passwort versteckt sich in deinem Tagebuch (grep kann nach einem Wort suchen). Und deine Erinnerungen dürfen nicht für alle offen bleiben (ls -l).
+    .solution = grep "mein Passwort" tagebuch.txt, dann sudo cp ~/radierer.conf.korrigiert /etc/radierer.conf; und chmod o-w erinnerungen, wenn ls -l noch rwxrwxrwx zeigt
 
 ## Kapitel 4 — Die Sicherung
 

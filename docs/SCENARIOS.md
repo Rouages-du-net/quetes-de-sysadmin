@@ -455,7 +455,7 @@ in English). The world finally looks like a real Linux: `/home`, `/etc`,
 | `/var/log` | the daemon's log shows two targets instead of one | `cat`, `grep cible` |
 | `/etc/effaceur.conf` | "cible = /Royaume /Corbeille": one space too many; the file belongs to root | Permission denied |
 | `journal.txt` | find your password (written down, "a very bad idea") | `grep "mot de passe"` (quotes) |
-| `/etc` | install the fixed version | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
+| `/etc` | install the fixed version; the chapter ends once the memories are also protected (the Eraser stops, but a place open to all stays a risk) | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
 | bonus | `/root`, `/etc/sudoers`, `/home/nour` (a diary: we don't read it, even as root) | `sudo ls`, `sudo cat`, `whoami`, `sudo cd` (not found: `cd` is a shell builtin) |
 
 The outcome: the character was the kingdom's administrator. They were the
@@ -636,8 +636,8 @@ gives the method: test step by step, from near to far.
 | `ping 9.9.9.9` | the internet works |
 | `ping letters.example` | "Temporary failure in name resolution": DNS |
 | `dig letters.example`, `cat /etc/resolv.conf` | the computer asks the old home router, which is gone |
-| `dig @9.9.9.9 letters.example` | the name does exist |
-| `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS repaired |
+| `dig @9.9.9.9 letters.example`, `dig @192.168.1.1 letters.example` | the name does exist, and the new router answers DNS |
+| `sudo nano /etc/resolv.conf` (`nameserver 192.168.1.1` or `9.9.9.9`) | DNS repaired, once a dig has shown a server answering |
 | `ping letters.example` | 100 % packet loss… |
 | `traceroute letters.example` | home router, ISP, exchange point, host, then silence |
 | `curl -I https://letters.example` | `HTTP/2 200`: the server was just ignoring ping |
@@ -653,9 +653,11 @@ poems in safety: `git init`, `git add .`, `git commit -m`.
 ## Story 5: The Archives (done, two chapters)
 
 The neighbourhood library's server shuts down at midnight; Rosa only has a
-64 MB USB stick. `du -sh` and `df -h` show that the collection (174 MB)
+64 MB USB stick. `du -sh` and `df -h` show that the collection (182 MB)
 doesn't fit; `tar` fails ("No space left on device"). `find fonds -name
-"*.tmp"` finds 120 MB of temporary files, deleted with `-delete`. The
+"*.tmp"` finds 128 MB of temporary files, deleted with `-delete`: three big
+ones in plain sight, five small ones deeper or in hidden folders, which
+`ls` misses (an archive that still carries one doesn't count). The
 compressed archive (`tar -czf`) is then 48 MB; `tar -tzf` checks it. An
 archivist's moral: a single copy isn't a backup.
 
@@ -1904,8 +1906,8 @@ doesn't reread its configuration by itself).
 
 In ssh's log, a login to Nadia's account in the night of 13 March at 3:12
 am, from 203.0.113.99; Nadia was asleep. Her `authorized_keys` holds two
-keys: the other one passes itself off as one of Nadia's keys
-(`nadia@portable`); only the fingerprint gives it away.
+keys, both with Nadia's comment (`nadia@shop`); only the fingerprint, in
+the log and in `ssh-keygen -l`, tells them apart.
 
 | Step | Command learnt |
 |---|---|
@@ -1916,7 +1918,8 @@ keys: the other one passes itself off as one of Nadia's keys
 | What it read | `sudo cat /home/nadia/.bash_history`: the intruder read `/srv/commandes/.env` (world-readable before "The Report") |
 | Change the secret | `sudo -u postgres psql -c "ALTER ROLE commandes PASSWORD '…'"`, the same password in `.env`'s `DATABASE_URL`, `sudo systemctl restart commandes` |
 
-Goal checked on the state: the intruder's key removed and Nadia's kept; the
+Goal checked on the state: the night's login found (journal or `last`); the
+intruder's key removed and Nadia's kept; the
 intruder's job removed and the backup kept; a new database password of at
 least twelve characters, the same in PostgreSQL and in `.env`, and the app
 restarted with it. Expected traps: trusting the key's comment, erasing the
@@ -2111,8 +2114,10 @@ and "The Exposure".
 
 Goal checked on the state: `priorite.md` puts nginx before rsync (even
 though its score is lower), with a justification that cites exposure (not
-just the score), and notes that openssh-server has nothing to do here.
-Expected trap: sorting only by decreasing CVSS score (rsync before nginx).
+just the score), and notes that openssh-server has nothing to do here;
+and the exposure was looked at on the machine (`ss` or `nmap`). Expected
+traps: sorting only by decreasing CVSS score (rsync before nginx); the
+right order guessed without looking at what listens.
 
 ### Chapter 3 — The Fix (done)
 
@@ -2143,7 +2148,8 @@ already been tried.
 | Look for an attempt | `grep "HTTP/2" /var/log/nginx/access.log` |
 | Check the site holds | `curl -I http://fournil.example/` |
 
-Goal checked on the state: both packages confirmed up to date, an earlier
+Goal checked on the state: both packages confirmed up to date by apt (they
+already are at the start: believing it isn't enough), an earlier
 attempt found in the access log (an empty HTTP/2 request, refused by nginx,
 a few days before the fix), and the site still served.
 
@@ -2289,8 +2295,11 @@ was already there, a YAML error, a misspelt module. Other accepted solution:
 
 Goal checked on the state: on the three centres, the file and the
 configuration loaded by sshd say `PasswordAuthentication no`, and the last
-full run changed nothing. Expected trap: the file changed without sshd being
-reloaded (the handler is only notified on a change).
+full run changed nothing; Ansible's record of the runs shows the change was
+rehearsed (a `--check` run, then a first real change limited to part of the
+centres). Expected traps: the file changed without sshd being reloaded (the
+handler is only notified on a change); all three centres at once, without
+the rehearsal (the chapter must then be restarted).
 
 ## Story 19: The Patch (one chapter)
 
@@ -2718,9 +2727,11 @@ it relaunches the miner: its `server.js` was changed), `usermod -L` alone.
 
 Goal checked on the state: no `@reboot` line and `sync-orders` kept, the
 intruder's key removed and Selma's kept, the miner's files gone,
-`server.js` identical to the release, the app running and nothing
-relaunched. Expected traps: `crontab -r`, emptying `authorized_keys`,
-trusting the key's comment, restoring from the rebuilt copy, restarting the
+`server.js` identical to the release and that release's signature checked
+(a `Good signature` seen: fixing the file by hand is not enough), the app
+running and nothing relaunched. Expected traps: `crontab -r`, emptying
+`authorized_keys`, trusting the key's comment (both keys say
+`selma@studio`), restoring from the rebuilt copy, restarting the
 app before `server.js` is clean.
 
 ### Chapter 4 — Hardening (done)
@@ -2758,8 +2769,10 @@ Firewall" and "The Bare Repository" (scripts).
 | sed | `sed -i "s/…/"` reads the file's name as the script (`undefined label`), `sed -i '' "s/…/"` |
 
 Goal checked on the state: yesterday's archive in `/var/backups`, and
-`state.conf` updated with yesterday's date. Expected traps: installing bash
-(the GNU options still fail), `systemctl` and the other Linux commands.
+`state.conf` updated with yesterday's date, by a run of `nightly-backup.sh`
+that reaches its last line. Expected traps: installing bash (the GNU
+options still fail), `systemctl` and the other Linux commands, making the
+archive and editing `state.conf` by hand.
 
 ### Chapter 2 — No systemd Here (done)
 
@@ -2869,8 +2882,10 @@ opens after "Trust, Then Switch" and "The Probe".
 | Convert | `/opt/batch/bin/ebc2asc` (field by field) into `/srv/batch/in/contrib.dat`; `check.txt` |
 
 Goal checked on the state: `contrib.dat` holds the 14 records converted
-with the right amounts, and `check.txt` gives 12 contributions and the
-control total 515.20. Expected traps: `iconv -f EBCDIC-US -t ASCII`
+with the right amounts, and `check.txt` gives the size (560), the 14
+records, 12 contributions, the control total 515.20 and the first amount's
+five bytes as the file stores them (00 00 04 25 0C, only `od`/`xxd`/`hexdump`
+show them: the converter alone doesn't fill the sheet). Expected traps: `iconv -f EBCDIC-US -t ASCII`
 ("illegal input sequence at position 75", inside the first amount),
 `iconv -f IBM037 -t UTF-8` (0x25 becomes a newline), `dd conv=ascii`
 (the amounts silently changed; ebc2asc then refuses them).
@@ -2933,8 +2948,12 @@ It opens after "The Late File" and "Transfers".
 | Release, reply | `ENDJOB JOB(412655/SORAYA/QPADEV0004)`, then the reply R |
 
 Goal checked on the state: every incoming order in ORDHDR, order 1847
-changed, no job waiting for a reply, the job queue empty, ORDWEB running.
-Expected traps: R while the record is still held (the question comes back),
+changed, no job waiting for a reply, the job queue empty, ORDWEB and
+Diego's session running. Kwame's email names nobody: two green screens are
+in order entry (Soraya's QPADEV0004, left open last night, and Diego's
+QPADEV0002, taking phone orders), both with ORDHDR open; only the record
+lock says which one holds order 1847. Expected traps: ending Diego's
+session (his order lost: no end), R while the record is still held (the question comes back),
 `ENDJOB` on the import or C (the run lost: `SBMJOB CMD(CALL
 PGM(ORDERS/ORDIMP))`, as Margit's notes say), G (the change skipped),
 `CALL` (the night's programs must run in batch).
@@ -3088,7 +3107,7 @@ folder, not its files), unquoted `(OI)(CI)` in PowerShell.
 | Refused | `Start-Service Agenda` ("cannot be started"), `sc.exe start` (FAILED 1069), `net start` |
 | Why | `Get-WinEvent -FilterHashtable @{LogName='System'; Id=7000,7038}` or `Get-EventLog System -EntryType Error`: 7038 "unable to log on as .\svc_agenda" at Sunday's boot, after the 1074 restart |
 | Which account | `Get-CimInstance Win32_Service -Filter "Name='Agenda'" \| Select-Object Name, StartName, State`, `sc.exe qc Agenda`; `Get-LocalUser svc_agenda \| Select-Object Name, PasswordLastSet` (Friday) |
-| The new password | `Get-Content Documents\vault-svc_agenda.txt` (the password manager's entry Mariam exported) |
+| The new password | `Get-Content Documents\vault-service-accounts.txt` (the server's entries Mariam exported: svc_backup, svc_agenda, the Agenda's web admin; the StartName says which) |
 | Give it to the service | `sc.exe config Agenda obj= .\svc_agenda password= …` (`sc` alone is Set-Content in PowerShell), `Start-Service Agenda` |
 
 Goal checked on the state: the Agenda runs under `svc_agenda` with the
@@ -3096,8 +3115,11 @@ account's current password stored, StartType Automatic, and `svc_agenda`
 isn't an administrator. Expected traps: `sc config` in PowerShell (the
 alias), LocalSystem (it starts, the check refuses it: least privilege), a
 new password set on the account only, a mistyped password, the service
-disabled or set to Manual, `svc_agenda` added to Administrators. Deleting
-the exported entry is thanked, not required.
+disabled or set to Manual, `svc_agenda` added to Administrators, the
+service under `svc_backup` or with the web admin's password. Mariam's email
+gives the symptom only (down since the update restart): the 7038 and the
+StartName lead to the account, PasswordLastSet to Friday's change. Deleting
+the exported file is thanked, not required.
 
 ### Chapter 3 — The Log Flood (done)
 
@@ -3210,7 +3232,7 @@ conventions' way).
 | From where | `Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4740} \| Format-List Message`: Caller Computer Name STACKS; `Get-ADUser -LDAPFilter '(lockoutTime>=1)'` |
 | There | `ssh stacks` (Windows' OpenSSH client); `Get-WinEvent` Security 4625: Logon Type 4 (batch) |
 | The source | `Get-ScheduledTask \| Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}`, `Get-ScheduledTaskInfo 'Scan Import'` (0x80070775), `schtasks /query /v /fo list`: the scan import, every 5 minutes, as LENDING\rsilva with the old password |
-| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (the vault's entry), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
+| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (its entry in the vault's export; `Get-ADUser -Properties Description` tells which account is the import's), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
 | Unlock | `exit`, `Unlock-ADAccount rsilva` |
 
 Since Rafael's change on Monday at 8:52, the chapter replays the task every
@@ -3220,12 +3242,14 @@ old password, Rafael is locked again. Goal checked on the state: rsilva
 isn't locked out half an hour after the unlock; no enabled task on stacks
 holds a wrong password for him; the scan import is Ready under a service
 account (OU=Service Accounts) whose stored password works, enabled, not an
-administrator; the lockout policy is unchanged (5 tries, at least 30
+administrator, that can write Archives (DL_Archives_RW); the lockout policy is unchanged (5 tries, at least 30
 minutes). Expected traps: unlocking first (it relocks), raising the
 threshold or disabling the lockout, resetting Rafael's password (it
 doesn't unlock), the task as SYSTEM, under a person's account or simply
-disabled (the scans stop arriving), a wrong password for svc_scans
-(refused, and it counts).
+disabled (the scans stop arriving), svc_backup (the vault's other entry,
+read-only on Archives), a wrong password for svc_scans (refused, and it
+counts). Nandini's export lists the service accounts with neutral notes:
+nothing in it names the task or the machine, so the trace is needed.
 
 ### Chapter 3 — The Policy That Doesn't Apply (done)
 
@@ -3713,7 +3737,7 @@ every 10 seconds under load, and a line in its log each minute).
 | Step | Command learnt |
 |---|---|
 | Killed | `kubectl get pods` (restarts, `CrashLoopBackOff`), `kubectl describe pod` (`Last State: Terminated`, `Reason: OOMKilled`, `Exit Code: 137`, `Limits`) |
-| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources); Rui's note: 230Mi at the last meet's peak |
+| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources): up to 230Mi at the meet's peak, which only measuring shows (Rui's note gives no figure nor release) |
 | What changed | `kubectl rollout history deployment/booking` (CHANGE-CAUSE), `--revision=N`; `kubectl logs` (the cache) |
 | Back | `kubectl rollout undo deployment/booking --to-revision=3` or the image in the file |
 | Room | `resources.requests.memory` and `resources.limits.memory` in `booking.yaml`, `kubectl apply -f`, `kubectl rollout status` |

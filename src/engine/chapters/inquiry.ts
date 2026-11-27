@@ -8,15 +8,19 @@
 //     file ORDHDR (R C G D F)"; its help (F1, here ?): another job holds the
 //     record; the job log (DSPJOBLOG) names it: CPF5027, Soraya's session
 //     QPADEV0004, left last evening on order 1847 (DSPRCDLCK, WRKOBJLCK);
+//     Kwame's email names nobody: two green screens are signed on in
+//     QINTER, both in ORDENT with ORDHDR open, and Diego's (QPADEV0002) is
+//     taking the morning's phone orders: only the record lock says which;
 //   - release the record (ENDJOB on Soraya's session: she had changed
 //     nothing), then reply R: the import goes on, ends normally, and the
 //     queue runs.
 // False leads: R while the record is still held (the same question comes
 // back), ENDJOB on the import or C (the night's run is lost: resubmit it
-// with SBMJOB), G (order 1847's change is skipped).
+// with SBMJOB), G (order 1847's change is skipped), ENDJOB on Diego's
+// session (the order he was typing is lost: the chapter can't end).
 // Objective checked on the state: every incoming order in ORDHDR, 1847
 // changed, no job waiting for a reply, the job queue empty, the web
-// receiver still running.
+// receiver and Diego's session still running.
 // Sources: https://www.ibm.com/docs/en/i/7.5?topic=messages-inquiry,
 // https://www.ibm.com/docs/en/i/7.5?topic=ssw_ibm_i_75/cl/dspmsg.html,
 // https://www.ibm.com/docs/en/i/7.5?topic=ssw_ibm_i_75/cl/endjob.html,
@@ -27,13 +31,16 @@ import type { Game } from '../shell';
 import { ibmi, send, type IbmiJob } from '../ibmi';
 import { CHANGED, CHANGED_RRN, HOME, IMPORT_NUMBER, OPEN, PASE_COMMANDS, PASSWORD, SORAYA_JOB, imported, importState, millAccounts, millState, millWorld, order, runImport, sieveHost, clInPase } from './order-book';
 
+/** Diego's green screen: signed on since 07:02, taking phone orders; ORDHDR open, no record held. */
+export const DIEGO_JOB = { number: '412961', user: 'DIEGO', name: 'QPADEV0002' };
+
 const said = (j: Game, text: string) => j.last.output.includes(text) || j.last.errors.some((e) => e.includes(text));
 const importJobs = (j: Game) => ibmi(j).jobs.filter((x) => x.name === 'ORDIMPORT');
 const sorayaGone = (j: Game) => !ibmi(j).jobs.some((x) => x.name === SORAYA_JOB.name);
 const ended = (j: Game, name: string) => ((j.state.ibmiEnded as string[] | undefined) ?? []).some((x) => x.endsWith(`/${name}`));
 const replied = (j: Game, r: string) => ((j.state.ibmiReplies as string[] | undefined) ?? []).includes(`RNQ1218:${r}`);
 const done = (j: Game) =>
-  imported(j) && !importJobs(j).some((x) => x.status === 'MSGW') && !ibmi(j).jobq.length && ibmi(j).jobs.some((x) => x.name === 'ORDWEB');
+  imported(j) && !importJobs(j).some((x) => x.status === 'MSGW') && !ibmi(j).jobq.length && ibmi(j).jobs.some((x) => x.name === 'ORDWEB') && !ended(j, DIEGO_JOB.name);
 
 export const inquiry: Chapter = {
   id: 'inquiry',
@@ -64,6 +71,16 @@ export const inquiry: Chapter = {
             { object: 'ORDERS/ORDHDR', type: '*FILE', state: '*SHRUPD' },
             { object: 'ORDERS/ORDHDR', type: '*FILE', state: '*SHRUPD', record: CHANGED_RRN },
           ],
+        },
+        {
+          ...DIEGO_JOB,
+          type: 'INT',
+          subsystem: 'QINTER',
+          status: 'DSPW',
+          function: 'PGM-ORDENT',
+          cpu: '.4',
+          log: [],
+          locks: [{ object: 'ORDERS/ORDHDR', type: '*FILE', state: '*SHRUPD' }],
         },
       ],
       jobq: [
@@ -100,6 +117,7 @@ export const inquiry: Chapter = {
     { id: 'killed', condition: (j) => ended(j, 'ORDIMPORT'), message: (j) => j.t('inquiry-event-killed') },
     { id: 'cancelled', condition: (j) => ['C', 'D', 'F'].some((r) => replied(j, r)), message: (j) => j.t('inquiry-event-cancelled') },
     { id: 'skipped', condition: (j) => replied(j, 'G'), message: (j) => j.t('inquiry-event-skipped') },
+    { id: 'wrong-session', condition: (j) => ended(j, DIEGO_JOB.name), message: (j) => j.t('inquiry-event-wrong-session') },
     { id: 'web-ended', condition: (j) => ended(j, 'ORDWEB'), message: (j) => j.t('inquiry-event-web-ended') },
     { id: 'released', condition: sorayaGone, message: (j) => j.t('inquiry-event-released') },
     { id: 'end', condition: done, message: (j) => j.t('inquiry-event-end') },

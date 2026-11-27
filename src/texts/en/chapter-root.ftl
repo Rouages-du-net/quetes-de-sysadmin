@@ -135,6 +135,14 @@ root-event-protected =
     in a log:
 
       cat /var/log/eraser.log
+root-event-still-open =
+    The daemon rereads its configuration: one target, the Bin. It leaves your
+    memories alone… for now. But look:  ls -l
+    The memories place is still rwxrwxrwx: any user, "eraser" included,
+    may still delete in it. The next mistake in a configuration won't wait.
+    Take that right away from others (o):
+
+      chmod o-w memories
 # { $loss }: "oui" if memories were deleted, otherwise "non"
 root-event-fixed =
     The daemon rereads its configuration: "target = /Kingdom/Bin". Just one

@@ -38,9 +38,8 @@ lost-packet-notebook =
 
     Die Netzwerkbefehle antworten auf Englisch, wie auf einem echten System:
     „packet loss“ = verlorene Pakete, „timed out“ = keine Antwort rechtzeitig.
-# Kommentare in den Dateien /etc/resolv.conf und /etc/resolv.conf.box (nach „#“)
+# Kommentar in der Datei /etc/resolv.conf (nach „#“)
 lost-packet-resolv-comment = Bei der Installation geschrieben, mit dem alten Router
-lost-packet-resolv-box-comment = Vom neuen Router empfohlene Einstellung
 
 ## Die Seite der Website, von curl geliefert (HTML)
 
@@ -75,9 +74,11 @@ lost-packet-event-dns-other =
     Der Name existiert; falsch ist die Einstellung des Rechners: Er fragt
     192.168.1.250, die Adresse des ALTEN Routers, den es nicht mehr gibt.
 
-    Die richtige Einstellung steht in /etc/resolv.conf.box. Diese Datei
-    gehört root: sudo cp /etc/resolv.conf.box /etc/resolv.conf
-lost-packet-event-dns-repaired = DNS ist repariert: Der Rechner fragt jetzt den neuen Router. Versuch es noch einmal:  ping letters.example
+    Beantwortet auch der neue Router (192.168.1.1) DNS-Anfragen? Frag ihn:
+    dig @192.168.1.1 letters.example
+    Dann trag in die Zeile „nameserver“ einen DNS-Server ein, der antwortet.
+    Die Datei gehört root:  sudo nano /etc/resolv.conf
+lost-packet-event-dns-repaired = DNS ist repariert: Der Rechner fragt jetzt einen Server, der antwortet. Versuch es noch einmal:  ping letters.example
 lost-packet-event-ping-lost =
     Der Name wird übersetzt ({ $ip })… aber 100 % der Pakete gehen verloren!
     Ist die Website down? Oder verirren sich die Pakete unterwegs?

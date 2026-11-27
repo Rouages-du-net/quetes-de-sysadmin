@@ -54,8 +54,22 @@ for (const language of languagesFor('night-batch'))
       expect(play(['tail -1 /srv/batch/in/contrib.dat'])).toContain('T000012END OF FILE         291121+000051520');
       expect(flag('converted')).toBe(true);
       expect(c.finished).not.toContain('copybook');
-      const end = edit('nano check.txt', (t) => t.replace(/:\n/, ': 560\n').concat('\n14 records, 12 contributions, 515.20'));
+      const end = edit('nano check.txt', (t) => t.replace(/:\n/, ': 560\n').concat('\n14 records, 12 contributions, 515.20, 0000 0425 0c'));
       contains(end, 'Bravo');
+      expect(c.finished).toContain('copybook');
+    });
+
+    it("chapter 1 — false lead: Ramón's converter and the trailer alone don't fill the sheet", () => {
+      const { c, play, edit, flag } = part();
+      play(['/opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat']);
+      expect(flag('converted')).toBe(true);
+      // The trailer's figures, the lines counted: the bytes are still missing.
+      edit('nano check.txt', (t) => t.concat('\n560 bytes, 14 records, 12 contributions, 515.20'));
+      expect(c.finished).not.toContain('copybook');
+      // The amount as the converter writes it isn't its bytes.
+      edit('nano check.txt', (t) => t.concat('\nfirst amount +000004250'));
+      expect(c.finished).not.toContain('copybook');
+      edit('nano check.txt', (t) => t.concat('\n00 00 04 25 0C'));
       expect(c.finished).toContain('copybook');
     });
 

@@ -6,7 +6,7 @@
 ## Chapitre 1 — Les Archives
 
 hint-archives-cleanup =
-    .lead = Le fonds ne tient pas sur la clé de 64 Mo. du montre où est la place, et Rosa parle de fichiers temporaires (.tmp) qu'on peut jeter : find sait les trouver dans tous les sous-dossiers, et les effacer.
+    .lead = Le fonds ne tient pas sur la clé de 64 Mo. du montre où est la place, et Rosa parle de fichiers temporaires (.tmp) qu'on peut jeter : find sait les trouver dans tous les sous-dossiers, et les effacer. Certains se cachent tout au fond, ou dans des dossiers cachés.
     .solution = find fonds -name "*.tmp" pour les voir, puis find fonds -name "*.tmp" -delete (avec le -name, sinon tout part).
 hint-archives-saved =
     .lead = Le ménage est fait : il reste à mettre tout le fonds dans UNE archive compressée, écrite directement sur la clé (/media/cle). Regarde man tar : -c crée, -z compresse, -f nomme l'archive.

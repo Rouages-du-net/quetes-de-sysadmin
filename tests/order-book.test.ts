@@ -66,6 +66,9 @@ for (const language of languagesFor('order-book'))
       expect(green()).toContain('IBM i Main Menu');
       const jobs = play(['WRKACTJOB']);
       expect(jobs).toMatch(/ORDIMPORT\s+ORDBATCH\s+BCH.*MSGW/);
+      // Two green screens in order entry: the email names neither.
+      expect(jobs).toMatch(/QPADEV0002\s+DIEGO/);
+      expect(jobs).toMatch(/QPADEV0004\s+SORAYA/);
       expect(width(jobs.split('\n\n')[0])).toBeLessThanOrEqual(80);
       expect(play(['WRKJOBQ QBATCH'])).toContain('ORDPICK');
       const msg = play(['DSPMSG QSYSOPR']);
@@ -75,7 +78,9 @@ for (const language of languagesFor('order-book'))
       // A whole command at the reply prompt leaves it.
       expect(play(['DSPJOBLOG JOB(412907/ORDBATCH/ORDIMPORT)'])).toContain('Record 28 in use by job 412655/SORAYA/QPADEV0004.');
       expect(flag('cause')).toBe(true);
-      expect(play(['DSPRCDLCK FILE(ORDERS/ORDHDR)'])).toMatch(/28\s+QPADEV0004\s+SORAYA\s+412655\s+HELD/);
+      const records = play(['DSPRCDLCK FILE(ORDERS/ORDHDR)']);
+      expect(records).toMatch(/28\s+QPADEV0004\s+SORAYA\s+412655\s+HELD/);
+      expect(records).not.toContain('DIEGO');
       const ended = play(['ENDJOB JOB(412655/SORAYA/QPADEV0004) OPTION(*IMMED)']);
       contains(ended, 'libre');
       expect(c.finished).not.toContain('inquiry');
@@ -86,6 +91,20 @@ for (const language of languagesFor('order-book'))
       expect(play(['WRKJOBQ QBATCH'])).toContain('(No jobs in queue)');
       play(['SIGNOFF']);
       expect(c.remote).toBeNull();
+    });
+
+    it("chapter 1 — false lead: ending the wrong green screen (Diego's, taking orders)", () => {
+      const { c, play, flag, green } = part();
+      green();
+      contains(play(['ENDJOB JOB(412961/DIEGO/QPADEV0002) OPTION(*IMMED)']), 'Diego');
+      expect(flag('wrong-session')).toBe(true);
+      // The record is still held: R brings the question back.
+      play(['DSPMSG QSYSOPR', 'R']);
+      expect(flag('retry-locked')).toBe(true);
+      play(['', 'ENDJOB JOB(QPADEV0004) OPTION(*IMMED)', 'DSPMSG QSYSOPR', 'R']);
+      // The night ran, but Diego's order is lost: no end.
+      expect(play(['WRKJOBQ QBATCH'])).toContain('(No jobs in queue)');
+      expect(c.finished).not.toContain('inquiry');
     });
 
     it('chapter 1 — false leads: R while locked, ENDJOB on the import, then SBMJOB', () => {

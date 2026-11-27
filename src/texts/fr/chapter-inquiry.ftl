@@ -68,10 +68,9 @@ inquiry-email-kwame =
     le relancer, sans perdre les commandes web d'hier soir ? Les listes
     s'impriment toutes seules une fois les travaux de la nuit passés.
 
-    Soraya ajoute : « Je suis partie en vitesse hier soir, le téléphone a
-    sonné pendant que j'étais sur la commande 1847 (La Mie d'Inès), sur
-    l'écran vert. Je n'ai rien modifié, je crois que je l'ai laissé
-    ouvert. »
+    Le bureau a ouvert à sept heures : les commandes par téléphone sont
+    prises sur l'écran vert comme d'habitude, alors ne coupez personne,
+    s'il vous plaît.
 
     Votre profil est VOUS, mot de passe meule-2029 : tn5250 moulin depuis
     votre poste de travail pour l'écran vert, ou ssh moulin pour le côté
@@ -108,8 +107,9 @@ inquiry-event-cause =
     Le voilà : l'enregistrement 28 d'ORDHDR, la commande 1847, est tenu
     par le travail 412655/SORAYA/QPADEV0004, l'écran vert de Soraya,
     laissé ouvert hier soir sur cette commande. Tant que sa session le
-    tient, l'import ne peut pas modifier la commande. Soraya dit n'avoir
-    rien modifié : sa session peut être arrêtée.
+    tient, l'import ne peut pas modifier la commande. Kwame l'appelle : le
+    téléphone a sonné, elle est partie en vitesse, et n'a rien modifié.
+    Sa session peut être arrêtée.
 inquiry-event-retry-locked =
     R a réessayé, mais l'enregistrement est toujours tenu : le travail a
     attendu de nouveau, et la même question est revenue. Réessayer n'aide
@@ -129,6 +129,14 @@ inquiry-event-skipped =
     de la commande 1847 a été laissée de côté, sans bruit. La boulangerie
     recevra l'ancienne quantité. Libérez l'enregistrement, puis soumettez
     l'import de nouveau : il applique ce qu'il a sauté.
+inquiry-event-wrong-session =
+    Vous avez arrêté la session de Diego : il saisissait la commande d'une
+    boulangerie au téléphone, et elle est perdue. Sa session tenait
+    ORDHDR ouvert, comme tout écran de saisie, mais aucun
+    enregistrement : le verrou d'enregistrement (DSPRCDLCK, ou
+    l'historique du travail de l'import) nomme le travail qui tient la
+    commande 1847. « Annuler la dernière saisie » (Instantané de secours)
+    vous ramène avant cette commande.
 inquiry-event-web-ended =
     ORDWEB a été arrêté : les commandes web des boulangeries n'arrivent
     plus. Il appartient au sous-système ORDSBS : redémarrez-le (ENDSBS

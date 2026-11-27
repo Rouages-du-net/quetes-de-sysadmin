@@ -60,7 +60,7 @@
       "whoami",
       "sudo"
      ],
-     "events": 4
+     "events": 5
     },
     {
      "id": "backup",
@@ -266,6 +266,7 @@
       "cat",
       "less",
       "cp",
+      "nano",
       "ping",
       "dig",
       "traceroute",
@@ -332,7 +333,7 @@
       "rm",
       "mkdir"
      ],
-     "events": 6
+     "events": 7
     },
     {
      "id": "versions",
@@ -2569,7 +2570,7 @@
       "ansible-inventory",
       "ansible-doc"
      ],
-     "events": 5
+     "events": 6
     }
    ]
   },
@@ -3339,7 +3340,7 @@
       "systemctl",
       "journalctl"
      ],
-     "events": 10
+     "events": 11
     },
     {
      "id": "hardening",
@@ -3777,7 +3778,7 @@
       "system",
       "db2"
      ],
-     "events": 13
+     "events": 14
     },
     {
      "id": "spooled",
@@ -4023,7 +4024,7 @@
       "Remove-Item",
       "Get-Help"
      ],
-     "events": 14
+     "events": 15
     },
     {
      "id": "log-flood",
@@ -4134,7 +4135,7 @@
       "exit",
       "Get-Help"
      ],
-     "events": 14
+     "events": 15
     },
     {
      "id": "unapplied-policy",

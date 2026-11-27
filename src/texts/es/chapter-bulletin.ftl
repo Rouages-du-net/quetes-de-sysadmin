@@ -107,8 +107,8 @@ bulletin-words-fixed = ya corregido, ya corregida, ya está corregido, ya esta c
 
 bulletin-review = Salomé revisa tu clasificación:
 bulletin-missing-template = Todavía quedan líneas «(por completar)» de la plantilla.
-bulletin-missing-concerns = En «Afecta a este servidor» tienen que estar exactamente nginx, rsync y openssh-server (ese se aplica, aunque aquí no haga falta nada más) — ni certbot ni curl pintan nada ahí.
-bulletin-missing-not-applicable = En «No aplicable», explica el porqué de cada uno: certbot (comprueba si está siquiera instalado) y curl (compara la versión instalada con la versión corregida del boletín).
+bulletin-missing-concerns = En «Afecta a este servidor», la lista todavía no es correcta: falta un CVE, o hay uno que no pinta nada ahí. Comprueba cada paquete con apt antes de clasificarlo.
+bulletin-missing-not-applicable = En «No aplicable», explica el porqué de cada CVE que pongas ahí: lo que apt te dice de su paquete.
 
 ## Eventos
 

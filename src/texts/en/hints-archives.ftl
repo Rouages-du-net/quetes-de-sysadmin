@@ -5,7 +5,7 @@
 ## Chapter 1 — The Archives
 
 hint-archives-cleanup =
-    .lead = The collection does not fit on the 64 MB stick. du shows where the space goes, and Rosa mentions temporary files (.tmp) that can be thrown away: find can track them down in every subdirectory, and delete them.
+    .lead = The collection does not fit on the 64 MB stick. du shows where the space goes, and Rosa mentions temporary files (.tmp) that can be thrown away: find can track them down in every subdirectory, and delete them. Some hide deep down, or in hidden folders.
     .solution = find collection -name "*.tmp" to see them, then find collection -name "*.tmp" -delete (with the -name, or everything goes).
 hint-archives-saved =
     .lead = The clean-up is done: now put the whole collection into ONE compressed archive, written straight onto the stick (/media/usb). See man tar: -c creates, -z compresses, -f names the archive.
