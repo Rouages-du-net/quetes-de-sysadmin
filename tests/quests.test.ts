@@ -164,6 +164,18 @@ for (const language of LANGUAGES)
         contains(all, 'cd : commande introuvable');
         expect(s.finished).toBe(true);
       });
+
+      it('chapter 3 — false lead: the fixed configuration copied, the memories left open', () => {
+        const { s, tout: all } = play('root', ['cat arrival.txt', 'grep password journal.txt', 'sudo cp ~/eraser.conf.fixed /etc/eraser.conf', 'sunflower']);
+        contains(all, 'Le lieu souvenirs est toujours en rwxrwxrwx');
+        expect(s.finished).toBe(false);
+        // The daemon targets the Bin again: no memory fades away any more.
+        const left = s.count(L('/home/you/memories'), '');
+        expect(s.execute('ls -l')).not.toContain('✗');
+        expect(s.count(L('/home/you/memories'), '')).toBe(left);
+        s.execute(L('chmod o-w memories'));
+        expect(s.finished).toBe(true);
+      });
     });
 
     describe('The Eraser, chapter 4 — The Backup', () => {
@@ -513,12 +525,28 @@ for (const language of LANGUAGES)
           'dig letters.example',
           'cat /etc/resolv.conf',
           'dig @9.9.9.9 letters.example',
-          'sudo cp /etc/resolv.conf.box /etc/resolv.conf',
+          'dig @192.168.1.1 letters.example',
+          'sudo nano /etc/resolv.conf',
           'anthill',
-          'ping letters.example',
-          'traceroute letters.example',
-          'curl -I https://letters.example',
         ]);
+        // No file next to it gives the right line: it comes from the diagnosis.
+        s.saveEdition(s.edition!.text.replace('192.168.1.250', '192.168.1.1'));
+        s.quitEdition();
+        for (const line of ['ping letters.example', 'traceroute letters.example', 'curl -I https://letters.example']) s.execute(line);
+        expect(s.finished).toBe(true);
+      });
+
+      it('The Lost Package — false lead: a nameserver guessed without the diagnosis', () => {
+        const { s, tout: all } = play('lost-packet', ['cat notebook.txt', 'ls /etc', 'sudo nano /etc/resolv.conf', 'anthill']);
+        expect(all).not.toContain('resolv.conf.box');
+        s.saveEdition(s.edition!.text.replace('192.168.1.250', '9.9.9.9'));
+        s.quitEdition();
+        // The name resolves, but nothing showed a DNS server answering: not over yet.
+        expect(s.execute('curl -I https://letters.example')).toContain('HTTP/2 200');
+        expect(s.finished).toBe(false);
+        // The diagnosis (a DNS server that answers) then the page: the end.
+        s.execute('dig letters.example');
+        s.execute('curl -I https://letters.example');
         expect(s.finished).toBe(true);
       });
 
@@ -549,6 +577,23 @@ for (const language of LANGUAGES)
           'tar -czf /media/usb/collection.tar.gz collection',
           'tar -tzf /media/usb/collection.tar.gz',
         ]);
+        expect(s.finished).toBe(true);
+      });
+
+      it('The Archives — false lead: only the .tmp files ls shows are removed', () => {
+        const { s, tout: all } = play('archives', [
+          'ls collection/maps collection/press collection/recordings',
+          'rm collection/maps/render.tmp collection/press/export.tmp collection/recordings/raw.tmp',
+          'tar -czf /media/usb/collection.tar.gz collection',
+        ]);
+        contains(all, 'elle emporte encore des fichiers');
+        expect(s.finished).toBe(false);
+        // find sees them all, the hidden ones too.
+        const found = s.execute(L('find collection -name "*.tmp"')) ?? '';
+        expect(found).toContain(L('collection/maps/scans/scan_batch_2/.cache/thumb_07.tmp'));
+        expect(found).toContain(L('collection/manuscripts/.autosave.tmp'));
+        s.execute(L('find collection -name "*.tmp" -delete'));
+        s.execute(L('tar -czf /media/usb/collection.tar.gz collection'));
         expect(s.finished).toBe(true);
       });
     });

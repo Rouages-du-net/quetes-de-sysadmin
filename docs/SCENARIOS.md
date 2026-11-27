@@ -455,7 +455,7 @@ in English). The world finally looks like a real Linux: `/home`, `/etc`,
 | `/var/log` | the daemon's log shows two targets instead of one | `cat`, `grep cible` |
 | `/etc/effaceur.conf` | "cible = /Royaume /Corbeille": one space too many; the file belongs to root | Permission denied |
 | `journal.txt` | find your password (written down, "a very bad idea") | `grep "mot de passe"` (quotes) |
-| `/etc` | install the fixed version | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
+| `/etc` | install the fixed version; the chapter ends once the memories are also protected (the Eraser stops, but a place open to all stays a risk) | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
 | bonus | `/root`, `/etc/sudoers`, `/home/nour` (a diary: we don't read it, even as root) | `sudo ls`, `sudo cat`, `whoami`, `sudo cd` (not found: `cd` is a shell builtin) |
 
 The outcome: the character was the kingdom's administrator. They were the
@@ -636,8 +636,8 @@ gives the method: test step by step, from near to far.
 | `ping 9.9.9.9` | the internet works |
 | `ping letters.example` | "Temporary failure in name resolution": DNS |
 | `dig letters.example`, `cat /etc/resolv.conf` | the computer asks the old home router, which is gone |
-| `dig @9.9.9.9 letters.example` | the name does exist |
-| `sudo cp /etc/resolv.conf.box /etc/resolv.conf` | DNS repaired |
+| `dig @9.9.9.9 letters.example`, `dig @192.168.1.1 letters.example` | the name does exist, and the new router answers DNS |
+| `sudo nano /etc/resolv.conf` (`nameserver 192.168.1.1` or `9.9.9.9`) | DNS repaired, once a dig has shown a server answering |
 | `ping letters.example` | 100 % packet loss… |
 | `traceroute letters.example` | home router, ISP, exchange point, host, then silence |
 | `curl -I https://letters.example` | `HTTP/2 200`: the server was just ignoring ping |
@@ -653,9 +653,11 @@ poems in safety: `git init`, `git add .`, `git commit -m`.
 ## Story 5: The Archives (done, two chapters)
 
 The neighbourhood library's server shuts down at midnight; Rosa only has a
-64 MB USB stick. `du -sh` and `df -h` show that the collection (174 MB)
+64 MB USB stick. `du -sh` and `df -h` show that the collection (182 MB)
 doesn't fit; `tar` fails ("No space left on device"). `find fonds -name
-"*.tmp"` finds 120 MB of temporary files, deleted with `-delete`. The
+"*.tmp"` finds 128 MB of temporary files, deleted with `-delete`: three big
+ones in plain sight, five small ones deeper or in hidden folders, which
+`ls` misses (an archive that still carries one doesn't count). The
 compressed archive (`tar -czf`) is then 48 MB; `tar -tzf` checks it. An
 archivist's moral: a single copy isn't a backup.
 

@@ -5,7 +5,7 @@
 ## Kapitel 1 — Das Archiv
 
 hint-archives-cleanup =
-    .lead = Der Bestand passt nicht auf den 64-MB-Stick. du zeigt, wohin der Platz geht, und Rosa erwähnt temporäre Dateien (.tmp), die weg dürfen: find spürt sie in jedem Unterverzeichnis auf und kann sie löschen.
+    .lead = Der Bestand passt nicht auf den 64-MB-Stick. du zeigt, wohin der Platz geht, und Rosa erwähnt temporäre Dateien (.tmp), die weg dürfen: find spürt sie in jedem Unterverzeichnis auf und kann sie löschen. Manche verstecken sich ganz unten oder in versteckten Ordnern.
     .solution = find bestand -name "*.tmp", um sie zu sehen, dann find bestand -name "*.tmp" -delete (mit dem -name, sonst geht alles).
 hint-archives-saved =
     .lead = Aufgeräumt: Jetzt den ganzen Bestand in EIN komprimiertes Archiv packen, direkt auf den Stick geschrieben (/media/stick). Siehe man tar: -c erstellt, -z komprimiert, -f benennt das Archiv.

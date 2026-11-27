@@ -53,8 +53,8 @@ hint-root-protected =
     .lead = The Eraser erases your memories because it may write in that directory. ls -l shows the permissions: r, w and x, for you, your group and others.
     .solution = chmod o-w memories (others can no longer write in the directory)
 hint-root-fixed =
-    .lead = The Eraser's configuration targets the wrong place, because of an extra space. A fixed version is waiting for you, but /etc belongs to root: you need sudo, and its password hides in your journal (grep can search for a word).
-    .solution = grep "my password" journal.txt, then sudo cp ~/eraser.conf.fixed /etc/eraser.conf
+    .lead = The Eraser's configuration targets the wrong place, because of an extra space. A fixed version is waiting for you, but /etc belongs to root: you need sudo, and its password hides in your journal (grep can search for a word). And your memories must not stay open to everyone (ls -l).
+    .solution = grep "my password" journal.txt, then sudo cp ~/eraser.conf.fixed /etc/eraser.conf; and chmod o-w memories if ls -l still shows rwxrwxrwx
 
 ## Chapter 4 — The Backup
 

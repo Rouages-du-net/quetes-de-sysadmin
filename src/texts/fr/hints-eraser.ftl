@@ -54,8 +54,8 @@ hint-root-protected =
     .lead = L'Effaceur efface tes souvenirs parce qu'il a le droit d'écrire dans ce dossier. ls -l montre les droits : r, w et x, pour toi, ton groupe et les autres.
     .solution = chmod o-w souvenirs (les autres ne peuvent plus écrire dans le dossier)
 hint-root-fixed =
-    .lead = La configuration de l'Effaceur vise le mauvais lieu, à cause d'une espace en trop. Une version corrigée t'attend, mais /etc appartient à root : il faut sudo, et son mot de passe se cache dans ton journal (grep sait chercher un mot).
-    .solution = grep "mot de passe" journal.txt, puis sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf
+    .lead = La configuration de l'Effaceur vise le mauvais lieu, à cause d'une espace en trop. Une version corrigée t'attend, mais /etc appartient à root : il faut sudo, et son mot de passe se cache dans ton journal (grep sait chercher un mot). Et tes souvenirs ne doivent pas rester ouverts à tous (ls -l).
+    .solution = grep "mot de passe" journal.txt, puis sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf ; et chmod o-w souvenirs si ls -l montre encore rwxrwxrwx
 
 ## Chapitre 4 — La Sauvegarde
 

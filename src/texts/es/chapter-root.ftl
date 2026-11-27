@@ -135,6 +135,14 @@ root-event-protected =
     hacen en un registro:
 
       cat /var/log/borrador.log
+root-event-still-open =
+    El demonio vuelve a leer su configuración: un solo objetivo, la Papelera.
+    Deja tranquilos tus recuerdos… por ahora. Pero mira:  ls -l
+    El lugar recuerdos sigue en rwxrwxrwx: cualquier usuario, «borrador»
+    incluido, aún puede borrar en él. El próximo error de configuración no
+    esperará. Quítales ese permiso a los demás (o):
+
+      chmod o-w recuerdos
 # { $loss }: «yes» si se borraron recuerdos, si no «no»
 root-event-fixed =
     El demonio vuelve a leer su configuración: «objetivo = /Reino/Papelera». Un solo

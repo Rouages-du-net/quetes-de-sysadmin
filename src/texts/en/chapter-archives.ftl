@@ -61,8 +61,11 @@ archives-event-full =
     need to make room BEFORE: what in the collection is not precious?
     (du -h collection, then find collection -name "*.tmp")
 archives-event-tmp =
-    Three temporary files, 120 MB between them! Rosa says we can throw
-    them away. find can delete them in one go, with -delete at the end:
+    Temporary files everywhere: in each folder, deeper down among the scans,
+    even in hidden folders (their name starts with a dot: ls doesn't show
+    them without -a). About 128 MB between them! Rosa says we can throw
+    them away. find searches every level and can delete them in one go,
+    with -delete at the end:
 
       find collection -name "*.tmp" -delete
 
@@ -71,6 +74,12 @@ archives-event-loss =
     Ouch: a precious file from the collection has disappeared, and
     find -delete, like rm, goes through no bin… In real life, that's why you make backups BEFORE cleaning
     up. Here, you can restart the chapter (link below the terminal).
+archives-event-leftovers =
+    The archive fits on the stick… but it still carries temporary files
+    (tar -tzf shows them). Some were hiding deeper, or in hidden folders:
+    ls only shows one level, and not the names that start with a dot.
+    find searches everywhere:  find collection -name "*.tmp"
+    Throw them away, then make the archive again.
 archives-event-cleanup =
     The cleanup is done. Check with du -sh collection, then create the compressed
     archive directly on the stick:
