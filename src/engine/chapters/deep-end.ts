@@ -11,8 +11,9 @@
 // You read kubectl describe pod (Last State: Terminated, Reason:
 // OOMKilled, Exit Code: 137), kubectl top pod and node, kubectl rollout
 // history; you go back to 2.3.1 (kubectl rollout undo, or the image in the
-// file), and set requests and limits from what was measured (Rui's note:
-// 230Mi at the last meet's peak), in the file.
+// file), and set requests and limits from what you measure (kubectl top pod
+// under the meet's load: up to 230Mi; Rui's note no longer gives the peak,
+// the release numbers or the limits), in the file.
 // Objective checked on the state: the Deployment rolled out on 2.3.1, the
 // site answering through Traefik under the meet's load; a memory limit
 // above the peak (230Mi) and no more than 1Gi; requests of at least 128Mi

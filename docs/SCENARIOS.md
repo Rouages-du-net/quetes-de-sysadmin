@@ -2295,8 +2295,11 @@ was already there, a YAML error, a misspelt module. Other accepted solution:
 
 Goal checked on the state: on the three centres, the file and the
 configuration loaded by sshd say `PasswordAuthentication no`, and the last
-full run changed nothing. Expected trap: the file changed without sshd being
-reloaded (the handler is only notified on a change).
+full run changed nothing; Ansible's record of the runs shows the change was
+rehearsed (a `--check` run, then a first real change limited to part of the
+centres). Expected traps: the file changed without sshd being reloaded (the
+handler is only notified on a change); all three centres at once, without
+the rehearsal (the chapter must then be restarted).
 
 ## Story 19: The Patch (one chapter)
 
@@ -2724,9 +2727,11 @@ it relaunches the miner: its `server.js` was changed), `usermod -L` alone.
 
 Goal checked on the state: no `@reboot` line and `sync-orders` kept, the
 intruder's key removed and Selma's kept, the miner's files gone,
-`server.js` identical to the release, the app running and nothing
-relaunched. Expected traps: `crontab -r`, emptying `authorized_keys`,
-trusting the key's comment, restoring from the rebuilt copy, restarting the
+`server.js` identical to the release and that release's signature checked
+(a `Good signature` seen: fixing the file by hand is not enough), the app
+running and nothing relaunched. Expected traps: `crontab -r`, emptying
+`authorized_keys`, trusting the key's comment (both keys say
+`selma@studio`), restoring from the rebuilt copy, restarting the
 app before `server.js` is clean.
 
 ### Chapter 4 — Hardening (done)
@@ -3721,7 +3726,7 @@ every 10 seconds under load, and a line in its log each minute).
 | Step | Command learnt |
 |---|---|
 | Killed | `kubectl get pods` (restarts, `CrashLoopBackOff`), `kubectl describe pod` (`Last State: Terminated`, `Reason: OOMKilled`, `Exit Code: 137`, `Limits`) |
-| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources); Rui's note: 230Mi at the last meet's peak |
+| Measure | `kubectl top pod -n swim`, `kubectl top node`, `kubectl describe node` (Allocatable, Allocated resources): up to 230Mi at the meet's peak, which only measuring shows (Rui's note gives no figure nor release) |
 | What changed | `kubectl rollout history deployment/booking` (CHANGE-CAUSE), `--revision=N`; `kubectl logs` (the cache) |
 | Back | `kubectl rollout undo deployment/booking --to-revision=3` or the image in the file |
 | Room | `resources.requests.memory` and `resources.limits.memory` in `booking.yaml`, `kubectl apply -f`, `kubectl rollout status` |

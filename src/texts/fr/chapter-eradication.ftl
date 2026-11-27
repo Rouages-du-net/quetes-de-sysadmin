@@ -59,8 +59,9 @@ eradication-event-key-all =
     clé de l'intrus·e devait partir : compare les empreintes (ssh-keygen
     -lf) avec celle de son courriel.
 eradication-event-key =
-    La clé de l'intrus·e est retirée, celle de Selma gardée. Le commentaire
-    (deploy@ci-runner) avait l'air légitime : seule l'empreinte les distinguait.
+    La clé de l'intrus·e est retirée, celle de Selma gardée. Les deux disaient
+    selma@studio : un commentaire est du texte libre, seule l'empreinte les
+    distinguait.
 eradication-event-files =
     Le mineur et son chien de garde ont disparu de /tmp/.cache.
 eradication-event-bad-signature =
@@ -73,6 +74,10 @@ eradication-event-verified =
 eradication-event-restored =
     server.js est de nouveau identique à la version publiée : la ligne
     ajoutée a disparu.
+eradication-event-unverified =
+    server.js ressemble de nouveau à la version publiée, mais rien ne le
+    prouve : l'intrus·e a pu changer plus d'une ligne. Vérifie la signature
+    de la version de Selma (gpg --verify) avant de lui faire confiance.
 eradication-event-relaunched =
     L'appli est repartie, et avec elle le chien de garde et le mineur :
     server.js les relance toujours, et leur script est toujours là.

@@ -54,7 +54,7 @@ hint-eradication-restored =
     .lead = Stell server.js aus dem Archiv wieder her, dessen Signatur gültig ist (man tar, -x und -C).
     .solution = sudo tar -xzf /srv/releases/delivery-2.3.1.tar.gz -C /srv (es überschreibt /srv/delivery/server.js; im Zweifel mit diff gegen die des Archivs vergleichen).
 hint-eradication-end =
-    .lead = Prüfe: kein @reboot, sync-orders behalten, nur Selmas Schlüssel, /tmp/.cache weg, server.js wie veröffentlicht, die App läuft und nichts wurde neu gestartet.
+    .lead = Prüfe: kein @reboot, sync-orders behalten, nur Selmas Schlüssel, /tmp/.cache weg, server.js wie im Release, dessen Signatur du geprüft hast, die App läuft und nichts wurde neu gestartet.
     .solution = sudo crontab -u deploy -l, sudo ssh-keygen -lf /home/deploy/.ssh/authorized_keys, sudo ls -la /tmp/.cache, sudo systemctl restart delivery, ps aux | grep cache.
 
 ## Kapitel 4 — Härtung

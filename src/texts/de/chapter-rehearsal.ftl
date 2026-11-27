@@ -94,6 +94,13 @@ rehearsal-event-not-reload =
     ändert daran nichts: Die Zeile ist schon da, der Task sagt „ok“, er
     benachrichtigt nicht mehr. Du musst ssh selbst neu laden, auf den
     betroffenen Zentren (das Modul service, mit ansible).
+rehearsal-event-unrehearsed =
+    Die Änderung ging wirklich raus, ohne die vollständige Probe: Entweder
+    kam vorher kein Lauf mit --check, oder alle drei Zentren bekamen sie auf
+    einmal. Hier hat sich niemand ausgesperrt, aber nichts hat es vorher
+    gezeigt. Théo: „Wir machen das noch mal, richtig.“ Starte das Kapitel
+    neu (über das Menü), probe dann mit --check --diff und fang mit einem
+    einzigen Zentrum an (--limit).
 rehearsal-event-end =
     Auf allen drei Zentren lehnt sshd jetzt Passwörter ab, und ein erneuter
     Lauf des Playbooks ändert nichts. Théo: „Und niemand hat sich

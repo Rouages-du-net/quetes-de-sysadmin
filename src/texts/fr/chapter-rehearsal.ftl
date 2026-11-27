@@ -94,6 +94,13 @@ rehearsal-event-not-reload =
     ligne est déjà là, la tâche dit « ok », elle ne notifie plus. Il faut
     recharger ssh soi-même, sur les centres concernés (le module service,
     avec ansible).
+rehearsal-event-unrehearsed =
+    Le changement est parti pour de vrai sans la répétition complète : soit
+    aucun passage --check n'est venu avant, soit les trois centres l'ont
+    reçu d'un coup. Ici, personne n'est resté dehors, mais rien ne l'a
+    montré avant. Théo : « On la refait, proprement. » Recommence le
+    chapitre (depuis le menu), puis répète avec --check --diff et commence
+    par un seul centre (--limit).
 rehearsal-event-end =
     Sur les trois centres, sshd refuse désormais les mots de passe, et le
     playbook relancé ne change plus rien. Théo : « Et personne n'est resté

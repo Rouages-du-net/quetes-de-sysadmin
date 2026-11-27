@@ -27,15 +27,10 @@ deep-end-message-folake =
 deep-end-note-rui =
     Note from Rui (Friday, 18:20)
 
-    I've applied 2.4.0: a cache of results, so that the timetable page is
-    faster tomorrow. I've also added memory requests and limits, as the
-    Kubernetes tutorial does (64Mi and 128Mi): it's cleaner. The pods
+    I've applied the new release: a cache of results, so that the
+    timetable page is faster tomorrow. I've also added memory requests and
+    limits, as the Kubernetes tutorial does: it's cleaner. The pods
     started fine.
-
-    For the record, at last Saturday's meet (on 2.3.1, without limits),
-    kubectl top pod showed at most 230Mi per pod at the peak.
-
-    The releases: 2.3.1 (since 4 June), 2.4.0 (tonight).
 
     Rui
 
@@ -49,7 +44,8 @@ deep-end-event-oom =
 deep-end-event-top =
     kubectl top asks the metrics-server what each pod uses right now
     (kubectl top node for the whole machine). Compare it with the limit in
-    the Deployment, and with what Rui measured at the last meet.
+    the Deployment; under the meet's load it moves from minute to minute:
+    look more than once, the peak is what counts.
 deep-end-event-history =
     kubectl rollout history lists the Deployment's revisions, with their
     CHANGE-CAUSE: 2.4.0 brought a new cache yesterday. A Deployment keeps
@@ -91,11 +87,11 @@ deep-end-event-rolled-back =
     The Deployment runs 2.3.1 again. Is it in the files, and does it have
     room enough for the meet's peak?
 deep-end-event-below-peak =
-    This limit is below what 2.3.1 used at the last meet's peak (230Mi,
-    Rui's note): at the busiest minute, it would be killed again. Set it
-    above the peak, with a margin.
+    This limit is below what 2.3.1 uses at the meet's busiest minutes: at
+    the peak, it would be killed again. Measure it (kubectl top pod, more
+    than once) and set the limit above the peak, with a margin.
 deep-end-event-limit-raised =
-    The memory limit is now above the peak Rui measured.
+    The memory limit is now above the meet's peak.
 deep-end-event-requests-low =
     The requests are far below what the app uses under load: the
     scheduler reserves that much, and might place other pods where the

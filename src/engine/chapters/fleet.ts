@@ -217,7 +217,7 @@ export const onCentre = (j: Game, name: string) => (j as Shell).internal(name)!;
 
 /** The last complete run (without --check, without --limit) of a playbook. */
 export function lastComplete(j: Game) {
-  return [...history(j as Shell).executions].reverse().find((e) => !e.check && !e.limit && NAMES.every((n) => e.hosts[n]));
+  return [...history(j as Shell).executions].reverse().find((e) => !e.check && !e.limit && !e.aborted && NAMES.every((n) => e.hosts[n]));
 }
 
 /** Idempotent: the last complete run changed nothing, failed nothing, reached everyone. */

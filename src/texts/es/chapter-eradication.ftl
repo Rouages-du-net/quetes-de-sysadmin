@@ -58,8 +58,8 @@ eradication-event-key-all =
     había que quitar la clave del intruso: compara las huellas
     (ssh-keygen -lf) con la de su correo.
 eradication-event-key =
-    La clave del intruso está quitada, la de Selma se conserva. El
-    comentario (deploy@ci-runner) parecía legítimo: solo la huella las
+    La clave del intruso está quitada, la de Selma se conserva. Las dos
+    decían selma@studio: un comentario es texto libre, solo la huella las
     distinguía.
 eradication-event-files =
     El minero y su vigilante han desaparecido de /tmp/.cache.
@@ -73,6 +73,10 @@ eradication-event-verified =
 eradication-event-restored =
     server.js vuelve a ser idéntico a la versión: la línea añadida ha
     desaparecido.
+eradication-event-unverified =
+    server.js vuelve a parecerse a la versión, pero nada lo prueba: el
+    intruso pudo cambiar más de una línea. Comprueba la firma de la versión
+    de Selma (gpg --verify) antes de fiarte.
 eradication-event-relaunched =
     La aplicación ha vuelto a arrancar, y con ella el vigilante y el minero:
     server.js todavía los relanza, y su script sigue ahí. Páralos, y luego

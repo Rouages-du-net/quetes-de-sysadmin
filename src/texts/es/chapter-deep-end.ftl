@@ -30,16 +30,10 @@ deep-end-message-folake =
 deep-end-note-rui =
     Nota de Rui (viernes, 18:20)
 
-    He aplicado la 2.4.0: una caché de resultados, para que la página de
-    horarios vaya más rápida mañana. También he añadido requests y limits
-    de memoria, como hace el tutorial de Kubernetes (64Mi y 128Mi): queda
-    más limpio. Los pods han arrancado bien.
-
-    Para que conste, en la competición del sábado pasado (con la 2.3.1,
-    sin límites), kubectl top pod mostró como mucho 230Mi por pod en el
-    pico.
-
-    Las versiones: 2.3.1 (desde el 4 de junio), 2.4.0 (esta noche).
+    He aplicado la nueva versión: una caché de resultados, para que la
+    página de horarios vaya más rápida mañana. También he añadido requests
+    y limits de memoria, como hace el tutorial de Kubernetes: queda más
+    limpio. Los pods han arrancado bien.
 
     Rui
 
@@ -54,7 +48,8 @@ deep-end-event-oom =
 deep-end-event-top =
     kubectl top pregunta al metrics-server lo que usa cada pod ahora mismo
     (kubectl top node para toda la máquina). Compáralo con el límite del
-    Deployment, y con lo que midió Rui en la última competición.
+    Deployment; con la carga de la competición cambia de un minuto a otro:
+    mira más de una vez, lo que cuenta es el pico.
 deep-end-event-history =
     kubectl rollout history lista las revisiones del Deployment, con su
     CHANGE-CAUSE: la 2.4.0 trajo ayer una caché nueva. Un Deployment
@@ -98,11 +93,12 @@ deep-end-event-rolled-back =
     El Deployment vuelve a ejecutar la 2.3.1. ¿Está en los archivos, y
     tiene espacio suficiente para el pico de la competición?
 deep-end-event-below-peak =
-    Este límite está por debajo de lo que usó la 2.3.1 en el pico de la
-    última competición (230Mi, la nota de Rui): en el minuto de más
-    actividad, volverían a matarla. Ponlo por encima del pico, con margen.
+    Este límite está por debajo de lo que usa la 2.3.1 en los minutos de
+    más actividad de la competición: en el pico, volverían a matarla.
+    Mídelo (kubectl top pod, más de una vez) y pon el límite por encima del
+    pico, con margen.
 deep-end-event-limit-raised =
-    El límite de memoria está ahora por encima del pico que midió Rui.
+    El límite de memoria está ahora por encima del pico de la competición.
 deep-end-event-requests-low =
     Las requests están muy por debajo de lo que usa la aplicación con
     carga: el planificador reserva eso, y podría colocar otros pods donde
