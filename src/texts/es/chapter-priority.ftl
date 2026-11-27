@@ -20,9 +20,8 @@ priority-email-salome =
 
     Hazte la pregunta que me hago siempre: ¿quién puede alcanzar este
     servicio, y cómo? Mira lo que escucha de verdad en este servidor (man
-    ss, man nmap). Un servicio accesible desde internet, aunque tenga una
-    puntuación más baja, merece tratarse antes que una herramienta que nunca
-    se ejecuta a menos que la lances tú.
+    ss, man nmap). Una puntuación dice lo grave que es una vez alcanzado el
+    fallo; no dice nada de quién puede alcanzarlo.
 
     Escribe tu decisión en prioridad.md, con el porqué. Y dime también qué
     hacemos con el CVE de openssh-server: se aplica a este servidor, pero
@@ -45,9 +44,10 @@ priority-words-protected = ya protegido, ya está en "no", ya esta en "no", ya e
 
 priority-review = Salomé revisa tu decisión:
 priority-missing-template = Todavía queda la línea «(por completar)» de la plantilla.
-priority-missing-order = Hay que nombrar los dos CVE (nginx y rsync), nginx primero.
+priority-missing-order = Hay que nombrar los dos CVE que quedan, en el orden en que los vas a tratar.
 priority-missing-exposure = Di por qué: ¿qué hace que nginx sea accesible desde internet, y por qué rsync no lo es (mira ss -tlnp o nmap)?
 priority-missing-ssh = No olvides el CVE de openssh-server: ¿se aplica? ¿Necesita alguna acción?
+priority-missing-look = Tu razonamiento se sostiene sobre el papel, pero ¿has mirado lo que escucha de verdad en este servidor (ss -tlnp o nmap)?
 
 ## Eventos
 

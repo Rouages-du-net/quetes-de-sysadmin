@@ -7,7 +7,8 @@
 // nginx comes first.
 // Objective checked on the state: priority.md ranks nginx before rsync, with
 // a justification that cites exposure (not only the score), and
-// notes that openssh-server has nothing to do here (already protected).
+// notes that openssh-server has nothing to do here (already protected);
+// and the exposure was looked at on the machine (ss or nmap: 'expose').
 // Expected traps: ranking only by decreasing CVSS score (rsync
 // before nginx).
 // Sources: https://man7.org/linux/man-pages/man8/ss.8.html,
@@ -45,6 +46,8 @@ const missing = (j: Game): string[] => {
   if (!okCity(j) || !okOrder(j)) m.push('order');
   if (okCity(j) && okOrder(j) && !okExposure(j)) m.push('exposure');
   if (okCity(j) && okOrder(j) && okExposure(j) && !sshOk(j)) m.push('ssh');
+  // A reasoning only holds once the exposure was looked at on the machine.
+  if (!m.length && !j.flags.has('expose')) m.push('look');
   return m;
 };
 
@@ -71,7 +74,11 @@ export const priority: Chapter = {
       cron: { description: 'Regular background program processing daemon', active: true, executable: 'cron' },
     }),
   }),
-  initialise: initialiseWatch,
+  initialise: (j) => {
+    initialiseWatch(j);
+    // Salomé only rereads what changed: the starting template counts as already read.
+    j.state.readPriority = readDoc(j);
+  },
   createWorld: (t) =>
     watchWorld(t, {
       home: { 'email_salome.txt': f(t('priority-email-salome')), 'priority.md': f(t('priority-template'), { lines: true }) },
@@ -95,6 +102,6 @@ export const priority: Chapter = {
       message: (j) => j.t('priority-event-expose'),
     },
     { id: 'order', condition: docOk, message: (j) => j.t('priority-event-order') },
-    { id: 'end', condition: docOk, message: (j) => j.t('priority-event-end') },
+    { id: 'end', condition: (j) => docOk(j) && j.flags.has('expose'), message: (j) => j.t('priority-event-end') },
   ],
 };

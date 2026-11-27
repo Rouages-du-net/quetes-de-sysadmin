@@ -101,6 +101,16 @@ ${CVE.ssh.id} (openssh-server) : ${w('already protected (KbdInteractiveAuthentic
       expect(c.finished).toContain('priority');
     });
 
+    it('chapter 2 — false lead: the right order without looking at what listens', () => {
+      const { c, jouer: play, editer: edit } = part(['bulletin']);
+      expect(play(['ls'])).not.toContain('Salomé');
+      const review = edit('nano priority.md', () => DOC_PRIORITY(false));
+      expect(review).toContain('ss -tlnp');
+      expect(c.finished).not.toContain('priority');
+      play(['ss -tlnp']);
+      expect(c.finished).toContain('priority');
+    });
+
     it('chapter 2 — false lead: ranking by score alone (rsync before nginx)', () => {
       const { c, jouer: play, editer: edit } = part(['bulletin']);
       const e = (id: string) => c.shell.flags.has(id);

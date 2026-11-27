@@ -2111,8 +2111,10 @@ and "The Exposure".
 
 Goal checked on the state: `priorite.md` puts nginx before rsync (even
 though its score is lower), with a justification that cites exposure (not
-just the score), and notes that openssh-server has nothing to do here.
-Expected trap: sorting only by decreasing CVSS score (rsync before nginx).
+just the score), and notes that openssh-server has nothing to do here;
+and the exposure was looked at on the machine (`ss` or `nmap`). Expected
+traps: sorting only by decreasing CVSS score (rsync before nginx); the
+right order guessed without looking at what listens.
 
 ### Chapter 3 — The Fix (done)
 
