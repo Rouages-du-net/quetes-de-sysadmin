@@ -863,7 +863,8 @@ reload, the game plays a minute of traffic, written to `access.log`.
 
 Goal checked on the state: during the last simulated minute, every visitor
 request was served, and rate limiting refused at least 60 % of the robot's
-requests.
+requests; and the robot was found in the log (its addresses counted with
+`awk`, `cut` or `uniq`).
 
 Expected traps: `limit_req` without `limit_req_zone` ("zero size shared
 memory zone"), a limit without burst (a page and its four files at once:

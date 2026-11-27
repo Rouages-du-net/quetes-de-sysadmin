@@ -815,7 +815,10 @@ for (const language of LANGUAGES)
         const { s } = play('concert', ['sudo id', 'ants-2026']);
         s.execute("echo 'limit_req_zone $binary_remote_addr zone=letters:10m rate=1r/s;' | sudo tee /etc/nginx/conf.d/limits.conf");
         modify(s, SITE, (t) => t.replace('    root /var/www/letters;', '    limit_req zone=letters burst=20 nodelay;\n    root /var/www/letters;'));
-        s.execute('sudo systemctl reload nginx');
+        // False lead: a tutorial's limit, without ever reading the log.
+        contains(s.execute('sudo systemctl reload nginx') ?? '', 'qui demande quoi');
+        expect(s.finished).toBe(false);
+        s.execute("sudo cut -d ' ' -f 1 /var/log/nginx/access.log | sort | uniq -c");
         expect(s.finished).toBe(true);
       });
     });
