@@ -2869,8 +2869,10 @@ opens after "Trust, Then Switch" and "The Probe".
 | Convert | `/opt/batch/bin/ebc2asc` (field by field) into `/srv/batch/in/contrib.dat`; `check.txt` |
 
 Goal checked on the state: `contrib.dat` holds the 14 records converted
-with the right amounts, and `check.txt` gives 12 contributions and the
-control total 515.20. Expected traps: `iconv -f EBCDIC-US -t ASCII`
+with the right amounts, and `check.txt` gives the size (560), the 14
+records, 12 contributions, the control total 515.20 and the first amount's
+five bytes as the file stores them (00 00 04 25 0C, only `od`/`xxd`/`hexdump`
+show them: the converter alone doesn't fill the sheet). Expected traps: `iconv -f EBCDIC-US -t ASCII`
 ("illegal input sequence at position 75", inside the first amount),
 `iconv -f IBM037 -t UTF-8` (0x25 becomes a newline), `dd conv=ascii`
 (the amounts silently changed; ebc2asc then refuses them).

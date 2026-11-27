@@ -14,8 +14,8 @@ hint-copybook-converted =
     .lead = Une conversion du fichier entier abîme les montants condensés. Les notes de Ramón (/opt/batch/NOTES.txt) nomment l'outil qui convertit champ par champ.
     .solution = /opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat, puis cat /srv/batch/in/contrib.dat.
 hint-copybook-end =
-    .lead = Remplis verification.txt : la taille, les enregistrements, et ce que dit l'enregistrement de fin (la dernière ligne du fichier converti).
-    .solution = nano verification.txt : 560 octets, 14 enregistrements, 12 cotisations, total de contrôle 515.20 (T000012…+000051520).
+    .lead = Remplis verification.txt : la taille, les enregistrements, ce que dit l'enregistrement de fin (la dernière ligne du fichier converti), et le premier montant tel que le fichier d'origine le garde (octets 34 à 38 du deuxième enregistrement, dans od ou xxd).
+    .solution = nano verification.txt : 560 octets, 14 enregistrements, 12 cotisations, total de contrôle 515.20 (T000012…+000051520), premier montant 00 00 04 25 0C.
 
 ## Chapitre 2 — Code retour
 

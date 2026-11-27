@@ -14,8 +14,8 @@ hint-copybook-converted =
     .lead = Eine Umwandlung der ganzen Datei beschädigt die gepackten Beträge. Ramóns Notizen (/opt/batch/NOTES.txt) nennen das Werkzeug, das Feld für Feld umwandelt.
     .solution = /opt/batch/bin/ebc2asc /srv/drop/contrib.ebc /srv/batch/in/contrib.dat, dann cat /srv/batch/in/contrib.dat.
 hint-copybook-end =
-    .lead = Füll pruefung.txt aus: die Größe, die Sätze und was der Schlusssatz sagt (die letzte Zeile der umgewandelten Datei).
-    .solution = nano pruefung.txt: 560 Bytes, 14 Sätze, 12 Beiträge, Kontrollsumme 515.20 (T000012…+000051520).
+    .lead = Füll pruefung.txt aus: die Größe, die Sätze was der Schlusssatz sagt (die letzte Zeile der umgewandelten Datei) und den ersten Betrag, wie ihn die Originaldatei speichert (Bytes 34 bis 38 des zweiten Satzes, in od oder xxd).
+    .solution = nano pruefung.txt: 560 Bytes, 14 Sätze, 12 Beiträge, Kontrollsumme 515.20 (T000012…+000051520), erster Betrag 00 00 04 25 0C.
 
 ## Kapitel 2 — Rückgabewert
 

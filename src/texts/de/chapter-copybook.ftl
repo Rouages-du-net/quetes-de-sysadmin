@@ -74,6 +74,7 @@ copybook-check =
     Anzahl der Sätze (einer alle 40 Bytes):
     Beiträge (Detailsätze):
     Kontrollsumme (im Schlusssatz):
+    Betrag des ersten Beitrags, seine 5 Bytes in der Datei (hex):
 
 ## Ereignisse
 

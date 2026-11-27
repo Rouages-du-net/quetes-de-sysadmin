@@ -72,6 +72,7 @@ copybook-check =
     Nombre d'enregistrements (un tous les 40 octets) :
     Cotisations (enregistrements de détail) :
     Total de contrôle (dans l'enregistrement de fin) :
+    Montant de la première cotisation, ses 5 octets dans le fichier (hexa) :
 
 ## Événements
 

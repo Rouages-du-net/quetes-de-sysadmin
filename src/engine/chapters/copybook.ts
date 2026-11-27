@@ -14,8 +14,11 @@
 //     (0x25 becomes a newline, 0x04 becomes 0x9C);
 //   - Ramón's converter, /opt/batch/bin/ebc2asc, converts field by field.
 // Objective checked on the state: /srv/batch/in/contrib.dat holds the 14
-// records, converted (amounts right), and check.txt gives the number of
-// contributions (12) and the control total of the trailer (515.20).
+// records, converted (amounts right), and check.txt gives the size (560), the
+// records (14), the number of contributions (12), the control total of the
+// trailer (515.20), and the first contribution's amount as its five bytes in
+// the file (00 00 04 25 0C): only a look at the bytes shows them, the
+// converter's output doesn't.
 // Sources: https://man7.org/linux/man-pages/man1/iconv.1.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/dd-invocation.html,
 // https://www.gnu.org/software/coreutils/manual/html_node/od-invocation.html
@@ -35,7 +38,10 @@ const onFile = (j: Game, commands: string[]) => j.last.line.includes('contrib.eb
 const converted = (j: Game) => (j.read(DAT) ?? '').replace(/\n+$/, '') === asciiFile(TEST_NIGHT);
 const checked = (j: Game) => {
   const text = j.read(path(j.t, `${HOME}/check.txt`)) ?? '';
-  return /(^|\D)12(\D|$)/.test(text) && /515[.,]20|51520/.test(text);
+  const number = (n: string) => new RegExp(`(^|\\D)${n}(\\D|$)`).test(text);
+  // The packed amount, however it is written: 00 00 04 25 0C, 0000 0425 0c, 0x00 0x00…
+  const packed = text.toLowerCase().replace(/0x/g, '').replace(/[^0-9a-f\n]/g, '').includes('000004250c');
+  return number('560') && number('14') && number('12') && /515[.,]20|51520/.test(text) && packed;
 };
 
 export const copybook: Chapter = {
