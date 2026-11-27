@@ -2569,7 +2569,7 @@
       "ansible-inventory",
       "ansible-doc"
      ],
-     "events": 5
+     "events": 6
     }
    ]
   },
@@ -3339,7 +3339,7 @@
       "systemctl",
       "journalctl"
      ],
-     "events": 10
+     "events": 11
     },
     {
      "id": "hardening",
