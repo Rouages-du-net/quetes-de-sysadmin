@@ -60,7 +60,7 @@
       "whoami",
       "sudo"
      ],
-     "events": 4
+     "events": 5
     },
     {
      "id": "backup",

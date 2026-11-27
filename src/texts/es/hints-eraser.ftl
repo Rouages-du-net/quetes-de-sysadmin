@@ -53,8 +53,8 @@ hint-root-protected =
     .lead = El Borrador borra tus recuerdos porque puede escribir en esa carpeta. ls -l muestra los permisos: r, w y x, para ti, para tu grupo y para los demás.
     .solution = chmod o-w recuerdos (los demás ya no pueden escribir en la carpeta)
 hint-root-fixed =
-    .lead = La configuración del Borrador apunta al sitio equivocado, por culpa de un espacio de más. Te espera una versión corregida, pero /etc pertenece a root: necesitas sudo, y su contraseña se esconde en tu diario (grep puede buscar una palabra).
-    .solution = grep "mi contraseña" diario.txt, y luego sudo cp ~/borrador.conf.corregido /etc/borrador.conf
+    .lead = La configuración del Borrador apunta al sitio equivocado, por culpa de un espacio de más. Te espera una versión corregida, pero /etc pertenece a root: necesitas sudo, y su contraseña se esconde en tu diario (grep puede buscar una palabra). Y tus recuerdos no deben quedar abiertos a todos (ls -l).
+    .solution = grep "mi contraseña" diario.txt, y luego sudo cp ~/borrador.conf.corregido /etc/borrador.conf; y chmod o-w recuerdos si ls -l aún muestra rwxrwxrwx
 
 ## Capítulo 4 — La Copia de Seguridad
 

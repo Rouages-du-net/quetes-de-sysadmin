@@ -164,6 +164,18 @@ for (const language of LANGUAGES)
         contains(all, 'cd : commande introuvable');
         expect(s.finished).toBe(true);
       });
+
+      it('chapter 3 — false lead: the fixed configuration copied, the memories left open', () => {
+        const { s, tout: all } = play('root', ['cat arrival.txt', 'grep password journal.txt', 'sudo cp ~/eraser.conf.fixed /etc/eraser.conf', 'sunflower']);
+        contains(all, 'Le lieu souvenirs est toujours en rwxrwxrwx');
+        expect(s.finished).toBe(false);
+        // The daemon targets the Bin again: no memory fades away any more.
+        const left = s.count(L('/home/you/memories'), '');
+        expect(s.execute('ls -l')).not.toContain('✗');
+        expect(s.count(L('/home/you/memories'), '')).toBe(left);
+        s.execute(L('chmod o-w memories'));
+        expect(s.finished).toBe(true);
+      });
     });
 
     describe('The Eraser, chapter 4 — The Backup', () => {

@@ -137,6 +137,14 @@ root-event-protected =
     tun, in ein Log:
 
       cat /var/log/radierer.log
+root-event-still-open =
+    Der Daemon liest seine Konfiguration neu: ein einziges Ziel, der
+    Mülleimer. Er lässt deine Erinnerungen in Ruhe… vorerst. Aber schau:  ls -l
+    Der Ort erinnerungen ist immer noch rwxrwxrwx: Jeder Benutzer, auch
+    „radierer“, darf darin weiter löschen. Der nächste Fehler in einer
+    Konfiguration wartet nicht. Nimm den anderen (o) dieses Recht:
+
+      chmod o-w erinnerungen
 # { $loss }: "yes" wenn Erinnerungen gelöscht wurden, sonst "no"
 root-event-fixed =
     Der Daemon liest seine Konfiguration neu: „ziel = /Koenigreich/Muelleimer“.

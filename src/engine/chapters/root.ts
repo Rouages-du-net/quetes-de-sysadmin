@@ -15,6 +15,16 @@ const eraser = (j: Game) => account(j.t, 'eraser');
 const memory = (text: string) => f(text);
 // The fixed configuration line, in the language: "target = /Kingdom/Bin".
 const fixedTarget = (j: Game) => `${name(j.t, 'target')} = ${path(j.t, '/Kingdom/Bin')}`;
+// /etc/eraser.conf holds the fixed target.
+const confFixed = (j: Game) => {
+  const conf = j.find(path(j.t, CONF));
+  return conf?.type === 'file' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
+};
+// The memories place no longer lets the eraser user delete in it (w and x needed).
+const protectedPlace = (j: Game) => {
+  const place = j.find(path(j.t, MEMORIES));
+  return place?.type === 'directory' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
+};
 
 export const root: Chapter = {
   id: 'root',
@@ -120,7 +130,7 @@ export const root: Chapter = {
   // The Eraser moves on: at each command, it erases a memory, as long as
   // other users are allowed to write in the place.
   afterCommand: (j) => {
-    if (!j.flags.has('alert') || j.flags.has('fixed') || !j.exists(path(j.t, CONF))) return;
+    if (!j.flags.has('alert') || j.flags.has('fixed') || confFixed(j) || !j.exists(path(j.t, CONF))) return;
     const place = j.find(path(j.t, MEMORIES));
     if (place?.type !== 'directory' || !j.can(place, 'w', eraser(j)) || !j.can(place, 'x', eraser(j))) return;
     const name = Object.keys(place.children).sort()[0];
@@ -136,10 +146,7 @@ export const root: Chapter = {
     },
     {
       id: 'protected',
-      condition: (j) => {
-        const place = j.find(path(j.t, MEMORIES));
-        return j.flags.has('alert') && !j.flags.has('fixed') && place?.type === 'directory' && !(j.can(place, 'w', eraser(j)) && j.can(place, 'x', eraser(j)));
-      },
+      condition: (j) => j.flags.has('alert') && !confFixed(j) && protectedPlace(j),
       message: (j) => j.t('root-event-protected', { saved: j.count(path(j.t, MEMORIES), ''), total: TOTAL }),
     },
     {
@@ -148,11 +155,15 @@ export const root: Chapter = {
       message: (j) => j.t('root-event-conf-erased'),
     },
     {
+      // The configuration fixed AND the memories protected: the chapter's
+      // lesson is the permissions, not only the copy with sudo.
+      id: 'still-open',
+      condition: (j) => confFixed(j) && !protectedPlace(j),
+      message: (j) => j.t('root-event-still-open'),
+    },
+    {
       id: 'fixed',
-      condition: (j) => {
-        const conf = j.find(path(j.t, CONF));
-        return conf?.type === 'file' && typeof conf.content === 'string' && conf.content.includes(fixedTarget(j));
-      },
+      condition: (j) => confFixed(j) && protectedPlace(j),
       message: (j) => {
         const saved = j.count(path(j.t, MEMORIES), '');
         return j.t('root-event-fixed', { saved: saved, total: TOTAL, loss: saved < TOTAL ? 'yes' : 'no' });

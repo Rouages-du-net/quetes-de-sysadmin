@@ -455,7 +455,7 @@ in English). The world finally looks like a real Linux: `/home`, `/etc`,
 | `/var/log` | the daemon's log shows two targets instead of one | `cat`, `grep cible` |
 | `/etc/effaceur.conf` | "cible = /Royaume /Corbeille": one space too many; the file belongs to root | Permission denied |
 | `journal.txt` | find your password (written down, "a very bad idea") | `grep "mot de passe"` (quotes) |
-| `/etc` | install the fixed version | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
+| `/etc` | install the fixed version; the chapter ends once the memories are also protected (the Eraser stops, but a place open to all stays a risk) | `sudo cp ~/effaceur.conf.corrige /etc/effaceur.conf` |
 | bonus | `/root`, `/etc/sudoers`, `/home/nour` (a diary: we don't read it, even as root) | `sudo ls`, `sudo cat`, `whoami`, `sudo cd` (not found: `cd` is a shell builtin) |
 
 The outcome: the character was the kingdom's administrator. They were the
