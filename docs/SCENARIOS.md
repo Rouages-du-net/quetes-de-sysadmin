@@ -3210,7 +3210,7 @@ conventions' way).
 | From where | `Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4740} \| Format-List Message`: Caller Computer Name STACKS; `Get-ADUser -LDAPFilter '(lockoutTime>=1)'` |
 | There | `ssh stacks` (Windows' OpenSSH client); `Get-WinEvent` Security 4625: Logon Type 4 (batch) |
 | The source | `Get-ScheduledTask \| Select-Object TaskName, @{n='User';e={$_.Principal.UserId}}`, `Get-ScheduledTaskInfo 'Scan Import'` (0x80070775), `schtasks /query /v /fo list`: the scan import, every 5 minutes, as LENDING\rsilva with the old password |
-| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (the vault's entry), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
+| Fix | `Set-ScheduledTask 'Scan Import' -User 'LENDING\svc_scans' -Password …` (its entry in the vault's export; `Get-ADUser -Properties Description` tells which account is the import's), or `schtasks /change /tn "Scan Import" /ru LENDING\svc_scans /rp …` |
 | Unlock | `exit`, `Unlock-ADAccount rsilva` |
 
 Since Rafael's change on Monday at 8:52, the chapter replays the task every
@@ -3220,12 +3220,14 @@ old password, Rafael is locked again. Goal checked on the state: rsilva
 isn't locked out half an hour after the unlock; no enabled task on stacks
 holds a wrong password for him; the scan import is Ready under a service
 account (OU=Service Accounts) whose stored password works, enabled, not an
-administrator; the lockout policy is unchanged (5 tries, at least 30
+administrator, that can write Archives (DL_Archives_RW); the lockout policy is unchanged (5 tries, at least 30
 minutes). Expected traps: unlocking first (it relocks), raising the
 threshold or disabling the lockout, resetting Rafael's password (it
 doesn't unlock), the task as SYSTEM, under a person's account or simply
-disabled (the scans stop arriving), a wrong password for svc_scans
-(refused, and it counts).
+disabled (the scans stop arriving), svc_backup (the vault's other entry,
+read-only on Archives), a wrong password for svc_scans (refused, and it
+counts). Nandini's export lists the service accounts with neutral notes:
+nothing in it names the task or the machine, so the trace is needed.
 
 ### Chapter 3 — The Policy That Doesn't Apply (done)
 

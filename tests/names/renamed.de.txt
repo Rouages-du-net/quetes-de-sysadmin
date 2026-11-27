@@ -1103,7 +1103,7 @@ comings-and-goings
 stale-password
   /C/Users/du/Documents/handover.txt → /C/Users/du/Documents/uebergabe.txt
   /C/Users/du/Documents/conventions.txt → /C/Users/du/Documents/konventionen.txt
-  /C/Users/du/Documents/vault-svc_scans.txt → /C/Users/du/Documents/tresor-svc_scans.txt
+  /C/Users/du/Documents/vault-service-accounts.txt → /C/Users/du/Documents/tresor-dienstkonten.txt
 
 stale-password:stacks
   /D/Shares/Archives → /D/Shares/Archiv

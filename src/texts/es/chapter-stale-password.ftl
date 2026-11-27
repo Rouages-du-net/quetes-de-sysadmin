@@ -24,24 +24,31 @@ stale-password-email-nandini =
     Jura que escribe la contraseña correcta, solo en su PC del mostrador
     de Central, y que no ha apuntado la antigua en ningún sitio.
 
-    ¿Podrías averiguar qué pasa? He exportado la entrada del gestor que
-    Tomas me dijo que necesitarías: Documents\caja-fuerte-svc_scans.txt.
-    Bórrala cuando termines.
+    ¿Podrías averiguar qué pasa? Tomas me dijo que las contraseñas de las
+    cuentas de servicio podrían servir, así que exporté sus entradas del
+    gestor: Documents\caja-fuerte-cuentas-servicio.txt. Bórralo cuando
+    termines.
 
     Nandini
 
-# { $password }: la contraseña de la cuenta (no se traduce).
+# { $scans }, { $backup }: las contraseñas de las cuentas (no se traducen).
 stale-password-vault =
-    Gestor de contraseñas - una entrada, exportada por Nandini (9 de enero
-    de 2030)
+    Gestor de contraseñas - carpeta «Cuentas de servicio», exportada por
+    Nandini (9 de enero de 2030)
+
+    Título:     LENDING - svc_backup
+    Usuario:    LENDING\svc_backup
+    Contraseña: { $backup }
+    Modificada: 15 de marzo de 2029 (Tomas)
+    Notas:      Cuenta de servicio. OU=Service Accounts, la contraseña
+                nunca caduca.
 
     Título:     LENDING - svc_scans
     Usuario:    LENDING\svc_scans
-    Contraseña: { $password }
+    Contraseña: { $scans }
     Modificada: 12 de diciembre de 2029 (Tomas)
-    Notas:      Cuenta de servicio de la importación de escaneos en
-                estantes (sustituye a la cuenta de Rafael en la tarea).
-                OU=Service Accounts, la contraseña nunca caduca.
+    Notas:      Cuenta de servicio. OU=Service Accounts, la contraseña
+                nunca caduca.
 
 ## Time passing
 
@@ -108,6 +115,12 @@ stale-password-event-person =
     persona cambie una contraseña, o se vaya, la importación se romperá, o
     la bloqueará. Una tarea tiene su propia cuenta de servicio: svc_scans,
     con su contraseña en el gestor.
+stale-password-event-read-only =
+    La importación se ejecuta ahora como svc_backup: una cuenta de
+    servicio, pero la de la copia externa, que solo puede leer Archives
+    (DL_Archives_RO). Los escaneos se quedarían en D:\Scans. ¿Qué cuenta
+    se creó para la importación? Su descripción lo dice (Get-ADUser
+    -Properties Description).
 stale-password-event-task-off =
     La importación de escaneos ya no se ejecuta: Rafael no se bloqueará,
     pero los PDF del escáner del archivo se acumulan en D:\Scans y nunca

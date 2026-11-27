@@ -1120,7 +1120,7 @@ comings-and-goings
 stale-password
   /C/Users/tu/Documents/handover.txt → /C/Users/tu/Documents/traspaso.txt
   /C/Users/tu/Documents/conventions.txt → /C/Users/tu/Documents/convenciones.txt
-  /C/Users/tu/Documents/vault-svc_scans.txt → /C/Users/tu/Documents/caja-fuerte-svc_scans.txt
+  /C/Users/tu/Documents/vault-service-accounts.txt → /C/Users/tu/Documents/caja-fuerte-cuentas-servicio.txt
   /C/Users/tu/email_nandini.txt → /C/Users/tu/correo_nandini.txt
 
 stale-password:stacks

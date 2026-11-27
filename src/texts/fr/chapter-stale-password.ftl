@@ -24,23 +24,30 @@ stale-password-email-nandini =
     Il jure qu'il tape le bon mot de passe, seulement sur son PC de la
     banque d'accueil de Central, et qu'il n'a noté l'ancien nulle part.
 
-    Pouvez-vous trouver ce qui se passe ? J'ai exporté l'entrée du coffre
-    dont Tomas m'a dit que vous auriez besoin :
-    Documents\coffre-svc_scans.txt. Supprimez-la quand vous aurez fini.
+    Pouvez-vous trouver ce qui se passe ? Tomas m'a dit que les mots de
+    passe des comptes de service pourraient servir, alors j'ai exporté
+    leurs entrées du coffre : Documents\coffre-comptes-service.txt.
+    Supprimez-le quand vous aurez fini.
 
     Nandini
 
-# { $password } : le mot de passe du compte (non traduit).
+# { $scans }, { $backup } : les mots de passe des comptes (non traduits).
 stale-password-vault =
-    Gestionnaire de mots de passe - une entrée, exportée par Nandini (9 janvier 2030)
+    Gestionnaire de mots de passe - dossier « Comptes de service », exporté par Nandini (9 janvier 2030)
+
+    Titre :          LENDING - svc_backup
+    Utilisateur :    LENDING\svc_backup
+    Mot de passe :   { $backup }
+    Modifié :        15 mars 2029 (Tomas)
+    Notes :          Compte de service. OU=Service Accounts, mot de
+                     passe sans expiration.
 
     Titre :          LENDING - svc_scans
     Utilisateur :    LENDING\svc_scans
-    Mot de passe :   { $password }
+    Mot de passe :   { $scans }
     Modifié :        12 décembre 2029 (Tomas)
-    Notes :          Compte de service de l'import des scans sur rayons
-                     (remplace le compte de Rafael dans la tâche).
-                     OU=Service Accounts, mot de passe sans expiration.
+    Notes :          Compte de service. OU=Service Accounts, mot de
+                     passe sans expiration.
 
 ## Le temps qui passe
 
@@ -111,6 +118,12 @@ stale-password-event-person =
     mot de passe, ou partira, l'import cassera, ou la verrouillera. Une
     tâche a son propre compte de service : svc_scans, son mot de passe
     dans le coffre.
+stale-password-event-read-only =
+    L'import tourne maintenant en svc_backup : un compte de service, mais
+    celui de la copie hors site, qui ne peut que lire Archives
+    (DL_Archives_RO). Les scans resteraient dans D:\Scans. Quel compte a
+    été créé pour l'import ? Sa description le dit (Get-ADUser
+    -Properties Description).
 stale-password-event-task-off =
     L'import des scans ne tourne plus : Rafael ne sera plus verrouillé,
     mais les PDF du scanner des archives s'entassent dans D:\Scans sans

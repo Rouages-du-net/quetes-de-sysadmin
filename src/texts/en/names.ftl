@@ -440,7 +440,7 @@ name-email_nandini-txt = email_nandini.txt
 name-hr-0112-arrival-txt = hr-0112-arrival.txt
 name-hr-0113-departure-txt = hr-0113-departure.txt
 name-conventions-txt = conventions.txt
-name-vault-svc_scans-txt = vault-svc_scans.txt
+name-vault-service-accounts-txt = vault-service-accounts.txt
 name-city-it-audit-txt = city-it-audit.txt
 
 ## The Pantry
