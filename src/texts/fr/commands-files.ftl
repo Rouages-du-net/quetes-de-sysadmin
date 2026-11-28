@@ -19,7 +19,7 @@ cd-old-missing = cd : OLDPWD non défini
 
 cat-usage = Usage : cat fichier
 mv-usage = Usage : mv source destination
-mv-missing = mv : impossible d'évaluer '{ $target }' : aucun fichier ou dossier de ce nom
+mv-missing = mv : impossible d'évaluer '{ $target }' : Aucun fichier ou dossier de ce nom
 # Simplification du jeu : on ne déplace pas les lieux.
 mv-place = mv : impossible de déplacer '{ $target }' : un lieu de l’histoire s’y trouve, et le jeu garde les lieux de l’histoire à leur place
 mv-permission = mv : impossible de déplacer '{ $target }' : Permission non accordée
@@ -40,7 +40,7 @@ ln-permission = Permission non accordée
 ln-missing = Aucun fichier ou dossier de ce nom
 ln-access-impossible = ln: impossible d'accéder à '{ $target }': Aucun fichier ou dossier de ce nom
 ln-physical-directory = ln: { $target } : les liens physiques ne sont pas permis pour un répertoire
-rm-missing = rm : impossible de supprimer '{ $target }' : aucun fichier ou dossier de ce nom
+rm-missing = rm : impossible de supprimer '{ $target }' : Aucun fichier ou dossier de ce nom
 rm-directory = rm : impossible de supprimer '{ $target }' : est un dossier
 rm-permission = rm : impossible de supprimer '{ $target }' : Permission non accordée
 touch-usage = Usage : touch fichier
@@ -101,7 +101,7 @@ target-missing = { $command } : cible '{ $target }' : aucun fichier ou dossier d
 cp-overwrite = cp : voulez-vous écraser '{ $target }' ? 
 mv-overwrite = mv : voulez-vous écraser '{ $target }' ? 
 # mv -v
-mv-renamed = '{ $source }' renommé en '{ $destination }'
+mv-renamed = '{ $source }' -> '{ $destination }' renommé
 rm-ask = rm : supprimer '{ $target }' du type fichier ? 
 rm-ask-empty = rm : supprimer '{ $target }' du type fichier vide ? 
 rm-ask-link = rm : supprimer '{ $target }' du type lien symbolique ? 
@@ -109,13 +109,13 @@ rm-removed = '{ $target }' supprimé
 rm-removed-directory = répertoire '{ $target }' supprimé
 rm-ask-descend = rm : descendre dans le répertoire '{ $target }' ?
 rm-ask-directory = rm : supprimer '{ $target }' du type répertoire ?
-rm-dot = rm : refus de supprimer le répertoire '.' ou '..' : '{ $target }' ignoré
+rm-dot = rm : refus de suppression des répertoires '.' ou '..' : '{ $target }' ignoré
 rm-preserve-root =
     rm : il est dangereux d'opérer récursivement sur '{ $target }'
     rm : utilisez --no-preserve-root pour inhiber cette mesure de sécurité
 rm-busy = rm : impossible de supprimer '{ $target }' : Périphérique ou ressource occupé
 rm-not-permitted = rm : impossible de supprimer '{ $target }' : Opération non permise
-rm-other-device = rm : '{ $target }' ignoré, car il est sur un autre périphérique
+rm-other-device = rm : '{ $target }' est ignoré car il est sur un périphérique différent
 # Différences voulues avec rm et mv de GNU : le jeu garde les lieux du système et ceux de l’histoire.
 rm-system = rm : impossible de supprimer '{ $target }' : le jeu garde les lieux du système (/, /etc, /usr/lib, /var/log…), que root pourrait détruire sur un vrai serveur
 rm-story-place = rm : impossible de supprimer '{ $target }' : un lieu de l’histoire s’y trouve, et le jeu garde les lieux de l’histoire

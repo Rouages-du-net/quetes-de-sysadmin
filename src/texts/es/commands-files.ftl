@@ -109,18 +109,18 @@ rm-removed = '{ $target }' borrado
 rm-removed-directory = directorio borrado: '{ $target }'
 rm-ask-descend = rm: ¿descender al directorio '{ $target }'? (s/n)
 rm-ask-directory = rm: ¿borrar el directorio '{ $target }'? (s/n)
-rm-dot = rm: rehusando borrar el directorio '.' o '..': se omite '{ $target }'
+rm-dot = rm: se rechaza borrar el directorio '.' o '..': se salta '{ $target }'
 rm-preserve-root =
     rm: es peligroso operar recursivamente sobre '{ $target }'
-    rm: use --no-preserve-root para anular esta medida de seguridad
+    rm: utilice --no-preserve-root para saltarse esta medida de seguridad
 rm-busy = rm: no se puede borrar '{ $target }': Dispositivo o recurso ocupado
 rm-not-permitted = rm: no se puede borrar '{ $target }': Operación no permitida
-rm-other-device = rm: se omite '{ $target }', porque está en un dispositivo diferente
+rm-other-device = rm: se salta '{ $target }', dado que está en un sistema de ficheros distinto
 # Diferencias deliberadas con rm y mv de GNU: el juego conserva los lugares del sistema y los de la historia.
 rm-system = rm: no se puede borrar '{ $target }': el juego conserva los lugares propios del sistema (/, /etc, /usr/lib, /var/log…), que root podría destruir en un servidor real
 rm-story-place = rm: no se puede borrar '{ $target }': dentro hay un lugar de la historia, y el juego conserva los lugares de la historia
 mv-system = mv: no se puede mover '{ $target }': el juego deja los lugares propios del sistema (/, /etc, /usr/lib, /var/log…) donde están
-mv-into-itself = mv: no se puede mover '{ $source }' a un subdirectorio de sí mismo, '{ $target }'
+mv-into-itself = mv: no se puede mover '{ $source }' a un directorio de sí mismo, '{ $target }'
 mv-busy = mv: no se puede mover '{ $source }' a '{ $target }': Dispositivo o recurso ocupado
 mv-over-file = mv: no se puede sobreescribir el no directorio '{ $target }' con el directorio '{ $source }'
 mv-not-empty = mv: no se puede mover '{ $source }' a '{ $target }': El directorio no está vacío
