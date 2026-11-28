@@ -16,14 +16,16 @@
 // the release numbers or the limits), in the file.
 // Objective checked on the state: the Deployment rolled out on 2.3.1, the
 // site answering through Traefik under the meet's load; a memory limit
-// above the peak (230Mi) and no more than 1Gi; requests of at least 128Mi
+// that fits the measured peak: above it (230Mi) and no more than twice it
+// (460Mi), so a limit guessed without measuring (512Mi, 1Gi) doesn't pass; requests of at least 128Mi
 // (what the app needs, so the scheduler keeps room for it); the files in
 // ~/manifests what runs.
 // Traps: the limits removed (a leak could then take the whole node), a
 // limit as big as the node, kubectl rollout undo after a change of the
 // limit (it goes back one revision: 2.4.0 again), requests the node can't hold (Pending:
 // FailedScheduling, "Insufficient memory"), a limit raised on 2.4.0 (it
-// fills it too), a limit below the peak, deleting the pods again and again.
+// fills it too), a limit below the peak, a generous limit guessed without
+// measuring (more than twice the peak), deleting the pods again and again.
 // Sources: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/,
 // https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/,
 // https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/,
@@ -44,7 +46,11 @@ const memoryOf = (q: unknown) => (q === undefined ? null : quantity(q));
 const limit = (j: Game) => memoryOf(container(j)?.resources?.limits?.memory);
 const requests = (j: Game) => memoryOf(container(j)?.resources?.requests?.memory);
 const aboveTutorial = (j: Game) => (limit(j) ?? 0) > 128 * MiB;
-const limitOk = (j: Game) => limit(j) !== null && limit(j)! > PEAK_MIB * MiB && limit(j)! <= 1024 * MiB;
+/** The most a sensible limit allows: twice the peak measured with kubectl top. */
+const HEADROOM_MIB = 2 * PEAK_MIB;
+const limitOk = (j: Game) => limit(j) !== null && limit(j)! > PEAK_MIB * MiB && limit(j)! <= HEADROOM_MIB * MiB;
+/** Above twice the peak, but not the whole node: a limit set without measuring. */
+const tooGenerous = (j: Game) => limit(j) !== null && limit(j)! > HEADROOM_MIB * MiB && limit(j)! <= 1024 * MiB;
 const requestsOk = (j: Game) => requests(j) !== null && requests(j)! >= 128 * MiB;
 /** A booking pod with a limit above the peak whose container was OOMKilled: 2.4.0 filled it. */
 const leakKilled = (j: Game) =>
@@ -88,6 +94,7 @@ export const deepEnd: Chapter = {
     { id: 'undo-leaky', condition: (j) => journal(j, 'undo').length > 0 && leaky(j), message: (j) => j.t('deep-end-event-undo-leaky') },
     { id: 'rolled-back', condition: rolledBack, message: (j) => j.t('deep-end-event-rolled-back') },
     { id: 'below-peak', condition: (j) => rolledBack(j) && aboveTutorial(j) && limit(j)! <= PEAK_MIB * MiB, message: (j) => j.t('deep-end-event-below-peak') },
+    { id: 'too-generous', condition: (j) => rolledBack(j) && tooGenerous(j), message: (j) => j.t('deep-end-event-too-generous') },
     { id: 'limit-raised', condition: (j) => aboveTutorial(j) && limit(j)! > PEAK_MIB * MiB, message: (j) => j.t('deep-end-event-limit-raised') },
     { id: 'requests-low', condition: (j) => rolledBack(j) && limitOk(j) && !requestsOk(j), message: (j) => j.t('deep-end-event-requests-low') },
     { id: 'requests', condition: (j) => rolledBack(j) && limitOk(j) && requestsOk(j) && rolledOut(j), message: (j) => j.t('deep-end-event-requests') },

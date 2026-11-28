@@ -99,6 +99,12 @@ deep-end-event-below-peak =
     Wettkampfs braucht: in der Spitze würde sie wieder beendet. Miss es
     (kubectl top pod, mehr als einmal) und setze das Limit über die Spitze,
     mit Spielraum.
+deep-end-event-too-generous =
+    Dieses Limit ist mehr als doppelt so hoch wie alles, was 2.3.1 beim
+    Wettkampf je gebraucht hat: geschätzt, nicht gemessen. Mit so viel Platz
+    würde ein Leck lange wachsen, bevor es gestoppt wird. Miss die Pods
+    unter der Last des Wettkampfs (kubectl top pod, mehr als einmal) und
+    setze das Limit ein wenig über die gemessene Spitze.
 deep-end-event-limit-raised = Das Speicherlimit liegt jetzt über der Spitze des Wettkampfs.
 deep-end-event-requests-low =
     Die Requests liegen weit unter dem, was die App unter Last braucht: der
