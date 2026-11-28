@@ -13,7 +13,8 @@
 //     (here, /var/ is an address and b a branch: "undefined label").
 // Objective checked on the state: yesterday's archive in /var/backups, and
 // state.conf updated with yesterday's date, by a run of nightly-backup.sh
-// itself that reached its last line ("Backup of … done"): an archive made
+// itself that reached its last line ("Backup of … done (N bytes)", N the
+// size of the archive it wrote: a script that only echoes it fails): an archive made
 // by hand and state.conf edited with nano don't fix the script. Several
 // solutions pass (the base system's tools, or GNU's from a package:
 // gdate…), as long as the script ran to the end.
@@ -24,6 +25,7 @@
 
 import { d, f, type Chapter } from '../world';
 import type { Game } from '../shell';
+import { sizeFor } from '../tools';
 import { M, PASSWORD, YESTERDAY, filmAccounts, filmState, filmWorld } from './film-club';
 
 export const SCRIPT = `#!/bin/bash
@@ -46,7 +48,17 @@ const recorded = (j: Game) => new RegExp(`^last=${YESTERDAY}$`, 'm').test(j.read
 // The script run (./nightly-backup.sh, sh nightly-backup.sh, sudo…), not a command that only names it.
 const RUNNERS = ['sh', 'bash', 'dash', 'sudo', 'env', 'nohup', 'time'];
 const runsScript = (c: string[]) => (RUNNERS.includes(c[0]) || c[0].endsWith(SCRIPT_NAME)) && c.some((a) => a.endsWith(SCRIPT_NAME));
-const ranToTheEnd = (j: Game) => j.last.commands.some(runsScript) && new RegExp(`Backup of ${YESTERDAY} done \\(\\d+ bytes\\)`).test(j.last.output);
+/** The archive's size in bytes, as stat would give it. */
+const archiveSize = (j: Game) => {
+  const n = j.find(`/var/backups/site-${YESTERDAY}.tar.gz`);
+  return n?.type === 'file' ? sizeFor(n, j) : null;
+};
+// The line the script prints, with the size of the archive it really wrote: an echo of the line alone doesn't pass.
+const ranToTheEnd = (j: Game) => {
+  if (!j.last.commands.some(runsScript)) return false;
+  const m = new RegExp(`Backup of ${YESTERDAY} done \\((\\d+) bytes\\)`).exec(j.last.output);
+  return m !== null && Number(m[1]) === archiveSize(j);
+};
 const said = (j: Game, text: string) => j.last.errors.some((e) => e.includes(text)) || j.last.output.includes(text);
 
 export const portableScript: Chapter = {

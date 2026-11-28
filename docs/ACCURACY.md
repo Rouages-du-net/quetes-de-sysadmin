@@ -338,6 +338,33 @@ the package's `.release/linux/` (`openbao.hcl`, `openbao.service`, `nfpm.yaml`, 
 | The package: `/etc/openbao/openbao.hcl` (pebbledb storage, TLS listener on 0.0.0.0:8200), `openbao.service` (Description in quotes, `Type=notify`, `ExecReload=/bin/kill --signal HUP`), the self-signed certificate of `postinst` | confirmed (`.release/linux/`); the declarative `audit "file"` stanza from `website/content/docs/configuration/audit.mdx` |
 | "Client sent an HTTP request to an HTTPS server." for plain HTTP to the listener | Go's `net/http` server answer, from memory |
 
+## rm and mv in French, Spanish and German
+
+The translations of `rm` and `mv`'s messages were checked against the
+Translation Project's current catalogues, downloaded in November 2026:
+coreutils' [fr.po](https://translationproject.org/latest/coreutils/fr.po)
+(coreutils 9.12-pre1),
+[es.po](https://translationproject.org/latest/coreutils/es.po) (8.23-pre1,
+the latest Spanish one) and
+[de.po](https://translationproject.org/latest/coreutils/de.po) (9.11-pre1);
+the system errors after the colon (`strerror`) against glibc's
+[fr.po](https://translationproject.org/latest/libc/fr.po),
+[es.po](https://translationproject.org/latest/libc/es.po) and
+[de.po](https://translationproject.org/latest/libc/de.po).
+
+| What | Result |
+|------|--------|
+| fr: "Aucun fichier ou dossier de ce nom" (capital A), "est un dossier", "Le dossier n'est pas vide", "Permission non accordée", "Périphérique ou ressource occupé" | corrected for `rm` and `mv` (the capital); the rest confirmed (libc fr.po) |
+| fr: `mv -v` "'A' -> 'B' renommé", "refus de suppression des répertoires '.' ou '..' : 'X' ignoré", "'X' est ignoré car il est sur un périphérique différent" | corrected (coreutils fr.po) |
+| fr: "impossible de supprimer", "impossible de déplacer … vers un sous-répertoire de lui-même", the `-i` questions ("supprimer 'X' du type fichier ?"), `--preserve-root`'s two lines | confirmed |
+| es: "se rechaza borrar el directorio '.' o '..': se salta 'X'", "utilice --no-preserve-root para saltarse esta medida de seguridad", "se salta 'X', dado que está en un sistema de ficheros distinto", "no se puede mover 'A' a un directorio de sí mismo, 'B'" | corrected (coreutils es.po) |
+| es: `mv -v` "renamed 'A' -> 'B'" | confirmed: the Spanish catalogue predates the message, so it stays in English |
+| de: "das Entfernen von 'X' ist nicht möglich", "das Verschieben von 'A' nach 'B' ist nicht möglich", "… in ein Unterverzeichnis seiner selbst ('B') ist nicht möglich", "reguläre (leere) Datei", "überspringe 'X', da es auf einem anderen Gerät ist", `--preserve-root`'s lines ending with a full stop, "Entfernen von '.' Verzeichnis '..' nicht möglich" (the catalogue's own wording) | corrected (coreutils de.po) |
+| de: "Das Verzeichnis ist nicht leer", "Ist ein Verzeichnis", "Keine Berechtigung" | corrected for the first (libc de.po); the others confirmed |
+| `mv`'s "cannot overwrite non-directory … with directory …" and "cannot overwrite directory … with non-directory" in fr and de | unverifiable: these catalogues (coreutils 9.11 and later) no longer carry the messages; the earlier translations are kept |
+| The game's own refusals (a place of the story, the system's places) | the game's wording, translated in the same form as the tool's "cannot remove"/"cannot move" |
+| The space before the colon in French ("rm : …") | kept: the game's French typography for every command; the real `error()` prefix is "rm: " |
+
 ## Not checked against sources
 
 These stay in the table of differences as they were: the IBM i messages

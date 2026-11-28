@@ -70,6 +70,20 @@ for (const language of languagesFor('other-unix'))
       expect(c.finished).toContain('portable-script');
     });
 
+    it('chapter 1 — false lead: a script that only echoes the size, without measuring the archive', () => {
+      const { c, play, edit } = part();
+      const fixed = (t: string) => t.replace('#!/bin/bash', '#!/bin/sh').replace('date -d yesterday', 'date -v-1d').replace('sed -i "', `sed -i '' "`);
+      edit('nano nightly-backup.sh', (t) => fixed(t).replace('SIZE=$(stat -c %s /var/backups/site-$DAY.tar.gz)', 'SIZE=1'));
+      expect(play(['./nightly-backup.sh'])).toContain(`Backup of ${YESTERDAY} done (1 bytes)`);
+      expect(play(['cat /var/backups/state.conf'])).toContain(`last=${YESTERDAY}`);
+      expect(c.finished).not.toContain('portable-script');
+      edit('nano nightly-backup.sh', (t) => t.replace('SIZE=1', 'SIZE=$(stat -f %z /var/backups/site-$DAY.tar.gz)'));
+      const all = play(['./nightly-backup.sh']);
+      const size = /done \((\d+) bytes\)/.exec(all)![1];
+      expect(play([`stat -f %z /var/backups/site-${YESTERDAY}.tar.gz`])).toContain(size);
+      expect(c.finished).toContain('portable-script');
+    });
+
     it('chapter 1 — false leads: bash from pkg is not enough, Linux commands are not there', () => {
       const { c, play, edit } = part();
       expect(play(['systemctl status'])).toContain('systemctl: not found');

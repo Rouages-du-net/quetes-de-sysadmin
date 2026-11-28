@@ -104,7 +104,7 @@ hint-deep-end-rolled-back =
     .lead = Go back to the release that held the last meet (the Deployment's history says which): in the file (and kubectl rollout undo can do it at once, to the right revision).
     .solution = kubectl rollout undo deployment/booking -n swim --to-revision=N, or nano ~/manifests/booking.yaml (image …:2.3.1) and kubectl apply -f ~/manifests/
 hint-deep-end-limit-raised =
-    .lead = Set the memory limit above the peak you measure under the meet's load (kubectl top pod, more than once: it moves), with a margin, but nowhere near the whole node.
+    .lead = Set the memory limit above the peak you measure under the meet's load (kubectl top pod, more than once: it moves), with a modest margin: less than twice the peak, nowhere near the whole node.
     .solution = nano ~/manifests/booking.yaml (limits: memory: 320Mi), then kubectl apply -f ~/manifests/
 hint-deep-end-requests =
     .lead = Set the memory requests to what the app usually uses under load (kubectl top pod), below the limit.

@@ -455,6 +455,19 @@ for (const language of languagesFor('pool'))
       expect(done('deep-end')).toBe(true);
     });
 
+    it('chapter 4 — false lead: a generous limit guessed without measuring (512Mi) does not win', () => {
+      const { play, edit, flag, done } = part(C3);
+      edit('nano manifests/booking.yaml', (x) => resources('256Mi', '512Mi')(x).replace('booking:2.4.0', 'booking:2.3.1'));
+      const all = play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(all).toContain('deployment "booking" successfully rolled out');
+      expect(flag('too-generous')).toBe(true);
+      expect(done('deep-end')).toBe(false);
+      contains(all, 'pas une mesure');
+      edit('nano manifests/booking.yaml', (x) => x.replace('memory: 512Mi', 'memory: 320Mi'));
+      play(['kubectl apply -f manifests/', 'kubectl rollout status deployment/booking -n swim']);
+      expect(done('deep-end')).toBe(true);
+    });
+
     it('chapter 4 — false leads: a limit raised on 2.4.0, undo to it, pods deleted, the whole node, no limits, below the peak', () => {
       const { play, edit, pods, flag, done } = part(C3);
       edit('nano manifests/booking.yaml', resources('64Mi', '512Mi'));

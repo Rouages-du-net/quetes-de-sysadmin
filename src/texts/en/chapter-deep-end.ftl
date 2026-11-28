@@ -90,6 +90,12 @@ deep-end-event-below-peak =
     This limit is below what 2.3.1 uses at the meet's busiest minutes: at
     the peak, it would be killed again. Measure it (kubectl top pod, more
     than once) and set the limit above the peak, with a margin.
+deep-end-event-too-generous =
+    This limit is more than twice what 2.3.1 has ever needed at the meet: a
+    guess, not a measure. With that much room, a leak would grow for a long
+    time before being stopped. Measure the pods under the meet's load
+    (kubectl top pod, more than once) and set the limit a little above the
+    peak you see.
 deep-end-event-limit-raised =
     The memory limit is now above the meet's peak.
 deep-end-event-requests-low =

@@ -97,6 +97,12 @@ deep-end-event-below-peak =
     más actividad de la competición: en el pico, volverían a matarla.
     Mídelo (kubectl top pod, más de una vez) y pon el límite por encima del
     pico, con margen.
+deep-end-event-too-generous =
+    Este límite supera el doble de lo que la 2.3.1 ha necesitado nunca en
+    la competición: es una suposición, no una medida. Con tanto espacio, una
+    fuga crecería mucho tiempo antes de que la pararan. Mide los pods con la
+    carga de la competición (kubectl top pod, más de una vez) y pon el
+    límite un poco por encima del pico que veas.
 deep-end-event-limit-raised =
     El límite de memoria está ahora por encima del pico de la competición.
 deep-end-event-requests-low =

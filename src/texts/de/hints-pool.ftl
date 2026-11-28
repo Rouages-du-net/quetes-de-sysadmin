@@ -105,7 +105,7 @@ hint-deep-end-rolled-back =
     .lead = Geh zurück zu dem Release, das den letzten Wettkampf gehalten hat (die Historie des Deployments sagt, welches): in der Datei (und kubectl rollout undo kann es sofort tun, zur richtigen Revision).
     .solution = kubectl rollout undo deployment/booking -n swim --to-revision=N, oder nano ~/manifests/booking.yaml (image …:2.3.1) und kubectl apply -f ~/manifests/
 hint-deep-end-limit-raised =
-    .lead = Setze das Speicherlimit über die Spitze, die du unter der Last des Wettkampfs misst (kubectl top pod, mehr als einmal: es ändert sich), mit Spielraum, aber bei weitem nicht den ganzen Node.
+    .lead = Setze das Speicherlimit über die Spitze, die du unter der Last des Wettkampfs misst (kubectl top pod, mehr als einmal: es ändert sich), mit maßvollem Spielraum: weniger als das Doppelte der Spitze, bei weitem nicht den ganzen Node.
     .solution = nano ~/manifests/booking.yaml (limits: memory: 320Mi), dann kubectl apply -f ~/manifests/
 hint-deep-end-requests =
     .lead = Setze die Speicher-Requests auf das, was die App unter Last normalerweise braucht (kubectl top pod), unter dem Limit.

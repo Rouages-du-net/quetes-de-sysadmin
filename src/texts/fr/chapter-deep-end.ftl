@@ -100,6 +100,12 @@ deep-end-event-below-peak =
     chargées du meeting : au pic, elle serait de nouveau tuée. Mesurez-le
     (kubectl top pod, plus d'une fois) et mettez la limite au-dessus du pic,
     avec une marge.
+deep-end-event-too-generous =
+    Cette limite dépasse le double de ce dont la 2.3.1 a jamais eu besoin
+    au meeting : c'est une estimation au jugé, pas une mesure. Avec autant
+    de place, une fuite grossirait longtemps avant d'être arrêtée.
+    Mesurez les pods sous la charge du meeting (kubectl top pod, plus d'une
+    fois) et mettez la limite un peu au-dessus du pic observé.
 deep-end-event-limit-raised =
     La limite de mémoire est maintenant au-dessus du pic du meeting.
 deep-end-event-requests-low =
